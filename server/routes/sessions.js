@@ -6,9 +6,22 @@ const { v4: uuidv4 } = require('uuid');
 // GET SESSION
 router.get('/:userId', (req, res) => {
     const { userId } = req.params;
-    const { type } = req.query; // 'FREE' or 'FULL'
+    const { type, projectId } = req.query; // 'FREE' or 'FULL', optional projectId
 
-    db.get('SELECT data FROM sessions WHERE user_id = ? AND type = ?', [userId, type], (err, row) => {
+    let sql = 'SELECT data FROM sessions WHERE user_id = ? AND type = ?';
+    let params = [userId, type];
+
+    if (projectId) {
+        sql += ' AND project_id = ?';
+        params.push(projectId);
+    } else {
+        // If no project specified, maybe find one with NULL project_id or ANY?
+        // For backward compatibility, we might want to just get the most recent one or strictly NULL.
+        // Let's assume strict NULL if not provided for now, or ignore if FREE mode (which might not have project).
+        sql += ' AND project_id IS NULL';
+    }
+
+    db.get(sql, params, (err, row) => {
         if (err) return res.status(500).json({ error: err.message });
         if (!row) return res.json({ data: null });
 
@@ -22,11 +35,21 @@ router.get('/:userId', (req, res) => {
 
 // SAVE SESSION
 router.post('/', (req, res) => {
-    const { userId, type, data } = req.body;
+    const { userId, type, data, projectId } = req.body;
     const dataStr = JSON.stringify(data);
 
+    let checkSql = 'SELECT id FROM sessions WHERE user_id = ? AND type = ?';
+    let checkParams = [userId, type];
+
+    if (projectId) {
+        checkSql += ' AND project_id = ?';
+        checkParams.push(projectId);
+    } else {
+        checkSql += ' AND project_id IS NULL';
+    }
+
     // Check if exists
-    db.get('SELECT id FROM sessions WHERE user_id = ? AND type = ?', [userId, type], (err, row) => {
+    db.get(checkSql, checkParams, (err, row) => {
         if (err) return res.status(500).json({ error: err.message });
 
         if (row) {
@@ -38,7 +61,7 @@ router.post('/', (req, res) => {
         } else {
             // Insert
             const id = uuidv4();
-            db.run('INSERT INTO sessions (id, user_id, type, data) VALUES (?, ?, ?, ?)', [id, userId, type, dataStr], (err) => {
+            db.run('INSERT INTO sessions (id, user_id, project_id, type, data) VALUES (?, ?, ?, ?, ?)', [id, userId, projectId || null, type, dataStr], (err) => {
                 if (err) return res.status(500).json({ error: err.message });
                 res.json({ success: true });
             });

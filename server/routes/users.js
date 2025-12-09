@@ -3,13 +3,16 @@ const router = express.Router();
 const db = require('../database');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
+const verifyToken = require('../middleware/authMiddleware');
 
-// Middleware to check auth (simplified)
-const verifyToken = require('../middleware/authMiddleware'); // Will create this next
+router.use(verifyToken);
 
-// GET ALL USERS
+// GET ALL USERS (Scoped to Organization)
 router.get('/', (req, res) => {
-    db.all('SELECT id, email, first_name, last_name, role, company_name, status, access_level, last_login FROM users', [], (err, rows) => {
+    // SuperAdmin sees all? Or we keep strict tenant separation even for him unless impersonating.
+    // For now: Admin sees own org users.
+
+    db.all('SELECT id, email, first_name, last_name, role, status, last_login FROM users WHERE organization_id = ?', [req.user.organizationId], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
 
         const users = rows.map(u => ({
@@ -18,27 +21,25 @@ router.get('/', (req, res) => {
             lastName: u.last_name,
             email: u.email,
             role: u.role,
-            companyName: u.company_name,
             status: u.status,
-            accessLevel: u.access_level,
             lastLogin: u.last_login
         }));
         res.json(users);
     });
 });
 
-// ADD USER (ADMIN)
+// ADD USER (To Organization)
 router.post('/', (req, res) => {
-    const { firstName, lastName, email, companyName, role, status, accessLevel, password } = req.body;
+    const { firstName, lastName, email, role, status, password } = req.body;
+    const organizationId = req.user.organizationId; // FROM TOKEN
 
-    // Default password if not provided by admin
     const finalPassword = password || 'welcome123';
     const hashedPassword = bcrypt.hashSync(finalPassword, 8);
     const id = uuidv4();
 
-    const sql = `INSERT INTO users (id, email, password, first_name, last_name, role, company_name, status, access_level, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`;
+    const sql = `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`;
 
-    db.run(sql, [id, email, hashedPassword, firstName, lastName, role || 'USER', companyName, status || 'active', accessLevel || 'free'], function (err) {
+    db.run(sql, [id, organizationId, email, hashedPassword, firstName, lastName, role || 'USER', status || 'active'], function (err) {
         if (err) {
             if (err.message.includes('UNIQUE constraint failed')) {
                 return res.status(400).json({ error: 'Email already exists' });
@@ -52,12 +53,15 @@ router.post('/', (req, res) => {
 // UPDATE USER
 router.put('/:id', (req, res) => {
     const { id } = req.params;
-    const { firstName, lastName, email, companyName, role, status } = req.body;
+    const { firstName, lastName, email, role, status } = req.body;
+    const organizationId = req.user.organizationId;
 
-    const sql = `UPDATE users SET first_name = ?, last_name = ?, email = ?, company_name = ?, role = ?, status = ? WHERE id = ?`;
+    // Ensure we only update user in OUR org
+    const sql = `UPDATE users SET first_name = ?, last_name = ?, email = ?, role = ?, status = ? WHERE id = ? AND organization_id = ?`;
 
-    db.run(sql, [firstName, lastName, email, companyName, role, status, id], function (err) {
+    db.run(sql, [firstName, lastName, email, role, status, id, organizationId], function (err) {
         if (err) return res.status(500).json({ error: err.message });
+        if (this.changes === 0) return res.status(404).json({ error: 'User not found or access denied' });
         res.json({ message: 'Updated successfully' });
     });
 });
@@ -65,8 +69,11 @@ router.put('/:id', (req, res) => {
 // DELETE USER
 router.delete('/:id', (req, res) => {
     const { id } = req.params;
-    db.run('DELETE FROM users WHERE id = ?', [id], function (err) {
+    const organizationId = req.user.organizationId;
+
+    db.run('DELETE FROM users WHERE id = ? AND organization_id = ?', [id, organizationId], function (err) {
         if (err) return res.status(500).json({ error: err.message });
+        if (this.changes === 0) return res.status(404).json({ error: 'User not found or access denied' });
         res.json({ message: 'Deleted successfully' });
     });
 });

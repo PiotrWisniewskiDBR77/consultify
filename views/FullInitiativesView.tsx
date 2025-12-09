@@ -1,11 +1,12 @@
 import React, { useEffect, useCallback } from 'react';
 import { ChatPanel } from '../components/ChatPanel';
 import { FullStep2Workspace } from '../components/FullStep2Workspace';
-import { FullInitiative, AxisId, AppView } from '../types';
+import { FullInitiative, AppView } from '../types';
 import { translations } from '../translations';
-import { initiativesLibrary } from '../contentLibraries';
 import { useAppStore } from '../store/useAppStore';
 import { sendMessageToAI, AIMessageHistory } from '../services/ai/gemini';
+import { generateInitiatives as engineGenerate } from '../services/transformationEngine';
+import { Api } from '../services/api';
 
 export const FullInitiativesView: React.FC = () => {
   const {
@@ -16,7 +17,8 @@ export const FullInitiativesView: React.FC = () => {
     activeChatMessages: messages,
     setIsBotTyping: setTyping,
     setCurrentView: onNavigate,
-    isBotTyping
+    isBotTyping,
+    currentProjectId
   } = useAppStore();
 
   const language = currentUser?.preferredLanguage || 'EN';
@@ -57,68 +59,45 @@ export const FullInitiativesView: React.FC = () => {
   };
 
   const generateInitiatives = useCallback(() => {
-    const newInitiatives: FullInitiative[] = [];
-    let idCounter = 1;
-    const scores = fullSession.assessment;
-
-    const addFromLib = (item: typeof initiativesLibrary['processes'][0], axis: AxisId, priorityOverride?: 'High' | 'Medium' | 'Low') => {
-      newInitiatives.push({
-        id: `INIT-${idCounter++}`,
-        name: item.name,
-        description: item.description,
-        axis: axis,
-        priority: priorityOverride || 'Medium',
-        complexity: item.complexity,
-        status: 'Draft'
-      });
-    };
-
-    const axisIds = Object.keys(scores).filter(k => k !== 'completedAxes') as AxisId[];
-    axisIds.forEach(axisId => {
-      const score = scores[axisId].score;
-      const libraryItems = initiativesLibrary[axisId];
-
-      if (!libraryItems) return;
-
-      if (score < 3.5) {
-        addFromLib(libraryItems[0], axisId, 'High');
-        if (libraryItems[1]) addFromLib(libraryItems[1], axisId, 'Medium');
-      } else {
-        const advancedItem = libraryItems.find(i => i.complexity === 'High') || libraryItems[libraryItems.length - 1];
-        if (advancedItem) addFromLib(advancedItem, axisId, 'Medium');
-      }
-    });
-
-    if (newInitiatives.length < 6) {
-      const aiQuickWin = initiativesLibrary.aiMaturity.find(i => i.complexity === 'Low');
-      if (aiQuickWin) addFromLib(aiQuickWin, 'aiMaturity', 'Low');
-    }
+    // Use the Transformation Engine
+    const newInitiatives = engineGenerate(fullSession);
 
     setTimeout(async () => {
       updateFullSession({ initiatives: newInitiatives });
+      await Api.saveSession(currentUser!.id, 'FULL', { ...fullSession, initiatives: newInitiatives }, currentProjectId || undefined);
 
       // AI Strategic Summary
-      const initNames = newInitiatives.map(i => i.name).join(', ');
-      const prompt = `I have generated these initiatives: ${initNames}. Provide a 2-sentence strategic justification for why these are the right focus areas based on standard digital transformation maturity curves.`;
+      const initNames = newInitiatives.slice(0, 5).map(i => i.name).join(', '); // Limit to 5 for prompt
+      const prompt = `I have generated these initiatives based on maturity gaps: ${initNames} (and others). Provide a 2-sentence strategic justification for why these are the right focus areas to move up the maturity curve.`;
 
-      // We pass empty history for this specific internal query or use current messages? 
-      // Better to use a fresh prompt for the Summary to avoid chat noise, then append result.
       const summary = await sendMessageToAI([], prompt);
 
       addAiMessage(`${t.intro[language]}\n\nStrategy: ${summary}`);
     }, 1500);
-  }, [fullSession, updateFullSession, addAiMessage, language, t]);
+  }, [fullSession, updateFullSession, addAiMessage, language, t, currentUser, currentProjectId]);
 
   useEffect(() => {
+    // Generate if empty.
+    // Also consider regeneration if assessment changed? 
+    // For now, simple check: if empty, generate.
     if (!fullSession.initiatives || fullSession.initiatives.length === 0) {
-      addAiMessage("Generating initiatives based on your assessment...");
-      generateInitiatives();
+      // Ensure we have some assessment data before generating?
+      const hasAssessment = fullSession.assessment.completedAxes.length > 0;
+      if (hasAssessment) {
+        addAiMessage("Analyzing your assessment results and generating transformation initiatives...");
+        generateInitiatives();
+      } else {
+        addAiMessage("Please complete the assessment first to generate initiatives.");
+      }
     }
-  }, [fullSession.initiatives, generateInitiatives]);
+  }, []); // Run once on mount if empty. 
+  // Note: removing dependencies to prevent loop if initiatives update triggers effect. 
+  // We want to run it only on mount.
 
   const handleUpdateInitiative = (updated: FullInitiative) => {
     const newInits = fullSession.initiatives.map(i => i.id === updated.id ? updated : i);
     updateFullSession({ initiatives: newInits });
+    Api.saveSession(currentUser!.id, 'FULL', { ...fullSession, initiatives: newInits }, currentProjectId || undefined);
   };
 
   return (

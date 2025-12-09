@@ -1,0 +1,1251 @@
+[
+  {
+    "id": 1,
+    "name": "Digital Processes",
+    "areas": [
+      {
+        "id": "1A",
+        "name": "Sales processes",
+        "levels": [
+          {
+            "level": 1,
+            "title": "Recording of basic data. Sales employees use dedicated systems to",
+            "description": "electronically register agreements and orders. This level ensures the precise documentation and efficient storage of crucial data."
+          },
+          {
+            "level": 2,
+            "title": "Workstation control. There is a reporting system that allows the",
+            "description": "monitoring and analysis of sales-related data. The reporting tool automatically generates reports containing key sales indicators and statistics, facilitating decision-making."
+          },
+          {
+            "level": 3,
+            "title": "Process control.  Budget control is implemented within the sales",
+            "description": "process through automation. An appropriate system enables the planning and control of the sales budget. The system generates the budget based on predefined parameters and sales indicators, streamlining financial management."
+          },
+          {
+            "level": 4,
+            "title": "Automation . We use various tools to automate sales such as online",
+            "description": "shops, marketplaces or a DIY platform that allow customers to buy online without having to interact with our employees."
+          },
+          {
+            "level": 5,
+            "title": "MES. Manufacturing Execution Systems are used for reporting  in the",
+            "description": "sales process. These systems enable the monitoring and analysis of data related to deliveries and logistics. They generate reports on deliveries, track delivery statuses and provide information on shipments and delivery deadlines."
+          },
+          {
+            "level": 6,
+            "title": "ERP.  Integrated ERP ( Enterprise Resource Planning) solutions",
+            "description": "are used within the sales process. This comprehensive system encompasses the management of key business processes, including sales. It synchronizes sales processes with other areas of the organization, such as procurement, production and finance. 454 Piotr Wisniewski, PhD 455"
+          },
+          {
+            "level": 7,
+            "title": "AI support. We harness advanced algorithms within the sales",
+            "description": "process to personalize offerings and provide other advanced features. Of note here are offer-personalization algorithms to analyse customer preferences and generate personalized purchase suggestions. We also employ natural language processing technology for customer service and tools for the automated operation of sales bots. Digital Pathfinder 456"
+          }
+        ]
+      },
+      {
+        "id": "1B",
+        "name": "Marketing processes",
+        "levels": [
+          {
+            "level": 1,
+            "title": "Recording of basic data. The  key feature of digitalization here is a",
+            "description": "CRM (Customer Relationship Management) system to register and manage basic customer data. It gathers contact details, precise interaction histories and marketing preferences, which are the basis for further marketing operations."
+          },
+          {
+            "level": 2,
+            "title": "Workstation control. The  marketing domain leverages CRM tools",
+            "description": "in conjunction with key analytical indicators to assess the effectiveness of marketing operations. Integrating CRM systems with analytical tools enables precise analysis and monitoring of key marketing indicators for well-informed decision-making."
+          },
+          {
+            "level": 3,
+            "title": "Process control.  Tools  related to search engine optimization (SEO)",
+            "description": "and data analysis from Google Analytics are employed. This provides oversight of marketing processes and the ability to assess the effectiveness of online activities. SEO strategies raise the visibility of websites in search results, while data from Google Analytics enable the monitoring of website traffic and user behaviours."
+          },
+          {
+            "level": 4,
+            "title": "Automation. We  use e-marketing tools to automate, for example,",
+            "description": "the sending of newsletters, email campaigns and offer personalization. E-marketing platforms automate campaigns based on predefined scenarios and customer segmentation, significantly enhancing the efficiency of marketing efforts."
+          },
+          {
+            "level": 5,
+            "title": "MES. Manufacturing Execution Systems are used to measure",
+            "description": "conversion in the sales process and evaluate the quality of m a r k e t i n g activities. In the marketing context, MES tools track conversions at various stages of the sales funnel and assign scores to potential customers (leads) based on their activities and behaviours . Piotr Wisniewski, PhD 457"
+          },
+          {
+            "level": 6,
+            "title": "ERP. Marketing harnesses integrated Enterprise Resource Planning",
+            "description": "solutions to manage key processes. An ERP system integrates marketing processes with other areas of the organization, allowing for efficient campaign management, customer data management and performance analysis."
+          },
+          {
+            "level": 7,
+            "title": "AI support. We assess the extent to which advanced algorithms",
+            "description": "are used in marketing. Technologies such as chatbots and content generation based on natural language processing (NLP) support customer interaction and the creation of personalized content. Chatbots provide rapid responses to customer inquiries, while NLP algorithms deliver personalized information, significantly improving customer service quality and raising audience engagement. Digital Pathfinder 458"
+          }
+        ]
+      },
+      {
+        "id": "1C",
+        "name": "Process technology and R&D processes",
+        "levels": [
+          {
+            "level": 1,
+            "title": "Recording of basic data. Design tools such as CAD record precise",
+            "description": "basic data on technological solutions that have been designed."
+          },
+          {
+            "level": 2,
+            "title": "Workstation control.  In the technology field, digital simulation",
+            "description": "tools enable control over workstations and technological processes. Through process simulation software or equipment operation simulations, the efficiency of technological workstations can be analysed and controlled."
+          },
+          {
+            "level": 3,
+            "title": "Process control. Failure Mode and Effects Analysis ( FMEA)",
+            "description": "is applied, which allows the control of technological processes and the identification of potential errors and their consequences, and thus the development of preventive action plans."
+          },
+          {
+            "level": 4,
+            "title": "Automation . Various automation technologies such as 3D",
+            "description": "printing, virtual reality ( VR) or augmented reality (AR) are in use. These allow prototypes to be created and tested and technological processes to be improved. 3D printing enables rapid prototyping and design verification, while VR/AR technologies support process simulation and employee training."
+          },
+          {
+            "level": 5,
+            "title": "MES.  M a n u f a c t u r i n g  E x e c u t i o n  S y st e m s  a r e  u s e d  t o  m a n a g e",
+            "description": "technological projects and monitor their implementation. MESs aid in planning , monitoring and managing technological projects, including task scheduling, resource allocation , progress control and reporting. In the development of manufacturing technologies , a Digital Twin is an MES-class tool."
+          },
+          {
+            "level": 6,
+            "title": "ERP. Integrated Enterprise Resource Planning solutions manage",
+            "description": "key business processes, including technological processes. An integrated ERP system enables the management of technological processes, task Piotr Wisniewski, PhD 459 scheduling, progress monitoring and integration with other areas of operation. Integrating the technological process with the ERP system also allows the exchange of data on technological cycle times, which is particularly useful during the design, price quoting and execution of new projects."
+          },
+          {
+            "level": 7,
+            "title": "AI  s u p p o r t .  Technologies such as AI algorithms support",
+            "description": "developmental work and the optimization of technological processes. These algorithms analyse data, optimize technological processes, generate proposals for improvements and automate actions, leading to efficiency and innovation in technological operations. AI can assist in identifying promising research areas, further expediting the innovation process and the development of new technologies. This makes AI an invaluable partner in R&D, contributing to new and unexpected results in various fields of science and technology. Digital Pathfinder 460"
+          }
+        ]
+      },
+      {
+        "id": "1D",
+        "name": "Purchasing processes",
+        "levels": [
+          {
+            "level": 1,
+            "title": "Recording of basic data . Basic transaction data are digitally",
+            "description": "recorded and stored, such as data about suppliers, products, quantities and prices. This level is fundamental because it ensures consistent and precise transaction information."
+          },
+          {
+            "level": 2,
+            "title": "Workstation control.  Inventory planning  tools, such as Material",
+            "description": "Requirements Planning (MRP), control material availability . These tools are used in establishing optimal ordering plans to ensure that there is always adequate availability of materials."
+          },
+          {
+            "level": 3,
+            "title": "Process control. An automated workflow system manages and",
+            "description": "controls the entire purchasing process, from the moment an order is placed, through its internal approval within the organization, to its execution and settlement. This makes procurement processes more efficient by automating their monitoring and management."
+          },
+          {
+            "level": 4,
+            "title": "Automation.  We utilize B2B procurement and auction platforms",
+            "description": "that enable electronic order placement, price negotiations, supplier offer comparisons and the efficient management of procurement relationships. This level provides more efficient procurement processes that are better integrated with suppliers."
+          },
+          {
+            "level": 5,
+            "title": "MES.  MES-class systems enable the monitoring of purchasing-",
+            "description": "related KPIs. Metrics such as procurement costs, delivery times, delivery quality and the effectiveness of price negotiations are closely monitored. This level makes procurement processes more transparent and controlled."
+          },
+          {
+            "level": 6,
+            "title": "ERP. Integrated Enterprise Resource Planning systems encompass",
+            "description": "the management of key business processes, including procurement processes. This allows us to schedule orders, monitor deliveries, process payments and integrate procurement processes with other areas of company operations. Piotr Wisniewski, PhD 461"
+          },
+          {
+            "level": 7,
+            "title": "AI support.  Advanced predictive algorithms are applied to support",
+            "description": "pricing and price negotiation processes. These algorithms analyse the market, forecast commodity and component prices, and support negotiations with suppliers. This level makes procurement processes more intelligent and adaptable to changes in the commercial landscape. Digital Pathfinder 462"
+          }
+        ]
+      },
+      {
+        "id": "1E",
+        "name": "Logistics processes",
+        "levels": [
+          {
+            "level": 1,
+            "title": "Recording of basic data. We employ RFID or barcode scanners that",
+            "description": "allow the registration of data related to material location and identification. These scanners quickly read the labels on goods in the warehouse to precisely identify them and record their locations."
+          },
+          {
+            "level": 2,
+            "title": "Workstation control. We use real-time location in the  system and",
+            "description": "mobile terminals to control and monitor logistics stations . Employees can thus track and update the location and condition of goods in the warehouse."
+          },
+          {
+            "level": 3,
+            "title": "Process control.  A Warehouse Management System (WMS) and",
+            "description": "Electronic Data Interchange (EDI ) are used over the Internet. This facilitates control and management of the logistics process at a higher level. The WMS system supervises the flow of materials in the warehouse, while EDI streamlines electronic data exchange with business partners to enhance logistics processes."
+          },
+          {
+            "level": 4,
+            "title": "Automation.  We use Automated Guided  Vehicles (AGVs) that can",
+            "description": "independently move goods within the warehouse . Meanwhile, robotized order-picking and other robotic operations automate or assist in many logistics operations, such as loading and unloading ."
+          },
+          {
+            "level": 5,
+            "title": "MES. MES-class systems and an advanced Warehouse",
+            "description": "Management System (WMS) integrated with Milkrun or Kanban systems monitor and optimize logistics processes. The MES system integrates production and warehouse management, while the WMS system, combined with Milkrun and Kanban, helps optimize inventory management and internal transport services."
+          },
+          {
+            "level": 6,
+            "title": "ERP.  Integrated ERP systems encompass the management of  key",
+            "description": "business processes, including logistics processes. This allows us to manage Piotr Wisniewski, PhD 463 logistics processes such as tracking goods, warehouse management, order management and integration with other areas of company operations."
+          },
+          {
+            "level": 7,
+            "title": "AI support. AI algorithms support the optimization of inventory",
+            "description": "levels and the allocation of goods within the warehouse. These advanced algorithms analyse demand, forecast needs, optimize inventory levels and assist in optimizing the placement of goods in the warehouse, thereby increasing operational efficiency and accelerating responses to changing external and internal circumstances. Digital Pathfinder 464"
+          }
+        ]
+      },
+      {
+        "id": "1F",
+        "name": "Production processes",
+        "levels": [
+          {
+            "level": 1,
+            "title": "Recording of basic data.  A precise monitoring and recording  system",
+            "description": "gathers basic data from production machines and equipment. Those data include machine runtimes, technical parameters, performance and product quality ."
+          },
+          {
+            "level": 2,
+            "title": "Workstation control. Programmable Logic Controllers (PLCs),",
+            "description": "sensors and detectors are employed to control and monitor production stations . PLCs, sensors and detectors monitor process parameters such as temperature , pressure and speed, and they control the operation of machines and equipment."
+          },
+          {
+            "level": 3,
+            "title": "Process control. Advanced systems are  applied, including",
+            "description": "Computerized Maintenance Management Systems (CMMS), Overall Equipment Effectiveness (OEE) analysis, and Value Stream Mapping (VSM). These help control and optimize the production process. The CMMS system aids in planning and monitoring machine maintenance; OEE analysis evaluates equipment efficiency ; and VSM allows production process parameters to be visually represented ."
+          },
+          {
+            "level": 4,
+            "title": "Automation. Automation and robotization of production operations",
+            "description": "increase productivity and precision. Automation encompasses the use of industrial robots and automation systems for repetitive tasks, eliminating human errors and enhancing efficiency."
+          },
+          {
+            "level": 5,
+            "title": "MES. Manufacturing Execution Systems are employed on production",
+            "description": "lines. MES systems include real-time management and control of production processes. This includes production planning, order management, material tracking, quality control and reporting on production lines."
+          },
+          {
+            "level": 6,
+            "title": "ERP. The key business processes that integrated  ERP solutions",
+            "description": "manage include production. ERP systems integrate production management , Piotr Wisniewski, PhD 465 resource planning, purchasing, sales and other processes to optimize the production process through efficient resource management."
+          },
+          {
+            "level": 7,
+            "title": "AI support. AI algorithms optimize production plans, precisely",
+            "description": "schedule tasks at individual workstations, and facilitate the even distribution of loads on production lines (including based on data acquired from digital twin simulations), thereby increasing efficiency and production flexibility. Digital Pathfinder 466"
+          }
+        ]
+      },
+      {
+        "id": "1G",
+        "name": "Quality processes",
+        "levels": [
+          {
+            "level": 1,
+            "title": "Recording of basic data. Electronic compliance sheets  are used to",
+            "description": "record basic data related to product quality . These electronic sheets contain information about quality parameters, measurement results , tests and other quality-related data."
+          },
+          {
+            "level": 2,
+            "title": "Workstation control.  Q u a l i t y  c o n t r o l  s y s t e m s  e m b e d d e d  i n",
+            "description": "machines and equipment are used in the production process. These systems allow for real -time monitoring of quality parameters such as dimensions, surface features , or other critical characteristics. Cameras, sensors and analysers are used for automatic quality control."
+          },
+          {
+            "level": 3,
+            "title": "Process control.  A  central system responds to quality defects.",
+            "description": "It quickly identifies, responds t o a n d e l i m i n a t e s q u a l i t y d e f e c t s i n t h e production process by automatically detecting defects, generating alerts, informing relevant personnel and initiating corrective actions for improved product quality."
+          },
+          {
+            "level": 4,
+            "title": "Automation.  Robots and advanced vision systems are employed for",
+            "description": "precise automatic examination of product quality. These systems can analyse defects, dimensions and surface characteristics and can eliminate human errors to ensure consistent quality."
+          },
+          {
+            "level": 5,
+            "title": "MES. A Quality Management System  (QMS) controls and monitors",
+            "description": "product quality at various stages of production. This includes document management, quality planning and control, and tracking of tests and inspections, as well as reporting on product quality and process stability."
+          },
+          {
+            "level": 6,
+            "title": "ERP. Integrated ERP solutions are applied that encompass quality",
+            "description": "management in the production process and that integrate this information with other areas of business operations. ERP systems integrate quality Piotr Wisniewski, PhD 467 management, documentation, process control, customer complaint handling and other quality-related functions."
+          },
+          {
+            "level": 7,
+            "title": "AI support. AI algorithms determine the scope of quality  control in",
+            "description": "the production process for efficient and precise management of the quality control process. These algorithms use data analysis and product quality histories to automatically determine which production batches require detailed quality control. Digital Pathfinder 468"
+          }
+        ]
+      },
+      {
+        "id": "1H",
+        "name": "Financial management processes",
+        "levels": [
+          {
+            "level": 1,
+            "title": "Recording of basic data. Technologies such as  OCR and electronic",
+            "description": "document management are used to record basic data such as invoices, contracts and other financial documents. OCR technology automatically extracts data from invoices and electronic document management to accelerate and streamline the recording of financial data."
+          },
+          {
+            "level": 2,
+            "title": "Workstation control. Financial control (FC) tools and systems  such",
+            "description": "as financial management systems monitor and control financial indicators and financial reporting. FC systems analyse and control budgets, costs , profitability and other financial indicators."
+          },
+          {
+            "level": 3,
+            "title": "Process control.  Decision acceptance systems coordinate and control",
+            "description": "financial decision-making processes . This improves information flow, risk assessment and the approval and monitoring of financial decisions at various levels of the organizational hierarchy."
+          },
+          {
+            "level": 4,
+            "title": "Automation.  Robotic Process Automation (RPA) automates  processes",
+            "description": "for automatic and efficient execution of repetitive tasks. RPA technology is used for tasks such as automatic invoice processing , report generation and financial analysis."
+          },
+          {
+            "level": 5,
+            "title": "MES. Workflow Management Systems optimize financial processes",
+            "description": "and control and track the progress of tasks. They automate and enhance financial processes such as payment approval, order management and cost reconciliation."
+          },
+          {
+            "level": 6,
+            "title": "ERP. Integrated ERP solutions provide financial control within the",
+            "description": "organization , process integration and real-time access to financial data. Piotr Wisniewski, PhD 469"
+          },
+          {
+            "level": 7,
+            "title": "AI support. AI algorithms and Business Intelligence (BI) tools are",
+            "description": "utilized for financial data analysis, report generation, forecasting and making advanced financial decisions. Digital Pathfinder 470"
+          }
+        ]
+      },
+      {
+        "id": "1I",
+        "name": "HR processes",
+        "levels": [
+          {
+            "level": 1,
+            "title": "Recording of basic data. Electronic work cards are used  to register",
+            "description": "basic HR data such as work hours, employee presence and other time- management-related information."
+          },
+          {
+            "level": 2,
+            "title": "Workstation control.  Systems engage in payroll management,",
+            "description": "overseeing salary data , payroll lists, tax declarations and other aspects of human resource management."
+          },
+          {
+            "level": 3,
+            "title": "Process control.  Systems are used that  register work time and",
+            "description": "attendance so that employees can automatically record their work hours using various technologies such as proximity cards, biometric readers or mobile applications."
+          },
+          {
+            "level": 4,
+            "title": "Automation.  HR processes are automated using e-kiosks and web",
+            "description": "applications that allow employees to independently manage their data, request leave , access documents and perform HR-related tasks."
+          },
+          {
+            "level": 5,
+            "title": "MES. Comprehensive Human Resource Management (HRM)",
+            "description": "software records personal data and employee assessments, and it is used in planning training, monitoring salaries and benefits, and career management."
+          },
+          {
+            "level": 6,
+            "title": "ERP.  An integrated ERP system with HR modules is used to",
+            "description": "centralize human resource management data."
+          },
+          {
+            "level": 7,
+            "title": "AI support.  AI algorithms support recruitment processes, talent",
+            "description": "management, HR data analysis and employee development planning. Piotr Wisniewski, PhD 471 Axis 2: Digital products Digital products represent a pivotal category in the digital transformation landscape, encapsulating goods and services that are stored, delivered and used in an electronic format. These products, ranging from software and apps to digital media, offer businesses a significant competitive edge due to their scalability and potential for rapid global distribution. As digital products bypass traditional physical limitations, they open avenues for companies to access wider markets more efficiently and at a lower cost. This inherent scalability and reach make digital products not just a transformative force but a critical element in redefining market boundaries and establishing new revenue streams in the hyper-competitive digital economy. Even within digital products, we can discern various levels of maturity and sophistication. Basic products like e-books, audiobooks, or movies can be effortlessly downloaded or streamed from online platforms such as Amazon and Audible. For instance, a customer might purchase an e-book on a website and download it to their e-reader device. Moving towards more complex solutions, intermediate products that amalgamate multiple formats \u2013 such as multimedia, e-books and audio or video files \u2013 are accessible on a variety of devices or platforms, including streaming platforms like Netflix. A website might offer a multimedia package that includes e-books and audio or video files that can be utilized across different devices. Advanced electronic products enhance user experience with additional features such as personalization, user interaction, or artificial intelligence. For example, a mobile app may allow users to customize settings and interact with other users, adding a layer of engagement and functionality. Products can offer interactivity, such as many video games, virtual reality, educational apps or design tools that enable users to actively collaborate on or modify the product. Many video games allow users to interact with a virtual environment and make decisions that affect the game`s progress. Expert products leverage innovative technologies like artificial intelligence, machine learning and blockchain to deliver more advanced products, such as intelligent data analysis systems, enterprise software or virtual reality platforms. Online services like e-learning platforms or cloud services also fit into this level. An --- END OF FILE: 1. Digitlne processy.pdf --- --- START OF FILE: 2. Digitalne produkty.pdf --- Piotr Wisniewski, PhD 471 Axis 2: Digital products Digital products represent a pivotal category in the digital transformation landscape, encapsulating goods and services that are stored, delivered and used in an electronic format. These products, ranging from software and apps to digital media, offer businesses a significant competitive edge due to their scalability and potential for rapid global distribution. As digital products bypass traditional physical limitations, they open avenues for companies to access wider markets more efficiently and at a lower cost. This inherent scalability and reach make digital products not just a transformative force but a critical element in redefining market boundaries and establishing new revenue streams in the hyper-competitive digital economy. Even within digital products, we can discern various levels of maturity and sophistication. Basic products like e-books, audiobooks, or movies can be effortlessly downloaded or streamed from online platforms such as Amazon and Audible. For instance, a customer might purchase an e-book on a website and download it to their e-reader device. Moving towards more complex solutions, intermediate products that amalgamate multiple formats \u2013 such as multimedia, e-books and audio or video files \u2013 are accessible on a variety of devices or platforms, including streaming platforms like Netflix. A website might offer a multimedia package that includes e-books and audio or video files that can be utilized across different devices. Advanced electronic products enhance user experience with additional features such as personalization, user interaction, or artificial intelligence. For example, a mobile app may allow users to customize settings and interact with other users, adding a layer of engagement and functionality. Products can offer interactivity, such as many video games, virtual reality, educational apps or design tools that enable users to actively collaborate on or modify the product. Many video games allow users to interact with a virtual environment and make decisions that affect the game`s progress. Expert products leverage innovative technologies like artificial intelligence, machine learning and blockchain to deliver more advanced products, such as intelligent data analysis systems, enterprise software or virtual reality platforms. Online services like e-learning platforms or cloud services also fit into this level. An Digital Pathfinder 472 AI-based data analysis system uses machine learning algorithms to process and analyse large datasets. In this area, we analyse the capability of products to transition to, or be developed in, digital formats, which notably enhances their accessibility and distribution efficiency. Community engagement in product development is evaluated to determine how well products foster the user loyalty and engagement that are crucial for long-term success. The connection to the ICT industry is also scrutinized to understand its impact on a company`s innovative capacity and competitive edge. Personalization of products is explored to ascertain how effectively products can be tailored to meet the unique demands of individual customers, an increasingly important factor in customer satisfaction and retention. Finally, the scalability of products is examined, focusing on the ability to expand production or services to meet escalating demand without sacrificing quality or performance. This comprehensive approach ensures a thorough understanding of a product`s digital maturity and market adaptability. For digital products, a five-tier model has been proposed to assess digital maturity. Due to the wide variety of assessment areas, it was not feasible to assign universally descriptive names to the various stages of digital development. Thus, the progression in digital product development is described simply in terms of advancement from a basic level to an expert level. This progression encapsulates a gradual enhancement in the sophistication and capabilities of the products, reflecting their increasing integration and utilization of digital technologies. Piotr Wisniewski, PhD 473"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Digital Products",
+    "areas": [
+      {
+        "id": "2A",
+        "name": "Digital products",
+        "levels": [
+          {
+            "level": 1,
+            "title": "Basic.  Products such as e-books, audiobooks or movies can be  easily",
+            "description": "downloaded or streamed from online platforms like Amazon and Audible. For example, a customer purchases an e-book from a website and downloads it to their e-reader device ."
+          },
+          {
+            "level": 2,
+            "title": "Intermediate.  Products that combine multiple formats such as",
+            "description": "multimedia, e-books, audio and video are available on various devices or platforms, such as streaming platforms like Netflix. A website offers a multimedia package containing e-books, audio and video that can be played on different devices."
+          },
+          {
+            "level": 3,
+            "title": "Advanced. Electronic products with additional features, such as",
+            "description": "mobile apps, games or software offer added functionality like personalization, user interaction or artificial intelligence. A mobile app allows users to customize settings and engage with other users."
+          },
+          {
+            "level": 4,
+            "title": "Interactive . Products that offer interactivity, such as many video",
+            "description": "games, virtual reality, educational apps or design tools that enable users to actively collaborate or modify the product. Many video games allow users to interact with a virtual environment and make decisions that affect the game`s progress."
+          },
+          {
+            "level": 5,
+            "title": "Expert.  Products leverage cutting-edge technologies like artificial",
+            "description": "intelligence, machine learning and blockchain to deliver more advanced products, such as intelligent data analysis systems, enterprise software or virtual reality platforms. Online services like e-learning platforms or cloud Digital Pathfinder 474 services also fit into this level. An AI-based data analysis system uses machine learning algorithms to process and analyse large datasets. Piotr Wisniewski, PhD 475"
+          }
+        ]
+      },
+      {
+        "id": "2B",
+        "name": "Community-based products",
+        "levels": [
+          {
+            "level": 1,
+            "title": "Basic. An online community shares resources such as files, tools  or",
+            "description": "information. Users can collectively utilize these resources and support each other by sharing knowledge and experiences. A community of photographers, for example, share their photos on an online platform , allowing other users to download and use them."
+          },
+          {
+            "level": 2,
+            "title": "Intermediate. An online community actively collaborates and",
+            "description": "interacts while working on projects, discussions and problem-solving. Users engage in group activities and share ideas, opinions and comments. A platform for developers, for example, enables collaborative work on projects, sharing code, commenting and mutual assistance."
+          },
+          {
+            "level": 3,
+            "title": "Advanced.  This level  focuses on experts sharing knowledge and",
+            "description": "expertise and mentoring other community members. Users can receive advice and support from more experienced individuals in their field. A community of programmers, for example, offers mentoring and provides educational materials for beginners in programming."
+          },
+          {
+            "level": 4,
+            "title": "Interactive. The online community actively contributes to creating",
+            "description": "content such as designs, articles, videos or graphics. Users can collaborate in creating something new, shared and creative. A community of artists, for example, collaborates on an artistic project, combining their skills in various art forms."
+          },
+          {
+            "level": 5,
+            "title": "Expert. This highest level is based on community members`",
+            "description": "involvement in co-owning and influencing the community`s development Digital Pathfinder 476 and the products or services it includes. Users can participate in decision- making, express opinions and influence the community`s direction . The user community of a social media platform, for example , influences the platform`s features, design and improvements by actively suggesting ideas and voting on them. Piotr Wisniewski, PhD 477"
+          }
+        ]
+      },
+      {
+        "id": "2C",
+        "name": "ICT-based products",
+        "levels": [
+          {
+            "level": 1,
+            "title": "Basic.  ICT is used for collecting, processing and analysing customer",
+            "description": "data . These data may include preferences, behaviours, purchase histories and other information that helps better understand customers. An analytical platform tracks user interactions on an online store`s website."
+          },
+          {
+            "level": 2,
+            "title": "Intermediate. ICT enables the personalization of offers to",
+            "description": "customers based on collected data. Advanced algorithms and analytical tools create personalized recommendations, offers and user experiences. An example of ICT use for personalization is a product recommendation system in an online store."
+          },
+          {
+            "level": 3,
+            "title": "Advanced.  ICT is employed to facilitate  communication and",
+            "description": "interaction with customers. Tools such as communication platforms , customer support systems and chatbots allow rapid and efficient information exchange. An example of effective ICT use for communication with customers is an integrated customer support platform that combines various communication channels in one place."
+          },
+          {
+            "level": 4,
+            "title": "Interactive.  ICT is used to automate and personalize customer service",
+            "description": "processes. Advanced Customer Relationship Management (CRM) systems and marketing automation tools deliver messages, offers and responses all personalized to customer needs. An example of using ICT for automating and personalizing customer service processes is an advanced CRM system integrated with marketing automation tools. Digital Pathfinder 478"
+          },
+          {
+            "level": 5,
+            "title": "Expert. At the highest level, ICT serves  as a tool for innovation",
+            "description": "and product improvement. Technologies such as big data, artificial intelligence, machine learning and predictive analysis are used to generate new ideas, discover trends and create innovative products that better meet customer expectations. For example, a company in the medical equipment manufacturing sector uses artificial intelligence and big data to create more precise and efficient diagnostic devices. Piotr Wisniewski, PhD 479"
+          }
+        ]
+      },
+      {
+        "id": "2D",
+        "name": "Product alignment to customer expectations",
+        "levels": [
+          {
+            "level": 1,
+            "title": "Basic.  The  product is available through various sales and",
+            "description": "communication channels, providing customers with consistent experiences, regardless of where and how they engage with it. For example, an e-commerce company collects data on customers` purchasing preferences and analyses them to customize product offerings and recommendations."
+          },
+          {
+            "level": 2,
+            "title": "Intermediate.  The product is tailored to different market segments,",
+            "description": "considering the unique needs and preferences of each customer group to deliver personalized and appealing solutions. In a typical example, a streaming platform adjusts movie and show recommendations based on the viewer`s preferences."
+          },
+          {
+            "level": 3,
+            "title": "Advanced.  The product uses flexible pricing models that  adjust",
+            "description": "to changing market conditions, customer preferences and competition, ensuring optimal value for different audience groups. The company employs a communication platform that allows customers to contact customer support through live chat."
+          },
+          {
+            "level": 4,
+            "title": "Interactive.  The product customizes experiences to individual",
+            "description": "customer needs, preferences and history by personalizing content, features and recommendations. The company sends automated emails with product offers and recommendations tailored to the customer`s preferences. Digital Pathfinder 480"
+          },
+          {
+            "level": 5,
+            "title": "Expert.  The product is customized and manufactured to the",
+            "description": "customer`s order, allowing the customer to tailor it to individual requirements and preferences, leading to greater satisfaction and alignment . The company uses predictive analysis and machine learning to create innovative products that respond as customer needs evolve. Piotr Wisniewski, PhD 481"
+          }
+        ]
+      },
+      {
+        "id": "2E",
+        "name": "Product scalability",
+        "levels": [
+          {
+            "level": 1,
+            "title": "Basic. The product is developed  and offered locally, focusing on a",
+            "description": "narrow audience or regional market. There are no opportunities for expansion into other markets . For example, a food ordering mobile app that operates in only one city."
+          },
+          {
+            "level": 2,
+            "title": "Intermediate. The product gains popularity in a specific region",
+            "description": "and starts expanding into adjacent markets. This may involve expansion into countries with similar preferences and needs. An example is a streaming service available in several countries in the Central and Eastern European region."
+          },
+          {
+            "level": 3,
+            "title": "Advanced.  The product leverages global platforms and services",
+            "description": "such as e-commerce platforms, social networks or cloud services to reach customers in different markets. The product is accessible to customers from various countries but may require some adaptation to local preferences. For instance, there is a range of mobile online shopping apps available on the App Store and Google Play that are targeted to various markets."
+          },
+          {
+            "level": 4,
+            "title": "Interactive . The product has a presence in multiple international",
+            "description": "markets and is adapted to various regions. This may include content translation, user interface customization and compliance with local regulations and standards. An example is an e-commerce website available in different languages and supporting various currencies and payment methods. Digital Pathfinder 482"
+          },
+          {
+            "level": 5,
+            "title": "Expert.  The product is globally accessible with no geographical",
+            "description": "constraints. It is widely recognized and used in various markets worldwide. It is customizable to different cultures and languages and complies with local regulations and requirements. This is perhaps best exemplified by a social networking platform that is available worldwide and supports multiple languages and cultural variations in user behaviours. Piotr Wisniewski, PhD Axis 3: Digital business models The axis of digital business models represents a critical component in the framework of digital transformation, as it underpins how companies generate value and interact with the modern digital economy. This axis explores the evolution from traditional business models to innovative digital formats that leverage technology to create, deliver and capture value in unique and dynamic ways. Digital business models enable organizations to respond more effectively to consumer demands and market changes, often leading to increased efficiency and opening up new revenue streams. As we examine this axis, we will be looking at the shift towards models that prioritize agility, customer engagement and continual adaptation to technological advancements. This transformation is not just about adopting new technologies but also about rethinking the organization`s approach to business, and making strategic use of digital tools to enhance competitiveness and sustainable advantages in the digital era. The assessment covers five key areas: the use of e- commerce models, platform solutions, As-a-Service models, asset sharing and data monetization. Each category is crucial for understanding how businesses adapt to and thrive in the digital economy, focusing on scalability, customer engagement and the strategic use of digital tools to develop a competitive edge. 483 --- END OF FILE: 2. Digitalne produkty.pdf --- --- START OF FILE: 3. digitlane modele .pdf --- Piotr Wisniewski, PhD Axis 3: Digital business models The axis of digital business models represents a critical component in the framework of digital transformation, as it underpins how companies generate value and interact with the modern digital economy. This axis explores the evolution from traditional business models to innovative digital formats that leverage technology to create, deliver and capture value in unique and dynamic ways. Digital business models enable organizations to respond more effectively to consumer demands and market changes, often leading to increased efficiency and opening up new revenue streams. As we examine this axis, we will be looking at the shift towards models that prioritize agility, customer engagement and continual adaptation to technological advancements. This transformation is not just about adopting new technologies but also about rethinking the organization`s approach to business, and making strategic use of digital tools to enhance competitiveness and sustainable advantages in the digital era. The assessment covers five key areas: the use of e- commerce models, platform solutions, As-a-Service models, asset sharing and data monetization. Each category is crucial for understanding how businesses adapt to and thrive in the digital economy, focusing on scalability, customer engagement and the strategic use of digital tools to develop a competitive edge. 483 Digital Pathfinder 484 Each area is rated on a scale that reflects the maturity and sophistication of the business model, from basic implementations to expert-level innovations that incorporate the latest technologies and market approaches. This structured assessment helps organizations identify their current capabilities and areas for growth in the digital landscape. Piotr Wisniewski, PhD 485"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Digital Business Models",
+    "areas": [
+      {
+        "id": "3A",
+        "name": "Use of e-commerce models",
+        "levels": [
+          {
+            "level": 1,
+            "title": "Basic. Online stores offer products or services through their own",
+            "description": "websites or popular e-commerce platforms like Amazon or eBay. Customers can choose from a variety of products, such as clothing, electronics or cosmetics, and make online purchases. This process involves adding products to a cart and making payments. Companies utilize basic sales applications to manage orders and track sales."
+          },
+          {
+            "level": 2,
+            "title": "Intermediate.  A n  e s s e n t i a l  s t e p  i s  i n t e g r a t i o n w i t h  v a r i o u s",
+            "description": "e-commerce platforms to enhance the visibility of p r o d u c t s o n v a r i o u s platforms. Additionally, sales applications offer more advanced t o o l s such as inventory management and sales data analysis. The importance of offer personalization is greater at this level, and products can be tailored to individual needs."
+          },
+          {
+            "level": 3,
+            "title": "Advanced . E-commerce stores continue to enhance their capabilities",
+            "description": "through further integration with various platforms, including marketplaces. More advanced visualization tools allow customers to, for example, view products in different colours or configurations. The personalizing of offers is more advanced at this stage, relying on customer purchase data and enabling customization, such as a choice of colours or engraving options. Advanced- level stores may also use product recommendations based on customer purchasing behaviour to give them a competitive advantage."
+          },
+          {
+            "level": 4,
+            "title": "Advanced personalization. Internet stores reach for even more advanced",
+            "description": "visualization tools and sales applications that allow for full customization of offers. Integrated e-commerce platforms are more comprehensive, enabling the sale of products on multiple platforms simultaneously. At this l e v e l , personalization becomes a key element of the business strategy , facilitating the adaptation of offers to each customer`s individual preferences. Digital Pathfinder 486"
+          },
+          {
+            "level": 5,
+            "title": "Expert.  E - c o m m e r c e  h a r n e s s e s  t h e  l a t e s t  technologies such",
+            "description": "as artificial intelligence, blockchain and the Internet of Things. Product visualization can include advanced virtual reality technologies, providing customers with incredibly realistic online shopping experiences. Integrations with marketplaces are highly comprehensive, allowing for product sales on various platforms simultaneously. Companies such as IKEA, with its online furniture store, and the IBM Commerce sales platform are setting the standard in e-commerce, using state-of-the-art technologies and innovative approaches to customer service. Piotr Wisniewski, PhD 487"
+          }
+        ]
+      },
+      {
+        "id": "3B",
+        "name": "Platform solutions",
+        "levels": [
+          {
+            "level": 1,
+            "title": "Basic. An individual or company  uses a platform to conduct simple",
+            "description": "transactions, such as purchasing or selling products or services. For example, a company might use a B2B platform to optimize raw material purchases or to forecast prices."
+          },
+          {
+            "level": 2,
+            "title": "Intermediate. A company or institution provides a platform where",
+            "description": "sellers can offer products or services to customers. The platform may offer analytical tools to sellers and personalized recommendations to customers. An online gaming platform, for example, might provide access to games through a subscription or one-time payment."
+          },
+          {
+            "level": 3,
+            "title": "Advanced.  A company or  institution creates and manages an",
+            "description": "ecosystem, connecting suppliers, partners and customers to create added value and synergy. They offer market analysis tools, joint promotions and loyalty programmes. An example might be an e-commerce platform integrating suppliers, partners and customers while also offering market analysis."
+          },
+          {
+            "level": 4,
+            "title": "Advanced SEM.  In addition to facilitating transactional",
+            "description": "relationships, the owner provides Software- as-a-Service solutions on its platform, enabling access to various online applications and tools. This type of platform organization is referred to as a Software-as-a-Service Enabled Marketplace (SEM). SEM platforms offer diverse applications, from project Digital Pathfinder 488 management to data analysis, with the option for customization and integration. An example might be a project management platform that provides access to various tools tailored to customer needs."
+          },
+          {
+            "level": 5,
+            "title": "Expert.  The highest-level platforms combine the functionalities",
+            "description": "of SEM platforms with an active user community. This enables participants to interact, collaborate and share knowledge. Companies combine SEM platforms with forums and chats where users can share knowledge and resolve issues. For example, an IT platform might allow IT resource management while also providing a space for collaboration and technical support for users. Piotr Wisniewski, PhD 489"
+          }
+        ]
+      },
+      {
+        "id": "3C",
+        "name": "As-a-Service",
+        "levels": [
+          {
+            "level": 1,
+            "title": "Basic. The  company and its service provider enter into long-term",
+            "description": "service agreements that resemble traditional partnerships. The provider offers a basic service with an emphasis on availability and simplicity. The customer values the convenience and flexibility of using the service, even though the service does not solve complex business problems. For example, an electronics manufacturer collaborates with an external company to run a basic online store and manage online product delivery . Customers can purchase products through the website, and the provider facilitates basic e-commerce services."
+          },
+          {
+            "level": 2,
+            "title": "Intermediate.  The company and the service provider establish long-",
+            "description": "term subscription or tariff-based agreements for service usage. The provider offers more advanced features and technical support. The customer expects consistent service quality throughout the contract period. Here, an example might be an electronics manufacturer collaborating with an external company that handles warehousing, packaging and product shipping on demand. The external operator is responsible for the product from the completion of production to delivery to the customer."
+          },
+          {
+            "level": 3,
+            "title": "Advanced. The customer  pays the service provider for the time they",
+            "description": "use available assets or resources. The service provider focuses on managing and maintaining assets for the customer`s needs, providing greater flexibility . Consider an electronics manufacturer that establishes a long-term partnership with an outsourcing company that manages various sales channels, including online stores, physical retail shops and online marketplaces. The outsourcing company also offers advanced analytical tools for sales monitoring. Digital Pathfinder 490"
+          },
+          {
+            "level": 4,
+            "title": "Advanced personalization.  The customer pays a service provider",
+            "description": "to complete specific tasks or achieve precisely defined results. The provider adapts heavily to the customer`s individual needs and delivers personalized solutions. The customer expects a specialized and tailored approach from the provider. An electronics manufacturer might use an omnichannel platform that connects various sales channels, allowing personalized customer service at every stage. The platform integrates online stores, physical stores, mobile apps and real-time delivery."
+          },
+          {
+            "level": 5,
+            "title": "Expert.  Service providers act as the primary executor, managing",
+            "description": "the entire customer business process. The customer leverages comprehensive business solutions offered by the provider. This is the highest level of provider involvement in the customer`s business processes and might, for example, entail an electronics manufacturer outsourcing solutions to experts in omnichannel. The collaboration includes comprehensive sales management, delivery, customer service and high-level personalization. Services are fully tailored to the customer`s needs and utilize advanced technologies. In this business model, the level of digital maturity depends on the amount of complexity and risk that is delegated to the service provider. The technological aspect of this assessment indirectly concerns the extent to which the service provider can monitor and manage the risks they undertake. Piotr Wisniewski, PhD 491"
+          }
+        ]
+      },
+      {
+        "id": "3D",
+        "name": "Asset sharing models",
+        "levels": [
+          {
+            "level": 1,
+            "title": "Basic. The platform allows users to  share virtual assets such as files,",
+            "description": "digital content, applications or online services. Users can use these assets based on subscriptions , pay-per-use or platform access. For example, a platform might allow graphic designers to share tools and collaborate effectively on projects, paying for access based on the number of projects they create."
+          },
+          {
+            "level": 2,
+            "title": "Intermediate.  The platform enables users to share physical assets",
+            "description": "such as cars, properties, tools or equipment. Users can rent these assets from others for a specified duration, allowing them to save on purchasing or renting a full set of items. For instance, a bike- sharing platform allows users to rent bikes from other users on a subscription basis, providing them access to various types of bikes based on their needs."
+          },
+          {
+            "level": 3,
+            "title": "Advanced. The  platform allows users to share knowledge, skills,",
+            "description": "experience or the product of intellectual work. Users can offer their services, conduct training or share educational materials with other platform users. One example might be a platform for marketing professionals on which experts offer their skills in data analysis and marketing strategy to other platform users for an hourly fee."
+          },
+          {
+            "level": 4,
+            "title": "Advanced personalization.  T h e  c u s t o m e r  p a y s  t h e  s e r v i c e",
+            "description": "provider for the time they use available assets or resources. The service provider focuses on managing and maintaining assets for the customer` s needs in order to increase the customer`s flexibility. Thus, an electronics manufacturer might enter into a long-term partnership with an outsourcing company that manages various sales channels, including online stores, physical retail shops and online marketplaces. The outsourcing company also offers advanced analytical tools for sales monitoring. Digital Pathfinder 492"
+          },
+          {
+            "level": 5,
+            "title": "Expert.  The platform enables users to share complex  business",
+            "description": "solutions such as IT infrastructure, analytical tools, logistics services or project management. Users can use these solutions on a subscription or pay- per-use basis, allowing them to reduce the costs of their investments. An example might be a platform that integrates various services and technologies to provide comprehensive business solutions for project management, data analysis and logistics. Companies can use these solutions on a subscription basis, allowing them to devote the time and resources they save to developing their proprietary solutions. Piotr Wisniewski, PhD 493"
+          }
+        ]
+      },
+      {
+        "id": "3E",
+        "name": "Data monetization models",
+        "levels": [
+          {
+            "level": 1,
+            "title": "Basic. The company collects data  from its customers, such as",
+            "description": "preferences, shopping behaviour and demographic information. It uses the data to comprehend customers and enhance its offerings. For example, auction platforms analyse purchase histories to recommend to users products that may interest them."
+          },
+          {
+            "level": 2,
+            "title": "Intermediate.  The company conducts more advanced analysis of the",
+            "description": "accumulated data to identify patterns, trends and opportunities. Data analysis helps it understand customers and make more informed business decisions. An example is Netflix, which analyses viewership data to identify trends and create more personalized recommendations for users."
+          },
+          {
+            "level": 3,
+            "title": "Advanced.  The company employs the gathered data to personalize",
+            "description": "offerings to individual customers. This allows it to deliver customized products , services and content that align more closely with individual customer needs and preferences. Spotify, for instance, analyses musical preferences to provide users with personalized playlists and song recommendations."
+          },
+          {
+            "level": 4,
+            "title": "Advanced personalization. The company uses the accumulated",
+            "description": "data as a valuable resource that can be sold, shared or used to generate additional revenue. This may involve sharing data with business partners, offering paid analytical services, or using data for advertising purposes. Facebook, for instance, sells data to advertisers, enabling them to target specific user groups."
+          },
+          {
+            "level": 5,
+            "title": "Expert. The  c o m p a n y  u s e s  i t s  g a t h e r e d  d a t a  t o  c r e a t e  n e w",
+            "description": "products, services and innovative solutions. Data serve as the foundation for developing new business models, crafting intelligent algorithms and harnessing artificial intelligence to deliver more advanced solutions to Digital Pathfinder 494 customers. Google, for example , utilizes user data to develop advanced AI algorithms, such as search algorithms, leading to the creation of new services and products. Piotr Wisniewski, PhD 495 Axis 4: Data management: Big Data everywhere In the digital era, data management and the effective use of Big Data have become critical components of organizational success. The fourth axis of digital transformation focuses on how well an organization captures, stores, processes and utilizes vast amounts of data to enhance decision-making, improve operational efficiencies and drive innovation. This axis examines the infrastructure, strategies and competencies that organizations deploy to handle the complexities of Big Data. As we explore this axis, we investigate the various facets of data management that are essential for building a strong digital ecosystem. From collecting data and ensuring their secure storage to conducting advanced analytics and deriving actionable insights, each component is crucial in turning raw data into strategic assets. This axis encompasses not only the technical skills required to handle Big Data but also the cultural transformations needed to cultivate a data-centric approach throughout the organization. A seven-tier maturity model has been proposed to assess each area, reflecting the broad range of technical capabilities present in these fields. --- END OF FILE: 3. digitlane modele .pdf --- --- START OF FILE: 4. Big data.pdf --- Piotr Wisniewski, PhD 495 Axis 4: Data management: Big Data everywhere In the digital era, data management and the effective use of Big Data have become critical components of organizational success. The fourth axis of digital transformation focuses on how well an organization captures, stores, processes and utilizes vast amounts of data to enhance decision-making, improve operational efficiencies and drive innovation. This axis examines the infrastructure, strategies and competencies that organizations deploy to handle the complexities of Big Data. As we explore this axis, we investigate the various facets of data management that are essential for building a strong digital ecosystem. From collecting data and ensuring their secure storage to conducting advanced analytics and deriving actionable insights, each component is crucial in turning raw data into strategic assets. This axis encompasses not only the technical skills required to handle Big Data but also the cultural transformations needed to cultivate a data-centric approach throughout the organization. A seven-tier maturity model has been proposed to assess each area, reflecting the broad range of technical capabilities present in these fields. Digital Pathfinder 496"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "Data Management",
+    "areas": [
+      {
+        "id": "4A",
+        "name": "Data collection",
+        "levels": [
+          {
+            "level": 1,
+            "title": "Manual data collection.  This involves employees manually",
+            "description": "completing forms with information about their work or other activities related to the organization. These forms typically include information about tasks performed, working hours, equipment used, materials and tools employed by the employee, and work-related problems or incidents. The downside of manual declarations is that they are time-consuming and costly, requiring manual filling of documents by employees. They are also often prone to human error, which can degrade data quality and complicate analysis. An example of this level is a construction company using paper cards to track working hours and equipment usage. While a simple task, errors in records could lead to inaccuracies in project management."
+          },
+          {
+            "level": 2,
+            "title": "The use of graphic symbols. Such techniques as the use of barcodes",
+            "description": "or QR codes are popularly employed in warehouses, stores or production to identify goods, products or devices using a scanner . Each product or device is graphically labelled, and its data are stored in an IT system. Using a scanner, an employee can quickly and precisely gather information about products or devices to ensure their smooth operation or to assist customers . In a large supermarket network, each product on the shelf has a barcode. Employees use scanners for quick inventory counting and receiving deliveries, thereby increasing efficiency and reducing errors."
+          },
+          {
+            "level": 3,
+            "title": "Advanced technological solutions.  Technologies such as Radio",
+            "description": "Frequency Identification (RFID) streamline operations and processes. Piotr Wisniewski, PhD 497 RFID enables the automatic identification and tracking of objects using radio waves. In manufacturing, this technology serves as a data collection system, significantly improving warehouse management, logistics and the monitoring of production processes. For example, in an automotive parts factory, the use of RFID tags is invaluable. The tags are used to track boxes containing car components. With this system, the organization can precisely monitor inventory availability, allowing for more efficient management. RFID technology not only improves efficiency but also enhances monitoring accuracy, eliminating human errors and providing better control over the organization`s resources."
+          },
+          {
+            "level": 4,
+            "title": "Data from manufacturing machines and devices.  A  key source",
+            "description": "of information is machines and devices equipped with various sensors that measure a range of process parameters, such as temperature, humidity, pressure, speed, rotations, vibrations and more. These data are collected in real-time and processed in IT systems, enabling continuous monitoring and analysis of production processes. For example, beverage factories may use sensors to monitor temperature and pressure in the pasteurization process. This data is analysed in real-time by the system, which can adjust pasteurization parameters on the fly. This ensures consistent product quality and minimizes the risk of failures."
+          },
+          {
+            "level": 5,
+            "title": "Mobile data collection devices  integrated into the production",
+            "description": "management and optimization process. C r u c i a l i n f o r m a t i o n c a n b e gathered regarding employees` interactions with mobile applications and devices used to monitor their work. These data may include information about employees` location, behaviours and preferences, and other relevant factors. An example is the use of smartphones or specially adapted devices that allow employees to be located within the production plant and data related to their work to be collected. For instance, these tools can monitor time spent at specific machines, work efficiency and breaks taken. With these tools , manufacturing companies can refine their operations and effectively respond to changing production conditions."
+          },
+          {
+            "level": 6,
+            "title": "Production data collected from physical  objects.  Modern sensors",
+            "description": "are increasingly recording various environmental parameters such as Digital Pathfinder 498 temperature, humidity, pressure, light intensity or motion. The data that are collected are extremely valuable, as they can be used for various purposes such as monitoring working conditions, performing machine diagnostics and optimizing production processes. An excellent example is that of a food production factory using temperature and humidity sensors in its warehouse. These sensors constantly monitor product storage conditions, and the data they collect are transmitted to the appropriate software. This allows the company to meticulously track the quality of stored products. In case of any irregularities, such as inappropriate storage conditions, the software enables swift intervention, minimizing losses and ensuring high product quality."
+          },
+          {
+            "level": 7,
+            "title": "Optical control. This advanced approach to collecting data from",
+            "description": "physical objects uses cameras and other optical devices to monitor and assess the state of physical objects. Optical devices capture images of objects, which are then meticulously analysed for potential damages or other irregularities. Thus, cameras might be installed on the ceiling of a production or warehouse hall for real-time monitoring and identification of the activities that equipment is performing. These advanced cameras, equipped with sensors and image- processing algorithms, track objects on the production line, identifying their position and actions. This intelligent solution integrates visualization, data analysis and monitoring to create a more efficient and secure production environment. Piotr Wisniewski, PhD 499"
+          }
+        ]
+      },
+      {
+        "id": "4B",
+        "name": "Data storage methodology",
+        "levels": [
+          {
+            "level": 1,
+            "title": "Traditional data storage methods. These rely on physically",
+            "description": "recording information on paper. Data are printed and archived as hard copies in offices or specialized archives. This approach is typical for smaller firms lacking extensive IT systems and databases. A typical example is a notary`s office, which stores the legal documents of its clients as hard copies in binders and cabinets . When clients need access to their records, office staff must manually search through the paper archives, which can be time -consuming. In this case, paper-based storage is dictated by legal requirements."
+          },
+          {
+            "level": 2,
+            "title": "Single local digital storage.  Information is held on a single device",
+            "description": "or workstation, which limits data access to that device only, meaning the information is not available to other users or systems. This approach is often employed in machine control systems, where data generated by the machine are stored on a local control device. An example would be a manufacturing plant where a machine control system for metal-cutting stores all its data on a local computer only. Engineers working in different parts of the factory cannot easily access these data, hindering the analysis and optimization of the production process. When there is a need to share this information with other employees or systems, data must be painstakingly copied manually."
+          },
+          {
+            "level": 3,
+            "title": "Dispersed local digital storage.  Various computers or devices are",
+            "description": "commonly used for data storage in small businesses or by individual users. Digital Pathfinder 500 Data are saved on the hard drives of individual computers, resulting in a lack of centralization in data storage. This approach carries some risk related to data protection, as the failure or loss of one computer can lead to the loss of important information. Additionally, it complicates collaboration and data sharing among employees and can be an obstacle to the analysis and utilization of data for business purposes. An example is a small accounting firm where each employee stores client data on their personal computer. If one of these computers fails or is stolen, there is a risk of valuable data being lost. Furthermore, the lack of a central database hinders effective collaboration among employees, as they do not have easy access to shared information."
+          },
+          {
+            "level": 4,
+            "title": "Local cloud storage.  A company  maintains and manages cloud",
+            "description": "infrastructure in its own data centre . This allows the organization to retain full control over its data and ensure a high level of security, as access to data is limited to authorized personnel. However, this method requires significant investments in infrastructure and human resources for managing and maintaining the local cloud. The example here is a manufacturing company that uses its server space to store and manage data related to quality control and safety. Although the company has full control over its data and protects it from unauthorized access, it bears the substantial costs of purchasing , maintaining and updating the infrastructure."
+          },
+          {
+            "level": 5,
+            "title": "Public cloud storage . This involves using the data-processing",
+            "description": "services of external cloud service providers. These providers maintain cloud infrastructure, which their clients access via the Internet. Public clouds offer a wide range of services, including data processing, data storage, virtual machines and tools for data analysis. A company that uses the services of providers such as Google Cloud, Dropbox or AWS is operating at this level. Employing a public cloud reduces costs , allows resources to be scaled, and provides flexibility in managing data and applications."
+          },
+          {
+            "level": 6,
+            "title": "Private cloud storage.  Cloud infrastructure  is dedicated to a single",
+            "description": "organization. This means that cloud resources such as servers, storage and network are available only to the employees of that specific organization, and not to external users. An example is a financial corporation such as a bank Piotr Wisniewski, PhD 501 using a private cloud to securely store customer data. This ensures full control over data security, a critical aspect in the financial sector."
+          },
+          {
+            "level": 7,
+            "title": "Hybrid approaches.  Companies strategically manage their data",
+            "description": "storage by utilizing a mix of solutions tailored to the specific needs of different types of data. For instance, operational data critical for production processes are stored on edge devices for immediate access, while sensitive information like technical drawings is kept in private clouds to enhance security. Other data, such as financial and material reports, benefit from the scalability and accessibility of public clouds, allowing for resource adjustments in response to fluctuating demands. This approach not only optimizes performance and cost-efficiency but also ensures robust security and control, exemplified by an automotive component manufacturer who effectively segregates data storage based on function and sensitivity. Digital Pathfinder 502"
+          }
+        ]
+      },
+      {
+        "id": "4C",
+        "name": "Data communication",
+        "levels": [
+          {
+            "level": 1,
+            "title": "Hard-copy reporting.  Traditional paper reports are the primary",
+            "description": "means of communication and data transmission. This classic method involves printing data out and passing them between employees or sending them outside the company. An example might be a financial industry company still using traditional paper reports for internal and external communication. This is a costly and time-consuming approach with negative environmental impacts."
+          },
+          {
+            "level": 2,
+            "title": "Reporting via email.  This is a fast and convenient method of",
+            "description": "information transfer, facilitating easy document sharing among employees and ensuring easy access. However, it comes with data security risks, such as the possibility of data interception by unauthorized individuals or email system failures. It is thus essential to ensure adequate security measures, such as data encryption, confidentiality regulations and backup procedures. Let us take the example of a consulting company that relies on email to ensure the rapid transfer of essential reports and documents between its teams. The company, acutely aware of the security risks associated with data, implements advanced data encryption technologies and strictly adheres to confidentiality regulations."
+          },
+          {
+            "level": 3,
+            "title": "An Ethernet-based architecture.  This is one of the  most popular",
+            "description": "ways of building computer networks, allowing data transmission between devices using an Ethernet cable. Ethernet-based architecture is applied in Local Area Networks (LANs), which are known for their high performance and operational reliability."
+          },
+          {
+            "level": 4,
+            "title": "An industrial  Ethernet-based architecture. This specialized",
+            "description": "network configuration is designed for industrial applications and has higher reliability, security and data transmission speed than traditional Ethernet networks. Industrial networks employ special network devices such as Piotr Wisniewski, PhD 503 switches, routers and gateways that are resistant to industrial conditions like vibrations, dust and humidity. Additionally, specific communication protocols like Modbus, Profibus and DeviceNet enable communication between various industrial devices."
+          },
+          {
+            "level": 5,
+            "title": "A wireless communication architecture.  Devices in this network",
+            "description": "connect to one another via a central access point, facilitating centralized network management. Wireless networks find applications in various industries, including manufacturing, transportation, medicine and services ."
+          },
+          {
+            "level": 6,
+            "title": "A WAN/LAN architecture.  Here, devices like routers, switches and",
+            "description": "servers connect multiple computers and devices into a network. WAN/LAN networks provide a stable connection between company branches and offices, enabling access to data and applications from different devices and locations. Various protocols and technologies such as TCP/IP, VPN and MPLS ensure fast and secure data exchange within the organization. In particular, VPN (Virtual Private Network) technology ensures secure communication between locations, which is crucial for safeguarding sensitive company data."
+          },
+          {
+            "level": 7,
+            "title": "A cloud-based architecture. Applications, data and resources are",
+            "description": "stored and processed in the cloud, which is usually provided by an external vendor. A cloud-based architecture allows access to applications and data from anywhere and any Internet-enabled device, allowing resources to be scaled flexibly according to needs. This enables organizations to adapt more easily to changing business requirements and reduce the costs of maintaining infrastructure. An example of cloud-based architecture is a microservices architecture, where applications are built as a set of smaller, independent services that can be easily scaled and updated. Digital Pathfinder 504"
+          }
+        ]
+      },
+      {
+        "id": "4D",
+        "name": "Big Data analysis",
+        "levels": [
+          {
+            "level": 1,
+            "title": "DBMSs. DataBase Management Systems facilitate effective data",
+            "description": "management by allowing large datasets to be created, stored, updated and analysed, giving them a crucial role in data collection and organization. DBMSs have applications in various fields, from business to science and engineering. MySQL, a popular solution in this category, is frequently used in web development, serving as an engine for storing and managing user data on products, transactions, and other elements that contribute to the smooth operation of websites and online applications."
+          },
+          {
+            "level": 2,
+            "title": "ETL systems.  Extract, Transform, Load systems perform a key",
+            "description": "process in data management to enable the collection, processing and loading of information from various sources into a single database. ETL systems allow efficient data acquisition from diverse sources such as databases, CSV files, spreadsheets or XML files. Subsequently, these data are processed to convert them to a consistent format and eliminate any errors or inconsistencies. Finally, the data are loaded into the target database, where they are ready for analysis and use ."
+          },
+          {
+            "level": 3,
+            "title": "Tools for visualizing database information. Data are far better",
+            "description": "comprehended when presented in an effective graphical form. These tools enable users, including managers and business analysts, to quickly create various visualizations like charts, tables and heatmaps that improve our understanding of the information stored in databases. These visualizations Piotr Wisniewski, PhD 505 help users detect patterns, analyse trends and identify significant relationships in data. For instance, a marketing department manager may use a database visualization tool to create an interactive chart presenting the effectiveness of different advertising campaigns in various regions. This allows for a quick assessment of which campaign works best so that the marketing strategy can be adjusted."
+          },
+          {
+            "level": 4,
+            "title": "Tools for analysing large databases.  A crucial element in  Big Data",
+            "description": "analysis, these are advanced applications and platforms, such as Apache, that enable the processing and analysis of massive amounts of data in a distributed manner. This means that data are processed on multiple servers simultaneously, ensuring scalability and significant computing performance. An example might be an e-commerce company employing Apache Spark to analyse vast sets of transactional data. The tools help a company identify customer purchasing patterns , analyse trends and optimize marketing strategies. These tools provide a deeper understanding of customer behaviour and better adaptation of the product offering."
+          },
+          {
+            "level": 5,
+            "title": "Data quality management software.  Data quality can be checked,",
+            "description": "improved and maintained through the automated detection and elimination of data errors, standardization of data, verification of information from external sources, and completion of missing data. Often, these tools can manage the data entry and modification process, continuously monitor data quality and then generate data quality reports. For example, an insurance company might use such tools to automatically detect and correct errors in customer data."
+          },
+          {
+            "level": 6,
+            "title": "A data simulation methodology.  Data simulation is an incredibly",
+            "description": "useful tool in various fields and involves the creation of data that mimic real- world information. This is particularly valuable for testing different scenarios and variations of system operations, algorithms or mathematical models. Data simulation can be used for safe, controlled testing without using real data, which is a crucial facility when dealing with sensitive information. In the medical field, for example, data simulation can create artificial datasets of patient information. The simulated data can be used to test and evaluate the performance of new diagnostic or therapeutic algorithms, eliminating the risk of making real-world errors or endangering patients. Digital Pathfinder 506"
+          },
+          {
+            "level": 7,
+            "title": "Machine learning algorithms.  These powerful tools can identify",
+            "description": "and classify atypical data in ways that are often hard or impossible using traditional analytical methods. The algorithms learn from existing data in order to classify new data, making them extremely versatile. In banks and payment processing companies, for example , machine learning algorithms can be used to identify anomalous customer behaviours. By analysing extensive datasets, machine learning algorithms can detect suspect behaviours and block such operations. Thus, by working with a database of banking transactions, machine learning algorithms further protect customers against, for example, fraudulent activity. Piotr Wisniewski, PhD 507"
+          }
+        ]
+      },
+      {
+        "id": "4E",
+        "name": "Computing",
+        "levels": [
+          {
+            "level": 1,
+            "title": "Computation by PC.  Personal Computers are used for data -",
+            "description": "processing tasks. These stations are equipped with efficient data-processing software and hardware. Data processing on PC stations is suited to various fields, ranging from financial and marketing analysis to CAD/CAM design. The drawback of this method is its lack of scalability, meaning the amount of processed data is limited by the computational power of the individual machine. In the case of CAD/CAM design, PCs can be utilized for 3D modelling and simulation, but with more complex projects they may not meet the computational load requirements."
+          },
+          {
+            "level": 2,
+            "title": "Computation by edge devices. Edge computing is an approach to",
+            "description": "data processing in which computational operations are executed on devices located near the data source, rather than in distant data-processing centres or the cloud. This approach allows for faster, more efficient, more effective data processing since data do not need to be transmitted to distant data centres, thereby reducing delays and network loads. Additionally, computations on edge devices improve decision-making speeds, as data are processed in real- time, even before being sent to data-processing centres or the cloud. For example, in medicine, computations on edge devices enable real-time monitoring of a patient`s condition, and crucial responses to changes can be made more quickly than if the data were to be transmitted to a remote centre for calculation."
+          },
+          {
+            "level": 3,
+            "title": "Virtual computing machines.  The virtualization  of computing",
+            "description": "machines is a technology that allows multiple virtual machines to be run Digital Pathfinder 508 on a single physical server or computer. Each of these machines operates as a separate system , with its own hardware resources and software, and their operation is isolated from other virtual machines and the host. Virtual computing machines in manufacturing companies, for instance, can speed up simulations used to optimize production scheduling by performing them in parallel, rather than in series. This enables near-real-time adjustments to production plans in cases of disruptions to production lines."
+          },
+          {
+            "level": 4,
+            "title": "GPU technology. Graphics Processing Units are a  type of processor",
+            "description": "specifically designed for graphics processing and parallel computing. In recent years, they have become a popular tool for accelerating computations in areas such as machine learning, data analysis, numerical simulations and more. By leveraging hundreds or thousands of parallel cores, GPUs can accelerate computations by several orders of magnitude compared to traditional CPU processors."
+          },
+          {
+            "level": 5,
+            "title": "Cloud  computing. This is a model of delivering computational,",
+            "description": "networking and application services over the Internet. In cloud computing, computational resources such as servers, memory, networks and databases are provided as a service, allowing them to be used flexibly, based on user needs. Various service models are available in cloud computing, including Software- as-a-Service, Platform-as-a-Service and Infrastructure-as-a-Service."
+          },
+          {
+            "level": 6,
+            "title": "HPC.  High-Performance Computing is a technology that can execute",
+            "description": "extraordinarily complex computations on multiple processors simultaneously. This allows large amounts of data to be processed quickly, which is essential in various fields such as science, finance, industry and data analysis. HPC systems consist of multiple computing nodes connected by a high-throughput network. In the field of science, HPC technology is used for simulating complex physical phenomena to process vast amounts of data and obtain results in a short time."
+          },
+          {
+            "level": 7,
+            "title": "Computer clusters.  These complex systems consist of many",
+            "description": "interconnected computers operating as a single computing unit. In the aviation industry, computer clusters are used for aerodynamics simulations, enabling the rapid processing of large amounts of data and shortening analysis times for more efficient designing of new aircraft models. Piotr Wisniewski, PhD 509 Axis 5: Competence levels and digital culture Axis 5, focusing on the digital culture of an organization, describes softer, yet equally crucial aspects of a company`s digital transformation. Unlike the first three axes, which directly influence the financial performance of an organization, the last three, especially Axis 5, emphasize the organizational behaviours critical for successful transformation. Experience in implementing digital transformations with client companies indicates that failures are often attributable to a lack of attention to organizational culture. A transformational culture within an organization encompasses values, attitudes and practices that promote agility in the face of changing market and technological conditions. Such a culture values openness to change, innovativeness and a propensity for experimentation and judicious risk-taking. In organizations endowed with a strong transformation culture, employees are actively engaged in the change process and encouraged by leaders to be creative and inventive, which enhances agility. For digital transformation strategies to succeed, they must align with the organizational culture. New technologies and processes require shifts in both thought and action across all levels of the organization. Without a culture that supports innovation, flexibility and openness to change, even the most --- END OF FILE: 4. Big data.pdf --- --- START OF FILE: 5. Kultura.pdf --- Piotr Wisniewski, PhD 509 Axis 5: Competence levels and digital culture Axis 5, focusing on the digital culture of an organization, describes softer, yet equally crucial aspects of a company`s digital transformation. Unlike the first three axes, which directly influence the financial performance of an organization, the last three, especially Axis 5, emphasize the organizational behaviours critical for successful transformation. Experience in implementing digital transformations with client companies indicates that failures are often attributable to a lack of attention to organizational culture. A transformational culture within an organization encompasses values, attitudes and practices that promote agility in the face of changing market and technological conditions. Such a culture values openness to change, innovativeness and a propensity for experimentation and judicious risk-taking. In organizations endowed with a strong transformation culture, employees are actively engaged in the change process and encouraged by leaders to be creative and inventive, which enhances agility. For digital transformation strategies to succeed, they must align with the organizational culture. New technologies and processes require shifts in both thought and action across all levels of the organization. Without a culture that supports innovation, flexibility and openness to change, even the most Digital Pathfinder 510 meticulously developed digital strategies may encounter tepid support or outright resistance. Thus, it is imperative to cultivate an organizational culture that not only supports but champions the values integral to digital transformation. This axis will explore five key areas \u2013 leadership styles, readiness for change, continuous improvement, innovation culture and resource availability \u2013 each of which is crucial for fostering an environment conducive to sustainable digital growth. Piotr Wisniewski, PhD 511"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "Digital Culture",
+    "areas": [
+      {
+        "id": "5A",
+        "name": "Leadership attitudes",
+        "levels": []
+      },
+      {
+        "id": "5B",
+        "name": "Readiness for change",
+        "levels": [
+          {
+            "level": 1,
+            "title": "Recognizing the need for change.  Organizations aiming for  success",
+            "description": "and competitiveness must identify the need for change and take action to implement it. It is essential to understand why change is necessary, what might happen if it is not implemented, and what benefits might arise from new solutions . Implementing change can be challenging and may require sacrifices, but organizations that embrace the challenge and actively strive for improvement have a better chance of surviving and developing. As a negative example, Kodak, by failing to recognize the need for change and adaptation to the digital revolution in photography, lost its dominant market position."
+          },
+          {
+            "level": 2,
+            "title": "A coalition dedicated to  implementing transformation. A group",
+            "description": "of individuals or a team work together to achieve a specific transformative goal. In the context of organizational transformation, a coalition may consist of employees, managers, project leaders and other individuals with a stake in the changes. The team`s goals are to support and promote changes, to engage employees and encourage them to engage fully in the transformation, and to overcome resistance to change while also addressing conflicts. A coalition can also assist in identifying and resolving problems that may arise during the transformation process."
+          },
+          {
+            "level": 3,
+            "title": "Seeking a vision. Formulating a vision and  strategy for digital",
+            "description": "transformation is a crucial part of the process. The vision should determine the direction in which the organization wants to go, and the strategy should describe the action plan and specific goals to be achieved by the transformation. Practice shows how important it is to involve all employees in creating the vision and change strategy and in implementing them. An Piotr Wisniewski, PhD 515 example of this level of excellence is a company in which employees from various departments are involved in creating the vision of change, identifying key challenges and developing a strategy, thereby enhancing the sense of ownership and commitment to the transformation plan."
+          },
+          {
+            "level": 4,
+            "title": "Communicating the vision . The vision of change must be formulated",
+            "description": "and presented in a way that is accessible to all employees. Communication should be two-way and consider the opinions and suggestions of employees so that the vision can be better adapted to the organization`s actual needs. Continuous communication of progress and achievements is also crucial for maintaining motivation and engagement in the change process."
+          },
+          {
+            "level": 5,
+            "title": "Implementing change. Implementing change  initiatives involves",
+            "description": "taking specific actions to introduce and carry out changes. Implementing changes requires that we plan, define goals and directions, and identify the people and resources needed for change . It is also essential to define criteria for assessing progress and results."
+          },
+          {
+            "level": 6,
+            "title": "Institutionalizing and inculturating change.  At this stage, the",
+            "description": "objective is to make the transformation integral to the company`s working methods and culture. It is important to regularly assess the effectiveness of implemented changes and modify the strategy accordingly. Also important is that adequate training and support be given to help employees adapt to the new priorities and ways of working. This requires that the leadership continuously engage in the transformation process and promote the newly implemented solutions. Digital Pathfinder 516"
+          }
+        ]
+      },
+      {
+        "id": "5C",
+        "name": "Continuous professional development",
+        "levels": [
+          {
+            "level": 1,
+            "title": "Outside contact. Trade fairs and conferences are popular venues for",
+            "description": "developing skills within the organization. At such industry events, company representatives and specialists meet to share knowledge and experience, learn about the latest trends and technologies, and establish business contacts. Conferences, in turn, allow experts to share their knowledge and experience in a specific field. Lectures panel discussions and workshops engage employees in developing skills and acquiring new competencies. Conferences also provide an excellent opportunity for business networking and exchanging experiences with other specialists in the industry."
+          },
+          {
+            "level": 2,
+            "title": "Internal training. The training system within an organization",
+            "description": "plays a crucial role in transforming its culture, requiring employees to stay updated with the latest trends and technologies through regular training that enhances both technical and soft skills such as communication and leadership. This system should be adaptable to different learning styles and tailored to employee needs, fostering an environment that values continuous learning and improvement. Moreover, internal training \u2013 whether conducted by in- house specialists or external experts \u2013 focuses on enhancing skills, developing potential and increasing knowledge, indicating the company`s commitment to employee development and integrating training into its cultural fabric."
+          },
+          {
+            "level": 3,
+            "title": "External training.  Training provided by external companies brings",
+            "description": "in seasoned specialists who offer fresh perspectives and diverse problem- solving techniques, enhancing the organizational transformation process by Piotr Wisniewski, PhD 517 integrating an external view on necessary changes. While external training exposes employees to a broader range of experts and knowledge, potentially breaking organizational insularity, it may not always align perfectly with the immediate needs of the company. In contrast, internal training is more adaptable to specific organizational contexts but might simply circulate pre- existing knowledge within the company. This suggests a strategic blend of both internal and external training could optimize learning outcomes and adaptation to change."
+          },
+          {
+            "level": 4,
+            "title": "Self-development. Self-education is a  continual process of individual",
+            "description": "acquisition of knowledge, skills and experience without the need for formal education, such as through reading books and articles or participating in online training. Self-education allows individuals to develop in directions that most interest them in the way that best suits them. In the context of organizations, employees` self-education can, and should, be integrated into the transformation culture strategy."
+          },
+          {
+            "level": 5,
+            "title": "Working in project  teams.  Project teams consist of employees",
+            "description": "from various departments who collaborate on specific tasks or projects, leveraging their expertise towards a common objective. This team structure not only speeds up decision-making and boosts efficiency but also facilitates personal skill development and broader professional growth through cross- functional collaboration. For instance, when developing a new product or service, representatives from different departments can pool their specialized knowledge, enhancing the entire team`s understanding of the project`s challenges and potential solutions. This approach not only achieves better outcomes but also serves as a powerful educational experience within the context of real-world tasks."
+          },
+          {
+            "level": 6,
+            "title": "Mentoring. In this model , an experienced employee, the mentor,",
+            "description": "serves as a guide and support for a junior employee, the mentee. Mentors are carefully selected for their rich experience and competence in a specific field, with their main goals being to assist the mentee in understanding the demands of their job and tools and to guide them towards achieving their goals. Mentoring is often integrated into organizational training programmes but can also exist as an individual professional development programme for Digital Pathfinder 518 employees. Through regular meetings , mentors share their knowledge and experience, help mentees develop practical skills, and provide advice on key issues related to their career paths. This process, based on a relationship of mutual trust, often significantly expands the mentee`s competencies, boosting their achievements within the organization. Piotr Wisniewski, PhD 519"
+          }
+        ]
+      },
+      {
+        "id": "5D",
+        "name": "Culture of innovation",
+        "levels": [
+          {
+            "level": 1,
+            "title": "Promotion of new ideas.  At this stage, organizations  encourage their",
+            "description": "employees to engage in generating innovative ideas. This is the moment when creativity is nurtured. This level is achieved by organizations that regularly organize hackathons and create dedicated platforms for employees to share their ideas. Furthermore, the most innovative proposals are acknowledged by rewarding employees."
+          },
+          {
+            "level": 2,
+            "title": "Experimentation . Organizations allow their employees to test",
+            "description": "new concepts and ideas in practice. Employees are given the opportunity to implement their ideas, which is a significant step in the process of creating innovation. At this stage, support mechanisms exist for experimental projects, but they are not fully developed. Organizations approach this process cautiously, encouraging employees to conduct research projects and prototyping. This approach minimizes the risk and costs of changes and allows for effective testing of ideas in real conditions."
+          },
+          {
+            "level": 3,
+            "title": "Active market trend analysis. This stage involves not  only identifying",
+            "description": "trends but also seeking to understand their implications for the company`s operations. Organizations examine changes in customer preferences, market competition and innovations in their industry. This in -depth analysis enables organizations to better understand their environment and adjust their strategy. So, for example, a cosmetics company might use a detailed analysis of market trends to identify growing consumer interest in environmentally friendly products. Instead of remaining passive to these changes, the company Digital Pathfinder 520 adjusts its offerings by introducing eco-friendly products, thus acquiring new customers and strengthening its market position."
+          },
+          {
+            "level": 4,
+            "title": "Acceptance of mistakes. Organizations at this stage understand that",
+            "description": "experimentation and seeking new solutions can sometimes lead to errors, but they are willing to accept this risk. Employees feel free to take risks and explore new ideas, even if it involves the chance of mistakes. Some companies, for example, run regular competitions for the biggest blunder of the week. As part of the competition, employees are encouraged to share mistakes that happened during the week. Though unusual, the contest aims to emphasize that every employee can make mistakes and that the company can accept mistakes as long as they lead to learning and improvement. This innovative approach to accepting mistakes aims to eliminate the fear of making mistakes and to create an atmosphere of experimentation. Employees, seeing that mistakes are part of the development and learning process, gain more confidence and willingness to try new solutions. This makes the organization more flexible and innovative."
+          },
+          {
+            "level": 5,
+            "title": "R&D integration into company strategy.  Organizations at this",
+            "description": "stage invest significant resources in research, develop experimental activities, and design new solutions that are later tested in the form of prototypes. The R&D process is no longer a one-time event but a constant part of the pursuit of innovation within the organization. Employees recognize the role of this process in creating new products or services and strengthening the company`s market position."
+          },
+          {
+            "level": 6,
+            "title": "Integration of external  collaboration into company strategy.",
+            "description": "Organizations acknowledge that partnerships with other companies, research institutes or startups are crucial for accelerating the innovation process. By being open to collaboration with external entities , organizations gain access to new technologies, knowledge and perspectives that may be hard to obtain internally. This approach allows organizations to better leverage the innovation ecosystem and more quickly put out new solutions. An example here is a medical software company that partnered with a local university. They jointly researched advanced diagnostic tools. This collaboration provided the company access to the latest scientific and technological advancements and Piotr Wisniewski, PhD 521 expert knowledge from the university. This resulted in the faster introduction of advanced diagnostic tools to the market, benefiting both the company and the entire medical sector. Digital Pathfinder 522"
+          }
+        ]
+      },
+      {
+        "id": "5E",
+        "name": "Resource availability",
+        "levels": [
+          {
+            "level": 1,
+            "title": "Access to capital.  Organizations direct their attention to ensuring",
+            "description": "adequate sources of funding for the transformation process. This is a key element of organizational transformation, as organizations must be prepared to finance planned initiatives and projects. The question is whether the company has a financial plan that includes expenses for implementing transformation initiatives."
+          },
+          {
+            "level": 2,
+            "title": "Access to training. The question here  is whether various paths to",
+            "description": "training exist within the organization , including both internal and external training, mentoring programmes and self -learning. The example here is of a manufacturing company that was introducing a new management system. The company expanded its training programmes to cover various aspects of the new system . Employees were given access to internal training on operating the new software but also participated in webinars conducted by the system provider, allowing them to gain firsthand expert knowledge."
+          },
+          {
+            "level": 3,
+            "title": "Access to experts.  The focus is on whether employees  consistently",
+            "description": "access expert knowledge through both external consultations and internal training. This approach evaluates whether an organization is committed to ongoing employee development and effectively integrates expert knowledge into its t r a n s f o r m a t i o n s t r a t e g y . F o r i n s t a n c e , a m a r k e t i n g a g e n c y h a s established a continuous relationship with an SEO expert who not only Piotr Wisniewski, PhD 523 conducts workshops but also provides ongoing support, enhancing the team`s skills and the agency`s processes. This sustained engagement with specialists not only boosts employee capabilities but also significantly enhances the agency`s marketing success, thereby increasing customer satisfaction and competitive edge. This exemplifies an organization`s strategic use of experts as a core component of its innovative culture."
+          },
+          {
+            "level": 4,
+            "title": "Access to data.  Organizations move from basic data analysis",
+            "description": "to advanced use of data in the decision-making process. The question is whether the organization has appropriate information systems and databases and focuses on securing and utilizing them. At this point, the organization realizes that data are an essential foundation for fact-based decision-making. An example could be a logistics company utilizing advanced IT tools for shipment analysis. Through a data warehouse, the company can precisely monitor, analyse and forecast shipment traffic. Decisions such as optimizing delivery routes or inventory management are data-driven rather than intuitive. Furthermore, the company emphasizes data security, which is crucial when dealing with shipment information."
+          },
+          {
+            "level": 5,
+            "title": "Access to technology.  Organizations  concentrate on providing",
+            "description": "employees with access to modern tools and technologies. The question of whether employees have access to modern technologies supported by appropriate training and technical assistance is crucial in the context of organizational transformation. Organizations realize that innovations often require tools that allow for more advanced actions, and they invest in them. Our example here is that of an advertising agency deciding to invest in the latest graphic design and data analysis software. This gives employees access to advanced tools to create effective advertising campaigns and analyse their outcomes. Furthermore, the company secures training for employees, enabling them to use the new technologies effectively. This is an example of an organization that understands that investments in modern technologies contribute to improving efficiency and competitiveness."
+          },
+          {
+            "level": 6,
+            "title": "Access to  partners.  Organizations pay special attention to the",
+            "description": "ability to collaborate with external entities. This collaboration is crucial in the context of organizational transformation because external partners can bring Digital Pathfinder 524 knowledge, experience and capital that expedite innovative processes. The example here is a software company and a technical university entering into a strategic partnership. The university provides the company with research and knowledge in technology, and, in return, the company offers internships to university students. This mutual benefit accelerates the innovation process and contributes to the development of both parties. For the university, it means that its knowledge finds practical application and that it can provide students access to real projects. For the software company, it means access to the latest research and young, talented employees. Piotr Wisniewski, PhD 525 Axis 6: Cybersecurity In the digital age, cybersecurity has transcended its past role as a mere safeguard to become a fundamental pillar of operational integrity and trust. As organizations increasingly digitalize their operations, the importance of robust cybersecurity measures has never been more critical. Accordingly, this sixth axis of digital transformation explores how deeply an organization has ingrained security practices into its digital and operational fabric. The relentless evolution of cyber threats means that a proactive stance on cybersecurity is not just advisable; it is imperative for protecting sensitive customer data, ensuring privacy and maintaining the trust that is so crucial to sustaining reputation and financial viability. This axis evaluates an organization`s cybersecurity maturity across five distinct but interconnected areas: strategy and risk management, protection of networks and systems, data security, education and training, and emergency planning. Each area is assessed on a graduated scale that corresponds to the depth and sophistication of cybersecurity measures in place. From the basics of securing network perimeters to the complexities of managing a comprehensive emergency response, this axis provides a structured framework to gauge how prepared an organization is to defend against and respond to cyber incidents with the potential to disrupt operations and compromise data --- END OF FILE: 5. Kultura.pdf --- --- START OF FILE: 6. Cyberbezpieczenstwo .pdf --- Piotr Wisniewski, PhD 525 Axis 6: Cybersecurity In the digital age, cybersecurity has transcended its past role as a mere safeguard to become a fundamental pillar of operational integrity and trust. As organizations increasingly digitalize their operations, the importance of robust cybersecurity measures has never been more critical. Accordingly, this sixth axis of digital transformation explores how deeply an organization has ingrained security practices into its digital and operational fabric. The relentless evolution of cyber threats means that a proactive stance on cybersecurity is not just advisable; it is imperative for protecting sensitive customer data, ensuring privacy and maintaining the trust that is so crucial to sustaining reputation and financial viability. This axis evaluates an organization`s cybersecurity maturity across five distinct but interconnected areas: strategy and risk management, protection of networks and systems, data security, education and training, and emergency planning. Each area is assessed on a graduated scale that corresponds to the depth and sophistication of cybersecurity measures in place. From the basics of securing network perimeters to the complexities of managing a comprehensive emergency response, this axis provides a structured framework to gauge how prepared an organization is to defend against and respond to cyber incidents with the potential to disrupt operations and compromise data Digital Pathfinder 526 integrity. As we elaborate on the specifics of each area, we underscore the critical need for an integrated approach to cybersecurity, one that stays in step with both technological advancements and emerging threats. The level of an organization`s digital development in the area of cybersecurity is assessed in five areas: strategy and risk management, network and system protection, data protection, education and quality systems, and emergency plans. Each area is evaluated on a scale from level one to level six. Piotr Wisniewski, PhD 527"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "name": "Cybersecurity",
+    "areas": [
+      {
+        "id": "6A",
+        "name": "Strategy and risk management",
+        "levels": [
+          {
+            "level": 1,
+            "title": "No cybersecurity strategy or policy.  The organization has not",
+            "description": "developed or implemented a cybersecurity strategy or policy. There are no defined goals, standards or security procedures. Risk management is impossible , and the organization is exposed to serious threats."
+          },
+          {
+            "level": 2,
+            "title": "Risk analysis. The strategy involves a cybersecurity risk analysis",
+            "description": "that determines threats and risks associated with the organization`s activities, the assets exposed to risk (such as customer data) and the development of preventive measures. For example, in a financial institution, risk analysis may include assessing threats to payment systems, identifying vulnerable assets such as customer data, and developing preventive measures."
+          },
+          {
+            "level": 3,
+            "title": "Action plan. The strategy includes, in  addition to risk analysis,",
+            "description": "an action plan that specifies the precise steps the organization will take to minimize risk. In a bank, the action plan may include regular software updates , security training and the implementation of incident response procedures."
+          },
+          {
+            "level": 4,
+            "title": "Security policies.  The strategy also describes cybersecurity policies",
+            "description": "that define the standards and procedures the organization will use to protect its assets and data. In a company, security policies may include rules for setting strong passwords, data and system access procedures, and guidelines for software updates. Digital Pathfinder 528"
+          },
+          {
+            "level": 5,
+            "title": "Strategy includes human resource management.  This may",
+            "description": "cover training the organization`s staff in the skills and knowledge needed to effectively counter cybersecurity threats. For example, the company includes regular security training for employees and specialized courses for the IT team, increasing readiness to respond to cybersecurity threats."
+          },
+          {
+            "level": 6,
+            "title": "Monitoring and assessment. The strategy includes plans for",
+            "description": "monitoring and assessing the effectiveness of cybersecurity actions to ensure that the strategy is working and being updated as the organization` s needs change. Examples of solutions include regular audits, penetration tests and log analysis to monitor and adjust the cybersecurity strategy to current needs. Piotr Wisniewski, PhD 529"
+          }
+        ]
+      },
+      {
+        "id": "6B",
+        "name": "Protection of networks and systems",
+        "levels": [
+          {
+            "level": 1,
+            "title": "Firewalls. This type of  software or device acts as a barrier controlling",
+            "description": "traffic between different segments of the network, allowing only trusted sources to access sensitive financial data. This ensures effective protection against potential threats. For example, for companies in the financial industry, such as banks or investment firms, a firewall is a key tool for protecting against unauthorized access to networks."
+          },
+          {
+            "level": 2,
+            "title": "Antivirus.  Companies install antivirus programs on all their",
+            "description": "computers to regularly scan files and systems, detecting and removing malicious software. This is crucial for, for example, maintaining the security of medical information and system stability. In the healthcare sector, where patient data confidentiality is a priority, antivirus programs serve as the first line of defence against malicious software."
+          },
+          {
+            "level": 3,
+            "title": "Intrusion Detection Systems.  In case of suspicious activities, such",
+            "description": "as intrusion attempts or attacks on control systems, these systems immediately generate alarms, allowing for a quick response and risk minimization. For example, in the energy sector, threat detection systems are essential for monitoring network traffic and securing energy infrastructure ."
+          },
+          {
+            "level": 4,
+            "title": "SIEM or IDS.  Upon detecting abnormalities in  delivery or attempts",
+            "description": "to compromise data, Security Information and Event Management systems and Intrusion Detection Systems analyse data from multiple sources and Digital Pathfinder 530 generate alerts or reports, enabling an effective response and ensuring operational continuity. These systems are used in the transportation sector, for example. Here, where complex logistics networks and data management are commonplace, incident detection systems are essential."
+          },
+          {
+            "level": 5,
+            "title": "Authorization and Authentication Systems. These systems verify",
+            "description": "the user`s identity and access level. In the education sector, for example, where there is a need to secure access to university resources, authorization and authentication systems are indispensable. Students and staff must provide unique identification data and passwords to access educational materials."
+          },
+          {
+            "level": 6,
+            "title": "VPN.  Virtual Private Networks are  used as a fundamental part",
+            "description": "of cybersecurity in, for example , the e-commerce industry, where secure transmission of financial data is a priority. Online merchants use VPNs to ensure a secure connection between different geographical locations, protecting sensitive data from interception. This allows for the secure transmission of financial information over public networks while protecting customers. Piotr Wisniewski, PhD 531"
+          }
+        ]
+      },
+      {
+        "id": "6C",
+        "name": "Data security",
+        "levels": [
+          {
+            "level": 1,
+            "title": "Data encryption. This involves using cryptographic algorithms",
+            "description": "to secure data from unauthorized access and reading. This requires that encryption algorithms be implemented, monitored and updated and that employees be trained in the correct use of encryption tools."
+          },
+          {
+            "level": 2,
+            "title": "Password security. This involves enforcing the use, regular",
+            "description": "changing and secure storage of strong passwords. This requires implementing a password security and storage management policy \u2013 for example, in encrypted form."
+          },
+          {
+            "level": 3,
+            "title": "Access controls. Access to data is limited to authorized users",
+            "description": "only based on roles and permission levels. This involves defining roles and permission levels for users, implementing access monitoring and audit systems and training employees in adhering to principles of access control."
+          },
+          {
+            "level": 4,
+            "title": "BDR. Backup and Disaster Recovery involves regularly creating",
+            "description": "backup copies of data so that, in the event of the loss of original data, they can be effectively restored. This requires that a backup strategy be established, that the process of data restoration from backup copies be tested, and that the backup strategy be regularly adjusted to changing needs."
+          },
+          {
+            "level": 5,
+            "title": "Monitoring and threat detection. Tools are used that monitor",
+            "description": "networks and s y s t e m s t o d e t e c t a b n o r m a l i t i e s a n d t h r e a t s . T h i s i n v o l v e s Digital Pathfinder 532 implementing solutions that monitor systems and network traffic, training monitoring personnel to respond to security alarms and continually updating monitoring tools."
+          },
+          {
+            "level": 6,
+            "title": "I d e n t i t y  v e r i f i c a t i o n  a n d  a u t h e n t i c a t i o n . Preventing unauthorized",
+            "description": "access to data and systems by unauthorized individuals requires the implementation of identity verification systems, such as biometric scanners or digital certificates, and, of course, training. Piotr Wisniewski, PhD 533"
+          }
+        ]
+      },
+      {
+        "id": "6D",
+        "name": "Education and training",
+        "levels": [
+          {
+            "level": 1,
+            "title": "Description of a cybersecurity training system. This  system is",
+            "description": "used to plan, organize and conduct cybersecurity training in the organization. The description sets precise training goals, schedules and topics to be covered, and it identifies appropriate trainers . In large enterprises, such a system helps identify training needs ."
+          },
+          {
+            "level": 2,
+            "title": "Implementation plan for cybersecurity training.  This plan is",
+            "description": "crucial for increasing employee awareness of threats and ways to minimize them. It includes various forms of training, from traditional face-to-face sessions to online courses and attack simulations. It is also important to determine indicators for monitoring training progress and to adjust the plan accordingly."
+          },
+          {
+            "level": 3,
+            "title": "Security testing system.  This tool identifies weaknesses in the",
+            "description": "IT system, allowing them to be fixed before attackers can exploit them. Implementation and regular security testing help minimize the risk of cyberattacks."
+          },
+          {
+            "level": 4,
+            "title": "Internal auditors.  Employees are trained as internal auditors who",
+            "description": "conduct regular internal audits of cybersecurity. Their goal is to assess the effectiveness of systems and procedures, contributing to continuous improvement in this area. Digital Pathfinder 534"
+          },
+          {
+            "level": 5,
+            "title": "Cybersecurity audit plan.  This schedules and determines the scope",
+            "description": "of internal and external audits to assess effectiveness and compliance with the organization`s cybersecurity policies and procedures. It also ensures compliance with applicable standards and regulations on information security."
+          },
+          {
+            "level": 6,
+            "title": "ISO 27001.  This international standard for information security",
+            "description": "management is used to certify organizations that have implemented a sufficient information security management system. Certification attests to high-quality risk management and protection of confidential information in the organization. This certificate builds trust with customers and business partners and contributes to the company`s development. Piotr Wisniewski, PhD 535"
+          }
+        ]
+      },
+      {
+        "id": "6E",
+        "name": "Emergency planning",
+        "levels": [
+          {
+            "level": 1,
+            "title": "Threat identification. The first step  in developing emergency plans",
+            "description": "is to identify potential threats to the organization`s information systems and data. A security audit and risk analysis are conducted to determine areas requiring special protection."
+          },
+          {
+            "level": 2,
+            "title": "Defining priorities.  The next stage is determining priorities in the",
+            "description": "event of an incident. The emergency plan must precisely define which parts of the system require immediate repair and restoration."
+          },
+          {
+            "level": 3,
+            "title": "Defining procedures.  The emergency  plan should contain detailed",
+            "description": "procedures for handling incidents. These procedures describe specific steps to be taken to limit the effects of an attack or a failure of information systems."
+          },
+          {
+            "level": 4,
+            "title": "Regular employee training.  Another element of developing",
+            "description": "emergency plans is regular employee training in emergencies. These training sessions cover both technical aspects and security procedures."
+          },
+          {
+            "level": 5,
+            "title": "Testing emergency plans.  After defining emergency plans, it",
+            "description": "is important to regularly test them in practice. These tests should include various incident scenarios and be conducted in a controlled manner. Regular Digital Pathfinder 536 testing allows adjustments to be made to emergency plans based on changing conditions and threats."
+          },
+          {
+            "level": 6,
+            "title": "Documentation. To ensure  the effectiveness of emergency plans, it",
+            "description": "is necessary to keep accurate documentation. This documentation includes information about procedures, test results and implemented changes. This allows for the rapid identification of weaknesses and introduction of corrections. Precise documentation is important if incidents are to be responded to swiftly and their harms minimized. In conclusion, cybersecurity is often underappreciated until a crisis unfolds. Much like safety measures in traditional industries, where the value of a Safety Officer is often only recognized following a serious incident, the critical importance of robust cybersecurity measures tends to be realized in hindsight. As enterprises expand their digital footprints, the necessity for both technical and non-technical measures to safeguard information, systems, and software becomes increasingly imperative . This aspect of digital transformation is not merely a precaution ; it is an essential component of maintaining trust and operational integrity in the digital age. Neglecting this could lead to severe consequences, making it essential for businesses to prioritize and continuously enhance their cybersecurity strategies. Piotr Wisniewski, PhD 537 Index 6V Adobe AI, Artificial Intelligence Alibaba AlphaGo Altman, Sam Amazon API, Application Programming Interface AR/VR, Augmented Reality/ Virtual Reality B2B, business to business Ballmer Steve Bennis, Warren Bezos, Jeff Big Data Black swan Blik Boeing Bolt Booking.com Branson, Richard Buffett, Warren butterfly effect C&D, Connect and Develop ChatGPT Christensen, Clayton Cisco CMMS, Computerized Maintenance Management Systems Cooperators CRM, Customer Relationship Management customer experience DBR77 Deep Blue Deep Mind Devol, Georg Digital 2022 Global Overview Report Digital Change Management Digital Roadmap Dropbox EDI, Electronic Data Interchange Eight-step model (see: Kotter`s eight-step model) ERP, Enterprise Resource Planning ETL, Extract, Transform, Load Farley, Jim FMEA, Failure Mode and Effects Analysis Ford (Motor Company) Ford, Henry Frog (see \u017babka ) GAI, General Artificial --- END OF FILE: 6. Cyberbezpieczenstwo .pdf --- --- START OF FILE: 7. Os AI opis.pdf --- AXIS 7: ARTIFICIAL INTELLIGENCE READINESS & INTEGRATION (Wprowadzenie do ca\u0142ej osi \u2013 styl zgodny z pozosta\u0142ymi osiami DRD) Artificial Intelligence has become one of the most transformative forces shaping modern organizations. While earlier axes examine processes, data, culture or products, this axis focuses on the organization\u2019s ability to adopt, scale and operationalize AI in a structured, safe and value-creating manner. AI is no longer an experimental technology reserved for innovators. It increasingly defines competitive advantage, productivity, decision-making quality and the speed at which organizations can respond to change. Companies that understand how to integrate AI into their architecture, processes, people and governance structures will build stronger adaptability and long-term resilience. Axis 7 evaluates maturity across five areas that collectively determine the organization\u2019s readiness for AI: 7A \u2013 Data Exposure & AI Foundations Evaluates how accessible, structured and prepared the organization\u2019s data is for use by AI models. 7B \u2013 AI-Augmented Processes Describes how deeply AI supports or automates decision-making inside operational and administrative workflows. 7C \u2013 AI in Products & Services Assesses whether AI enhances offerings or becomes a core component of new digital products. 7D \u2013 AI Governance, Safety & Ethics Measures the organization\u2019s capability to manage risks, compliance and responsible AI deployment. 7E \u2013 AI Empowerment of Employees Examines whether employees possess the skills, tools and routines to work effectively with AI in daily operations. The maturity scale, similarly to other axes, ranges from Level 1 (initial) to Level 5 (advanced) and allows organizations to identify precisely where they stand and what steps must be taken to progress to the next stage. AREA 7A \u2014 Data Exposure & AI Foundations Wprowadzenie (dlaczego to wa\u017cne) Artificial Intelligence is only as powerful as the data it can access. Organizations with fragmented, inconsistent or inaccessible data struggle to achieve meaningful AI outcomes. Conversely, companies that maintain structured, integrated and governed data environments progress quickly toward automation, advanced analytics and generative AI adoption. This area assesses whether the organization\u2019s data architecture \u2014 including operational data, transactional data, machine data, documents and knowledge \u2014 is ready to be consumed by AI models. A company cannot achieve AI maturity without achieving maturity in this area first. Poni\u017cej przedstawiono pi\u0119ciopoziomow\u0105 skal\u0119 umo\u017cliwiaj\u0105c\u0105 precyzyjn\u0105 samoocen\u0119. LEVEL 1 \u2014 Fragmented Data, No AI Readiness Jak to rozumie\u0107 Data are scattered across spreadsheets, local drives and disconnected systems. There is no unified view of the organization\u2019s information. Preparing any dataset for analysis requires manual work and significant effort. Data quality issues are common and not monitored. Typowe technologie / brak technologii \u2022 Excel, lokalne pliki, brak API \u2022 Brak system\u00f3w ETL / brak hurtowni danych \u2022 Brak standard\u00f3w nazewnictwa i metadanych Jak rozpozna\u0107, \u017ce jeste\u015b na tym poziomie \u2022 Ka\u017cde zapytanie analityczne wymaga r\u0119cznego zbierania danych \u2022 Dane s\u0105 niekompletne lub niesp\u00f3jne mi\u0119dzy systemami \u2022 AI nie mo\u017ce dzia\u0142a\u0107, bo dane nie s\u0105 dost\u0119pne w odpowiednim formacie LEVEL 2 \u2014 Structured Data in Silos Jak to rozumie\u0107 Firma posiada kilka system\u00f3w cyfrowych (ERP, MES, CRM), ale ka\u017cdy z nich przechowuje dane we w\u0142asnym \u201esilosie\u201d. Dane s\u0105 bardziej uporz\u0105dkowane, lecz nie s\u0105 \u0142atwo dost\u0119pne dla AI. Eksporty realizowane s\u0105 r\u0119cznie. Typowe technologie \u2022 ERP / MES / CRM jako g\u0142\u00f3wne \u017ar\u00f3d\u0142a danych \u2022 Podstawowe API, ale niewykorzystywane \u2022 Manualne integracje (CSV, XLS export/import) Jak rozpozna\u0107, \u017ce jeste\u015b na tym poziomie \u2022 Dane s\u0105 cyfrowe, lecz niepo\u0142\u0105czone \u2022 Aby wykona\u0107 analiz\u0119, pracownicy \u0142\u0105cz\u0105 pliki z r\u00f3\u017cnych \u017ar\u00f3de\u0142 \u2022 AI mo\u017ce dzia\u0142a\u0107 tylko na ma\u0142ych, jednorazowo przygotowanych zestawach LEVEL 3 \u2014 Centralized Data & Initial AI Readiness Jak to rozumie\u0107 Organizacja buduje pierwsze scentralizowane repozytoria danych. Procesy ETL zaczynaj\u0105 funkcjonowa\u0107, a dane s\u0105 pobierane do jednego miejsca. Pojawiaj\u0105 si\u0119 pierwsze projekty machine learning, oparte na ustandaryzowanych zbiorach danych. Typowe technologie \u2022 Data Warehouse / Data Lake (np. BigQuery, Redshift, Snowflake) \u2022 ETL/ELT (Airflow, Fivetran, dbt) \u2022 Pierwsze API integracyjne Jak rozpozna\u0107, \u017ce jeste\u015b na tym poziomie \u2022 Dane w hurtowni s\u0105 aktualizowane regularnie \u2022 Analitycy i data scientists mog\u0105 korzysta\u0107 z uzgodnionych \u017ar\u00f3de\u0142 \u2022 Projekty AI nie wymagaj\u0105 manualnego \u0142\u0105czenia danych LEVEL 4 \u2014 Fully AI-Ready Data Architecture Jak to rozumie\u0107 Organizacja posiada sp\u00f3jne zasady governance, jako\u015b\u0107 danych jest monitorowana, a \u017ar\u00f3d\u0142a danych s\u0105 udokumentowane. Dane s\u0105 dost\u0119pne w czasie zbli\u017conym do rzeczywistego. AI mo\u017ce trenowa\u0107 modele i aktualizowa\u0107 je w spos\u00f3b powtarzalny i niezawodny. Typowe technologie \u2022 Real-time streaming (Kafka, Pub/Sub) \u2022 Data Catalog / Metadata Management \u2022 Automatyczne walidacje danych \u2022 Feature Store dla modeli AI Jak rozpozna\u0107, \u017ce jeste\u015b na tym poziomie \u2022 Dane s\u0105 zawsze dost\u0119pne, sp\u00f3jne i aktualne \u2022 Modele AI maj\u0105 stabilne, powtarzalne pipeline\u2019y \u2022 Dane wykorzystywane s\u0105 w wielu inicjatywach AI r\u00f3wnocze\u015bnie LEVEL 5 \u2014 Autonomous Data Intelligence Jak to rozumie\u0107 Dane s\u0105 automatycznie przygotowywane, czyszczone, wersjonowane i udost\u0119pniane modelom AI. Systemy potrafi\u0105 wykrywa\u0107 anomalie, uzupe\u0142nia\u0107 braki i optymalizowa\u0107 przep\u0142ywy danych bez udzia\u0142u cz\u0142owieka. To najwy\u017cszy stopie\u0144 dojrza\u0142o\u015bci fundament\u00f3w AI. Typowe technologie \u2022 Automatyczne data quality engines \u2022 Self-healing pipelines \u2022 Real-time feature engineering \u2022 Monitoring driftu danych i modeli Jak rozpozna\u0107, \u017ce jeste\u015b na tym poziomie \u2022 Systemy same reaguj\u0105 na problemy z danymi \u2022 AI dzia\u0142a na danych w czasie rzeczywistym, bez r\u0119cznej ingerencji \u2022 Dane s\u0105 traktowane jako produkt (\u201edata as a product\u201d) ----------------------------------------------------- \u2b50 AREA 7B \u2014 AI-Augmented Processes ----------------------------------------------------- Wprowadzenie (dlaczego to wa\u017cne) Procesy stanowi\u0105 rdze\u0144 dzia\u0142alno\u015bci ka\u017cdej organizacji \u2014 to one generuj\u0105 wynik finansowy, obs\u0142uguj\u0105 klient\u00f3w, produkuj\u0105 warto\u015b\u0107 oraz organizuj\u0105 codzienn\u0105 prac\u0119. Dlatego dojrza\u0142o\u015b\u0107 w wykorzystaniu AI w procesach jest jednym z kluczowych element\u00f3w transformacji. Ten obszar mierzy, w jakim stopniu sztuczna inteligencja wspiera, optymalizuje lub autonomicznie prowadzi dzia\u0142ania operacyjne w firmie. Ocena obejmuje: \u2022 zakres automatyzacji, \u2022 rol\u0119 AI w podejmowaniu decyzji, \u2022 integracj\u0119 AI z systemami operacyjnymi, \u2022 stopie\u0144, w jakim procesy s\u0105 projektowane \u201eAI-first\u201d. Wysoka dojrza\u0142o\u015b\u0107 oznacza, \u017ce procesy dzia\u0142aj\u0105 szybciej, taniej, stabilniej, przewidywalniej, a decyzje s\u0105 podejmowane w spos\u00f3b powtarzalny i oparty na danych. \u2b50 LEVEL 1 \u2014 Isolated AI Experiments Jak to rozumie\u0107 AI pojawia si\u0119 w organizacji jedynie w formie ma\u0142ych, niepowi\u0105zanych inicjatyw. Mog\u0105 to by\u0107 testy narz\u0119dzi generatywnych, chatboty, OCR lub podstawowe automatyzacje biurowe \u2014 ale nie maj\u0105 one wp\u0142ywu na g\u0142\u00f3wne procesy biznesowe. Procesy dzia\u0142aj\u0105 tak jak dotychczas, a AI pojawia si\u0119 jako ciekawostka lub inicjatywa pojedynczych pracownik\u00f3w. Typowe technologie \u2022 ChatGPT, Gemini, Copilot \u2013 u\u017cywane prywatnie, nie jako cz\u0119\u015b\u0107 proces\u00f3w \u2022 Proste narz\u0119dzia OCR \u2022 Pojedyncze makra, skrypty automatyzuj\u0105ce \u2022 Narz\u0119dzia do generowania tre\u015bci (np. marketing) Jak rozpozna\u0107, \u017ce jeste\u015b na tym poziomie \u2022 AI dzia\u0142a \u201eobok\u201d proces\u00f3w, nie w ich \u015brodku \u2022 Nie ma wp\u0142ywu na decyzje operacyjne \u2022 Brak po\u0142\u0105czenia z systemami (ERP/MES/CRM) \u2022 U\u017cycie AI zale\u017cy od indywidualnej inicjatywy, nie od strategii \u2b50 LEVEL 2 \u2014 Assisted Work Automation Jak to rozumie\u0107 AI wspiera pracownik\u00f3w w wykonywaniu zada\u0144, ale nie decyduje w procesach. Pojawiaj\u0105 si\u0119 pierwsze automatyzacje: planowanie spotka\u0144, generowanie tre\u015bci, analiza dokument\u00f3w, klasyfikacja maili, automatyczne przep\u0142ywy pracy (RPA). Rola AI to przyspieszanie pracy cz\u0142owieka, nie jej przejmowanie. Proces dzia\u0142a tak jak wcze\u015bniej \u2014 ale szybciej. Typowe technologie \u2022 RPA (UiPath, Power Automate) \u2022 Generative AI w obs\u0142udze biura (podsumowania, transkrypcje, drafty) \u2022 Automatyczne klasyfikatory dokument\u00f3w \u2022 Predictive alerts w systemach analitycznych \u2022 Wtyczki AI do Excel/Office Jak rozpozna\u0107, \u017ce jeste\u015b na tym poziomie \u2022 AI poprawia efektywno\u015b\u0107, ale nie ma wp\u0142ywu na jako\u015b\u0107 procesu \u2022 Ka\u017cda decyzja wci\u0105\u017c nale\u017cy do cz\u0142owieka \u2022 AI nie posiada dost\u0119pu do danych operacyjnych \u201ena \u017cywo\u201d \u2022 Automatyzacje s\u0105 jednostkowe, dzia\u0142aj\u0105ce tylko w swoich wycinkach \u2b50 LEVEL 3 \u2014 Integrated AI Decision Support Jak to rozumie\u0107 AI zaczyna by\u0107 cz\u0119\u015bci\u0105 procesu, a nie dodatkiem. Modele AI dostarczaj\u0105 rekomendacje operacyjne, np.: \u2022 prognozy sprzeda\u017cy, \u2022 predykcja awarii maszyn, \u2022 rekomendacje zam\u00f3wie\u0144, \u2022 optymalizacja tras, \u2022 planowanie produkcji, \u2022 ocena ryzyka finansowego. Pracownicy podejmuj\u0105 decyzje w oparciu o wskazania AI. Procesy s\u0105 projektowane tak, by uwzgl\u0119dnia\u0142y dane i algorytmy \u2014 ale odpowiedzialno\u015b\u0107 pozostaje po stronie cz\u0142owieka. Typowe technologie \u2022 Modele ML (regresja, klasyfikacja, forecasting) \u2022 Systemy rekomendacyjne \u2022 Predykcyjne modu\u0142y ERP/MES/WMS \u2022 Computer vision w kontroli jako\u015bci \u2022 IoT + AI do analizy danych maszynowych Jak rozpozna\u0107, \u017ce jeste\u015b na tym poziomie \u2022 Ka\u017cdy kluczowy proces ma elementy predykcyjne lub analityczne \u2022 Pracownik polega na rekomendacjach AI w codziennej pracy \u2022 Modele s\u0105 trenowane cyklicznie, a dane przep\u0142ywaj\u0105 automatycznie \u2022 Systemy generuj\u0105 powtarzalne rekomendacje o wysokiej jako\u015bci \u2b50 LEVEL 4 \u2014 Semi-Autonomous Processes Jak to rozumie\u0107 AI wykonuje cz\u0119\u015b\u0107 dzia\u0142a\u0144 procesowych samodzielnie. Cz\u0142owiek pe\u0142ni rol\u0119 nadzorcy lub zatwierdzaj\u0105cego. Przyk\u0142ady: \u2022 automatyczne planowanie produkcji z mo\u017cliwo\u015bci\u0105 akceptacji, \u2022 autonomiczne przydzielanie zlece\u0144 do pracownik\u00f3w lub maszyn, \u2022 dynamiczne sterowanie zapasami, \u2022 automatyczne generowanie zam\u00f3wie\u0144, \u2022 autonomiczne wykrywanie i klasyfikacja usterek, \u2022 priorytetyzacja zada\u0144 w obs\u0142udze klienta. W wielu procesach cz\u0142owiek nie podejmuje ju\u017c decyzji \u2014 jedynie kontroluje system. Typowe technologie \u2022 Autonomiczne modu\u0142y APS \u2022 Zaawansowane reinforcement learning / optymalizatory \u2022 Agentowe systemy workflow \u2022 Predictive + prescriptive analytics \u2022 Vision systems z auto-reagowaniem Jak rozpozna\u0107, \u017ce jeste\u015b na tym poziomie \u2022 AI wykonuje \u201eaction steps\u201d, nie tylko analizy \u2022 Systemy same proponuj\u0105 i wdra\u017caj\u0105 zmiany \u2022 Cz\u0142owiek dzia\u0142a tylko w wyj\u0105tkach lub zatwierdza krok ko\u0144cowy \u2022 Zmienno\u015b\u0107 procesu spada, stabilno\u015b\u0107 ro\u015bnie \u2b50 LEVEL 5 \u2014 Fully Autonomous Operational Orchestration Jak to rozumie\u0107 Procesy s\u0105 projektowane tak, aby by\u0142y wykonywane przez autonomiczne systemy AI. AI nie tylko decyduje, ale: \u2022 monitoruje procesy, \u2022 reaguje na odchylenia, \u2022 symuluje scenariusze, \u2022 podejmuje dzia\u0142ania, \u2022 uczy si\u0119 na podstawie wynik\u00f3w, \u2022 stale optymalizuje spos\u00f3b dzia\u0142ania organizacji. Cz\u0142owiek zajmuje si\u0119 nadzorem, audytami, strategi\u0105 i rozwi\u0105zywaniem wyj\u0105tkowych sytuacji. Przyk\u0142ad (fabryka): AI zarz\u0105dza harmonogramem produkcji, przep\u0142ywem materia\u0142\u00f3w, kolejno\u015bci\u0105 zlece\u0144, jako\u015bci\u0105, maintenance i logistyk\u0105 \u2014 dzia\u0142aj\u0105c w cyklu zamkni\u0119tej p\u0119tli. Typowe technologie \u2022 Multi-agent AI (operational agents, planning agents) \u2022 Autonomous decision engines \u2022 Digital twin + real-time optimization \u2022 Large Action Models \u2022 On-line reinforcement learning \u2022 Autonomous workflow orchestration Jak rozpozna\u0107, \u017ce jeste\u015b na tym poziomie \u2022 Procesy wykonuj\u0105 si\u0119 w ca\u0142o\u015bci bez udzia\u0142u cz\u0142owieka \u2022 AI dynamicznie przebudowuje proces na podstawie danych w czasie rzeczywistym \u2022 Organizacja dzia\u0142a w modelu \u201eclosed-loop operations\u201d \u2022 Pracownicy nie wykonuj\u0105 pracy operacyjnej \u2014 tylko nadzoruj\u0105 system ----------------------------------------------------- \u2b50 AREA 7C \u2014 AI in Products & Services ----------------------------------------------------- Wprowadzenie (dlaczego to wa\u017cne) Artificial Intelligence is not only a tool for improving internal processes \u2014 it fundamentally reshapes the value delivered to customers. This area evaluates the extent to which AI is: \u2022 embedded in products, \u2022 enhances customer experience, \u2022 creates new digital services, \u2022 builds competitive advantage, \u2022 generates new revenue streams. As organizations mature, AI transitions from a minor feature to a core element of product architecture, eventually giving rise to fully AI-native offerings that could not exist without advanced algorithms. Ten obszar odpowiada na pytania: \u2022 Czy produkty korzystaj\u0105 z danych u\u017cytkownik\u00f3w? \u2022 Czy AI tworzy przewag\u0119 na rynku? \u2022 Czy firma jest w stanie skalowa\u0107 swoje produkty dzi\u0119ki AI? \u2022 Czy pojawiaj\u0105 si\u0119 nowe modele biznesowe oparte o inteligencj\u0119 maszynow\u0105? Poni\u017cej znajduj\u0105 si\u0119 poziomy dojrza\u0142o\u015bci. \u2b50 LEVEL 1 \u2014 No AI Components in Products Jak to rozumie\u0107 Produkty i us\u0142ugi nie zawieraj\u0105 \u017cadnych element\u00f3w AI. Warto\u015b\u0107 dostarczana klientowi wynika w ca\u0142o\u015bci z tradycyjnych funkcji \u2014 manualnych, mechanicznych, proceduralnych lub standardowych cyfrowych modu\u0142\u00f3w. AI nie jest brana pod uwag\u0119 podczas projektowania produkt\u00f3w, a roadmapa nie przewiduje wykorzystania AI. Technologie typowe / brak technologii \u2022 Tradycyjne systemy cyfrowe bez element\u00f3w inteligencji \u2022 Manualne konfiguracje, brak personalizacji \u2022 Brak modeli ML lub jakichkolwiek komponent\u00f3w predykcyjnych Jak rozpozna\u0107, \u017ce jeste\u015b na tym poziomie \u2022 Produkty dzia\u0142aj\u0105 tak samo dla ka\u017cdego u\u017cytkownika \u2022 Nie ma funkcji predykcyjnych ani rekomendacyjnych \u2022 Nie wykorzystuje si\u0119 danych klient\u00f3w do ulepsze\u0144 produktu \u2022 Firma konkuruje wy\u0142\u0105cznie funkcjami, cen\u0105 lub obs\u0142ug\u0105, a nie inteligencj\u0105 produkt\u00f3w \u2b50 LEVEL 2 \u2014 Add-On AI Features Jak to rozumie\u0107 AI pojawia si\u0119 jako dodatkowy modu\u0142 wzbogacaj\u0105cy produkt, ale nie definiuj\u0105cy jego istoty. Funkcje AI maj\u0105 charakter ulepsze\u0144, np.: \u2022 rekomendacje, \u2022 klasyfikacja danych, \u2022 proste predykcje, \u2022 analiza dokument\u00f3w, \u2022 automatyczne podsumowania. AI jest dodatkiem, kt\u00f3ry usprawnia do\u015bwiadczenie klienta, ale produkt nadal posiada klasyczn\u0105 struktur\u0119. Typowe technologie \u2022 API modeli AI (OpenAI, Gemini, Claude) \u2022 Proste machine learning models (np. klasyfikatory) \u2022 Vision AI z ograniczonym zakresem \u2022 Standardowe modu\u0142y personalizacji Jak rozpozna\u0107, \u017ce jeste\u015b na tym poziomie \u2022 AI \u201epomaga\u201d, ale nie jest fundamentem produktu \u2022 Produkt mo\u017ce dzia\u0142a\u0107 w pe\u0142ni bez AI \u2022 Funkcje AI nie s\u0105 kluczowym argumentem sprzeda\u017cowym \u2022 AI jest traktowane jako atrakcyjna funkcja, a nie strategia \u2b50 LEVEL 3 \u2014 AI as a Core Product Component Jak to rozumie\u0107 AI staje si\u0119 kluczowym elementem architektury produktu. Bez niego wi\u0119kszo\u015b\u0107 nowoczesnych funkcji nie mog\u0142aby dzia\u0142a\u0107. Produkt \u201erozumie\u201d u\u017cytkownika, adaptuje si\u0119 i reaguje na dane. Przyk\u0142ady: \u2022 predykcyjne utrzymanie ruchu (maintenance), \u2022 inteligentne planowanie, \u2022 dynamiczne rekomendacje, \u2022 adaptacyjne UI na podstawie zachowa\u0144 u\u017cytkownika, \u2022 wykrywanie anomalii, \u2022 automatyczna optymalizacja parametr\u00f3w us\u0142ugi. Typowe technologie \u2022 DSPM / ML pipelines \u2022 Systemy rekomendacyjne \u2022 Vision AI do wykrywania usterek \u2022 Modele predykcyjne w produktach SaaS \u2022 Systemy edge AI z analiz\u0105 na urz\u0105dzeniach klienta Jak rozpozna\u0107, \u017ce jeste\u015b na tym poziomie \u2022 Produkt znacz\u0105co r\u00f3\u017cni si\u0119 od konkurencji dzi\u0119ki AI \u2022 Funkcje AI dzia\u0142aj\u0105 wewn\u0105trz produktu, nie jako dodatki \u2022 Dane klient\u00f3w s\u0105 wykorzystywane w treningu/rekonfiguracji \u2022 AI wp\u0142ywa na jako\u015b\u0107, efektywno\u015b\u0107 lub koszty us\u0142ugi \u2b50 LEVEL 4 \u2014 Fully AI-Driven Products Jak to rozumie\u0107 AI odpowiada za wi\u0119kszo\u015b\u0107 logiki produktu i dynamicznie dostosowuje spos\u00f3b dzia\u0142ania. Produkt stale uczy si\u0119 zachowa\u0144 klienta, optymalizuje procesy i reaguje w czasie rzeczywistym. Jest to poziom, gdzie funkcjonalno\u015b\u0107 produktu jest: \u2022 personalizowana, \u2022 adaptacyjna, \u2022 predykcyjna, \u2022 samodoskonal\u0105ca si\u0119. Przyk\u0142ady: \u2022 autonomiczne modu\u0142y zarz\u0105dzania produkcj\u0105, \u2022 inteligentne roboty reaguj\u0105ce na \u015brodowisko, \u2022 autonomiczne logistyczne systemy routingowe, \u2022 aplikacje, kt\u00f3re same zmieniaj\u0105 UI, workflow i logik\u0119 dzia\u0142ania. Typowe technologie \u2022 Reinforcement learning \u2022 Multi-modal AI \u2022 Real-time feedback loops \u2022 Auto-personalization engines \u2022 On-device learning (edge re-training) Jak rozpozna\u0107, \u017ce jeste\u015b na tym poziomie \u2022 Produkt samodzielnie podejmuje wiele decyzji \u2022 Zachowanie produktu zmienia si\u0119 na podstawie danych \u2022 Produkt tworzy unikalne do\u015bwiadczenia dla ka\u017cdego klienta \u2022 AI jest fundamentem architektury \u2014 nie da si\u0119 go \u201eod\u0142\u0105czy\u0107\u201d \u2b50 LEVEL 5 \u2014 AI-Native Business Offerings Jak to rozumie\u0107 Firma oferuje produkty lub us\u0142ugi, kt\u00f3re nie mog\u0142yby istnie\u0107 bez AI. AI tworzy nie tylko funkcje \u2014 tworzy ca\u0142y model biznesowy. Na tym poziomie powstaj\u0105: \u2022 autonomiczne systemy zarz\u0105dzania (fabryka, magazyn, park maszyn), \u2022 w pe\u0142ni autonomiczne analityczne lub operacyjne \u201eagenty\u201d, \u2022 platformy predykcyjne, kt\u00f3re dzia\u0142aj\u0105 jak \u201einteligentni wsp\u00f3\u0142pracownicy\u201d, \u2022 cyfrowe bli\u017aniaki dzia\u0142aj\u0105ce w trybie closed-loop, \u2022 oprogramowanie, kt\u00f3re reaguje na \u015brodowisko w czasie rzeczywistym i podejmuje dzia\u0142ania. To poziom firm, kt\u00f3re buduj\u0105 w\u0142asne modele, w\u0142asn\u0105 AI-architektur\u0119 i w\u0142asne systemy autonomiczne. Technologie, kt\u00f3re dominuj\u0105 \u2022 Multi-agent systems \u2022 Proprietary LLM/SLM models \u2022 Digital Twins + Autonomous Control Loops \u2022 Synthetic data generation pipelines \u2022 RLHF + real-time optimization \u2022 AI-operated ecosystems Jak rozpozna\u0107, \u017ce jeste\u015b na tym poziomie \u2022 Produkt dzia\u0142a jak inteligentny system, nie aplikacja \u2022 AI podejmuje autonomicznie decyzje strategiczne i operacyjne \u2022 Klienci kupuj\u0105 rozwi\u0105zanie g\u0142\u00f3wnie dlatego, \u017ce jest AI-native \u2022 Firma posiada w\u0142asne modele lub w\u0142asn\u0105 warstw\u0119 agent\u00f3w \u2022 AI umo\u017cliwia ca\u0142kowicie nowe modele biznesowe, niedost\u0119pne wcze\u015bniej ----------------------------------------------------- \u2b50 AREA 7D \u2014 AI Governance, Safety & Ethics ----------------------------------------------------- Wprowadzenie (dlaczego to wa\u017cne) Wraz ze wzrostem wykorzystania sztucznej inteligencji ro\u015bnie znaczenie odpowiedzialnego zarz\u0105dzania ni\u0105. AI niesie ogromn\u0105 warto\u015b\u0107, ale r\u00f3wnie\u017c nowe ryzyka: \u2022 b\u0142\u0119dne decyzje podejmowane autonomicznie, \u2022 niejawne uprzedzenia w danych (bias), \u2022 naruszenia prywatno\u015bci i poufno\u015bci, \u2022 niekontrolowane generowanie tre\u015bci, \u2022 niezgodno\u015b\u0107 z regulacjami (np. EU AI Act), \u2022 brak nadzoru nad modelem po wdro\u017ceniu. Brak odpowiedniego governance mo\u017ce prowadzi\u0107 do strat finansowych, utraty reputacji, ryzyk prawnych lub ca\u0142kowitego wstrzymania projekt\u00f3w AI. Ten obszar bada, czy organizacja potrafi: \u2022 kontrolowa\u0107 ryzyka AI, \u2022 zapewnia\u0107 bezpiecze\u0144stwo danych i modeli, \u2022 dokumentowa\u0107 procesy AI, \u2022 monitorowa\u0107 dzia\u0142anie system\u00f3w, \u2022 budowa\u0107 zaufanie i przejrzysto\u015b\u0107, \u2022 wdra\u017ca\u0107 AI zgodnie z etyk\u0105 i prawem. \u2b50 LEVEL 1 \u2014 No AI Governance, Uncontrolled Use Jak to rozumie\u0107 AI jest u\u017cywane spontanicznie i bez nadzoru. Pracownicy korzystaj\u0105 z narz\u0119dzi AI wed\u0142ug w\u0142asnego uznania \u2014 bez zasad, kontroli czy \u015bwiadomo\u015bci ryzyk. Nie istniej\u0105: \u2022 polityki u\u017cycia, \u2022 zasady bezpiecze\u0144stwa, \u2022 standardy prywatno\u015bci, \u2022 kontrola danych wprowadzanych do modeli, \u2022 regu\u0142y dotycz\u0105ce tre\u015bci generowanych przez AI. Organizacja nie jest \u015bwiadoma ryzyk. Typowe technologie / praktyki \u2022 Otwarta praca z publicznymi modelami \u2022 Brak kontroli nad tym, jakie dane trafiaj\u0105 do AI \u2022 Brak proces\u00f3w audytu czy dokumentacji Jak rozpozna\u0107, \u017ce jeste\u015b na tym poziomie \u2022 Ka\u017cdy u\u017cywa AI jak chce \u2022 Cz\u0119sto pojawia si\u0119 zdanie \u201eNo przecie\u017c to tylko ChatGPT\u201d \u2022 Poufne dane s\u0105 kopiowane do narz\u0119dzi publicznych \u2022 Firma nie posiada \u017cadnych dokument\u00f3w nt. AI \u2b50 LEVEL 2 \u2014 Basic AI Usage Policies Jak to rozumie\u0107 Organizacja zaczyna dostrzega\u0107 ryzyka i tworzy podstawowe zasady korzystania z AI: \u2022 co wolno, \u2022 czego nie wolno, \u2022 jakie dane mo\u017cna u\u017cywa\u0107, \u2022 jakie narz\u0119dzia s\u0105 dopuszczone. Polityki te maj\u0105 charakter informacyjny i nie s\u0105 jeszcze egzekwowane. Typowe technologie / praktyki \u2022 Proste dokumenty: \u201eResponsible Use of AI\u201d \u2022 White-list lub black-list narz\u0119dzi \u2022 Edukacja pracownik\u00f3w w minimalnym zakresie \u2022 Wy\u0142\u0105czanie generatywnych funkcji tam, gdzie to konieczne Jak rozpozna\u0107, \u017ce jeste\u015b na tym poziomie \u2022 Istniej\u0105 zasady, ale nie ma systemu nadzoru \u2022 Decyzje pozostaj\u0105 po stronie dzia\u0142\u00f3w lub pojedynczych os\u00f3b \u2022 Firma zaczyna zadawa\u0107 pytania o bezpiecze\u0144stwo i zgodno\u015b\u0107 z prawem \u2022 Nadal nie ma kontroli nad jako\u015bci\u0105 modeli ani generowanych wynik\u00f3w \u2b50 LEVEL 3 \u2014 Organization-Wide AI Governance Framework Jak to rozumie\u0107 Firma formalizuje podej\u015bcie do AI. Powstaj\u0105: \u2022 procesy akceptacji projekt\u00f3w AI, \u2022 kryteria oceny ryzyka, \u2022 dedykowana rola (Chief AI Officer, AI Committee), \u2022 kontrola danych wej\u015bciowych, \u2022 dokumentacja modeli, \u2022 zasady wyja\u015bnialno\u015bci (explainability), \u2022 polityki zarz\u0105dzania dostawcami AI. Organizacja zaczyna kontrolowa\u0107 nie tylko u\u017cycie AI, lecz r\u00f3wnie\u017c ca\u0142y cykl \u017cycia projekt\u00f3w. Technologie / praktyki \u2022 Model cards \u2022 Data cards \u2022 Dokumentacja pipeline\u2019\u00f3w ML \u2022 Centralna platforma do AI governance (np. Azure Responsible AI Dashboard) \u2022 Wst\u0119pny model risk scoring Jak rozpozna\u0107, \u017ce jeste\u015b na tym poziomie \u2022 Modele s\u0105 wersjonowane i audytowane \u2022 AI nie jest wdra\u017cane bez formalnego zatwierdzenia \u2022 Pracownicy wiedz\u0105, czego nie powinni robi\u0107 z AI \u2022 Jest jedna wsp\u00f3lna polityka obowi\u0105zuj\u0105ca w ca\u0142ej firmie \u2b50 LEVEL 4 \u2014 Continuous AI Risk Management & Monitoring Jak to rozumie\u0107 Organizacja ma ustrukturyzowany system kontroli nad AI, kt\u00f3ry dzia\u0142a nie tylko przy wdro\u017ceniu, ale ca\u0142y czas. Obejmuje to: \u2022 monitoring dzia\u0142ania modeli w czasie rzeczywistym, \u2022 wykrywanie driftu danych i modelu, \u2022 audyty jako\u015bci predykcji, \u2022 zg\u0142aszanie incydent\u00f3w AI, \u2022 procedury reagowania, \u2022 testy bezpiecze\u0144stwa i robustno\u015bci modeli, \u2022 zapewnienie zgodno\u015bci z regulacjami (np. EU AI Act). AI staje si\u0119 cz\u0119\u015bci\u0105 infrastruktury krytycznej, a firma monitoruje j\u0105 jak inne systemy produkcyjne. Technologie \u2022 ML observability platforms (Arize AI, Fiddler, Evidently) \u2022 Real-time monitoring & alerts \u2022 AI risk dashboards \u2022 Automated fairness checks \u2022 Testy penetracyjne modeli Jak rozpozna\u0107, \u017ce jeste\u015b na tym poziomie \u2022 Modele s\u0105 monitorowane 24/7 \u2022 Firma zna procent b\u0142\u0119d\u00f3w i odchyle\u0144 modeli \u2022 Ka\u017cda zmiana AI musi przej\u015b\u0107 proces walidacji \u2022 AI jest traktowane tak samo powa\u017cnie jak systemy ERP/MES \u2022 Ryzyka s\u0105 przypisane do w\u0142a\u015bcicieli proces\u00f3w \u2b50 LEVEL 5 \u2014 Ethical, Transparent & Autonomous AI Governance Jak to rozumie\u0107 Najwy\u017cszy poziom \u2014 AI governance jest zautomatyzowane, wbudowane w systemy i zgodne z najlepszymi praktykami etycznymi. Systemy AI: \u2022 same wykrywaj\u0105 problemy, \u2022 same reaguj\u0105, \u2022 same raportuj\u0105 nieprawid\u0142owo\u015bci, \u2022 dynamicznie dostosowuj\u0105 parametry, \u2022 minimalizuj\u0105 bias w czasie rzeczywistym, \u2022 wymuszaj\u0105 zgodno\u015b\u0107 z polityk\u0105 organizacji. Organizacja posiada zaawansowane podej\u015bcie do przejrzysto\u015bci, uczciwo\u015bci, bezpiecze\u0144stwa i dokumentacji \u2014 oraz potrafi to udowodni\u0107 audytorom, klientom i regulatorom. Technologie / praktyki \u2022 Autonomous governance engines \u2022 Automatyczne audyty modeli \u2022 Dynamic access control \u2022 Model explainability na poziomie enterprise \u2022 Wbudowane regulatory guardrails \u2022 Pe\u0142na zgodno\u015b\u0107 z AI-regulacjami (EU AI Act, NIST AI Framework) Jak rozpozna\u0107, \u017ce jeste\u015b na tym poziomie \u2022 Governance dzia\u0142a autonomicznie bez udzia\u0142u cz\u0142owieka \u2022 AI spe\u0142nia najwy\u017csze standardy bezpiecze\u0144stwa i etyki \u2022 Firma sama wyznacza standardy rynku \u2022 Klienci i partnerzy widz\u0105 governance jako przewag\u0119 konkurencyjn\u0105 \u2022 Regulacje nie ograniczaj\u0105 dzia\u0142alno\u015bci, lecz wzmacniaj\u0105 --- END OF FILE: 7. Os AI opis.pdf ---"
+          }
+        ]
+      }
+    ]
+  }
+]

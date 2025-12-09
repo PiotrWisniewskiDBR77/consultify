@@ -68,6 +68,7 @@ const initialFullSession: FullSession = {
         businessModels: { score: 0, answers: [], status: 'NOT_STARTED' },
         dataManagement: { score: 0, answers: [], status: 'NOT_STARTED' },
         culture: { score: 0, answers: [], status: 'NOT_STARTED' },
+        cybersecurity: { score: 0, answers: [], status: 'NOT_STARTED' },
         aiMaturity: { score: 0, answers: [], status: 'NOT_STARTED' },
         completedAxes: []
     },

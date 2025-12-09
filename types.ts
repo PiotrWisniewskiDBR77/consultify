@@ -3,6 +3,7 @@ export enum AppView {
   WELCOME = 'WELCOME',
   AUTH = 'AUTH',
   DASHBOARD = 'DASHBOARD',
+  USER_DASHBOARD = 'USER_DASHBOARD',
 
   // Quick Assessment
   QUICK_STEP1_PROFILE = 'QUICK_STEP1_PROFILE',
@@ -16,6 +17,7 @@ export enum AppView {
   FULL_STEP1_MODELS = 'FULL_STEP1_MODELS',
   FULL_STEP1_DATA = 'FULL_STEP1_DATA',
   FULL_STEP1_CULTURE = 'FULL_STEP1_CULTURE',
+  FULL_STEP1_CYBERSECURITY = 'FULL_STEP1_CYBERSECURITY',
   FULL_STEP1_AI = 'FULL_STEP1_AI',
 
   FULL_STEP2_INITIATIVES = 'FULL_STEP2_INITIATIVES',
@@ -34,6 +36,9 @@ export enum AppView {
   // SaaS / Admin
   ADMIN_DASHBOARD = 'ADMIN_DASHBOARD',
   ADMIN_USERS = 'ADMIN_USERS',
+  ADMIN_PROJECTS = 'ADMIN_PROJECTS',
+  ADMIN_LLM = 'ADMIN_LLM',
+  ADMIN_KNOWLEDGE = 'ADMIN_KNOWLEDGE',
   SETTINGS_PROFILE = 'SETTINGS_PROFILE',
   SETTINGS_BILLING = 'SETTINGS_BILLING'
 }
@@ -117,6 +122,7 @@ export interface User {
   isAuthenticated: boolean;
   accessLevel: 'free' | 'full';
   preferredLanguage?: Language;
+  organizationId?: string;
 }
 
 export interface FreeSession {
@@ -144,11 +150,12 @@ export interface FreeSession {
 
 // --- FULL SESSION TYPES ---
 
-export type AxisId = 'processes' | 'digitalProducts' | 'businessModels' | 'dataManagement' | 'culture' | 'aiMaturity';
+export type AxisId = 'processes' | 'digitalProducts' | 'businessModels' | 'dataManagement' | 'culture' | 'cybersecurity' | 'aiMaturity';
 
 export interface AssessmentAxis {
   score: number;
   answers: number[]; // 1-7 scale values
+  areaScores?: { [areaId: string]: number }; // Granular scores per area (e.g., "1A": 3)
   status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
 }
 
@@ -204,6 +211,7 @@ export interface FullSession {
     businessModels: AssessmentAxis;
     dataManagement: AssessmentAxis;
     culture: AssessmentAxis;
+    cybersecurity: AssessmentAxis;
     aiMaturity: AssessmentAxis;
     completedAxes: AxisId[];
   };
@@ -216,6 +224,8 @@ export interface FullSession {
   step3Completed: boolean;
   step4Completed: boolean;
   step5Completed: boolean;
+
+  chatHistory?: ChatMessage[];
 }
 
 export interface SessionContext {
@@ -255,4 +265,24 @@ export interface ImplementationPlan {
     data: string;
     ai: string;
   };
+}
+
+export interface KnowledgeDoc {
+  id: string;
+  filename: string;
+  filepath: string;
+  status: 'pending' | 'indexing' | 'indexed' | 'error';
+  created_at: string;
+}
+
+export interface LLMProvider {
+  id: string;
+  name: string;
+  provider: 'openai' | 'anthropic' | 'google' | 'ollama' | 'local';
+  api_key: string;
+  endpoint: string;
+  model_id: string;
+  cost_per_1k: number;
+  is_active: boolean;
+  visibility: 'admin' | 'public' | 'beta';
 }

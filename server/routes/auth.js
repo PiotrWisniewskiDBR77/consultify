@@ -1,80 +1,104 @@
 const express = require('express');
 const router = express.Router();
+const db = require('../database');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const db = require('../database');
 const { v4: uuidv4 } = require('uuid');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'secret';
-
-// REGISTER
-router.post('/register', (req, res) => {
-    const { firstName, lastName, email, password, companyName, role, phone, accessLevel } = req.body;
-
-    if (!email || !password) {
-        return res.status(400).json({ error: 'Email and password are required' });
-    }
-
-    const hashedPassword = bcrypt.hashSync(password, 8);
-    const id = uuidv4();
-    // Default role CEO if not provided, unless admin panel sends it
-    const userRole = role || 'CEO';
-    const userAccess = accessLevel || 'free';
-
-    const sql = `INSERT INTO users (id, email, password, first_name, last_name, role, company_name, status, access_level, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`;
-
-    db.run(sql, [id, email, hashedPassword, firstName, lastName, userRole, companyName, 'active', userAccess], function (err) {
-        if (err) {
-            console.error(err);
-            if (err.message.includes('UNIQUE constraint failed')) {
-                return res.status(400).json({ error: 'Email already exists' });
-            }
-            return res.status(500).json({ error: 'Database error' });
-        }
-
-        const token = jwt.sign({ id: id, email: email, role: userRole }, JWT_SECRET, { expiresIn: '24h' });
-
-        // Return user without password
-        const user = {
-            id, firstName, lastName, email, companyName, role: userRole, status: 'active', accessLevel: userAccess, isAuthenticated: true
-        };
-
-        res.json({ user, token });
-    });
-});
+const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey_change_this_in_production';
 
 // LOGIN
 router.post('/login', (req, res) => {
     const { email, password } = req.body;
 
     db.get('SELECT * FROM users WHERE email = ?', [email], (err, user) => {
-        if (err) return res.status(500).json({ error: 'Database error' });
+        if (err) return res.status(500).json({ error: 'Server error' });
         if (!user) return res.status(404).json({ error: 'User not found' });
 
         const passwordIsValid = bcrypt.compareSync(password, user.password);
-        if (!passwordIsValid) {
-            return res.status(401).json({ token: null, error: 'Invalid password' });
-        }
+        if (!passwordIsValid) return res.status(401).json({ error: 'Invalid password' });
 
-        const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '24h' });
-
-        // Update last login
+        // Update Last Login
         db.run('UPDATE users SET last_login = datetime("now") WHERE id = ?', [user.id]);
 
-        const safeUser = {
-            id: user.id,
-            firstName: user.first_name,
-            lastName: user.last_name,
-            email: user.email,
-            companyName: user.company_name,
-            role: user.role,
-            status: user.status,
-            accessLevel: user.access_level,
-            isAuthenticated: true,
-            lastLogin: new Date().toISOString()
-        };
+        db.get('SELECT * FROM organizations WHERE id = ?', [user.organization_id], (err, org) => {
+            if (err) return res.status(500).json({ error: 'Server error' });
+            if (!org) return res.status(404).json({ error: 'Organization not found' });
 
-        res.json({ user: safeUser, token });
+            // Check if organization is blocked
+            if (org.status === 'blocked' && user.role !== 'SUPERADMIN') {
+                return res.status(403).json({ error: 'Your organization has been blocked. Contact support.' });
+            }
+
+            const token = jwt.sign({
+                id: user.id,
+                email: user.email,
+                role: user.role,
+                organizationId: user.organization_id
+            }, JWT_SECRET, { expiresIn: '24h' });
+
+            const safeUser = {
+                id: user.id,
+                email: user.email,
+                firstName: user.first_name,
+                lastName: user.last_name,
+                role: user.role,
+                status: user.status,
+                organizationId: user.organization_id,
+                companyName: org.name
+            };
+
+            res.json({ user: safeUser, token });
+        });
+    });
+});
+
+// REGISTER (New Company)
+router.post('/register', (req, res) => {
+    const { email, password, firstName, lastName, companyName } = req.body;
+
+    // Check if user exists
+    db.get('SELECT id FROM users WHERE email = ?', [email], (err, row) => {
+        if (row) return res.status(400).json({ error: 'Email already in use' });
+
+        const orgId = uuidv4();
+        const userId = uuidv4();
+        const hashedPassword = bcrypt.hashSync(password, 8);
+
+        // 1. Create Organization
+        const insertOrg = db.prepare(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`);
+        insertOrg.run(orgId, companyName || 'My Company', 'free', 'active', (err) => {
+            if (err) {
+                console.error('Register Org Error:', err);
+                return res.status(500).json({ error: 'Failed to create organization' });
+            }
+            insertOrg.finalize();
+
+            // 2. Create Admin User for that Org
+            const insertUser = db.prepare(`INSERT INTO users (id, organization_id, email, password, first_name, last_name, role) VALUES (?, ?, ?, ?, ?, ?, ?)`);
+            insertUser.run(userId, orgId, email, hashedPassword, firstName, lastName, 'ADMIN', (err) => {
+                if (err) {
+                    console.error('Register User Error:', err);
+                    return res.status(500).json({ error: 'Failed to create user' });
+                }
+                insertUser.finalize();
+
+                const token = jwt.sign({
+                    id: userId,
+                    email: email,
+                    role: 'ADMIN',
+                    organizationId: orgId
+                }, JWT_SECRET, { expiresIn: '24h' });
+
+                res.json({
+                    user: {
+                        id: userId, email, firstName, lastName, role: 'ADMIN',
+                        companyName: companyName, organizationId: orgId
+                    },
+                    token
+                });
+            });
+        });
     });
 });
 
