@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AppView, SessionMode, UserRole } from '../types';
 import { translations } from '../translations';
 import { useAppStore } from '../store/useAppStore';
+import { ModelSelector } from './ModelSelector';
 import {
   Shield,
   LayoutDashboard,
@@ -37,7 +38,9 @@ export const Sidebar: React.FC = () => {
     setIsSidebarOpen,
     currentUser,
     freeSessionData,
-    fullSessionData
+    fullSessionData,
+    theme,
+    toggleTheme
   } = useAppStore();
 
   const t = translations.sidebar;
@@ -122,7 +125,19 @@ export const Sidebar: React.FC = () => {
       label: t.resources[language],
       icon: <Box size={18} />,
       viewId: AppView.RESOURCES
-    }
+    },
+    ...(currentUser?.role === UserRole.ADMIN ? [{
+      id: 'ADMIN',
+      label: language === 'PL' ? 'Panel Administratora' : 'Admin Panel',
+      icon: <Shield size={18} />,
+      subItems: [
+        { id: 'ADMIN_DASHBOARD', label: t.dashboard[language], viewId: AppView.ADMIN_DASHBOARD },
+        { id: 'ADMIN_USERS', label: language === 'PL' ? 'Użytkownicy' : 'Users', viewId: AppView.ADMIN_USERS },
+        { id: 'ADMIN_PROJECTS', label: language === 'PL' ? 'Projekty' : 'Projects', viewId: AppView.ADMIN_PROJECTS },
+        { id: 'ADMIN_LLM', label: language === 'PL' ? 'Zarządzanie LLM' : 'LLM Management', viewId: AppView.ADMIN_LLM },
+        { id: 'ADMIN_KNOWLEDGE', label: language === 'PL' ? 'Baza Wiedzy' : 'Knowledge Base', viewId: AppView.ADMIN_KNOWLEDGE },
+      ]
+    }] : [])
   ];
 
   // Auto-expand sidebar based on currentView
@@ -188,14 +203,14 @@ export const Sidebar: React.FC = () => {
             ${paddingLeft}
             ${isLocked ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
             ${isActive
-              ? 'bg-gradient-to-r from-purple-600/20 to-transparent border-l-2 border-purple-500 text-white'
+              ? 'bg-gradient-to-r from-purple-600/10 to-transparent ltr:border-l-2 rtl:border-r-2 border-purple-500 text-purple-700 dark:text-white dark:from-purple-600/20'
               : isParentActive
-                ? 'text-white font-medium border-l-2 border-transparent'
-                : 'text-slate-400 hover:text-white hover:bg-white/5 border-l-2 border-transparent'}
+                ? 'text-navy-900 dark:text-white font-medium ltr:border-l-2 rtl:border-r-2 border-transparent'
+                : 'text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 ltr:border-l-2 rtl:border-r-2 border-transparent'}
           `}
         >
           <div className="flex items-center gap-3 overflow-hidden">
-            {item.icon && <span className={`${isActive || isParentActive ? 'text-purple-400' : 'text-slate-500 group-hover:text-slate-300'}`}>{item.icon}</span>}
+            {item.icon && <span className={`${isActive || isParentActive ? 'text-purple-600 dark:text-purple-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`}>{item.icon}</span>}
             <span className="truncate tracking-wide">
               {item.label}
             </span>
@@ -206,18 +221,18 @@ export const Sidebar: React.FC = () => {
               <CheckCircle2 size={14} className="text-green-500/80" />
             )}
             {isLocked && (
-              <Lock size={12} className="text-slate-500" />
+              <Lock size={12} className="text-slate-400 dark:text-slate-500" />
             )}
             {hasSubItems && (
-              <span className="text-slate-600">
-                {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+              <span className="text-slate-400 dark:text-slate-600">
+                {isExpanded ? <ChevronDown size={14} /> : <div className="rtl:rotate-180"><ChevronRight size={14} /></div>}
               </span>
             )}
           </div>
         </button>
 
         {hasSubItems && isExpanded && (
-          <div className="w-full bg-navy-900/20 border-l border-white/5 ml-4 my-1">
+          <div className="w-full bg-slate-50/50 dark:bg-navy-900/20 ltr:border-l rtl:border-r border-slate-200 dark:border-white/5 ltr:ml-4 rtl:mr-4 my-1">
             {item.subItems!.map(sub => renderMenuItem(sub, level + 1))}
           </div>
         )}
@@ -237,12 +252,14 @@ export const Sidebar: React.FC = () => {
 
       {/* Sidebar Container */}
       <div className={`
-        fixed inset-y-0 left-0 z-50 w-72 bg-navy-950 border-r border-elegant flex flex-col transition-transform duration-300 ease-in-out shrink-0
-        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 lg:relative'}
+        fixed inset-y-0 ltr:left-0 rtl:right-0 z-50 w-72 bg-white dark:bg-navy-950 ltr:border-r rtl:border-l border-slate-200 dark:border-elegant flex flex-col transition-all duration-300 ease-in-out shrink-0
+        ${isSidebarOpen
+          ? 'translate-x-0'
+          : language === 'AR' ? 'translate-x-full lg:translate-x-0 lg:relative' : '-translate-x-full lg:translate-x-0 lg:relative'}
       `}>
         {/* Header / Logo */}
-        <div className="h-20 flex items-center px-6 border-b border-elegant relative bg-navy-950">
-          <div className="flex items-center gap-3 font-bold text-xl tracking-tight text-white">
+        <div className="h-20 flex items-center px-6 border-b border-slate-200 dark:border-elegant relative bg-white dark:bg-navy-950 transition-colors">
+          <div className="flex items-center gap-3 font-bold text-xl tracking-tight text-navy-950 dark:text-white">
             <div className="h-8 px-2 rounded-sm bg-purple-600 flex items-center justify-center shadow-glow">
               <span className="text-white font-bold text-xs tracking-tighter">DBR77</span>
             </div>
@@ -252,42 +269,59 @@ export const Sidebar: React.FC = () => {
           {/* Mobile Close Button */}
           <button
             onClick={() => setIsSidebarOpen(false)}
-            className="lg:hidden absolute right-4 text-slate-400 hover:text-white"
+            className="lg:hidden absolute right-4 text-slate-400 hover:text-navy-900 dark:hover:text-white"
           >
             <X size={24} />
           </button>
         </div>
 
+        {/* Model Selector */}
+        <div className="relative">
+          <ModelSelector />
+        </div>
+
         {/* Scrollable Navigation */}
-        <nav className="flex-1 overflow-y-auto py-4 scrollbar-thin scrollbar-thumb-navy-800 scrollbar-track-transparent">
+        <nav className="flex-1 overflow-y-auto py-4 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-navy-800 scrollbar-track-transparent">
           <div className="space-y-1">
             {menuStructure.map(item => renderMenuItem(item))}
           </div>
         </nav>
 
         {/* Bottom Actions */}
-        <div className="p-4 border-t border-elegant bg-navy-950">
-          {/* Admin Link */}
-          {currentUser && currentUser.role === UserRole.ADMIN && (
-            <button
-              onClick={() => setCurrentView(AppView.ADMIN_DASHBOARD)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-md text-sm transition-colors mb-1 ${currentView.startsWith('ADMIN') ? 'bg-purple-600/20 text-purple-300' : 'text-slate-400 hover:text-white hover:bg-navy-900'}`}
-            >
-              <Shield size={18} />
-              Admin Panel
-            </button>
-          )}
+        <div className="p-4 border-t border-slate-200 dark:border-elegant bg-white dark:bg-navy-950 transition-colors">
+
+
+          <button
+            onClick={toggleTheme}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-sm text-slate-500 dark:text-slate-400 hover:text-navy-900 hover:bg-slate-100 dark:hover:text-white dark:hover:bg-navy-900 transition-colors mb-1"
+          >
+            {theme === 'dark' ? (
+              <>
+                <div className="w-4 h-4 rounded-full border border-current flex items-center justify-center">
+                  <div className="w-2 h-2 rounded-full bg-current" />
+                </div>
+                <span>Light Mode</span>
+              </>
+            ) : (
+              <>
+                <div className="w-4 h-4 rounded-full bg-navy-900 flex items-center justify-center text-white text-[10px]">
+                  🌙
+                </div>
+                <span>Dark Mode</span>
+              </>
+            )}
+          </button>
 
           <button
             onClick={() => setCurrentView(AppView.SETTINGS_PROFILE as AppView)}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-md text-sm transition-colors mb-1 ${currentView.startsWith('SETTINGS') ? 'bg-navy-800 text-white' : 'text-slate-400 hover:text-white hover:bg-navy-900'}`}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-md text-sm transition-colors mb-1 ${currentView.startsWith('SETTINGS') ? 'bg-slate-100 dark:bg-navy-800 text-navy-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-900'}`}
           >
             <Settings size={18} />
             {t.settings[language]}
           </button>
           <button
             onClick={logout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-sm text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-sm text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
           >
             <LogOut size={18} />
             {t.logOut[language]}

@@ -1,23 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { User, UserRole, Language } from '../types';
-
 import { Api } from '../services/api';
+import { User, UserRole, Language, AppView } from '../types';
+import { useAppStore } from '../store/useAppStore';
 import {
-    Users,
-    Search,
-    MoreVertical,
-    Plus,
-    Trash2,
-    Edit,
-    Shield,
-    TrendingUp,
-    Activity,
-
-
-    DollarSign,
-    X,
-    Check
+    Users, Search, Layers, Plus, Trash2, Edit, Shield, TrendingUp, Activity,
+    DollarSign, X, Check, Briefcase
 } from 'lucide-react';
+import { AdminLLMView } from './AdminLLMView';
+import { AdminKnowledgeView } from './AdminKnowledgeView';
+import { toast } from 'react-hot-toast';
 
 interface AdminViewProps {
     currentUser: User;
@@ -25,30 +16,36 @@ interface AdminViewProps {
     language: Language;
 }
 
+interface Project {
+    id: string;
+    name: string;
+    status: string;
+    owner_first_name?: string;
+    owner_last_name?: string;
+    created_at: string;
+}
+
 export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate, language }) => {
-    const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'USERS' | 'CODES'>('DASHBOARD');
+    const { currentView } = useAppStore();
+    // const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'USERS' | 'PROJECTS'>('DASHBOARD'); // Removed internal state
     const [users, setUsers] = useState<User[]>([]);
+    const [projects, setProjects] = useState<Project[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
+
+    // Modals
     const [showAddUserModal, setShowAddUserModal] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
+    const [showAddProjectModal, setShowAddProjectModal] = useState(false);
+    const [newProjectName, setNewProjectName] = useState('');
 
-    // Form states
+    // User Form State
     const [formData, setFormData] = useState({
-        firstName: '',
-        lastName: '',
-        email: '',
-        companyName: '',
-        role: UserRole.OTHER,
-        status: 'active'
+        firstName: '', lastName: '', email: '', role: UserRole.OTHER, status: 'active'
     });
 
-
-
-    // ...
-
-    // Refresh data on mount
     useEffect(() => {
         loadUsers();
+        loadProjects();
     }, []);
 
     const loadUsers = async () => {
@@ -57,77 +54,86 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate, l
             setUsers(data);
         } catch (e) {
             console.error(e);
+            toast.error('Failed to load users');
+        }
+    };
+
+    const loadProjects = async () => {
+        try {
+            const data = await Api.getProjects();
+            setProjects(data);
+        } catch (e) {
+            console.error(e);
+            toast.error('Failed to load projects');
         }
     };
 
     const handleDeleteUser = async (id: string) => {
         if (window.confirm('Are you sure you want to delete this user?')) {
-            await Api.deleteUser(id);
-            loadUsers();
+            try {
+                await Api.deleteUser(id);
+                toast.success('User deleted');
+                loadUsers();
+            } catch (e) { toast.error('Failed to delete user'); }
         }
+    };
+
+    const handleDeleteProject = async (id: string) => {
+        if (window.confirm('Are you sure you want to delete this project?')) {
+            try {
+                await Api.deleteProject(id);
+                toast.success('Project deleted');
+                loadProjects();
+            } catch (e) { toast.error('Failed to delete project'); }
+        }
+    };
+
+    const handleCreateProject = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            await Api.createProject({ name: newProjectName });
+            toast.success('Project created');
+            setNewProjectName('');
+            setShowAddProjectModal(false);
+            loadProjects();
+        } catch (e) { toast.error('Failed to create project'); }
     };
 
     const handleSaveUser = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             if (editingUser) {
-                // Edit mode
                 await Api.updateUser(editingUser.id, formData);
+                toast.success('User updated');
             } else {
-                // Create mode
-                await Api.addUser({
-                    ...formData,
-                    phone: '',
-                    password: 'welcome123', // Default
-                    accessLevel: 'full'
-                });
+                await Api.addUser({ ...formData, password: 'welcome123' });
+                toast.success('User created');
             }
-            // Reset and refresh
             setShowAddUserModal(false);
             setEditingUser(null);
             loadUsers();
-            setFormData({
-                firstName: '',
-                lastName: '',
-                email: '',
-                companyName: '',
-                role: UserRole.OTHER,
-                status: 'active'
-            });
         } catch (err: any) {
-            alert(err.message);
+            toast.error(err.message || 'Error saving user');
         }
     };
 
     const openEditModal = (user: User) => {
         setEditingUser(user);
         setFormData({
-            firstName: user.firstName,
-            lastName: user.lastName,
-            email: user.email,
-            companyName: user.companyName,
-            role: user.role || UserRole.OTHER,
-            status: user.status || 'active'
+            firstName: user.firstName, lastName: user.lastName, email: user.email,
+            role: user.role || UserRole.OTHER, status: user.status || 'active'
         });
         setShowAddUserModal(true);
     };
 
     const openAddModal = () => {
         setEditingUser(null);
-        setFormData({
-            firstName: '',
-            lastName: '',
-            email: '',
-            companyName: '',
-            role: UserRole.OTHER,
-            status: 'active'
-        });
+        setFormData({ firstName: '', lastName: '', email: '', role: UserRole.OTHER, status: 'active' });
         setShowAddUserModal(true);
     };
 
     const filteredUsers = users.filter(u =>
         u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        u.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         u.lastName.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
@@ -136,64 +142,66 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate, l
         return 'bg-blue-500/20 text-blue-400 border-blue-500/50';
     };
 
-    // --- SUB-COMPONENTS ---
-
-    const StatsCard = ({ title, value, icon: Icon, color }: any) => (
-        <div className="bg-navy-900 border border-white/5 rounded-xl p-6 flex items-center justify-between">
-            <div>
-                <p className="text-slate-400 text-xs uppercase tracking-wider mb-1">{title}</p>
-                <h3 className="text-2xl font-bold text-white">{value}</h3>
-            </div>
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${color}`}>
-                <Icon size={24} />
-            </div>
-        </div>
-    );
+    // --- RENDERERS ---
 
     const renderDashboard = () => (
         <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <StatsCard
-                    title="Total Users"
-                    value={users.length}
-                    icon={Users}
-                    color="bg-blue-500/20 text-blue-400"
-                />
-                <StatsCard
-                    title="Active Sessions"
-                    value={users.filter(u => u.status === 'active').length}
-                    icon={Activity}
-                    color="bg-green-500/20 text-green-400"
-                />
-                <StatsCard
-                    title="Est. Revenue"
-                    value="$12.4k"
-                    icon={DollarSign}
-                    color="bg-purple-500/20 text-purple-400"
-                />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-navy-900 border border-white/5 rounded-xl p-6 h-64 flex flex-col justify-center items-center text-slate-500">
-                    <TrendingUp size={48} className="mb-4 opacity-50" />
-                    <p>Usage Analytics Graph (Coming Soon)</p>
-                </div>
-                <div className="bg-navy-900 border border-white/5 rounded-xl p-6">
-                    <h3 className="text-white font-semibold mb-4">Recent Activity</h3>
-                    <div className="space-y-4">
-                        {users.slice(0, 3).map(user => (
-                            <div key={user.id} className="flex items-center gap-3 text-sm">
-                                <div className="w-8 h-8 rounded-full bg-navy-800 flex items-center justify-center text-slate-400">
-                                    {user.firstName[0]}{user.lastName[0]}
-                                </div>
-                                <div>
-                                    <p className="text-white">{user.firstName} logged in</p>
-                                    <p className="text-xs text-slate-500">{new Date(user.lastLogin || '').toLocaleDateString()}</p>
-                                </div>
-                            </div>
-                        ))}
+                <div className="bg-navy-900 border border-white/5 rounded-xl p-6 flex items-center justify-between">
+                    <div>
+                        <p className="text-slate-400 text-xs uppercase tracking-wider mb-1">Total Users</p>
+                        <h3 className="text-2xl font-bold text-white">{users.length}</h3>
                     </div>
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-blue-500/20 text-blue-400"><Users size={24} /></div>
                 </div>
+                <div className="bg-navy-900 border border-white/5 rounded-xl p-6 flex items-center justify-between">
+                    <div>
+                        <p className="text-slate-400 text-xs uppercase tracking-wider mb-1">Active Projects</p>
+                        <h3 className="text-2xl font-bold text-white">{projects.length}</h3>
+                    </div>
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-green-500/20 text-green-400"><Briefcase size={24} /></div>
+                </div>
+                <div className="bg-navy-900 border border-white/5 rounded-xl p-6 flex items-center justify-between">
+                    <div>
+                        <p className="text-slate-400 text-xs uppercase tracking-wider mb-1">Est. Revenue</p>
+                        <h3 className="text-2xl font-bold text-white">$0.00</h3>
+                    </div>
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-purple-500/20 text-purple-400"><DollarSign size={24} /></div>
+                </div>
+            </div>
+        </div>
+    );
+
+    const renderProjects = () => (
+        <div className="space-y-4">
+            <div className="flex justify-between items-center mb-6">
+                <h2 className="text-lg font-semibold text-white">Active Projects</h2>
+                <button
+                    onClick={() => setShowAddProjectModal(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition-colors text-sm font-medium"
+                >
+                    <Plus size={16} /> New Project
+                </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {projects.map(p => (
+                    <div key={p.id} className="bg-navy-900 border border-white/5 rounded-xl p-6 hover:bg-navy-800 transition-colors group relative">
+                        <div className="flex justify-between items-start mb-4">
+                            <div className="w-10 h-10 rounded bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                                <Layers size={20} />
+                            </div>
+                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onClick={() => handleDeleteProject(p.id)} className="text-slate-500 hover:text-red-400"><Trash2 size={16} /></button>
+                            </div>
+                        </div>
+                        <h3 className="font-semibold text-white mb-1">{p.name}</h3>
+                        <p className="text-xs text-slate-400 mb-4">Owner: {p.owner_first_name || 'Unknown'} {p.owner_last_name || ''}</p>
+                        <div className="flex justify-between items-center text-xs">
+                            <span className="bg-green-500/10 text-green-400 px-2 py-0.5 rounded capitalize">{p.status}</span>
+                            <span className="text-slate-600">{new Date(p.created_at).toLocaleDateString()}</span>
+                        </div>
+                    </div>
+                ))}
             </div>
         </div>
     );
@@ -214,8 +222,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate, l
                     onClick={openAddModal}
                     className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors text-sm font-medium shadow-lg shadow-purple-900/20"
                 >
-                    <Plus size={16} />
-                    Add User
+                    <Plus size={16} /> Add User
                 </button>
             </div>
 
@@ -226,7 +233,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate, l
                             <th className="px-6 py-4">User</th>
                             <th className="px-6 py-4">Role</th>
                             <th className="px-6 py-4">Status</th>
-                            <th className="px-6 py-4">Last Login</th>
                             <th className="px-6 py-4 text-right">Actions</th>
                         </tr>
                     </thead>
@@ -250,40 +256,18 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate, l
                                     </span>
                                 </td>
                                 <td className="px-6 py-4">
-                                    <div className="flex items-center gap-2">
-                                        <span className={`w-2 h-2 rounded-full ${user.status === 'active' ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                                        <span className="capitalize text-white">{user.status}</span>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                    {user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never'}
+                                    <span className={`capitalize ${user.status === 'active' ? 'text-green-400' : 'text-red-400'}`}>{user.status}</span>
                                 </td>
                                 <td className="px-6 py-4 text-right">
                                     <div className="flex items-center justify-end gap-2">
-                                        <button
-                                            onClick={() => openEditModal(user)}
-                                            className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-colors"
-                                        >
-                                            <Edit size={16} />
-                                        </button>
-                                        <button
-                                            onClick={() => handleDeleteUser(user.id)}
-                                            className="p-2 hover:bg-red-500/20 rounded-lg text-slate-400 hover:text-red-400 transition-colors"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
+                                        <button onClick={() => openEditModal(user)} className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white"><Edit size={16} /></button>
+                                        <button onClick={() => handleDeleteUser(user.id)} className="p-2 hover:bg-red-500/20 rounded-lg text-slate-400 hover:text-red-400"><Trash2 size={16} /></button>
                                     </div>
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
-
-                {filteredUsers.length === 0 && (
-                    <div className="p-8 text-center text-slate-500">
-                        No users found matching "{searchTerm}"
-                    </div>
-                )}
             </div>
         </div>
     );
@@ -295,135 +279,61 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate, l
                 <div>
                     <h1 className="text-xl font-bold text-white flex items-center gap-2">
                         <Shield className="text-purple-500" />
-                        Admin Panel
+                        Admin Panel: {currentUser.companyName}
                     </h1>
-                    <p className="text-xs text-slate-500">Manage users, licenses, and system settings</p>
                 </div>
 
-                <div className="flex bg-navy-900 p-1 rounded-lg border border-white/10">
-                    <button
-                        onClick={() => setActiveTab('DASHBOARD')}
-                        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'DASHBOARD' ? 'bg-navy-800 text-white shadow-sm' : 'text-slate-400 hover:text-white'}`}
-                    >
-                        Dashboard
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('USERS')}
-                        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'USERS' ? 'bg-navy-800 text-white shadow-sm' : 'text-slate-400 hover:text-white'}`}
-                    >
-                        User Management
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('CODES')}
-                        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'CODES' ? 'bg-navy-800 text-white shadow-sm' : 'text-slate-400 hover:text-white'}`}
-                    >
-                        Access Codes
-                    </button>
-                </div>
             </div>
 
             <div className="flex-1 overflow-auto p-8">
-                {activeTab === 'DASHBOARD' && renderDashboard()}
-                {activeTab === 'USERS' && renderUsers()}
-                {activeTab === 'CODES' && (
-                    <div className="flex items-center justify-center h-64 border border-dashed border-white/10 rounded-xl text-slate-500">
-                        Access Code Management Module (Not Implemented in MVP)
-                    </div>
-                )}
+                {currentView === AppView.ADMIN_DASHBOARD && renderDashboard()}
+                {currentView === AppView.ADMIN_USERS && renderUsers()}
+                {currentView === AppView.ADMIN_PROJECTS && renderProjects()}
+                {currentView === AppView.ADMIN_LLM && <AdminLLMView />}
+                {currentView === AppView.ADMIN_KNOWLEDGE && <AdminKnowledgeView />}
             </div>
 
-
+            {/* Add User Modal */}
             {showAddUserModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                    <div className="bg-navy-900 border border-white/10 rounded-xl p-8 w-full max-w-md shadow-2xl animate-in fade-in zoom-in-95">
+                    <div className="bg-navy-900 border border-white/10 rounded-xl p-8 w-full max-w-md shadow-2xl">
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-bold text-white">
-                                {editingUser ? 'Edit User' : 'Add New User'}
-                            </h2>
-                            <button onClick={() => setShowAddUserModal(false)} className="text-slate-400 hover:text-white">
-                                <X size={20} />
-                            </button>
+                            <h2 className="text-xl font-bold text-white">{editingUser ? 'Edit User' : 'Add New User'}</h2>
+                            <button onClick={() => setShowAddUserModal(false)} className="text-slate-400 hover:text-white"><X size={20} /></button>
                         </div>
-
                         <form onSubmit={handleSaveUser} className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                    <label className="text-xs text-slate-400">First Name</label>
-                                    <input
-                                        required
-                                        value={formData.firstName}
-                                        onChange={e => setFormData({ ...formData, firstName: e.target.value })}
-                                        className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white text-sm focus:border-purple-500 outline-none"
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs text-slate-400">Last Name</label>
-                                    <input
-                                        required
-                                        value={formData.lastName}
-                                        onChange={e => setFormData({ ...formData, lastName: e.target.value })}
-                                        className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white text-sm focus:border-purple-500 outline-none"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-1">
-                                <label className="text-xs text-slate-400">Email</label>
-                                <input
-                                    required
-                                    type="email"
-                                    value={formData.email}
-                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                    className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white text-sm focus:border-purple-500 outline-none"
-                                />
-                            </div>
-
-                            <div className="space-y-1">
-                                <label className="text-xs text-slate-400">Company</label>
-                                <input
-                                    required
-                                    value={formData.companyName}
-                                    onChange={e => setFormData({ ...formData, companyName: e.target.value })}
-                                    className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white text-sm focus:border-purple-500 outline-none"
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                    <label className="text-xs text-slate-400">Role</label>
-                                    <select
-                                        value={formData.role}
-                                        onChange={e => setFormData({ ...formData, role: e.target.value as any })}
-                                        className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white text-sm focus:border-purple-500 outline-none"
-                                    >
-                                        <option value={UserRole.OTHER}>User (Other)</option>
-                                        <option value="ceo">CEO</option>
-                                        <option value="manager">Manager</option>
-                                        <option value={UserRole.ADMIN}>Admin</option>
-                                    </select>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs text-slate-400">Status</label>
-                                    <select
-                                        value={formData.status}
-                                        onChange={e => setFormData({ ...formData, status: e.target.value })}
-                                        className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white text-sm focus:border-purple-500 outline-none"
-                                    >
-                                        <option value="active">Active</option>
-                                        <option value="inactive">Inactive</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <button type="submit" className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-semibold mt-4 flex items-center justify-center gap-2">
-                                <Check size={18} />
-                                {editingUser ? 'Save Changes' : 'Create User'}
-                            </button>
+                            <input required placeholder="First Name" value={formData.firstName} onChange={e => setFormData({ ...formData, firstName: e.target.value })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" />
+                            <input required placeholder="Last Name" value={formData.lastName} onChange={e => setFormData({ ...formData, lastName: e.target.value })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" />
+                            <input required placeholder="Email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" />
+                            <select value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value as any })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white">
+                                <option value="USER">User</option>
+                                <option value="MANAGER">Manager</option>
+                                <option value="ADMIN">Admin</option>
+                            </select>
+                            <button type="submit" className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-semibold mt-4">Save</button>
                         </form>
                     </div>
                 </div>
-            )
-            }
-        </div >
+            )}
+
+            {/* Add Project Modal */}
+            {showAddProjectModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                    <div className="bg-navy-900 border border-white/10 rounded-xl p-8 w-full max-w-md shadow-2xl">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-bold text-white">Create New Project</h2>
+                            <button onClick={() => setShowAddProjectModal(false)} className="text-slate-400 hover:text-white"><X size={20} /></button>
+                        </div>
+                        <form onSubmit={handleCreateProject} className="space-y-4">
+                            <div>
+                                <label className="block text-xs text-slate-400 mb-1">Project Name (e.g. "Digital Transformation 2025")</label>
+                                <input required value={newProjectName} onChange={e => setNewProjectName(e.target.value)} className="w-full bg-navy-950 border border-white/10 rounded p-3 text-white focus:border-purple-500 outline-none" placeholder="Enter project name..." />
+                            </div>
+                            <button type="submit" className="w-full py-3 bg-green-600 hover:bg-green-500 text-white rounded-lg font-semibold mt-4">Create Project</button>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </div>
     );
 };

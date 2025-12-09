@@ -26,6 +26,14 @@ interface AppState {
     freeSessionData: Partial<FreeSession>;
     fullSessionData: FullSession;
 
+    // Project Context
+    currentProjectId: string | null;
+    setCurrentProjectId: (projectId: string | null) => void;
+
+    // LLM Model Selection
+    selectedModelId: string | null;
+    setSelectedModelId: (modelId: string | null) => void;
+
     // Actions
     setCurrentView: (view: AppView) => void;
     setSessionMode: (mode: SessionMode) => void;
@@ -43,6 +51,8 @@ interface AppState {
     setFreeSessionData: (data: Partial<FreeSession> | ((prev: Partial<FreeSession>) => Partial<FreeSession>)) => void;
     setFullSessionData: (data: Partial<FullSession> | ((prev: FullSession) => FullSession)) => void;
     logout: () => void;
+    theme: 'light' | 'dark';
+    toggleTheme: () => void;
 }
 
 const initialFreeSession: Partial<FreeSession> = {
@@ -61,6 +71,7 @@ const initialFullSession: FullSession = {
         businessModels: { score: 0, answers: [], status: 'NOT_STARTED' },
         dataManagement: { score: 0, answers: [], status: 'NOT_STARTED' },
         culture: { score: 0, answers: [], status: 'NOT_STARTED' },
+        cybersecurity: { score: 0, answers: [], status: 'NOT_STARTED' },
         aiMaturity: { score: 0, answers: [], status: 'NOT_STARTED' },
         completedAxes: []
     },
@@ -86,6 +97,8 @@ export const useAppStore = create<AppState>()(
             isBotTyping: false,
             freeSessionData: initialFreeSession,
             fullSessionData: initialFullSession,
+            currentProjectId: null,
+            selectedModelId: null,
 
             setCurrentView: (view) => set({ currentView: view }),
             setSessionMode: (mode) => set({ sessionMode: mode }),
@@ -93,6 +106,8 @@ export const useAppStore = create<AppState>()(
             setAuthInitialStep: (step) => set({ authInitialStep: step }),
             setLanguage: (lang) => set({ language: lang }),
             setIsSidebarOpen: (isOpen) => set({ isSidebarOpen: isOpen }),
+            setCurrentProjectId: (pid) => set({ currentProjectId: pid }),
+            setSelectedModelId: (modelId) => set({ selectedModelId: modelId }),
 
             addChatMessage: (message) => set((state) => ({ activeChatMessages: [...state.activeChatMessages, message] })),
             setChatMessages: (messages) => set({ activeChatMessages: messages }),
@@ -113,8 +128,12 @@ export const useAppStore = create<AppState>()(
                 isSidebarOpen: false,
                 activeChatMessages: [],
                 freeSessionData: initialFreeSession,
-                fullSessionData: initialFullSession
+                fullSessionData: initialFullSession,
+                currentProjectId: null,
+                selectedModelId: null
             }),
+            theme: 'dark',
+            toggleTheme: () => set((state) => ({ theme: state.theme === 'dark' ? 'light' : 'dark' })),
         }),
         {
             name: 'consultify-storage', // unique name for localStorage
@@ -126,7 +145,10 @@ export const useAppStore = create<AppState>()(
                 language: state.language,
                 activeChatMessages: state.activeChatMessages, // Persisting chat!
                 freeSessionData: state.freeSessionData,
-                fullSessionData: state.fullSessionData
+                fullSessionData: state.fullSessionData,
+                currentProjectId: state.currentProjectId,
+                selectedModelId: state.selectedModelId,
+                theme: state.theme
             }),
         }
     )

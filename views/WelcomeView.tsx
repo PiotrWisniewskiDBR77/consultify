@@ -167,11 +167,11 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({
   const currentLang = languages.find(l => l.code === language) || languages[0];
 
   return (
-    <div className="flex flex-col h-full w-full bg-navy-950 text-white overflow-hidden">
+    <div className="flex flex-col h-full w-full bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white overflow-hidden transition-colors duration-300">
 
       {/* GLOBAL HEADER (Only for Welcome View) */}
-      <header className="h-20 border-b border-elegant flex items-center justify-between px-8 lg:px-12 bg-navy-950 shrink-0 relative z-50">
-        <div className="flex items-center gap-3 font-bold text-xl tracking-tight text-white">
+      <header className="h-20 border-b border-slate-200 dark:border-elegant flex items-center justify-between px-8 lg:px-12 bg-white dark:bg-navy-950 shrink-0 relative z-50 transition-colors duration-300">
+        <div className="flex items-center gap-3 font-bold text-xl tracking-tight text-navy-950 dark:text-white">
           <div className="h-8 px-2 rounded-sm bg-purple-600 flex items-center justify-center shadow-glow">
             <span className="text-white font-bold text-xs tracking-tighter">DBR77</span>
           </div>
@@ -184,7 +184,7 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({
           <div className="relative">
             <button
               onClick={() => setIsLangOpen(!isLangOpen)}
-              className="text-sm text-slate-300 hover:text-white flex items-center gap-2 transition-colors focus:outline-none px-2 py-1 rounded hover:bg-white/5"
+              className="text-sm text-slate-500 hover:text-navy-900 dark:text-slate-300 dark:hover:text-white flex items-center gap-2 transition-colors focus:outline-none px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-white/5"
             >
               <span>{currentLang.flag}</span>
               <span>{currentLang.code}</span>
@@ -194,12 +194,12 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({
             {isLangOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setIsLangOpen(false)}></div>
-                <div className="absolute top-full right-0 mt-2 w-40 bg-navy-900 border border-white/10 rounded-lg shadow-xl py-2 z-50 backdrop-blur-md">
+                <div className="absolute top-full right-0 mt-2 w-40 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg shadow-xl py-2 z-50 backdrop-blur-md">
                   {languages.map((lang) => (
                     <button
                       key={lang.code}
                       onClick={() => handleLanguageSelect(lang.code)}
-                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-white/10 transition-colors text-left ${language === lang.code ? 'text-purple-400 bg-purple-500/10' : 'text-slate-300'
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-slate-100 dark:hover:bg-white/10 transition-colors text-left ${language === lang.code ? 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10' : 'text-slate-600 dark:text-slate-300'
                         }`}
                     >
                       <span>{lang.flag}</span>
@@ -211,25 +211,19 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({
             )}
           </div>
 
-          <div className="h-4 w-px bg-white/15"></div>
+          <div className="h-4 w-px bg-slate-200 dark:bg-white/15"></div>
           <button
             onClick={onLoginClick}
-            className="text-sm font-medium text-white hover:text-purple-400 transition-colors"
+            className="text-sm font-medium text-navy-700 hover:text-purple-600 dark:text-white dark:hover:text-purple-400 transition-colors"
           >
             {text.logIn}
           </button>
 
           {/* Admin Login Button - Added per request */}
-          <button
-            onClick={onLoginClick}
-            className="text-xs font-semibold text-slate-500 hover:text-white transition-colors border border-slate-700 hover:border-white px-3 py-1 rounded uppercase tracking-wider"
-            title="Admin Portal Access"
-          >
-            ADMIN
-          </button>
+
           <button
             onClick={() => onStartSession(SessionMode.FREE)}
-            className="px-5 py-2 bg-white text-navy-950 hover:bg-slate-200 font-semibold text-sm rounded-sm transition-colors"
+            className="px-5 py-2 bg-navy-900 text-white dark:bg-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-slate-200 font-semibold text-sm rounded-sm transition-colors"
           >
             {text.register}
           </button>
@@ -240,14 +234,14 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({
       <div className="flex flex-1 overflow-hidden" dir={language === 'AR' ? 'rtl' : 'ltr'}>
 
         {/* LEFT COLUMN - PATH SELECTION */}
-        <div className="w-1/2 p-8 lg:p-12 flex flex-col justify-center border-r border-elegant overflow-y-auto">
+        <div className="w-1/2 p-8 lg:p-12 flex flex-col justify-center border-r border-slate-200 dark:border-elegant overflow-y-auto">
           <div className="max-w-xl mx-auto w-full space-y-8">
 
             <div>
-              <h1 className="text-3xl lg:text-4xl font-bold mb-2 tracking-tight">
-                {text.titleStart} <span className="text-purple-500">{text.titleEnd}</span>
+              <h1 className="text-3xl lg:text-4xl font-bold mb-2 tracking-tight text-navy-950 dark:text-white">
+                {text.titleStart} <span className="text-purple-600 dark:text-purple-500">{text.titleEnd}</span>
               </h1>
-              <p className="text-slate-400 text-lg">
+              <p className="text-slate-500 dark:text-slate-400 text-lg">
                 {text.subtitle}
               </p>
             </div>
@@ -255,26 +249,26 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({
             <div className="space-y-6">
 
               {/* OPTION 1: QUICK ASSESSMENT */}
-              <div className="group relative bg-navy-900 border border-white/10 hover:border-purple-500/50 rounded-lg p-6 transition-all duration-300 hover:shadow-glow cursor-pointer"
+              <div className="group relative bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 hover:border-purple-500/50 rounded-lg p-6 transition-all duration-300 hover:shadow-lg dark:hover:shadow-glow cursor-pointer"
                 onClick={() => onStartSession(SessionMode.FREE)}>
                 <div className={`absolute top-0 ${language === 'AR' ? 'left-0' : 'right-0'} p-4 opacity-10 group-hover:opacity-100 transition-opacity`}>
                   <ArrowRight className={`text-purple-500 ${language === 'AR' ? 'rotate-180' : ''}`} size={24} />
                 </div>
 
                 <div className="flex items-start gap-4 mb-4">
-                  <div className="w-12 h-12 rounded bg-purple-900/30 flex items-center justify-center border border-purple-500/30 group-hover:bg-purple-600 group-hover:border-purple-600 transition-colors">
-                    <Zap className="text-purple-300 group-hover:text-white" size={24} />
+                  <div className="w-12 h-12 rounded bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center border border-purple-100 dark:border-purple-500/30 group-hover:bg-purple-600 group-hover:border-purple-600 transition-colors">
+                    <Zap className="text-purple-600 dark:text-purple-300 group-hover:text-white" size={24} />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-white group-hover:text-purple-400 transition-colors">{text.quickTitle}</h3>
+                    <h3 className="text-xl font-semibold text-navy-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">{text.quickTitle}</h3>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs font-medium px-2 py-0.5 rounded bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">{text.quickSteps}</span>
+                      <span className="text-xs font-medium px-2 py-0.5 rounded bg-yellow-100 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-500/20">{text.quickSteps}</span>
                       <span className="text-xs text-slate-500">{text.quickTime}</span>
                     </div>
                   </div>
                 </div>
 
-                <p className="text-slate-400 text-sm mb-6 leading-relaxed">
+                <p className="text-slate-500 dark:text-slate-400 text-sm mb-6 leading-relaxed">
                   {text.quickDesc}
                 </p>
 
@@ -284,35 +278,35 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({
               </div>
 
               {/* OPTION 2: FULL TRANSFORMATION */}
-              <div className="group relative bg-navy-900 border border-white/10 hover:border-blue-500/50 rounded-lg p-6 transition-all duration-300 cursor-pointer"
+              <div className="group relative bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 hover:border-blue-500/50 rounded-lg p-6 transition-all duration-300 cursor-pointer hover:shadow-lg"
                 onClick={() => onStartSession(SessionMode.FULL)}>
 
                 <div className="flex items-start gap-4 mb-4">
-                  <div className="w-12 h-12 rounded bg-navy-800 flex items-center justify-center border border-white/10 group-hover:border-blue-500/50 transition-colors">
-                    <Layers className="text-slate-300 group-hover:text-blue-400" size={24} />
+                  <div className="w-12 h-12 rounded bg-slate-100 dark:bg-navy-800 flex items-center justify-center border border-slate-200 dark:border-white/10 group-hover:border-blue-500/50 transition-colors">
+                    <Layers className="text-slate-500 dark:text-slate-300 group-hover:text-blue-500 dark:group-hover:text-blue-400" size={24} />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-white group-hover:text-blue-400 transition-colors">{text.fullTitle}</h3>
+                    <h3 className="text-xl font-semibold text-navy-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{text.fullTitle}</h3>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs font-medium px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">{text.fullSteps}</span>
+                      <span className="text-xs font-medium px-2 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20">{text.fullSteps}</span>
                       <span className="text-xs text-slate-500">{text.fullTime}</span>
                     </div>
                   </div>
                 </div>
 
-                <p className="text-slate-400 text-sm mb-6 leading-relaxed">
+                <p className="text-slate-500 dark:text-slate-400 text-sm mb-6 leading-relaxed">
                   {text.fullDesc}
                 </p>
 
                 <div className="space-y-2 mb-6">
                   {text.fullFeatures.map((feature, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-sm text-slate-400">
+                    <div key={idx} className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                       <CheckCircle2 size={14} className="text-blue-500" /> <span>{feature}</span>
                     </div>
                   ))}
                 </div>
 
-                <button className="w-full py-3 bg-transparent border border-white/20 hover:border-white text-white font-medium rounded transition-colors flex items-center justify-center gap-2">
+                <button className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded transition-colors flex items-center justify-center gap-2">
                   <Lock size={16} />
                   {text.fullBtn}
                 </button>
@@ -320,49 +314,51 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({
 
             </div>
 
-            <div className="pt-8 border-t border-elegant">
-              <h4 className="text-sm font-semibold text-white mb-2">{text.masterclassTitle}</h4>
-              <p className="text-xs text-slate-400 mb-4">{text.masterclassDesc}</p>
-              <a href="#" className="text-xs text-purple-400 hover:text-purple-300 underline flex items-center gap-1">
-                {text.masterclassLink} {language === 'AR' ? '←' : '→'}
-              </a>
-            </div>
+
 
           </div>
         </div>
 
         {/* RIGHT COLUMN - VIDEO INTRO */}
-        <div className="w-1/2 relative bg-navy-950 flex flex-col items-center justify-center p-12">
+        <div className="w-1/2 relative bg-slate-50 dark:bg-navy-950 flex flex-col items-center justify-center p-12 transition-colors duration-300">
           {/* Decorative background elements */}
-          <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-purple-900/20 via-navy-950 to-navy-950 pointer-events-none"></div>
-          <div className="absolute bottom-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-blue-900/10 via-navy-950 to-navy-950 pointer-events-none"></div>
+          <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-purple-100/50 dark:from-purple-900/20 via-slate-50 dark:via-navy-950 to-slate-50 dark:to-navy-950 pointer-events-none transition-colors duration-300"></div>
+          <div className="absolute bottom-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-blue-100/50 dark:from-blue-900/10 via-slate-50 dark:via-navy-950 to-slate-50 dark:to-navy-950 pointer-events-none transition-colors duration-300"></div>
 
           <div className="relative z-10 w-full max-w-2xl">
             <div className="mb-8 text-center">
-              <h2 className="text-2xl font-light tracking-wide text-white mb-2">{text.videoTitle}</h2>
+              <h2 className="text-2xl font-light tracking-wide text-navy-900 dark:text-white mb-2">{text.videoTitle}</h2>
               <div className="h-0.5 w-16 bg-purple-600 mx-auto"></div>
             </div>
 
             {/* Video Player Placeholder */}
-            <div className="aspect-video w-full bg-navy-900 border border-white/20 rounded-xl overflow-hidden shadow-2xl relative group cursor-pointer">
-              <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all flex items-center justify-center">
-                <div className="w-20 h-20 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30 group-hover:scale-110 transition-transform">
-                  <Play size={32} className="text-white fill-white ml-1" />
+            <div className="aspect-video w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/20 rounded-xl overflow-hidden shadow-2xl relative group cursor-pointer">
+              <div className="absolute inset-0 bg-black/5 dark:bg-black/40 group-hover:bg-black/10 dark:group-hover:bg-black/20 transition-all flex items-center justify-center">
+                <div className="w-20 h-20 bg-white/40 dark:bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/50 dark:border-white/30 group-hover:scale-110 transition-transform">
+                  <Play size={32} className="text-navy-900 dark:text-white fill-current ml-1" />
                 </div>
               </div>
               {/* Abstract UI representation as thumbnail */}
               <div className="w-full h-full p-8 flex flex-col gap-4 opacity-50">
-                <div className="w-1/3 h-4 bg-slate-700 rounded"></div>
+                <div className="w-1/3 h-4 bg-slate-200 dark:bg-slate-700 rounded"></div>
                 <div className="flex gap-4 h-full">
-                  <div className="w-1/3 h-full bg-slate-800 rounded border border-slate-700"></div>
-                  <div className="w-2/3 h-full bg-slate-800 rounded border border-slate-700"></div>
+                  <div className="w-1/3 h-full bg-slate-100 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700"></div>
+                  <div className="w-2/3 h-full bg-slate-100 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700"></div>
                 </div>
               </div>
             </div>
 
             <div className="mt-6 text-center">
-              <p className="text-lg font-medium text-white">{text.videoPerson}</p>
-              <p className="text-sm text-purple-400">{text.videoRole}</p>
+              <p className="text-lg font-medium text-navy-900 dark:text-white">{text.videoPerson}</p>
+              <p className="text-sm text-purple-600 dark:text-purple-400">{text.videoRole}</p>
+            </div>
+
+            <div className="mt-12 pt-8 border-t border-slate-200 dark:border-white/10 text-center">
+              <h4 className="text-sm font-semibold text-navy-900 dark:text-white mb-2">{text.masterclassTitle}</h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 max-w-sm mx-auto">{text.masterclassDesc}</p>
+              <a href="#" className="text-xs text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300 underline inline-flex items-center gap-1">
+                {text.masterclassLink} {language === 'AR' ? '←' : '→'}
+              </a>
             </div>
           </div>
         </div>

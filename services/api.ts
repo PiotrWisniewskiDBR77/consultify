@@ -78,19 +78,22 @@ export const Api = {
     },
 
     // --- SESSIONS ---
-    getSession: async (userId: string, type: SessionMode): Promise<any> => {
-        const res = await fetch(`${API_URL}/sessions/${userId}?type=${type}`, { headers: getHeaders() });
+    getSession: async (userId: string, type: SessionMode, projectId?: string): Promise<any> => {
+        let url = `${API_URL}/sessions/${userId}?type=${type}`;
+        if (projectId) url += `&projectId=${projectId}`;
+
+        const res = await fetch(url, { headers: getHeaders() });
         if (!res.ok) return null;
         const json = await res.json();
         return json.data;
     },
 
-    saveSession: async (userId: string, type: SessionMode, data: any): Promise<void> => {
+    saveSession: async (userId: string, type: SessionMode, data: any, projectId?: string): Promise<void> => {
         if (!userId) return;
         await fetch(`${API_URL}/sessions`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ userId, type, data })
+            body: JSON.stringify({ userId, type, data, projectId })
         });
     },
 
@@ -114,5 +117,128 @@ export const Api = {
             body: JSON.stringify({ key, value })
         });
         if (!res.ok) throw new Error('Failed to save setting');
+    },
+
+    // --- SUPER ADMIN ---
+    getOrganizations: async (): Promise<any[]> => {
+        const res = await fetch(`${API_URL}/superadmin/organizations`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch organizations');
+        return res.json();
+    },
+
+    updateOrganization: async (id: string, updates: { plan?: string; status?: string }): Promise<void> => {
+        const res = await fetch(`${API_URL}/superadmin/organizations/${id}`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify(updates)
+        });
+        if (!res.ok) throw new Error('Failed to update organization');
+    },
+
+    deleteOrganization: async (id: string): Promise<void> => {
+        const res = await fetch(`${API_URL}/superadmin/organizations/${id}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        if (!res.ok) throw new Error('Failed to delete organization');
+    },
+
+    // --- PROJECTS ---
+    getProjects: async (): Promise<any[]> => {
+        const res = await fetch(`${API_URL}/projects`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch projects');
+        return res.json();
+    },
+
+    createProject: async (data: { name: string; ownerId?: string }): Promise<any> => {
+        const res = await fetch(`${API_URL}/projects`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Failed to create project');
+        return json;
+    },
+
+    deleteProject: async (id: string): Promise<void> => {
+        const res = await fetch(`${API_URL}/projects/${id}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        if (!res.ok) throw new Error('Failed to delete project');
+    },
+
+    // --- LLM MANAGEMENT ---
+    getLLMProviders: async (): Promise<any[]> => {
+        const res = await fetch(`${API_URL}/llm/providers`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch LLM providers');
+        return res.json();
+    },
+
+    addLLMProvider: async (provider: any): Promise<void> => {
+        const res = await fetch(`${API_URL}/llm/providers`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(provider)
+        });
+        if (!res.ok) throw new Error('Failed to add provider');
+    },
+
+    updateLLMProvider: async (id: string, provider: any): Promise<void> => {
+        const res = await fetch(`${API_URL}/llm/providers/${id}`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify(provider)
+        });
+        if (!res.ok) throw new Error('Failed to update provider');
+    },
+
+    deleteLLMProvider: async (id: string): Promise<void> => {
+        const res = await fetch(`${API_URL}/llm/providers/${id}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        if (!res.ok) throw new Error('Failed to delete provider');
+    },
+
+    getPublicLLMProviders: async (): Promise<any[]> => {
+        const res = await fetch(`${API_URL}/llm/providers/public`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch public LLM providers');
+        return res.json();
+    },
+
+    testOllamaConnection: async (endpoint: string): Promise<{ success: boolean; message?: string; models?: any[]; error?: string }> => {
+        const res = await fetch(`${API_URL}/llm/test-ollama`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ endpoint })
+        });
+        return res.json();
+    },
+
+    getOllamaModels: async (endpoint: string): Promise<any[]> => {
+        const res = await fetch(`${API_URL}/llm/ollama-models?endpoint=${encodeURIComponent(endpoint)}`, {
+            headers: getHeaders()
+        });
+        if (!res.ok) return [];
+        return res.json();
+    },
+
+    // --- KNOWLEDGE BASE ---
+    getKnowledgeFiles: async (): Promise<{ docs: any[], availableFiles: string[] }> => {
+        const res = await fetch(`${API_URL}/knowledge/files`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch knowledge files');
+        return res.json();
+    },
+
+    indexKnowledgeFiles: async (): Promise<{ message: string; indexedCount: number }> => {
+        const res = await fetch(`${API_URL}/knowledge/index`, {
+            method: 'POST',
+            headers: getHeaders()
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Indexing failed');
+        return data;
     }
 };
