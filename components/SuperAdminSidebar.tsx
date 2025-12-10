@@ -9,16 +9,24 @@ import {
     Shield,
     FileText,
     LogOut,
-    ChevronRight
+    ChevronRight,
+    UserPlus,
+    CreditCard,
+    TrendingUp
 } from 'lucide-react';
 
 export type SuperAdminSection =
     | 'overview'
     | 'organizations'
     | 'users'
+    | 'access-requests'
     | 'llm'
     | 'knowledge'
+    | 'plans'
+    | 'token-billing'
+    | 'revenue'
     | 'settings'
+    | 'analytics'
     | 'audit';
 
 interface SuperAdminSidebarProps {
@@ -32,9 +40,14 @@ const menuItems: { id: SuperAdminSection; label: string; icon: React.ReactNode; 
     { id: 'overview', label: 'System Overview', icon: <LayoutDashboard size={20} />, description: 'Dashboard & Stats' },
     { id: 'organizations', label: 'Organizations', icon: <Building2 size={20} />, description: 'Manage companies' },
     { id: 'users', label: 'All Users', icon: <Users size={20} />, description: 'System-wide users' },
+    { id: 'access-requests', label: 'Access Requests', icon: <UserPlus size={20} />, description: 'Approve new users' },
+    { id: 'plans', label: 'Subscription Plans', icon: <CreditCard size={20} />, description: 'Pricing tiers' },
+    { id: 'token-billing', label: 'Token Billing', icon: <CreditCard size={20} />, description: 'Margins & Packages' },
+    { id: 'revenue', label: 'Revenue', icon: <TrendingUp size={20} />, description: 'MRR & Analytics' },
     { id: 'llm', label: 'LLM Providers', icon: <Brain size={20} />, description: 'AI model config' },
     { id: 'knowledge', label: 'Knowledge Base', icon: <BookOpen size={20} />, description: 'RAG documents' },
     { id: 'settings', label: 'System Settings', icon: <Settings size={20} />, description: 'Global config' },
+    { id: 'analytics', label: 'AI Analytics', icon: <LayoutDashboard size={20} />, description: 'Usage & Costs' },
     { id: 'audit', label: 'Audit Logs', icon: <FileText size={20} />, description: 'Activity history' },
 ];
 
@@ -68,8 +81,8 @@ export const SuperAdminSidebar: React.FC<SuperAdminSidebarProps> = ({
                             <button
                                 onClick={() => onSectionChange(item.id)}
                                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${activeSection === item.id
-                                        ? 'bg-gradient-to-r from-red-600/20 to-transparent text-white border-l-2 border-red-500'
-                                        : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                                    ? 'bg-gradient-to-r from-red-600/20 to-transparent text-white border-l-2 border-red-500'
+                                    : 'text-slate-400 hover:bg-white/5 hover:text-white'
                                     }`}
                             >
                                 <span className={activeSection === item.id ? 'text-red-400' : 'text-slate-500 group-hover:text-slate-300'}>

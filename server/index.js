@@ -4,12 +4,15 @@ const cors = require('cors');
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3005;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+
+// ... (imports remain the same)
 // Routes
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
@@ -20,6 +23,20 @@ const superAdminRoutes = require('./routes/superadmin');
 const projectRoutes = require('./routes/projects');
 const knowledgeRoutes = require('./routes/knowledge');
 const llmRoutes = require('./routes/llm');
+// Phase 1: Teamwork & Collaboration Routes
+const taskRoutes = require('./routes/tasks');
+const teamRoutes = require('./routes/teams');
+const notificationRoutes = require('./routes/notifications');
+const initiativeRoutes = require('./routes/initiatives');
+const analyticsRoutes = require('./routes/analytics');
+const feedbackRoutes = require('./routes/feedback');
+const accessControlRoutes = require('./routes/access-control');
+const webhookRoutes = require('./routes/webhooks');
+const aiTrainingRoutes = require('./routes/ai-training');
+// Billing & Usage Routes
+const billingRoutes = require('./routes/billing');
+const stripeWebhookRoutes = require('./routes/webhooks/stripe');
+const tokenBillingRoutes = require('./routes/tokenBilling');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -30,6 +47,22 @@ app.use('/api/superadmin', superAdminRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/knowledge', knowledgeRoutes);
 app.use('/api/llm', llmRoutes);
+// Phase 1: Teamwork & Collaboration
+app.use('/api/tasks', taskRoutes);
+app.use('/api/teams', teamRoutes);
+app.use('/api/notifications', notificationRoutes);
+// Phase 2: DRD Strategy Execution
+app.use('/api/initiatives', initiativeRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/feedback', feedbackRoutes);
+app.use('/api/access-control', accessControlRoutes);
+// Integration Hub & AI Training
+app.use('/api/webhooks', webhookRoutes);
+app.use('/api/ai-training', aiTrainingRoutes);
+// Billing & Stripe
+app.use('/api/billing', billingRoutes);
+app.use('/api/token-billing', tokenBillingRoutes);
+app.use('/api/webhooks', stripeWebhookRoutes);
 
 // Health Check - MUST be before catchall
 app.get('/api/health', (req, res) => {
@@ -45,6 +78,23 @@ app.use((req, res) => {
     res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-});
+// Only listen if the file is run directly (not imported)
+if (require.main === module) {
+    const http = require('http');
+    const server = http.createServer(app);
+
+    // Initialize WebSocket server (using built-in upgrade mechanism instead of 'ws' library)
+    const realtimeService = require('./services/realtimeService');
+    realtimeService.initializeSimple(server);
+
+    // Start token cleanup cron job
+    const { startCleanupJob } = require('./cron/cleanupRevokedTokens');
+    startCleanupJob();
+
+    server.listen(PORT, () => {
+        console.log('Server running on http://localhost:' + PORT);
+        console.log('WebSocket available at ws://localhost:' + PORT + '/ws');
+    });
+}
+
+module.exports = app;

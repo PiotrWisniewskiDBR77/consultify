@@ -93,7 +93,7 @@ export const useStore = create<AppState>((set) => ({
     fullSessionData: initialFullSession,
     messages: [],
     isTyping: false,
-    chatHandler: (text) => console.log("Default handler:", text),
+    chatHandler: () => { /* Default no-op handler */ },
 
     // Actions
     setAppView: (view) => set({ currentView: view }),

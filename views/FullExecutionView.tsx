@@ -1,8 +1,11 @@
 import React, { useEffect, useCallback } from 'react';
+import { SplitLayout } from '../components/SplitLayout';
 import { FullStep5Workspace } from '../components/FullStep5Workspace';
-import { FullInitiative, AppView } from '../types';
+import { FullInitiative, AppView, AIMessageHistory } from '../types';
 import { translations } from '../translations';
 import { useAppStore } from '../store/useAppStore';
+import { sendMessageToAI } from '../services/ai/gemini';
+import { AIFeedbackButton } from '../components/AIFeedbackButton';
 
 export const FullExecutionView: React.FC = () => {
   const {
@@ -11,11 +14,16 @@ export const FullExecutionView: React.FC = () => {
     setFullSessionData: updateFullSession,
     addChatMessage: addMessage,
     setIsBotTyping: setTyping,
-    setCurrentView: onNavigate
+    setCurrentView: onNavigate,
+    activeChatMessages: messages
   } = useAppStore();
 
   const language = currentUser?.preferredLanguage || 'EN';
   const t = translations.fullExecution;
+
+  const addUserMessage = (content: string) => {
+    addMessage({ id: Date.now().toString(), role: 'user', content, timestamp: new Date() });
+  };
 
   const addAiMessage = useCallback((content: string, delay = 600) => {
     setTyping(true);
@@ -30,25 +38,37 @@ export const FullExecutionView: React.FC = () => {
     }, delay);
   }, [addMessage, setTyping]);
 
-  const analyzeStateAndSuggest = useCallback(() => {
-    const initiatives = fullSession.initiatives;
-    const todo = initiatives.filter(i => i.status === 'To Do').length;
-    const inProg = initiatives.filter(i => i.status === 'In Progress').length;
-    const blocked = initiatives.filter(i => i.status === 'Blocked').length;
+  const handleAiChat = async (text: string) => {
+    addUserMessage(text);
+    setTyping(true);
 
-    let suggestion = "";
-    if (blocked > 0) {
-      suggestion = `You have ${blocked} blocked initiatives. I recommend addressing them first.`;
-    } else if (inProg > 5) {
-      suggestion = `You have ${inProg} items in progress. Consider limiting WIP.`;
-    } else if (todo > 0) {
-      suggestion = `You have ${todo} items in 'To Do'. Assign owners and due dates.`;
-    } else {
-      suggestion = "Great job! Keep monitoring the progress.";
+    try {
+      const history: AIMessageHistory[] = messages.map(m => ({
+        role: m.role === 'user' ? 'user' : 'model',
+        parts: [{ text: m.content }]
+      }));
+
+      // Context: Execution
+      const todo = fullSession.initiatives.filter(i => i.status === 'To Do' || i.status === 'Draft' || i.status === 'Ready').length;
+      const inProg = fullSession.initiatives.filter(i => i.status === 'In Progress').length;
+      const blocked = fullSession.initiatives.filter(i => i.status === 'Blocked').length;
+
+      const context = `
+        Context: User is in the Execution Phase (Kanban Board).
+        Stats: ${todo} To Do, ${inProg} In Progress, ${blocked} Blocked.
+        User Question: ${text}
+      `;
+
+      const response = await sendMessageToAI(history, context);
+      addAiMessage(response, 0);
+
+    } catch (e) {
+      console.error(e);
+      addAiMessage("I apologize, I am having trouble processing that right now.");
+      setTyping(false);
     }
+  };
 
-    addAiMessage(`Current State: ${todo} To Do, ${inProg} In Progress, ${blocked} Blocked.\n\nAdvice: ${suggestion}`, 1000);
-  }, [fullSession, addAiMessage]);
 
   useEffect(() => {
     const needsInit = fullSession.initiatives.some(i => ['Draft', 'Ready', 'Archived'].includes(i.status));
@@ -66,8 +86,6 @@ export const FullExecutionView: React.FC = () => {
     }
   }, [fullSession.initiatives, updateFullSession]);
 
-  // Chat handler effect removed as ChatPanel is not currently rendered in this view
-  // TODO: Implement Split View layout if Chat is desired here
 
   const handleUpdateInitiative = (updated: FullInitiative) => {
     const newInits = fullSession.initiatives.map(i => i.id === updated.id ? updated : i);
@@ -75,16 +93,21 @@ export const FullExecutionView: React.FC = () => {
   };
 
   return (
-    <div className="w-full h-full flex flex-col">
-      <FullStep5Workspace
-        fullSession={fullSession}
-        onUpdateInitiative={handleUpdateInitiative}
-        onNextStep={() => {
-          updateFullSession({ step5Completed: true });
-          onNavigate(AppView.FULL_STEP6_REPORTS);
-        }}
-        language={language}
-      />
-    </div>
+    <SplitLayout title="Execution Dashboard" onSendMessage={handleAiChat}>
+      <div className="w-full h-full flex flex-col relative">
+        <div className="absolute top-2 right-4 z-20">
+          <AIFeedbackButton context="execution" data={fullSession.initiatives} />
+        </div>
+        <FullStep5Workspace
+          fullSession={fullSession}
+          onUpdateInitiative={handleUpdateInitiative}
+          onNextStep={() => {
+            updateFullSession({ step5Completed: true });
+            onNavigate(AppView.FULL_STEP6_REPORTS);
+          }}
+          language={language}
+        />
+      </div>
+    </SplitLayout>
   );
 };

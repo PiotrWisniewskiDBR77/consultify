@@ -124,4 +124,49 @@ router.get('/ollama-models', async (req, res) => {
     }
 });
 
+// GET /api/llm/organization-config/:orgId
+router.get('/organization-config/:orgId', async (req, res) => {
+    const { orgId } = req.params;
+    try {
+        // Get current selection
+        const org = await new Promise((resolve, reject) => {
+            db.get("SELECT active_llm_provider_id FROM organizations WHERE id = ?", [orgId], (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
+            });
+        });
+
+        // Get available options (all active providers)
+        // Admin should be able to see all active providers (even if visibility is 'admin' or 'beta' if they are the org admin?? 
+        // OR maybe superadmin decides which are 'public' for org admins to pick.
+        // Let's assume Org Admin can pick from 'public' and 'beta' and 'admin' (if they are superadmin?). 
+        // For simplicity, let's allow Org Admin to pick from ANY active provider for now, or maybe restrict 'admin' visibility to SuperAdmins only.
+        // Request says "Superadmin adds... Admin decides". Implies Admin sees what Superadmin added.
+        // So we return all ACTIVE providers.
+        const providers = await dbAll("SELECT id, name, provider, model_id FROM llm_providers WHERE is_active = 1 ORDER BY name ASC");
+
+        res.json({
+            activeProviderId: org ? org.active_llm_provider_id : null,
+            availableProviders: providers
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to fetch organization config' });
+    }
+});
+
+// POST /api/llm/organization-config/:orgId
+router.post('/organization-config/:orgId', async (req, res) => {
+    const { orgId } = req.params;
+    const { providerId } = req.body; // Can be null to reset to system default
+
+    try {
+        await dbRun("UPDATE organizations SET active_llm_provider_id = ? WHERE id = ?", [providerId, orgId]);
+        res.json({ message: 'Organization LLM updated', providerId });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to update configuration' });
+    }
+});
+
 module.exports = router;

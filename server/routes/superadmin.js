@@ -9,7 +9,7 @@ router.use(verifySuperAdmin);
 router.get('/organizations', (req, res) => {
     const sql = `
         SELECT 
-            o.id, o.name, o.plan, o.status, o.created_at,
+            o.id, o.name, o.plan, o.status, o.created_at, o.discount_percent,
             COUNT(u.id) as user_count
         FROM organizations o
         LEFT JOIN users u ON o.id = u.organization_id
@@ -23,10 +23,10 @@ router.get('/organizations', (req, res) => {
     });
 });
 
-// UPDATE Organization (Plan / Status)
+// UPDATE Organization (Plan / Status / Discount)
 router.put('/organizations/:id', (req, res) => {
     const { id } = req.params;
-    const { plan, status } = req.body;
+    const { plan, status, discount_percent } = req.body;
 
     // Validate inputs
     const validPlans = ['free', 'pro', 'enterprise'];
@@ -34,10 +34,11 @@ router.put('/organizations/:id', (req, res) => {
 
     if (plan && !validPlans.includes(plan)) return res.status(400).json({ error: 'Invalid plan' });
     if (status && !validStatuses.includes(status)) return res.status(400).json({ error: 'Invalid status' });
+    if (discount_percent !== undefined && (discount_percent < 0 || discount_percent > 100)) return res.status(400).json({ error: 'Invalid discount percent' });
 
-    const sql = `UPDATE organizations SET plan = COALESCE(?, plan), status = COALESCE(?, status) WHERE id = ?`;
+    const sql = `UPDATE organizations SET plan = COALESCE(?, plan), status = COALESCE(?, status), discount_percent = COALESCE(?, discount_percent) WHERE id = ?`;
 
-    db.run(sql, [plan, status, id], function (err) {
+    db.run(sql, [plan, status, discount_percent, id], function (err) {
         if (err) return res.status(500).json({ error: err.message });
         if (this.changes === 0) return res.status(404).json({ error: 'Organization not found' });
         res.json({ message: 'Organization updated' });

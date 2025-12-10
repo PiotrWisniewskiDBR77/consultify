@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AppView, SessionMode, UserRole } from '../types';
 import { translations } from '../translations';
 import { useAppStore } from '../store/useAppStore';
-import { ModelSelector } from './ModelSelector';
+
 import {
   Shield,
   LayoutDashboard,
@@ -16,7 +16,11 @@ import {
   Box,
   CheckCircle2,
   Lock,
-  X
+  X,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Rocket,
+  Map
 } from 'lucide-react';
 
 interface MenuItem {
@@ -40,7 +44,9 @@ export const Sidebar: React.FC = () => {
     freeSessionData,
     fullSessionData,
     theme,
-    toggleTheme
+    toggleTheme,
+    isSidebarCollapsed,
+    toggleSidebarCollapse
   } = useAppStore();
 
   const t = translations.sidebar;
@@ -51,8 +57,8 @@ export const Sidebar: React.FC = () => {
 
     // Quick Assessment
     if (freeSessionData.step1Completed) completed.push(AppView.QUICK_STEP1_PROFILE);
-    if (freeSessionData.step2Completed) completed.push(AppView.QUICK_STEP2_CHALLENGES);
-    if (freeSessionData.step3Completed) completed.push(AppView.QUICK_STEP3_RECOMMENDATIONS);
+    if (freeSessionData.step2Completed) completed.push(AppView.QUICK_STEP2_USER_CONTEXT);
+    if (freeSessionData.step3Completed) completed.push(AppView.QUICK_STEP3_EXPECTATIONS);
 
     // Full Transformation
     if (fullSessionData.step1Completed) completed.push(AppView.FULL_STEP1_ASSESSMENT);
@@ -76,72 +82,93 @@ export const Sidebar: React.FC = () => {
   const menuStructure: MenuItem[] = [
     {
       id: 'DASHBOARD',
-      label: t.dashboard[language],
+      label: t.dashboard[language], // Module 0
       icon: <LayoutDashboard size={18} />,
       viewId: AppView.DASHBOARD
     },
     {
-      id: 'QUICK',
-      label: t.quickAssessment[language],
+      id: 'MODULE_1',
+      label: language === 'PL' ? '1. Oczekiwania & Wyzwania' : '1. Expectations & Challenges',
       icon: <Zap size={18} />,
       subItems: [
-        { id: 'Q1', label: t.quickStep1[language], viewId: AppView.QUICK_STEP1_PROFILE },
-        { id: 'Q2', label: t.quickStep2[language], viewId: AppView.QUICK_STEP2_CHALLENGES, requiresView: AppView.QUICK_STEP1_PROFILE },
-        { id: 'Q3', label: t.quickStep3[language], viewId: AppView.QUICK_STEP3_RECOMMENDATIONS, requiresView: AppView.QUICK_STEP2_CHALLENGES },
+        { id: 'M1_1', label: language === 'PL' ? 'Profil Firmy' : 'Company Profile', viewId: AppView.QUICK_STEP1_PROFILE },
+        { id: 'M1_2', label: language === 'PL' ? 'Cele Strategiczne' : 'Goals & Expectations', viewId: AppView.QUICK_STEP2_USER_CONTEXT, requiresView: AppView.QUICK_STEP1_PROFILE }, // Assuming STEP2 maps to Context/Goals
+        { id: 'M1_3', label: language === 'PL' ? 'Mapa Wyzwań' : 'Challenges Map', viewId: AppView.QUICK_STEP3_EXPECTATIONS, requiresView: AppView.QUICK_STEP2_USER_CONTEXT },
       ]
     },
     {
-      id: 'FULL',
-      label: t.fullProject[language],
+      id: 'MODULE_2',
+      label: language === 'PL' ? '2. Ocena DrD & Audyty' : '2. Assessment (DRD)',
+      icon: <CheckCircle2 size={18} />,
+      subItems: [
+        { id: 'M2_1', label: t.fullStep1_proc[language], viewId: AppView.FULL_STEP1_PROCESSES },
+        { id: 'M2_2', label: t.fullStep1_prod[language], viewId: AppView.FULL_STEP1_DIGITAL },
+        { id: 'M2_3', label: t.fullStep1_model[language], viewId: AppView.FULL_STEP1_MODELS },
+        { id: 'M2_4', label: t.fullStep1_data[language], viewId: AppView.FULL_STEP1_DATA },
+        { id: 'M2_5', label: t.fullStep1_cult[language], viewId: AppView.FULL_STEP1_CULTURE },
+        { id: 'M2_6', label: t.fullStep1_ai[language], viewId: AppView.FULL_STEP1_AI },
+      ]
+    },
+    {
+      id: 'MODULE_3',
+      label: language === 'PL' ? '3. Inicjatywy & Roadmapa' : '3. Initiatives & Roadmap',
       icon: <Layers size={18} />,
       subItems: [
-        {
-          id: 'FULL_STEP1',
-          label: t.fullStep1[language],
-          subItems: [
-            { id: 'FS1_1', label: t.fullStep1_proc[language], viewId: AppView.FULL_STEP1_PROCESSES },
-            { id: 'FS1_2', label: t.fullStep1_prod[language], viewId: AppView.FULL_STEP1_DIGITAL },
-            { id: 'FS1_3', label: t.fullStep1_model[language], viewId: AppView.FULL_STEP1_MODELS },
-            { id: 'FS1_4', label: t.fullStep1_data[language], viewId: AppView.FULL_STEP1_DATA },
-            { id: 'FS1_5', label: t.fullStep1_cult[language], viewId: AppView.FULL_STEP1_CULTURE },
-            { id: 'FS1_6', label: t.fullStep1_ai[language], viewId: AppView.FULL_STEP1_AI },
-          ]
-        },
-        { id: 'FULL_STEP2', label: t.fullStep2[language], viewId: AppView.FULL_STEP2_INITIATIVES, requiresView: AppView.FULL_STEP1_ASSESSMENT },
-        { id: 'FULL_STEP3', label: t.fullStep3[language], viewId: AppView.FULL_STEP3_ROADMAP, requiresView: AppView.FULL_STEP2_INITIATIVES },
-        { id: 'FULL_STEP4', label: t.fullStep4[language], viewId: AppView.FULL_STEP4_ROI, requiresView: AppView.FULL_STEP3_ROADMAP },
-        { id: 'FULL_STEP5', label: t.fullStep5[language], viewId: AppView.FULL_STEP5_EXECUTION, requiresView: AppView.FULL_STEP4_ROI },
-        { id: 'FULL_STEP6', label: t.fullStep6[language], viewId: AppView.FULL_STEP6_REPORTS, requiresView: AppView.FULL_STEP5_EXECUTION },
+        { id: 'M3_1', label: language === 'PL' ? 'Generator & Lista' : 'Initiatives List', viewId: AppView.FULL_STEP2_INITIATIVES, requiresView: AppView.FULL_STEP1_ASSESSMENT },
+        { id: 'M3_2', label: language === 'PL' ? 'Roadmapa' : 'Roadmap Builder', viewId: AppView.FULL_STEP3_ROADMAP, requiresView: AppView.FULL_STEP2_INITIATIVES },
       ]
     },
     {
-      id: 'MASTERCLASS',
-      label: t.masterclass[language],
+      id: 'MODULE_4',
+      label: language === 'PL' ? '4. Pilot Execution' : '4. Pilot Execution',
+      icon: <Rocket size={18} />, // Need to import Rocket if not present
+      viewId: AppView.FULL_PILOT_EXECUTION,
+      requiresView: AppView.FULL_STEP3_ROADMAP
+    },
+    {
+      id: 'MODULE_5',
+      label: language === 'PL' ? '5. Full Rollout' : '5. Full Rollout',
+      icon: <Map size={18} />, // Need to import Map if not present
+      viewId: AppView.FULL_ROLLOUT,
+      requiresView: AppView.FULL_STEP3_ROADMAP
+    },
+    {
+      id: 'MODULE_6',
+      label: language === 'PL' ? '6. Ekonomia & ROI' : '6. Economics & ROI',
+      icon: <Box size={18} />, // Using specific icon for ROI
+      viewId: AppView.FULL_STEP4_ROI,
+      requiresView: AppView.FULL_STEP2_INITIATIVES
+    },
+    {
+      id: 'MODULE_7',
+      label: language === 'PL' ? '7. Raporty' : '7. Execution Reports',
       icon: <BookOpen size={18} />,
-      viewId: AppView.MASTERCLASS
-    },
-    {
-      id: 'RESOURCES',
-      label: t.resources[language],
-      icon: <Box size={18} />,
-      viewId: AppView.RESOURCES
-    },
-    ...(currentUser?.role === UserRole.ADMIN ? [{
-      id: 'ADMIN',
-      label: language === 'PL' ? 'Panel Administratora' : 'Admin Panel',
-      icon: <Shield size={18} />,
-      subItems: [
-        { id: 'ADMIN_DASHBOARD', label: t.dashboard[language], viewId: AppView.ADMIN_DASHBOARD },
-        { id: 'ADMIN_USERS', label: language === 'PL' ? 'Użytkownicy' : 'Users', viewId: AppView.ADMIN_USERS },
-        { id: 'ADMIN_PROJECTS', label: language === 'PL' ? 'Projekty' : 'Projects', viewId: AppView.ADMIN_PROJECTS },
-        { id: 'ADMIN_LLM', label: language === 'PL' ? 'Zarządzanie LLM' : 'LLM Management', viewId: AppView.ADMIN_LLM },
-        { id: 'ADMIN_KNOWLEDGE', label: language === 'PL' ? 'Baza Wiedzy' : 'Knowledge Base', viewId: AppView.ADMIN_KNOWLEDGE },
-      ]
-    }] : [])
+      viewId: AppView.FULL_STEP6_REPORTS,
+      requiresView: AppView.FULL_STEP5_EXECUTION
+    }
   ];
+
+  const adminMenuItem: MenuItem = {
+    id: 'ADMIN',
+    label: language === 'PL' ? 'Panel Administratora' : 'Admin Panel',
+    icon: <Shield size={18} />,
+    subItems: [
+      { id: 'ADMIN_DASHBOARD', label: t.dashboard[language], viewId: AppView.ADMIN_DASHBOARD },
+      { id: 'ADMIN_USERS', label: language === 'PL' ? 'Użytkownicy' : 'Users', viewId: AppView.ADMIN_USERS },
+      { id: 'ADMIN_PROJECTS', label: language === 'PL' ? 'Projekty' : 'Projects', viewId: AppView.ADMIN_PROJECTS },
+      { id: 'ADMIN_LLM', label: language === 'PL' ? 'Zarządzanie LLM' : 'LLM Management', viewId: AppView.ADMIN_LLM },
+      { id: 'ADMIN_KNOWLEDGE', label: language === 'PL' ? 'Baza Wiedzy' : 'Knowledge Base', viewId: AppView.ADMIN_KNOWLEDGE },
+      { id: 'ADMIN_FEEDBACK', label: language === 'PL' ? 'Feedback' : 'User Feedback', viewId: AppView.ADMIN_FEEDBACK },
+    ]
+  };
 
   // Auto-expand sidebar based on currentView
   useEffect(() => {
+    if (isSidebarCollapsed) {
+      setExpandedItems([]);
+      return;
+    }
+    const allItems = [...menuStructure, ...(currentUser?.role === UserRole.ADMIN ? [adminMenuItem] : [])];
     const findParentIds = (items: MenuItem[], targetView: AppView): string[] | null => {
       for (const item of items) {
         if (item.viewId === targetView) {
@@ -157,14 +184,14 @@ export const Sidebar: React.FC = () => {
       return null;
     };
 
-    const parentsToExpand = findParentIds(menuStructure, currentView);
+    const parentsToExpand = findParentIds(allItems, currentView);
     if (parentsToExpand && parentsToExpand.length > 0) {
       setExpandedItems(prev => {
         const next = new Set([...prev, ...parentsToExpand]);
         return Array.from(next);
       });
     }
-  }, [currentView]);
+  }, [currentView, currentUser, isSidebarCollapsed]);
 
   const renderMenuItem = (item: MenuItem, level: number = 0) => {
     const isExpanded = expandedItems.includes(item.id);
@@ -173,7 +200,7 @@ export const Sidebar: React.FC = () => {
     const isCompleted = item.viewId && completedViews.includes(item.viewId);
 
     // Determine if locked
-    const isLocked = item.requiresView && !completedViews.includes(item.requiresView);
+    const isLocked = item.requiresView && !completedViews.includes(item.requiresView) && !(currentUser?.role === UserRole.ADMIN || currentUser?.role === 'SUPERADMIN');
 
     // Check if any child is active to highlight parent
     const isChildActive = (i: MenuItem): boolean => {
@@ -183,7 +210,7 @@ export const Sidebar: React.FC = () => {
     };
     const isParentActive = hasSubItems && isChildActive(item);
 
-    const paddingLeft = level === 0 ? 'px-4' : level === 1 ? 'px-8' : 'px-12';
+    const paddingLeft = isSidebarCollapsed ? 'justify-center px-2' : level === 0 ? 'px-3' : level === 1 ? 'px-6' : 'px-9';
 
     return (
       <div key={item.id} className="w-full">
@@ -199,9 +226,10 @@ export const Sidebar: React.FC = () => {
           }}
           disabled={isLocked}
           className={`
-            w-full flex items-center justify-between py-2.5 text-sm transition-all relative group
+            w-full flex items-center justify-between py-1.5 text-xs transition-all relative group
             ${paddingLeft}
             ${isLocked ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+            ${isSidebarCollapsed ? '' : ''}
             ${isActive
               ? 'bg-gradient-to-r from-purple-600/10 to-transparent ltr:border-l-2 rtl:border-r-2 border-purple-500 text-purple-700 dark:text-white dark:from-purple-600/20'
               : isParentActive
@@ -209,29 +237,33 @@ export const Sidebar: React.FC = () => {
                 : 'text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 ltr:border-l-2 rtl:border-r-2 border-transparent'}
           `}
         >
-          <div className="flex items-center gap-3 overflow-hidden">
-            {item.icon && <span className={`${isActive || isParentActive ? 'text-purple-600 dark:text-purple-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`}>{item.icon}</span>}
-            <span className="truncate tracking-wide">
-              {item.label}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {isCompleted && !isActive && (
-              <CheckCircle2 size={14} className="text-green-500/80" />
-            )}
-            {isLocked && (
-              <Lock size={12} className="text-slate-400 dark:text-slate-500" />
-            )}
-            {hasSubItems && (
-              <span className="text-slate-400 dark:text-slate-600">
-                {isExpanded ? <ChevronDown size={14} /> : <div className="rtl:rotate-180"><ChevronRight size={14} /></div>}
+          <div className="flex items-center gap-2.5 overflow-hidden">
+            {item.icon && <span className={`${isActive || isParentActive ? 'text-purple-600 dark:text-purple-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`}>{React.cloneElement(item.icon as React.ReactElement, { size: 16 })}</span>}
+            {(!isSidebarCollapsed) && (
+              <span className="truncate tracking-wide">
+                {item.label}
               </span>
             )}
           </div>
+
+          {!isSidebarCollapsed && (
+            <div className="flex items-center gap-2">
+              {isCompleted && !isActive && (
+                <CheckCircle2 size={14} className="text-green-500/80" />
+              )}
+              {isLocked && (
+                <Lock size={12} className="text-slate-400 dark:text-slate-500" />
+              )}
+              {hasSubItems && (
+                <span className="text-slate-400 dark:text-slate-600">
+                  {isExpanded ? <ChevronDown size={14} /> : <div className="rtl:rotate-180"><ChevronRight size={14} /></div>}
+                </span>
+              )}
+            </div>
+          )}
         </button>
 
-        {hasSubItems && isExpanded && (
+        {hasSubItems && isExpanded && !isSidebarCollapsed && (
           <div className="w-full bg-slate-50/50 dark:bg-navy-900/20 ltr:border-l rtl:border-r border-slate-200 dark:border-white/5 ltr:ml-4 rtl:mr-4 my-1">
             {item.subItems!.map(sub => renderMenuItem(sub, level + 1))}
           </div>
@@ -250,21 +282,32 @@ export const Sidebar: React.FC = () => {
         />
       )}
 
-      {/* Sidebar Container */}
+      {/* Sidebar Container - Floating Dock Style */}
       <div className={`
-        fixed inset-y-0 ltr:left-0 rtl:right-0 z-50 w-72 bg-white dark:bg-navy-950 ltr:border-r rtl:border-l border-slate-200 dark:border-elegant flex flex-col transition-all duration-300 ease-in-out shrink-0
+        fixed inset-y-0 ltr:left-0 rtl:right-0 z-50 
+        my-4 ml-4 rounded-2xl border border-white/20 dark:border-white/5
+        ${isSidebarCollapsed ? 'w-16' : 'w-64'} 
+        bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl shadow-2xl dark:shadow-black/50
+        flex flex-col transition-all duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)] shrink-0
         ${isSidebarOpen
           ? 'translate-x-0'
           : language === 'AR' ? 'translate-x-full lg:translate-x-0 lg:relative' : '-translate-x-full lg:translate-x-0 lg:relative'}
       `}>
         {/* Header / Logo */}
-        <div className="h-20 flex items-center px-6 border-b border-slate-200 dark:border-elegant relative bg-white dark:bg-navy-950 transition-colors">
-          <div className="flex items-center gap-3 font-bold text-xl tracking-tight text-navy-950 dark:text-white">
-            <div className="h-8 px-2 rounded-sm bg-purple-600 flex items-center justify-center shadow-glow">
-              <span className="text-white font-bold text-xs tracking-tighter">DBR77</span>
+        <div className="h-16 flex items-center px-4 mb-2 relative">
+          <button onClick={toggleSidebarCollapse} className="flex items-center gap-3 w-full group">
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-brand to-brand-hover flex items-center justify-center shadow-lg shadow-brand/20 group-hover:scale-105 transition-transform duration-300">
+              <span className="text-white font-black text-xs tracking-tighter">DBR</span>
             </div>
-            <span className="tracking-widest text-sm">CONSULTIFY</span>
-          </div>
+            {!isSidebarCollapsed && (
+              <div className="flex items-center justify-between flex-1 animate-fade-in">
+                <div className="flex flex-col items-start leading-none">
+                  <span className="font-bold text-base tracking-tight text-navy-900 dark:text-white">CONSULTIFY</span>
+                  <span className="text-[10px] text-slate-400 font-medium tracking-widest uppercase">Enterprise</span>
+                </div>
+              </div>
+            )}
+          </button>
 
           {/* Mobile Close Button */}
           <button
@@ -275,57 +318,41 @@ export const Sidebar: React.FC = () => {
           </button>
         </div>
 
-        {/* Model Selector */}
-        <div className="relative">
-          <ModelSelector />
-        </div>
-
         {/* Scrollable Navigation */}
-        <nav className="flex-1 overflow-y-auto py-4 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-navy-800 scrollbar-track-transparent">
-          <div className="space-y-1">
-            {menuStructure.map(item => renderMenuItem(item))}
-          </div>
+        <nav className="flex-1 overflow-y-auto px-3 py-2 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-white/10 scrollbar-track-transparent space-y-1">
+          {menuStructure.map(item => renderMenuItem(item))}
         </nav>
 
         {/* Bottom Actions */}
-        <div className="p-4 border-t border-slate-200 dark:border-elegant bg-white dark:bg-navy-950 transition-colors">
+        <div className="mt-auto px-3 pb-4">
+          {currentUser?.role === UserRole.ADMIN && (
+            <div className="mb-2 pb-2 border-b border-slate-200/50 dark:border-white/5">
+              {renderMenuItem(adminMenuItem)}
+            </div>
+          )}
 
-
-          <button
-            onClick={toggleTheme}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-sm text-slate-500 dark:text-slate-400 hover:text-navy-900 hover:bg-slate-100 dark:hover:text-white dark:hover:bg-navy-900 transition-colors mb-1"
-          >
-            {theme === 'dark' ? (
-              <>
-                <div className="w-4 h-4 rounded-full border border-current flex items-center justify-center">
-                  <div className="w-2 h-2 rounded-full bg-current" />
-                </div>
-                <span>Light Mode</span>
-              </>
-            ) : (
-              <>
-                <div className="w-4 h-4 rounded-full bg-navy-900 flex items-center justify-center text-white text-[10px]">
-                  🌙
-                </div>
-                <span>Dark Mode</span>
-              </>
-            )}
-          </button>
-
-          <button
-            onClick={() => setCurrentView(AppView.SETTINGS_PROFILE as AppView)}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-md text-sm transition-colors mb-1 ${currentView.startsWith('SETTINGS') ? 'bg-slate-100 dark:bg-navy-800 text-navy-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-900'}`}
-          >
-            <Settings size={18} />
-            {t.settings[language]}
-          </button>
-          <button
-            onClick={logout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-sm text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
-          >
-            <LogOut size={18} />
-            {t.logOut[language]}
-          </button>
+          <div className="flex flex-col gap-1">
+            <button
+              onClick={() => setCurrentView(AppView.SETTINGS_PROFILE as AppView)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all duration-200
+                ${currentView.startsWith('SETTINGS')
+                  ? 'bg-brand/10 text-brand dark:text-purple-300'
+                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-navy-900 dark:hover:text-white'} 
+                ${isSidebarCollapsed ? 'justify-center px-0' : ''}`}
+            >
+              <Settings size={18} />
+              {!isSidebarCollapsed && t.settings[language]}
+            </button>
+            <button
+              onClick={logout}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all duration-200
+               text-slate-500 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400
+               ${isSidebarCollapsed ? 'justify-center px-0' : ''}`}
+            >
+              <LogOut size={18} />
+              {!isSidebarCollapsed && t.logOut[language]}
+            </button>
+          </div>
         </div>
       </div>
     </>
