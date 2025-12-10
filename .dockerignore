@@ -1,0 +1,51 @@
+# Dependencies
+node_modules
+server/node_modules
+
+# Build artifacts
+dist
+coverage
+playwright-report
+test-results
+
+# Environment files
+.env
+.env.local
+.env.production
+server/.env
+
+# Database (for Docker builds)
+*.db
+*.db-journal
+
+# Logs
+*.log
+logs
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Git
+.git
+.gitignore
+
+# Documentation (not needed in container)
+docs
+*.md
+!README.md
+
+# Tests (not needed in production)
+tests
+**/*.test.ts
+**/*.test.tsx
+**/*.test.js
+**/*.spec.ts
+playwright.config.ts
+vitest.config.ts

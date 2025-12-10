@@ -11,7 +11,8 @@ import {
   Smartphone,
   Briefcase,
   BrainCircuit,
-  Info
+  Info,
+  Bot
 } from 'lucide-react';
 import { RadarChart } from './RadarChart';
 import { AIInterviewModal } from './AIInterviewModal';
@@ -67,7 +68,7 @@ export const FullStep1Workspace: React.FC<FullStep1WorkspaceProps> = ({
     <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-slate-100 font-sans transition-colors duration-300">
 
       {/* Header Section */}
-      <div className="h-14 px-6 border-b border-slate-200 dark:border-white/5 flex items-center justify-between shrink-0 bg-white dark:bg-navy-950 transition-colors duration-300">
+      <div className="h-12 px-4 border-b border-slate-200 dark:border-white/5 flex items-center justify-between shrink-0 bg-white dark:bg-navy-950 transition-colors duration-300">
         <div>
           <h1 className="text-lg font-semibold tracking-wide text-navy-950 dark:text-white">
             Digital Maturity Assessment
@@ -93,8 +94,8 @@ export const FullStep1Workspace: React.FC<FullStep1WorkspaceProps> = ({
       </div>
 
       {/* content */}
-      <div className="flex-1 overflow-y-auto p-6 md:p-8">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="flex-1 overflow-y-auto p-4 md:p-6">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* Visualizer Column */}
           <div className="lg:col-span-1 space-y-6">

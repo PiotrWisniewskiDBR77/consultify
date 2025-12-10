@@ -196,6 +196,8 @@ export interface User {
   avatarUrl?: string; // URL to avatar image
   tokenUsage?: number;
   tokenLimit?: number;
+  industry?: string; // Company industry
+  country?: string; // Company country
 }
 
 export interface FreeSession {
@@ -216,6 +218,12 @@ export interface FreeSession {
   generatedFocusAreas?: string[];
   generatedQuickWins?: { title: string; desc: string }[];
   step3Completed: boolean;
+
+  // Module 1 Context Fields
+  strategicGoals?: StrategicGoal[];
+  successCriteria?: string;
+  challengesMap?: Challenge[];
+  constraints?: Constraint[];
 
   // Legacy
   selectedIdeas: string[];
@@ -247,7 +255,7 @@ export interface FullInitiative {
   name: string;
   description?: string;
   axis: AxisId;
-  priority: 'High' | 'Medium' | 'Low';
+  priority: 'High' | 'Medium' | 'Low' | 'Critical';
   complexity: 'High' | 'Medium' | 'Low'; // Keep for compatibility
   status: InitiativeStatus;
 
@@ -267,7 +275,11 @@ export interface FullInitiative {
   keyRisks?: { risk: string; mitigation: string; metric: 'Low' | 'Medium' | 'High' }[];
   relatedGap?: string; // Links this initiative to a specific DRD Gap
 
-  // Economics
+  // Economics (financial fields for analytics)
+  capex?: number;
+  firstYearOpex?: number;
+  annualBenefit?: number;
+  roi?: number;
   costCapex?: number;
   costOpex?: number;
   expectedRoi?: number;
@@ -290,6 +302,7 @@ export interface FullInitiative {
   ownerBusinessId?: string;
   ownerExecutionId?: string;
   sponsorId?: string;
+  assigneeId?: string; // For risk calculations
   ownerBusiness?: Pick<User, 'id' | 'firstName' | 'lastName' | 'avatarUrl'>;
   ownerExecution?: Pick<User, 'id' | 'firstName' | 'lastName' | 'avatarUrl'>;
   sponsor?: Pick<User, 'id' | 'firstName' | 'lastName' | 'avatarUrl'>;
@@ -471,8 +484,8 @@ export interface AIProviderConfig {
 // ==========================================
 
 // Task Status (Workflow)
-// Task Status (Workflow)
-export type TaskStatus = 'not_started' | 'in_progress' | 'waiting_data' | 'waiting_decision' | 'blocked' | 'completed' | 'rejected';
+// Extended to include legacy aliases used in some components
+export type TaskStatus = 'not_started' | 'in_progress' | 'waiting_data' | 'waiting_decision' | 'blocked' | 'completed' | 'rejected' | 'todo' | 'review' | 'done';
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type ProjectRole = 'owner' | 'admin' | 'member' | 'viewer';
 export type TeamRole = 'lead' | 'member';

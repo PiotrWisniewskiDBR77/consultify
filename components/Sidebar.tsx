@@ -210,7 +210,7 @@ export const Sidebar: React.FC = () => {
     };
     const isParentActive = hasSubItems && isChildActive(item);
 
-    const paddingLeft = isSidebarCollapsed ? 'justify-center px-2' : level === 0 ? 'px-3' : level === 1 ? 'px-6' : 'px-9';
+    const paddingLeft = isSidebarCollapsed ? 'justify-center px-2' : level === 0 ? 'px-2.5' : level === 1 ? 'px-5' : 'px-8';
 
     return (
       <div key={item.id} className="w-full">
@@ -226,7 +226,7 @@ export const Sidebar: React.FC = () => {
           }}
           disabled={isLocked}
           className={`
-            w-full flex items-center justify-between py-1.5 text-xs transition-all relative group
+            w-full flex items-center justify-between py-1 text-xs transition-all relative group
             ${paddingLeft}
             ${isLocked ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
             ${isSidebarCollapsed ? '' : ''}
@@ -285,8 +285,8 @@ export const Sidebar: React.FC = () => {
       {/* Sidebar Container - Floating Dock Style */}
       <div className={`
         fixed inset-y-0 ltr:left-0 rtl:right-0 z-50 
-        my-4 ml-4 rounded-2xl border border-white/20 dark:border-white/5
-        ${isSidebarCollapsed ? 'w-16' : 'w-64'} 
+        my-3 ml-3 rounded-xl border border-white/20 dark:border-white/5
+        ${isSidebarCollapsed ? 'w-14' : 'w-56'} 
         bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl shadow-2xl dark:shadow-black/50
         flex flex-col transition-all duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)] shrink-0
         ${isSidebarOpen
@@ -294,7 +294,7 @@ export const Sidebar: React.FC = () => {
           : language === 'AR' ? 'translate-x-full lg:translate-x-0 lg:relative' : '-translate-x-full lg:translate-x-0 lg:relative'}
       `}>
         {/* Header / Logo */}
-        <div className="h-16 flex items-center px-4 mb-2 relative">
+        <div className="h-12 flex items-center px-3 mb-1 relative">
           <button onClick={toggleSidebarCollapse} className="flex items-center gap-3 w-full group">
             <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-brand to-brand-hover flex items-center justify-center shadow-lg shadow-brand/20 group-hover:scale-105 transition-transform duration-300">
               <span className="text-white font-black text-xs tracking-tighter">DBR</span>
@@ -319,7 +319,7 @@ export const Sidebar: React.FC = () => {
         </div>
 
         {/* Scrollable Navigation */}
-        <nav className="flex-1 overflow-y-auto px-3 py-2 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-white/10 scrollbar-track-transparent space-y-1">
+        <nav className="flex-1 overflow-y-auto px-2 py-1.5 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-white/10 scrollbar-track-transparent space-y-0.5">
           {menuStructure.map(item => renderMenuItem(item))}
         </nav>
 

@@ -22,3 +22,25 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment files (NEVER commit these!)
+.env
+.env.local
+.env.production
+server/.env
+
+# Database files
+*.db
+*.db-journal
+*.db.bak
+data/
+
+# Test artifacts
+coverage
+playwright-report
+test-results
+
+# Build logs
+*.log
+backend_*.log
+frontend_*.log

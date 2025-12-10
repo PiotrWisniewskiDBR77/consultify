@@ -1,4 +1,15 @@
-// Add to services/api.ts
+// Extended API functions for webhooks and AI training
+// These functions complement the main Api object in api.ts
+
+const API_URL = 'http://127.0.0.1:3005/api';
+
+const authHeaders = (): Record<string, string> => {
+    const token = localStorage.getItem('token');
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : ''
+    };
+};
 
 // Webhooks
 export const getWebhooks = async (): Promise<any[]> => {

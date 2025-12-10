@@ -137,7 +137,7 @@ export const FullInitiativesView: React.FC = () => {
     // For now, simple check: if empty, generate.
     if (!fullSession.initiatives || fullSession.initiatives.length === 0) {
       // Ensure we have some assessment data before generating?
-      const hasAssessment = fullSession.assessment.completedAxes.length > 0;
+      const hasAssessment = Object.keys(fullSession.assessment || {}).length > 0;
       if (hasAssessment) {
         addAiMessage("Analyzing your assessment results and generating transformation initiatives...");
         generateInitiatives();

@@ -60,4 +60,17 @@
     .btn-glass {
         @apply bg-white/10 hover:bg-white/20 text-navy-900 dark:text-white border border-white/10 backdrop-blur-sm transition-all duration-200 active:scale-[0.98];
     }
+
+    /* Compact layout utilities */
+    .compact-card {
+        @apply p-3 gap-2;
+    }
+
+    .compact-section {
+        @apply py-3 px-4;
+    }
+
+    .compact-header {
+        @apply py-2 px-3;
+    }
 }

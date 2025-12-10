@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import '@testing-library/jest-dom';
+import { vi } from 'vitest';
 
 if (typeof window !== 'undefined') {
     global.ResizeObserver = class ResizeObserver {

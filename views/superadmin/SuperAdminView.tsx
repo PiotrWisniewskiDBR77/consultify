@@ -4,13 +4,13 @@ import { User, AppView } from '../../types';
 import { Users, Building, AlertCircle, CheckCircle, CreditCard, Trash2, Edit2, Search, Plus, RefreshCw } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { SuperAdminSidebar, SuperAdminSection } from '../../components/SuperAdminSidebar';
-import { AdminLLMView } from './AdminLLMView';
-import { AdminKnowledgeView } from './AdminKnowledgeView';
+import { AdminLLMView } from '../admin/AdminLLMView';
+import { AdminKnowledgeView } from '../admin/AdminKnowledgeView';
 import { SuperAdminAccessRequestsView } from './SuperAdminAccessRequestsView';
 import { SuperAdminPlansView } from './SuperAdminPlansView';
 import { SuperAdminRevenueView } from './SuperAdminRevenueView';
-import { AdminMarginConfig } from './AdminMarginConfig';
-import { AdminTokenPackages } from './AdminTokenPackages';
+import { AdminMarginConfig } from '../admin/AdminMarginConfig';
+import { AdminTokenPackages } from '../admin/AdminTokenPackages';
 
 interface SuperAdminViewProps {
     currentUser: User;

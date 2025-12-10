@@ -11,6 +11,10 @@ const authMiddleware = require('../middleware/authMiddleware');
 router.post('/login', (req, res) => {
     const { email, password } = req.body;
 
+    if (!email || !password) {
+        return res.status(400).json({ error: 'Email and password are required' });
+    }
+
     db.get('SELECT * FROM users WHERE email = ?', [email], (err, user) => {
         if (err) return res.status(500).json({ error: 'Server error' });
         if (!user) return res.status(404).json({ error: 'User not found' });

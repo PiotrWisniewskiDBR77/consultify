@@ -42,16 +42,16 @@ export const OnboardingDashboard: React.FC<OnboardingDashboardProps> = ({ onStar
     ];
 
     return (
-        <div className="max-w-5xl mx-auto space-y-8 animate-fade-in">
+        <div className="max-w-5xl mx-auto space-y-6 animate-fade-in">
             {/* Minimalist Overview Header */}
-            <div className="text-center mb-8">
+            <div className="text-center mb-6">
                 <h1 className="text-3xl font-bold text-navy-900 dark:text-white mb-2">Digital Transformation Journey</h1>
                 <p className="text-slate-500 dark:text-slate-400">Step-by-step roadmap to operational excellence.</p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Left: The Process (1-5) */}
-                <div className="lg:col-span-2 bg-white dark:bg-navy-900 rounded-2xl p-6 border border-slate-200 dark:border-white/10 shadow-sm">
+                <div className="lg:col-span-2 bg-white dark:bg-navy-900 rounded-xl p-5 border border-slate-200 dark:border-white/10 shadow-sm">
                     <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-6 flex items-center gap-2">
                         <Map size={20} className="text-purple-500" />
                         Process Overview
@@ -64,16 +64,16 @@ export const OnboardingDashboard: React.FC<OnboardingDashboardProps> = ({ onStar
 
                             return (
                                 <div key={step.id} className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${isCurrent
-                                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 shadow-md ring-1 ring-purple-500/20'
-                                        : status === 'completed'
-                                            ? 'border-green-200 bg-green-50/50 dark:bg-green-900/10'
-                                            : 'border-slate-100 bg-slate-50 dark:bg-navy-950 dark:border-white/5 opacity-60'
+                                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 shadow-md ring-1 ring-purple-500/20'
+                                    : status === 'completed'
+                                        ? 'border-green-200 bg-green-50/50 dark:bg-green-900/10'
+                                        : 'border-slate-100 bg-slate-50 dark:bg-navy-950 dark:border-white/5 opacity-60'
                                     }`}>
                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-colors ${status === 'completed'
-                                            ? 'bg-green-500 text-white'
-                                            : isCurrent
-                                                ? 'bg-purple-600 text-white'
-                                                : 'bg-slate-200 text-slate-400 dark:bg-slate-800'
+                                        ? 'bg-green-500 text-white'
+                                        : isCurrent
+                                            ? 'bg-purple-600 text-white'
+                                            : 'bg-slate-200 text-slate-400 dark:bg-slate-800'
                                         }`}>
                                         {status === 'completed' ? <CheckCircle2 size={20} /> : <span className="font-bold">{step.id}</span>}
                                     </div>
