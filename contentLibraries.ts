@@ -97,6 +97,29 @@ export const initiativesLibrary: Record<AxisId, { id: string; name: string; desc
       tags: ["change-management"]
     }
   ],
+  cybersecurity: [
+    {
+      id: "cyber-risk-assessment",
+      name: "Cybersecurity Risk Assessment",
+      description: "Comprehensive evaluation of current security posture and vulnerability mapping.",
+      complexity: "Medium",
+      tags: ["security", "compliance"]
+    },
+    {
+      id: "cyber-zero-trust",
+      name: "Zero Trust Architecture Planning",
+      description: "Design and roadmap for implementing zero trust security model.",
+      complexity: "High",
+      tags: ["architecture", "security"]
+    },
+    {
+      id: "cyber-awareness",
+      name: "Security Awareness Program",
+      description: "Employee training program on phishing, social engineering, and secure practices.",
+      complexity: "Low",
+      tags: ["training", "culture"]
+    }
+  ],
   aiMaturity: [
     {
       id: "ai-usecase-radar",
@@ -187,6 +210,11 @@ export const maturityInterpretations: Record<AxisId, { low: string; medium: stri
     low: "Digital is seen as an IT topic. Resistance to change is high.",
     medium: "Awareness of digital importance exists, but skills and agility are lacking.",
     high: "Digital-first mindset is embedded. Experimentation and continuous learning are norms."
+  },
+  cybersecurity: {
+    low: "Basic security measures only. No formal security policies or proactive monitoring.",
+    medium: "Security policies exist with partial implementation. Some automated monitoring.",
+    high: "Zero trust architecture, continuous monitoring, and security integrated into DevSecOps."
   },
   aiMaturity: {
     low: "No AI usage or awareness. Processes are manual and reactive.",

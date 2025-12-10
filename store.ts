@@ -62,16 +62,18 @@ const initialFreeSession: Partial<FreeSession> = {
 };
 
 const initialFullSession: FullSession = {
+    id: '',
     assessment: {
-        processes: { score: 0, answers: [], status: 'NOT_STARTED' },
-        digitalProducts: { score: 0, answers: [], status: 'NOT_STARTED' },
-        businessModels: { score: 0, answers: [], status: 'NOT_STARTED' },
-        dataManagement: { score: 0, answers: [], status: 'NOT_STARTED' },
-        culture: { score: 0, answers: [], status: 'NOT_STARTED' },
-        cybersecurity: { score: 0, answers: [], status: 'NOT_STARTED' },
-        aiMaturity: { score: 0, answers: [], status: 'NOT_STARTED' },
-        completedAxes: []
+        processes: { actual: 1, target: 1, justification: '', notes: '' },
+        products: { actual: 1, target: 1, justification: '', notes: '' },
+        business_models: { actual: 1, target: 1, justification: '', notes: '' },
+        data: { actual: 1, target: 1, justification: '', notes: '' },
+        culture: { actual: 1, target: 1, justification: '', notes: '' },
+        cybersecurity: { actual: 1, target: 1, justification: '', notes: '' },
+        ai: { actual: 1, target: 1, justification: '', notes: '' }
     },
+    audits: [],
+    roadmap: [],
     initiatives: [],
     economics: { totalCost: 0, totalAnnualBenefit: 0, overallROI: 0, paybackPeriodYears: 0 },
     step1Completed: false,

@@ -5,14 +5,28 @@ const { v4: uuidv4 } = require('uuid');
 
 const dbPath = path.resolve(__dirname, 'consultify.db');
 
-const db = new sqlite3.Database(dbPath, (err) => {
-    if (err) {
-        console.error('Error opening database', err.message);
-    } else {
-        console.log('Connected to the SQLite database.');
-        initDb();
-    }
-});
+let db;
+
+// Allow bypassing real DB connection for Unit Tests
+if (process.env.MOCK_DB === 'true') {
+    console.log('Using MOCKED DB (No connection)');
+    db = {
+        prepare: () => ({ run: () => { }, finalize: () => { } }),
+        run: () => { },
+        all: () => { },
+        get: () => { },
+        serialize: (cb) => cb && cb()
+    };
+} else {
+    db = new sqlite3.Database(dbPath, (err) => {
+        if (err) {
+            console.error('Error opening database', err.message);
+        } else {
+            console.log('Connected to the SQLite database.');
+            initDb();
+        }
+    });
+}
 
 function initDb() {
     db.serialize(() => {

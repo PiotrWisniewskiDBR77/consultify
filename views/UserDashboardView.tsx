@@ -35,7 +35,7 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({ currentUse
     return (
         <div className="flex h-full flex-col bg-slate-50 dark:bg-navy-950">
             {/* Header */}
-            <div className="h-16 px-6 lg:px-8 flex items-center justify-between bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-white/10 shrink-0 sticky top-0 z-50">
+            <div className="h-12 px-4 lg:px-6 flex items-center justify-between bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-white/10 shrink-0 sticky top-0 z-50">
                 <div className="flex items-center gap-6">
                     <div className="flex items-center gap-3 text-navy-900 dark:text-white font-semibold text-lg">
                         <LayoutDashboard className="text-purple-600" />
@@ -79,7 +79,7 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({ currentUse
             </div>
 
             {/* Content */}
-            <div className="flex-1 p-6 lg:p-8 overflow-auto">
+            <div className="flex-1 p-4 lg:p-6 overflow-auto">
                 {activeTab === 'overview' ? (
                     <OnboardingDashboard onStartModule1={handleStartTransformation} session={fullSessionData} />
                 ) : (

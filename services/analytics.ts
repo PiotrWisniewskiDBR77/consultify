@@ -30,7 +30,7 @@ export const calculateAnalytics = (
     tasks: Task[]
 ): AnalyticsData => {
     const completedInitiatives = initiatives.filter(i => i.status === 'completed');
-    const inProgressInitiatives = initiatives.filter(i => i.status === 'in_progress');
+    const inProgressInitiatives = initiatives.filter(i => i.status === 'In Progress');
     const completedTasks = tasks.filter(t => t.status === 'completed');
 
     const totalCost = initiatives.reduce((sum, i) => sum + (i.capex || 0) + (i.firstYearOpex || 0), 0);

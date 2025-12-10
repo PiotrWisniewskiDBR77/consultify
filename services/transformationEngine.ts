@@ -34,14 +34,13 @@ export const generateInitiatives = (session: FullSession): FullInitiative[] => {
                 initiatives.push({
                     id: `init-${area.id}-${nextLevel.level}-${Date.now()}`,
                     name: `Advance ${area.name} to Level ${nextLevel.level}`,
-                    description: `${nextLevel.title}. ${nextLevel.description}`,
+                    description: `${nextLevel.title}. ${nextLevel.description} (Generated based on current level ${currentLevel}.)`,
                     axis: axisKey,
-                    priority: currentLevel === 0 ? 'High' : (currentLevel < 3 ? 'Medium' : 'Low'), // Basic logic: urgent if 0
+                    priority: currentLevel === 0 ? 'High' : (currentLevel < 3 ? 'Medium' : 'Low'),
                     complexity: nextLevel.level > 4 ? 'High' : (nextLevel.level > 2 ? 'Medium' : 'Low'),
                     status: 'Draft',
-                    estimatedCost: nextLevel.level * 10000, // Placeholder
-                    estimatedAnnualBenefit: nextLevel.level * 20000, // Placeholder
-                    notes: `Generated based on current level ${currentLevel}.`
+                    estimatedCost: nextLevel.level * 10000,
+                    estimatedAnnualBenefit: nextLevel.level * 20000
                 });
             }
         });

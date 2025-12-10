@@ -258,7 +258,7 @@ export const App = () => {
             <main className="flex-1 flex flex-col overflow-hidden relative w-full h-full transition-colors duration-300">
                 {/* Top Bar for Session Views */}
                 {isSessionView && (
-                    <div className="h-14 border-b border-slate-200 dark:border-white/5 bg-white dark:bg-navy-950 flex items-center justify-between px-4 shrink-0 z-20 transition-colors duration-300">
+                    <div className="h-12 border-b border-slate-200 dark:border-white/5 bg-white dark:bg-navy-950 flex items-center justify-between px-3 shrink-0 z-20 transition-colors duration-300">
                         <div className="flex items-center gap-3">
                             <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden text-navy-700 dark:text-white mr-2">
                                 <Menu />

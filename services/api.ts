@@ -697,6 +697,22 @@ export const Api = {
         if (!res.ok) throw new Error('Failed to save feedback');
     },
 
+    // AI Detail Feedback (for inline rating buttons)
+    aiDetailFeedback: async (feedback: { action: string; rating: number; user_comment?: string; original_prompt?: string }): Promise<void> => {
+        const res = await fetch(`${API_URL}/ai/feedback`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({
+                context: feedback.action,
+                prompt: feedback.original_prompt || '',
+                response: '',
+                rating: feedback.rating,
+                correction: feedback.user_comment
+            })
+        });
+        if (!res.ok) throw new Error('Failed to save feedback');
+    },
+
     // ADMIN ANALYTICS & CONTROLS
     aiGetStats: async (): Promise<any> => {
         const res = await fetch(`${API_URL}/ai/stats`, { headers: getHeaders() });

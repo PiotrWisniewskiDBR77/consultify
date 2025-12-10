@@ -26,7 +26,7 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
     } = useAppStore();
 
     // Resizable State
-    const [sidebarWidth, setSidebarWidth] = React.useState(450);
+    const [sidebarWidth, setSidebarWidth] = React.useState(380);
     const [isResizing, setIsResizing] = React.useState(false);
     const sidebarRef = React.useRef<HTMLDivElement>(null);
 
@@ -41,7 +41,7 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
             // Calculate new width: original width + delta
             // If dragging right, delta is positive, sidebar grows.
             const delta = mouseMoveEvent.clientX - startX;
-            const newWidth = Math.max(300, Math.min(800, startWidth + delta));
+            const newWidth = Math.max(280, Math.min(700, startWidth + delta));
             setSidebarWidth(newWidth);
         };
 

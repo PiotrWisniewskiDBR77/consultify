@@ -3,9 +3,8 @@ import { FullSession, FullInitiative, Language } from '../types';
 import { translations } from '../translations';
 import {
     Target, Users, Calendar, BarChart2, CheckCircle,
-    AlertTriangle, ArrowRight, Play, Edit3, Save
+    AlertTriangle, ArrowRight, Play, Edit3, Save, X
 } from 'lucide-react';
-import { format } from 'date-fns';
 
 interface FullPilotWorkspaceProps {
     fullSession: FullSession;

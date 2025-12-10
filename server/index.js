@@ -2,14 +2,55 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const helmet = require('helmet');
+const compression = require('compression');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const PORT = process.env.PORT || 3005;
+const isProduction = process.env.NODE_ENV === 'production';
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+// Security Headers (production-ready)
+app.use(helmet({
+    contentSecurityPolicy: isProduction ? undefined : false, // Disable CSP in dev for hot reload
+    crossOriginEmbedderPolicy: false // Allow embedding
+}));
+
+// Compression
+app.use(compression());
+
+// Rate Limiting
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: isProduction ? 100 : 1000, // Stricter in production
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many requests, please try again later.' }
+});
+
+const authLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: isProduction ? 10 : 100, // 10 login attempts per hour in production
+    message: { error: 'Too many login attempts, please try again later.' }
+});
+
+// CORS Configuration
+const corsOptions = {
+    origin: process.env.FRONTEND_URL || (isProduction ? false : '*'),
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-access-token']
+};
+app.use(cors(corsOptions));
+
+// Body Parsing & Static Files
+app.use(express.json({ limit: '10mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Apply rate limiting to API routes
+app.use('/api/', apiLimiter);
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
 
 
 // ... (imports remain the same)

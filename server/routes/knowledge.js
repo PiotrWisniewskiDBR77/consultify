@@ -79,7 +79,7 @@ router.put('/strategies/:id/toggle', requireSuperAdmin, async (req, res) => {
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const pdf = require('pdf-parse');
+// const pdf = require('pdf-parse'); // Moved to lazy load inside handler
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -122,6 +122,8 @@ router.post('/documents', requireSuperAdmin, enforceStorageQuota, upload.single(
         let text = '';
         if (mimetype === 'application/pdf') {
             const dataBuffer = fs.readFileSync(filepath);
+            // Lazy load pdf-parse to avoid DOMMatrix error in Node environments during tests
+            const pdf = require('pdf-parse');
             const pdfData = await pdf(dataBuffer);
             text = pdfData.text;
         } else {
