@@ -1,18 +1,29 @@
 import React, { useEffect, useCallback } from 'react';
-import { FullStep4Workspace } from '../components/FullStep4Workspace';
+import { SplitLayout } from '../components/SplitLayout';
+import { FullROIWorkspace } from '../components/FullROIWorkspace';
 import { FullInitiative, CostRange, BenefitRange, AppView, EconomicsSummary } from '../types';
 import { translations } from '../translations';
 import { useAppStore } from '../store/useAppStore';
+
+// FIX: Added missing imports
+import { Api } from '../services/api';
+import { SessionMode } from '../types';
+import { AIFeedbackButton } from '../components/AIFeedbackButton'; // Added import
 
 export const FullROIView: React.FC = () => {
   const {
     currentUser,
     fullSessionData: fullSession,
     setFullSessionData: updateFullSession,
+    currentProjectId,
     addChatMessage: addMessage,
     setIsBotTyping: setTyping,
     setCurrentView: onNavigate
   } = useAppStore();
+
+  const handleAiChat = async (text: string) => {
+    addMessage({ id: Date.now().toString(), role: 'user', content: text, timestamp: new Date() });
+  };
 
   const language = currentUser?.preferredLanguage || 'EN';
   const t = translations.fullROI;
@@ -51,38 +62,72 @@ export const FullROIView: React.FC = () => {
   };
 
   useEffect(() => {
-    let initializedInitiatives = fullSession.initiatives;
-    const needsDefaults = fullSession.initiatives.some(i => i.estimatedCost === undefined || i.estimatedCost === 0);
+    const runSimulation = async () => {
+      let initializedInitiatives = fullSession.initiatives;
+      const needsDefaults = fullSession.initiatives.some(i => i.estimatedCost === undefined || i.estimatedCost === 0);
 
-    if (needsDefaults) {
-      initializedInitiatives = fullSession.initiatives.map(i => {
-        if (i.estimatedCost && i.estimatedCost > 0) return i;
+      if (needsDefaults) {
+        initializedInitiatives = fullSession.initiatives.map(i => {
+          if (i.estimatedCost && i.estimatedCost > 0) return i;
 
-        let cost: number = 0;
-        let costR: CostRange = 'Low (<$10k)';
-        let benefit: number = 0;
-        let benefitR: BenefitRange = 'Low (<$20k/yr)';
+          let cost: number = 0;
+          let costR: CostRange = 'Low (<$10k)';
+          let benefit: number = 0;
+          let benefitR: BenefitRange = 'Low (<$20k/yr)';
 
-        if (i.complexity === 'High') { cost = 75000; costR = 'High (>$50k)'; }
-        else if (i.complexity === 'Medium') { cost = 25000; costR = 'Medium ($10k-$50k)'; }
-        else { cost = 5000; costR = 'Low (<$10k)'; }
+          if (i.complexity === 'High') { cost = 75000; costR = 'High (>$50k)'; }
+          else if (i.complexity === 'Medium') { cost = 25000; costR = 'Medium ($10k-$50k)'; }
+          else { cost = 5000; costR = 'Low (<$10k)'; }
 
-        if (i.priority === 'High') { benefit = cost * 2.5; benefitR = 'High (>$100k/yr)'; }
-        else if (i.priority === 'Medium') { benefit = cost * 1.5; benefitR = 'Medium ($20k-$100k/yr)'; }
-        else { benefit = cost * 1.2; benefitR = 'Low (<$20k/yr)'; }
+          if (i.priority === 'High') { benefit = cost * 2.5; benefitR = 'High (>$100k/yr)'; }
+          else if (i.priority === 'Medium') { benefit = cost * 1.5; benefitR = 'Medium ($20k-$100k/yr)'; }
+          else { benefit = cost * 1.2; benefitR = 'Low (<$20k/yr)'; }
 
-        if (benefit < 20000) benefitR = 'Low (<$20k/yr)';
-        else if (benefit < 100000) benefitR = 'Medium ($20k-$100k/yr)';
-        else benefitR = 'High (>$100k/yr)';
+          if (benefit < 20000) benefitR = 'Low (<$20k/yr)';
+          else if (benefit < 100000) benefitR = 'Medium ($20k-$100k/yr)';
+          else benefitR = 'High (>$100k/yr)';
 
-        return { ...i, estimatedCost: cost, costRange: costR, estimatedAnnualBenefit: benefit, benefitRange: benefitR };
-      });
+          return { ...i, estimatedCost: cost, costRange: costR, estimatedAnnualBenefit: benefit, benefitRange: benefitR };
+        });
 
-      const economics = recalculateEconomics(initializedInitiatives);
-      updateFullSession({ initiatives: initializedInitiatives, economics });
-      addAiMessage("I've pre-filled cost and benefit estimates based on the complexity of your initiatives. You can switch to 'Range View' or edit exact numbers.", 1000);
-    }
-  }, [fullSession.initiatives, updateFullSession, addAiMessage, language, t]);
+        // Update local state first
+        updateFullSession({ initiatives: initializedInitiatives });
+      }
+
+      addAiMessage("Running economic simulation and CFO analysis...");
+
+      try {
+        // CALL AI SIMULATION LAYER
+        const result = await Api.aiSimulate(initializedInitiatives);
+
+        updateFullSession({
+          economics: {
+            totalCost: result.totalCost,
+            totalAnnualBenefit: result.totalAnnualBenefit,
+            overallROI: result.overallROI,
+            paybackPeriodYears: result.paybackPeriodYears
+          }
+        });
+        await Api.saveSession(currentUser!.id, SessionMode.FULL, { ...fullSession, initiatives: initializedInitiatives, economics: result }, currentProjectId || undefined);
+
+        if (result.commentary) {
+          addAiMessage(`💡 CFO Commentary: ${result.commentary}`);
+        }
+        if (result.riskAssessment) {
+          setTimeout(() => addAiMessage(`⚠️ Risk Assessment: ${result.riskAssessment}`), 1000);
+        }
+
+      } catch (e) {
+        console.error("Simulation Error", e);
+        // Fallback
+        const economics = recalculateEconomics(initializedInitiatives);
+        updateFullSession({ initiatives: initializedInitiatives, economics });
+        addAiMessage("AI Simulation unavailable. Using standard calculated estimates.");
+      }
+    };
+
+    runSimulation();
+  }, [fullSession.initiatives, updateFullSession, addAiMessage, language, t, currentUser, currentProjectId]);
 
   // Chat handler effect removed
   // TODO: Add Split View layout
@@ -94,16 +139,21 @@ export const FullROIView: React.FC = () => {
   };
 
   return (
-    <div className="w-full h-full flex flex-col">
-      <FullStep4Workspace
-        fullSession={fullSession}
-        onUpdateInitiative={handleUpdateInitiative}
-        onNextStep={() => {
-          updateFullSession({ step4Completed: true });
-          onNavigate(AppView.FULL_STEP5_EXECUTION);
-        }}
-        language={language}
-      />
-    </div>
+    <SplitLayout title="Value Realization & ROI" onSendMessage={handleAiChat}>
+      <div className="w-full h-full bg-navy-900 flex flex-col overflow-hidden relative">
+        <div className="absolute top-2 right-4 z-20">
+          <AIFeedbackButton context="simulation" data={fullSession.economics} />
+        </div>
+        <FullROIWorkspace
+          fullSession={fullSession}
+          onUpdateInitiative={handleUpdateInitiative}
+          onNextStep={() => {
+            updateFullSession({ step4Completed: true });
+            onNavigate(AppView.FULL_STEP5_EXECUTION);
+          }}
+          language={language}
+        />
+      </div>
+    </SplitLayout>
   );
 };

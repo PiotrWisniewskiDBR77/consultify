@@ -167,7 +167,7 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({
   const currentLang = languages.find(l => l.code === language) || languages[0];
 
   return (
-    <div className="flex flex-col h-full w-full bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white overflow-hidden transition-colors duration-300">
+    <div className="flex flex-col h-full w-full bg-gray-50 dark:bg-navy-950 text-navy-900 dark:text-white overflow-hidden transition-colors duration-300">
 
       {/* GLOBAL HEADER (Only for Welcome View) */}
       <header className="h-20 border-b border-slate-200 dark:border-elegant flex items-center justify-between px-8 lg:px-12 bg-white dark:bg-navy-950 shrink-0 relative z-50 transition-colors duration-300">
@@ -320,10 +320,10 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({
         </div>
 
         {/* RIGHT COLUMN - VIDEO INTRO */}
-        <div className="w-1/2 relative bg-slate-50 dark:bg-navy-950 flex flex-col items-center justify-center p-12 transition-colors duration-300">
+        <div className="w-1/2 relative bg-gray-50 dark:bg-navy-950 flex flex-col items-center justify-center p-12 transition-colors duration-300">
           {/* Decorative background elements */}
-          <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-purple-100/50 dark:from-purple-900/20 via-slate-50 dark:via-navy-950 to-slate-50 dark:to-navy-950 pointer-events-none transition-colors duration-300"></div>
-          <div className="absolute bottom-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-blue-100/50 dark:from-blue-900/10 via-slate-50 dark:via-navy-950 to-slate-50 dark:to-navy-950 pointer-events-none transition-colors duration-300"></div>
+          <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-purple-100/50 dark:from-purple-900/20 via-gray-50 dark:via-navy-950 to-gray-50 dark:to-navy-950 pointer-events-none transition-colors duration-300"></div>
+          <div className="absolute bottom-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-blue-100/50 dark:from-blue-900/10 via-gray-50 dark:via-navy-950 to-gray-50 dark:to-navy-950 pointer-events-none transition-colors duration-300"></div>
 
           <div className="relative z-10 w-full max-w-2xl">
             <div className="mb-8 text-center">
@@ -332,21 +332,16 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({
             </div>
 
             {/* Video Player Placeholder */}
-            <div className="aspect-video w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/20 rounded-xl overflow-hidden shadow-2xl relative group cursor-pointer">
-              <div className="absolute inset-0 bg-black/5 dark:bg-black/40 group-hover:bg-black/10 dark:group-hover:bg-black/20 transition-all flex items-center justify-center">
-                <div className="w-20 h-20 bg-white/40 dark:bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/50 dark:border-white/30 group-hover:scale-110 transition-transform">
-                  <Play size={32} className="text-navy-900 dark:text-white fill-current ml-1" />
-                </div>
-              </div>
-              {/* Abstract UI representation as thumbnail */}
-              <div className="w-full h-full p-8 flex flex-col gap-4 opacity-50">
-                <div className="w-1/3 h-4 bg-slate-200 dark:bg-slate-700 rounded"></div>
-                <div className="flex gap-4 h-full">
-                  <div className="w-1/3 h-full bg-slate-100 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700"></div>
-                  <div className="w-2/3 h-full bg-slate-100 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700"></div>
-                </div>
-              </div>
-            </div>
+            // Video Player
+            <video
+              className="aspect-video w-full rounded-xl overflow-hidden shadow-2xl"
+              controls
+              key={language} // Force re-render on language change
+            >
+              <source src={`/videos/en.mp4?v=${Date.now()}`} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+
 
             <div className="mt-6 text-center">
               <p className="text-lg font-medium text-navy-900 dark:text-white">{text.videoPerson}</p>
@@ -364,6 +359,6 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({
         </div>
       </div>
 
-    </div>
+    </div >
   );
 };

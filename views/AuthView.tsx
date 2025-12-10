@@ -84,10 +84,14 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('handleLogin called with:', formData.email);
     try {
+      console.log('Calling Api.login...');
       const user = await Api.login(formData.email, formData.password);
+      console.log('Login successful:', user);
       onAuthSuccess(user);
     } catch (err: any) {
+      console.error('Login error:', err);
       setError(err.message || 'Login failed');
     }
   };
@@ -95,8 +99,8 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
   const renderCodeEntry = () => (
     <div className="space-y-8">
       <div className="text-center">
-        <div className="w-16 h-16 bg-blue-100 dark:bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-blue-200 dark:border-blue-500/20 shadow-[0_0_15px_-3px_rgba(59,130,246,0.3)]">
-          <Lock className="text-blue-600 dark:text-blue-400" size={32} />
+        <div className="w-12 h-12 bg-blue-100 dark:bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-200 dark:border-blue-500/20 shadow-[0_0_15px_-3px_rgba(59,130,246,0.3)]">
+          <Lock className="text-blue-600 dark:text-blue-400" size={24} />
         </div>
         <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">{t.unlockFull[language]}</h2>
         <p className="text-slate-500 dark:text-slate-400 text-sm max-w-xs mx-auto">{t.enterCode[language]}</p>
@@ -126,7 +130,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
 
       <button
         onClick={verifyCode}
-        className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-all shadow-lg shadow-blue-500/20 dark:shadow-blue-900/20"
+        className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-all shadow-lg shadow-blue-500/20 dark:shadow-blue-900/20 text-sm"
       >
         {t.verifyCode[language]}
       </button>
@@ -152,7 +156,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
               required
               value={formData.firstName}
               onChange={e => setFormData({ ...formData, firstName: e.target.value })}
-              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-sm"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-xs"
             />
           </div>
           <div className="space-y-1.5">
@@ -161,7 +165,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
               required
               value={formData.lastName}
               onChange={e => setFormData({ ...formData, lastName: e.target.value })}
-              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-sm"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-xs"
             />
           </div>
         </div>
@@ -173,7 +177,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
             required
             value={formData.email}
             onChange={e => setFormData({ ...formData, email: e.target.value })}
-            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-sm"
+            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-xs"
           />
         </div>
 
@@ -183,7 +187,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
             type="tel"
             value={formData.phone}
             onChange={e => setFormData({ ...formData, phone: e.target.value })}
-            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-sm"
+            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-xs"
           />
         </div>
 
@@ -193,7 +197,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
             required
             value={formData.companyName}
             onChange={e => setFormData({ ...formData, companyName: e.target.value })}
-            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-sm"
+            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-xs"
           />
         </div>
 
@@ -205,7 +209,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
             minLength={8}
             value={formData.password}
             onChange={e => setFormData({ ...formData, password: e.target.value })}
-            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-sm"
+            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-xs"
           />
         </div>
 
@@ -216,9 +220,9 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
           </div>
         )}
 
-        <button className="w-full py-3.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg transition-all flex items-center justify-center gap-2 mt-6 shadow-lg shadow-purple-500/20 dark:shadow-purple-900/20 group">
+        <button className="w-full py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg transition-all flex items-center justify-center gap-2 mt-4 shadow-lg shadow-purple-500/20 dark:shadow-purple-900/20 group text-sm">
           {t.createStart[language]}
-          <ArrowRight size={18} className={`group-hover:translate-x-1 transition-transform ${language === 'AR' ? 'rotate-180' : ''}`} />
+          <ArrowRight size={16} className={`group-hover:translate-x-1 transition-transform ${language === 'AR' ? 'rotate-180' : ''}`} />
         </button>
       </form>
 
@@ -244,7 +248,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
             required
             value={formData.email}
             onChange={e => setFormData({ ...formData, email: e.target.value })}
-            className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-sm"
+            className="w-full px-3 py-2.5 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-sm"
           />
         </div>
 
@@ -257,7 +261,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
             required
             value={formData.password}
             onChange={e => setFormData({ ...formData, password: e.target.value })}
-            className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-sm"
+            className="w-full px-3 py-2.5 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-sm"
           />
         </div>
 
@@ -268,7 +272,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
           </div>
         )}
 
-        <button className="w-full py-3.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg transition-all shadow-lg shadow-purple-500/20 dark:shadow-purple-900/20 mt-2">
+        <button type="submit" className="w-full py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg transition-all shadow-lg shadow-purple-500/20 dark:shadow-purple-900/20 mt-2 text-sm">
           {t.logIn[language]}
         </button>
       </form>
@@ -286,7 +290,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-purple-100/50 dark:from-purple-900/20 via-slate-50 dark:via-navy-950 to-slate-50 dark:to-navy-950 pointer-events-none transition-colors duration-300"></div>
 
       {/* Card Container */}
-      <div className="relative w-full max-w-md bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-2xl rounded-2xl p-8 lg:p-10 animate-in fade-in zoom-in-95 duration-300 transition-colors">
+      <div className="relative w-full max-w-sm bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-2xl rounded-2xl p-6 lg:p-8 animate-in fade-in zoom-in-95 duration-300 transition-colors">
 
         {/* Close/Back Button */}
         <button

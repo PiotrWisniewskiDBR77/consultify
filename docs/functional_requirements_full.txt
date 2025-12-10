@@ -1,0 +1,2000 @@
+1. Application Purpose & Business Assumptions
+Name: Consultify – AI-Led Digital Transformation & Execution Platform
+1.1. What the application is for
+Consultify is a B2B web application that supports companies in planning and executing digital transformation and AI-driven change programs.
+The app combines:
+	•	Methodology from the Digital Pathfinder book and the DRD model (7 axes of digital maturity),
+	•	Interactive AI Consultant (LLM-based) that talks with the user like a senior consultant,
+	•	Project & portfolio execution tooling (initiatives, roadmap, pilot, rollout, KPIs, ROI).
+1.2. Who uses it
+	•	CEO / Board / Owners – want a clear, structured transformation plan and ROI.
+	•	Transformation Leaders / PMO / COO / CIO – manage assessments, initiatives, pilots, and rollout.
+	•	Department Heads / Process Owners – responsible for specific initiatives.
+	•	Consultants / Partners – can run engagements for their clients using this platform.
+1.3. Core business goals
+The application should enable a company to:
+	•	Clarify context & expectations – understand goals, challenges, and constraints.
+	•	Diagnose digital maturity – across 7 DRD axes based on the Digital Pathfinder model.
+	•	Generate a structured list of transformation initiatives – directly linked to gaps and target maturity levels.
+	•	Build a realistic roadmap – with logical dependencies and resource constraints.
+	•	Run pilots – limited, measurable test projects to de-risk the full rollout.
+	•	Execute full rollout – manage all initiatives, tasks, risks, and progress.
+	•	Quantify economics & ROI – link operational improvements to financial impact.
+	•	Report execution & impact – dashboards and AI-generated management reports.
+1.4. Role of AI in the application
+AI is not just a chatbot – it is the core engine of the app.
+AI should:
+	•	use three knowledge layers:
+	•	The Digital Pathfinder book (methodology & DRD),
+	•	Internal DRD model (7 axes, levels, gaps, initiatives),
+	•	External internet sources (industry benchmarks, trends, practices),
+	•	act as an active consultant, not only reactive:
+	•	asks smart questions,
+	•	challenges assumptions,
+	•	suggests options,
+	•	checks consistency and realism of inputs,
+	•	constantly perform a “sense-check” of:
+	•	assessments,
+	•	initiatives,
+	•	timelines,
+	•	expected benefits and ROI,
+	•	adapt to industry context (manufacturing, logistics, services, etc.).
+
+2. Global Layout & Navigation
+2.1. Layout pattern (very important)
+The entire app follows a dual-pane layout:
+	•	Left panel: AI Conversation Panel
+	•	Persistent AI chat / guided conversation.
+	•	AI comments on user actions (proactive).
+	•	User can ask questions at any time.
+	•	AI sees the current module, current data, and context.
+	•	Right panel: Work Area
+	•	Actual forms, assessments, lists, dashboards, tables, timelines.
+	•	All the “business objects” live here (assessments, initiatives, KPIs, etc.).
+	•	Changes in the right panel can trigger AI responses on the left.
+This pattern is consistent across all modules.
+2.2. Top-level navigation (main menu)
+Main app sections (left sidebar or top menu):
+	•	Dashboard (Home)
+	•	Expectations & Challenges
+	•	Assessment (DRD & Audits)
+	•	Initiatives & Roadmap
+	•	Pilot Execution
+	•	Full Rollout
+	•	Economics & ROI
+	•	Execution Reports
+	•	Admin & Settings
+We keep navigation simple and linear, but user can jump freely between modules.
+
+3. Business Modules – Short Overview
+Below is only a brief description of each module. In later steps we will provide detailed specifications for each module one by one.
+
+3.1. Dashboard (Home)
+Purpose: A simple, non-overloaded landing view.
+Content:
+	•	Before starting a project:
+	•	High-level explanation of the 5-step journey:
+	•	Expectations & Challenges
+	•	Assessment
+	•	Initiatives & Roadmap
+	•	Pilot Execution
+	•	Full Rollout (+ Economics & Reports)
+	•	Status: which steps are already completed / in progress.
+	•	Once the project is running:
+	•	Very concise top-level info:
+	•	number of initiatives,
+	•	current phase (Assessment / Pilot / Rollout),
+	•	high-level traffic lights (on track / at risk),
+	•	two tabs:
+	•	Overview – generic project info,
+	•	Execution Snapshot – simple status of initiatives and KPIs.
+No heavy analytics here. This is a calm entry point to the app.
+
+3.2. Expectations & Challenges
+Purpose: Set the context: who we are, what we want, what hurts, what limits us.
+Key elements in the right panel:
+	•	Company profile (industry, size, main processes, business model)
+	•	Expectations & goals (strategic and time horizon)
+	•	Challenges & pain points
+	•	Constraints & risks
+	•	Success criteria
+	•	Additional documents (strategy, existing audits, internal reports)
+AI role (left panel):
+	•	leads a structured conversation about context,
+	•	helps user articulate goals and challenges,
+	•	suggests missing aspects to consider,
+	•	reads uploaded documents and summarises key signals.
+
+3.3. Assessment (DRD & Additional Audits)
+Purpose: Determine where the company is now and where it wants to be across 7 DRD axes:
+	•	Digital Processes
+	•	Digital Products
+	•	Digital Business Models
+	•	Data & Analytics
+	•	Organizational Culture
+	•	Cybersecurity
+	•	AI
+For each axis:
+	•	user selects Actual Level and Target Level,
+	•	AI suggests levels based on context,
+	•	user can add comments and evidence.
+Additional audits:
+	•	user can upload / input results from ADMA, SIRI, ISO, Lean or other frameworks,
+	•	AI maps them into DRD where possible.
+AI role:
+	•	suggests realistic levels,
+	•	explains each level in plain language,
+	•	challenges unrealistic choices,
+	•	ensures the Assessment is “good enough” as a foundation for initiatives.
+
+3.4. Initiatives & Roadmap
+Purpose: Convert gaps in maturity into a structured portfolio of initiatives and a logical roadmap.
+Includes:
+	•	AI Initiatives Generator (based on Assessment + Challenges + documents + industry),
+	•	Initiatives List (with impact, difficulty, DRD axis, etc.),
+	•	Initiative Cards (full details for each initiative),
+	•	Roadmap Builder:
+	•	drag & drop initiatives on a timeline,
+	•	group into workstreams,
+	•	manage dependencies.
+AI role:
+	•	generates initiative proposals,
+	•	explains why they are needed,
+	•	links them to DRD levels and gaps,
+	•	suggests realistic ordering and dependencies,
+	•	warns about overload and illogical sequences.
+
+3.5. Pilot Execution
+Purpose: Test selected initiatives on a limited scope to de-risk full rollout.
+Key features:
+	•	Choose which initiatives go into the pilot,
+	•	Define pilot scope (where, for whom, what exactly),
+	•	Define pilot team (owner, sponsor, members, roles),
+	•	Pilot action plan & milestones,
+	•	Pilot KPIs (operational + financial),
+	•	Pilot dashboard (execution tracking),
+	•	Pilot evaluation (Go / No Go / Adjust).
+AI role:
+	•	suggests which initiatives to pilot,
+	•	proposes pilot plan and KPIs,
+	•	monitors pilot execution,
+	•	identifies risks and root causes,
+	•	writes evaluation summary and recommendation.
+
+3.6. Full Rollout
+Purpose: Roll out successful solutions across the organization.
+Features:
+	•	Rollout scope overview (all initiatives included),
+	•	Workstreams & dependencies,
+	•	Execution dashboard (status of all initiatives),
+	•	Detailed initiative execution views (tasks, progress, risks, owners),
+	•	Risk & issue management,
+	•	Change management (communication, training, adoption),
+	•	Monthly / quarterly review support.
+AI role:
+	•	acts as an AI PMO:
+	•	monitors progress,
+	•	flags delays and overloads,
+	•	proposes corrective actions,
+	•	tracks risk changes,
+	•	validates that initiatives are moving towards Assessment target levels.
+
+3.7. Economics & ROI
+Purpose: Translate operational improvements into real financial impact.
+Features:
+	•	Cost baseline (current costs & waste),
+	•	Cost of initiatives (implementation & ongoing),
+	•	Benefit model (operational → financial),
+	•	ROI, NPV, payback, savings,
+	•	Scenario simulation (optimistic / realistic / conservative),
+	•	Investment summary for top management.
+AI role:
+	•	checks realism of assumptions,
+	•	uses benchmarks from industry,
+	•	converts time & error savings into money,
+	•	explains the economics in simple, CFO-friendly language.
+
+3.8. Execution Reports
+Purpose: Provide clear, structured reports for:
+	•	Board / CEO,
+	•	PMO / Transformation Office,
+	•	Sponsors & owners of initiatives.
+Features:
+	•	Configurable dashboards,
+	•	Monthly and quarterly AI-generated summaries,
+	•	Progress vs Assessment targets,
+	•	Impact on KPIs & ROI,
+	•	Key risks and decisions needed.
+AI role:
+	•	automatically generates human-readable reports (PDF / PPT / text),
+	•	tailors tone and level of detail to audience,
+	•	highlights insights, not only data,
+	•	checks whether conclusions match real data (sense-check).
+GLOBALNE ZAŁOŻENIA (dla wszystkich modułów)
+	•	Layout:
+	•	Left panel – AI Conversation (persistent).
+	•	Right panel – Work Area (formularze, tabele, wykresy, itd.).
+	•	AI zawsze:
+	•	widzi aktualny moduł, dane i stan projektu,
+	•	może reagować na działania (kliknięcia, zmiany, zapis),
+	•	może inicjować pytania/komentarze, gdy widzi braki lub niespójności.
+	•	AI korzysta z 3 warstw wiedzy:
+	•	Digital Pathfinder (pełna treść + DRD logika),
+	•	Model DRD (7 osi) – poziomy, luki, inicjatywy,
+	•	Internet / branża – benchmarki, praktyki, trendy.
+	•	Wbudowany jest mechanizm AI Sense-Check:
+	•	sprawdzanie sensu założeń, liczb, kolejności, ROI, itp.
+	•	AI daje ostrzeżenia + propozycję korekty, nie tylko krytykę.
+
+MODULE 0 – DASHBOARD (HOME)
+0.1. Purpose
+	•	Prosty, czysty punkt wejścia.
+	•	Pokazuje:
+	•	gdzie jesteśmy w procesie 1–5,
+	•	prosty status projektu,
+	•	droga do kolejnych kroków.
+	•	Zero „big data śmietnika” – minimalistyczny overview.
+0.2. UI Structure (Right Panel)
+Dwie zakładki:
+(A) Overview (Before / Early Phase)
+Pokazuj, gdy:
+	•	projekt jeszcze się nie rozpoczął, albo
+	•	jesteśmy w fazie 1–2.
+Elementy:
+	•	Krótki opis 5-stopniowego procesu:
+	•	Expectations & Challenges
+	•	Assessment
+	•	Initiatives & Roadmap
+	•	Pilot Execution
+	•	Full Rollout (+ Economics & Reports)
+	•	Status:
+	•	np. „Step 1 in progress”, „Step 2 not started”, itp.
+	•	CTA:
+	•	przycisk: “Start with Expectations & Challenges”
+	•	linki do kolejnych kroków (zablokowane, jeśli to ma sens).
+(B) Execution Snapshot (After Initiatives exist)
+Pokazuj, gdy:
+	•	jest już lista inicjatyw i/lub pilot / rollout trwa.
+Elementy:
+	•	Licznik inicjatyw:
+	•	total / in progress / completed / delayed.
+	•	Główny status projektu:
+	•	On Track / At Risk / Off Track (na bazie logiki AI).
+	•	Proste KPI:
+	•	liczba aktywnych pilotaży,
+	•	oszacowane savings vs plan,
+	•	poziom realizacji roadmapy (procent ukończenia inicjatyw).
+	•	Linki:
+	•	„Go to Initiatives & Roadmap”
+	•	„Go to Pilot Dashboard”
+	•	„Go to Rollout Dashboard”
+0.3. AI Behaviour (Left Panel)
+	•	Jeśli projekt nie wystartował:
+	•	AI wyjaśnia strukturę procesu,
+	•	pyta, czy chcesz zacząć od Expectations.
+	•	Jeśli coś już się dzieje:
+	•	AI potrafi skomentować status:
+	•	„Widzę, że masz 12 inicjatyw, z czego 4 są opóźnione…”
+	•	proponuje:
+	•	„Chcesz, żebym wygenerował krótkie podsumowanie dla zarządu?”
+
+
+
+
+MODUŁ 1: EXPECTATIONS & CHALLENGES
+Pełny projekt konceptualny + logika AI (wersja PRO)
+
+0. FILOZOFIA MODUŁU
+W tym module:
+	•	nie zbieramy „formularzy”,
+	•	tylko budujemy pełny kontekst strategiczny,
+	•	który AI wykorzysta do:
+	•	interpretacji Assessmentu,
+	•	generowania inicjatyw,
+	•	budowy roadmapy,
+	•	analiz finansowych i ROI,
+	•	sens-checku w całym projekcie.
+To oznacza, że ten moduł jest fundamentem całej transformacji.
+Dlatego AI musi działać jak senior konsultant, który:
+	•	prowadzi dialog,
+	•	zadaje właściwe pytania,
+	•	wykrywa braki,
+	•	uzupełnia luki,
+	•	proponuje standardy branżowe,
+	•	i dopiero gdy uzna, że kontekst jest „wystarczający” — pozwala przejść dalej.
+
+1️⃣ STRUKTURA MODUŁU
+(po menu po lewej)
+1. Expectations & Challenges
+   1.1 Company Profile
+   1.2 Expectations & Goals
+   1.3 Challenges Map
+   1.4 Constraints & Risks
+   1.5 Additional Context & Documents
+Workflow modułu:
+Rozmowa → Doprecyzowanie → Weryfikacja AI → Podsumowanie → Przejście do Assessmentu
+
+2️⃣ JAK POWSTAJĄ DANE W TYM MODULE? (ALGORYTM KONTEKSTU)
+AI zbiera dane z 4 źródeł:
+	•	Rozmowa z użytkownikiem — główne źródło.
+	•	Dane wpisane w panelu po prawej — strukturalne.
+	•	Wgrane dokumenty — strategia, audyty, raporty.
+	•	Branżowa wiedza AI + Digital Pathfinder — szablony, normy, zależności.
+Na tej podstawie AI buduje Context Model, który zawiera:
+	•	model biznesowy firmy,
+	•	główne procesy i problemy,
+	•	cele strategiczne,
+	•	mapę wyzwań,
+	•	ograniczenia i ryzyka,
+	•	branżowe parametry odniesienia,
+	•	kluczowe sygnały z dokumentów,
+	•	hipotezy, które będą testowane w Assessment.
+Ten model będzie wykorzystywany w każdym kolejnym module.
+
+3️⃣ PODMODUŁ 1.1 — COMPANY PROFILE
+🎯 Cel:
+Zrozumieć kim jest firma i w jakim działa środowisku.
+To daje AI kontekst:
+	•	branży,
+	•	dojrzałości,
+	•	typowych problemów,
+	•	skali operacji,
+	•	obszarów krytycznych.
+🧩 Układ widoku (prawy panel):
+Sekcja A — Basic Info
+	•	Nazwa
+	•	Branża / Subbranża
+	•	Lokalizacja
+	•	Rozmiar (employees / revenue ranges)
+Sekcja B — Business Model
+	•	Co firma sprzedaje
+	•	Komu sprzedaje
+	•	Jak dostarcza wartość (model operacyjny)
+Sekcja C — Core Processes (checklist)
+	•	Sales
+	•	Production
+	•	Logistics
+	•	Quality
+	•	Service
+	•	Maintenance
+	•	Finance
+	•	HR
+	•	R&D
+	•	IT
+Sekcja D — IT Landscape
+	•	ERP
+	•	MES
+	•	WMS
+	•	CRM
+	•	Custom systems
+	•	Integrations level (low/medium/high)
+
+🤖 ROLA AI NA TYM EKRANIE
+AI:
+	•	doprecyzowuje branżę,
+	•	identyfikuje brakujące procesy,
+	•	sugeruje typowe systemy IT,
+	•	ocenia ryzyka (np. legacy),
+	•	wykrywa niespójności:
+„Wybrałaś produkcję, ale nie wskazałaś żadnego systemu MES — czy to oznacza, że nie macie MES-u?”
+	•	tworzy pierwszą wersję profilu organizacji (AI Summary).
+
+4️⃣ PODMODUŁ 1.2 — EXPECTATIONS & GOALS
+🎯 Cel:
+Zrozumieć dlaczego firma chce transformacji, jakie ma ambicje i sukces-kryteria.
+🧩 Układ:
+Sekcja A — Strategic Goals (multi-select + custom) Cele typu:
+	•	efektywność,
+	•	automatyzacja,
+	•	poprawa jakości,
+	•	wzrost sprzedaży,
+	•	porządek w danych,
+	•	wdrożenie AI,
+	•	kultura ciągłego doskonalenia.
+Sekcja B — Time Horizon 12 / 24 / 36 miesięcy.
+Sekcja C — Success Criteria Jak poznamy, że transformacja się udała?
+
+🤖 ROLA AI
+AI:
+	•	pomaga sformułować cele w sposób SMART,
+	•	wykrywa cele niespójne z oceną dojrzałości,
+	•	sugeruje cele dla branży:
+„Firmy automotive zwykle skupiają się na OEE — czy to również jest dla Ciebie priorytet?”
+	•	pokazuje jak cele wpływają na inicjatywy:
+„Cel automatyzacji procesów wymaga najpierw uporządkowania danych.”
+
+5️⃣ PODMODUŁ 1.3 — CHALLENGES MAP
+🎯 Cel:
+Zebrać prawdziwe problemy, które blokują organizację.
+🧩 Układ:
+Lista wyzwań, gdzie dla każdego mamy:
+	•	nazwę,
+	•	opis,
+	•	obszar (people/process/data/tech),
+	•	severity (1–5),
+	•	impact (1–5),
+	•	przykłady (opcjonalne).
+
+🤖 ROLA AI
+AI działa jak konsultant:
+	•	zadaje pogłębiające pytania („dlaczego to jest problem?”),
+	•	pomaga doprecyzować sedno,
+	•	tworzy mapę zależności przyczynowo-skutkowych:
+„Brak standardów → chaos danych → niestabilna automatyzacja.”
+	•	identyfikuje tematy strategiczne:
+„Wiele Twoich wyzwań dotyczy danych — to będzie ważny temat w Assessment.”
+	•	pomaga w priorytetyzacji wyzwań.
+
+6️⃣ PODMODUŁ 1.4 — CONSTRAINTS & RISKS
+🎯 Cel:
+Zrozumieć co może przeszkodzić transformacji, zanim zaczniemy ją planować.
+🧩 Układ:
+Sekcja A — Constraints
+	•	budżet
+	•	czas
+	•	ludzie
+	•	kompetencje
+	•	polityka
+	•	technologia (legacy)
+Sekcja B — Risks
+	•	ryzyko
+	•	prawdopodobieństwo
+	•	wpływ
+	•	mitigation
+
+🤖 ROLA AI
+AI:
+	•	wykrywa sprzeczności z celami:
+„Masz ograniczenie budżetowe, ale cel ‘pełna automatyzacja’ jest bardzo kosztowny — to może być problem.”
+	•	szacuje ryzyko wejściowe projektu,
+	•	tłumaczy wpływ ograniczeń na inicjatywy:
+„Przy niskich kompetencjach IT wdrożenia AI trzeba rozłożyć w czasie.”
+
+7️⃣ PODMODUŁ 1.5 — ADDITIONAL CONTEXT & DOCUMENTS
+🎯 Cel:
+Dać aplikacji wszystkie dodatkowe dokumenty, które mogą poprawić rekomendacje AI.
+🧩 Układ:
+	•	upload dokumentów (PDF, PPT, DOCX),
+	•	kategorie dokumentów (Strategy, Audit, Process, KPI, IT…)
+	•	notatki kontekstowe.
+
+🤖 ROLA AI
+Po wgraniu dokumentów AI:
+	•	analizuje je semantycznie,
+	•	tworzy summary,
+	•	wyciąga sygnały strategiczne,
+	•	mapuje dokumenty do osi DRD,
+	•	wykrywa niespójności:
+„Strategia mówi o digital products, ale w celach transformacji ich nie ma.”
+	•	dodaje informacje do Context Model.
+
+8️⃣ NA KOŃCU MODUŁU: AI CHECKPOINT
+AI wykonuje holistyczną analizę:
+	•	Czy rozumiem firmę?
+	•	Czy wiem, jakie są cele?
+	•	Czy wiem, jakie są wyzwania?
+	•	Czy mam kontekst branżowy?
+	•	Czy dokumenty coś zmieniają?
+	•	Czy mogę przejść do Assessment?
+Jeśli tak — AI mówi:
+„Mam wystarczający kontekst, aby przejść do oceny dojrzałości (Assessment). Możemy kontynuować.”
+Jeśli nie — proponuje uzupełnienia.
+
+9️⃣ UX / INTERAKCJA Z AI
+Lewa strona — senior konsultant, który prowadzi rozmowę. Prawa strona — strukturalne dane z możliwością edycji.
+AI reaguje na:
+	•	zmiany w polach,
+	•	uploady dokumentów,
+	•	nowe wyzwania,
+	•	nowe cele.
+AI może też inicjować rozmowę:
+„Widzę, że wskazałaś trzy obszary produkcyjne. Chcesz, abym przeanalizowała, które z nich mają największy potencjał do poprawy?”
+
+🔚 OUTPUT MODUŁU 1
+AI tworzy pełny pakiet:
+	•	Context Summary
+	•	Challenge Map
+	•	Strategic Goals Model
+	•	Input for DRD Assessment
+	•	Early Risk Map
+To staje się bazą do kolejnych modułów.
+MODUŁ 2: ASSESSMENT (DRD + Additional Audits)
+Pełny projekt konceptualny + logika AI (wersja PRO)
+
+0. FILOZOFIA MODUŁU
+Assessment nie jest ankietą. Assessment jest diagnozą dojrzałości cyfrowej, która:
+	•	bierze dane z modułu 1 (cele, wyzwania, ograniczenia, dokumenty),
+	•	wykonuje ocenę 7 osi DRD opisaną w Twojej książce Digital Pathfinder,
+	•	rozpoznaje luki (gaps) między Actual a Target,
+	•	tworzy ścieżki dojścia (pathways) między poziomami,
+	•	buduje matematyczną i logiczną bazę pod inicjatywy,
+	•	stanowi rdzeń analityczny całej transformacji.
+Dlatego ten moduł musi być:
+	•	przyjazny użytkownikowi,
+	•	głęboko wspierany przez AI,
+	•	oparty na wiedzy branżowej,
+	•	z mechanizmem sens-check,
+	•	dynamiczny (zmiana kontekstu zmienia wyniki),
+	•	modularny.
+
+1️⃣ STRUKTURA MODUŁU
+(po lewej menu)
+2. Assessment
+   2.1 DRD Maturity Assessment
+        - Oś 1 – Digital Processes
+        - Oś 2 – Digital Products
+        - Oś 3 – Digital Business Models
+        - Oś 4 – Data & Analytics
+        - Oś 5 – Organizational Culture
+        - Oś 6 – Cybersecurity
+        - Oś 7 – AI
+   2.2 Additional Audits (ADMA, SIRI, Lean, internal audits)
+   2.3 AI Summary & Gaps Map
+
+2️⃣ JAK POWSTAJE OCENA? (ALGORYTM DRD + AI)
+AI bierze pięć źródeł informacji:
+	•	Wszystko, co powstało w Module 1.
+	•	Dane z formularza (prawy panel).
+	•	Wgrane dokumenty (strategy, audits, KPIs).
+	•	Logikę DRD (z Twojej książki).
+	•	Wiedzę branżową z internetu.
+I tworzy:
+	•	Level Suggestion (propozycja poziomu 1–7 dla każdej osi).
+	•	Explanation – dlaczego.
+	•	Gap Map – różnice między Actual a Target.
+	•	Pathway – krok po kroku jak dojść do Target Level.
+To jest absolutnie krytyczne, bo inicjatywy z modułu 3 są w 100% generowane logicznie na bazie tych gaps.
+
+3️⃣ PODMODUŁ 2.1 — DRD MATURITY ASSESSMENT
+🎯 Cel:
+Określić gdzie firma jest teraz (Actual) i gdzie chce dojść (Target) w każdej z 7 osi.
+🧩 Filozofia UX:
+Proces oceny ma być:
+	•	prowadzony przez AI (lewy panel),
+	•	szybki, ale sensowny,
+	•	dynamiczny,
+	•	interaktywny,
+	•	komentarze AI mają wyjaśniać poziomy i konsekwencje.
+
+🔷 3.1.1 STRUKTURA OSI
+Każda oś ma:
+	•	poziomy dojrzałości 1–7,
+	•	opis poziomu (z książki — nie zmieniamy),
+	•	warunki osiągnięcia poziomu,
+	•	typowe sygnały dla branży,
+	•	najczęstsze błędy.
+Layout:
+▶ Oś: Digital Processes
+[Description]
+Poziomy:
+1 — Basic
+2 — Emerging
+3 — Managed
+4 — Optimized
+5 — Digitally Integrated
+6 — Predictive
+7 — Autonomous
+
+SELECT:
+Actual Level: [1–7]
+Target Level: [1–7]
+
+Field:
+Notes / Evidence
+
+🔷 3.1.2 ROLA AI W PROCESIE OCENY
+AI wykonuje 6 inteligentnych zadań:
+1. Wyjaśnia poziomy, ale nie przeładowuje informacjami
+Tylko 2–3 zdania + można poprosić o więcej.
+2. Sugeruje poziom (AI Suggested Level)
+Na podstawie:
+	•	dokumentów,
+	•	firmy,
+	•	wyzwań,
+	•	branży,
+	•	danych z modułu 1.
+3. Kwestionuje błędne wybory
+Jeśli user ustawia poziom za wysoki, AI mówi:
+„Opis procesów wskazuje raczej poziom 2–3, nie 5. Chcesz, żebym pokazała różnice?”
+4. Prowadzi rozmowę
+Na lewym czacie:
+„Opisz jak mierzycie procesy. Czy macie KPI live?”
+5. Ocenia realność Target Level
+AI nie zabrania — ale ostrzega:
+„Przeskok z poziomu 1 na poziom 5 zwykle trwa 18–36 miesięcy w firmach Twojej skali.”
+6. Tworzy ‘Axis Insight Summary’ dla każdej osi
+Na końcu:
+	•	kluczowe problemy,
+	•	kluczowe mocne strony,
+	•	czego brakuje,
+	•	co należy poprawić.
+
+🔷 3.1.3 EXPERIENCES UX: CO WIDZI UŻYTKOWNIK?
+Po lewej — AI konsultant. Po prawej — ocena osi.
+AI reaguje na każde kliknięcie:
+Użytkownik ustawia poziom: 3 AI mówi:
+„OK — poziom 3 oznacza, że procesy są zarządzane, ale jeszcze nie zoptymalizowane. Czy potwierdzasz, że macie standaryzację na wszystkich stanowiskach?”
+Ten dialog sprawia, że użytkownik nie popełni błędu.
+
+⭐ PODMODUŁ 2.2 — ADDITIONAL AUDITS (ADMA, SIRI…)
+🎯 Cel:
+Pozwolić użytkownikowi wprowadzić wyniki innych audytów i zmapować je do DRD.
+🧩 Układ:
+Dla każdego audytu:
+	•	Nazwa audytu
+	•	Obszary i poziomy
+	•	Data
+	•	Wgrane dokumenty
+	•	Linki
+	•	Pole „Interpretacja AI”
+🤖 ROLA AI
+AI:
+	•	analizuje PDFy,
+	•	rozpoznaje strukturę audytu,
+	•	mapuje obszary audytu do osi DRD,
+	•	proponuje korekty poziomów.
+Przykład:
+„ADMA wskazuje poziom 2 w Data — dopasowałam to do DRD (oś Data & Analytics).”
+W wielu firmach to jest game changer, bo audyty są często chaotyczne.
+
+⭐ PODMODUŁ 2.3 — AI SUMMARY & GAPS MAP
+To jest najważniejszy ekran Assessmentu.
+AI generuje:
+1️⃣ Gap Map
+Czyli matrycę:
+Oś
+Actual
+Target
+Gap
+Meaning
+Data
+2
+4
+2
+Brak fundamentu pod AI
+Culture
+1
+3
+2
+Brak adaptacji do zmian
+2️⃣ Interpretation of gaps
+AI tłumaczy:
+„Największa luka jest w Data & Analytics (2 poziomy). Bez jej zamknięcia inicjatywy AI będą ryzykowne.”
+3️⃣ Implications for initiatives
+AI generuje już przedsmak modułu 3:
+„Aby dojść z poziomu 1 do 3 w osi Culture, potrzebne będą inicjatywy: Leadership Enablement, Communication Framework, Change Champions.”
+4️⃣ Assessment Confidence Level
+AI ocenia jakość danych:
+	•	wysoka — dużo dokumentów, konkretne odpowiedzi, spójne wybory,
+	•	średnia — brakuje części danych,
+	•	niska — użytkownik odpowiada zbyt ogólnie.
+To wpływa na to, ile AI musi zapytać w module 3.
+
+🧠 ROLA AI W CAŁYM MODUŁE 2 — KLUCZOWA
+AI działa jak „diagnostyczny silnik”, który:
+	•	interpretuje dane z całej organizacji,
+	•	wyznacza poziomy przez inteligentny dialog,
+	•	szuka sprzeczności,
+	•	sugeruje Target Level oparty na ambicji i ryzykach,
+	•	buduje zrozumiałe dla zarządu Insight Reports,
+	•	zapisuje wynik jako matematyczny model, który:
+	•	100% napędza moduł Initiatives & Roadmap
+
+🧠 AI SENSE-CHECK — MISTRZOWSKA FUNKCJA
+AI wykrywa błędy typu:
+❌ Target 5 przy Actual 1
+→ AI ostrzega, że to trudne i wymaga wielu inicjatyw.
+❌ brak powiązania między osiami
+np. wysoka AI Capability, ale niska Data Capability.
+❌ Niespójności z dokumentami
+„Strategia mówi o omni-channel, ale w Assessment tego nie ma.”
+❌ Nierealne Target Levels
+np. +4 poziomy w rok.
+AI zawsze proponuje korekty.
+
+UX / INTERAKCJA Z AI
+Lewa strona: inteligentny konsultant senior Prawa strona: ocena poziomów i dokumentów
+AI:
+	•	zadaje pytania,
+	•	komentuje wybory,
+	•	pomaga użytkownikowi zrozumieć poziomy,
+	•	proponuje alternatywne wartości,
+	•	używa wiedzy z Twojej książki,
+	•	pobiera dane z internetu.
+
+OUTPUT MODUŁU 2
+(input do Modułu 3)
+System generuje:
+	•	Gap Map (główna podstawa inicjatyw),
+	•	Axis Summaries,
+	•	Assessment Confidence Level,
+	•	Pathways (jak przejść z poziomu A do poziomu B),
+	•	Inference Model — semantyczną matrycę do generowania inicjatyw.
+Ta część jest absolutnie krytyczna. Dzięki takiemu poziomowi jakości inicjatywy będą logiczne, a nie przypadkowe.
+MODUŁ 3: INITIATIVES & ROADMAP
+Pełny projekt konceptualny + algorytm transformacji + logika AI (wersja PRO MAX)
+
+0. FILOZOFIA MODUŁU
+To jest serce Consultify. Tutaj Assessment zamienia się w pełną strategię transformacji:
+	•	połączoną z lukami DRD (Actual → Target),
+	•	powiązaną z kontekstem biznesowym firmy,
+	•	generującą inicjatywy, które mają sens w branży,
+	•	ułożoną w wykonany roadmap krok po kroku.
+Najważniejsza zasada modułu:
+Inicjatywy nie pochodzą z fantazji AI. Pochodzą z Twojej metodologii, mapy luk, ścieżek rozwoju poziomów DRD, wyzwań firmy i dokumentów strategii.
+Dlatego Consultify nie jest „AI tool”. Jest digital consulting platform.
+
+1️⃣ STRUKTURA MODUŁU (MENU)
+3. Initiatives & Roadmap
+   3.1 AI Initiatives Generator
+   3.2 Initiatives List
+   3.3 Initiative Card (Detailed View)
+   3.4 Roadmap Builder
+   3.5 Pilot vs Full Rollout Decision
+Każda zakładka to osobny etap logiki transformacji.
+
+2️⃣ JAK POWSTAJĄ INICJATYWY? (ALGORRYTM TRANSFORMACYJNY)
+AI bierze cztery warstwy wiedzy:
+1. Assessment (Actual → Target + Gap Map)
+To jest główne źródło inicjatyw:
+	•	jeśli Gap = 2 → 2 poziomy rozwoju,
+	•	jeśli Gap = 1 → pojedyncze usprawnienie,
+	•	jeśli Gap = 3+ → program transformacyjny.
+2. Challenges & Goals
+Inicjatywy muszą odpowiadać:
+	•	wyzwaniom operacyjnym,
+	•	strategicznym celom,
+	•	ograniczeniom.
+3. Dokumenty (Strategy, ADMA, SIRI, audyty…)
+AI potwierdza lub koryguje inicjatywy na podstawie dokumentów.
+4. Twoja książka Digital Pathfinder + wiedza branżowa AI
+Przykład:
+	•	automotive → OEE, standard pracy, traceability, automatyzacja dokumentacji,
+	•	FMCG → szybkość, scrap rate, changeover,
+	•	e-commerce → fulfillment optimization,
+	•	logistics → fleet & route planning,
+	•	heavy industry → predictive maintenance.
+Każda inicjatywa = logiczna odpowiedź na poziom + gap + branża + wyzwania.
+
+3️⃣ ZAKŁADKA 3.1 — AI INITIATIVES GENERATOR
+🎯 Cel:
+	•	wygenerować kompletną listę inicjatyw,
+	•	uporządkowaną wg 7 osi DRD,
+	•	dopasowaną do Assessmentu, kontekstu i branży,
+	•	z automatycznym uzasadnieniem.
+🧩 UX (prawy panel):
+Widok listy inicjatyw podzielonych wg osi:
+Processes
+   - Process Standardization 2.0
+   - Bottleneck Analysis & Cycle Time Optimization
+   - Digital Workflow Foundation
+Products
+   - Customer Portal MVP
+   - Digital Product Enhancement
+Business Models
+   - Subscription Opportunities Review
+   - New Revenue Stream Analysis
+Data & Analytics
+   - Data Foundation Program
+   - KPI Architecture 2.0
+Culture
+   - Leadership Enablement Program
+   - Continuous Improvement Labs
+Cybersecurity
+   - Access Governance Upgrade
+   - Incident Response Framework
+AI
+   - Predictive Maintenance (if data exists)
+   - AI-assisted Quality Control
+🔥 DLA KAŻDEJ INICJATYWY AI GENERUJE:
+	•	nazwę (jasną, konsultingową),
+	•	poziom „impact” (1–5),
+	•	poziom „difficulty” (1–5),
+	•	które poziomy DRD podnosi,
+	•	czas realizacji,
+	•	zależności (np. Data Foundation → AI),
+	•	poziom ryzyka,
+	•	kluczowe korzyści,
+	•	typ: strategic / quick win / operational.
+
+🤖 ROLA AI W GENERATORZE (najważniejsze 7 funkcji)
+	•	Analiza Assessmentu → generacja inicjatyw odpowiadających na luki Gap 2 = 2 fazy inicjatywy, Gap 3+ = 3–6 inicjatyw strategicznych.
+	•	Interpretacja branży AI wybiera inicjatywy sensowne dla sektora (np. automotive ≠ retail).
+	•	Przeczesywanie dokumentów (PDFy, strategie) AI sprawdza czy inicjatywa jest wspierana przez strategię.
+	•	Wyjaśnianie inicjatyw User pyta: → „Dlaczego to jest ważne?” AI odpowiada: → „Bo Twoja firma ma niski poziom standaryzacji procesów, co blokuje automatyzację.”
+	•	Alternatywy AI potrafi zaproponować wersję light / medium / enterprise.
+	•	Dynamiczna aktualizacja listy Zmiana poziomu Assessmentu → aktualizacja inicjatyw.
+	•	Sens-check AI wykrywa, że np.:
+„Masz inicjatywę AI Predictive Maintenance, ale Assessment danych = poziom 1. Ta inicjatywa jest ryzykowna.”
+
+4️⃣ ZAKŁADKA 3.2 — INITIATIVES LIST
+🎯 Cel:
+Centralne miejsce zarządzania portfolio.
+🧩 UX:
+Tabela:
+| Initiative | Axis | Impact | Difficulty | Owner | Status | Duration | Dependencies | Tags |
+Filtry:
+	•	axis (1–7),
+	•	difficulty,
+	•	impact,
+	•	strategic / quick win / operational,
+	•	dependencies (show blocking initiatives),
+	•	branch (if multi-country).
+🤖 ROLA AI:
+	•	identyfikacja duplikatów,
+	•	wykrywanie luk (np. brak inicjatywy kulturowej → adoption risk),
+	•	sugestie:
+„Te trzy inicjatywy mają podobny zakres — proponuję połączyć je w jedną.”
+	•	przypomina o zależnościach:
+„Inicjatywa ‘AI Quality Assistant’ powinna zostać wykonana dopiero po ‘Data Foundation Program’.”
+
+5️⃣ ZAKŁADKA 3.3 — INITIATIVE CARD (FULL DETAIL)
+(Najważniejszy ekran modułu)
+Każda karta inicjatywy ma konsultingową strukturę:
+
+Sekcja A: What & Why
+	•	nazwa inicjatywy
+	•	krótki opis (1–2 zdania)
+	•	cel biznesowy
+	•	gap który wypełnia
+	•	poziom DRD który podnosi
+	•	branżowa logika
+🤖 AI:
+	•	pisze wyjaśnienie,
+	•	doprecyzowuje język,
+	•	wykrywa błędy interpretacyjne.
+
+Sekcja B: Scope
+	•	zakres prac
+	•	procesy objęte zmianą
+	•	główne deliverables
+	•	narzędzia / systemy
+	•	interesariusze
+	•	zespół projektowy
+	•	zależności logiczne
+🤖 AI:
+„Brakuje deliverable dotyczącego standaryzacji procesu przed digitalizacją.”
+
+Sekcja C: Timeline
+	•	czas realizacji (sloty 4–12 tygodni lub 1–6 miesięcy)
+	•	kamienie milowe (milestones)
+	•	prerekwizyty
+	•	czynniki blokujące
+🤖 AI:
+	•	wykrywa przeszacowania,
+	•	sugeruje realistyczne daty,
+	•	ostrzega o konfliktach zasobów.
+
+Sekcja D: KPI
+	•	KPI operacyjne (czas, błędy, throughput, OEE…)
+	•	KPI finansowe (koszt, oszczędności, waste, cashflow…)
+	•	KPI strategiczne (customer NPS, adoption rate…)
+🤖 AI:
+	•	dobiera KPI do branży,
+	•	przelicza KPI operacyjne → finansowe,
+	•	podpowiada źródła danych.
+
+Sekcja E: Resource Plan
+	•	ludzie: FTE, kompetencje
+	•	technologia
+	•	budżet (estymacja AI)
+	•	partnerzy zewnętrzni
+🤖 AI:
+„Realizacja tej inicjatywy wymaga kompetencji analitycznych, których w Twojej firmie brakuje.”
+
+Sekcja F: Risks & Mitigation
+	•	ryzyko
+	•	prawdopodobieństwo
+	•	wpływ
+	•	plan mitigacji
+🤖 AI:
+	•	wykrywa brak krytycznych ryzyk,
+	•	ocenia realność mitigacji.
+
+Sekcja G: Expected Results
+	•	wyniki operacyjne
+	•	wyniki finansowe
+	•	expected maturity uplift (+1, +2 poziomy)
+🤖 AI:
+	•	wykrywa nierealistyczne założenia,
+	•	proponuje branżowe wartości.
+
+6️⃣ ZAKŁADKA 3.4 — ROADMAP BUILDER
+🎯 Cel:
+Ułożyć inicjatywy w wykonalną, logiczną sekwencję.
+🧩 UX:
+Widok Gantt-like:
+	•	drag & drop
+	•	automatyczne wykrywanie zależności
+	•	grupowanie w workstreams
+	•	wykrywanie konfliktów zasobów
+	•	kolorowanie wg osi DRD (7 kolorów)
+
+🤖 ROLA AI (najbardziej zaawansowany element modułu)
+AI:
+1. tworzy pierwszą propozycję roadmapy:
+„W oparciu o Assessment proponuję ścieżkę: Data Foundation → Process Standardization → Automation → AI.”
+2. wykrywa konflikty:
+„IT jest przeciążone: 3 inicjatywy zaczynają się w tym samym tygodniu.”
+3. proponuje priorytety:
+	•	quick wins na start,
+	•	strategiczne zmiany po zbudowaniu fundamentów.
+4. proponuje wersje roadmap:
+	•	conservative (bez ryzyka),
+	•	realistic,
+	•	ambitious.
+5. konwertuje inicjatywy w logiczne programy (program → projekty → zadania).
+
+7️⃣ ZAKŁADKA 3.5 — PILOT VS FULL ROLLOUT DECISION
+🎯 Cel:
+Po zakończeniu inicjatyw strategicznych użytkownik wybiera:
+	•	Pilot (mały zakres),
+	•	Pełne wdrożenie.
+🤖 AI pomaga:
+	•	wybiera które inicjatywy zaleca na pilota,
+	•	ocenia ryzyko obu wariantów,
+	•	tworzy warunki powodzenia pilota:
+„Aby pilot się udał, firma musi spełnić 3 warunki: …”
+	•	porównuje scenariusze:
+Wariant
+Czas
+Koszt
+Ryzyko
+Efekty
+
+🧠 ROLA AI W CAŁYM MODUŁE — MASTER LEVEL
+AI musi:
+	•	Generować inicjatywy dedukcyjnie, nie kreatywnie.
+	•	Podnosić poziomy DRD logicznymi krokami.
+	•	Uwzględniać branżę i skalę firmy.
+	•	Reagować na zmiany użytkownika w Assessment.
+	•	Utrzymywać spójność transformacji:
+	•	brak danych → brak AI
+	•	brak kultury → trudne rollouty
+	•	brak IT → przesunięcia terminów
+	•	Pilnować sensu:
+	•	terminy,
+	•	zasoby,
+	•	zależności,
+	•	ryzyka,
+	•	KPI,
+	•	finansów.
+
+OUTPUT MODUŁU 3
+System generuje:
+	•	pełną listę inicjatyw,
+	•	kartę każdej inicjatywy,
+	•	mapę zależności,
+	•	roadmapę (3 wersje),
+	•	propozycje pilota,
+	•	logikę przejścia do modułu 4.
+MODUŁ 4: PILOT EXECUTION
+Pełny projekt konceptualny + logika AI (wersja PRO MAX)
+
+0. FILOZOFIA MODUŁU
+Pilot nie jest „mini-wdrożeniem”. Pilot jest eksperymentem biznesowym, który:
+	•	redukuje ryzyko transformacji,
+	•	testuje inicjatywy w małej skali,
+	•	dostarcza mierzalnych KPI,
+	•	buduje zaufanie organizacji,
+	•	przygotowuje do pełnego rollout’u.
+W praktyce:
+	•	Złe pilotaże niszczą projekty.
+	•	Dobre pilotaże przyspieszają transformację o lata.
+Dlatego w Consultify pilot ma:
+	•	precyzyjny zakres,
+	•	właściwy skład zespołu,
+	•	jasne KPI,
+	•	plan działań,
+	•	dashboard postępu,
+	•	AI, które pilnuje każdej decyzji.
+
+1️⃣ STRUKTURA MODUŁU (MENU)
+4. Pilot Execution
+   4.1 Pilot Scope
+   4.2 Pilot Team & Roles
+   4.3 Pilot Plan & Milestones
+   4.4 Pilot KPIs
+   4.5 Pilot Dashboard
+   4.6 Pilot Evaluation (Go / No-Go / Adjust)
+Każda zakładka jest etapem prowadzenia pilota od designu do decyzji.
+
+2️⃣ ZAKŁADKA 4.1 — PILOT SCOPE
+🎯 Cel:
+Zdefiniować dokładnie, co jest objęte pilotem i dlaczego.
+Pilot ma odpowiadać na pytanie:
+„Czy dana inicjatywa działa w naszej firmie i przynosi efekty?”
+🧩 Zawartość ekranu:
+Sekcja A — Wybór inicjatyw przeznaczonych na pilota
+	•	AI rekomenduje inicjatywy nadające się do pilota (np. szybkie efekty, niskie ryzyko).
+	•	User zatwierdza lub zmienia wybór.
+Sekcja B — Zakres pilota
+	•	proces(y), który(e) testujemy,
+	•	obszar organizacji (dział / linia produkcyjna / zespół),
+	•	wariant procesu przed i po zmianie (AS-IS → TO-BE),
+	•	wymagane zasoby,
+	•	narzędzia używane w pilocie.
+Sekcja C — Cele pilota
+	•	co chcemy udowodnić,
+	•	jakie hipotezy testujemy,
+	•	jakie KPI chcemy poprawić.
+
+🤖 ROLA AI
+AI wykonuje 6 zadań:
+	•	Dobiera właściwe inicjatywy na pilota – uwzględniając branżę, dojrzałość i ryzyka.
+	•	Proponuje zakres minimalny (MVP) – pilot ma być mały, krótki, testowy.
+	•	Wskazuje brakujące elementy
+„Nie zdefiniowano procesu AS-IS — nie możemy ocenić poprawy.”
+	•	Analizuje dokumenty – np. layout hali, dane KPI, strukturę zespołu.
+	•	Generuje uzasadnienie pilota
+„Ten pilot pozwoli zredukować waste o ~15–20%.”
+	•	Wyłapuje błędne zakresy
+„Zakres pilota jest zbyt duży — trwałby 6 miesięcy. Zalecam zawężenie.”
+
+3️⃣ ZAKŁADKA 4.2 — PILOT TEAM & ROLES
+🎯 Cel:
+Utworzyć właściwy zespół pilota.
+Najczęstszy błąd firm: → Przypadkowy zespół = martwy pilot.
+🧩 Zawartość:
+Role:
+	•	Sponsor pilota (top manager)
+	•	Pilot Owner (Project Leader)
+	•	Team Members (operacja, IT, dane, jakość)
+	•	External Partners (opcjonalnie)
+	•	Process Owner
+Dane każdego członka:
+	•	imię i nazwisko
+	•	rola
+	•	zakres odpowiedzialności
+	•	dostępność (FTE)
+	•	kluczowe kompetencje
+
+🤖 ROLA AI
+AI:
+	•	Analizuje Assessment i inicjatywy → sugeruje potrzebne kompetencje np. analityk danych, operator procesu, specjalista IT.
+	•	Wykrywa brakujące role
+„Nie ma Process Ownera — pilot może nie mieć wsparcia operacyjnego.”
+	•	Ocenia ryzyko zespołu
+„Dostępność IT = 10%. To zbyt mało, by wesprzeć pilot.”
+	•	Proponuje strukturę zespołu optymalną dla branży – np. automotive wymaga Quality Engineer w każdym pilocie.
+
+4️⃣ ZAKŁADKA 4.3 — PILOT PLAN & MILESTONES
+🎯 Cel:
+Stworzyć krótkoterminowy, wykonalny plan działania.
+Pilot musi być:
+	•	tani,
+	•	szybki,
+	•	jasno mierzalny,
+	•	i bez zbędnych elementów.
+🧩 Zawartość:
+Plan 4–8 tygodniowy:
+	•	krok 1 – przygotowanie danych,
+	•	krok 2 – konfiguracja rozwiązania,
+	•	krok 3 – testy,
+	•	krok 4 – obserwacja,
+	•	krok 5 – ocena KPI.
+Milestones:
+	•	nazwa,
+	•	data,
+	•	owner,
+	•	warunek zakończenia.
+
+🤖 ROLA AI
+AI:
+	•	generuje pierwszy draft planu,
+	•	sugeruje długość trwania,
+	•	wykrywa niepotrzebne kroki,
+	•	proponuje optymalizację:
+„Krok 3 i 4 można połączyć — skróci to pilot o tydzień.”
+	•	wykrywa konflikty zasobów:
+„IT wspiera równocześnie 3 inicjatywy — opóźnienie pilota o 1–2 tygodnie jest prawdopodobne.”
+
+5️⃣ ZAKŁADKA 4.4 — PILOT KPIs
+🎯 Cel:
+Zdefiniować mierzalne wskaźniki sukcesu pilota.
+🧩 Kategorie KPI:
+	•	Operacyjne
+	•	czas cyklu
+	•	błędy / scrap
+	•	throughput
+	•	opóźnienia
+	•	jakość danych
+	•	OEE (dla produkcji)
+	•	Finansowe
+	•	oszczędności FTE
+	•	redukcja kosztów błędów
+	•	przychód zwiększony dzięki poprawie procesu
+	•	Adoption KPIs
+	•	poziom wykorzystania rozwiązania
+	•	satysfakcja użytkowników
+	•	zgodność procesu
+
+🤖 ROLA AI
+AI:
+	•	dobiera KPI do branży,
+	•	przelicza KPI operacyjne → efekty finansowe,
+	•	wykrywa nierealne KPI:
+„Redukcja czasu o 60% w 4 tygodnie jest prawdopodobnie nierealna.”
+	•	sugeruje minimalny zestaw:
+„Do oceny pilota wystarczą 3 KPI operacyjne i 1 finansowy.”
+
+6️⃣ ZAKŁADKA 4.5 — PILOT DASHBOARD
+🎯 Cel:
+Pokazać postęp pilota w czasie rzeczywistym.
+🧩 Elementy:
+	•	status milestone’ów
+	•	on track / delayed / at risk
+	•	wykresy KPI (baseline vs aktualne)
+	•	lista ryzyk i problemów
+	•	komentarze AI
+	•	wskaźnik stopnia realizacji
+	•	odchylenia czasowe
+
+🤖 ROLA AI
+AI w tym miejscu działa jak digital PMO:
+	•	Monitoruje postęp (na podstawie update’ów usera).
+	•	Ostrzega:
+„Milestone 2 jest opóźniony o 5 dni — proponuję korektę timeline’u.”
+	•	Wykrywa niebezpieczne trendy:
+„KPI jakości rośnie tylko o 2%, chociaż cel to 15% — możliwa nieskuteczność pilota.”
+	•	Proponuje akcje naprawcze.
+	•	Generuje krótkie raporty statusowe dla zarządu.
+
+7️⃣ ZAKŁADKA 4.6 — PILOT EVALUATION (GO / NO-GO / ADJUST)
+🎯 Cel:
+Podjąć formalną decyzję, czy przechodzimy:
+	•	do pełnego rollout’u,
+	•	czy potrzebujemy poprawki,
+	•	czy pilot należy zatrzymać.
+🧩 Zawartość:
+	•	ocena KPI,
+	•	ocena zespołu,
+	•	ocena kosztów,
+	•	ocena jakości danych,
+	•	ryzyka,
+	•	lessons learned.
+User wybiera:
+	•	GO
+	•	ADJUST
+	•	NO-GO
+
+🤖 ROLA AI
+AI wykonuje wielopoziomową analizę:
+	•	KPI vs target – czy pilot spełnia cele?
+	•	Stabilność wyników – czy poprawa jest trwała?
+	•	Zgodność z DRD – czy podnosi poziom?
+	•	Zasoby – czy rollout jest wykonalny?
+	•	Ryzyka – co może się wysypać?
+	•	ROI – czy pilot finansowo się broni?
+A następnie generuje oficjalną rekomendację:
+„Rekomenduję GO — efekty pilota wskazują na 20–25% poprawę procesu. Warunki sukcesu rollout’u: standaryzacja, zwiększenie zespołu IT, wzmocnienie komunikacji.”
+Lub:
+„NO-GO — dane nie są wystarczające, ROI nie zostało potwierdzone.”
+Lub:
+„ADJUST — potrzebny drugi cykl pilota z poprawionym zakresem.”
+
+OUTPUT MODUŁU 4
+System po zakończeniu pilota generuje:
+	•	Pilot Summary Report,
+	•	KPI Results Dashboard,
+	•	Lessons Learned,
+	•	rekomendacje AI,
+	•	scenariusz rollout’u.
+To przechodzi do Modułu 5.
+MODUŁ 5: FULL ROLLOUT EXECUTION
+Kompletny projekt konceptualny, logika AI, UX i algorytmy
+
+0. FILOZOFIA MODUŁU
+Full Rollout to nie jest powiększony pilot. To transformacja organizacji w czasie.
+Jego cel:
+	•	wdrożyć wszystkie zaakceptowane inicjatywy,
+	•	zapewnić spójność działań między działami,
+	•	doprowadzić do realnych zmian operacyjnych,
+	•	osiągnąć Target Levels DRD,
+	•	dostarczyć finansowe i operacyjne wyniki,
+	•	zapewnić skuteczny change management.
+Wdrożenie musi być:
+	•	monitorowane,
+	•	adaptacyjne,
+	•	oparte na danych,
+	•	wspierane przez AI.
+
+1️⃣ STRUKTURA MODUŁU (MENU)
+5. Full Rollout
+   5.1 Rollout Scope & Strategy
+   5.2 Workstreams & Teams
+   5.3 Rollout Plan (Master Plan)
+   5.4 Rollout Execution Dashboard
+   5.5 Risks & Issues Management
+   5.6 Change Management Hub
+   5.7 KPI Tracking (Operational & Financial)
+   5.8 Rollout Review & Closure
+Każda część odpowiada typowym elementom zarządzania transformacją na poziomie konsultingowym.
+
+2️⃣ ZAKŁADKA 5.1 — ROLLOUT SCOPE & STRATEGY
+🎯 Cel:
+Zdefiniować zakres, kolejność i strategię pełnego wdrożenia.
+🧩 Zawartość:
+	•	lista inicjatyw wybranych do rollout’u
+	•	priorytety (A/B/C lub 1/2/3)
+	•	zależności logiczne
+	•	wymagane zasoby
+	•	strategia rollout’u:
+	•	big bang
+	•	wave-based
+	•	sequential
+	•	parallel
+	•	horyzont czasowy (6/12/18 miesięcy)
+
+🤖 ROLA AI
+AI:
+	•	Analizuje roadmapę i pilota → sugeruje strategię rollout’u
+„Najbezpieczniejsza strategia to rollout falami co 6 tygodni.”
+	•	Wykrywa konflikty
+„Proces Customer Service nie jest gotowy — rollout tej inicjatywy powinien zostać przesunięty.”
+	•	Tworzy pierwszą wersję master planu rollout’u (automatyczne rozpisanie na fazy)
+	•	Ocenia ryzyka skalowania
+„Zespół danych ma tylko 1 osobę — rollout Data Foundation może się opóźnić.”
+
+3️⃣ ZAKŁADKA 5.2 — WORKSTREAMS & TEAMS
+🎯 Cel:
+Utworzyć strukturę wdrożenia, tak jak robią to firmy konsultingowe.
+
+🧩 Elementy:
+Workstreams (np.):
+	•	Digital Processes
+	•	Data Foundation
+	•	Automation
+	•	AI Enablement
+	•	Culture & Leadership
+	•	Cybersecurity
+Każdy WS ma:
+	•	Ownera
+	•	Zespół
+	•	Zakres
+	•	Cel
+	•	KPI
+	•	Zależności wsparcia (IT, data, HR, process owners)
+
+🤖 ROLA AI
+AI:
+	•	Proponuje strukturę WS na podstawie inicjatyw.
+	•	Wykrywa zbyt szerokie lub zbyt wąskie WS.
+	•	Mapuje inicjatywy do WS automatycznie.
+	•	Ocenia dostępność zespołu i zgłasza ryzyka.
+
+4️⃣ ZAKŁADKA 5.3 — ROLLOUT PLAN (MASTER PLAN)
+🎯 Cel:
+Ułożyć harmonogram pełnego wdrożenia.
+To odpowiednik Master Gantt w dużych programach transformacyjnych.
+
+🧩 Elementy:
+	•	timeline dla 6–18 miesięcy
+	•	inicjatywy rozmieszczone wg WS
+	•	zależności logiczne
+	•	milestone’y
+	•	krytyczna ścieżka (Critical Path)
+	•	obciążenie zasobów
+
+🤖 ROLA AI
+AI:
+	•	Generuje pierwszą wersję Master Planu na podstawie roadmapy.
+	•	Analizuje Critical Path.
+	•	Wykrywa przeciążenie zasobów.
+	•	Proponuje optymalizacje, np.:
+„Przenieśmy Data Integration o 4 tygodnie, aby uniknąć przeciążenia zespołu IT.”
+	•	Wykrywa ryzyka harmonogramowe (np. zależności między działami).
+
+5️⃣ ZAKŁADKA 5.4 — ROLLOUT EXECUTION DASHBOARD
+🎯 Cel:
+Monitorować realizację wdrożenia w czasie rzeczywistym.
+
+🧩 Elementy:
+	•	status inicjatyw (on track / delayed / at risk)
+	•	status workstreams
+	•	realizacja milestone’ów
+	•	wykres postępu (burndown)
+	•	alerty opóźnień
+	•	status zasobów
+	•	performance zespołów
+
+🤖 ROLA AI — DIGITAL PROGRAM DIRECTOR
+AI działa jak dyrektor programu:
+	•	wykrywa odchylenia
+„Workstream AI jest opóźniony o 12 dni.”
+	•	podpowiada działania naprawcze
+„Brakuje danych — zacznij od ustawienia integracji źródeł.”
+	•	generuje krótkie raporty dla zarządu (w stylu weekly Executive Summary).
+	•	monitoruje zależności
+„Spóźniony WS Data blokuje WS Automation.”
+	•	przewiduje opóźnienia dzięki ML i pattern recognition.
+
+6️⃣ ZAKŁADKA 5.5 — RISKS & ISSUES MANAGEMENT
+🎯 Cel:
+Zarządzać ryzykami i problemami w czasie rollout’u.
+
+🧩 Elementy:
+	•	rejestr ryzyk
+	•	rejestr problemów
+	•	scoring ryzyka (probability × impact)
+	•	plan mitigacji
+	•	heatmapa ryzyk
+	•	ryzyka strategiczne vs operacyjne
+
+🤖 ROLA AI
+AI:
+	•	Wykrywa ryzyka automatycznie na podstawie danych z dashboardu.
+	•	Proponuje mitigacje oparte na historii projektów.
+	•	Ocenia wpływ ryzyka na Drd poziomy.
+	•	Sygnalizuje eskalacje dla PMO i zarządu.
+
+7️⃣ ZAKŁADKA 5.6 — CHANGE MANAGEMENT HUB
+🎯 Cel:
+Zarządzać adaptacją zmian w organizacji.
+To bardzo ważny element Twojej filozofii transformacji.
+
+🧩 Elementy:
+	•	mapa interesariuszy
+	•	komunikacja zmian
+	•	plan szkoleń
+	•	materiały edukacyjne
+	•	adoption KPIs
+	•	barometr zmian (feedback pracowników)
+
+🤖 ROLA AI
+AI:
+	•	Tworzy plan komunikacji:
+	•	kto,
+	•	kiedy,
+	•	jaki komunikat.
+	•	Proponuje szkolenia dopasowane do roli.
+	•	Wykrywa opór organizacji (na podstawie danych i komentarzy).
+	•	Sugeruje działania:
+„Dział produkcji wykazuje niski poziom adopcji — proponuję warsztat procesowy.”
+
+8️⃣ ZAKŁADKA 5.7 — KPI TRACKING (FINANCIAL & OPERATIONAL)
+🎯 Cel:
+Monitorować efekty wdrożenia.
+
+🧩 Elementy:
+	•	baseline KPI (z pilota)
+	•	aktualne KPI
+	•	trend
+	•	przewidywane KPI (AI forecasting)
+	•	finansowe efekty rollout’u
+	•	raport ROI
+
+🤖 ROLA AI
+AI:
+	•	Przelicza KPI → finansowe skutki.
+	•	Generuje przewidywania.
+	•	Wykrywa brakujące dane.
+	•	Proponuje usprawnienia procesów.
+
+9️⃣ ZAKŁADKA 5.8 — ROLLOUT REVIEW & CLOSURE
+🎯 Cel:
+Formalnie zamknąć rollout.
+
+🧩 Elementy:
+	•	podsumowanie wyników
+	•	lista spełnionych celów
+	•	lessons learned
+	•	porównanie Actual DRD vs Target DRD
+	•	propozycje kolejnych kroków
+	•	rekomendacja AI dot. dalszego rozwoju organizacji
+
+🤖 ROLA AI
+AI:
+	•	generuje raport końcowy,
+	•	ocenia poziom transformacji osiągnięty przez firmę,
+	•	aktualizuje poziomy DRD,
+	•	sugeruje kolejną falę inicjatyw,
+	•	proponuje follow-up (np. utrzymanie zmian, automatyzacje, AI enhancements).
+
+OUTPUT MODUŁU 5
+System generuje:
+	•	pełny Master Plan,
+	•	dashboard rollout’u,
+	•	raporty statusowe,
+	•	ryzyka i mitigacje,
+	•	KPI finansowe i operacyjne,
+	•	raport końcowy transformacji,
+	•	aktualizację DRD.
+MODUŁ 6: ECONOMICS & ROI
+Pełny projekt konceptualny + logika AI + algorytmy finansowe (PRO MAX)
+
+0. FILOZOFIA MODUŁU
+Transformacja cyfrowa bez liczenia pieniędzy to tylko hobby.
+Moduł Economics & ROI ma 3 zadania:
+	•	Wyliczyć realny wpływ inicjatyw na finanse firmy.
+	•	Ocenić opłacalność całej transformacji (ROI, payback, NPV).
+	•	Zbudować finansową narrację dla zarządu / inwestorów.
+Oparty jest na Twojej filozofii:
+„Każda inicjatywa musi mieć wpływ na operacje i P&L.”
+
+1️⃣ STRUKTURA MODUŁU (MENU)
+6. Economics & ROI
+   6.1 Initiative Economics
+   6.2 Portfolio ROI
+   6.3 Cost Structure & Savings Model
+   6.4 Financial Scenarios (Conservative / Realistic / Aggressive)
+   6.5 Executive Summary (for Management Board)
+Moduł 6 działa na danych z:
+	•	inicjatyw (moduł 3),
+	•	pilota (moduł 4),
+	•	rollout’u (moduł 5),
+	•	KPI (moduł 5.7).
+To jest automatyczny moduł finansowy transformacji.
+
+2️⃣ ZAKŁADKA 6.1 — INITIATIVE ECONOMICS
+🎯 Cel:
+Policzyć opłacalność każdej inicjatywy osobno.
+To jest poziom szczegółowości konsultingowej.
+
+🧩 Dla każdej inicjatywy pokazywane są:
+A. Koszty:
+	•	koszty ludzi (FTE hours × internal rate)
+	•	koszty zakupów / technologii
+	•	koszty partnerów / integratorów
+	•	opóźnienia (cost of delay)
+B. Oszczędności operacyjne:
+	•	redukcja czasu cyklu
+	•	zmniejszenie scrap / defect rate
+	•	redukcja błędów manualnych
+	•	automatyzacja procesów
+	•	zwiększenie throughput’u
+C. Wpływ finansowy:
+	•	koszt godzinowy operatora
+	•	koszt błędu
+	•	koszt przestoju
+	•	revenue uplift (jeśli dotyczy)
+D. Profitability metrics:
+	•	annualized benefit
+	•	yearly net savings
+	•	ROI (%)
+	•	payback period
+	•	TCO 12/24/36 miesięcy
+	•	NPV (opcjonalnie)
+
+🤖 ROLA AI
+AI wykonuje pełny zestaw analiz:
+	•	Przelicza KPI operacyjne (np. czas cyklu) → wartości finansowe (wzorem firm konsultingowych).
+	•	Uczy się wzorców branżowych — np. koszt przestoju w automotive ≠ retail.
+	•	Wykrywa błędne założenia
+„Oszczędność 50% czasu pracy operatora jest nierealna — typowa wartość to 10–20%.”
+	•	Tworzy wersję conservative / realistic / aggressive (3 warianty finansowe).
+	•	Porównuje inicjatywy między sobą — ranking wg ROI i impactu.
+	•	Ocenia opłacalność inicjatywy dla różnych wielkości firm (SME vs large enterprise).
+
+3️⃣ ZAKŁADKA 6.2 — PORTFOLIO ROI
+🎯 Cel:
+Policzyć opłacalność całej strategii transformacji.
+To najważniejszy ekran dla zarządu.
+
+🧩 Elementy:
+1. Koszt całkowity transformacji
+	•	koszty inicjatyw
+	•	koszty rollout’u
+	•	koszty zespołu
+	•	koszty technologii
+	•	koszty change management
+2. Łączne korzyści operacyjne
+Zsumowane efekty z inicjatyw:
+	•	oszczędności FTE
+	•	redukcja kosztów błędów
+	•	mniejszy scrap
+	•	mniejszy downtime
+	•	zwiększony throughput
+3. Wynik finansowy całej transformacji
+	•	ROI
+	•	payback
+	•	net savings
+	•	annual benefit
+	•	NPV
+4. Heatmapa inicjatyw wg efektywności
+Kwadraty: (impact × difficulty) → kolorowane w 7 barwach dla osi DRD.
+
+🤖 ROLA AI
+AI:
+	•	automatycznie łączy efekty inicjatyw,
+	•	wykrywa duplikacje oszczędności,
+	•	ostrzega przed sztucznym zawyżaniem wyników,
+	•	analizuje portfolio:
+„60% benefitów pochodzi tylko z dwóch inicjatyw — to ryzyko koncentracji.”
+	•	proponuje rebalancing portfolio.
+
+4️⃣ ZAKŁADKA 6.3 — COST STRUCTURE & SAVINGS MODEL
+🎯 Cel:
+Zbudować model kosztowy i oszczędnościowy firmy.
+To fundament realnych obliczeń ROI.
+
+🧩 Zawartość:
+A. Koszty bezpośrednie
+	•	wynagrodzenia
+	•	technologia
+	•	utrzymanie systemów
+	•	usługi zewnętrzne
+B. Koszty pośrednie
+	•	błędy
+	•	waste
+	•	opóźnienia
+	•	jakość danych
+	•	rotacja pracowników
+C. Savings Calculator
+Model:
+	•	oszczędności roboczogodzin
+	•	oszczędności błędów
+	•	oszczędności czasu cyklu
+	•	zmniejszenie zapasów
+	•	zwiększenie przepustowości
+AI potrafi:
+	•	automatycznie wyliczyć delta %
+	•	zamienić to na pieniądze
+	•	wyświetlić wynik w prostym graficznym panelu.
+
+🤖 ROLA AI
+AI:
+	•	Analizuje branżowe benchmarki kosztów.
+	•	Uzupełnia model brakującymi wartościami.
+	•	Ocenia realność modelu:
+„Koszt godziny pracy wygląda na 40% zaniżony vs średnia rynkowa.”
+	•	Uczy użytkownika:
+„Te 3 inicjatywy wpływają na ten sam rodzaj kosztów — unikaj podwójnego liczenia.”
+
+5️⃣ ZAKŁADKA 6.4 — FINANCIAL SCENARIOS
+🎯 Cel:
+Pokazać 3 warianty finansowe transformacji.
+
+Scenariusz Conservative
+	•	niższe efekty
+	•	wyższe ryzyka
+	•	dłuższy payback
+	•	minimalny rollout
+Scenariusz Realistic
+	•	rekomendowany
+	•	zbalansowany
+	•	zgodny z branżą
+Scenariusz Aggressive
+	•	duże efekty
+	•	większe inwestycje
+	•	szybkie skalowanie
+
+🤖 ROLA AI
+AI:
+	•	buduje 3 warianty równocześnie,
+	•	tłumaczy różnice,
+	•	wskazuje warunki sukcesu dla każdego scenariusza,
+	•	robi porównanie:
+Scenariusz
+ROI
+Payback
+Koszt
+Benefit
+Ryzyko
+
+6️⃣ ZAKŁADKA 6.5 — EXECUTIVE SUMMARY
+🎯 Cel:
+Stworzyć dokument finansowy dla zarządu w formie prezentacji lub PDF.
+Ten dokument jest podstawą decyzji inwestycyjnej.
+
+🧩 Elementy podsumowania:
+	•	Top 5 inicjatyw wg ROI
+	•	Top 5 ryzyk finansowych
+	•	ROI transformacji
+	•	payback okresowy
+	•	NPV 3–5 letnie
+	•	mapa inicjatyw wg impact/difficulty
+	•	rekomendacja AI
+	•	rekomendacja Consultify
+
+🤖 ROLA AI
+AI generuje:
+	•	wersję 3-minutową (zarząd),
+	•	wersję 10-minutową (CFO),
+	•	wersję 30-minutową (owner / board),
+	•	wersję „bank friendly” (pod kredyty technologiczne),
+	•	wersję „investor friendly”.
+AI dostarcza gotowy materiał:
+	•	PDF
+	•	PowerPoint
+	•	pitch dla zarządu
+
+OUTPUT MODUŁU 6
+System generuje:
+	•	pełną analizę ekonomiczną,
+	•	ROI inicjatyw i całego portfela,
+	•	modele scenariuszowe,
+	•	dokument dla zarządu,
+	•	logiczną podstawę do modułu 7 (Execution Dashboard).
+MODUŁ 7: EXECUTION DASHBOARD & FINAL REPORTING
+Pełny projekt, logika AI, UX, algorytmy raportowe
+
+0. FILOZOFIA MODUŁU
+To jest „Command Center” całej transformacji.
+Dashboard ma:
+	•	dać natychmiastowy obraz sytuacji,
+	•	wskazać ryzyka,
+	•	pokazać progres,
+	•	zaprezentować efekty finansowe i operacyjne,
+	•	agregować dane z modułów 1–6,
+	•	być narzędziem do zarządzania, a nie dekoracją.
+Musi być:
+	•	szybki,
+	•	minimalistyczny wizualnie,
+	•	zrozumiały dla zarządu,
+	•	sterowany przez AI (rekomendacje + podsumowania + alerty).
+
+1️⃣ STRUKTURA MODUŁU (MENU)
+7. Execution Dashboard
+   7.1 High-Level Overview
+   7.2 Progress by Workstreams & Initiatives
+   7.3 KPI Performance
+   7.4 ROI & Financial Impact
+   7.5 Risks & Alerts
+   7.6 AI Consultant Insights
+   7.7 Final Transformation Report (Auto-PDF)
+To jest ostateczne, kompletne centrum raportowe.
+
+2️⃣ ZAKŁADKA 7.1 — HIGH-LEVEL OVERVIEW
+🎯 Cel:
+Pokazać na jednym ekranie stan całej transformacji.
+Minimalistycznie, czytelnie, elegancko.
+
+🧩 Elementy:
+1. Overall Progress Bar
+Pokazuje % realizacji transformacji.
+2. Status Workstreams
+Każdy workstream (Processes, Data, Automation, AI, Culture…) ma status:
+	•	On Track
+	•	At Risk
+	•	Delayed
+Kolory: zielony / żółty / czerwony
+3. Top 3 Blockers
+Dynamicznie aktualizowana lista:
+	•	„Brak danych blokuje AI Quality Assistant”
+	•	„Zbyt mała dostępność IT powoduje opóźnienia”
+4. Next 3 Milestones
+Najbliższe ważne wydarzenia.
+5. AI Summary (1 paragraf)
+AI pisze:
+„Transformacja przebiega poprawnie, największym ryzykiem jest opóźnienie w Data Foundation (14 dni). Zalecam wzmocnienie zespołu analitycznego.”
+
+🤖 ROLA AI
+AI generuje:
+	•	dynamiczne komentarze,
+	•	wnioski,
+	•	rekomendacje,
+	•	ostrzeżenia,
+	•	priorytety na następny tydzień.
+
+3️⃣ ZAKŁADKA 7.2 — PROGRESS BY WORKSTREAMS & INITIATIVES
+🎯 Cel:
+Pokazać, które obszary wdrożenia idą dobrze, a które nie.
+
+🧩 Dane:
+1. Workstreams
+Każdy WS ma:
+	•	status,
+	•	% wykonania,
+	•	opóźnienia,
+	•	obciążenie zespołu.
+2. Initiatives
+Lista z możliwością drill-down:
+	•	nazwa
+	•	status
+	•	owner
+	•	% realizacji
+	•	wykres postępu
+	•	link do initiative card
+
+🤖 ROLA AI
+AI:
+	•	wykrywa opóźnienia,
+	•	porównuje inicjatywy między workstreams,
+	•	wskazuje nieefektywne zespoły,
+	•	sugeruje przesunięcia.
+Np:
+„Workstream Automation jest przeciążony — przenieś jedną inicjatywę do następnej fali rollout’u.”
+
+4️⃣ ZAKŁADKA 7.3 — KPI PERFORMANCE
+🎯 Cel:
+Monitorować efekty transformacji w czasie rzeczywistym.
+
+🧩 Elementy:
+1. KPI Operational Dashboard
+	•	cycle time
+	•	scrap
+	•	throughput
+	•	waiting time
+	•	automation rate
+	•	data quality
+	•	error reduction
+2. KPI Financial Dashboard
+	•	savings achieved
+	•	cost avoidance
+	•	additional revenue
+	•	ROI-to-date
+	•	projected ROI
+3. KPI Trendlines
+Wykresy przed / po:
+	•	baseline
+	•	pilot
+	•	rollout
+
+🤖 ROLA AI
+AI:
+	•	wyjaśnia trendy,
+	•	przewiduje przyszłe wyniki (forecast),
+	•	analizuje anomalie KPI,
+	•	porównuje wyniki z benchmarkami branżowymi,
+	•	wskazuje obszary do dalszej optymalizacji.
+Przykład:
+„Throughput wzrósł o 12%, ale scrap nadal jest na wysokim poziomie — konieczna inicjatywa jakościowa.”
+
+5️⃣ ZAKŁADKA 7.4 — ROI & FINANCIAL IMPACT
+🎯 Cel:
+Pokazać efekty finansowe transformacji przebiegającej w całej organizacji.
+
+🧩 Elementy:
+1. Cumulative Savings (Year-to-Date)
+Wykres liniowy.
+2. Annualized Financial Impact
+Estymacja 12-miesięczna.
+3. ROI Calculator
+Aktualny ROI transformacji.
+4. Payback Progress
+Kiedy inwestycja się zwróci.
+5. Financial Forecast (AI Predicted)
+Przewidywany efekt za 3/6/12 miesięcy.
+
+🤖 ROLA AI
+AI:
+	•	aktualizuje model finansowy z modułu 6,
+	•	wykrywa niezgodności,
+	•	rekomenduje inwestycje lub redukcje,
+	•	tworzy komentarz CFO-ready.
+
+6️⃣ ZAKŁADKA 7.5 — RISKS & ALERTS
+🎯 Cel:
+Centralny system zarządzania ryzykami i alertami.
+
+🧩 Elementy:
+1. Risk Heat Map
+Oś X: Impact Oś Y: Probability Kolor: poziom ryzyka
+2. Top 10 Risks
+Dynamiczna lista:
+	•	ryzyko
+	•	właściciel
+	•	mitigacje
+	•	status
+3. Alerts Panel
+System automatycznych powiadomień, np.:
+	•	„opóźnienie milestone’u o 7 dni”
+	•	„KPI spada”
+	•	„brak danych → ryzyko w AI initiatives”
+4. Issue Log
+Lista problemów, które trzeba rozwiązać.
+
+🤖 ROLA AI
+AI:
+	•	przewiduje ryzyka przed ich wystąpieniem (predictive risk analytics),
+	•	łączy dane z KPI i harmonogramu,
+	•	proponuje działania naprawcze,
+	•	tworzy raport ryzyka dla zarządu.
+
+7️⃣ ZAKŁADKA 7.6 — AI CONSULTANT INSIGHTS
+🎯 Cel:
+Dać użytkownikowi możliwość dialogu z „digital executive consultant”.
+To jest kluczowa przewaga Consultify.
+
+🧩 Funkcje:
+	•	zadawanie pytań analitycznych
+	•	analiza trendów
+	•	wyjaśnienia finansowe
+	•	interpretacja KPI
+	•	rekomendacje operacyjne
+	•	rekomendacje strategiczne
+
+🤖 ROLA AI
+To jest miejsce, gdzie AI „myśli jak partner konsultingowy”.
+Przykłady:
+„Patrząc na Twoje KPI, przewiduję że wdrożenie AI w jakości powinno zostać przyspieszone o 4 tygodnie.”
+„Data Foundation blokuje 3 inne inicjatywy. Zalecam zwiększyć zasób o 1 FTE na 6 tygodni.”
+„Transformacja poprawiła efektywność o 18%. Można rozważyć kolejny cykl optymalizacji procesów.”
+
+8️⃣ ZAKŁADKA 7.7 — FINAL TRANSFORMATION REPORT (AUTO-PDF)
+🎯 Cel:
+Automatycznie generować elegancki dokument końcowy projektu. Coś jak „Management Consulting Final Report”.
+
+🧩 Zawartość:
+	•	executive summary
+	•	opis transformacji
+	•	osiągnięte poziomy DRD
+	•	kluczowe inicjatywy
+	•	wyniki KPI
+	•	wyniki finansowe
+	•	lessons learned
+	•	rekomendacje AI
+	•	roadmapa dalszego rozwoju
+	•	ocena kultury organizacyjnej
+	•	final ROI
+
+🤖 ROLA AI
+AI:
+	•	generuje PDF, PowerPoint lub Notion report,
+	•	dostosowuje język do odbiorcy (CEO, CFO, Board),
+	•	tworzy slide deck do prezentacji,
+	•	tworzy wersję 1-stronicową (executive one-pager).
+
+OUTPUT MODUŁU 7
+System generuje:
+	•	centralny dashboard transformacji,
+	•	alerty i insighty AI,
+	•	pełny raport końcowy,
+	•	materiały dla zarządu,
+	•	aktualizację poziomu DRD po rollout’cie.
+DASHBOARD (GLOBAL VIEW)
+Moduł nadrzędny – centralny ekran kontrolny Consultify
+
+0. FILOZOFIA DASHBOARDU
+Dashboard nie jest zbiorem wykresów. To centrum dowodzenia transformacją, które ma spełniać trzy cele:
+	•	Szybko poinformować użytkownika o stanie projektu.
+	•	Zidentyfikować ryzyka i najważniejsze priorytety.
+	•	Umożliwić wejście w głąb modułów jednym kliknięciem.
+Dashboard musi być:
+	•	lekki,
+	•	przejrzysty,
+	•	inteligentny,
+	•	oparty na AI,
+	•	dopasowany do tego, na jakim etapie jest użytkownik.
+Dlatego mamy DWA TRYBY:
+
+🌱 1. DASHBOARD — BEFORE START (ONBOARDING STATE)
+(czyli zanim firma uruchomi krok 1: Expectations & Challenges)
+Ekran zawiera:
+A. Welcome Panel
+	•	opis czym jest Consultify,
+	•	krótki film / tekst onboardingowy,
+	•	przycisk Start the Transformation → Module 1.
+AI może powiedzieć:
+„Zacznijmy od poznania Twojej firmy — przejdź do modułu 1, gdzie określimy cele i kontekst.”
+
+B. Required Steps Panel (Progress Bar 0% active)
+Wyświetlamy 5 głównych kroków:
+	•	Expectations & Challenges
+	•	Assessment
+	•	Initiatives & Roadmap
+	•	Pilot
+	•	Rollout
+Każdy krok jest szary, nieaktywny.
+Gdy user kończy moduł 1 → pasek się aktywuje.
+
+C. Short instructions:
+„Aby rozpocząć proces transformacji:
+	•	Zdefiniuj cele i wyzwania.
+	•	Wgraj dokumenty strategiczne.
+	•	Przejdź do Assessmentu.”
+To jest onboarding „bez oporu”.
+
+D. AI Assistant box (mini chat)
+AI daje krótką informację:
+„Jestem Twoim konsultantem. Poprowadzę Cię przez cały proces krok po kroku.”
+
+E. Brak wykresów, brak KPI, brak inicjatyw.
+Dashboard ma być czysty, nieprzeładowany.
+
+🟦 2. DASHBOARD — DURING PROJECT (LIVE STATE)
+(kiedy użytkownik przeszedł krok 1 lub dalej)
+To jest prawdziwy dashboard transformacji, który zawiera 5 sekcji:
+
+SEKCJA 1: PROJECT STATUS OVERVIEW
+(Top row – 3 duże kafle)
+A. Overall Progress
+	•	pasek postępu (0–100%)
+	•	wynik na podstawie statusów modułów:
+	•	Expectations & Challenges (20% wagi)
+	•	Assessment (20%)
+	•	Initiatives & Roadmap (25%)
+	•	Pilot (15%)
+	•	Full Rollout (20%)
+B. Current Phase
+	•	„Current Phase: Assessment”
+	•	lub „In Pilot Execution”
+	•	lub „Full Rollout in progress”
+C. Priority Alerts (AI-generated)
+3 najważniejsze alerty:
+	•	„Assessment incomplete: 2 axes missing.”
+	•	„Pilot delayed by 5 days.”
+	•	„Critical dependency blocked in Data Workstream.”
+AI generuje to automatycznie.
+
+SEKCJA 2: MODULE COMPLETION STATUS
+(pasek z 5 blokami – każdy moduł ma status)
+	•	Expectations & Challenges – ✔️ / ⚠️ / ❌
+	•	Assessment – ✔️ / ⚠️ / ❌
+	•	Initiatives & Roadmap – ✔️ / ⚠️ / ❌
+	•	Pilot Execution – ✔️ / ⚠️ / ❌
+	•	Full Rollout – ✔️ / ⚠️ / ❌
+Click → przenosi do modułu.
+
+SEKCJA 3: INITIATIVE SUMMARY
+(widok skrócony sytuacji inicjatyw)
+A. Total Initiatives: 27
+B. Status:
+	•	On Track: 14
+	•	At Risk: 7
+	•	Delayed: 6
+Kolorowe oznaczenia: zielony / żółty / czerwony.
+C. Link:
+„View all initiatives → Module 3.2”
+
+SEKCJA 4: KPI SNAPSHOT
+(tylko 4 kluczowe KPI, nie przeładowujemy)
+Standardowy układ:
+	•	KPI 1: Cycle time
+	•	KPI 2: Quality / scrap
+	•	KPI 3: Throughput
+	•	KPI 4: Operational cost savings
+Jeśli to firma usługowa → podmieniamy na:
+	•	SLA
+	•	lead time
+	•	error rate
+	•	customer satisfaction
+AI dynamicznie wybiera najlepszy zestaw KPI.
+Każdy KPI ma:
+	•	baseline
+	•	actual
+	•	trend (zielony ↑ lub czerwony ↓)
+
+SEKCJA 5: AI INSIGHTS (SUPER WAŻNE)
+Duża karta AI, która analizuje cały projekt i wyświetla:
+A. Weekly Executive Summary
+AI generuje:
+„W tym tygodniu projekt przesunął się o 4%. Największym ryzykiem jest opóźnienie w Data Foundation. W KPI zauważalna jest poprawa o 6% w throughput.”
+B. Recommended Actions
+Lista 3 zaleceń:
+	•	Wzmocnić rolę Process Owner’a w Workstream Automation.
+	•	Przyspieszyć decyzję dot. integracji danych.
+	•	Zaplanować workshop kulturowy dla liderów.
+C. Early Predictive Risks
+AI przewiduje:
+„Za 3 tygodnie możliwe opóźnienie w rollout’cie AI-user training.”
+
+SEKCJA 6: NAVIGATION SHORTCUTS
+Szybkie wejście do najważniejszych modułów:
+	•	Go to Assessment
+	•	Go to Roadmap
+	•	Go to Pilot Dashboard
+	•	Go to Rollout Execution Dashboard
+
+SEKCJA 7: UPCOMING MILESTONES
+Lista 5 najbliższych milestone’ów z całego programu:
+Milestone
+Data
+Status
+Owner
+
+SEKCJA 8: DOCUMENTS & NOTES
+Ostatnie:
+	•	dodane dokumenty,
+	•	notatki ze spotkań,
+	•	komentarze AI.
+
+TRYB MINIMALNY (MUST HAVE)
+Dla mniejszych firm → uproszczony layout:
+	•	Progress
+	•	Phase
+	•	Key Numbers
+	•	3 AI Insights
+	•	Quick Navigation
+
+🧠 ZACHOWANIE AI W DASHBOARDZIE
+AI:
+	•	monitoruje cały projekt 24/7,
+	•	generuje alerty,
+	•	pisze tygodniowe podsumowania,
+	•	wskazuje priorytety,
+	•	przewiduje problemy (predictive analytics),
+	•	na podstawie KPI sugeruje działania.
+Dashboard to prawdziwy digital transformation co-pilot.
+

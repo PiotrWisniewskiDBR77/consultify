@@ -1,33 +1,113 @@
 const db = require('../database');
+const { OpenAI } = require('openai'); // Assuming openai package is available
+
+// Helper: Cosine Similarity
+const cosineSimilarity = (vecA, vecB) => {
+    if (!vecA || !vecB || vecA.length !== vecB.length) return 0;
+    let dot = 0;
+    let normA = 0;
+    let normB = 0;
+    for (let i = 0; i < vecA.length; i++) {
+        dot += vecA[i] * vecB[i];
+        normA += vecA[i] * vecA[i];
+        normB += vecB[i] * vecB[i];
+    }
+    return dot / (Math.sqrt(normA) * Math.sqrt(normB));
+};
 
 const RagService = {
     /**
-     * Retrieves relevant context from the knowledge base based on a query.
-     * @param {string} query - The search query (usually user message or analysis topic).
-     * @param {number} limit - Number of chunks to retrieve.
-     * @returns {Promise<string>} - Combined text of relevant chunks.
+     * Generates an embedding for the given text using the configured provider (default: OpenAI).
      */
-    getContext: (query, limit = 3) => {
+    generateEmbedding: async (text) => {
+        return new Promise((resolve, reject) => {
+            // 1. Get embedding provider
+            db.get("SELECT * FROM llm_providers WHERE provider = 'openai' AND is_active = 1 LIMIT 1", async (err, row) => {
+                if (err || !row) {
+                    // Fallback - no embedding provider configured
+                    return resolve(null);
+                }
+
+                try {
+                    const openai = new OpenAI({ apiKey: row.api_key });
+                    const response = await openai.embeddings.create({
+                        model: "text-embedding-3-small",
+                        input: text,
+                        encoding_format: "float",
+                    });
+                    resolve(response.data[0].embedding);
+                } catch (e) {
+                    console.error("[RAG] Embedding Error:", e);
+                    resolve(null);
+                }
+            });
+        });
+    },
+
+    /**
+     * Retrieves relevant context using Vector Search (Cosine Similarity).
+     */
+    getContext: async (query, limit = 3) => {
+        // 1. Generate Query Embedding
+        const queryEmbedding = await RagService.generateEmbedding(query);
+
+        return new Promise((resolve, reject) => {
+            if (!queryEmbedding) {
+                // Fallback to Keyword Search if no embedding
+                return resolve(RagService.getContextKeyword(query, limit));
+            }
+
+            // 2. Fetch all chunks with embeddings
+            // Optimization: In a real DB, use a Vector Index. Here we do linear scan (fine for <10k docs).
+            db.all("SELECT content, filename, embedding FROM knowledge_chunks WHERE embedding IS NOT NULL", (err, rows) => {
+                if (err) return resolve('');
+
+                if (!rows || rows.length === 0) {
+                    return resolve(RagService.getContextKeyword(query, limit));
+                }
+
+                // 3. Rank by Similarity
+                const scored = rows.map(row => {
+                    let vec;
+                    try {
+                        vec = JSON.parse(row.embedding);
+                    } catch (e) { return { ...row, score: 0 }; }
+
+                    return {
+                        ...row,
+                        score: cosineSimilarity(queryEmbedding, vec)
+                    };
+                });
+
+                // 4. Sort and Slice
+                scored.sort((a, b) => b.score - a.score);
+                const topChunks = scored.slice(0, limit);
+
+                // 5. Format Context
+                const context = topChunks
+                    .filter(c => c.score > 0.5) // Minimum relevance threshold
+                    .map(r => `[Source: ${r.filename}] (Relevance: ${Math.round(r.score * 100)}%)\n${r.content}`)
+                    .join('\n\n');
+
+                resolve(context);
+            });
+        });
+    },
+
+    /**
+     * Legacy Keyword Search (Fallback)
+     */
+    getContextKeyword: (query, limit = 3) => {
         return new Promise((resolve, reject) => {
             if (!query) return resolve('');
-
-            // Extract meaningful keywords (length > 3)
-            const keywords = query.split(' ')
-                .map(w => w.trim().replace(/[^\w\s]/gi, '')) // Remove punctuation
-                .filter(w => w.length > 3);
-
+            const keywords = query.split(' ').map(w => w.trim().replace(/[^\w\s]/gi, '')).filter(w => w.length > 3);
             if (keywords.length === 0) return resolve('');
 
-            // Basic keyword matching (SQLite LIKE)
-            // In a production system, this should be Vector Search (e.g. pgvector or Pinecone)
             const sqlParts = keywords.map(() => "content LIKE ?").join(" OR ");
             const params = keywords.map(w => `%${w}%`);
 
-            // Add limit to params
-            // params.push(limit); // db.all doesn't take limit as param easily with map above without spread
-
             const sql = `
-                SELECT content, filename, doc_id
+                SELECT content, filename
                 FROM knowledge_chunks 
                 JOIN knowledge_docs ON knowledge_chunks.doc_id = knowledge_docs.id
                 WHERE ${sqlParts} 
@@ -35,33 +115,16 @@ const RagService = {
             `;
 
             db.all(sql, params, (err, rows) => {
-                if (err) {
-                    console.error("RAG Error:", err);
-                    resolve('');
-                } else if (!rows || rows.length === 0) {
-                    resolve('');
-                } else {
-                    // Format the context with citations
-                    const context = rows.map(r =>
-                        `[Source: ${r.filename}]\n${r.content}`
-                    ).join('\n\n');
-                    resolve(context);
-                }
+                if (err) return resolve('');
+                const context = (rows || []).map(r => `[Source: ${r.filename}]\n${r.content}`).join('\n\n');
+                resolve(context);
             });
         });
     },
 
-    /**
-     * Retrieves context specifically for a given Axis definition.
-     * This aids the Diagnosis Engine to find "Level 1" vs "Level 5" definitions.
-     * @param {string} axisName - E.g. "Digital Processes" or "Culture"
-     * @returns {Promise<string>}
-     */
     getAxisDefinitions: (axisName) => {
-        // This is a heuristic wrapper around getContext
-        // We assume the PDF files are named or contain text like "Axis 1", "Level 1", etc.
         const query = `${axisName} maturity levels definitions 1 2 3 4 5`;
-        return RagService.getContext(query, 10); // Get more chunks for broad definition
+        return RagService.getContext(query, 5);
     }
 };
 

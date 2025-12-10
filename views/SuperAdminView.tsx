@@ -6,6 +6,11 @@ import { toast } from 'react-hot-toast';
 import { SuperAdminSidebar, SuperAdminSection } from '../components/SuperAdminSidebar';
 import { AdminLLMView } from './AdminLLMView';
 import { AdminKnowledgeView } from './AdminKnowledgeView';
+import { SuperAdminAccessRequestsView } from './SuperAdminAccessRequestsView';
+import { SuperAdminPlansView } from './SuperAdminPlansView';
+import { SuperAdminRevenueView } from './SuperAdminRevenueView';
+import { AdminMarginConfig } from './AdminMarginConfig';
+import { AdminTokenPackages } from './AdminTokenPackages';
 
 interface SuperAdminViewProps {
     currentUser: User;
@@ -19,8 +24,8 @@ interface Organization {
     status: 'active' | 'blocked' | 'trial';
     created_at: string;
     user_count: number;
+    discount_percent?: number;
 }
-
 interface SystemUser {
     id: string;
     email: string;
@@ -99,7 +104,8 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
         try {
             await Api.updateOrganization(editingOrg.id, {
                 plan: editingOrg.plan,
-                status: editingOrg.status
+                status: editingOrg.status,
+                discount_percent: editingOrg.discount_percent
             });
             toast.success('Organization updated');
             setShowEditModal(false);
@@ -134,10 +140,26 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                 return renderOrganizations();
             case 'users':
                 return renderUsers();
+            case 'access-requests':
+                return <div className="p-8 overflow-y-auto"><SuperAdminAccessRequestsView /></div>;
             case 'llm':
                 return <AdminLLMView />;
             case 'knowledge':
                 return <AdminKnowledgeView />;
+            case 'plans':
+                return <div className="p-8 overflow-y-auto"><SuperAdminPlansView /></div>;
+            case 'token-billing':
+                return (
+                    <div className="p-8 overflow-y-auto">
+                        <h1 className="text-2xl font-bold mb-6">Token Billing Management</h1>
+                        <div className="grid grid-cols-1 gap-6">
+                            <AdminMarginConfig />
+                            <AdminTokenPackages />
+                        </div>
+                    </div>
+                );
+            case 'revenue':
+                return <div className="p-8 overflow-y-auto"><SuperAdminRevenueView /></div>;
             case 'settings':
                 return renderSettings();
             case 'audit':
@@ -215,15 +237,16 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                             <th className="p-4 font-medium">Users</th>
                             <th className="p-4 font-medium">Plan</th>
                             <th className="p-4 font-medium">Status</th>
+                            <th className="p-4 font-medium">Discount</th>
                             <th className="p-4 font-medium">Created At</th>
                             <th className="p-4 font-medium text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5 text-sm">
                         {loading ? (
-                            <tr><td colSpan={6} className="p-8 text-center text-slate-500">Loading...</td></tr>
+                            <tr><td colSpan={7} className="p-8 text-center text-slate-500">Loading...</td></tr>
                         ) : filteredOrgs.length === 0 ? (
-                            <tr><td colSpan={6} className="p-8 text-center text-slate-500">No organizations found</td></tr>
+                            <tr><td colSpan={7} className="p-8 text-center text-slate-500">No organizations found</td></tr>
                         ) : (
                             filteredOrgs.map(org => (
                                 <tr key={org.id} className="hover:bg-white/5 transition-colors">
@@ -244,6 +267,9 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                                             {org.status === 'active' ? <CheckCircle size={14} /> : <AlertCircle size={14} />}
                                             {org.status}
                                         </span>
+                                    </td>
+                                    <td className="p-4 text-slate-300">
+                                        {org.discount_percent ? <span className="text-green-400 font-bold">-{org.discount_percent}%</span> : '-'}
                                     </td>
                                     <td className="p-4 text-slate-500 text-xs">
                                         {new Date(org.created_at).toLocaleDateString()}
@@ -312,8 +338,8 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                                     <td className="p-4 text-slate-300">{user.email}</td>
                                     <td className="p-4">
                                         <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${user.role === 'SUPERADMIN' ? 'bg-red-500/20 text-red-400' :
-                                                user.role === 'ADMIN' ? 'bg-purple-500/20 text-purple-400' :
-                                                    'bg-slate-700 text-slate-300'
+                                            user.role === 'ADMIN' ? 'bg-purple-500/20 text-purple-400' :
+                                                'bg-slate-700 text-slate-300'
                                             }`}>
                                             {user.role}
                                         </span>
@@ -433,6 +459,19 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                                     <option value="trial">Trial</option>
                                     <option value="blocked">Blocked</option>
                                 </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-medium text-slate-400 mb-1">Discount (%)</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    value={editingOrg.discount_percent || 0}
+                                    onChange={e => setEditingOrg({ ...editingOrg, discount_percent: parseInt(e.target.value) || 0 })}
+                                    className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-blue-500 outline-none"
+                                />
+                                <p className="text-xs text-slate-500 mt-1">Discount applied to all future invoices.</p>
                             </div>
 
                             <div className="flex gap-3 pt-4">

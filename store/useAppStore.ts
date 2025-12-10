@@ -18,6 +18,8 @@ interface AppState {
     authInitialStep: AuthStep;
     language: Language;
     isSidebarOpen: boolean;
+    isSidebarCollapsed: boolean;
+    toggleSidebarCollapse: () => void;
 
     // Chat State
     activeChatMessages: ChatMessage[];
@@ -53,6 +55,8 @@ interface AppState {
     logout: () => void;
     theme: 'light' | 'dark';
     toggleTheme: () => void;
+    setAIConfig: (config: import('../types').AIProviderConfig) => void;
+    updateLastChatMessage: (content: string) => void;
 }
 
 const initialFreeSession: Partial<FreeSession> = {
@@ -106,6 +110,9 @@ export const useAppStore = create<AppState>()(
             setAuthInitialStep: (step) => set({ authInitialStep: step }),
             setLanguage: (lang) => set({ language: lang }),
             setIsSidebarOpen: (isOpen) => set({ isSidebarOpen: isOpen }),
+            isSidebarCollapsed: false,
+            toggleSidebarCollapse: () => set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
+
             setCurrentProjectId: (pid) => set({ currentProjectId: pid }),
             setSelectedModelId: (modelId) => set({ selectedModelId: modelId }),
 
@@ -134,6 +141,24 @@ export const useAppStore = create<AppState>()(
             }),
             theme: 'dark',
             toggleTheme: () => set((state) => ({ theme: state.theme === 'dark' ? 'light' : 'dark' })),
+
+            // AI Config Actions
+            setAIConfig: (config) => set((state) => {
+                const updatedUser = state.currentUser ? { ...state.currentUser, aiConfig: config } : null;
+                return { currentUser: updatedUser };
+            }),
+
+            updateLastChatMessage: (content: string) => set((state) => {
+                const messages = [...state.activeChatMessages];
+                if (messages.length > 0) {
+                    const lastMsg = messages[messages.length - 1];
+                    // Only update if it's an AI message (safety check)
+                    if (lastMsg.role === 'ai') {
+                        messages[messages.length - 1] = { ...lastMsg, content: content }; // Replace content
+                    }
+                }
+                return { activeChatMessages: messages };
+            }),
         }),
         {
             name: 'consultify-storage', // unique name for localStorage

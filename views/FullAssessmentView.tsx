@@ -1,22 +1,12 @@
-import React, { useEffect, useCallback, useState } from 'react';
-import { FullStep1Workspace } from '../components/FullStep1Workspace';
-import { AppView, AxisId, SessionMode } from '../types';
-import { translations } from '../translations';
+import React, { useEffect, useState } from 'react';
+import { SplitLayout } from '../components/SplitLayout';
+import { AppView, DRDAxis, AxisAssessment, AdditionalAudit, SessionMode } from '../types';
 import { useAppStore } from '../store/useAppStore';
 import { Api } from '../services/api';
-import { MaturityMatrix } from '../components/MaturityMatrix';
-import { DRD_STRUCTURE } from '../services/drdStructure';
-
-// Helper Map to get numeric ID
-const AXIS_ID_MAP: Record<AxisId, number> = {
-  'processes': 1,
-  'digitalProducts': 2,
-  'businessModels': 3,
-  'dataManagement': 4,
-  'culture': 5,
-  'cybersecurity': 6,
-  'aiMaturity': 7
-};
+import { AIMessageHistory } from '../services/ai/gemini';
+import { AssessmentAxisWorkspace } from '../components/assessment/AssessmentAxisWorkspace';
+import { AssessmentSummaryWorkspace } from '../components/assessment/AssessmentSummaryWorkspace';
+import { AssessmentAuditsWorkspace } from '../components/assessment/AssessmentAuditsWorkspace';
 
 export const FullAssessmentView: React.FC = () => {
   const {
@@ -25,129 +15,253 @@ export const FullAssessmentView: React.FC = () => {
     currentView: currentAppView,
     setCurrentView: onNavigate,
     setFullSessionData: updateFullSession,
-    currentProjectId
+    currentProjectId,
+    addChatMessage,
+    activeChatMessages: messages,
+    setIsBotTyping,
+    updateLastChatMessage
   } = useAppStore();
 
   const language = currentUser?.preferredLanguage || 'EN';
+  const [dashboardTab, setDashboardTab] = useState<'summary' | 'audits'>('summary');
 
-  // Map AppView to AxisId
-  const getAxisFromView = (view: AppView): AxisId | null => {
-    switch (view) {
-      case AppView.FULL_STEP1_PROCESSES: return 'processes';
-      case AppView.FULL_STEP1_DIGITAL: return 'digitalProducts';
-      case AppView.FULL_STEP1_MODELS: return 'businessModels';
-      case AppView.FULL_STEP1_DATA: return 'dataManagement';
-      case AppView.FULL_STEP1_CULTURE: return 'culture';
-      case AppView.FULL_STEP1_CYBERSECURITY: return 'cybersecurity';
-      case AppView.FULL_STEP1_AI: return 'aiMaturity';
-      default: return null;
-    }
-  };
-
-  const currentAxisId = getAxisFromView(currentAppView);
-
-  // Load Data on Mount
+  // Load Session Data
   useEffect(() => {
     const loadSession = async () => {
       if (!currentUser) return;
+      // Ensure we have a session. If not, create or fetch.
       const data = await Api.getSession(currentUser.id, SessionMode.FULL, currentProjectId || undefined);
       if (data) {
+        // Migration safety: Ensure assessment object exists
+        if (!data.assessment) data.assessment = {};
+        if (!data.audits) data.audits = [];
         updateFullSession(data);
       }
     };
     loadSession();
   }, [currentUser, currentProjectId, updateFullSession]);
 
-  const handleScoreSelect = useCallback(async (axisId: AxisId, areaId: string, level: number) => {
-    const currentAxisData = fullSession.assessment[axisId];
-    const newAreaScores = { ...currentAxisData.areaScores, [areaId]: level };
-
-    // Also update generic 'answers' for backward compatibility or simple averaging if needed
-    // But we rely on areaScores now. 
-
-    const updatedAssessment = { ...fullSession.assessment };
-    updatedAssessment[axisId] = {
-      ...currentAxisData,
-      areaScores: newAreaScores,
-      status: 'IN_PROGRESS'
-    };
-
-    const newSessionData = { ...fullSession, assessment: updatedAssessment };
-    updateFullSession(newSessionData);
-
-    // Save periodically/debounced usually, but here immediate for safety
-    await Api.saveSession(currentUser!.id, SessionMode.FULL, newSessionData, currentProjectId || undefined);
-  }, [fullSession, updateFullSession, currentUser, currentProjectId]);
-
-  const handleAxisComplete = useCallback(async (axisId: AxisId) => {
-    const currentAxisData = fullSession.assessment[axisId];
-    const scores = Object.values(currentAxisData.areaScores || {});
-    const avg = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
-
-    const updatedAssessment = { ...fullSession.assessment };
-    updatedAssessment[axisId] = {
-      ...currentAxisData,
-      score: avg,
-      status: 'COMPLETED'
-    };
-
-    if (!updatedAssessment.completedAxes.includes(axisId)) {
-      updatedAssessment.completedAxes.push(axisId);
+  // View Mapping
+  const getAxisFromView = (view: AppView): DRDAxis | null => {
+    switch (view) {
+      case AppView.FULL_STEP1_PROCESSES: return 'processes';
+      case AppView.FULL_STEP1_DIGITAL: return 'products'; // Mapped 'digitalProducts' -> 'products' in new Type
+      case AppView.FULL_STEP1_MODELS: return 'business_models';
+      case AppView.FULL_STEP1_DATA: return 'data';
+      case AppView.FULL_STEP1_CULTURE: return 'culture';
+      case AppView.FULL_STEP1_CYBERSECURITY: return 'cybersecurity';
+      case AppView.FULL_STEP1_AI: return 'ai';
+      default: return null;
     }
+  };
 
-    const newSessionData = { ...fullSession, assessment: updatedAssessment };
-    updateFullSession(newSessionData);
-    await Api.saveSession(currentUser!.id, SessionMode.FULL, newSessionData, currentProjectId || undefined);
+  const currentAxisId = getAxisFromView(currentAppView);
 
-    // Navigate back to dashboard
-    onNavigate(AppView.FULL_STEP1_ASSESSMENT);
+  // --- HANDLERS ---
 
-  }, [fullSession, updateFullSession, onNavigate, currentUser, currentProjectId]);
+  const handleAxisUpdate = async (axis: DRDAxis, data: Partial<AxisAssessment>) => {
+    const updatedAssessment = { ...fullSession.assessment };
+    const current = updatedAssessment[axis] || { actual: 0, target: 0, justification: '' };
+    updatedAssessment[axis] = { ...current, ...data } as AxisAssessment;
 
+    const newSession = { ...fullSession, assessment: updatedAssessment };
+    updateFullSession(newSession);
 
-  // If no specific axis view is selected, show the Dashboard (Step1Workspace)
-  if (!currentAxisId) {
+    // Auto-save
+    await Api.saveSession(currentUser!.id, SessionMode.FULL, newSession, currentProjectId || undefined);
+  };
+
+  const handleNextAxis = (current: DRDAxis) => {
+    const flow: DRDAxis[] = ['processes', 'products', 'business_models', 'data', 'culture', 'cybersecurity', 'ai'];
+    const idx = flow.indexOf(current);
+    if (idx < flow.length - 1) {
+      const next = flow[idx + 1];
+      // Map back to AppView
+      const viewMap: Record<DRDAxis, AppView> = {
+        'processes': AppView.FULL_STEP1_PROCESSES,
+        'products': AppView.FULL_STEP1_DIGITAL,
+        'business_models': AppView.FULL_STEP1_MODELS,
+        'data': AppView.FULL_STEP1_DATA,
+        'culture': AppView.FULL_STEP1_CULTURE,
+        'cybersecurity': AppView.FULL_STEP1_CYBERSECURITY,
+        'ai': AppView.FULL_STEP1_AI
+      };
+      onNavigate(viewMap[next]);
+    } else {
+      // Done with axes, back to summary
+      onNavigate(AppView.FULL_STEP1_ASSESSMENT);
+      setDashboardTab('summary');
+    }
+  };
+
+  const handleAuditAdd = async (audit: AdditionalAudit) => {
+    const newAudits = [...(fullSession.audits || []), audit];
+    const newSession = { ...fullSession, audits: newAudits };
+    updateFullSession(newSession);
+    await Api.saveSession(currentUser!.id, SessionMode.FULL, newSession, currentProjectId || undefined);
+  };
+
+  const handleAuditRemove = async (id: string) => {
+    const newAudits = (fullSession.audits || []).filter(a => a.id !== id);
+    const newSession = { ...fullSession, audits: newAudits };
+    updateFullSession(newSession);
+    await Api.saveSession(currentUser!.id, SessionMode.FULL, newSession, currentProjectId || undefined);
+  };
+
+  const handleGenerateInitiatives = async () => {
+    // Navigate to Module 3 (Impact Phase)
+    onNavigate(AppView.FULL_STEP2_INITIATIVES);
+
+    // Here we would also trigger the AI Generation Engine for Initiatives
+    // For now, we assume the view transition triggers it or user initiates it there.
+  };
+
+  // --- AI LOGIC ---
+  const handleAiChat = async (text: string) => {
+    addChatMessage({ id: Date.now().toString(), role: 'user', content: text, timestamp: new Date() });
+    setIsBotTyping(true);
+
+    const history: AIMessageHistory[] = messages.map(m => ({
+      role: m.role === 'user' ? 'user' : 'model',
+      parts: [{ text: m.content }]
+    }));
+
+    let context = `User is in Module 2: Assessment.`;
+    if (currentAxisId) {
+      const data = fullSession.assessment[currentAxisId];
+      context += ` Assessing Axis: ${currentAxisId}. Actual: ${data?.actual || '?'}, Target: ${data?.target || '?'}.`;
+    } else {
+      context += ` Reviewing Assessment Summary/Gap Map.`;
+    }
+    context += `\nUser asks: ${text}`;
+
+    // Placeholder message
+    addChatMessage({ id: Date.now().toString(), role: 'ai', content: '', timestamp: new Date() });
+
+    let currentText = "";
+    await import('../services/ai/gemini').then(async (mod) => {
+      await mod.sendMessageToAIStream(
+        history,
+        context,
+        (chunk) => {
+          currentText += chunk;
+          updateLastChatMessage(currentText);
+        },
+        () => setIsBotTyping(false)
+      );
+    });
+  };
+
+  // --- RENDER ---
+
+  // 1. Specific Axis View
+  if (currentAxisId) {
+    const axisData = fullSession.assessment?.[currentAxisId] || { actual: 0, target: 0, justification: '' };
+
     return (
-      <div className="w-full h-full flex flex-col">
-        <FullStep1Workspace
-          fullSession={fullSession}
-          currentAxisId={undefined}
-          onStartAxis={(id) => {
-            const viewMap: Record<string, AppView> = {
-              'processes': AppView.FULL_STEP1_PROCESSES,
-              'digitalProducts': AppView.FULL_STEP1_DIGITAL,
-              'businessModels': AppView.FULL_STEP1_MODELS,
-              'dataManagement': AppView.FULL_STEP1_DATA,
-              'culture': AppView.FULL_STEP1_CULTURE,
-              'cybersecurity': AppView.FULL_STEP1_CYBERSECURITY,
-              'aiMaturity': AppView.FULL_STEP1_AI
-            };
-            onNavigate(viewMap[id]);
-          }}
-          onNextStep={() => onNavigate(AppView.FULL_STEP2_INITIATIVES)}
-          language={language}
-        />
-      </div>
+      <SplitLayout title="DRD Assessment" onSendMessage={handleAiChat}>
+        <div className="flex flex-col h-full bg-navy-900 border-l border-white/5 w-full">
+          {/* Back Navigation Bar */}
+          <div className="h-12 border-b border-white/5 flex items-center px-4 bg-navy-950/30">
+            <button
+              onClick={() => onNavigate(AppView.FULL_STEP1_ASSESSMENT)}
+              className="text-xs text-slate-400 hover:text-white flex items-center gap-1"
+            >
+              ← Back to Dashboard
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-hidden">
+            <AssessmentAxisWorkspace
+              axis={currentAxisId}
+              data={axisData}
+              onChange={(d) => handleAxisUpdate(currentAxisId, d)}
+              onNext={() => handleNextAxis(currentAxisId)}
+              language={language}
+              // PRO Features Props
+              context={{
+                goals: fullSession.contextSufficiency?.gaps ? [] : ['Growth', 'Efficiency'], // Mock or real if available
+                challenges: [],
+                industry: currentUser?.companyName || 'Unknown' // Ideally from profile
+              }}
+            />
+          </div>
+        </div>
+      </SplitLayout>
     );
   }
 
-  // If Axis is selected, show Matrix
+  // 2. Dashboard View (Summary + Audits)
   return (
-    <div className="w-full h-full p-6 bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
-      <button
-        onClick={() => onNavigate(AppView.FULL_STEP1_ASSESSMENT)}
-        className="mb-4 flex items-center gap-2 text-slate-500 hover:text-navy-900 dark:text-slate-400 dark:hover:text-white transition-colors"
-      >
-        ← Back to Assessment Dashboard
-      </button>
+    <SplitLayout title="Assessment Dashboard" onSendMessage={handleAiChat}>
+      <div className="flex flex-col h-full bg-navy-900 border-l border-white/5 w-full">
+        {/* Tabs */}
+        <div className="h-16 border-b border-white/5 flex items-center px-8 gap-8 bg-navy-900 shrink-0">
+          <button
+            onClick={() => setDashboardTab('summary')}
+            className={`h-full border-b-2 text-sm font-semibold transition-colors ${dashboardTab === 'summary' ? 'border-purple-500 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+          >
+            Assessment & Gaps
+          </button>
+          <button
+            onClick={() => setDashboardTab('audits')}
+            className={`h-full border-b-2 text-sm font-semibold transition-colors ${dashboardTab === 'audits' ? 'border-purple-500 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+          >
+            Additional Audits
+          </button>
+        </div>
 
-      <MaturityMatrix
-        axisId={AXIS_ID_MAP[currentAxisId]}
-        axisKey={currentAxisId}
-        currentScores={fullSession.assessment[currentAxisId].areaScores || {}}
-        onScoreSelect={(areaId, level) => handleScoreSelect(currentAxisId, areaId, level)}
-        onComplete={() => handleAxisComplete(currentAxisId)}
-      />
-    </div>
+        <div className="flex-1 overflow-y-auto w-full">
+          {dashboardTab === 'summary' ? (
+            // Summary / Gap Map
+            <>
+              <div className="grid grid-cols-7 gap-1 p-4 bg-navy-950/50 border-b border-white/5">
+                {(['processes', 'products', 'business_models', 'data', 'culture', 'cybersecurity', 'ai'] as DRDAxis[]).map(axis => (
+                  <button
+                    key={axis}
+                    onClick={() => {
+                      const viewMap: Record<DRDAxis, AppView> = {
+                        'processes': AppView.FULL_STEP1_PROCESSES,
+                        'products': AppView.FULL_STEP1_DIGITAL,
+                        'business_models': AppView.FULL_STEP1_MODELS,
+                        'data': AppView.FULL_STEP1_DATA,
+                        'culture': AppView.FULL_STEP1_CULTURE,
+                        'cybersecurity': AppView.FULL_STEP1_CYBERSECURITY,
+                        'ai': AppView.FULL_STEP1_AI
+                      };
+                      onNavigate(viewMap[axis]);
+                    }}
+                    className="p-2 rounded bg-white/5 hover:bg-white/10 text-xs text-center border border-white/5 transition-all group"
+                  >
+                    <span className="block text-slate-400 group-hover:text-white mb-1 truncate">{axis}</span>
+                    <div className="flex justify-center gap-1">
+                      <span className="w-5 h-5 rounded bg-navy-900 flex items-center justify-center font-bold text-blue-400">
+                        {fullSession.assessment?.[axis]?.actual || '-'}
+                      </span>
+                      <span className="w-5 h-5 rounded bg-navy-900 flex items-center justify-center font-bold text-purple-400">
+                        {fullSession.assessment?.[axis]?.target || '-'}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+              <AssessmentSummaryWorkspace
+                assessment={fullSession.assessment || {}}
+                onGenerateInitiatives={handleGenerateInitiatives}
+                language={language}
+              />
+            </>
+          ) : (
+            // Audits View
+            <AssessmentAuditsWorkspace
+              audits={fullSession.audits || []}
+              onAddAudit={handleAuditAdd}
+              onRemoveAudit={handleAuditRemove}
+              language={language}
+            />
+          )}
+        </div>
+      </div>
+    </SplitLayout>
   );
 };

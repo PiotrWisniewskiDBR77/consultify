@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { AdminLLMView } from './AdminLLMView';
 import { AdminKnowledgeView } from './AdminKnowledgeView';
+import { AdminAnalyticsView } from './AdminAnalyticsView';
 import { toast } from 'react-hot-toast';
 
 interface AdminViewProps {
@@ -275,22 +276,23 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate, l
     return (
         <div className="flex flex-col h-full bg-navy-950">
             {/* Admin Header */}
-            <div className="h-20 border-b border-white/5 bg-navy-950 flex items-center justify-between px-8 shrink-0">
+            <div className="h-14 border-b border-white/5 bg-navy-950 flex items-center justify-between px-6 shrink-0">
                 <div>
-                    <h1 className="text-xl font-bold text-white flex items-center gap-2">
-                        <Shield className="text-purple-500" />
+                    <h1 className="text-sm font-bold text-white flex items-center gap-2">
+                        <Shield className="text-purple-500" size={18} />
                         Admin Panel: {currentUser.companyName}
                     </h1>
                 </div>
 
             </div>
 
-            <div className="flex-1 overflow-auto p-8">
+            <div className="flex-1 overflow-auto p-6">
                 {currentView === AppView.ADMIN_DASHBOARD && renderDashboard()}
                 {currentView === AppView.ADMIN_USERS && renderUsers()}
                 {currentView === AppView.ADMIN_PROJECTS && renderProjects()}
                 {currentView === AppView.ADMIN_LLM && <AdminLLMView />}
                 {currentView === AppView.ADMIN_KNOWLEDGE && <AdminKnowledgeView />}
+                {currentView === AppView.ADMIN_ANALYTICS && <AdminAnalyticsView />}
             </div>
 
             {/* Add User Modal */}

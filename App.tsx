@@ -8,12 +8,16 @@ import { FullAssessmentView } from './views/FullAssessmentView';
 import { FullInitiativesView } from './views/FullInitiativesView';
 import { FullRoadmapView } from './views/FullRoadmapView';
 import { FullROIView } from './views/FullROIView';
+
 import { FullExecutionView } from './views/FullExecutionView';
+import { FullPilotView } from './views/FullPilotView';
+import { FullRolloutView } from './views/FullRolloutView';
 import { FullReportsView } from './views/FullReportsView';
 import { AdminView } from './views/AdminView';
 import { SettingsView } from './views/SettingsView';
 import { SuperAdminView } from './views/SuperAdminView';
 import { UserDashboardView } from './views/UserDashboardView';
+import { Module1ContextView } from './views/Module1ContextView';
 import { AppView, SessionMode, AuthStep, User, UserRole } from './types';
 import { Menu, UserCircle, ChevronRight, Save } from 'lucide-react';
 import { useAppStore } from './store/useAppStore';
@@ -169,8 +173,8 @@ export const App = () => {
         if (
             currentView === AppView.FREE_ASSESSMENT_CHAT ||
             currentView === AppView.QUICK_STEP1_PROFILE ||
-            currentView === AppView.QUICK_STEP2_CHALLENGES ||
-            currentView === AppView.QUICK_STEP3_RECOMMENDATIONS
+            currentView === AppView.QUICK_STEP2_USER_CONTEXT ||
+            currentView === AppView.QUICK_STEP3_EXPECTATIONS
         ) {
             return (
                 <FreeAssessmentView
@@ -183,7 +187,14 @@ export const App = () => {
             );
         }
 
+        // ... (Removing misplaced import)
+
+        // ... existing code
+
         // Full Transformation Views
+        if (currentView === AppView.FULL_STEP1_CONTEXT) {
+            return <Module1ContextView currentUser={currentUser} fullSession={fullSessionData} setFullSession={setFullSessionData} onNavigate={setCurrentView} />;
+        }
         if (currentView === AppView.FULL_STEP1_ASSESSMENT || currentView.startsWith('FULL_STEP1_')) {
             return <FullAssessmentView currentUser={currentUser} fullSession={fullSessionData} setFullSession={setFullSessionData} currentAppView={currentView} onNavigate={setCurrentView} />;
         }
@@ -199,6 +210,12 @@ export const App = () => {
         if (currentView === AppView.FULL_STEP5_EXECUTION) {
             return <FullExecutionView currentUser={currentUser} fullSession={fullSessionData} setFullSession={setFullSessionData} onNavigate={setCurrentView} />;
         }
+        if (currentView === AppView.FULL_PILOT_EXECUTION) {
+            return <FullPilotView />;
+        }
+        if (currentView === AppView.FULL_ROLLOUT) {
+            return <FullRolloutView />;
+        }
         if (currentView === AppView.FULL_STEP6_REPORTS) {
             return <FullReportsView currentUser={currentUser} fullSession={fullSessionData} setFullSession={setFullSessionData} onNavigate={setCurrentView} />;
         }
@@ -210,7 +227,16 @@ export const App = () => {
 
         // Settings Views
         if (currentView.startsWith('SETTINGS')) {
-            return <SettingsView currentUser={currentUser} language={language} onUpdateUser={setCurrentUser} />;
+            return (
+                <SettingsView
+                    currentUser={currentUser}
+                    language={language}
+                    onUpdateUser={setCurrentUser}
+                    theme={theme}
+                    toggleTheme={toggleTheme}
+                    setLanguage={setLanguage}
+                />
+            );
         }
 
         return (
@@ -232,7 +258,7 @@ export const App = () => {
             <main className="flex-1 flex flex-col overflow-hidden relative w-full h-full transition-colors duration-300">
                 {/* Top Bar for Session Views */}
                 {isSessionView && (
-                    <div className="h-16 border-b border-slate-200 dark:border-white/5 bg-white dark:bg-navy-950 flex items-center justify-between px-6 shrink-0 z-20 transition-colors duration-300">
+                    <div className="h-14 border-b border-slate-200 dark:border-white/5 bg-white dark:bg-navy-950 flex items-center justify-between px-4 shrink-0 z-20 transition-colors duration-300">
                         <div className="flex items-center gap-3">
                             <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden text-navy-700 dark:text-white mr-2">
                                 <Menu />
@@ -252,8 +278,8 @@ export const App = () => {
                             <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
                             <div className="flex items-center gap-2">
                                 <div className="text-right hidden md:block">
-                                    <div className="text-sm font-medium text-navy-900 dark:text-white">{currentUser?.firstName} {currentUser?.lastName}</div>
-                                    <div className="text-xs text-purple-600 dark:text-purple-400">{currentUser?.companyName}</div>
+                                    <div className="text-xs font-semibold text-navy-900 dark:text-white">{currentUser?.firstName} {currentUser?.lastName}</div>
+                                    <div className="text-[10px] text-purple-600 dark:text-purple-400 uppercase tracking-wider">{currentUser?.companyName}</div>
                                 </div>
                                 <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-white/10 flex items-center justify-center">
                                     <UserCircle size={20} className="text-slate-400" />

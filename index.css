@@ -36,6 +36,28 @@
 
 @layer base {
     body {
-        @apply bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white antialiased;
+        @apply bg-gray-50 dark:bg-navy-950 text-navy-900 dark:text-white antialiased text-sm leading-relaxed;
+        /* Subtle global gradient in dark mode for depth */
+        background-image: radial-gradient(circle at 50% 0%, rgba(124, 58, 237, 0.03) 0%, transparent 50%),
+            radial-gradient(circle at 100% 0%, rgba(59, 130, 246, 0.03) 0%, transparent 50%);
+        background-attachment: fixed;
+    }
+}
+
+@layer components {
+    .glass-panel {
+        @apply bg-white/70 dark:bg-navy-900/60 backdrop-blur-xl border border-white/20 dark:border-white/5 shadow-sm dark:shadow-2xl;
+    }
+
+    .glass-card {
+        @apply bg-white/50 dark:bg-navy-800/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 transition-all duration-300 hover:border-brand/30 dark:hover:border-white/10 hover:shadow-glow;
+    }
+
+    .btn-primary {
+        @apply bg-brand hover:bg-brand-hover text-white shadow-lg shadow-brand/20 transition-all duration-200 active:scale-[0.98] border border-white/10 relative overflow-hidden;
+    }
+
+    .btn-glass {
+        @apply bg-white/10 hover:bg-white/20 text-navy-900 dark:text-white border border-white/10 backdrop-blur-sm transition-all duration-200 active:scale-[0.98];
     }
 }

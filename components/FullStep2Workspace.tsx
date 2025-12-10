@@ -1,255 +1,250 @@
-
-import React, { useState } from 'react';
-import { FullSession, FullInitiative, Language, AxisId } from '../types';
+import React, { useState, useMemo } from 'react';
+import { FullSession, FullInitiative, Language, AxisId, InitiativeStatus } from '../types';
 import { translations } from '../translations';
-import { ArrowRight, Pencil, Save, X, Trash2 } from 'lucide-react';
+import { ArrowRight, Save, X, Plus, Filter, Search, Layers, Grid, List } from 'lucide-react';
+import { InitiativeCard } from './InitiativeCard';
+import { InitiativeDetailModal } from './InitiativeDetailModal';
+import { useAppStore } from '../store/useAppStore';
 
 interface FullStep2WorkspaceProps {
   fullSession: FullSession;
   onUpdateInitiative: (initiative: FullInitiative) => void;
+  onCreateInitiative: (initiative: FullInitiative) => void;
+  onEnrichInitiative?: (id: string) => Promise<void>;
   onNextStep: () => void;
   language: Language;
 }
 
-export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({ 
-  fullSession, 
-  onUpdateInitiative, 
-  onNextStep, 
-  language 
+export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
+  fullSession,
+  onUpdateInitiative,
+  onCreateInitiative,
+  onEnrichInitiative,
+  onNextStep,
+  language
 }) => {
   const t = translations.fullInitiatives;
   const ts = translations.sidebar;
   const initiatives = fullSession.initiatives || [];
-  
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const { currentUser } = useAppStore();
+
+  // Temporary: use currentUser as the only available user for assignment
+  const users = currentUser ? [currentUser] : [];
+
   const [modalData, setModalData] = useState<FullInitiative | null>(null);
+
+  // Filter State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterAxis, setFilterAxis] = useState<AxisId | 'ALL'>('ALL');
+  const [filterPriority, setFilterPriority] = useState<'ALL' | 'High' | 'Medium' | 'Low'>('ALL');
+  const [activeTab, setActiveTab] = useState<'list' | 'kanban'>('list'); // Future use, currently just list/grid
+  const [groupBy, setGroupBy] = useState<'none' | 'axis' | 'priority' | 'status'>('none');
 
   const handleEditClick = (init: FullInitiative) => {
     setModalData({ ...init });
   };
 
-  const handleModalSave = () => {
-    if (modalData) {
-      onUpdateInitiative(modalData);
-      setModalData(null);
-    }
+  const handleCreateClick = () => {
+    const newInit: FullInitiative = {
+      id: '',
+      name: '',
+      axis: filterAxis !== 'ALL' ? filterAxis : 'processes',
+      priority: 'Medium',
+      complexity: 'Medium',
+      status: 'step3',
+      businessValue: 'Medium',
+      costCapex: 0,
+      costOpex: 0,
+      expectedRoi: 0,
+      progress: 0
+    };
+    setModalData(newInit);
   };
 
-  const axisOptions: AxisId[] = ['processes', 'digitalProducts', 'businessModels', 'dataManagement', 'culture', 'aiMaturity'];
-
   const getAxisLabel = (id: string) => {
-    const key = `fullStep1_${id === 'digitalProducts' ? 'prod' : id.substring(0,4)}` as any;
+    // @ts-ignore
+    const key = `fullStep1_${id === 'digitalProducts' ? 'prod' : id.substring(0, 4)}` as any;
     return ts[key]?.[language] || id;
   };
 
-  const renderDropdown = (
-    currentValue: string, 
-    options: string[], 
-    onChange: (val: any) => void,
-    colors?: Record<string, string>
-  ) => (
-    <select
-      value={currentValue}
-      onChange={(e) => onChange(e.target.value)}
-      onClick={(e) => e.stopPropagation()}
-      className={`bg-navy-950 border border-white/10 text-xs rounded px-2 py-1 outline-none focus:border-blue-500 cursor-pointer ${colors ? colors[currentValue] : 'text-slate-300'}`}
-    >
-      {options.map(opt => (
-        <option key={opt} value={opt}>{t[colors ? 'priorities' : 'statuses'][opt]?.[language] || opt}</option>
-      ))}
-    </select>
-  );
+  // Filter Logic
+  const filteredInitiatives = useMemo(() => {
+    return initiatives.filter(init => {
+      const matchesSearch = init.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        init.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        init.id.includes(searchQuery);
+
+      const matchesAxis = filterAxis === 'ALL' || init.axis === filterAxis;
+      const matchesPriority = filterPriority === 'ALL' || init.priority === filterPriority;
+
+      return matchesSearch && matchesAxis && matchesPriority;
+    });
+  }, [initiatives, searchQuery, filterAxis, filterPriority]);
+
+  // Grouping Logic
+  const groupedInitiatives = useMemo(() => {
+    if (groupBy === 'none') return { 'All Initiatives': filteredInitiatives };
+
+    const groups: Record<string, FullInitiative[]> = {};
+
+    filteredInitiatives.forEach(init => {
+      let key = '';
+      if (groupBy === 'axis') key = getAxisLabel(init.axis);
+      else if (groupBy === 'priority') key = init.priority;
+      else if (groupBy === 'status') key = init.status?.replace('_', ' ') || 'Unknown';
+
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(init);
+    });
+
+    return groups;
+  }, [filteredInitiatives, groupBy, language]);
 
   return (
-    <div className="flex flex-col h-full bg-navy-900">
-       {/* Header */}
-       <div className="h-20 border-b border-white/5 flex flex-col justify-center px-8 bg-navy-900 shrink-0">
-         <div className="flex justify-between items-center mb-1">
-           <span className="text-sm font-semibold text-white tracking-wide">{t.intro ? t.intro[language].substring(0, 30) + '...' : 'Initiatives Generator'}</span>
-           <span className="text-xs text-slate-500">STEP 2</span>
-         </div>
-         <div className="w-full h-1 bg-navy-800 rounded-full overflow-hidden">
-           <div className="h-full bg-blue-500 w-2/6 shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
-         </div>
+    <div className="flex flex-col h-full bg-transparent">
+      {/* Header */}
+      <div className="h-auto md:h-24 border-b border-slate-200 dark:border-white/5 flex flex-col justify-center px-6 bg-white dark:bg-navy-800 shrink-0 gap-3 py-3 md:py-0">
+        <div className="flex justify-between items-center">
+          <span className="text-sm font-bold text-navy-900 dark:text-white tracking-wide">Strategic Initiatives Board</span>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-slate-400">{filteredInitiatives.length} items</span>
+            <button onClick={handleCreateClick} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 rounded text-xs font-semibold hover:bg-blue-500 transition-colors text-white shadow-lg shadow-blue-900/20">
+              <Plus size={14} /> New Initiative
+            </button>
+          </div>
+        </div>
+
+        {/* Toolbar */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Search */}
+          <div className="relative">
+            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              className="pl-8 pr-3 py-1.5 bg-slate-100 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-md text-xs w-48 focus:outline-none focus:border-blue-500 text-navy-900 dark:text-white"
+              placeholder="Search initiatives..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          <div className="h-6 w-px bg-slate-200 dark:bg-white/10 hidden md:block"></div>
+
+          {/* Filters */}
+          <select
+            className="bg-slate-100 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-md px-2 py-1.5 text-xs text-navy-900 dark:text-slate-300 outline-none focus:border-blue-500"
+            value={filterAxis}
+            onChange={(e) => setFilterAxis(e.target.value as any)}
+          >
+            <option value="ALL">All Axes</option>
+            <option value="processes">Processes</option>
+            <option value="digitalProducts">Product</option>
+            <option value="businessModels">Business Model</option>
+            <option value="dataManagement">Data</option>
+            <option value="culture">Culture</option>
+            <option value="cybersecurity">Security</option>
+            <option value="aiMaturity">AI</option>
+          </select>
+
+          <select
+            className="bg-slate-100 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-md px-2 py-1.5 text-xs text-navy-900 dark:text-slate-300 outline-none focus:border-blue-500"
+            value={filterPriority}
+            onChange={(e) => setFilterPriority(e.target.value as any)}
+          >
+            <option value="ALL">All Priorities</option>
+            <option value="High">High Priority</option>
+            <option value="Medium">Medium Priority</option>
+            <option value="Low">Low Priority</option>
+          </select>
+
+          <div className="flex-1"></div>
+
+          {/* Group By */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] uppercase text-slate-500 font-bold">Group By:</span>
+            <div className="flex bg-slate-100 dark:bg-navy-900 p-0.5 rounded-md border border-slate-200 dark:border-white/10">
+              {['none', 'axis', 'priority', 'status'].map((g) => (
+                <button
+                  key={g}
+                  onClick={() => setGroupBy(g as any)}
+                  className={`px-2 py-1 round text-[10px] font-medium transition-colors ${groupBy === g ? 'bg-white dark:bg-navy-800 text-blue-600 dark:text-blue-400 get-shadow-sm' : 'text-slate-400 hover:text-navy-900 dark:hover:text-white'}`}
+                >
+                  {g === 'none' ? 'None' : g.charAt(0).toUpperCase() + g.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Table Content */}
-      <div className="flex-1 overflow-y-auto p-8">
-        <div className="border border-white/10 rounded-xl overflow-hidden bg-navy-950/50 shadow-xl">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-navy-900 border-b border-white/10 text-xs uppercase tracking-wider text-slate-500">
-                <th className="p-4">{t.tableHeader.initiative[language]}</th>
-                <th className="p-4">{t.tableHeader.axis[language]}</th>
-                <th className="p-4">{t.tableHeader.priority[language]}</th>
-                <th className="p-4">{t.tableHeader.complexity[language]}</th>
-                <th className="p-4">{t.tableHeader.status[language]}</th>
-                <th className="p-4 w-10"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {initiatives.map((init) => (
-                <tr 
-                  key={init.id} 
-                  className="border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer group"
+      {/* Grid Content */}
+      <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-white/10">
+        {Object.keys(groupedInitiatives).map((groupKey) => (
+          <div key={groupKey} className="mb-8">
+            {groupBy !== 'none' && (
+              <h3 className="text-sm font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
+                <Layers size={14} className="text-blue-500" />
+                {groupKey}
+                <span className="text-xs font-normal text-slate-500 bg-slate-200 dark:bg-white/10 px-1.5 py-0.5 rounded-full">{groupedInitiatives[groupKey].length}</span>
+              </h3>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {groupedInitiatives[groupKey].map((init) => (
+                <InitiativeCard
+                  key={init.id}
+                  initiative={init as any}
+                  language={language}
                   onClick={() => handleEditClick(init)}
-                >
-                  <td className="p-4">
-                    <div className="font-medium text-white text-sm">{init.name}</div>
-                    {init.description && <div className="text-xs text-slate-500 mt-1 truncate max-w-xs">{init.description}</div>}
-                  </td>
-                  <td className="p-4 text-xs text-slate-400">
-                     <span className="px-2 py-1 bg-navy-900 rounded border border-white/5">
-                        {getAxisLabel(init.axis)}
-                     </span>
-                  </td>
-                  <td className="p-4">
-                    {renderDropdown(
-                      init.priority, 
-                      ['High', 'Medium', 'Low'], 
-                      (val) => onUpdateInitiative({...init, priority: val}),
-                      { 'High': 'text-red-400', 'Medium': 'text-yellow-400', 'Low': 'text-green-400' }
-                    )}
-                  </td>
-                  <td className="p-4">
-                    {renderDropdown(
-                        init.complexity, 
-                        ['High', 'Medium', 'Low'], 
-                        (val) => onUpdateInitiative({...init, complexity: val})
-                    )}
-                  </td>
-                  <td className="p-4">
-                     <span className={`text-xs px-2 py-1 rounded border ${
-                        init.status === 'Ready' ? 'bg-green-500/10 border-green-500/20 text-green-400' :
-                        init.status === 'Archived' ? 'bg-slate-700/20 border-slate-600/30 text-slate-500' :
-                        'bg-blue-500/10 border-blue-500/20 text-blue-400'
-                     }`}>
-                        {t.statuses[init.status]?.[language]}
-                     </span>
-                  </td>
-                  <td className="p-4 text-right">
-                    <button className="p-1.5 hover:bg-white/10 rounded-full text-slate-500 hover:text-white transition-colors">
-                      <Pencil size={14} />
-                    </button>
-                  </td>
-                </tr>
+                  onEnrich={onEnrichInitiative}
+                />
               ))}
-              {initiatives.length === 0 && (
-                 <tr>
-                    <td colSpan={6} className="p-8 text-center text-slate-500 italic">
-                       Generating initiatives...
-                    </td>
-                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+            </div>
+
+            {groupedInitiatives[groupKey].length === 0 && (
+              <p className="text-sm text-slate-400 italic">No initiatives found in this group.</p>
+            )}
+          </div>
+        ))}
+
+        {filteredInitiatives.length === 0 && (
+          <div className="border border-dashed border-slate-300 dark:border-white/10 rounded-xl p-10 text-center text-slate-400 dark:text-slate-500 text-sm">
+            <p>No initiatives match your filters.</p>
+            <button onClick={() => { setSearchQuery(''); setFilterPriority('ALL'); setFilterAxis('ALL'); }} className="text-blue-500 hover:underline mt-2">Clear Filters</button>
+          </div>
+        )}
       </div>
 
       {/* Footer */}
-      <div className="p-6 border-t border-white/5 bg-navy-900 flex justify-end">
-        <button 
+      <div className="p-4 border-t border-slate-200 dark:border-white/5 bg-white dark:bg-navy-900 flex justify-end">
+        <button
           onClick={onNextStep}
-          className="flex items-center gap-2 px-8 py-4 rounded-lg font-semibold text-sm transition-all shadow-lg bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/30"
+          className="flex items-center gap-2 px-6 py-2.5 rounded-lg font-semibold text-sm transition-all shadow-lg bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/30"
         >
           {t.nextStep[language]}
-          <ArrowRight size={18} className={language === 'AR' ? 'rotate-180' : ''} />
+          <ArrowRight size={16} className={language === 'AR' ? 'rotate-180' : ''} />
         </button>
       </div>
 
-      {/* Edit Modal */}
+      {/* Modal */}
       {modalData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy-950/80 backdrop-blur-sm p-4">
-           <div className="bg-navy-900 border border-white/10 rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95">
-              <div className="p-4 border-b border-white/10 flex justify-between items-center bg-navy-950">
-                 <h3 className="font-semibold text-white">Edit Initiative</h3>
-                 <button onClick={() => setModalData(null)} className="text-slate-500 hover:text-white"><X size={20}/></button>
-              </div>
-              <div className="p-6 space-y-4 overflow-y-auto max-h-[80vh]">
-                 <div>
-                    <label className="text-xs uppercase text-slate-500 font-bold mb-1 block">Initiative Name</label>
-                    <input 
-                      value={modalData.name}
-                      onChange={e => setModalData({...modalData, name: e.target.value})}
-                      className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white focus:border-blue-500 outline-none"
-                    />
-                 </div>
-                 
-                 <div>
-                    <label className="text-xs uppercase text-slate-500 font-bold mb-1 block">Description</label>
-                    <textarea 
-                      value={modalData.description || ''}
-                      onChange={e => setModalData({...modalData, description: e.target.value})}
-                      className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white focus:border-blue-500 outline-none h-20 resize-none"
-                      placeholder="Short description of the initiative..."
-                    />
-                 </div>
-
-                 <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="text-xs uppercase text-slate-500 font-bold mb-1 block">Axis</label>
-                        <select 
-                           value={modalData.axis}
-                           onChange={e => setModalData({...modalData, axis: e.target.value as AxisId})}
-                           className="w-full bg-navy-950 border border-white/10 rounded p-2 text-slate-300 outline-none"
-                        >
-                           {axisOptions.map(a => <option key={a} value={a}>{getAxisLabel(a)}</option>)}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="text-xs uppercase text-slate-500 font-bold mb-1 block">Status</label>
-                         <select 
-                           value={modalData.status}
-                           onChange={e => setModalData({...modalData, status: e.target.value as any})}
-                           className="w-full bg-navy-950 border border-white/10 rounded p-2 text-slate-300 outline-none"
-                        >
-                           {['Draft', 'Ready', 'Archived'].map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
-                    </div>
-                 </div>
-
-                 <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="text-xs uppercase text-slate-500 font-bold mb-1 block">Priority</label>
-                        <select 
-                           value={modalData.priority}
-                           onChange={e => setModalData({...modalData, priority: e.target.value as any})}
-                           className="w-full bg-navy-950 border border-white/10 rounded p-2 text-slate-300 outline-none"
-                        >
-                           {['High', 'Medium', 'Low'].map(p => <option key={p} value={p}>{p}</option>)}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="text-xs uppercase text-slate-500 font-bold mb-1 block">Complexity</label>
-                         <select 
-                           value={modalData.complexity}
-                           onChange={e => setModalData({...modalData, complexity: e.target.value as any})}
-                           className="w-full bg-navy-950 border border-white/10 rounded p-2 text-slate-300 outline-none"
-                        >
-                           {['High', 'Medium', 'Low'].map(c => <option key={c} value={c}>{c}</option>)}
-                        </select>
-                    </div>
-                 </div>
-
-                 <div>
-                    <label className="text-xs uppercase text-slate-500 font-bold mb-1 block">Notes / Implementation Details</label>
-                    <textarea 
-                      value={modalData.notes || ''}
-                      onChange={e => setModalData({...modalData, notes: e.target.value})}
-                      className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white focus:border-blue-500 outline-none h-24 resize-none"
-                      placeholder="Add specific notes, resources needed, or risks..."
-                    />
-                 </div>
-              </div>
-              <div className="p-4 border-t border-white/10 bg-navy-950 flex justify-end gap-3">
-                 <button onClick={() => setModalData(null)} className="px-4 py-2 text-slate-400 hover:text-white text-sm">Cancel</button>
-                 <button onClick={handleModalSave} className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded text-sm font-medium flex items-center gap-2">
-                    <Save size={16} /> Save Changes
-                 </button>
-              </div>
-           </div>
-        </div>
+        <InitiativeDetailModal
+          initiative={modalData}
+          isOpen={true}
+          onClose={() => setModalData(null)}
+          onSave={(updated) => {
+            if (!updated.id || updated.id === '') {
+              onCreateInitiative(updated);
+            } else {
+              onUpdateInitiative(updated);
+            }
+            setModalData(null);
+          }}
+          users={users}
+          language={language}
+        />
       )}
     </div>
   );
 };
+
+

@@ -1,160 +1,155 @@
 const express = require('express');
 const router = express.Router();
-const fs = require('fs');
+const KnowledgeService = require('../services/knowledgeService');
+const requireSuperAdmin = require('../middleware/superAdminMiddleware');
+const { enforceStorageQuota, recordStorageAfterUpload } = require('../middleware/quotaMiddleware');
+
+// --- CANDIDATES (Idea Inbox) ---
+
+// Get pending candidates (SuperAdmin only)
+router.get('/candidates', requireSuperAdmin, async (req, res) => {
+    try {
+        const status = req.query.status || 'pending';
+        const items = await KnowledgeService.getCandidates(status);
+        res.json(items);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Submit a new candidate (Internal AI or User feedback)
+// No specific auth required for AI internal calls, but public endpoint should probably be protected
+// For now, allow authenticated users to "suggest" ideas
+router.post('/candidates', async (req, res) => {
+    try {
+        const { content, reasoning, source, relatedAxis, originContext } = req.body;
+        const id = await KnowledgeService.addCandidate(content, reasoning, source, relatedAxis, originContext);
+        res.json({ id, message: 'Candidate submitted' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Review candidate (Approve/Reject)
+router.put('/candidates/:id/status', requireSuperAdmin, async (req, res) => {
+    try {
+        const { status, adminComment } = req.body;
+        await KnowledgeService.updateCandidateStatus(req.params.id, status, adminComment);
+        res.json({ message: 'Status updated' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- GLOBAL STRATEGIES ---
+
+router.get('/strategies', async (req, res) => {
+    try {
+        // Active strategies are public for all users (to influence AI)
+        // Admin sees all? Let's just return active for now or filtering
+        const strategies = await KnowledgeService.getActiveStrategies();
+        res.json(strategies);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.post('/strategies', requireSuperAdmin, async (req, res) => {
+    try {
+        const { title, description } = req.body;
+        const id = await KnowledgeService.addStrategy(title, description, req.user?.email || 'admin');
+        res.json({ id, message: 'Strategy created' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.put('/strategies/:id/toggle', requireSuperAdmin, async (req, res) => {
+    try {
+        const { isActive } = req.body;
+        await KnowledgeService.toggleStrategy(req.params.id, isActive);
+        res.json({ message: 'Strategy toggled' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- KNOWLEDGE DOCUMENTS (RAG) ---
+
+const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const pdf = require('pdf-parse');
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
 
-const KNOWLEDGE_DIR = path.resolve(__dirname, '../../knowledge');
-
-// Helper: Run DB Run
-const dbRun = (query, params) => new Promise((resolve, reject) => {
-    db.run(query, params, function (err) {
-        if (err) reject(err);
-        else resolve(this);
-    });
-});
-
-// Helper: Run DB Get
-const dbGet = (query, params) => new Promise((resolve, reject) => {
-    db.get(query, params, (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-    });
-});
-
-// Helper: Run DB All
-const dbAll = (query, params) => new Promise((resolve, reject) => {
-    db.all(query, params, (err, rows) => {
-        if (err) reject(err);
-        else resolve(rows);
-    });
-});
-
-// GET /api/knowledge/files
-router.get('/files', async (req, res) => {
-    try {
-        // 1. Check DB for existing docs
-        const docs = await dbAll("SELECT * FROM knowledge_docs ORDER BY created_at DESC");
-
-        // 2. Scan directory
-        let files = [];
-        if (fs.existsSync(KNOWLEDGE_DIR)) {
-            files = fs.readdirSync(KNOWLEDGE_DIR).filter(f => f.toLowerCase().endsWith('.pdf'));
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const uploadDir = path.join(__dirname, '../../knowledge_uploads');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
         }
-
-        res.json({
-            docs,
-            availableFiles: files
-        });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Failed to list files' });
+        cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+        // Sanitize filename
+        const safeName = file.originalname.replace(/[^a-z0-9.]/gi, '_').toLowerCase();
+        cb(null, `${Date.now()}-${safeName}`);
     }
 });
 
-// POST /api/knowledge/index
-// Triggers indexing of all files in the directory that aren't already indexed
-router.post('/index', async (req, res) => {
-    try {
-        if (!fs.existsSync(KNOWLEDGE_DIR)) {
-            return res.status(404).json({ error: 'Knowledge directory not found' });
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype === 'application/pdf' || file.mimetype === 'text/plain' || file.mimetype === 'text/markdown') {
+            cb(null, true);
+        } else {
+            cb(new Error('Only PDF, TXT, and Markdown files are allowed'));
         }
-
-        const files = fs.readdirSync(KNOWLEDGE_DIR).filter(f => f.toLowerCase().endsWith('.pdf'));
-        let indexedCount = 0;
-
-        for (const file of files) {
-            // Check if already indexed
-            const existing = await dbGet("SELECT id FROM knowledge_docs WHERE filename = ?", [file]);
-            if (existing) continue;
-
-            const filePath = path.join(KNOWLEDGE_DIR, file);
-            const docId = uuidv4();
-
-            // Insert Doc Record
-            await dbRun("INSERT INTO knowledge_docs (id, filename, filepath, status) VALUES (?, ?, ?, ?)",
-                [docId, file, filePath, 'indexing']);
-
-            try {
-                // Read and Parse PDF
-                const dataBuffer = fs.readFileSync(filePath);
-                const data = await pdf(dataBuffer);
-
-                // Chunking Strategy (Simple paragraph/page split)
-                // pdf-parse creates long modification strings. We'll split by newlines for now.
-                const text = data.text;
-                // Simple chunking: ~1000 chars overlap
-                const chunkSize = 1000;
-                const overlap = 200;
-                let chunks = [];
-
-                for (let i = 0; i < text.length; i += (chunkSize - overlap)) {
-                    chunks.push(text.substring(i, i + chunkSize));
-                }
-
-                // Save Chunks
-                let chunkIndex = 0;
-                const insertChunk = db.prepare("INSERT INTO knowledge_chunks (id, doc_id, content, chunk_index) VALUES (?, ?, ?, ?)");
-
-                for (const chunkContent of chunks) {
-                    if (chunkContent.trim().length > 50) { // filter empty noise
-                        insertChunk.run(uuidv4(), docId, chunkContent.trim(), chunkIndex++);
-                    }
-                }
-                insertChunk.finalize();
-
-                // Update Status
-                await dbRun("UPDATE knowledge_docs SET status = ? WHERE id = ?", ['indexed', docId]);
-                indexedCount++;
-
-            } catch (err) {
-                console.error(`Error indexing ${file}:`, err);
-                await dbRun("UPDATE knowledge_docs SET status = ? WHERE id = ?", ['error', docId]);
-            }
-        }
-
-        res.json({ message: 'Indexing complete', indexedCount });
-
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Indexing failed' });
     }
 });
 
-// POST /api/knowledge/query
-// Simple RAG retrieval
-router.post('/query', async (req, res) => {
-    const { query } = req.body;
-    if (!query) return res.status(400).json({ error: 'Query required' });
-
+// Apply storage quota enforcement before upload
+router.post('/documents', requireSuperAdmin, enforceStorageQuota, upload.single('file'), async (req, res) => {
     try {
-        // Very basic semantic search (keyword matching) for MVP
-        // In prod, use embeddings (pgvector / pinecone)
-        // Here we just use LIKE %keyword% or simple scoring
+        if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
-        const keywords = query.split(' ').filter(w => w.length > 3);
-        if (keywords.length === 0) return res.json({ chunks: [] });
+        const { filename, path: filepath, mimetype, size } = req.file;
 
-        // Build dynamic SQL for keywords
-        // Note: This is inefficient but functional for small datasets (8 books)
-        const sqlParts = keywords.map(() => "content LIKE ?").join(" OR ");
-        const params = keywords.map(w => `%${w}%`);
+        // 1. Save metadata
+        const docId = await KnowledgeService.addDocument(filename, filepath);
 
-        const chunks = await dbAll(`
-            SELECT content, doc_id, filename 
-            FROM knowledge_chunks 
-            JOIN knowledge_docs ON knowledge_chunks.doc_id = knowledge_docs.id
-            WHERE ${sqlParts} 
-            LIMIT 5
-        `, params);
+        // 2. Extract Text
+        let text = '';
+        if (mimetype === 'application/pdf') {
+            const dataBuffer = fs.readFileSync(filepath);
+            const pdfData = await pdf(dataBuffer);
+            text = pdfData.text;
+        } else {
+            text = fs.readFileSync(filepath, 'utf8');
+        }
 
-        res.json({ chunks });
+        // 3. Process & Index (Async)
+        // We don't await this fully so UI returns fast, but for verification we might want to await.
+        // Let's await for simplicity and immediate feedback.
+        const chunkCount = await KnowledgeService.processDocument(docId, text);
+
+        // 4. Record storage usage
+        await recordStorageAfterUpload(req, size, 'document_upload');
+
+        res.json({ message: 'Document uploaded and indexed', docId, chunkCount });
 
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Query failed' });
+        console.error("Upload Error", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.get('/documents', requireSuperAdmin, async (req, res) => {
+    try {
+        const docs = await KnowledgeService.getDocuments();
+        res.json(docs);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
