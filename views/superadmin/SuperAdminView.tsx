@@ -41,9 +41,10 @@ interface SystemUser {
 
 export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onNavigate }) => {
     const [activeSection, setActiveSection] = useState<SuperAdminSection>('overview');
-    const [stats, setStats] = useState({ totalOrgs: 0, totalUsers: 0, revenue: 0 });
+    const [stats, setStats] = useState({ totalOrgs: 0, totalUsers: 0, revenue: 0, aiCalls: 0, tokens: 0, activeUsers7d: 0 });
     const [organizations, setOrganizations] = useState<Organization[]>([]);
     const [allUsers, setAllUsers] = useState<SystemUser[]>([]);
+    const [activities, setActivities] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -58,15 +59,22 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
     const fetchData = async () => {
         setLoading(true);
         try {
-            const orgs = await Api.getOrganizations();
+            const [orgs, dashboardData] = await Promise.all([
+                Api.getOrganizations(),
+                Api.getSuperAdminDashboard().catch(() => null)
+            ]);
+
             setOrganizations(orgs);
 
-            // Calculate Stats
-            const totalUsers = orgs.reduce((acc: number, org: Organization) => acc + (org.user_count || 0), 0);
+            // Calculate Stats from dashboard API
+            const totalUsers = dashboardData?.counts?.total_users || orgs.reduce((acc: number, org: Organization) => acc + (org.user_count || 0), 0);
             setStats({
-                totalOrgs: orgs.length,
+                totalOrgs: dashboardData?.counts?.total_orgs || orgs.length,
                 totalUsers: totalUsers,
-                revenue: 0 // Placeholder
+                revenue: 0,
+                aiCalls: dashboardData?.ai?.total_ai_calls || 0,
+                tokens: dashboardData?.ai?.total_tokens || 0,
+                activeUsers7d: dashboardData?.counts?.active_users_7d || 0
             });
 
             // Fetch all users (for Users section)
@@ -75,6 +83,14 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                 setAllUsers(users);
             } catch (e) {
                 console.warn('Could not fetch users', e);
+            }
+
+            // Fetch recent activities
+            try {
+                const acts = await Api.getActivities(20);
+                setActivities(acts);
+            } catch (e) {
+                console.warn('Could not fetch activities', e);
             }
 
             setLoading(false);
@@ -179,34 +195,70 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className="bg-navy-900 border border-white/10 rounded-xl p-6 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400"><Building size={24} /></div>
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+                <div className="bg-navy-900 border border-white/10 rounded-xl p-4 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400"><Building size={20} /></div>
                     <div>
-                        <p className="text-slate-400 text-sm">Total Organizations</p>
-                        <p className="text-2xl font-bold text-white">{stats.totalOrgs}</p>
+                        <p className="text-slate-400 text-xs">Organizations</p>
+                        <p className="text-xl font-bold text-white">{stats.totalOrgs}</p>
                     </div>
                 </div>
-                <div className="bg-navy-900 border border-white/10 rounded-xl p-6 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-lg bg-green-500/20 flex items-center justify-center text-green-400"><Users size={24} /></div>
+                <div className="bg-navy-900 border border-white/10 rounded-xl p-4 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center text-green-400"><Users size={20} /></div>
                     <div>
-                        <p className="text-slate-400 text-sm">Total Users</p>
-                        <p className="text-2xl font-bold text-white">{stats.totalUsers}</p>
+                        <p className="text-slate-400 text-xs">Total Users</p>
+                        <p className="text-xl font-bold text-white">{stats.totalUsers}</p>
                     </div>
                 </div>
-                <div className="bg-navy-900 border border-white/10 rounded-xl p-6 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400"><CreditCard size={24} /></div>
+                <div className="bg-navy-900 border border-white/10 rounded-xl p-4 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-yellow-500/20 flex items-center justify-center text-yellow-400"><Users size={20} /></div>
                     <div>
-                        <p className="text-slate-400 text-sm">MRR (Est)</p>
-                        <p className="text-2xl font-bold text-white">${stats.revenue.toFixed(2)}</p>
+                        <p className="text-slate-400 text-xs">Active (7d)</p>
+                        <p className="text-xl font-bold text-white">{stats.activeUsers7d}</p>
+                    </div>
+                </div>
+                <div className="bg-navy-900 border border-white/10 rounded-xl p-4 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400"><CreditCard size={20} /></div>
+                    <div>
+                        <p className="text-slate-400 text-xs">AI Calls (7d)</p>
+                        <p className="text-xl font-bold text-white">{stats.aiCalls}</p>
+                    </div>
+                </div>
+                <div className="bg-navy-900 border border-white/10 rounded-xl p-4 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center text-cyan-400"><CreditCard size={20} /></div>
+                    <div>
+                        <p className="text-slate-400 text-xs">Tokens (7d)</p>
+                        <p className="text-xl font-bold text-white">{(stats.tokens / 1000).toFixed(1)}k</p>
+                    </div>
+                </div>
+                <div className="bg-navy-900 border border-white/10 rounded-xl p-4 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-pink-500/20 flex items-center justify-center text-pink-400"><CreditCard size={20} /></div>
+                    <div>
+                        <p className="text-slate-400 text-xs">MRR (Est)</p>
+                        <p className="text-xl font-bold text-white">${stats.revenue.toFixed(0)}</p>
                     </div>
                 </div>
             </div>
 
-            {/* Quick Stats Table */}
+            {/* Recent Activity */}
             <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
                 <h2 className="text-lg font-semibold mb-4">Recent Activity</h2>
-                <p className="text-slate-500 text-sm">Activity feed coming soon...</p>
+                {activities.length === 0 ? (
+                    <p className="text-slate-500 text-sm">No recent activity recorded yet.</p>
+                ) : (
+                    <div className="space-y-3 max-h-64 overflow-y-auto">
+                        {activities.slice(0, 10).map((act: any, idx: number) => (
+                            <div key={act.id || idx} className="flex items-center gap-3 text-sm border-b border-white/5 pb-2">
+                                <div className={`w-2 h-2 rounded-full ${act.action === 'created' ? 'bg-green-500' : act.action === 'deleted' ? 'bg-red-500' : 'bg-blue-500'}`} />
+                                <span className="text-slate-400">{act.user_name || act.user_email || 'System'}</span>
+                                <span className="text-slate-500">{act.action}</span>
+                                <span className="text-white font-medium">{act.entity_type}</span>
+                                <span className="text-slate-500">{act.entity_name || act.entity_id?.slice(0, 8) || ''}</span>
+                                <span className="ml-auto text-slate-600 text-xs">{act.created_at ? new Date(act.created_at).toLocaleString() : ''}</span>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -398,13 +450,43 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
 
     const renderAuditLogs = () => (
         <div className="p-8 overflow-y-auto">
-            <h1 className="text-2xl font-bold mb-6">Audit Logs</h1>
-            <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
-                <p className="text-slate-500 text-sm mb-4">System activity and security events will appear here.</p>
-                <div className="text-center py-12 text-slate-600">
-                    <p className="text-lg font-medium">Audit logging coming soon</p>
-                    <p className="text-sm">Track user actions, API calls, and system events</p>
-                </div>
+            <div className="flex items-center justify-between mb-6">
+                <h1 className="text-2xl font-bold">Audit Logs</h1>
+                <button onClick={fetchData} className="flex items-center gap-2 px-4 py-2 bg-navy-800 hover:bg-navy-700 rounded-lg text-sm transition-colors">
+                    <RefreshCw size={16} /> Refresh
+                </button>
+            </div>
+            <div className="bg-navy-900 border border-white/10 rounded-xl overflow-hidden">
+                <table className="w-full text-left border-collapse">
+                    <thead>
+                        <tr className="bg-navy-950 text-slate-400 text-xs uppercase tracking-wider">
+                            <th className="p-4 font-medium">Time</th>
+                            <th className="p-4 font-medium">User</th>
+                            <th className="p-4 font-medium">Action</th>
+                            <th className="p-4 font-medium">Entity</th>
+                            <th className="p-4 font-medium">Details</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5 text-sm">
+                        {activities.length === 0 ? (
+                            <tr><td colSpan={5} className="p-8 text-center text-slate-500">No audit logs recorded yet. Activity will appear here as users interact with the system.</td></tr>
+                        ) : (
+                            activities.map((act: any, idx: number) => (
+                                <tr key={act.id || idx} className="hover:bg-white/5 transition-colors">
+                                    <td className="p-4 text-slate-500 text-xs">{act.created_at ? new Date(act.created_at).toLocaleString() : '-'}</td>
+                                    <td className="p-4 text-slate-300">{act.user_name || act.user_email || 'System'}</td>
+                                    <td className="p-4">
+                                        <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${act.action === 'created' ? 'bg-green-500/20 text-green-400' : act.action === 'deleted' ? 'bg-red-500/20 text-red-400' : 'bg-blue-500/20 text-blue-400'}`}>
+                                            {act.action}
+                                        </span>
+                                    </td>
+                                    <td className="p-4 text-white font-medium">{act.entity_type} {act.entity_name ? `(${act.entity_name})` : ''}</td>
+                                    <td className="p-4 text-slate-500 text-xs max-w-xs truncate">{act.entity_id || '-'}</td>
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
             </div>
         </div>
     );

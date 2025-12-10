@@ -8,7 +8,7 @@ const verifySuperAdmin = (req, res, next) => {
     jwt.verify(token.split(' ')[1], JWT_SECRET, (err, decoded) => {
         if (err) return res.status(401).json({ error: 'Unauthorized' });
 
-        if (decoded.role !== 'SUPERADMIN') {
+        if (decoded.role !== 'SUPERADMIN' && decoded.role !== 'SUPER_ADMIN') {
             return res.status(403).json({ error: 'Requires Super Admin privileges' });
         }
 

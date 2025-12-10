@@ -232,6 +232,22 @@ export const Api = {
         if (!res.ok) throw new Error('Failed to delete organization');
     },
 
+    getSuperAdminDashboard: async (): Promise<{
+        activity: { total: number; last_hour: number; last_24h: number; last_7d: number };
+        ai: { total_ai_calls: number; total_tokens: number; active_users: number };
+        counts: { total_users: number; total_orgs: number; active_users_7d: number };
+    }> => {
+        const res = await fetch(`${API_URL}/superadmin/dashboard`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch dashboard');
+        return res.json();
+    },
+
+    getActivities: async (limit: number = 50): Promise<any[]> => {
+        const res = await fetch(`${API_URL}/superadmin/activities?limit=${limit}`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch activities');
+        return res.json();
+    },
+
     // --- PROJECTS ---
     getProjects: async (): Promise<any[]> => {
         const res = await fetch(`${API_URL}/projects`, { headers: getHeaders() });
