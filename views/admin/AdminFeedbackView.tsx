@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Api } from '../services/api';
-import { Feedback } from '../types';
+import { Api } from '../../services/api';
+import { Feedback } from '../../types';
 import { CheckCircle2, Circle, XCircle, MessageSquare, ExternalLink, Loader2, Filter } from 'lucide-react';
 import toast from 'react-hot-toast';
 

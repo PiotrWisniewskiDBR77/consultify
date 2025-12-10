@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Api } from '../services/api';
-import { User, UserRole, Language, AppView } from '../types';
-import { useAppStore } from '../store/useAppStore';
+import { Api } from '../../services/api';
+import { User, UserRole, Language, AppView } from '../../types';
+import { useAppStore } from '../../store/useAppStore';
 import {
     Users, Search, Layers, Plus, Trash2, Edit, Shield, TrendingUp, Activity,
     DollarSign, X, Check, Briefcase

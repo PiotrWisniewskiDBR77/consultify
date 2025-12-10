@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Api } from '../services/api';
+import { Api } from '../../services/api';
 import { RefreshCw, Save, DollarSign, Percent, AlertCircle } from 'lucide-react';
 
 export const AdminMarginConfig = () => {
