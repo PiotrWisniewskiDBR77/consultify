@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Api } from '../services/api';
-import { User, AppView } from '../types';
+import { Api } from '../../services/api';
+import { User, AppView } from '../../types';
 import { Users, Building, AlertCircle, CheckCircle, CreditCard, Trash2, Edit2, Search, Plus, RefreshCw } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { SuperAdminSidebar, SuperAdminSection } from '../components/SuperAdminSidebar';
+import { SuperAdminSidebar, SuperAdminSection } from '../../components/SuperAdminSidebar';
 import { AdminLLMView } from './AdminLLMView';
 import { AdminKnowledgeView } from './AdminKnowledgeView';
 import { SuperAdminAccessRequestsView } from './SuperAdminAccessRequestsView';

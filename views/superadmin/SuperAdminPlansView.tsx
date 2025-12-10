@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Package, DollarSign, Database, Plus, Edit2, Trash2, Save, X, Check } from 'lucide-react';
-import { Api } from '../services/api';
+import { Api } from '../../services/api';
 
 interface SubscriptionPlan {
     id: string;

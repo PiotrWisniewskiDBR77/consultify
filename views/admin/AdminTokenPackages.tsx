@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Api } from '../services/api';
+import { Api } from '../../services/api';
 import { Package, Plus, Edit2, Check, X, Trash2, Coins } from 'lucide-react';
 
 export const AdminTokenPackages = () => {

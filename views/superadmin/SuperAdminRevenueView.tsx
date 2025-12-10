@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, DollarSign, Users, BarChart3, PieChart, Activity, ArrowUpRight, ArrowDownRight } from 'lucide-react';
-import { Api } from '../services/api';
+import { Api } from '../../services/api';
 
 interface RevenueStats {
     mrr: number;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Api } from '../services/api';
-import { LLMProvider } from '../types';
+import { Api } from '../../services/api';
+import { LLMProvider } from '../../types';
 import { toast } from 'react-hot-toast';
 import { Shield, Plus, Trash2, Edit, Save, X, Check, Eye, EyeOff, Server, RefreshCw, Wifi, WifiOff } from 'lucide-react';
 

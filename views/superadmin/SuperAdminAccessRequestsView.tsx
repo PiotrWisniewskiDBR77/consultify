@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { UserPlus, CheckCircle, XCircle, Clock, Mail, Building2, Shield } from 'lucide-react';
-import { Api } from '../services/api';
+import { Api } from '../../services/api';
 
 interface AccessRequest {
     id: string;

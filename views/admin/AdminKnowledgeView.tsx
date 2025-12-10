@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Api } from '../services/api';
+import { Api } from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { Lightbulb, Target, Check, X, MessageSquare, Plus, Trash2, Power, BrainCircuit, Activity, FileText, Upload, RefreshCw } from 'lucide-react';
 

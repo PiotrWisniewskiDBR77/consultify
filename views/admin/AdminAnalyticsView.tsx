@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Api } from '../services/api';
+import { Api } from '../../services/api';
 import { BarChart3, TrendingUp, Zap, AlertTriangle, Activity } from 'lucide-react';
 
 interface AIStats {

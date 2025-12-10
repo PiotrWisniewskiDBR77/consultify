@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Key, Copy, Check, X, Plus, Calendar, Users, Shield, Trash2 } from 'lucide-react';
-import { Api } from '../services/api';
+import { Api } from '../../services/api';
 
 interface AccessCode {
     id: string;
