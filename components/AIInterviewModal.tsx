@@ -14,6 +14,8 @@ interface AIInterviewModalProps {
 export const AIInterviewModal: React.FC<AIInterviewModalProps> = ({
     isOpen, onClose, axisId, axisLabel, onComplete
 }) => {
+    const { currentUser } = useAppStore();
+    const language = currentUser?.preferredLanguage || 'en';
     const [messages, setMessages] = useState<{ role: 'model' | 'user', text: string }[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -43,7 +45,7 @@ export const AIInterviewModal: React.FC<AIInterviewModalProps> = ({
         setIsLoading(true);
 
         try {
-            const result = await Agent.conductAssessmentInterview(axisLabel, newHistory as any); // pass language if needed
+            const result = await Agent.conductAssessmentInterview(axisLabel, newHistory as any, language); // pass language if needed
 
             if (result.isFinished && result.conclusion) {
                 setMessages(prev => [...prev, {

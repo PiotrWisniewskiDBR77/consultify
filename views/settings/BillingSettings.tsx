@@ -135,7 +135,7 @@ export const BillingSettings: React.FC<BillingSettingsProps> = ({ currentUser })
                                 <Cpu size={20} />
                             </div>
                             <div>
-                                <h4 className="text-white font-medium">Token Usage</h4>
+                                <h4 className="text-white font-medium">Monthly Token Limit</h4>
                                 <p className="text-xs text-slate-500">AI requests this month</p>
                             </div>
                         </div>
@@ -167,8 +167,8 @@ export const BillingSettings: React.FC<BillingSettingsProps> = ({ currentUser })
                                 <Globe size={20} />
                             </div>
                             <div>
-                                <h4 className="text-white font-medium">Storage Usage</h4>
-                                <p className="text-xs text-slate-500">Documents & files</p>
+                                <h4 className="text-white font-medium">Total Storage Used</h4>
+                                <p className="text-xs text-slate-500">Documents &amp; files</p>
                             </div>
                         </div>
                         <div className="space-y-2">

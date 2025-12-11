@@ -41,8 +41,13 @@ interface AppState {
     setCurrentProjectId: (projectId: string | null) => void;
 
     // LLM Model Selection
-    selectedModelId: string | null;
-    setSelectedModelId: (modelId: string | null) => void;
+    aiConfig: {
+        autoMode: boolean;
+        maxMode: boolean;
+        multiModel: boolean;
+        selectedModelId: string | null;
+    };
+    setAIConfig: (config: Partial<AppState['aiConfig']>) => void;
 
     // Actions
     setCurrentView: (view: AppView) => void;
@@ -64,7 +69,6 @@ interface AppState {
     logout: () => void;
     theme: 'light' | 'dark';
     toggleTheme: () => void;
-    setAIConfig: (config: import('../types').AIProviderConfig) => void;
     updateLastChatMessage: (content: string) => void;
 }
 
@@ -115,7 +119,17 @@ export const useAppStore = create<AppState>()(
             freeSessionData: initialFreeSession,
             fullSessionData: initialFullSession,
             currentProjectId: null,
-            selectedModelId: null,
+
+            // AI Config
+            aiConfig: {
+                autoMode: true,
+                maxMode: false,
+                multiModel: false,
+                selectedModelId: null
+            },
+            setAIConfig: (newConfig) => set((state) => ({
+                aiConfig: { ...state.aiConfig, ...newConfig }
+            })),
 
             setCurrentView: (view) => set({ currentView: view }),
             setSessionMode: (mode) => set({ sessionMode: mode }),
@@ -127,7 +141,6 @@ export const useAppStore = create<AppState>()(
             toggleSidebarCollapse: () => set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
 
             setCurrentProjectId: (pid) => set({ currentProjectId: pid }),
-            setSelectedModelId: (modelId) => set({ selectedModelId: modelId }),
 
             addChatMessage: (message) => set((state) => ({ activeChatMessages: [...state.activeChatMessages, message] })),
             setChatMessages: (messages) => set({ activeChatMessages: messages }),
@@ -151,16 +164,10 @@ export const useAppStore = create<AppState>()(
                 freeSessionData: initialFreeSession,
                 fullSessionData: initialFullSession,
                 currentProjectId: null,
-                selectedModelId: null
+                aiConfig: { autoMode: true, maxMode: false, multiModel: false, selectedModelId: null }
             }),
             theme: 'dark',
             toggleTheme: () => set((state) => ({ theme: state.theme === 'dark' ? 'light' : 'dark' })),
-
-            // AI Config Actions
-            setAIConfig: (config) => set((state) => {
-                const updatedUser = state.currentUser ? { ...state.currentUser, aiConfig: config } : null;
-                return { currentUser: updatedUser };
-            }),
 
             updateLastChatMessage: (content: string) => set((state) => {
                 const messages = [...state.activeChatMessages];
@@ -186,7 +193,7 @@ export const useAppStore = create<AppState>()(
                 freeSessionData: state.freeSessionData,
                 fullSessionData: state.fullSessionData,
                 currentProjectId: state.currentProjectId,
-                selectedModelId: state.selectedModelId,
+                aiConfig: state.aiConfig,
                 theme: state.theme
             }),
         }

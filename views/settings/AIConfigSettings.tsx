@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Api } from '../../services/api';
 import { User, AIProviderType } from '../../types';
-import { Cpu, Monitor, Lock, Check } from 'lucide-react';
+import { Cpu, Monitor, Lock, Check, Layers } from 'lucide-react';
 
 interface AIConfigSettingsProps {
     currentUser: User;
@@ -17,9 +17,52 @@ export const AIConfigSettings: React.FC<AIConfigSettingsProps> = ({ currentUser,
     const [isLoadingModels, setIsLoadingModels] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
 
+    // New State for System Models
+    const [systemModels, setSystemModels] = useState<any[]>([]);
+    const [visibleModels, setVisibleModels] = useState<string[]>(currentUser.aiConfig?.visibleModelIds || []);
+
+    useEffect(() => {
+        // Init visible models from user prop if updated
+        if (currentUser.aiConfig?.visibleModelIds) {
+            setVisibleModels(currentUser.aiConfig.visibleModelIds);
+        }
+    }, [currentUser]);
+
+    useEffect(() => {
+        if (configMode === 'system') {
+            setIsLoadingModels(true);
+            Api.getPublicLLMProviders()
+                .then(models => {
+                    setSystemModels(models);
+                    // If user has NO visible models defined, enable ALL by default?
+                    // Or keep it empty? User experience: if empty, maybe they didn't configure it.
+                    // Let's decide: if undefined in user object, we select all initially in UI state (but don't save yet).
+                    if (!currentUser.aiConfig?.visibleModelIds) {
+                        const allIds = models.map((m: any) => m.id);
+                        setVisibleModels(allIds);
+                    }
+                })
+                .catch(err => console.error("Failed to fetch public models", err))
+                .finally(() => setIsLoadingModels(false));
+        }
+    }, [configMode]);
+
+    const toggleModelVisibility = (id: string) => {
+        setVisibleModels(prev =>
+            prev.includes(id)
+                ? prev.filter(x => x !== id)
+                : [...prev, id]
+        );
+    };
+
     const handleSaveConfig = async (e: React.FormEvent) => {
         e.preventDefault();
         const newConfig: any = { provider: configMode };
+
+        // Save persistent visibility for system models
+        if (configMode === 'system') {
+            newConfig.visibleModelIds = visibleModels;
+        }
 
         if (configMode === 'openai' || configMode === 'gemini') {
             newConfig.apiKey = customKey;
@@ -122,16 +165,78 @@ export const AIConfigSettings: React.FC<AIConfigSettingsProps> = ({ currentUser,
             <form onSubmit={handleSaveConfig} className="bg-navy-900 border border-white/10 rounded-xl p-6">
 
                 {configMode === 'system' && (
-                    <div className="text-center py-8 space-y-6">
-                        <div className="w-16 h-16 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4 text-purple-400">
-                            <Cpu size={32} />
-                        </div>
-                        <div>
-                            <h3 className="text-white font-medium mb-2">System AI (Managed)</h3>
+                    <div className="space-y-6">
+                        <div className="text-center py-6">
+                            <div className="w-16 h-16 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4 text-purple-400">
+                                <Cpu size={32} />
+                            </div>
+                            <h3 className="text-white font-medium mb-2">System AI Models</h3>
                             <p className="text-slate-400 text-sm max-w-sm mx-auto">
-                                You are using the organization's default AI provider.
-                                No configuration is needed. Usage counts towards your plan limit.
+                                Enable the models you want to use in the Top Bar selector.
+                                All usage counts towards your organization's plan.
                             </p>
+                        </div>
+
+                        {/* List of System Models */}
+                        <div className="space-y-3">
+                            {isLoadingModels ? (
+                                <div className="text-center text-slate-500 py-4">Loading available models...</div>
+                            ) : (
+                                systemModels.map((model) => {
+                                    const isSelected = (currentUser.aiConfig?.visibleModelIds || []).includes(model.id) ||
+                                        (currentUser.aiConfig?.visibleModelIds === undefined); // Default to all if undefined? Or none? Let's say all by default if list is empty/undefined, BUT logic below assumes explicit check. 
+                                    // Better: If undefined/empty, maybe we assume ALL are visible or NONE.
+                                    // Let's rely on explicit toggle. If undefined, treat as "All"? No, let's treat as "None" or require explicit enable.
+                                    // Actually, to avoid breaking existing users, if undefined, we should probably toggle ALL on save, or treat undefined as "Show All".
+                                    // Let's handle state separately.
+
+                                    const isChecked = visibleModels.includes(model.id);
+
+                                    return (
+                                        <div key={model.id} className={`p-4 rounded-xl border transition-all ${isChecked ? 'bg-purple-500/5 border-purple-500/30' : 'bg-navy-950/50 border-white/5 hover:border-white/10'}`}>
+                                            <div className="flex items-start justify-between gap-4">
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <h4 className="text-sm font-semibold text-white">{model.name}</h4>
+                                                        {model.provider === 'openai' && <span className="px-1.5 py-0.5 rounded bg-green-500/20 text-green-400 text-[10px] uppercase font-bold tracking-wider">OpenAI</span>}
+                                                        {model.provider === 'google' && <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 text-[10px] uppercase font-bold tracking-wider">Google</span>}
+                                                        {model.provider === 'anthropic' && <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 text-[10px] uppercase font-bold tracking-wider">Anthropic</span>}
+                                                    </div>
+
+                                                    <div className="text-xs text-slate-400 mb-2 line-clamp-2">
+                                                        {model.description || 'Advanced LLM provided by the platform.'}
+                                                    </div>
+
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {model.context_window && (
+                                                            <div className="inline-flex items-center gap-1 px-2 py-1 rounded bg-white/5 border border-white/5 text-[10px] text-slate-300">
+                                                                <Layers size={10} />
+                                                                <span>{model.context_window.toLocaleString()} ctx</span>
+                                                            </div>
+                                                        )}
+                                                        {model.max_outputs && (
+                                                            <div className="inline-flex items-center gap-1 px-2 py-1 rounded bg-white/5 border border-white/5 text-[10px] text-slate-300">
+                                                                <Monitor size={10} />
+                                                                <span>{model.max_outputs.toLocaleString()} output</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <label className="relative inline-flex items-center cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="sr-only peer"
+                                                        checked={isChecked}
+                                                        onChange={() => toggleModelVisibility(model.id)}
+                                                    />
+                                                    <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
                         </div>
 
                         {/* Organization Admin Control */}
@@ -141,7 +246,7 @@ export const AIConfigSettings: React.FC<AIConfigSettingsProps> = ({ currentUser,
                                     <div className="p-2 rounded bg-blue-500/20 text-blue-400"><Monitor size={16} /></div>
                                     <div>
                                         <h4 className="text-sm font-bold text-white">Organization Default Model</h4>
-                                        <p className="text-xs text-slate-400">Select which model powers your organization.</p>
+                                        <p className="text-xs text-slate-400">Select which model powers your organization's default behavior.</p>
                                     </div>
                                 </div>
 

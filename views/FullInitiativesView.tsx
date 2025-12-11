@@ -196,7 +196,8 @@ export const FullInitiativesView: React.FC = () => {
                   industry: currentUser?.industry,
                   country: currentUser?.country
                 },
-                fullSession
+                fullSession,
+                language
               );
 
               // Merge results

@@ -5,6 +5,24 @@
     "fullProject": "Full Transformation",
     "masterclass": "Masterclass",
     "resources": "Resources",
+    "module1": "1. Expectations & Challenges",
+    "module1_1": "Company Profile",
+    "module1_2": "Goals & Expectations",
+    "module1_3": "Challenges Map",
+    "module2": "2. Assessment (DRD)",
+    "module3": "3. Initiatives & Roadmap",
+    "module3_1": "Initiatives List",
+    "module3_2": "Roadmap Builder",
+    "module4": "4. Pilot Execution",
+    "module5": "5. Full Rollout",
+    "module6": "6. Economics & ROI",
+    "module7": "7. Execution Reports",
+    "adminPanel": "Admin Panel",
+    "adminUsers": "Users",
+    "adminProjects": "Projects",
+    "adminLLM": "LLM Management",
+    "adminKnowledge": "Knowledge Base",
+    "adminFeedback": "User Feedback",
     "quickStep1": "Company & Expectations",
     "quickStep2": "Challenges & Profile Questions",
     "quickStep3": "Recommendations",
@@ -343,6 +361,34 @@
       "finding3": "The organization is ready for {type} transformation.",
       "aggressive": "aggressive",
       "focused": "focused"
+    }
+  },
+  "settings": {
+    "menu": {
+      "header": "Settings",
+      "myProfile": "My Profile",
+      "billing": "Billing & Plans",
+      "aiConfig": "AI Configuration",
+      "notifications": "Notifications",
+      "integrations": "Integrations",
+      "regionalization": "Regionalization"
+    },
+    "profile": {
+      "header": "Personal Information",
+      "photo": "Profile Photo",
+      "change": "Change",
+      "photoHint": "Accepts JPG, PNG (Auto-optimized)",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "role": "Role / Job Title",
+      "email": "Email Address (Managed by Admin)",
+      "preferences": "Preferences",
+      "theme": "Interface Theme",
+      "light": "Light",
+      "dark": "Dark",
+      "language": "Language",
+      "save": "Save Changes",
+      "saved": "Saved!"
     }
   }
 }

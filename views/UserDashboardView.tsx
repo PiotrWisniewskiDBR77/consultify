@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
-import { OnboardingDashboard } from '../components/dashboard/OnboardingDashboard';
+import { DashboardOverview } from '../components/dashboard/DashboardOverview';
+import { DashboardExecutionSnapshot } from '../components/dashboard/DashboardExecutionSnapshot';
+import { OnboardingDashboard } from '../components/dashboard/OnboardingDashboard'; // Keeping for reference if needed, or remove if unused
 import { LiveDashboard } from '../components/dashboard/LiveDashboard';
-import { LayoutDashboard, LogOut, Map, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, LogOut, Map, BarChart3, Activity } from 'lucide-react';
 
 interface UserDashboardViewProps {
     currentUser: any;
@@ -55,8 +57,8 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({ currentUse
                                 : 'text-slate-500 hover:text-navy-900 dark:hover:text-white'
                                 } ${isEarlyPhase ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
-                            <BarChart3 size={16} />
-                            Cockpit
+                            <Activity size={16} />
+                            Execution Snapshot
                         </button>
                     </div>
                 </div>
@@ -75,9 +77,9 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({ currentUse
             {/* Content */}
             <div className="flex-1 p-4 lg:p-6 overflow-auto">
                 {activeTab === 'overview' ? (
-                    <OnboardingDashboard onStartModule1={handleStartTransformation} session={fullSessionData} />
+                    <DashboardOverview onStartModule1={handleStartTransformation} session={fullSessionData} />
                 ) : (
-                    <LiveDashboard session={fullSessionData} onNavigate={onNavigate} />
+                    <DashboardExecutionSnapshot session={fullSessionData} onNavigate={onNavigate} />
                 )}
             </div>
         </div>

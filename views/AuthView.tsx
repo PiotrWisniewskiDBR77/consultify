@@ -364,6 +364,20 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
       {/* Card Container */}
       <div className="relative w-full max-w-sm bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-2xl rounded-2xl p-6 lg:p-8 animate-in fade-in zoom-in-95 duration-300 transition-colors">
 
+        {/* Branding */}
+        <div className="flex justify-center mb-6">
+          <img
+            src="/assets/logos/logo-dark.png"
+            className="h-10 w-auto object-contain hidden dark:block"
+            alt="Consultify"
+          />
+          <img
+            src="/assets/logos/logo-light.png"
+            className="h-10 w-auto object-contain block dark:hidden"
+            alt="Consultify"
+          />
+        </div>
+
         {/* Close/Back Button */}
         <button
           onClick={onBack}

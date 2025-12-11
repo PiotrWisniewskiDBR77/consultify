@@ -18,7 +18,7 @@ i18n
 
         // Path to load resources
         backend: {
-            loadPath: '/locales/{{lng}}/translation.json',
+            loadPath: '/locales/{{lng}}/translation.json?v=' + new Date().getTime(),
         },
 
         // Detection options

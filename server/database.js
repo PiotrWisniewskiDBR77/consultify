@@ -43,6 +43,8 @@ function initDb() {
             role TEXT, 
             status TEXT DEFAULT 'active',
             avatar_url TEXT,
+            timezone TEXT DEFAULT 'UTC',
+            units TEXT DEFAULT 'metric',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             last_login DATETIME,
             FOREIGN KEY(organization_id) REFERENCES organizations(id)
@@ -421,6 +423,27 @@ function initDb() {
         )`);
 
         // ==========================================
+        // PHASE 1.5: NOTIFICATIONS & INTEGRATIONS
+        // ==========================================
+
+        // Integrations Table (Slack, Teams, etc.)
+        db.run(`CREATE TABLE IF NOT EXISTS integrations (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            provider TEXT NOT NULL, -- slack, teams, whatsapp, trello, jira, clickup
+            config TEXT, -- JSON: webhook_url, api_token, channel_id, etc.
+            status TEXT DEFAULT 'active', -- active, error, disabled
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+
+        // Add notification_preferences to users if not exists
+        db.run(`ALTER TABLE users ADD COLUMN notification_preferences TEXT DEFAULT '{}'`, (err) => {
+            // Ignore if exists
+        });
+
+        // ==========================================
         // PHASE 2: DRD STRATEGY EXECUTION ENGINE
         // ==========================================
 
@@ -740,49 +763,40 @@ function initDb() {
         const hashedPassword = bcrypt.hashSync('123456', 8);
 
         // Check if admin exists (or rather, just ensure seed since we dropped table)
-        db.get("SELECT id FROM organizations WHERE id = ?", [superAdminOrgId], (err, row) => {
-            if (!row) {
-                // Create System Organization
-                const insertOrg = db.prepare(`INSERT INTO organizations(id, name, plan, status) VALUES(?, ?, ?, ?)`);
-                insertOrg.run(superAdminOrgId, 'DBR77 System', 'enterprise', 'active');
-                insertOrg.finalize();
+        // Check if admin exists (or rather, just ensure seed since we dropped table)
+        // Refactored to ensure users are always seeded in DEV because we drop the users table
 
-                // Create Super Admin User
-                const insertUser = db.prepare(`INSERT INTO users(id, organization_id, email, password, first_name, last_name, role) VALUES(?, ?, ?, ?, ?, ?, ?)`);
-                insertUser.run(superAdminId, superAdminOrgId, 'admin@dbr77.ai', hashedPassword, 'Super', 'Admin', 'SUPERADMIN');
-                insertUser.finalize();
+        // 1. Ensure System Organization Exists
+        const insertOrg = db.prepare(`INSERT OR IGNORE INTO organizations(id, name, plan, status) VALUES(?, ?, ?, ?)`);
+        insertOrg.run(superAdminOrgId, 'DBR77 System', 'enterprise', 'active');
+        insertOrg.run('org-dbr77-test', 'DBR77', 'pro', 'active'); // Ensure DBR77 org exists context
+        insertOrg.finalize();
 
-                console.log('Seeded SuperAdmin (admin@dbr77.ai) and System Org.');
+        // 2. Create Users (Table was dropped in DEV, so we must recreate)
+        // Use INSERT OR IGNORE just in case we are in prod or table wasn't dropped
+        const insertUser = db.prepare(`INSERT OR IGNORE INTO users(id, organization_id, email, password, first_name, last_name, role) VALUES(?, ?, ?, ?, ?, ?, ?)`);
 
-                // --- SEED TEST ORGANIZATION: DBR77 ---
-                const dbr77OrgId = 'org-dbr77-test';
-                const dbr77AdminId = 'user-dbr77-admin';
-                const dbr77UserId = 'user-dbr77-user';
+        // Super Admin
+        insertUser.run(superAdminId, superAdminOrgId, 'admin@dbr77.com', hashedPassword, 'Super', 'Admin', 'SUPERADMIN');
 
-                // Create DBR77 Organization
-                const insertDbr77Org = db.prepare(`INSERT INTO organizations(id, name, plan, status) VALUES(?, ?, ?, ?)`);
-                insertDbr77Org.run(dbr77OrgId, 'DBR77', 'pro', 'active');
-                insertDbr77Org.finalize();
+        // DBR77 Admin
+        const dbr77OrgId = 'org-dbr77-test'; // Hardcoded ID from previous code
+        const dbr77AdminId = 'user-dbr77-admin';
+        insertUser.run(dbr77AdminId, dbr77OrgId, 'piotr.wisniewski@dbr77.com', hashedPassword, 'Piotr', 'Wiśniewski', 'ADMIN');
 
-                // Create Admin user for DBR77
-                const insertDbr77Admin = db.prepare(`INSERT INTO users(id, organization_id, email, password, first_name, last_name, role) VALUES(?, ?, ?, ?, ?, ?, ?)`);
-                insertDbr77Admin.run(dbr77AdminId, dbr77OrgId, 'piotr.wisniewski@dbr77.com', hashedPassword, 'Piotr', 'Wiśniewski', 'ADMIN');
-                insertDbr77Admin.finalize();
+        // DBR77 User
+        const dbr77UserId = 'user-dbr77-user';
+        insertUser.run(dbr77UserId, dbr77OrgId, 'justyna.laskowska@dbr77.com', hashedPassword, 'Justyna', 'Laskowska', 'USER');
 
-                // Create regular User for DBR77
-                const insertDbr77User = db.prepare(`INSERT INTO users(id, organization_id, email, password, first_name, last_name, role) VALUES(?, ?, ?, ?, ?, ?, ?)`);
-                insertDbr77User.run(dbr77UserId, dbr77OrgId, 'justyna.laskowska@dbr77.com', hashedPassword, 'Justyna', 'Laskowska', 'USER');
-                insertDbr77User.finalize();
+        insertUser.finalize();
 
-                // Create a sample project for DBR77
-                const dbr77ProjectId = 'project-dbr77-001';
-                const insertProject = db.prepare(`INSERT INTO projects(id, organization_id, name, status, owner_id) VALUES(?, ?, ?, ?, ?)`);
-                insertProject.run(dbr77ProjectId, dbr77OrgId, 'Digital Transformation 2025', 'active', dbr77AdminId);
-                insertProject.finalize();
+        console.log('Seeded SuperAdmin and DBR77 Users.');
 
-                console.log('Seeded DBR77 Organization with Admin (piotr.wisniewski@dbr77.com) and User (justyna.laskowska@dbr77.com).');
-            }
-        });
+        // 3. Create Default Project if not exists
+        const dbr77ProjectId = 'project-dbr77-001';
+        const insertProject = db.prepare(`INSERT OR IGNORE INTO projects(id, organization_id, name, status, owner_id) VALUES(?, ?, ?, ?, ?)`);
+        insertProject.run(dbr77ProjectId, dbr77OrgId, 'Digital Transformation 2025', 'active', dbr77AdminId);
+        insertProject.finalize();
     });
 }
 

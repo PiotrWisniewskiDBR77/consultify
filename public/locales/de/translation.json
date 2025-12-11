@@ -5,6 +5,24 @@
     "fullProject": "Volle Transformation",
     "masterclass": "Meisterklasse",
     "resources": "Ressourcen",
+    "module1": "1. Erwartungen & Herausforderungen",
+    "module1_1": "Unternehmensprofil",
+    "module1_2": "Ziele & Erwartungen",
+    "module1_3": "Herausforderungskarte",
+    "module2": "2. Bewertung (DRD)",
+    "module3": "3. Initiativen & Roadmap",
+    "module3_1": "Initiativenliste",
+    "module3_2": "Roadmap-Ersteller",
+    "module4": "4. Pilotdurchführung",
+    "module5": "5. Volle Einführung",
+    "module6": "6. Wirtschaft & ROI",
+    "module7": "7. Ausführungsberichte",
+    "adminPanel": "Admin-Bereich",
+    "adminUsers": "Benutzer",
+    "adminProjects": "Projekte",
+    "adminLLM": "LLM-Verwaltung",
+    "adminKnowledge": "Wissensdatenbank",
+    "adminFeedback": "Benutzerfeedback",
     "quickStep1": "Firma & Erwartungen",
     "quickStep2": "Herausforderungen & Profilfragen",
     "quickStep3": "Empfehlungen",
@@ -343,6 +361,34 @@
       "finding3": "Die Organisation ist bereit für eine {type} Transformation.",
       "aggressive": "aggressive",
       "focused": "fokussierte"
+    }
+  },
+  "settings": {
+    "menu": {
+      "header": "Einstellungen",
+      "myProfile": "Mein Profil",
+      "billing": "Abrechnung & Pläne",
+      "aiConfig": "KI-Konfiguration",
+      "notifications": "Benachrichtigungen",
+      "integrations": "Integrationen",
+      "regionalization": "Regionalisierung"
+    },
+    "profile": {
+      "header": "Persönliche Informationen",
+      "photo": "Profilbild",
+      "change": "Ändern",
+      "photoHint": "Akzeptiert JPG, PNG (Auto-optimiert)",
+      "firstName": "Vorname",
+      "lastName": "Nachname",
+      "role": "Rolle / Berufsbezeichnung",
+      "email": "E-Mail-Adresse (Vom Admin verwaltet)",
+      "preferences": "Einstellungen",
+      "theme": "Oberflächendesign",
+      "light": "Hell",
+      "dark": "Dunkel",
+      "language": "Sprache",
+      "save": "Änderungen speichern",
+      "saved": "Gespeichert!"
     }
   }
 }
