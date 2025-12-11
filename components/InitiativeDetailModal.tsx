@@ -51,14 +51,6 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
         setInitiative({ ...initiative, [field]: newArray });
     };
 
-    // Helper for Input fields
-    const InputGroup = ({ label, children }: { label: string, children: React.ReactNode }) => (
-        <div className="mb-4">
-            <label className="block text-xs uppercase text-slate-500 font-bold mb-1">{label}</label>
-            {children}
-        </div>
-    );
-
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
             <div className="bg-navy-900 border border-white/10 rounded-xl w-full max-w-5xl h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
@@ -503,3 +495,11 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
         </div>
     );
 };
+
+// Helper for Input fields
+const InputGroup = ({ label, children }: { label: string, children: React.ReactNode }) => (
+    <div className="mb-4">
+        <label className="block text-xs uppercase text-slate-500 font-bold mb-1">{label}</label>
+        {children}
+    </div>
+);

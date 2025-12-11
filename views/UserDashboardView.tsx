@@ -17,16 +17,8 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({ currentUse
     const isEarlyPhase = !fullSessionData?.step3Completed; // Phase 1-2 (Step 1, Step 2)
 
     // Default Tab State
-    const [activeTab, setActiveTab] = useState<'overview' | 'live'>('overview');
-
-    useEffect(() => {
-        // "Pokazuj Overview gdy projekt ... w fazie 1-2"
-        if (isEarlyPhase) {
-            setActiveTab('overview');
-        } else {
-            setActiveTab('live');
-        }
-    }, [isEarlyPhase]);
+    const [manualTab, setManualTab] = useState<'overview' | 'live'>('live');
+    const activeTab = isEarlyPhase ? 'overview' : manualTab;
 
     const handleStartTransformation = () => {
         onNavigate(AppView.FULL_STEP1_CONTEXT);
@@ -45,21 +37,23 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({ currentUse
                     {/* Tabs - Defined in Header "Minimalist Overview" */}
                     <div className="hidden md:flex bg-slate-100 dark:bg-navy-950/50 p-1 rounded-lg border border-slate-200 dark:border-white/5">
                         <button
-                            onClick={() => setActiveTab('overview')}
+                            onClick={() => setManualTab('overview')}
+                            disabled={isEarlyPhase}
                             className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'overview'
                                 ? 'bg-white dark:bg-navy-800 text-purple-600 dark:text-purple-400 shadow-sm'
                                 : 'text-slate-500 hover:text-navy-900 dark:hover:text-white'
-                                }`}
+                                } ${isEarlyPhase ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                             <Map size={16} />
                             Overview
                         </button>
                         <button
-                            onClick={() => setActiveTab('live')}
+                            onClick={() => setManualTab('live')}
+                            disabled={isEarlyPhase}
                             className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'live'
                                 ? 'bg-white dark:bg-navy-800 text-blue-600 dark:text-blue-400 shadow-sm'
                                 : 'text-slate-500 hover:text-navy-900 dark:hover:text-white'
-                                }`}
+                                } ${isEarlyPhase ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                             <BarChart3 size={16} />
                             Cockpit

@@ -20,6 +20,28 @@ import { useAppStore } from '../store/useAppStore';
 import { sendMessageToAI, SYSTEM_PROMPTS, AIMessageHistory } from '../services/ai/gemini';
 import { useAIStream } from '../hooks/useAIStream';
 
+const StepIndicator = ({ activeIdx, language }: { activeIdx: number; language: string }) => {
+  return (
+    <div className="flex items-center justify-center py-3 border-b border-white/5 bg-navy-950">
+      {[1, 2, 3].map((step) => {
+        const isCompleted = step < activeIdx;
+        const isActive = step === activeIdx;
+        return (
+          <div key={step} className="flex items-center">
+            <div className={`flex items-center justify-center w-6 h-6 rounded-full border transition-all ${isActive ? 'bg-purple-600 border-purple-500 text-white' : isCompleted ? 'bg-green-500/20 border-green-500/30 text-green-400' : 'bg-navy-900 border-white/10 text-slate-500'}`}>
+              {isCompleted ? <Check size={12} /> : <span className="text-[10px] font-bold">{step}</span>}
+            </div>
+            <span className={`ml-2 text-[10px] font-medium hidden lg:block ${isActive ? 'text-white' : 'text-slate-500'}`}>
+              {step === 1 ? (language === 'PL' ? 'Firma & IT' : 'Profile & IT') : step === 2 ? (language === 'PL' ? 'Cele' : 'Goals') : (language === 'PL' ? 'Wyzwania' : 'Challenges')}
+            </span>
+            {step < 3 && <div className={`w-8 h-px mx-2 ${isCompleted ? 'bg-green-500/30' : 'bg-white/10'}`}></div>}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 export const FreeAssessmentView: React.FC = () => {
   const {
     currentUser,
@@ -55,15 +77,7 @@ export const FreeAssessmentView: React.FC = () => {
   // For now local state handles the form.
 
   // --- EFFECT: Handle View Switching ---
-  useEffect(() => {
-    // Logic to resume specific steps based on View
-    if (currentAppView === AppView.QUICK_STEP2_USER_CONTEXT && !sessionData.step2Completed && currentStep !== AssessmentStep.STRATEGIC_GOALS) {
-      startStep2Flow();
-    }
-    if (currentAppView === AppView.QUICK_STEP3_EXPECTATIONS && !sessionData.step3Completed && currentStep !== AssessmentStep.CHALLENGES_MAP) {
-      startStep3Flow();
-    }
-  }, [currentAppView]);
+
 
   useEffect(() => {
     if (messages.length === 0 && currentAppView === AppView.QUICK_STEP1_PROFILE && currentUser) {
@@ -355,39 +369,32 @@ export const FreeAssessmentView: React.FC = () => {
     }
   };
 
+  // --- EFFECT: Handle View Switching ---
+  useEffect(() => {
+    // Logic to resume specific steps based on View
+    const timeout = setTimeout(() => {
+      if (currentAppView === AppView.QUICK_STEP2_USER_CONTEXT && !sessionData.step2Completed && currentStep !== AssessmentStep.STRATEGIC_GOALS) {
+        startStep2Flow();
+      }
+      if (currentAppView === AppView.QUICK_STEP3_EXPECTATIONS && !sessionData.step3Completed && currentStep !== AssessmentStep.CHALLENGES_MAP) {
+        startStep3Flow();
+      }
+    }, 0);
+    return () => clearTimeout(timeout);
+  }, [currentAppView]);
+
   const getActiveStepIndex = () => {
     if (currentAppView === AppView.QUICK_STEP3_EXPECTATIONS) return 3;
     if (currentAppView === AppView.QUICK_STEP2_USER_CONTEXT) return 2;
     return 1;
   };
 
-  const StepIndicator = () => {
-    const activeIdx = getActiveStepIndex();
-    return (
-      <div className="flex items-center justify-center py-3 border-b border-white/5 bg-navy-950">
-        {[1, 2, 3].map((step) => {
-          const isCompleted = step < activeIdx;
-          const isActive = step === activeIdx;
-          return (
-            <div key={step} className="flex items-center">
-              <div className={`flex items-center justify-center w-6 h-6 rounded-full border transition-all ${isActive ? 'bg-purple-600 border-purple-500 text-white' : isCompleted ? 'bg-green-500/20 border-green-500/30 text-green-400' : 'bg-navy-900 border-white/10 text-slate-500'}`}>
-                {isCompleted ? <Check size={12} /> : <span className="text-[10px] font-bold">{step}</span>}
-              </div>
-              <span className={`ml-2 text-[10px] font-medium hidden lg:block ${isActive ? 'text-white' : 'text-slate-500'}`}>
-                {step === 1 ? (language === 'PL' ? 'Firma & IT' : 'Profile & IT') : step === 2 ? (language === 'PL' ? 'Cele' : 'Goals') : (language === 'PL' ? 'Wyzwania' : 'Challenges')}
-              </span>
-              {step < 3 && <div className={`w-8 h-px mx-2 ${isCompleted ? 'bg-green-500/30' : 'bg-white/10'}`}></div>}
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
+
 
   return (
     <div className="flex w-full h-full" dir={language === 'AR' ? 'rtl' : 'ltr'}>
       <div className={`flex-1 flex flex-col h-full min-w-[600px] ${language === 'AR' ? 'border-l' : 'border-r'} border-elegant`}>
-        <StepIndicator />
+        <StepIndicator activeIdx={getActiveStepIndex()} language={language} />
         <ChatPanel
           messages={
             isStreaming

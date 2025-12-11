@@ -10,7 +10,7 @@ const usageService = require('../services/usageService');
  */
 async function enforceTokenQuota(req, res, next) {
     try {
-        const orgId = req.user?.organization_id;
+        const orgId = req.user?.organizationId || req.user?.organization_id;
 
         if (!orgId) {
             return res.status(401).json({ error: 'Unauthorized - no organization' });
@@ -54,7 +54,7 @@ async function enforceTokenQuota(req, res, next) {
  */
 async function enforceStorageQuota(req, res, next) {
     try {
-        const orgId = req.user?.organization_id;
+        const orgId = req.user?.organizationId || req.user?.organization_id;
 
         if (!orgId) {
             return res.status(401).json({ error: 'Unauthorized - no organization' });
@@ -91,7 +91,7 @@ async function enforceStorageQuota(req, res, next) {
  */
 async function recordTokenUsageAfterResponse(req, res, tokens, action) {
     try {
-        const orgId = req.user?.organization_id;
+        const orgId = req.user?.organizationId || req.user?.organization_id;
         const userId = req.user?.id;
 
         if (orgId && tokens > 0) {

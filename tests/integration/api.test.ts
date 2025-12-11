@@ -2,7 +2,7 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
 import request from 'supertest';
-// @ts-ignore
+
 import app from '../../server/index.js';
 
 describe('Integration Test: API Health', () => {

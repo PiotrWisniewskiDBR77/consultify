@@ -255,6 +255,9 @@ function initDb() {
         db.run(`ALTER TABLE users ADD COLUMN token_reset_at DATETIME`, (err) => {
             // Ignore error if column already exists
         });
+        db.run(`ALTER TABLE users ADD COLUMN avatar_url TEXT`, (err) => {
+            // Ignore error if column already exists
+        });
 
         // ==========================================
         // PHASE 3: AI EVOLUTION TABLES

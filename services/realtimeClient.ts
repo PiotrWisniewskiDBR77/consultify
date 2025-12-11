@@ -2,7 +2,7 @@
 class RealtimeClient {
     private ws: WebSocket | null = null;
     private reconnectTimer: NodeJS.Timeout | null = null;
-    private callbacks: Map<string, Set<Function>> = new Map();
+    private callbacks: Map<string, Set<(...args: any[]) => void>> = new Map();
     private isConnected: boolean = false;
 
     connect(token: string) {
@@ -93,14 +93,14 @@ class RealtimeClient {
         }
     }
 
-    on(event: string, callback: Function) {
+    on(event: string, callback: (...args: any[]) => void) {
         if (!this.callbacks.has(event)) {
             this.callbacks.set(event, new Set());
         }
         this.callbacks.get(event)!.add(callback);
     }
 
-    off(event: string, callback: Function) {
+    off(event: string, callback: (...args: any[]) => void) {
         if (this.callbacks.has(event)) {
             this.callbacks.get(event)!.delete(callback);
         }

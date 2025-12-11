@@ -74,11 +74,7 @@ export const FullReportsView: React.FC = () => {
   };
 
 
-  useEffect(() => {
-    if (!fullSession.report) {
-      generateReport();
-    }
-  }, []);
+
 
   const getAxisLabel = (id: string) => {
     const key = `fullStep1_${id === 'digitalProducts' ? 'prod' : id.substring(0, 4)}`;
@@ -195,6 +191,12 @@ export const FullReportsView: React.FC = () => {
     await exportReportToPDF('full-report-content', `Consultify_Report_${currentUser?.companyName || 'Export'}.pdf`);
     setIsExporting(false);
   };
+
+  useEffect(() => {
+    if (!fullSession.report) {
+      setTimeout(() => generateReport(), 0);
+    }
+  }, []);
 
   if (isGenerating || !fullSession.report) {
     return (

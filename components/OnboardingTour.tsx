@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { X, ChevronRight, ChevronLeft } from 'lucide-react';
 
 interface TourStep {
@@ -24,7 +24,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
     const [currentStep, setCurrentStep] = useState(0);
     const [position, setPosition] = useState({ top: 0, left: 0 });
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (!isOpen || !steps[currentStep]) return;
 
         const targetElement = document.querySelector(steps[currentStep].target);
@@ -148,8 +148,8 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
                                 <div
                                     key={idx}
                                     className={`h-1.5 rounded-full transition-all ${idx === currentStep
-                                            ? 'w-6 bg-purple-500'
-                                            : 'w-1.5 bg-slate-300 dark:bg-slate-600'
+                                        ? 'w-6 bg-purple-500'
+                                        : 'w-1.5 bg-slate-300 dark:bg-slate-600'
                                         }`}
                                 />
                             ))}

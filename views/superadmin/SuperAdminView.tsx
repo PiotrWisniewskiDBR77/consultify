@@ -41,8 +41,8 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
     const [editingOrg, setEditingOrg] = useState<Organization | null>(null);
     const [showEditModal, setShowEditModal] = useState(false);
 
-    const fetchData = async () => {
-        setLoading(true);
+    const fetchData = async (showLoading = true) => {
+        if (showLoading) setLoading(true);
         try {
             const [orgs, dashboardData] = await Promise.all([
                 Api.getOrganizations(),
@@ -87,7 +87,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
     };
 
     useEffect(() => {
-        fetchData();
+        fetchData(false);
     }, []);
 
     const handleDeleteOrg = async (id: string, name: string) => {
@@ -178,7 +178,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
         <div className="p-8 overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
                 <h1 className="text-2xl font-bold">System Overview</h1>
-                <button onClick={fetchData} className="flex items-center gap-2 px-4 py-2 bg-navy-800 hover:bg-navy-700 rounded-lg text-sm transition-colors">
+                <button onClick={() => fetchData(true)} className="flex items-center gap-2 px-4 py-2 bg-navy-800 hover:bg-navy-700 rounded-lg text-sm transition-colors">
                     <RefreshCw size={16} /> Refresh
                 </button>
             </div>
@@ -441,7 +441,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
         <div className="p-8 overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
                 <h1 className="text-2xl font-bold">Audit Logs</h1>
-                <button onClick={fetchData} className="flex items-center gap-2 px-4 py-2 bg-navy-800 hover:bg-navy-700 rounded-lg text-sm transition-colors">
+                <button onClick={() => fetchData(true)} className="flex items-center gap-2 px-4 py-2 bg-navy-800 hover:bg-navy-700 rounded-lg text-sm transition-colors">
                     <RefreshCw size={16} /> Refresh
                 </button>
             </div>

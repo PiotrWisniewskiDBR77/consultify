@@ -6,6 +6,10 @@ const AnalyticsService = require('../services/analyticsService');
 const db = require('../database');
 const { v4: uuidv4 } = require('uuid');
 const { enforceTokenQuota, recordTokenUsageAfterResponse } = require('../middleware/quotaMiddleware');
+const verifyToken = require('../middleware/authMiddleware');
+
+// Authenticate all AI routes
+router.use(verifyToken);
 
 // Apply token quota enforcement to all AI POST endpoints
 const quotaProtectedRoutes = ['/chat', '/chat/stream', '/diagnose', '/recommend', '/roadmap', '/simulate', '/validate', '/suggest-tasks', '/verify', '/extract-insight'];
@@ -16,7 +20,8 @@ quotaProtectedRoutes.forEach(route => {
 // --- CHAT ---
 router.post('/chat', async (req, res) => {
     try {
-        const { message, history, systemInstruction, roleName, userId } = req.body;
+        const { message, history, systemInstruction, roleName } = req.body;
+        const userId = req.body.userId || req.user?.id;
         // userId might come from req.user if auth middleware is on, but simplified here
         const response = await AiService.chat(message, history, roleName, userId);
         res.json({ text: response });
@@ -33,7 +38,8 @@ router.post('/chat/stream', async (req, res) => {
     res.setHeader('Connection', 'keep-alive');
 
     try {
-        const { message, history, roleName, userId } = req.body;
+        const { message, history, roleName } = req.body;
+        const userId = req.body.userId || req.user?.id;
 
         const stream = AiService.chatStream(message, history, roleName, userId);
 
