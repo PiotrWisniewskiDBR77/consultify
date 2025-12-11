@@ -28,7 +28,7 @@ export const Api = {
         return data.user;
     },
 
-    register: async (userData: any): Promise<User> => {
+    register: async (userData: any): Promise<User | any> => {
         const res = await fetch(`${API_URL}/auth/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -36,6 +36,10 @@ export const Api = {
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Registration failed');
+
+        if (data.status === 'pending') {
+            return data;
+        }
 
         localStorage.setItem('token', data.token);
         return data.user;
@@ -49,7 +53,7 @@ export const Api = {
                 headers: getHeaders()
             });
         } catch (error) {
-            // Ignore errors - we still want to clear local storage
+            // Ignore errors-we still want to clear local storage
             console.warn('Logout API call failed, clearing token anyway:', error);
         }
         localStorage.removeItem('token');
@@ -232,10 +236,17 @@ export const Api = {
         if (!res.ok) throw new Error('Failed to delete organization');
     },
 
+    getOrganizationBillingDetails: async (orgId: string): Promise<any> => {
+        const res = await fetch(`${API_URL}/superadmin/organizations/${orgId}/billing`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch organization billing details');
+        return res.json();
+    },
+
     getSuperAdminDashboard: async (): Promise<{
         activity: { total: number; last_hour: number; last_24h: number; last_7d: number };
         ai: { total_ai_calls: number; total_tokens: number; active_users: number };
         counts: { total_users: number; total_orgs: number; active_users_7d: number };
+        live?: { total_active_connections: number };
     }> => {
         const res = await fetch(`${API_URL}/superadmin/dashboard`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch dashboard');
@@ -245,6 +256,59 @@ export const Api = {
     getActivities: async (limit: number = 50): Promise<any[]> => {
         const res = await fetch(`${API_URL}/superadmin/activities?limit=${limit}`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch activities');
+        return res.json();
+    },
+
+    getSuperAdminUsers: async (): Promise<User[]> => {
+        const res = await fetch(`${API_URL}/superadmin/users`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch users');
+        return res.json();
+    },
+
+    updateSuperAdminUser: async (id: string, updates: { organizationId?: string; role?: string; status?: string }): Promise<void> => {
+        const res = await fetch(`${API_URL}/superadmin/users/${id}`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify(updates)
+        });
+        if (!res.ok) throw new Error('Failed to update user');
+    },
+
+    createSuperAdminUser: async (user: any): Promise<User> => {
+        const res = await fetch(`${API_URL}/superadmin/users`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(user)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to create super admin');
+        return data;
+    },
+
+    revertImpersonation: async (): Promise<{ user: User; token: string }> => {
+        const res = await fetch(`${API_URL}/auth/revert-impersonation`, {
+            method: 'POST',
+            headers: getHeaders()
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to revert impersonation');
+        return data;
+    },
+
+    impersonateUser: async (userId: string): Promise<{ user: User; token: string }> => {
+        const res = await fetch(`${API_URL}/superadmin/impersonate`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ userId })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to impersonate user');
+        return data;
+    },
+
+    getSystemSettings: async (): Promise<any> => {
+        const res = await fetch(`${API_URL}/settings`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch settings');
         return res.json();
     },
 
@@ -272,6 +336,16 @@ export const Api = {
             headers: getHeaders()
         });
         if (!res.ok) throw new Error('Failed to delete project');
+    },
+
+    // AI OBSERVATIONS
+    generateGlobalBrainObservations: async () => {
+        const response = await fetch(`${API_URL}/knowledge/observations/generate`, {
+            method: 'GET',
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to generate observations');
+        return response.json();
     },
 
     // --- LLM MANAGEMENT ---
@@ -316,7 +390,7 @@ export const Api = {
         const params = new URLSearchParams();
         if (startDate) params.append('startDate', startDate);
         if (endDate) params.append('endDate', endDate);
-        if (params.toString()) url += `?${params.toString()}`;
+        if (params.toString()) url += `? ${params.toString()}`;
 
         const res = await fetch(url, { headers: getHeaders() });
         const data = await res.json();
@@ -398,7 +472,7 @@ export const Api = {
             if (filters.status) params.append('status', filters.status);
             if (filters.assigneeId) params.append('assigneeId', filters.assigneeId);
             if (filters.priority) params.append('priority', filters.priority);
-            if (params.toString()) url += `?${params.toString()}`;
+            if (params.toString()) url += `? ${params.toString()}`;
         }
         const res = await fetch(url, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch tasks');
@@ -596,7 +670,7 @@ export const Api = {
     // --- INITIATIVES (Phase 2) ---
     getInitiatives: async (projectId?: string): Promise<any[]> => {
         let url = `${API_URL}/initiatives`;
-        if (projectId) url += `?projectId=${projectId}`;
+        if (projectId) url += `? projectId=${projectId}`;
         const res = await fetch(url, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch initiatives');
         return res.json();
@@ -736,6 +810,65 @@ export const Api = {
             body: JSON.stringify(feedback)
         });
         if (!res.ok) throw new Error('Failed to save feedback');
+    },
+
+    // --- AI STRATEGIC BOARD ---
+    getAIIdeas: async (): Promise<any[]> => {
+        const res = await fetch(`${API_URL}/ai/ideas`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch AI ideas');
+        return res.json();
+    },
+
+    createAIIdea: async (idea: any): Promise<any> => {
+        const res = await fetch(`${API_URL}/ai/ideas`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(idea)
+        });
+        if (!res.ok) throw new Error('Failed to create AI idea');
+        return res.json();
+    },
+
+    updateAIIdea: async (id: string, updates: any): Promise<any> => {
+        const res = await fetch(`${API_URL}/ai/ideas/${id}`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify(updates)
+        });
+        if (!res.ok) throw new Error('Failed to update AI idea');
+        return res.json();
+    },
+
+    deleteAIIdea: async (id: string): Promise<void> => {
+        const res = await fetch(`${API_URL}/ai/ideas/${id}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        if (!res.ok) throw new Error('Failed to delete AI idea');
+    },
+
+    // --- AI OBSERVATIONS ---
+    getAIObservations: async (): Promise<any[]> => {
+        const res = await fetch(`${API_URL}/ai/observations`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch observations');
+        return res.json();
+    },
+
+    createAIObservation: async (observation: any): Promise<any> => {
+        const res = await fetch(`${API_URL}/ai/observations`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(observation)
+        });
+        if (!res.ok) throw new Error('Failed to create observation');
+        return res.json();
+    },
+
+    // --- AI REPORTS ---
+    getAIDeepReports: async (): Promise<any> => {
+        const res = await fetch(`${API_URL}/ai/reports/performance`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch AI reports');
+        return res.json();
     },
 
     // AI Detail Feedback (for inline rating buttons)
@@ -953,89 +1086,47 @@ export const Api = {
         return json;
     },
 
-    // Get access requests (Super Admin only)
-    getAccessRequests: async (status: string = 'pending'): Promise<any[]> => {
-        const res = await fetch(`${API_URL}/access-control/requests?status=${status}`, {
-            headers: getHeaders()
-        });
+    // --- ACCESS CONTROL (Super Admin) ---
+    getAccessRequests: async (): Promise<any[]> => {
+        const res = await fetch(`${API_URL}/superadmin/access-requests`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch access requests');
         return res.json();
     },
 
-    // Approve access request (Super Admin only)
-    approveAccessRequest: async (id: string, password: string, role?: string): Promise<{
-        success: boolean;
-        organizationId: string;
-        userId: string;
-        message: string;
-    }> => {
-        const res = await fetch(`${API_URL}/access-control/requests/${id}/approve`, {
-            method: 'PUT',
-            headers: getHeaders(),
-            body: JSON.stringify({ password, role })
+    approveAccessRequest: async (id: string): Promise<void> => {
+        const res = await fetch(`${API_URL}/superadmin/access-requests/${id}/approve`, {
+            method: 'POST',
+            headers: getHeaders()
         });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error || 'Failed to approve request');
-        return json;
+        if (!res.ok) throw new Error('Failed to approve request');
     },
 
-    // Reject access request (Super Admin only)
-    rejectAccessRequest: async (id: string, reason?: string): Promise<{ success: boolean; message: string }> => {
-        const res = await fetch(`${API_URL}/access-control/requests/${id}/reject`, {
-            method: 'PUT',
+    rejectAccessRequest: async (id: string, reason: string): Promise<void> => {
+        const res = await fetch(`${API_URL}/superadmin/access-requests/${id}/reject`, {
+            method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ reason })
         });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error || 'Failed to reject request');
-        return json;
+        if (!res.ok) throw new Error('Failed to reject request');
     },
 
-    // Generate access code (Admin only)
-    generateAccessCode: async (data: {
-        organizationId: string;
-        role?: string;
-        maxUses?: number;
-        expiresInDays?: number;
-    }): Promise<{
-        success: boolean;
-        code: {
-            id: string;
-            code: string;
-            role: string;
-            maxUses: number;
-            expiresAt: string | null;
-        };
-    }> => {
-        const res = await fetch(`${API_URL}/access-control/codes`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify(data)
-        });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error || 'Failed to generate access code');
-        return json;
-    },
-
-    // Get organization's access codes (Admin only)
-    getAccessCodes: async (organizationId: string): Promise<any[]> => {
-        const res = await fetch(`${API_URL}/access-control/codes?organizationId=${organizationId}`, {
-            headers: getHeaders()
-        });
+    getAccessCodes: async (): Promise<any[]> => {
+        const res = await fetch(`${API_URL}/superadmin/access-codes`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch access codes');
         return res.json();
     },
 
-    // Deactivate access code (Admin only)
-    deactivateAccessCode: async (id: string): Promise<{ success: boolean; message: string }> => {
-        const res = await fetch(`${API_URL}/access-control/codes/${id}`, {
-            method: 'DELETE',
-            headers: getHeaders()
+    generateAccessCode: async (data: { code?: string; role?: string; maxUses?: number; expiresAt?: string }): Promise<void> => {
+        const res = await fetch(`${API_URL}/superadmin/access-codes`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
         });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error || 'Failed to deactivate access code');
-        return json;
+        if (!res.ok) throw new Error('Failed to generate access code');
     },
+
+    // Deactivate access code (Super Admin only) - not yet implemented in backend but keeping placeholder or removing if not needed.
+    // Removing deactivateAccessCode for now as it's not in my backend plan yet, can add later.
 
     // ==========================================
     // BILLING & USAGE API
@@ -1174,7 +1265,7 @@ export const Api = {
     },
 
     getTokenTransactions: async (limit = 50, offset = 0) => {
-        const res = await fetch(`${API_URL}/token-billing/transactions?limit=${limit}&offset=${offset}`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/token-billing/transactions?limit=${limit} & offset=${offset}`, { headers: getHeaders() });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to get transactions');
         return data.transactions;
@@ -1250,7 +1341,7 @@ export const Api = {
     },
 
     getTokenAnalytics: async (startDate?: string, endDate?: string) => {
-        const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : '';
+        const query = startDate && endDate ? `? startDate=${startDate} & endDate=${endDate}` : '';
         const res = await fetch(`${API_URL}/token-billing/analytics${query}`, { headers: getHeaders() });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to get analytics');

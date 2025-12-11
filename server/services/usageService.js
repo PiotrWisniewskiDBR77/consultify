@@ -260,6 +260,58 @@ function getGlobalUsageStats() {
     });
 }
 
+/**
+ * Record project-level storage usage
+ */
+function recordProjectStorageUsage(projectId, bytes, action) {
+    return new Promise((resolve, reject) => {
+        // Increment usage
+        db.run(
+            `UPDATE projects SET storage_used_bytes = storage_used_bytes + ? WHERE id = ?`,
+            [bytes, projectId],
+            function (err) {
+                if (err) reject(err);
+                else resolve({ projectId, bytes });
+            }
+        );
+    });
+}
+
+/**
+ * Check if project has storage quota
+ * Returns: { allowed: boolean, remaining: number }
+ */
+function checkProjectQuota(projectId) {
+    return new Promise((resolve, reject) => {
+        db.get(
+            `SELECT storage_limit_gb, storage_used_bytes FROM projects WHERE id = ?`,
+            [projectId],
+            (err, row) => {
+                if (err) return reject(err);
+                if (!row) return reject(new Error('Project not found'));
+
+                // If limit is NULL, it means unlimited (or falls back to Org quota which is checked separately)
+                if (row.storage_limit_gb === null) {
+                    return resolve({ allowed: true, remaining: Infinity, limit: null });
+                }
+
+                const limitBytes = row.storage_limit_gb * 1024 * 1024 * 1024;
+                const usedBytes = row.storage_used_bytes || 0;
+                const remaining = Math.max(0, limitBytes - usedBytes);
+
+                resolve({
+                    allowed: remaining > 0,
+                    remaining,
+                    limit: limitBytes,
+                    used: usedBytes,
+                    percentage: limitBytes > 0 ? (usedBytes / limitBytes) * 100 : 0
+                });
+            }
+        );
+    });
+}
+
+
 module.exports = {
     recordTokenUsage,
     recordStorageUsage,
@@ -269,6 +321,8 @@ module.exports = {
     updateUsageSummary,
     getUsageHistory,
     getGlobalUsageStats,
+    recordProjectStorageUsage,
+    checkProjectQuota,
 
     /**
      * Get operational costs grouped by Provider/Model

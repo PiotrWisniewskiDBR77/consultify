@@ -126,10 +126,29 @@ class TokenBillingService {
             db.serialize(() => {
                 db.run(`UPDATE user_token_balance SET platform_tokens = platform_tokens + ?, platform_tokens_bonus = platform_tokens_bonus + ?, lifetime_purchased = lifetime_purchased + ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?`,
                     [tokens, bonusTokens, tokens + bonusTokens, userId]);
+
                 const txId = `tx-${uuidv4()}`;
+
+                // 1. Log Transaction
                 db.run(`INSERT INTO token_transactions (id, user_id, organization_id, type, source_type, tokens, package_id, stripe_payment_id, description) VALUES (?, ?, ?, 'purchase', 'platform', ?, ?, ?, ?)`,
                     [txId, userId, organizationId, tokens + bonusTokens, packageId, stripePaymentId, `Purchased ${tokens} tokens`],
-                    function (err) { if (err) reject(err); else resolve({ transactionId: txId, tokens, bonusTokens }); });
+                    function (err) {
+                        if (err) return reject(err);
+
+                        // 2. Generate Invoice Record if Organization ID is present
+                        if (organizationId) {
+                            // Fetch Package Price to log invoice correctly
+                            db.get('SELECT price_usd FROM token_packages WHERE id = ?', [packageId], (err, row) => {
+                                if (row && row.price_usd > 0) {
+                                    const invoiceId = `inv-${uuidv4().slice(0, 8)}`;
+                                    db.run(`INSERT INTO billing_invoices (id, organization_id, amount_due, currency, status, stripe_invoice_id, created_at) VALUES (?, ?, ?, 'USD', 'paid', ?, CURRENT_TIMESTAMP)`,
+                                        [invoiceId, organizationId, row.price_usd, stripePaymentId || 'manual_credit']);
+                                }
+                            });
+                        }
+
+                        resolve({ transactionId: txId, tokens, bonusTokens });
+                    });
             });
         });
     }

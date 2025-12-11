@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Api } from '../../services/api';
 import { User, AppView } from '../../types';
 import { Users, Building, AlertCircle, CheckCircle, CreditCard, Trash2, Edit2, Search, Plus, RefreshCw } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { useAppStore } from '../../store/useAppStore';
 import { SuperAdminSidebar, SuperAdminSection } from '../../components/SuperAdminSidebar';
 import { AdminLLMView } from '../admin/AdminLLMView';
 import { AdminKnowledgeView } from '../admin/AdminKnowledgeView';
@@ -12,6 +13,9 @@ import { SuperAdminRevenueView } from './SuperAdminRevenueView';
 import { AdminLLMMultipliers } from '../admin/AdminLLMMultipliers';
 import { AdminMarginConfig } from '../admin/AdminMarginConfig';
 import { AdminTokenPackages } from '../admin/AdminTokenPackages';
+import { SuperAdminOrgDetailsModal } from './SuperAdminOrgDetailsModal';
+import { TokenBillingManagementView } from '../admin/TokenBillingManagementView';
+import { SystemSettings } from './SystemSettings';
 
 interface SuperAdminViewProps {
     currentUser: User;
@@ -31,7 +35,7 @@ interface Organization {
 
 export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onNavigate }) => {
     const [activeSection, setActiveSection] = useState<SuperAdminSection>('overview');
-    const [stats, setStats] = useState({ totalOrgs: 0, totalUsers: 0, revenue: 0, aiCalls: 0, tokens: 0, activeUsers7d: 0 });
+    const [stats, setStats] = useState({ totalOrgs: 0, totalUsers: 0, revenue: 0, aiCalls: 0, tokens: 0, activeUsers7d: 0, liveUsers: 0 });
     const [organizations, setOrganizations] = useState<Organization[]>([]);
     const [allUsers, setAllUsers] = useState<User[]>([]);
     const [activities, setActivities] = useState<any[]>([]);
@@ -42,7 +46,13 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
     const [editingOrg, setEditingOrg] = useState<Organization | null>(null);
     const [showEditModal, setShowEditModal] = useState(false);
 
-    const fetchData = async (showLoading = true) => {
+    // User Management State
+    const [movingUser, setMovingUser] = useState<User | null>(null);
+    const [targetOrgId, setTargetOrgId] = useState('');
+    const [viewingOrgUsers, setViewingOrgUsers] = useState<Organization | null>(null);
+    const { isSidebarCollapsed } = useAppStore();
+
+    const fetchData = useCallback(async (showLoading = true) => {
         if (showLoading) setLoading(true);
         try {
             const [orgs, dashboardData] = await Promise.all([
@@ -60,12 +70,13 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                 revenue: 0,
                 aiCalls: dashboardData?.ai?.total_ai_calls || 0,
                 tokens: dashboardData?.ai?.total_tokens || 0,
-                activeUsers7d: dashboardData?.counts?.active_users_7d || 0
+                activeUsers7d: dashboardData?.counts?.active_users_7d || 0,
+                liveUsers: dashboardData?.live?.total_active_connections || 0
             });
 
             // Fetch all users (for Users section)
             try {
-                const users = await Api.getUsers();
+                const users = await Api.getSuperAdminUsers();
                 setAllUsers(users);
             } catch (e) {
                 console.warn('Could not fetch users', e);
@@ -85,11 +96,12 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
             toast.error('Failed to load data');
             setLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         fetchData(false);
-    }, []);
+    }, [fetchData]);
 
     const handleDeleteOrg = async (id: string, name: string) => {
         if (!confirm(`Are you sure you want to delete organization "${name}" and all its users? This cannot be undone.`)) return;
@@ -103,22 +115,32 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
         }
     };
 
-    const handleUpdateOrg = async (e: React.FormEvent) => {
+
+
+    const handleMoveUser = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!editingOrg) return;
+        if (!movingUser || !targetOrgId) return;
 
         try {
-            await Api.updateOrganization(editingOrg.id, {
-                plan: editingOrg.plan,
-                status: editingOrg.status,
-                discount_percent: editingOrg.discount_percent
-            });
-            toast.success('Organization updated');
-            setShowEditModal(false);
-            setEditingOrg(null);
+            await Api.updateSuperAdminUser(movingUser.id, { organizationId: targetOrgId });
+            toast.success('User moved successfully');
+            setMovingUser(null);
+            setTargetOrgId(''); // Reset selection
             fetchData();
         } catch (err) {
-            toast.error('Failed to update organization');
+            toast.error('Failed to move user');
+        }
+    };
+
+    const handleImpersonateUser = async (userId: string) => {
+        if (!confirm('Are you sure you want to impersonate this user? You will be logged in as them.')) return;
+        try {
+            const { token } = await Api.impersonateUser(userId);
+            localStorage.setItem('token', token);
+            // Force reload to pick up new user context
+            window.location.href = '/';
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to impersonate user');
         }
     };
 
@@ -155,20 +177,11 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
             case 'plans':
                 return <div className="p-8 overflow-y-auto"><SuperAdminPlansView /></div>;
             case 'token-billing':
-                return (
-                    <div className="p-8 overflow-y-auto">
-                        <h1 className="text-2xl font-bold mb-6">Token Billing Management</h1>
-                        <div className="grid grid-cols-1 gap-6">
-                            <AdminLLMMultipliers />
-                            <AdminMarginConfig />
-                            <AdminTokenPackages />
-                        </div>
-                    </div>
-                );
+                return <TokenBillingManagementView />;
             case 'revenue':
                 return <div className="p-8 overflow-y-auto"><SuperAdminRevenueView /></div>;
             case 'settings':
-                return renderSettings();
+                return <SystemSettings />;
             case 'audit':
                 return renderAuditLogs();
             default:
@@ -199,6 +212,16 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                     <div>
                         <p className="text-slate-400 text-xs">Total Users</p>
                         <p className="text-xl font-bold text-white">{stats.totalUsers}</p>
+                    </div>
+                </div>
+                <div className="bg-navy-900 border border-white/10 rounded-xl p-4 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-red-500/20 flex items-center justify-center text-red-500 relative">
+                        <Users size={20} />
+                        <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse border border-navy-900"></span>
+                    </div>
+                    <div>
+                        <p className="text-slate-400 text-xs">Live Users Now</p>
+                        <p className="text-xl font-bold text-white">{stats.liveUsers}</p>
                     </div>
                 </div>
                 <div className="bg-navy-900 border border-white/10 rounded-xl p-4 flex items-center gap-3">
@@ -333,6 +356,13 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                                             >
                                                 <Trash2 size={16} />
                                             </button>
+                                            <button
+                                                onClick={() => setViewingOrgUsers(org)}
+                                                className="p-1.5 hover:bg-green-500/20 text-slate-400 hover:text-green-400 rounded transition-colors"
+                                                title="View Users"
+                                            >
+                                                <Users size={16} />
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -366,19 +396,24 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                         <tr className="bg-navy-950 text-slate-400 text-xs uppercase tracking-wider">
                             <th className="p-4 font-medium">Name</th>
                             <th className="p-4 font-medium">Email</th>
+                            <th className="p-4 font-medium">Organization</th>
                             <th className="p-4 font-medium">Role</th>
                             <th className="p-4 font-medium">Status</th>
                             <th className="p-4 font-medium">Last Login</th>
+                            <th className="p-4 font-medium text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5 text-sm">
                         {filteredUsers.length === 0 ? (
-                            <tr><td colSpan={5} className="p-8 text-center text-slate-500">No users found</td></tr>
+                            <tr><td colSpan={7} className="p-8 text-center text-slate-500">No users found</td></tr>
                         ) : (
                             filteredUsers.map(user => (
                                 <tr key={user.id} className="hover:bg-white/5 transition-colors">
                                     <td className="p-4 font-medium text-white">{user.firstName} {user.lastName}</td>
                                     <td className="p-4 text-slate-300">{user.email}</td>
+                                    <td className="p-4 text-slate-300">
+                                        {(user as any).organizationName || <span className="text-slate-600 italic">None</span>}
+                                    </td>
                                     <td className="p-4">
                                         <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${user.role === 'SUPERADMIN' ? 'bg-red-500/20 text-red-400' :
                                             user.role === 'ADMIN' ? 'bg-purple-500/20 text-purple-400' :
@@ -396,6 +431,24 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                                     <td className="p-4 text-slate-500 text-xs">
                                         {user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never'}
                                     </td>
+                                    <td className="p-4 text-right">
+                                        <div className="flex items-center justify-end gap-2">
+                                            <button
+                                                onClick={() => handleImpersonateUser(user.id)}
+                                                className="p-1.5 hover:bg-purple-500/20 text-slate-400 hover:text-purple-400 rounded transition-colors text-xs font-medium"
+                                                title="Impersonate User"
+                                            >
+                                                Impersonate
+                                            </button>
+                                            <button
+                                                onClick={() => setMovingUser(user)}
+                                                className="p-1.5 hover:bg-blue-500/20 text-slate-400 hover:text-blue-400 rounded transition-colors text-xs font-medium"
+                                                title="Move User"
+                                            >
+                                                Move
+                                            </button>
+                                        </div>
+                                    </td>
                                 </tr>
                             ))
                         )}
@@ -405,39 +458,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
         </div>
     );
 
-    const renderSettings = () => (
-        <div className="p-8 overflow-y-auto">
-            <h1 className="text-2xl font-bold mb-6">System Settings</h1>
-            <div className="bg-navy-900 border border-white/10 rounded-xl p-6 space-y-6">
-                <div>
-                    <label className="block text-sm font-medium text-slate-400 mb-2">Application Name</label>
-                    <input
-                        type="text"
-                        defaultValue="Consultify"
-                        className="w-full max-w-md px-4 py-2 bg-navy-950 border border-white/10 rounded-lg text-white focus:border-blue-500 outline-none"
-                    />
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-slate-400 mb-2">Default Language</label>
-                    <select className="w-full max-w-md px-4 py-2 bg-navy-950 border border-white/10 rounded-lg text-white focus:border-blue-500 outline-none">
-                        <option value="EN">English</option>
-                        <option value="PL">Polish</option>
-                        <option value="DE">German</option>
-                    </select>
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-slate-400 mb-2">Maintenance Mode</label>
-                    <label className="flex items-center gap-3 cursor-pointer">
-                        <input type="checkbox" className="w-5 h-5 rounded border-white/20 bg-navy-950 text-red-500 focus:ring-red-500" />
-                        <span className="text-sm text-slate-300">Enable maintenance mode (blocks all non-admin access)</span>
-                    </label>
-                </div>
-                <button className="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white font-medium transition-colors">
-                    Save Settings
-                </button>
-            </div>
-        </div>
-    );
+
 
     const renderAuditLogs = () => (
         <div className="p-8 overflow-y-auto">
@@ -484,7 +505,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
 
     return (
         <div className="flex h-full bg-navy-950 text-white overflow-hidden">
-            {/* Sidebar */}
+            {/* Sidebar (Fixed Position) */}
             <SuperAdminSidebar
                 activeSection={activeSection}
                 onSectionChange={setActiveSection}
@@ -492,69 +513,112 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                 currentUserEmail={currentUser.email}
             />
 
-            {/* Main Content */}
-            <main className="flex-1 overflow-hidden flex flex-col">
+            {/* Main Content (Push with ml-xx) */}
+            <main
+                className={`flex-1 overflow-hidden flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'ml-16' : 'ml-72'}`}
+            >
                 {renderContent()}
             </main>
 
             {/* Edit Organization Modal */}
+            {/* Edit Organization Modal */}
             {showEditModal && editingOrg && (
+                <SuperAdminOrgDetailsModal
+                    org={editingOrg}
+                    onClose={() => { setShowEditModal(false); setEditingOrg(null); }}
+                    onUpdate={() => { setShowEditModal(false); setEditingOrg(null); fetchData(); }}
+                />
+            )}
+
+            {/* Move User Modal */}
+            {movingUser && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
                     <div className="bg-navy-900 border border-white/10 rounded-xl p-6 w-full max-w-md shadow-2xl">
-                        <h3 className="text-xl font-bold mb-4">Edit Organization</h3>
-                        <form onSubmit={handleUpdateOrg} className="space-y-4">
+                        <h3 className="text-xl font-bold mb-4">Move User to Organization</h3>
+                        <p className="text-sm text-slate-400 mb-4">
+                            Select the new organization for <span className="text-white font-medium">{movingUser.firstName} {movingUser.lastName}</span> ({movingUser.email}).
+                        </p>
+                        <form onSubmit={handleMoveUser} className="space-y-4">
                             <div>
-                                <label className="block text-xs font-medium text-slate-400 mb-1">Organization Name</label>
-                                <input disabled value={editingOrg.name} className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-slate-500" />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-medium text-slate-400 mb-1">Plan</label>
+                                <label className="block text-xs font-medium text-slate-400 mb-1">Target Organization</label>
                                 <select
-                                    value={editingOrg.plan}
-                                    onChange={e => setEditingOrg({ ...editingOrg, plan: e.target.value as any })}
+                                    value={targetOrgId}
+                                    onChange={e => setTargetOrgId(e.target.value)}
                                     className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-blue-500 outline-none"
+                                    required
                                 >
-                                    <option value="free">Free</option>
-                                    <option value="pro">Pro</option>
-                                    <option value="enterprise">Enterprise</option>
+                                    <option value="">Select Organization...</option>
+                                    {organizations.map(org => (
+                                        <option key={org.id} value={org.id}>{org.name} ({org.status})</option>
+                                    ))}
                                 </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-medium text-slate-400 mb-1">Status</label>
-                                <select
-                                    value={editingOrg.status}
-                                    onChange={e => setEditingOrg({ ...editingOrg, status: e.target.value as any })}
-                                    className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-blue-500 outline-none"
-                                >
-                                    <option value="active">Active</option>
-                                    <option value="trial">Trial</option>
-                                    <option value="blocked">Blocked</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-medium text-slate-400 mb-1">Discount (%)</label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    max="100"
-                                    value={editingOrg.discount_percent || 0}
-                                    onChange={e => setEditingOrg({ ...editingOrg, discount_percent: parseInt(e.target.value) || 0 })}
-                                    className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-blue-500 outline-none"
-                                />
-                                <p className="text-xs text-slate-500 mt-1">Discount applied to all future invoices.</p>
                             </div>
 
                             <div className="flex gap-3 pt-4">
-                                <button type="button" onClick={() => setShowEditModal(false)} className="flex-1 py-2 bg-transparent border border-white/10 hover:bg-white/5 rounded text-slate-300">Cancel</button>
-                                <button type="submit" className="flex-1 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-medium">Save Changes</button>
+                                <button type="button" onClick={() => { setMovingUser(null); setTargetOrgId(''); }} className="flex-1 py-2 bg-transparent border border-white/10 hover:bg-white/5 rounded text-slate-300">Cancel</button>
+                                <button type="submit" className="flex-1 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-medium">Move User</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* View Org Users Modal */}
+            {viewingOrgUsers && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                    <div className="bg-navy-900 border border-white/10 rounded-xl p-6 w-full max-w-4xl shadow-2xl h-[80vh] flex flex-col">
+                        <div className="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 className="text-xl font-bold">Users in {viewingOrgUsers.name}</h3>
+                                <p className="text-sm text-slate-400">{viewingOrgUsers.plan} • {viewingOrgUsers.status}</p>
+                            </div>
+                            <button onClick={() => setViewingOrgUsers(null)} className="p-2 hover:bg-white/10 rounded-full text-slate-400 hover:text-white">
+                                <Users size={20} />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto bg-navy-950 border border-white/5 rounded-lg">
+                            <table className="w-full text-left border-collapse">
+                                <thead className="sticky top-0 bg-navy-900 shadow-md">
+                                    <tr className="text-slate-400 text-xs uppercase tracking-wider">
+                                        <th className="p-3 font-medium">Name</th>
+                                        <th className="p-3 font-medium">Email</th>
+                                        <th className="p-3 font-medium">Role</th>
+                                        <th className="p-3 font-medium">Last Login</th>
+                                        <th className="p-3 font-medium text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-white/5 text-sm">
+                                    {allUsers.filter(u => u.organizationId === viewingOrgUsers.id).length === 0 ? (
+                                        <tr><td colSpan={5} className="p-8 text-center text-slate-500">No users in this organization</td></tr>
+                                    ) : (
+                                        allUsers.filter(u => u.organizationId === viewingOrgUsers.id).map(user => (
+                                            <tr key={user.id} className="hover:bg-white/5">
+                                                <td className="p-3 font-medium text-white">{user.firstName} {user.lastName}</td>
+                                                <td className="p-3 text-slate-300">{user.email}</td>
+                                                <td className="p-3"><span className="text-xs font-bold uppercase bg-slate-800 px-2 py-1 rounded text-slate-300">{user.role}</span></td>
+                                                <td className="p-3 text-slate-500 text-xs">{user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : '-'}</td>
+                                                <td className="p-3 text-right">
+                                                    <button
+                                                        onClick={() => { setMovingUser(user); setViewingOrgUsers(null); }}
+                                                        className="text-blue-400 hover:text-blue-300 text-xs font-medium"
+                                                    >
+                                                        Move Out
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div className="pt-4 flex justify-end">
+                            <button onClick={() => setViewingOrgUsers(null)} className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded text-white text-sm">Close</button>
+                        </div>
                     </div>
                 </div>
             )}
         </div>
     );
 };
+

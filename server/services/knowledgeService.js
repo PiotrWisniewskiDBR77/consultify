@@ -97,20 +97,26 @@ const KnowledgeService = {
 
     // --- 4. KNOWLEDGE DOCUMENTS (RAG) ---
 
-    addDocument: (filename, filepath) => {
+    addDocument: (filename, filepath, orgId, projectId, size) => {
+        const id = uuidv4();
         return new Promise((resolve, reject) => {
-            const id = uuidv4();
-            db.run("INSERT INTO knowledge_docs (id, filename, filepath, status) VALUES (?, ?, ?, 'pending')",
-                [id, filename, filepath], function (err) {
+            db.run("INSERT INTO knowledge_docs (id, filename, filepath, organization_id, project_id, file_size_bytes, status) VALUES (?, ?, ?, ?, ?, ?, 'pending')",
+                [id, filename, filepath, orgId, projectId, size], function (err) {
                     if (err) reject(err);
                     else resolve(id);
                 });
         });
     },
 
-    getDocuments: () => {
+    getDocuments: (orgId) => {
         return new Promise((resolve, reject) => {
-            db.all("SELECT * FROM knowledge_docs ORDER BY created_at DESC", (err, rows) => {
+            const sql = orgId
+                ? "SELECT * FROM knowledge_docs WHERE organization_id = ? ORDER BY created_at DESC"
+                : "SELECT * FROM knowledge_docs ORDER BY created_at DESC";
+
+            const params = orgId ? [orgId] : [];
+
+            db.all(sql, params, (err, rows) => {
                 if (err) reject(err);
                 else resolve(rows || []);
             });
@@ -166,6 +172,34 @@ const KnowledgeService = {
             db.run("UPDATE knowledge_docs SET status = 'indexed' WHERE id = ?", [docId], (err) => {
                 if (err) reject(err);
                 else resolve(processedCount);
+            });
+        });
+    },
+
+    // --- 5. LIFECYCLE MANAGEMENT ---
+
+    deleteDocument: (docId, orgId) => {
+        const StorageService = require('./storageService');
+        return new Promise((resolve, reject) => {
+            // 1. Get document info
+            db.get("SELECT * FROM knowledge_docs WHERE id = ?", [docId], async (err, doc) => {
+                if (err) return reject(err);
+                if (!doc) return resolve(false);
+
+                try {
+                    // 2. Soft Delete File (Move to trash)
+                    if (doc.filepath) {
+                        await StorageService.softDeleteFile(doc.filepath, orgId);
+                    }
+
+                    // 3. Mark as Deleted in DB
+                    db.run("UPDATE knowledge_docs SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?", [docId], (err) => {
+                        if (err) reject(err);
+                        else resolve(true);
+                    });
+                } catch (e) {
+                    reject(e);
+                }
             });
         });
     }

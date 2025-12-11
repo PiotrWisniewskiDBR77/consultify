@@ -28,19 +28,36 @@ test.describe('Navigation Smoke Test', () => {
                 'Settings': 'text="Settings"'
             };
 
+            // Hover sidebar to ensure it is expanded/visible
+            // Target the fixed sidebar container explicitly
+            await page.hover('div.fixed.z-50');
+            await page.waitForTimeout(500); // Allow for expansion animation
+
+            // Wait for sidebar to expand (CONSULTIFY header text appears)
+            try {
+                await page.waitForSelector('text="CONSULTIFY"', { timeout: 2000 });
+            } catch (e) {
+                console.log('Sidebar failed to expand on hover, attempting fallback click if possible');
+            }
+
             // Expand parent if needed and not already visible
             if (pageInfo.parent) {
-                const parentSelector = locationMap[pageInfo.parent] || `nav >> text="${pageInfo.parent}"`;
+                // If the parent section is collapsed, click to expand it
                 const linkSelector = locationMap[pageInfo.link] || `nav >> text="${pageInfo.link}"`;
 
+                // Check visibility with loose timeout to avoid immediate fail
                 if (!(await page.isVisible(linkSelector))) {
+                    const parentSelector = locationMap[pageInfo.parent] || `nav >> text="${pageInfo.parent}"`;
+                    await page.waitForSelector(parentSelector);
                     await page.click(parentSelector);
+                    await page.waitForTimeout(300); // Wait for submenu animation
                 }
             }
 
-            // Click the actual link
-            const selector = locationMap[pageInfo.link] || `nav >> text="${pageInfo.link}"`;
-            await page.click(selector);
+            // Navigate
+            const linkSelector = locationMap[pageInfo.link] || `nav >> text="${pageInfo.link}"`;
+            await page.waitForSelector(linkSelector);
+            await page.click(linkSelector);
 
             // Verify main header or content exists
             // Check for both h1 and breadcrumbs/spans

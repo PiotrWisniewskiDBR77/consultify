@@ -226,4 +226,71 @@ router.put('/prompts/:key', (req, res) => {
     stmt.finalize();
 });
 
+
+// --- STRATEGIC IDEAS ---
+router.get('/ideas', async (req, res) => {
+    try {
+        const ideas = await AiService.getStrategicIdeas();
+        res.json(ideas);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/ideas', async (req, res) => {
+    try {
+        const idea = await AiService.addStrategicIdea(req.body);
+        res.json(idea);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.put('/ideas/:id', async (req, res) => {
+    try {
+        const updated = await AiService.updateStrategicIdea(req.params.id, req.body);
+        res.json(updated);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.delete('/ideas/:id', async (req, res) => {
+    try {
+        await AiService.deleteStrategicIdea(req.params.id);
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// --- OBSERVATIONS ---
+router.get('/observations', async (req, res) => {
+    try {
+        const observations = await AiService.getObservations();
+        res.json(observations);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/observations', async (req, res) => {
+    try {
+        const obs = await AiService.addObservation(req.body);
+        res.json(obs);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// --- DEEP REPORTS ---
+router.get('/reports/performance', async (req, res) => {
+    try {
+        const report = await AiService.getDeepPerformanceReport();
+        res.json(report);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 module.exports = router;

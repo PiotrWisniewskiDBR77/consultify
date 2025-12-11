@@ -32,6 +32,7 @@ export const App = () => {
         authInitialStep, setAuthInitialStep,
         language, setLanguage,
         isSidebarOpen, setIsSidebarOpen,
+        isSidebarCollapsed, // Added for layout adjustment
         freeSessionData, setFreeSessionData,
         fullSessionData, setFullSessionData,
         logout,
@@ -100,6 +101,20 @@ export const App = () => {
         } else {
             // Regular User -> Dashboard to select project
             setCurrentView(AppView.USER_DASHBOARD);
+        }
+    };
+
+    const handleStopImpersonation = async () => {
+        try {
+            const { token, user } = await Api.revertImpersonation();
+            localStorage.setItem('token', token);
+            // Force reload to pick up pure admin context
+            window.location.href = '/';
+        } catch (err) {
+            console.error(err);
+            // Fallback to logout
+            logout();
+            setCurrentView(AppView.WELCOME);
         }
     };
 
@@ -257,11 +272,39 @@ export const App = () => {
             <div className="flex h-screen w-full bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white font-sans overflow-hidden" dir={language === 'AR' ? 'rtl' : 'ltr'}>
                 <Toaster position="bottom-right" />
 
+                {/* Impersonation Banner */}
+                {currentUser?.impersonatorId && (
+                    <div className="fixed top-0 left-0 right-0 h-10 bg-red-600 text-white z-50 flex items-center justify-center gap-4 text-sm font-medium shadow-md">
+                        <span className="flex items-center gap-2">
+                            <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                            IMPERSONATING: {currentUser.email}
+                        </span>
+                        <button
+                            onClick={handleStopImpersonation}
+                            className="bg-white text-red-600 px-3 py-0.5 rounded text-xs font-bold hover:bg-red-50 transition-colors uppercase"
+                        >
+                            Stop Impersonating
+                        </button>
+                    </div>
+                )}
+
                 {isSessionView && (
                     <Sidebar />
                 )}
 
-                <main className="flex-1 flex flex-col overflow-hidden relative w-full h-full transition-colors duration-300">
+                {/* 
+                    Main Content Area
+                    - We use conditional left padding (ltr) or right padding (rtl) to make room for fixed sidebar
+                    - w-16 (64px) when UNPINNED (Mini)
+                    - w-64 (256px) when PINNED (Full)
+                    - lg:pl-xx handles desktop only. Mobile uses overlay so pl-0 usually.
+                 */}
+                <main
+                    className={`
+                        flex-1 flex flex-col overflow-hidden relative w-full h-full transition-all duration-300
+                        ${isSessionView ? (isSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64') : ''}
+                    `}
+                >
                     {/* Top Bar for Session Views */}
                     {isSessionView && (
                         <div className="h-12 border-b border-slate-200 dark:border-white/5 bg-white dark:bg-navy-950 flex items-center justify-between px-3 shrink-0 z-20 transition-colors duration-300">
@@ -324,5 +367,6 @@ export const App = () => {
                     )}
                 </main>
             </div>
-            );
+        </ErrorBoundary>
+    );
 };

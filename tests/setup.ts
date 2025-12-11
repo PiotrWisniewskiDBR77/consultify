@@ -23,6 +23,13 @@ if (typeof window !== 'undefined') {
     });
 }
 
+// Node Polyfills
 import { TextEncoder, TextDecoder } from 'util';
 global.TextEncoder = TextEncoder as any;
 global.TextDecoder = TextDecoder as any;
+
+// PDF-Parse / Canvas Polyfills
+global.DOMMatrix = class DOMMatrix {
+    a = 1; b = 0; c = 0; d = 1; e = 0; f = 0;
+    constructor() { }
+} as any;

@@ -341,10 +341,34 @@ describe('AiService Tests', () => {
                     callback(null, { is_active: 1, provider: 'openai', api_key: 'sk-test' });
                 }
             });
-
             const result = await AiService.diagnose("Strategy", "Input", 123);
             expect(result.score).toBe(4);
             expect(mockAnalytics.logUsage).toHaveBeenCalled();
+        });
+
+        it('deepDiagnose should run chain of thought and save analytics', async () => {
+            mockDb.get.mockImplementation((q, p, cb) => cb(null, { organization_id: 10, industry: 'Tech' }));
+
+            // Mock chain of thought response
+            vi.spyOn(AiService, 'callLLM').mockResolvedValue('{"score":3, "gaps": []}');
+
+            const result = await AiService.deepDiagnose("Axis1", "Input", 1);
+            expect(result.score).toBe(3);
+            expect(mockAnalytics.saveMaturityScore).toHaveBeenCalled();
+        });
+
+        it('deepDiagnose should handle JSON parse errors by returning fallback', async () => {
+            // Return invalid JSON
+            vi.spyOn(AiService, 'callLLM').mockResolvedValue('Invalid JSON Content');
+
+            // Suppress console.error for this test
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+
+            const result = await AiService.deepDiagnose("Axis1", "Input", 1);
+            expect(result.score).toBe(1); // Default
+            expect(result.summary).toBe("Invalid JSON Content"); // Raw result as summary
+
+            consoleSpy.mockRestore();
         });
     });
 
@@ -475,6 +499,30 @@ describe('AiService Tests', () => {
             expect(parts).toEqual(["Chunk1", "Chunk2"]);
         });
 
+        it.skip('should yield chunks for Gemini when configured via DB', async () => {
+            mockDb.get.mockImplementation((query, params, cb) => {
+                const callback = typeof params === 'function' ? params : cb;
+                callback(null, { id: 1, provider: 'gemini', api_key: 'gem-key', markup_multiplier: 1 });
+            });
+
+            mockGoogleGenerativeAI.mockImplementation(() => ({
+                getGenerativeModel: () => ({
+                    startChat: () => ({
+                        sendMessageStream: vi.fn().mockResolvedValue({
+                            stream: (async function* () { yield { text: () => "GeminiConfigChunk" }; })()
+                        })
+                    })
+                })
+            }));
+
+            const generator = AiService.streamLLM("Prompt", "", [], null, 1);
+            const parts = [];
+            for await (const chunk of generator) {
+                parts.push(chunk);
+            }
+            expect(parts).toEqual(["GeminiConfigChunk"]);
+        });
+
         it('should handle stream errors gracefully', async () => {
             // Mock Gemini error (since default)
             mockGoogleGenerativeAI.mockImplementation(() => ({
@@ -553,6 +601,18 @@ describe('AiService Tests', () => {
             expect(res[0].title).toBe("Init 1");
         });
 
+        it('generateInitiatives should return empty list on error', async () => {
+            vi.spyOn(AiService, 'callLLM').mockRejectedValue(new Error("Gen Fail"));
+            const result = await AiService.generateInitiatives({}, 1);
+            expect(result).toEqual([]);
+        });
+
+        it('suggestTasks should return empty list on error', async () => {
+            vi.spyOn(AiService, 'callLLM').mockRejectedValue(new Error("Task Fail"));
+            const result = await AiService.suggestTasks({}, 1);
+            expect(result).toEqual([]);
+        });
+
         it('buildRoadmap should return empty object on error', async () => {
             mockChatSession.sendMessage.mockRejectedValue(new Error("Fail"));
             // allow enhancePrompt to pass
@@ -616,6 +676,37 @@ describe('AiService Tests', () => {
             });
             expect(result.success).toBe(false);
             expect(result.message).toContain("Network Error");
+        });
+
+        it('should return error for unknown provider', async () => {
+            const result = await AiService.testProviderConnection({
+                provider: 'unknown-provider', api_key: 'sk-test'
+            });
+            expect(result.success).toBe(false);
+            expect(result.message).toContain("not implemented yet");
+        });
+
+        it('should use default baseURL for generic providers if missing', async () => {
+            const MockOpenAI = vi.fn();
+            MockOpenAI.prototype.chat = {
+                completions: {
+                    create: vi.fn().mockResolvedValue({
+                        choices: [{ message: { content: "DefaultBase" } }]
+                    })
+                }
+            };
+            // Inject MockOpenAI directly
+            AiService.setDependencies({ OpenAI: MockOpenAI });
+
+            const result = await AiService.testProviderConnection({
+                provider: 'deepseek', api_key: 'sk-deep'
+                // No endpoint provided (triggers default baseURL logic only if provider matching logic works)
+            });
+
+            expect(result.success).toBe(true);
+            expect(MockOpenAI).toHaveBeenCalledWith(
+                expect.objectContaining({ baseURL: "https://api.deepseek.com" })
+            );
         });
     });
 

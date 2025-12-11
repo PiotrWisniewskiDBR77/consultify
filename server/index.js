@@ -10,6 +10,11 @@ const app = express();
 const PORT = process.env.PORT || 3005;
 const isProduction = process.env.NODE_ENV === 'production';
 
+const Scheduler = require('./cron/scheduler');
+
+// Init Scheduler
+Scheduler.init();
+
 // Security Headers (production-ready)
 app.use(helmet({
     contentSecurityPolicy: isProduction ? undefined : false, // Disable CSP in dev for hot reload
@@ -20,17 +25,26 @@ app.use(helmet({
 app.use(compression());
 
 // Rate Limiting
+const RedisStore = require('./utils/redisRateLimitStore');
+const auditLogMiddleware = require('./middleware/auditLog');
+
+// Rate Limiting Config
+const redisStore = new RedisStore({ windowMs: 15 * 60 * 1000 }); // 15 mins
+const authRedisStore = new RedisStore({ windowMs: 60 * 60 * 1000 }); // 1 hour
+
 const apiLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: isProduction ? 100 : 1000, // Stricter in production
+    windowMs: 15 * 60 * 1000,
+    max: isProduction ? 100 : 1000,
     standardHeaders: true,
     legacyHeaders: false,
+    store: redisStore, // Use Custom Redis Store
     message: { error: 'Too many requests, please try again later.' }
 });
 
 const authLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000, // 1 hour
-    max: isProduction ? 10 : 1000, // 10 login attempts per hour in production, 1000 in dev
+    windowMs: 60 * 60 * 1000,
+    max: isProduction ? 10 : 1000,
+    store: authRedisStore,
     message: { error: 'Too many login attempts, please try again later.' }
 });
 
@@ -47,8 +61,9 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Apply rate limiting to API routes
+// Apply rate limiting and security logging to API routes
 app.use('/api/', apiLimiter);
+app.use('/api/', auditLogMiddleware); // Audit Log for all API methods (filters GET internally)
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 
@@ -104,6 +119,11 @@ app.use('/api/ai-training', aiTrainingRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/token-billing', tokenBillingRoutes);
 app.use('/api/webhooks', stripeWebhookRoutes);
+const ssoRoutes = require('./routes/sso');
+app.use('/api/sso', ssoRoutes);
+
+const aiAsyncRoutes = require('./routes/aiAsync');
+app.use('/api/ai-async', aiAsyncRoutes); // New Async Endpoint
 
 // Health Check - MUST be before catchall
 app.get('/api/health', (req, res) => {
@@ -131,6 +151,10 @@ if (require.main === module) {
     // Start token cleanup cron job
     const { startCleanupJob } = require('./cron/cleanupRevokedTokens');
     startCleanupJob();
+
+    // Init AI Worker
+    const { initWorker } = require('./workers/aiWorker');
+    initWorker();
 
     server.listen(PORT, '0.0.0.0', () => {
         console.log('Server running on http://0.0.0.0:' + PORT);

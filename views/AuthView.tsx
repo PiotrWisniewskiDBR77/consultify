@@ -5,7 +5,6 @@ import { AuthStep, SessionMode, Language, UserRole } from '../types';
 import { translations } from '../translations';
 import { Api } from '../services/api';
 
-
 interface AuthViewProps {
   initialStep: AuthStep;
   targetMode: SessionMode;
@@ -17,6 +16,7 @@ interface AuthViewProps {
 export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onAuthSuccess, onBack, language }) => {
   const [step, setStep] = useState<AuthStep>(initialStep);
   const [error, setError] = useState<string | null>(null);
+  const [isPending, setIsPending] = useState(false);
   const t = translations.auth;
 
   // --- CODE ENTRY STATE ---
@@ -30,7 +30,8 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
     email: '',
     phone: '',
     companyName: '',
-    password: ''
+    password: '',
+    accessCode: ''
   });
 
   const handleCodeChange = (index: number, value: string) => {
@@ -60,9 +61,6 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
     }
   };
 
-
-  // ... imports
-
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -73,17 +71,47 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
         companyName: formData.companyName,
         phone: formData.phone,
         password: formData.password,
+        accessCode: formData.accessCode,
         role: UserRole.CEO,
         accessLevel: targetMode === SessionMode.FULL ? 'full' : 'free'
       });
+
+      // Check if the user status or a specific message implies pending
+      // The backend returns { status: 'pending', message: ... } if pending
+      if ((user as any).status === 'pending') {
+        setIsPending(true);
+        return;
+      }
+
       onAuthSuccess(user);
     } catch (err: any) {
       setError(err.message || 'Registration failed');
     }
   };
 
+  const startDemo = async () => {
+    try {
+      const rand = Math.floor(Math.random() * 10000);
+      const demoUser = {
+        firstName: 'Demo',
+        lastName: 'User',
+        email: `demo${rand}@consultify.io`,
+        password: 'demo123USER!',
+        companyName: `Demo Corp ${rand}`,
+        isDemo: true,
+        role: UserRole.CEO,
+        accessLevel: 'full'
+      };
+      const user = await Api.register(demoUser);
+      onAuthSuccess(user);
+    } catch (err: any) {
+      setError('Failed to start demo: ' + err.message);
+    }
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     console.log('handleLogin called with:', formData.email);
     try {
       console.log('Calling Api.login...');
@@ -92,9 +120,34 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
       onAuthSuccess(user);
     } catch (err: any) {
       console.error('Login error:', err);
-      setError(err.message || 'Login failed');
+      // Check for pending status in error or response
+      if (err.message && (err.message.includes('approval') || err.message.toLowerCase().includes('pending'))) {
+        setIsPending(true);
+      } else {
+        setError(err.message || 'Login failed');
+      }
     }
   };
+
+  const renderPending = () => (
+    <div className="text-center space-y-6 animate-in fade-in zoom-in-95 duration-300">
+      <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-yellow-200 dark:border-yellow-500/20 shadow-[0_0_15px_-3px_rgba(234,179,8,0.3)]">
+        <Lock className="text-yellow-600 dark:text-yellow-400" size={32} />
+      </div>
+      <div>
+        <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">Access Pending</h2>
+        <p className="text-slate-500 dark:text-slate-400 text-sm max-w-xs mx-auto leading-relaxed">
+          Your organization is currently waiting for manual approval. You will receive an email once your access is granted.
+        </p>
+      </div>
+      <button
+        onClick={() => { setIsPending(false); setStep(AuthStep.LOGIN); }}
+        className="text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300 font-medium hover:underline text-sm transition-colors"
+      >
+        Back to Login
+      </button>
+    </div>
+  );
 
   const renderCodeEntry = () => (
     <div className="space-y-8">
@@ -202,6 +255,16 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
         </div>
 
         <div className="space-y-1.5">
+          <label className="text-xs font-medium text-slate-600 dark:text-slate-300">Access Code <span className="text-slate-400 font-normal">(Optional)</span></label>
+          <input
+            value={formData.accessCode}
+            onChange={e => setFormData({ ...formData, accessCode: e.target.value })}
+            placeholder="Enter invitation code"
+            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-xs placeholder:text-slate-400 dark:placeholder:text-slate-600"
+          />
+        </div>
+
+        <div className="space-y-1.5">
           <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t.password[language]} <span className="text-purple-500 dark:text-purple-400">*</span></label>
           <input
             type="password"
@@ -226,9 +289,18 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
         </button>
       </form>
 
-      <div className="text-center pt-2 text-sm text-slate-500 dark:text-slate-400">
-        {t.haveAccount[language]}{' '}
-        <button onClick={() => setStep(AuthStep.LOGIN)} className="text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300 font-medium hover:underline">{t.logIn[language]}</button>
+      <div className="text-center pt-2 space-y-3">
+        <div className="text-sm text-slate-500 dark:text-slate-400">
+          {t.haveAccount[language]}{' '}
+          <button onClick={() => setStep(AuthStep.LOGIN)} className="text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300 font-medium hover:underline">{t.logIn[language]}</button>
+        </div>
+
+        <div className="pt-2 border-t border-slate-200 dark:border-white/5">
+          <button onClick={startDemo} className="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 text-xs font-medium hover:underline flex items-center justify-center gap-1 mx-auto transition-colors">
+            Try Demo Account
+            <ArrowRight size={12} />
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -300,9 +372,10 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
           <X size={20} />
         </button>
 
-        {step === AuthStep.CODE_ENTRY && renderCodeEntry()}
-        {step === AuthStep.REGISTER && renderRegister()}
-        {step === AuthStep.LOGIN && renderLogin()}
+        {!isPending && step === AuthStep.CODE_ENTRY && renderCodeEntry()}
+        {!isPending && step === AuthStep.REGISTER && renderRegister()}
+        {!isPending && step === AuthStep.LOGIN && renderLogin()}
+        {isPending && renderPending()}
 
       </div>
 

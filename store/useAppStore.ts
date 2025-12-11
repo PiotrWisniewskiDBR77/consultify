@@ -24,6 +24,13 @@ interface AppState {
     // Chat State
     activeChatMessages: ChatMessage[];
     isBotTyping: boolean;
+    /* 
+     * PERFORMANCE CRITICAL: 
+     * `currentStreamContent` is for high-frequency updates (typing effect).
+     * It is EXCLUDED from persistence. 
+     * DO NOT use `activeChatMessages` for streaming as it triggers sync localStorage writes 
+     * which will freeze the main thread.
+     */
     currentStreamContent: string; // Non-persisted high-frequency update
 
     freeSessionData: Partial<FreeSession>;

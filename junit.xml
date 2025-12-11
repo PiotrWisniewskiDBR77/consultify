@@ -1,167 +1,3253 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="37" failures="0" errors="0" time="0.147959958">
-    <testsuite name="tests/unit/backend/aiService.test.js" timestamp="2025-12-11T10:24:51.549Z" hostname="Air-Piotr.lan" tests="37" failures="0" errors="0" skipped="0" time="0.147959958">
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; callLLM &gt; should fallback to Gemini (default) when no provider configured" time="0.089706208">
+<testsuites name="vitest tests" tests="22" failures="12" errors="0" time="83.683007376">
+    <testsuite name="tests/integration/api.test.ts" timestamp="2025-12-11T12:21:31.676Z" hostname="Air-Piotr.lan" tests="2" failures="2" errors="0" skipped="0" time="10.089509042">
+        <testcase classname="tests/integration/api.test.ts" name="Integration Test: API Health &gt; GET /health should return 200 OK" time="5.003564667">
             <system-out>
-[Database] Using SQLite Adapter
-Using MOCKED DB (No connection)
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; callLLM &gt; should use OpenAI when provider is configured" time="0.001610041">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; callLLM &gt; should handle OpenAI error gracefully" time="0.020163834">
-            <system-err>
-LLM Call Error Error: OpenAI error: Server Error
-    at Object.callLLM [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/aiService.js:192:45[90m)[39m
-[90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
-    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/aiService.test.js:195:13
-    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:20
-
-            </system-err>
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; callLLM &gt; should use Anthropic when provider is configured" time="0.001285083">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; callLLM &gt; should use Ollama when provider is configured" time="0.00093975">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; callLLM &gt; should use DeepSeek provider" time="0.000730542">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Provider Coverage &gt; should use deepseek provider correctly" time="0.000934583">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Provider Coverage &gt; should use qwen provider correctly" time="0.000770292">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Provider Coverage &gt; should use mistral provider correctly" time="0.000683084">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Provider Coverage &gt; should use anthropic provider correctly" time="0.000650125">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Provider Coverage &gt; should use groq provider correctly" time="0.000630458">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Provider Coverage &gt; should use together provider correctly" time="0.000850334">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Provider Coverage &gt; should use nvidia_nim provider correctly" time="0.0007785">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Provider Coverage &gt; should use zhipu provider correctly" time="0.000678042">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Provider Coverage &gt; should use cohere provider correctly" time="0.000727083">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Provider Coverage &gt; should use ernie provider correctly" time="0.00068975">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Diagnosis Logic &gt; deepDiagnose should run chain of thought and save analytics" time="0.001064833">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Helper Methods &gt; simulateEconomics should delegate to FinancialService and call LLM" time="0.000979291">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Helper Methods &gt; verifyWithWeb should delegate to WebSearchService" time="0.0008135">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Helper Methods &gt; enrichInitiative should use WebSearchService" time="0.000915875">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Helper Methods &gt; enrichInitiative should fallback to LLM if WebSearch fails" time="0.001607292">
-            <system-err>
-Web Search failed, using LLM knowledge Error: Web Fail
-    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/aiService.test.js:386:69
-    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:145:11
-    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:26
-    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1240:20
-    at new Promise (&lt;anonymous&gt;)
-    at runWithTimeout [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1206:10[90m)[39m
-    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1650:37
-    at Traces.$ [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/traces.U4xDYhzZ.js:115:27[90m)[39m
-    at trace [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/test.BT8LKgU9.js:239:21[90m)[39m
-    at runTest [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1650:12[90m)[39m
-
-            </system-err>
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Helper Methods &gt; validateInitiative should return safe default on error" time="0.001645375">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Helper Methods &gt; extractInsights should parse JSON and save to KnowledgeService" time="0.001262458">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Helper Methods &gt; suggestTasks should parse JSON list tasks" time="0.001348916">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; streamLLM &gt; should yield chunks for Gemini fallback" time="0.001301542">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; streamLLM &gt; should yield chunks for OpenAI stream" time="0.001896791">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; streamLLM &gt; should handle stream errors gracefully" time="0.001628667">
-            <system-err>
-[vitest] The vi.fn() mock did not use &apos;function&apos; or &apos;class&apos; in its implementation, see https://vitest.dev/api/vi#vi-spyon for examples.
-Stream LLM Error TypeError: () =&gt; ({
-                getGenerativeModel: () =&gt; ({
-                    startChat: () =&gt; ({
-                 ...&lt;omitted&gt;...}) is not a constructor
-    at new Mock [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/spy[24m/dist/index.js:262:27[90m)[39m
-    at Object.streamLLM [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/aiService.js:489:31[90m)[39m
-[90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
-    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/aiService.test.js:490:30
-    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:20
-
-            </system-err>
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; enhancePrompt &gt; should append strategies and context if available" time="0.000994084">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Deep Reasoning Layers &gt; generateInitiatives should parse JSON response" time="0.000882958">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Deep Reasoning Layers &gt; buildRoadmap should return empty object on error" time="0.001116375">
-            <system-err>
-LLM Call Error Error: Fail
-    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/aiService.test.js:557:59
-    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:145:11
-    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:26
-    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1240:20
-    at new Promise (&lt;anonymous&gt;)
-    at runWithTimeout [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1206:10[90m)[39m
-    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1650:37
-    at Traces.$ [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/traces.U4xDYhzZ.js:115:27[90m)[39m
-    at trace [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/test.BT8LKgU9.js:239:21[90m)[39m
-    at runTest [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1650:12[90m)[39m
-
-            </system-err>
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; testProviderConnection &gt; should return success for OpenAI" time="0.000901125">
-            <system-out>
-[AiService] Testing connection for: openai
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; testProviderConnection &gt; should return success for Google" time="0.000736042">
-            <system-out>
-[AiService] Testing connection for: google
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; testProviderConnection &gt; should return success for Generic Providers (DeepSeek)" time="0.000739834">
-            <system-out>
-[AiService] Testing connection for: deepseek
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; testProviderConnection &gt; should return success for Ollama" time="0.000775667">
-            <system-out>
-[AiService] Testing connection for: ollama
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; testProviderConnection &gt; should handle connection errors gracefully" time="0.001246167">
-            <system-out>
-[AiService] Testing connection for: ollama
+Connected to the SQLite database.
+Created billing tables and seeded default subscription plans.
 
             </system-out>
             <system-err>
-Test connection failed: Error: Network Error
-    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/aiService.test.js:613:54
-    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:145:11
-    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:26
-    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1240:20
-    at new Promise (&lt;anonymous&gt;)
-    at runWithTimeout [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1206:10[90m)[39m
-    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1650:37
-    at Traces.$ [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/traces.U4xDYhzZ.js:115:27[90m)[39m
-    at trace [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/test.BT8LKgU9.js:239:21[90m)[39m
-    at runTest [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1650:12[90m)[39m
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
 
             </system-err>
+            <failure message="Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with &quot;testTimeout&quot;." type="Error">
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with &quot;testTimeout&quot;.
+ ❯ tests/integration/api.test.ts:9:5
+            </failure>
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Chat &amp; Streams &gt; chat should enhance prompt with context and history" time="0.000982208">
+        <testcase classname="tests/integration/api.test.ts" name="Integration Test: API Health &gt; GET /non-existent-route should return 404 (handled by catchall serving index.html)" time="5.069934">
+            <system-err>
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+            </system-err>
+            <failure message="Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with &quot;testTimeout&quot;." type="Error">
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with &quot;testTimeout&quot;.
+ ❯ tests/integration/api.test.ts:15:5
+            </failure>
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Chat &amp; Streams &gt; chatStream should delegate to streamLLM" time="0.000936083">
+    </testsuite>
+    <testsuite name="tests/integration/auth.test.js" timestamp="2025-12-11T12:21:31.686Z" hostname="Air-Piotr.lan" tests="4" failures="4" errors="0" skipped="0" time="21.859961208">
+        <testcase classname="tests/integration/auth.test.js" name="Auth Integration &gt; should login successfully with valid credentials" time="5.021267209">
+            <system-err>
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+            </system-err>
+            <failure message="Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with &quot;testTimeout&quot;." type="Error">
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with &quot;testTimeout&quot;.
+ ❯ tests/integration/auth.test.js:49:7
+            </failure>
+        </testcase>
+        <testcase classname="tests/integration/auth.test.js" name="Auth Integration &gt; should fail with invalid credentials" time="5.092274209">
+            <system-err>
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+            </system-err>
+            <failure message="Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with &quot;testTimeout&quot;." type="Error">
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with &quot;testTimeout&quot;.
+ ❯ tests/integration/auth.test.js:59:7
+            </failure>
+        </testcase>
+        <testcase classname="tests/integration/auth.test.js" name="Auth Integration &gt; should require email and password" time="5.075777792">
+            <system-err>
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+            </system-err>
+            <failure message="Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with &quot;testTimeout&quot;." type="Error">
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with &quot;testTimeout&quot;.
+ ❯ tests/integration/auth.test.js:68:7
+            </failure>
+        </testcase>
+        <testcase classname="tests/integration/auth.test.js" name="Auth Integration &gt; should validate token via /api/auth/me" time="5.063212084">
+            <system-err>
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+            </system-err>
+            <failure message="Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with &quot;testTimeout&quot;." type="Error">
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with &quot;testTimeout&quot;.
+ ❯ tests/integration/auth.test.js:75:7
+            </failure>
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/integration/initiatives.test.js" timestamp="2025-12-11T12:21:31.694Z" hostname="Air-Piotr.lan" tests="3" failures="1" errors="0" skipped="2" time="10.162834209">
+        <testcase classname="tests/integration/initiatives.test.js" name="Initiatives Integration &gt; should list initiatives" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="tests/integration/initiatives.test.js" name="Initiatives Integration &gt; should create an initiative" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="tests/integration/initiatives.test.js" name="Initiatives Integration" time="10.162142292">
+            <system-err>
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+            </system-err>
+            <failure message="Hook timed out in 10000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with &quot;hookTimeout&quot;." type="Error">
+Error: Hook timed out in 10000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with &quot;hookTimeout&quot;.
+ ❯ tests/integration/initiatives.test.js:16:14
+            </failure>
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/integration/projects.test.js" timestamp="2025-12-11T12:21:31.702Z" hostname="Air-Piotr.lan" tests="3" failures="1" errors="0" skipped="2" time="10.172205958">
+        <testcase classname="tests/integration/projects.test.js" name="Projects Integration &gt; should create a new project" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="tests/integration/projects.test.js" name="Projects Integration &gt; should list projects" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="tests/integration/projects.test.js" name="Projects Integration" time="10.096326084">
+            <system-out>
+Seeded SuperAdmin (admin@dbr77.ai) and System Org.
+Seeded DBR77 Organization with Admin (piotr.wisniewski@dbr77.com) and User (justyna.laskowska@dbr77.com).
+
+            </system-out>
+            <system-err>
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+            </system-err>
+            <failure message="Hook timed out in 10000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with &quot;hookTimeout&quot;." type="Error">
+Error: Hook timed out in 10000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with &quot;hookTimeout&quot;.
+ ❯ tests/integration/projects.test.js:16:14
+            </failure>
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/integration/storage_security.test.js" timestamp="2025-12-11T12:21:31.707Z" hostname="Air-Piotr.lan" tests="5" failures="1" errors="0" skipped="4" time="10.142840792">
+        <testcase classname="tests/integration/storage_security.test.js" name="Storage Security &amp; Isolation Integration &gt; should NOT allow User B to see files uploaded by User A" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="tests/integration/storage_security.test.js" name="Storage Security &amp; Isolation Integration &gt; should block upload if project storage limit is exceeded" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="tests/integration/storage_security.test.js" name="Storage Security &amp; Isolation Integration &gt; should sanitize filenames preventing directory traversal" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="tests/integration/storage_security.test.js" name="Storage Security &amp; Isolation Integration &gt; should soft delete files instead of removing them immediately" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="tests/integration/storage_security.test.js" name="Storage Security &amp; Isolation Integration" time="10.133418416">
+            <system-out>
+Connected to the SQLite database.
+Created billing tables and seeded default subscription plans.
+
+Connected to the SQLite database.
+Created billing tables and seeded default subscription plans.
+
+            </system-out>
+            <system-err>
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+            </system-err>
+            <failure message="Hook timed out in 10000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with &quot;hookTimeout&quot;." type="Error">
+Error: Hook timed out in 10000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with &quot;hookTimeout&quot;.
+ ❯ tests/integration/storage_security.test.js:28:14
+            </failure>
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/integration/tasks.test.js" timestamp="2025-12-11T12:21:31.738Z" hostname="Air-Piotr.lan" tests="3" failures="1" errors="0" skipped="2" time="10.135416917">
+        <testcase classname="tests/integration/tasks.test.js" name="Tasks Integration &gt; should list tasks" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="tests/integration/tasks.test.js" name="Tasks Integration &gt; should create a task" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="tests/integration/tasks.test.js" name="Tasks Integration" time="10.129843375">
+            <system-err>
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+            </system-err>
+            <failure message="Hook timed out in 10000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with &quot;hookTimeout&quot;." type="Error">
+Error: Hook timed out in 10000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with &quot;hookTimeout&quot;.
+ ❯ tests/integration/tasks.test.js:16:14
+            </failure>
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/integration/backend/planLimits.test.js" timestamp="2025-12-11T12:21:31.743Z" hostname="Air-Piotr.lan" tests="2" failures="2" errors="0" skipped="0" time="11.12023925">
+        <testcase classname="tests/integration/backend/planLimits.test.js" name="Plan Limits Integration &gt; should prevent creating more projects than allowed by Free plan" time="5.015455375">
+            <system-err>
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+            </system-err>
+            <failure message="Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with &quot;testTimeout&quot;." type="Error">
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with &quot;testTimeout&quot;.
+ ❯ tests/integration/backend/planLimits.test.js:41:5
+            </failure>
+        </testcase>
+        <testcase classname="tests/integration/backend/planLimits.test.js" name="Plan Limits Integration &gt; should allow creating more projects after upgrade" time="5.02520325">
+            <system-err>
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[Redis] Client Error AggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;::1&apos;[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m&apos;ECONNREFUSED&apos;[39m,
+      syscall: [32m&apos;connect&apos;[39m,
+      address: [32m&apos;127.0.0.1&apos;[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+            </system-err>
+            <failure message="Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with &quot;testTimeout&quot;." type="Error">
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with &quot;testTimeout&quot;.
+ ❯ tests/integration/backend/planLimits.test.js:62:5
+            </failure>
         </testcase>
     </testsuite>
 </testsuites>
