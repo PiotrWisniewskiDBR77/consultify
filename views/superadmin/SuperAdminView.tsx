@@ -41,10 +41,6 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
     const [editingOrg, setEditingOrg] = useState<Organization | null>(null);
     const [showEditModal, setShowEditModal] = useState(false);
 
-    useEffect(() => {
-        fetchData();
-    }, []);
-
     const fetchData = async () => {
         setLoading(true);
         try {
@@ -89,6 +85,10 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        fetchData();
+    }, []);
 
     const handleDeleteOrg = async (id: string, name: string) => {
         if (!confirm(`Are you sure you want to delete organization "${name}" and all its users? This cannot be undone.`)) return;
