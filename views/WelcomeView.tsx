@@ -338,7 +338,7 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({
               controls
               key={language} // Force re-render on language change
             >
-              <source src={`/videos/en.mp4?v=${Date.now()}`} type="video/mp4" />
+              <source src={`/videos/en.mp4`} type="video/mp4" />
               Your browser does not support the video tag.
             </video>
 

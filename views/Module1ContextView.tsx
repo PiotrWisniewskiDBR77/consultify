@@ -19,8 +19,7 @@ export const Module1ContextView: React.FC<Module1ContextViewProps> = ({ currentU
         activeChatMessages: messages,
         addChatMessage,
         isBotTyping,
-        setIsBotTyping,
-        updateLastChatMessage
+        setIsBotTyping
     } = useAppStore();
 
     const { isStreaming, streamedContent, startStream } = useAIStream();
@@ -94,7 +93,7 @@ export const Module1ContextView: React.FC<Module1ContextViewProps> = ({ currentU
         // This is a simplified call to get the JSON. In production we might split this.
         // For now, we simulate "progress" to not block the user indefinitely in this demo.
         const msgCount = history.filter(m => m.role === 'user').length;
-        let mockScore = Math.min(10 + (msgCount * 20), 100);
+        const mockScore = Math.min(10 + (msgCount * 20), 100);
         let mockGaps: string[] = [];
 
         if (mockScore < 40) mockGaps = ["Strategic Drivers", "Business Goals", "Financial Context"];

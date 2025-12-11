@@ -44,11 +44,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate, l
         firstName: '', lastName: '', email: '', role: UserRole.OTHER, status: 'active'
     });
 
-    useEffect(() => {
-        loadUsers();
-        loadProjects();
-    }, []);
-
     const loadUsers = async () => {
         try {
             const data = await Api.getUsers();
@@ -68,6 +63,11 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate, l
             toast.error('Failed to load projects');
         }
     };
+
+    useEffect(() => {
+        loadUsers();
+        loadProjects();
+    }, []);
 
     const handleDeleteUser = async (id: string) => {
         if (window.confirm('Are you sure you want to delete this user?')) {

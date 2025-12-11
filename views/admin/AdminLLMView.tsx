@@ -33,11 +33,6 @@ export const AdminLLMView: React.FC = () => {
         cost_per_1k: 0
     });
 
-    useEffect(() => {
-        loadProviders();
-        loadPrompts();
-    }, []);
-
     const loadProviders = async () => {
         try {
             const data = await Api.getLLMProviders();
@@ -57,6 +52,11 @@ export const AdminLLMView: React.FC = () => {
             console.error(e);
         }
     };
+
+    useEffect(() => {
+        loadProviders();
+        loadPrompts();
+    }, []);
 
     const testOllamaConnection = async () => {
         setTestingOllama(true);
