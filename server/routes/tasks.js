@@ -4,6 +4,7 @@ const db = require('../database');
 const { v4: uuidv4 } = require('uuid');
 const verifyToken = require('../middleware/authMiddleware');
 const notificationsRouter = require('./notifications');
+const ActivityService = require('../services/activityService');
 
 router.use(verifyToken);
 
@@ -264,6 +265,17 @@ router.post('/', (req, res) => {
             );
         }
 
+        // Log Activity
+        ActivityService.log({
+            organizationId: orgId,
+            userId: userId,
+            action: 'created',
+            entityType: 'task',
+            entityId: id,
+            entityName: title,
+            newValue: { status, priority, assigneeId }
+        });
+
         res.json({
             id,
             projectId,
@@ -409,6 +421,17 @@ router.put('/:id', (req, res) => {
                 if (err) return res.status(500).json({ error: err.message });
                 if (this.changes === 0) return res.status(404).json({ error: 'Task not found' });
 
+                // Log Activity
+                ActivityService.log({
+                    organizationId: orgId,
+                    userId: req.user.id,
+                    action: 'updated',
+                    entityType: 'task',
+                    entityId: id,
+                    entityName: title || 'Task', // Use new title if provided, else fallback (ideal would be old title but we don't have it easily here without another query)
+                    newValue: req.body // Log the changes
+                });
+
                 res.json({ message: 'Task updated', id, updatedAt: now });
             });
         }
@@ -437,6 +460,17 @@ router.delete('/:id', (req, res) => {
         // Delete task
         db.run('DELETE FROM tasks WHERE id = ? AND organization_id = ?', [id, orgId], function (err) {
             if (err) return res.status(500).json({ error: err.message });
+
+            // Log Activity
+            ActivityService.log({
+                organizationId: orgId,
+                userId: req.user.id,
+                action: 'deleted',
+                entityType: 'task',
+                entityId: id,
+                entityName: task.title
+            });
+
             res.json({ message: 'Task deleted' });
         });
     });

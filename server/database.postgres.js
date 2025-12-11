@@ -749,6 +749,24 @@ function initDb() {
                 FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
             )`);
 
+            // AI Ideas Board
+            await query(`CREATE TABLE IF NOT EXISTS ai_ideas (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                title TEXT NOT NULL,
+                description TEXT,
+                status VARCHAR(50) DEFAULT 'new',
+                priority VARCHAR(50) DEFAULT 'medium',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )`);
+
+            // AI System Observations
+            await query(`CREATE TABLE IF NOT EXISTS ai_observations (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                content TEXT NOT NULL,
+                category VARCHAR(50),
+                confidence_score REAL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )`);
 
             console.log('[Postgres] Schema Check Complete.');
 

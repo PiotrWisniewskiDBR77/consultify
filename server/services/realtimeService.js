@@ -240,6 +240,23 @@ class RealtimeServiceSimple {
         console.log(`[WS] User ${userId} disconnected`);
     }
 
+    getGlobalStats() {
+        let totalUsers = 0;
+        const orgStats = {};
+
+        for (const [orgId, users] of this.presence.entries()) {
+            const count = users.size;
+            totalUsers += count;
+            orgStats[orgId] = count;
+        }
+
+        return {
+            total_active_connections: totalUsers,
+            active_organizations: this.presence.size,
+            organization_breakdown: orgStats
+        };
+    }
+
     // External API
     notifyUpdate(organizationId, eventType, data) {
         this.broadcastToOrganization(organizationId, {

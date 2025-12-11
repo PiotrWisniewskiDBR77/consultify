@@ -14,10 +14,17 @@ test.describe('Project Management', () => {
     test('should create a new project', async ({ page }) => {
         // Navigate to projects (Admin Panel -> Projects)
         // Admin Panel might be auto-expanded
-        if (!(await page.isVisible('text="Admin Panel"'))) {
-            await page.click('text="Admin Panel"');
+        await page.hover('div.fixed.z-50');
+        await page.waitForTimeout(500);
+        // Ensure expansion
+        try { await page.waitForSelector('text="CONSULTIFY"', { timeout: 2000 }); } catch (e) { }
+
+        if (!(await page.isVisible('nav >> text="Projects"'))) {
+            await page.click('nav >> text="Admin Panel"');
+            await page.waitForTimeout(300);
         }
-        await page.click('text="Projects"');
+        await page.waitForSelector('nav >> text="Projects"');
+        await page.click('nav >> text="Projects"');
 
         // Open "New Project" modal/form
         await page.click('text=New Project');

@@ -26,7 +26,12 @@ export const FullROIWorkspace: React.FC<FullROIWorkspaceProps> = ({
     const [activeTab, setActiveTab] = useState<ROITab>('portfolio'); // Default to Portfolio (Macro view)
     const t = translations.fullROI;
     const initiatives = fullSession.initiatives || [];
-    const economics = fullSession.economics || { totalCost: 0, totalAnnualBenefit: 0, overallROI: 0, paybackPeriodYears: 0 };
+    const economics = {
+        totalCost: fullSession.economics?.totalCost ?? 0,
+        totalAnnualBenefit: fullSession.economics?.totalAnnualBenefit ?? 0,
+        overallROI: fullSession.economics?.overallROI ?? 0,
+        paybackPeriodYears: fullSession.economics?.paybackPeriodYears ?? 0
+    };
 
     // --- Render Functions ---
 

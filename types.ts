@@ -198,6 +198,7 @@ export interface User {
   tokenLimit?: number;
   industry?: string; // Company industry
   country?: string; // Company country
+  impersonatorId?: string; // ID of the admin impersonating this user
 }
 
 export interface FreeSession {

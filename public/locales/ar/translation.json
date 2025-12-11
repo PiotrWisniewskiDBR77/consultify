@@ -1,0 +1,348 @@
+{
+  "sidebar": {
+    "dashboard": "لوحة القيادة",
+    "quickAssessment": "التقييم السريع",
+    "fullProject": "التحول الكامل",
+    "masterclass": "فئة رئيسية",
+    "resources": "موارد",
+    "quickStep1": "الشركة والتوقعات",
+    "quickStep2": "التحديات وأسئلة الملف الشخصي",
+    "quickStep3": "توصيات",
+    "fullStep1": "تقييم (DRD)",
+    "fullStep1_proc": "العمليات",
+    "fullStep1_prod": "المنتجات الرقمية",
+    "fullStep1_model": "نطاقات الأعمال",
+    "fullStep1_data": "إدارة البيانات",
+    "fullStep1_cult": "ثقافة",
+    "fullStep1_ai": "نضج الذكاء الاصطناعي",
+    "fullStep2": "مولد المبادرات",
+    "fullStep3": "خارطة طريق التحول",
+    "fullStep4": "الاقتصاد وعائد الاستثمار",
+    "fullStep5": "لوحة القيادة للتنفيذ",
+    "fullStep6": "التقارير",
+    "newConversation": "محادثة جديدة",
+    "settings": "الإعدادات",
+    "mobileApp": "تطبيق الهاتف",
+    "logOut": "تسجيل خروج"
+  },
+  "auth": {
+    "startQuick": "ابدأ التقييم السريع",
+    "setupFull": "إعداد حسابك الكامل",
+    "unlockFull": "فتح التحول الكامل",
+    "enterCode": "أدخل رمز الوصول المكون من 6 أرقام.",
+    "verifyCode": "تحقق من الرمز",
+    "personalize": "نحتاج إلى بعض التفاصيل لتخصيص خارطة الطريق الخاصة بك.",
+    "firstName": "الاسم الأول",
+    "lastName": "اسم العائلة",
+    "email": "البريد الإلكتروني للعمل",
+    "phone": "رقم الهاتف",
+    "company": "اسم الشركة",
+    "password": "كلمة المرور (8 أحرف كحد أدنى)",
+    "createStart": "إنشاء حساب وابدأ",
+    "haveAccount": "هل لديك حساب بالفعل؟",
+    "noAccount": "ليس لديك حساب؟",
+    "logIn": "تسجيل الدخول",
+    "createOne": "أنشئ حساباً",
+    "welcomeBack": "مرحبًا بعودتك!",
+    "signInText": "سجل الدخول لمتابعة رحلة التحول الخاصة بك.",
+    "backToStart": "العودة إلى شاشة البدء"
+  },
+  "step1": {
+    "title": "الخطوة 1 من 3 — الشركة والتوقعات",
+    "subtitle": "التقييم السريع",
+    "profile": "ملف الشركة",
+    "role": "الدور",
+    "industry": "الصناعة",
+    "size": "الحجم",
+    "country": "البلد",
+    "expectations": "التحديات والأهداف",
+    "mainChallenges": "التحديات الرئيسية",
+    "mainGoal": "هدف التحول الرئيسي",
+    "horizon": "الأفق الزمني",
+    "nextStep": "الذهاب إلى مقترحات العمل (الخطوة 2)",
+    "notSelected": "لم يتم التحديد بعد...",
+    "toBeDefined": "يجب تحديده...",
+    "months": "أشهر"
+  },
+  "step3": {
+    "title": "الخطوة 3 من 3 — توصيات",
+    "snapshot": "لمحة عن الشركة",
+    "focusAreas": "مجالات التركيز الموصى بها",
+    "quickWins": "مكاسب سريعة قابلة للتنفيذ",
+    "startFull": "بدء مشروع التحول الكامل",
+    "download": "تحميل الملخص",
+    "revenue": "إيرادات",
+    "maturity": "النضج الرقمي"
+  },
+  "chat": {
+    "header": "مساعد التحول",
+    "subHeader": "الخطوة 1: الملف الشخصي",
+    "placeholder": "اكتب إجابتك...",
+    "scripts": {
+      "intro": "مرحبًا {name}. أنا مساعد التحول الخاص بك.\n\nفي هذا التقييم السريع (المجاني)، سنمر بـ 3 خطوات:\n1. الشركة والتوقعات\n2. التحديات والملف الشخصي\n3. التوصيات والمكاسب السريعة.\n\nهل نبدأ؟",
+      "role": "عظيم. لنبدأ بالأساسيات.\n\nما هو دورك في الشركة؟",
+      "industry": "تشرفت بمقابلتك، {role}. المنظور مهم.\n\nفي أي صناعة تعمل؟",
+      "industrySub": "الإنتاج. فهمت. أي نوع بالتحديد؟",
+      "size": "كم عدد الموظفين لديك تقريبًا؟",
+      "country": "فهمت. الحجم يغير الحلول المتاحة.\n\nفي أي بلد تعمل بشكل رئيسي؟",
+      "challenges": "عظيم، دعنا نستكشف تحدياتك الحالية.\n\nما هي نقطة الألم التشغيلية الرئيسية لديك؟",
+      "goal": "فهمت. التعامل مع التحديات الرئيسية.\n\nالآن، إذا تحدثنا في غضون 12 شهرًا، ما هو بيان النجاح الرئيسي الذي تود الإدلاء به؟",
+      "horizon": "هدف واضح.\n\nمتى تحتاج إلى رؤية أول نتائج ملموسة؟",
+      "summary": "مثالي. لدينا الملف الشخصي.\n\nملخص:\n- الدور: {role}\n- القطاع: {industry}\n- الهدف: {goal}\n\nسأقوم الآن بتوليد أفكار محددة لك.",
+      "done": "عظيم! يرجى النقر على الزر الموجود على اليمين لعرض مقترحات العمل الخاصة بك.",
+      "step3Intro": "بناءً على إجاباتك، إليك لمحة سريعة عن وضعك وتوصياتي.",
+      "step3Summary": "شركتك في قطاع {industry} بهدف واضح وهو {goal}. التحدي الرئيسي هو {painPoint}.",
+      "step3Focus": "أوصي بالتركيز فوراً على هذه المجالات:",
+      "step3Wins": "إليك بعض المكاسب السريعة التي يمكنك البدء بها يوم الاثنين القادم:",
+      "step3Upsell": "هل ترغب في الانتقال إلى مشروع التحول الكامل وبناء خارطة طريق كاملة؟"
+    },
+    "options": {
+      "start": "حسنا لنبدأ",
+      "explain": "اشرح العملية",
+      "ceo": "المالك / الرئيس التنفيذي",
+      "plant": "مدير المصنع",
+      "coo": "مدير العمليات",
+      "mfg": "إنتاج",
+      "log": "الخدمات اللوجستية",
+      "inefficient": "عمليات إنتاج غير فعالة",
+      "lackData": "نقص البيانات / الرؤية",
+      "manual": "الكثير من المهام اليدوية",
+      "quality": "مشاكل في الجودة",
+      "automation": "مستوى أتمتة منخفض",
+      "proc": "العمليات",
+      "data": "البيانات",
+      "auto": "الأتمتة",
+      "culture": "الثقافة",
+      "m3": "3 أشهر",
+      "m6": "6 أشهر",
+      "m12": "12 شهر",
+      "confirm": "يبدو صحيحا",
+      "edit": "تغيير شيء ما",
+      "yesFull": "نعم، ابدأ المشروع الكامل",
+      "notNow": "ليس الآن"
+    }
+  },
+  "fullAssessment": {
+    "intro": "مرحبًا بك في تشخيص الجاهزية الرقمية الكامل (DRD). سنقوم بتقييم 6 محاور رئيسية لعملك على مقياس من 1-7.",
+    "axisIntro": "دعنا نقيم {axis}. ما مدى نضجك في هذا المجال؟",
+    "startAxis": "ابدأ المحور",
+    "currentAxis": "المحور الحالي",
+    "continue": "متابعة",
+    "completed": "مكتمل",
+    "score": "النتيجة",
+    "maturityOverview": "نظرة عامة على النضج",
+    "nextStep": "الذهاب إلى مولد المبادرات (الخطوة 2)",
+    "summary": "إليك ملف تعريف النضج الرقمي الخاص بك عبر 6 محاور. بناءً على الدرجات، يجب أن نعطي الأولوية لـ {weakest}.",
+    "introMicrocopy": "يقيم هذا التقييم مؤسستك عبر 6 أبعاد لنموذج تشخيص الجاهزية الرقمية (DRD). تتراوح الدرجات من 1 (مبتدئ) إلى 7 (قائد).",
+    "descriptions": {
+      "processes": "التوحيد والكفاءة",
+      "digitalProducts": "الاتصال وتجربة المستخدم",
+      "businessModels": "قابلية التوسع والإيرادات",
+      "dataManagement": "الجودة والحوكمة",
+      "culture": "المهارات والعقلية",
+      "aiMaturity": "التبني والاستراتيجية"
+    },
+    "questions": {
+      "processes": [
+        {
+          "EN": "How standardized are your core production processes?",
+          "PL": "Jak ustandaryzowane są Twoje główne procesy produkcji?"
+        },
+        {
+          "EN": "How well are your processes measured and monitored?",
+          "PL": "Jak dobrze mierzone i monitorowane są procesy?"
+        },
+        {
+          "EN": "To what extent are your processes digitally supported?",
+          "PL": "W jakim stopniu procesy są wspierane cyfrowo?"
+        }
+      ],
+      "digitalProducts": [
+        {
+          "EN": "Does your product portfolio include digital services?",
+          "PL": "Czy Twoje portfolio zawiera usługi cyfrowe?"
+        },
+        {
+          "EN": "How integrated are your products with IoT?",
+          "PL": "Jak zintegrowane są produkty z IoT?"
+        },
+        {
+          "EN": "Do you use customer usage data to improve products?",
+          "PL": "Czy używasz danych o użyciu do ulepszania produktów?"
+        }
+      ],
+      "businessModels": [
+        {
+          "EN": "Are you shifting from CAPEX to OPEX models?",
+          "PL": "Czy przechodzisz z modeli CAPEX na OPEX?"
+        },
+        {
+          "EN": "Do you have digital ecosystem partnerships?",
+          "PL": "Czy masz partnerstwa w ekosystemie cyfrowym?"
+        },
+        {
+          "EN": "How scalable is your current business model?",
+          "PL": "Jak skalowalny jest obecny model biznesowy?"
+        }
+      ],
+      "dataManagement": [
+        {
+          "EN": "Is there a single source of truth for key data?",
+          "PL": "Czy istnieje jedno źródło prawdy dla kluczowych danych?"
+        },
+        {
+          "EN": "How automated is data collection?",
+          "PL": "Jak zautomatyzowane jest zbieranie danych?"
+        },
+        {
+          "EN": "Do you use predictive analytics?",
+          "PL": "Czy używasz analityki predykcyjnej?"
+        }
+      ],
+      "culture": [
+        {
+          "EN": "How open is the leadership to digital change?",
+          "PL": "Jak otwarte jest kierownictwo na zmiany cyfrowe?"
+        },
+        {
+          "EN": "Do employees have digital skills training?",
+          "PL": "Czy pracownicy mają szkolenia z umiejętności cyfrowych?"
+        },
+        {
+          "EN": "Is innovation rewarded in the company?",
+          "PL": "Czy innowacyjność jest nagradzana w firmie?"
+        }
+      ],
+      "aiMaturity": [
+        {
+          "EN": "Are you piloting any AI solutions currently?",
+          "PL": "Czy pilotujesz obecnie jakieś rozwiązania AI?"
+        },
+        {
+          "EN": "Do you have data ready for AI training?",
+          "PL": "Czy masz dane gotowe do trenowania AI?"
+        },
+        {
+          "EN": "Is there an AI strategy in place?",
+          "PL": "Czy istnieje strategia AI?"
+        }
+      ]
+    }
+  },
+  "fullInitiatives": {
+    "intro": "بناءً على درجات نضجك، قمت بإنشاء مجموعة من مبادرات التحول. يمكنك مراجعتها وتعديلها في الجدول الموجود على اليمين.",
+    "tableHeader": {
+      "initiative": "اسم المبادرة",
+      "axis": "محور",
+      "priority": "أولوية",
+      "complexity": "تعقيد",
+      "status": "حالة",
+      "notes": "ملاحظات",
+      "actions": "أجراءات"
+    },
+    "priorities": {
+      "High": "مرتفع",
+      "Medium": "متوسط",
+      "Low": "منخفض"
+    },
+    "complexities": {
+      "High": "مرتفع",
+      "Medium": "متوسط",
+      "Low": "منخفض"
+    },
+    "statuses": {
+      "Draft": "مسودة",
+      "Ready": "جاهز",
+      "Archived": "مؤرشف"
+    },
+    "nextStep": "انتقل إلى خارطة طريق التحول (الخطوة 3)"
+  },
+  "fullRoadmap": {
+    "intro": "لقد قمت بصياغة خارطة طريق لك بناءً على أولوية وتعقيد مبادراتك. المهام الأساسية (البيانات/العمليات) مجدولة في وقت مبكر.",
+    "tableHeader": {
+      "quarter": "ربع السنة",
+      "wave": "موجة"
+    },
+    "workload": {
+      "title": "توزيع عبء العمل",
+      "initiatives": "مبادرات",
+      "overloaded": "مثقل"
+    },
+    "nextStep": "انتقل إلى الاقتصاد وعائد الاستثمار (الخطوة 4)"
+  },
+  "fullROI": {
+    "intro": "الآن دعونا نقدر التكاليف والفوائد. لا تحتاج إلى أن تكون دقيقًا - النطاقات والتخمينات جيدة في الوقت الحالي.",
+    "tableHeader": {
+      "cost": "التكلفة التقديرية (ألف دولار)",
+      "benefit": "الفائدة التقديرية (ألف دولار/سنة)"
+    },
+    "summary": {
+      "totalCost": "التكلفة الإجمالية",
+      "totalBenefit": "إجمالي الفائدة السنوية",
+      "roi": "عائد الاستثمار الإجمالي",
+      "payback": "فترة الاسترداد",
+      "years": "سنوات"
+    },
+    "nextStep": "انتقل إلى لوحة القيادة للتنفيذ (الخطوة 5)"
+  },
+  "fullExecution": {
+    "intro": "مرحبًا بك في وضع التنفيذ. هنا يمكنك تتبع التقدم وتعيين المالكين وإدارة الحواجز.",
+    "columns": {
+      "todo": "للقيام به",
+      "inProgress": "في تَقَدم",
+      "blocked": "مسدود",
+      "done": "منجز"
+    },
+    "kpi": {
+      "total": "إجمالي المبادرات",
+      "completion": "معدل الإنجاز"
+    },
+    "fields": {
+      "owner": "المالك",
+      "dueDate": "تاريخ الاستحقاق",
+      "progress": "تقدم"
+    },
+    "nextStep": "اذهب إلى التقرير النهائي (الخطوة 6)"
+  },
+  "fullReports": {
+    "header": "تقرير التحول",
+    "sections": {
+      "exec": "ملخص تنفيذي",
+      "maturity": "ملف النضج الرقمي",
+      "initiatives": "المبادرات الرئيسية",
+      "roadmap": "خارطة طريق التحول",
+      "economics": "الاقتصاد وعائد الاستثمار",
+      "execution": "حالة التنفيذ"
+    },
+    "cards": {
+      "maturity": "النضج والتركيز",
+      "economics": "اقتصاديات المشروع",
+      "execution": "لمحة سريعة عن التنفيذ"
+    },
+    "buttons": {
+      "export": "تصدير التقرير",
+      "copy": "نسخ النص"
+    },
+    "labels": {
+      "strongest": "أقوى الأصول",
+      "weakest": "الفجوة الحرجة",
+      "totalCost": "التكلفة الإجمالية",
+      "annualBenefit": "المنفعة السنوية",
+      "roi": "العائد على الاستثمار",
+      "payback": "فترة الاسترداد",
+      "completionRate": "معدل الإنجاز",
+      "initiatives": "مبادرات",
+      "done": "منجز",
+      "inProg": "في تَقَدم",
+      "blocked": "مسدود"
+    },
+    "reportTemplates": {
+      "execSummary": "شرعت {companyName} في رحلة تحول رقمي استراتيجي. استنادًا إلى تقييم DRD الشامل، تظهر المنظمة نضجًا قويًا في {strongest} ({strongestScore}/7)، بينما تواجه تحديات كبيرة في {weakest} ({weakestScore}/7).\n\nولمعالجة هذه الفجوات، تم وضع خارطة طريق مخصصة تتكون من {initCount} مبادرة استراتيجية. تركز الخطة على بناء القدرات الأساسية في الأشهر الـ 12 الأولى قبل توسيع نطاق الحلول الرقمية المتقدمة.\n\nمن منظور اقتصادي، من المتوقع أن يولد التحول فائدة سنوية قدرها ${benefit} ألف مقابل استثمار إجمالي قدره ${cost} ألف. هذا يحقق عائدًا جذابًا على الاستثمار بنسبة {roi}% مع فترة استرداد تبلغ {payback} سنوات.",
+      "finding1": "{strongest} هو أقوى أصولك، ويعمل كركيزة للنمو المستقبلي.",
+      "finding2": "{weakest} يتطلب اهتمامًا فوريًا لمنع الاختناقات في التوسع.",
+      "finding3": "المنظمة جاهزة للتحول {type}.",
+      "aggressive": "عدواني",
+      "focused": "مركز"
+    }
+  }
+}

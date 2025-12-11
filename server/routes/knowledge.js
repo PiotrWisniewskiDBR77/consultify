@@ -41,6 +41,19 @@ router.put('/candidates/:id/status', requireSuperAdmin, async (req, res) => {
     }
 });
 
+// --- AI OBSERVATIONS ---
+
+router.get('/observations/generate', requireSuperAdmin, async (req, res) => {
+    try {
+        const AiService = require('../services/aiService'); // Lazy load to avoid circular dep if any
+        const observations = await AiService.generateObservations(req.user?.id);
+        res.json(observations);
+    } catch (err) {
+        console.error("Observation Route Error", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // --- GLOBAL STRATEGIES ---
 
 router.get('/strategies', async (req, res) => {
@@ -76,28 +89,17 @@ router.put('/strategies/:id/toggle', requireSuperAdmin, async (req, res) => {
 
 // --- KNOWLEDGE DOCUMENTS (RAG) ---
 
+const StorageService = require('../services/storageService');
+const { v4: uuidv4 } = require('uuid');
+
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-// const pdf = require('pdf-parse'); // Moved to lazy load inside handler
+const pdf = require('pdf-parse');
 
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        const uploadDir = path.join(__dirname, '../../knowledge_uploads');
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
-        cb(null, uploadDir);
-    },
-    filename: function (req, file, cb) {
-        // Sanitize filename
-        const safeName = file.originalname.replace(/[^a-z0-9.]/gi, '_').toLowerCase();
-        cb(null, `${Date.now()}-${safeName}`);
-    }
-});
-
+// Configure multer to use a temporary staging directory
 const upload = multer({
-    storage: storage,
+    dest: path.join(__dirname, '../../uploads/temp'), // Staging area
     limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
     fileFilter: (req, file, cb) => {
         if (file.mimetype === 'application/pdf' || file.mimetype === 'text/plain' || file.mimetype === 'text/markdown') {
@@ -108,48 +110,83 @@ const upload = multer({
     }
 });
 
+const verifyToken = require('../middleware/authMiddleware');
+const enforceProjectQuota = require('../middleware/projectQuotaMiddleware');
+
 // Apply storage quota enforcement before upload
-router.post('/documents', requireSuperAdmin, enforceStorageQuota, upload.single('file'), async (req, res) => {
+router.post('/documents', verifyToken, enforceStorageQuota, upload.single('file'), enforceProjectQuota, async (req, res) => {
+    let tempPath = null;
     try {
         if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
-        const { filename, path: filepath, mimetype, size } = req.file;
+        const { originalname, size, path: multerPath, mimetype } = req.file;
+        tempPath = multerPath;
 
-        // 1. Save metadata
-        const docId = await KnowledgeService.addDocument(filename, filepath);
+        const orgId = req.user?.organizationId || req.user?.organization_id;
+        // Project ID is optional (global org doc vs project doc)
+        const projectId = req.body.project_id || null;
 
-        // 2. Extract Text
+        if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+        // 1. Check Project Quota (if in project context)
+        // TODO: Implement strict project quota check here using verifyToken context
+
+        // 2. Move file to isolated storage
+        const finalPath = await StorageService.storeFile(tempPath, orgId, projectId, 'knowledge', originalname);
+
+        // 3. Save metadata
+        const docId = await KnowledgeService.addDocument(originalname, finalPath, orgId, projectId, size);
+
+        // 4. Extract Text
         let text = '';
         if (mimetype === 'application/pdf') {
-            const dataBuffer = fs.readFileSync(filepath);
-            // Lazy load pdf-parse to avoid DOMMatrix error in Node environments during tests
-            const pdf = require('pdf-parse');
+            const dataBuffer = fs.readFileSync(finalPath);
             const pdfData = await pdf(dataBuffer);
             text = pdfData.text;
         } else {
-            text = fs.readFileSync(filepath, 'utf8');
+            text = fs.readFileSync(finalPath, 'utf8');
         }
 
-        // 3. Process & Index (Async)
-        // We don't await this fully so UI returns fast, but for verification we might want to await.
-        // Let's await for simplicity and immediate feedback.
+        // 5. Process & Index (Async)
         const chunkCount = await KnowledgeService.processDocument(docId, text);
 
-        // 4. Record storage usage
+        // 6. Record storage usage (Organization Level)
         await recordStorageAfterUpload(req, size, 'document_upload');
+
+        // 7. Record storage usage (Project Level) - Optional for now, added column in DB
+        // await ProjectUsageService.record(...)
 
         res.json({ message: 'Document uploaded and indexed', docId, chunkCount });
 
     } catch (err) {
         console.error("Upload Error", err);
+        // Cleanup temp file if it still exists
+        if (tempPath && fs.existsSync(tempPath)) {
+            try { fs.unlinkSync(tempPath); } catch (e) { }
+        }
         res.status(500).json({ error: err.message });
     }
 });
 
-router.get('/documents', requireSuperAdmin, async (req, res) => {
+router.get('/documents', verifyToken, async (req, res) => {
     try {
-        const docs = await KnowledgeService.getDocuments();
+        const orgId = req.user?.organizationId || req.user?.organization_id;
+        const docs = await KnowledgeService.getDocuments(orgId);
         res.json(docs);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.delete('/documents/:id', verifyToken, async (req, res) => {
+    try {
+        const orgId = req.user?.organizationId || req.user?.organization_id;
+        const success = await KnowledgeService.deleteDocument(req.params.id, orgId);
+        if (success) {
+            res.json({ message: 'Document deleted' });
+        } else {
+            res.status(404).json({ error: 'Document not found' });
+        }
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

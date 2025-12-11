@@ -1,0 +1,348 @@
+{
+  "sidebar": {
+    "dashboard": "Armaturenbrett",
+    "quickAssessment": "Schnellbewertung",
+    "fullProject": "Volle Transformation",
+    "masterclass": "Meisterklasse",
+    "resources": "Ressourcen",
+    "quickStep1": "Firma & Erwartungen",
+    "quickStep2": "Herausforderungen & Profilfragen",
+    "quickStep3": "Empfehlungen",
+    "fullStep1": "Bewertung (DRD)",
+    "fullStep1_proc": "Prozesse",
+    "fullStep1_prod": "Digitale Produkte",
+    "fullStep1_model": "Geschäftsmodelle",
+    "fullStep1_data": "Datenmanagement",
+    "fullStep1_cult": "Kultur",
+    "fullStep1_ai": "KI-Reife",
+    "fullStep2": "Initiativen-Generator",
+    "fullStep3": "Transformations-Roadmap",
+    "fullStep4": "Wirtschaft & ROI",
+    "fullStep5": "Ausführungs-Dashboard",
+    "fullStep6": "Berichte",
+    "newConversation": "Neues Gespräch",
+    "settings": "Einstellungen",
+    "mobileApp": "Mobile App",
+    "logOut": "Abmelden"
+  },
+  "auth": {
+    "startQuick": "Starten Sie Ihre Schnellbewertung",
+    "setupFull": "Vollständiges Konto einrichten",
+    "unlockFull": "Vollständige Transformation freischalten",
+    "enterCode": "Geben Sie den 6-stelligen Zugangscode ein.",
+    "verifyCode": "Code überprüfen",
+    "personalize": "Wir benötigen einige Details, um Ihre Roadmap zu personalisieren.",
+    "firstName": "Vorname",
+    "lastName": "Nachname",
+    "email": "Arbeits-E-Mail",
+    "phone": "Telefonnummer",
+    "company": "Firmenname",
+    "password": "Passwort (min. 8 Zeichen)",
+    "createStart": "Konto erstellen & Starten",
+    "haveAccount": "Haben Sie bereits ein Konto?",
+    "noAccount": "Haben Sie kein Konto?",
+    "logIn": "Einloggen",
+    "createOne": "Erstellen",
+    "welcomeBack": "Willkommen zurück!",
+    "signInText": "Melden Sie sich an, um Ihre Transformationsreise fortzusetzen.",
+    "backToStart": "Zurück zum Startbildschirm"
+  },
+  "step1": {
+    "title": "Schritt 1 von 3 — Unternehmen & Erwartungen",
+    "subtitle": "Schnellbewertung",
+    "profile": "Unternehmensprofil",
+    "role": "Rolle",
+    "industry": "Branche",
+    "size": "Größe",
+    "country": "Land",
+    "expectations": "Herausforderungen & Ziele",
+    "mainChallenges": "Hauptherausforderungen",
+    "mainGoal": "Hauptziel der Transformation",
+    "horizon": "Zeithorizont",
+    "nextStep": "Zu den Aktionsvorschlägen (Schritt 2)",
+    "notSelected": "Noch nicht ausgewählt...",
+    "toBeDefined": "Zu definieren...",
+    "months": "Monate"
+  },
+  "step3": {
+    "title": "Schritt 3 von 3 — Empfehlungen",
+    "snapshot": "Unternehmensüberblick",
+    "focusAreas": "Empfohlene Schwerpunkte",
+    "quickWins": "Umsetzbare Quick Wins",
+    "startFull": "Starten Sie das volle Projekt",
+    "download": "Zusammenfassung herunterladen",
+    "revenue": "Einnahmen",
+    "maturity": "Digitale Reife"
+  },
+  "chat": {
+    "header": "Transformationsassistent",
+    "subHeader": "Schritt 1: Profiling",
+    "placeholder": "Geben Sie Ihre Antwort ein...",
+    "scripts": {
+      "intro": "Hallo {name}. Ich bin Ihr Transformationsassistent.\n\nIn dieser Schnellbewertung gehen wir durch 3 Schritte:\n1. Unternehmen & Erwartungen\n2. Herausforderungen & Profil\n3. Empfehlungen & Quick Wins.\n\nSollen wir anfangen?",
+      "role": "Super. Fangen wir mit den Grundlagen an.\n\nWas ist Ihre Rolle im Unternehmen?",
+      "industry": "Freut mich, {role}. Die Perspektive zählt.\n\nIn welcher Branche sind Sie tätig?",
+      "industrySub": "Produktion. Verstanden. Welche Art genau?",
+      "size": "Wie viele Mitarbeiter haben Sie ungefähr?",
+      "country": "Verstanden. Die Größe ändert die verfügbaren Lösungen.\n\nIn welchem Land sind Sie hauptsächlich tätig?",
+      "challenges": "Großartig, lassen Sie uns Ihre aktuellen Herausforderungen untersuchen.\n\nWas ist Ihr größtes operatives Problem?",
+      "goal": "Verstanden. Wir gehen die Herausforderungen an.\n\nWenn wir in 12 Monaten sprechen, was wäre die HAUPTAUSSAGE zum Erfolg?",
+      "horizon": "Klares Ziel.\n\nWann müssen Sie die ersten greifbaren Ergebnisse sehen?",
+      "summary": "Perfekt. Wir haben das Profil.\n\nZusammenfassung:\n- Rolle: {role}\n- Sektor: {industry}\n- Ziel: {goal}\n\nIch werde jetzt spezifische Ideen für Sie generieren.",
+      "done": "Großartig! Bitte klicken Sie auf die Schaltfläche rechts, um Ihre Aktionsvorschläge anzuzeigen.",
+      "step3Intro": "Basierend auf Ihren Antworten ist hier ein kurzer Überblick über Ihre Situation und meine Empfehlungen.",
+      "step3Summary": "Ihr Unternehmen ist im Sektor {industry} mit dem klaren Ziel {goal}. Die Hauptherausforderung ist {painPoint}.",
+      "step3Focus": "Ich empfehle, sich sofort auf diese Bereiche zu konzentrieren:",
+      "step3Wins": "Hier sind einige Quick Wins, mit denen Sie nächsten Montag beginnen können:",
+      "step3Upsell": "Möchten Sie zum vollen Transformationsprojekt übergehen und eine vollständige Roadmap erstellen?"
+    },
+    "options": {
+      "start": "OK, lass uns anfangen",
+      "explain": "Prozess erklären",
+      "ceo": "Inhaber / CEO",
+      "plant": "Werksleiter",
+      "coo": "COO",
+      "mfg": "Produktion",
+      "log": "Logistik",
+      "inefficient": "Ineffiziente Prozesse",
+      "lackData": "Mangel an Daten",
+      "manual": "Zu viele manuelle Aufgaben",
+      "quality": "Qualitätsprobleme",
+      "automation": "Geringe Automatisierung",
+      "proc": "Prozesse",
+      "data": "Daten",
+      "auto": "Automatisierung",
+      "culture": "Kultur",
+      "m3": "3 Monate",
+      "m6": "6 Monate",
+      "m12": "12 Monate",
+      "confirm": "Sieht korrekt aus",
+      "edit": "Etwas ändern",
+      "yesFull": "Ja, volles Projekt starten",
+      "notNow": "Nicht jetzt"
+    }
+  },
+  "fullAssessment": {
+    "intro": "Willkommen zur vollständigen Digital Readiness Diagnosis (DRD). Wir bewerten 6 Schlüsselachsen Ihres Unternehmens auf einer Skala von 1-7.",
+    "axisIntro": "Lassen Sie uns Ihre {axis} bewerten. Wie reif sind Sie in diesem Bereich?",
+    "startAxis": "Achse starten",
+    "currentAxis": "Aktuelle Achse",
+    "continue": "Weiter",
+    "completed": "Abgeschlossen",
+    "score": "Punktzahl",
+    "maturityOverview": "Reifegradübersicht",
+    "nextStep": "Zum Initiativen-Generator (Schritt 2)",
+    "summary": "Hier ist Ihr digitales Reifegradprofil über 6 Achsen. Basierend auf den Punktzahlen sollten wir {weakest} priorisieren.",
+    "introMicrocopy": "Diese Bewertung bewertet Ihr Unternehmen in 6 Dimensionen des Digital Readiness Diagnosis (DRD) -Modells. Die Werte reichen von 1 (Anfänger) bis 7 (Führer).",
+    "descriptions": {
+      "processes": "Standardisierung & Effizienz",
+      "digitalProducts": "Konnektivität & UX",
+      "businessModels": "Skalierbarkeit & Umsatz",
+      "dataManagement": "Qualität & Governance",
+      "culture": "Fähigkeiten & Denkweise",
+      "aiMaturity": "Adoption & Strategie"
+    },
+    "questions": {
+      "processes": [
+        {
+          "EN": "How standardized are your core production processes?",
+          "PL": "Jak ustandaryzowane są Twoje główne procesy produkcji?"
+        },
+        {
+          "EN": "How well are your processes measured and monitored?",
+          "PL": "Jak dobrze mierzone i monitorowane są procesy?"
+        },
+        {
+          "EN": "To what extent are your processes digitally supported?",
+          "PL": "W jakim stopniu procesy są wspierane cyfrowo?"
+        }
+      ],
+      "digitalProducts": [
+        {
+          "EN": "Does your product portfolio include digital services?",
+          "PL": "Czy Twoje portfolio zawiera usługi cyfrowe?"
+        },
+        {
+          "EN": "How integrated are your products with IoT?",
+          "PL": "Jak zintegrowane są produkty z IoT?"
+        },
+        {
+          "EN": "Do you use customer usage data to improve products?",
+          "PL": "Czy używasz danych o użyciu do ulepszania produktów?"
+        }
+      ],
+      "businessModels": [
+        {
+          "EN": "Are you shifting from CAPEX to OPEX models?",
+          "PL": "Czy przechodzisz z modeli CAPEX na OPEX?"
+        },
+        {
+          "EN": "Do you have digital ecosystem partnerships?",
+          "PL": "Czy masz partnerstwa w ekosystemie cyfrowym?"
+        },
+        {
+          "EN": "How scalable is your current business model?",
+          "PL": "Jak skalowalny jest obecny model biznesowy?"
+        }
+      ],
+      "dataManagement": [
+        {
+          "EN": "Is there a single source of truth for key data?",
+          "PL": "Czy istnieje jedno źródło prawdy dla kluczowych danych?"
+        },
+        {
+          "EN": "How automated is data collection?",
+          "PL": "Jak zautomatyzowane jest zbieranie danych?"
+        },
+        {
+          "EN": "Do you use predictive analytics?",
+          "PL": "Czy używasz analityki predykcyjnej?"
+        }
+      ],
+      "culture": [
+        {
+          "EN": "How open is the leadership to digital change?",
+          "PL": "Jak otwarte jest kierownictwo na zmiany cyfrowe?"
+        },
+        {
+          "EN": "Do employees have digital skills training?",
+          "PL": "Czy pracownicy mają szkolenia z umiejętności cyfrowych?"
+        },
+        {
+          "EN": "Is innovation rewarded in the company?",
+          "PL": "Czy innowacyjność jest nagradzana w firmie?"
+        }
+      ],
+      "aiMaturity": [
+        {
+          "EN": "Are you piloting any AI solutions currently?",
+          "PL": "Czy pilotujesz obecnie jakieś rozwiązania AI?"
+        },
+        {
+          "EN": "Do you have data ready for AI training?",
+          "PL": "Czy masz dane gotowe do trenowania AI?"
+        },
+        {
+          "EN": "Is there an AI strategy in place?",
+          "PL": "Czy istnieje strategia AI?"
+        }
+      ]
+    }
+  },
+  "fullInitiatives": {
+    "intro": "Basierend auf Ihren Reifegradbewertungen habe ich eine Reihe von Transformationsinitiativen erstellt. Sie können diese in der Tabelle rechts überprüfen und bearbeiten.",
+    "tableHeader": {
+      "initiative": "Initiativenname",
+      "axis": "Achse",
+      "priority": "Priorität",
+      "complexity": "Komplexität",
+      "status": "Status",
+      "notes": "Notizen",
+      "actions": "Aktionen"
+    },
+    "priorities": {
+      "High": "Hoch",
+      "Medium": "Mittel",
+      "Low": "Niedrig"
+    },
+    "complexities": {
+      "High": "Hoch",
+      "Medium": "Mittel",
+      "Low": "Niedrig"
+    },
+    "statuses": {
+      "Draft": "Entwurf",
+      "Ready": "Bereit",
+      "Archived": "Archiviert"
+    },
+    "nextStep": "Zur Transformations-Roadmap (Schritt 3)"
+  },
+  "fullRoadmap": {
+    "intro": "Ich habe basierend auf Priorität und Komplexität Ihrer Initiativen einen Roadmap-Entwurf erstellt. Grundlegende Aufgaben (Daten/Prozess) sind früher geplant.",
+    "tableHeader": {
+      "quarter": "Quartal",
+      "wave": "Welle"
+    },
+    "workload": {
+      "title": "Arbeitslastverteilung",
+      "initiatives": "Initiativen",
+      "overloaded": "Überlastet"
+    },
+    "nextStep": "Zu Wirtschaft & ROI (Schritt 4)"
+  },
+  "fullROI": {
+    "intro": "Lassen Sie uns nun die Kosten und den Nutzen abschätzen. Sie müssen nicht genau sein – Größenordnungen reichen vorerst aus.",
+    "tableHeader": {
+      "cost": "Gesch. Kosten (k$)",
+      "benefit": "Gesch. Nutzen (k$/Jahr)"
+    },
+    "summary": {
+      "totalCost": "Gesamtkosten",
+      "totalBenefit": "Jährlicher Gesamtnutzen",
+      "roi": "Gesamt-ROI",
+      "payback": "Amortisationsdauer",
+      "years": "Jahre"
+    },
+    "nextStep": "Zum Ausführungs-Dashboard (Schritt 5)"
+  },
+  "fullExecution": {
+    "intro": "Willkommen im Ausführungsmodus. Hier können Sie den Fortschritt verfolgen, Besitzer zuweisen und Blockaden verwalten.",
+    "columns": {
+      "todo": "Zu Erledigen",
+      "inProgress": "In Bearbeitung",
+      "blocked": "Blockiert",
+      "done": "Erledigt"
+    },
+    "kpi": {
+      "total": "Gesamtinitiativen",
+      "completion": "Abschlussquote"
+    },
+    "fields": {
+      "owner": "Eigentümer",
+      "dueDate": "Fälligkeitsdatum",
+      "progress": "Fortschritt"
+    },
+    "nextStep": "Zum Abschlussbericht (Schritt 6)"
+  },
+  "fullReports": {
+    "header": "Transformationsbericht",
+    "sections": {
+      "exec": "Zusammenfassung",
+      "maturity": "Digitales Reifegradprofil",
+      "initiatives": "Schlüsselinitiativen",
+      "roadmap": "Transformations-Roadmap",
+      "economics": "Wirtschaft & ROI",
+      "execution": "Ausführungsstatus"
+    },
+    "cards": {
+      "maturity": "Reife & Fokus",
+      "economics": "Projektwirtschaft",
+      "execution": "Ausführungs-Momentaufnahme"
+    },
+    "buttons": {
+      "export": "Bericht exportieren",
+      "copy": "Text kopieren"
+    },
+    "labels": {
+      "strongest": "Stärkster Vermögenswert",
+      "weakest": "Kritische Lücke",
+      "totalCost": "Gesamtkosten",
+      "annualBenefit": "Jährlicher Nutzen",
+      "roi": "ROI",
+      "payback": "Amortisationszeit",
+      "completionRate": "Abschlussquote",
+      "initiatives": "Initiativen",
+      "done": "Erledigt",
+      "inProg": "In Bearb.",
+      "blocked": "Blockiert"
+    },
+    "reportTemplates": {
+      "execSummary": "{companyName} hat eine strategische digitale Transformationsreise begonnen. Basierend auf der umfassenden DRD-Bewertung zeigt die Organisation eine starke Reife in {strongest} ({strongestScore}/7), steht jedoch vor erheblichen Herausforderungen in {weakest} ({weakestScore}/7).\n\nUm diese Lücken zu schließen, wurde eine maßgeschneiderte Roadmap bestehend aus {initCount} strategischen Initiativen entwickelt. Der Plan konzentriert sich auf den Aufbau grundlegender Fähigkeiten in den ersten 12 Monaten, bevor fortgeschrittene digitale Lösungen skaliert werden.\n\nAus wirtschaftlicher Sicht wird prognostiziert, dass die Transformation einen jährlichen Nutzen von ${benefit}k bei einer Gesamtinvestition von ${cost}k generieren wird. Dies ergibt einen attraktiven ROI von {roi}% bei einer Amortisationszeit von {payback} Jahren.",
+      "finding1": "{strongest} ist Ihr stärkstes Kapital und dient als Pfeiler für zukünftiges Wachstum.",
+      "finding2": "{weakest} erfordert sofortige Aufmerksamkeit, um Engpässe bei der Skalierung zu vermeiden.",
+      "finding3": "Die Organisation ist bereit für eine {type} Transformation.",
+      "aggressive": "aggressive",
+      "focused": "fokussierte"
+    }
+  }
+}

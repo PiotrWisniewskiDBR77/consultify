@@ -1,0 +1,19 @@
+```javascript
+const config = require('./config/database.config');
+const path = require('path');
+
+// Determine which adapter to load based on configuration
+if (config.type === 'postgres') {
+    console.log('[Database] Using PostgreSQL Adapter');
+    // Assuming the billing tables section and its finalization would be here in a more complete file
+    // For the purpose of this edit, we'll place the new code where it would logically follow
+    // after a hypothetical 'insertPlan.finalize();' and 'console.log('Created billing tables...');'
+
+    // ==========================================
+    // PHASE 5: ENTERPRISE STORAGE UPGRADE
+    // ==========================================
+
+    // 1. PROJECT STORAGE & LIFECYCLE
+    // Add columns to PROJECTS if they don't exist
+    const projectStorageCols = [
+        { name: 'storage_limit_gb',

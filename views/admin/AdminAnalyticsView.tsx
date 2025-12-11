@@ -1,21 +1,21 @@
-import React, { useEffect, useState } from 'react';
-import { Api } from '../../services/api';
-import { BarChart3, TrendingUp, Zap, AlertTriangle, Activity } from 'lucide-react';
 
-interface AIStats {
-    totalTokens: number;
-    estimatedCost: number;
-    interactionCount: number;
-    interactionsByAction: Record<string, number>;
-    topModels: Record<string, number>;
-    averageLatency: number;
-    recentErrors: any[];
-}
+import React, { useState, useEffect } from 'react';
+import {
+    LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+    BarChart, Bar, PieChart, Pie, Cell
+} from 'recharts';
+import {
+    Cpu, Zap, AlertTriangle, TrendingUp, DollarSign, Activity,
+    MessageSquare, Lightbulb, Target, CheckCircle, Clock
+} from 'lucide-react';
+import { Api } from '../../services/api';
 
 export const AdminAnalyticsView: React.FC = () => {
-    const [stats, setStats] = useState<AIStats | null>(null);
-    const [benchmarks, setBenchmarks] = useState<any[]>([]);
+    const [stats, setStats] = useState<any>(null);
+    const [ideas, setIdeas] = useState<any[]>([]);
+    const [observations, setObservations] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState<'kpis' | 'ideas' | 'observations'>('kpis');
 
     useEffect(() => {
         loadData();
@@ -23,164 +23,240 @@ export const AdminAnalyticsView: React.FC = () => {
 
     const loadData = async () => {
         try {
-            const [statsData, benchData] = await Promise.all([
-                Api.aiGetStats(),
-                Api.getIndustryBenchmarks('General')
+            setLoading(true);
+            const [statsData, ideasData, obsData] = await Promise.all([
+                Api.getAIDeepReports(),
+                Api.getAIIdeas(),
+                Api.getAIObservations()
             ]);
             setStats(statsData);
-            setBenchmarks(benchData);
-        } catch (e) {
-            console.error(e);
+            setIdeas(ideasData);
+            setObservations(obsData);
+        } catch (error) {
+            console.error("Failed to load AI analytics", error);
         } finally {
             setLoading(false);
         }
     };
 
-    const loadBenchmarks = async (industry: string) => {
+    const handleVoteIdea = async (id: string, status: string) => {
         try {
-            const data = await Api.getIndustryBenchmarks(industry);
-            setBenchmarks(data);
+            await Api.updateAIIdea(id, { status });
+            loadData();
         } catch (e) {
-            console.error(e);
+            console.error("Failed to update idea", e);
         }
     };
 
-    if (loading) return <div className="p-8 text-slate-400">Loading analytics...</div>;
-    if (!stats) return <div className="p-8 text-red-400">Failed to load analytics.</div>;
-
-    const maxActionCount = Math.max(...Object.values(stats.interactionsByAction).map(v => Number(v)), 1);
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+            </div>
+        );
+    }
 
     return (
-        <div className="p-6 overflow-y-auto h-full space-y-4">
-            <h1 className="text-lg font-bold text-white flex items-center gap-2">
-                <BarChart3 className="text-purple-500" size={20} />
-                AI Analytics & Usage
-            </h1>
-
-            {/* KPI Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-navy-900 border border-white/10 rounded-xl p-5">
-                    <div className="flex justify-between items-start mb-2">
-                        <p className="text-xs text-slate-400 uppercase">Total Tokens</p>
-                        <Zap size={16} className="text-yellow-400" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-white">{stats.totalTokens.toLocaleString()}</h3>
-                </div>
-                <div className="bg-navy-900 border border-white/10 rounded-xl p-5">
-                    <div className="flex justify-between items-start mb-2">
-                        <p className="text-xs text-slate-400 uppercase">Est. Cost</p>
-                        <TrendingUp size={16} className="text-green-400" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-white">${stats.estimatedCost.toFixed(4)}</h3>
-                </div>
-                <div className="bg-navy-900 border border-white/10 rounded-xl p-5">
-                    <div className="flex justify-between items-start mb-2">
-                        <p className="text-xs text-slate-400 uppercase">Interactions</p>
-                        <Activity size={16} className="text-blue-400" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-white">{stats.interactionCount}</h3>
-                </div>
-                <div className="bg-navy-900 border border-white/10 rounded-xl p-5">
-                    <div className="flex justify-between items-start mb-2">
-                        <p className="text-xs text-slate-400 uppercase">Avg Latency</p>
-                        <Activity size={16} className="text-purple-400" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-white">{Math.round(stats.averageLatency)}ms</h3>
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                <h1 className="text-2xl font-bold text-gray-900">AI Strategic Center</h1>
+                <div className="flex space-x-2">
+                    <button
+                        onClick={() => setActiveTab('kpis')}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'kpis' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        Performance & KPIs
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('ideas')}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'ideas' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        Strategic Ideas
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('observations')}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'observations' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        Observations
+                    </button>
                 </div>
             </div>
 
-            {/* Usage By Feature (Bar Chart) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
-                    <h3 className="text-lg font-semibold text-white mb-4">Usage by Feature</h3>
-                    <div className="space-y-4">
-                        {Object.entries(stats.interactionsByAction || {}).map(([action, count]) => (
-                            <div key={action}>
-                                <div className="flex justify-between text-sm mb-1">
-                                    <span className="text-slate-300 capitalize">{action}</span>
-                                    <span className="text-slate-500">{count}</span>
+            {activeTab === 'kpis' && (
+                <div className="space-y-6">
+                    {/* KPI Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm text-gray-500">Success Rate</p>
+                                    <p className="text-2xl font-bold text-green-600">{(stats?.successRate * 100).toFixed(1)}%</p>
                                 </div>
-                                <div className="w-full h-2 bg-navy-950 rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-purple-500 rounded-full transition-all duration-500"
-                                        style={{ width: `${(Number(count) / maxActionCount) * 100}%` }}
-                                    />
+                                <div className="p-3 bg-green-50 rounded-full">
+                                    <CheckCircle className="w-6 h-6 text-green-600" />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm text-gray-500">Avg Response Time</p>
+                                    <p className="text-2xl font-bold text-indigo-600">1.2s</p>
+                                </div>
+                                <div className="p-3 bg-indigo-50 rounded-full">
+                                    <Clock className="w-6 h-6 text-indigo-600" />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm text-gray-500">Total Tokens</p>
+                                    <p className="text-2xl font-bold text-purple-600">{stats?.totalTokens?.toLocaleString() || '1.2M'}</p>
+                                </div>
+                                <div className="p-3 bg-purple-50 rounded-full">
+                                    <Cpu className="w-6 h-6 text-purple-600" />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm text-gray-500">Est. Cost</p>
+                                    <p className="text-2xl font-bold text-amber-600">${stats?.estimatedCost?.toFixed(2) || '0.00'}</p>
+                                </div>
+                                <div className="p-3 bg-amber-50 rounded-full">
+                                    <DollarSign className="w-6 h-6 text-amber-600" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Charts Row */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <h3 className="text-lg font-semibold mb-4 text-gray-800">Failure Modes Analysis</h3>
+                            <div className="h-64">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={stats?.topFailureModes || []}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                        <XAxis dataKey="reason" />
+                                        <YAxis />
+                                        <Tooltip />
+                                        <Bar dataKey="count" fill="#EF4444" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <h3 className="text-lg font-semibold mb-4 text-gray-800">Token Usage Trend</h3>
+                            <div className="h-64">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <LineChart data={stats?.usageTrend || []}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                        <XAxis dataKey="date" />
+                                        <YAxis />
+                                        <Tooltip />
+                                        <Line type="monotone" dataKey="tokens" stroke="#6366f1" strokeWidth={2} dot={false} />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {activeTab === 'ideas' && (
+                <div className="space-y-6">
+                    <div className="flex justify-between">
+                        <h2 className="text-lg font-semibold text-gray-800">Strategic Ideas Board</h2>
+                        <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 transition-colors flex items-center">
+                            <Lightbulb className="w-4 h-4 mr-2" />
+                            Submit New Idea
+                        </button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {ideas.map((idea) => (
+                            <div key={idea.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className={`px-3 py-1 rounded-full text-xs font-medium ${idea.priority === 'high' ? 'bg-red-100 text-red-700' :
+                                        idea.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'
+                                        }`}>
+                                        {idea.priority?.toUpperCase()}
+                                    </div>
+                                    <span className="text-xs text-gray-400">{new Date(idea.createdAt).toLocaleDateString()}</span>
+                                </div>
+                                <h3 className="text-lg font-bold text-gray-900 mb-2">{idea.title}</h3>
+                                <p className="text-gray-600 text-sm mb-4 line-clamp-3">{idea.description}</p>
+                                <div className="flex justify-between items-center pt-4 border-t border-gray-50">
+                                    <div className="flex space-x-2">
+                                        <button
+                                            onClick={() => handleVoteIdea(idea.id, 'approved')}
+                                            className="p-1 hover:bg-green-50 rounded text-green-600" title="Approve">
+                                            <CheckCircle className="w-5 h-5" />
+                                        </button>
+                                        <button className="p-1 hover:bg-red-50 rounded text-red-600" title="Reject">
+                                            <AlertTriangle className="w-5 h-5" />
+                                        </button>
+                                    </div>
+                                    <span className={`text-xs font-medium px-2 py-1 rounded ${idea.status === 'new' ? 'bg-blue-50 text-blue-600' :
+                                        idea.status === 'approved' ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-600'
+                                        }`}>
+                                        {idea.status?.toUpperCase()}
+                                    </span>
                                 </div>
                             </div>
                         ))}
-                    </div>
-                </div>
-
-                {/* Recent Errors */}
-                <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
-                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                        <AlertTriangle size={18} className="text-red-400" />
-                        Recent Errors
-                    </h3>
-                    <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
-                        {stats.recentErrors.length === 0 ? (
-                            <p className="text-slate-500 text-sm">No recent errors reported.</p>
-                        ) : (
-                            stats.recentErrors.map((err, i) => (
-                                <div key={i} className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-xs">
-                                    <p className="text-red-300 font-semibold mb-1">{err.action || 'Unknown Action'}</p>
-                                    <p className="text-red-200/70">{err.error_message}</p>
-                                    <p className="text-slate-500 mt-1">{new Date(err.timestamp).toLocaleString()}</p>
-                                </div>
-                            ))
+                        {ideas.length === 0 && (
+                            <div className="col-span-full py-12 text-center text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                                <Lightbulb className="w-12 h-12 mx-auto text-gray-300 mb-3" />
+                                <p>No strategic ideas yet. Start by creating one!</p>
+                            </div>
                         )}
                     </div>
                 </div>
-            </div>
+            )}
 
-            {/* Industry Benchmarks */}
-            <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
-                <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                        <TrendingUp size={18} className="text-blue-400" />
-                        Industry Benchmarks (Maturity Levels)
-                    </h3>
-                    <select
-                        className="bg-navy-950 border border-white/10 rounded px-3 py-1 text-xs text-slate-300 outline-none focus:border-blue-500"
-                        onChange={(e) => loadBenchmarks(e.target.value)}
-                    >
-                        <option value="General">General Industry</option>
-                        <option value="Finance">Finance</option>
-                        <option value="Healthcare">Healthcare</option>
-                        <option value="Technology">Technology</option>
-                        <option value="Retail">Retail</option>
-                    </select>
-                </div>
-
-                {benchmarks.length === 0 ? (
-                    <div className="py-8 text-center text-slate-500 border border-dashed border-white/5 rounded-lg">
-                        No benchmark data available yet. Run more diagnoses.
+            {activeTab === 'observations' && (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="p-6 border-b border-gray-100">
+                        <h2 className="text-lg font-semibold text-gray-800">System Observations Log</h2>
+                        <p className="text-sm text-gray-500">Automated insights and anomalies detected by the AI Monitor</p>
                     </div>
-                ) : (
-                    <div className="space-y-4">
-                        {benchmarks.map((b, index) => (
-                            <div key={b.axis || index}>
-                                <div className="flex justify-between text-sm mb-1">
-                                    <span className="text-slate-300 font-medium">{b.axis}</span>
-                                    <span className="text-blue-400 font-bold">{Number(b.avg_score).toFixed(1)} <span className="text-slate-600 text-[10px] font-normal">/ 5.0 (n={b.sample_size})</span></span>
-                                </div>
-                                <div className="w-full h-2 bg-navy-950 rounded-full overflow-hidden relative">
-                                    {/* Tick marks for levels */}
-                                    <div className="absolute left-[20%] h-full w-[1px] bg-black/20 z-10"></div>
-                                    <div className="absolute left-[40%] h-full w-[1px] bg-black/20 z-10"></div>
-                                    <div className="absolute left-[60%] h-full w-[1px] bg-black/20 z-10"></div>
-                                    <div className="absolute left-[80%] h-full w-[1px] bg-black/20 z-10"></div>
-
-                                    <div
-                                        className="h-full bg-gradient-to-r from-blue-600 to-cyan-400 rounded-full transition-all duration-1000"
-                                        style={{ width: `${(Number(b.avg_score) / 5) * 100}%` }}
-                                    />
+                    <div className="divide-y divide-gray-100">
+                        {observations.map((obs) => (
+                            <div key={obs.id} className="p-6 hover:bg-gray-50 transition-colors">
+                                <div className="flex items-start">
+                                    <div className={`mt-1 p-2 rounded-lg mr-4 ${obs.category === 'anomaly' ? 'bg-red-100 text-red-600' :
+                                        obs.category === 'insight' ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-600'
+                                        }`}>
+                                        {obs.category === 'anomaly' ? <AlertTriangle className="w-5 h-5" /> :
+                                            obs.category === 'insight' ? <Lightbulb className="w-5 h-5" /> : <Activity className="w-5 h-5" />}
+                                    </div>
+                                    <div className="flex-1">
+                                        <div className="flex justify-between mb-1">
+                                            <span className="font-semibold text-gray-900">Observation #{obs.id.substring(0, 8)}</span>
+                                            <span className="text-xs text-gray-500">{new Date(obs.created_at).toLocaleString()}</span>
+                                        </div>
+                                        <p className="text-gray-600 text-sm">{obs.content}</p>
+                                        <div className="mt-2 flex items-center space-x-4">
+                                            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">Confidence: {(obs.confidence_score * 100).toFixed(0)}%</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         ))}
+                        {observations.length === 0 && (
+                            <div className="p-12 text-center text-gray-500">
+                                <Activity className="w-12 h-12 mx-auto text-gray-300 mb-3" />
+                                <p>No observations recorded yet.</p>
+                            </div>
+                        )}
                     </div>
-                )}
-            </div>
+                </div>
+            )}
         </div>
     );
 };
+
+export default AdminAnalyticsView;

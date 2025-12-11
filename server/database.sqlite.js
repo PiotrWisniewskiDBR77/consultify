@@ -622,6 +622,27 @@ function initDb() {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
 
+        // Migration: Ensure new columns exist for subscription_plans (if table already existed)
+        const planCols = ['token_overage_rate REAL', 'storage_overage_rate REAL', 'stripe_price_id TEXT'];
+        planCols.forEach(col => {
+            db.run(`ALTER TABLE subscription_plans ADD COLUMN ${col}`, (err) => { /* ignore error if exists */ });
+        });
+
+        // Seed Default Subscription Plans
+        const defaultPlans = [
+            { id: 'plan_free', name: 'Free', price_monthly: 0, token_limit: 50000, storage_limit_gb: 1, token_overage_rate: 0.015, storage_overage_rate: 0.1, stripe_price_id: '' },
+            { id: 'plan_basic', name: 'Basic', price_monthly: 20, token_limit: 500000, storage_limit_gb: 10, token_overage_rate: 0.015, storage_overage_rate: 0.1, stripe_price_id: '' },
+            { id: 'plan_standard', name: 'Standard', price_monthly: 100, token_limit: 5000000, storage_limit_gb: 50, token_overage_rate: 0.015, storage_overage_rate: 0.1, stripe_price_id: '' },
+            { id: 'plan_premium', name: 'Premium', price_monthly: 500, token_limit: 30000000, storage_limit_gb: 500, token_overage_rate: 0.015, storage_overage_rate: 0.1, stripe_price_id: '' }
+        ];
+
+        const insertPlan = db.prepare(`INSERT OR IGNORE INTO subscription_plans (id, name, price_monthly, token_limit, storage_limit_gb, token_overage_rate, storage_overage_rate, stripe_price_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
+
+        defaultPlans.forEach(p => {
+            insertPlan.run(p.id, p.name, p.price_monthly, p.token_limit, p.storage_limit_gb, p.token_overage_rate, p.storage_overage_rate, p.stripe_price_id);
+        });
+        insertPlan.finalize();
+
         // 2. ORGANIZATION BILLING (per tenant)
         db.run(`CREATE TABLE IF NOT EXISTS organization_billing (
             id TEXT PRIMARY KEY,
@@ -818,22 +839,27 @@ function initDb() {
         });
         insertPackage.finalize();
 
-        console.log('Created 3-tier token billing tables and seeded defaults.');
 
-        // Seed Default Subscription Plans
-        const defaultPlans = [
-            { id: 'plan-starter', name: 'Starter', price: 20, tokens: 100000, storage: 5, tokenOverage: 0.015, storageOverage: 0.10 },
-            { id: 'plan-growth', name: 'Growth', price: 100, tokens: 1000000, storage: 50, tokenOverage: 0.012, storageOverage: 0.08 },
-            { id: 'plan-payg', name: 'Pay As You Go', price: 0, tokens: 0, storage: 0, tokenOverage: 0.020, storageOverage: 0.12 }
-        ];
+        // AI Ideas Board
+        db.run(`CREATE TABLE IF NOT EXISTS ai_ideas (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            description TEXT,
+            status TEXT DEFAULT 'new',
+            priority TEXT DEFAULT 'medium',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
 
-        const insertPlan = db.prepare(`INSERT OR IGNORE INTO subscription_plans (id, name, price_monthly, token_limit, storage_limit_gb, token_overage_rate, storage_overage_rate) VALUES (?, ?, ?, ?, ?, ?, ?)`);
-        defaultPlans.forEach(p => {
-            insertPlan.run(p.id, p.name, p.price, p.tokens, p.storage, p.tokenOverage, p.storageOverage);
-        });
-        insertPlan.finalize();
+        // AI System Observations
+        db.run(`CREATE TABLE IF NOT EXISTS ai_observations (
+            id TEXT PRIMARY KEY,
+            content TEXT NOT NULL,
+            category TEXT,
+            confidence_score REAL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
 
-        console.log('Created billing tables and seeded default subscription plans.');
+        console.log('Database initialized successfully');
 
         // Seed Super Admin & Default Organization
         const superAdminOrgId = 'org-dbr77-system';

@@ -1,0 +1,183 @@
+
+[1m[46m RUN [49m[22m [36mv4.0.15 [39m[90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify[39m
+
+[90mstdout[2m | tests/integration/storage_security.test.js
+[22m[39mConnected to the SQLite database.
+Created billing tables and seeded default subscription plans.
+
+[90mstderr[2m | tests/integration/storage_security.test.js
+[22m[39mWarning: Cannot access the `require` function: "TypeError [ERR_INVALID_ARG_VALUE]: The argument 'filename' must be a file URL object, file URL string, or absolute path string. Received 'http://localhost:3000/index.cjs'".
+Warning: Cannot polyfill `ImageData`, rendering may be broken.
+Warning: Cannot polyfill `Path2D`, rendering may be broken.
+
+[90mstdout[2m | tests/integration/storage_security.test.js
+[22m[39m[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔑 add access controls to secrets: https://dotenvx.com/ops
+[Scheduler] Initializing Cron Jobs...
+[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM)
+[Redis] Initializing client...
+[Redis] Using Mock Client
+
+[90mstdout[2m | tests/integration/storage_security.test.js[2m > [22m[2mStorage Security & Isolation Integration
+[22m[39mConnected to the SQLite database.
+Created billing tables and seeded default subscription plans.
+
+[90mstderr[2m | tests/integration/storage_security.test.js[2m > [22m[2mStorage Security & Isolation Integration
+[22m[39mAggregateError: 
+[90m    at internalConnectMultiple (node:net:1134:18)[39m
+[90m    at afterConnectMultiple (node:net:1715:7)[39m {
+  code: [32m'ECONNREFUSED'[39m,
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m'ECONNREFUSED'[39m,
+      syscall: [32m'connect'[39m,
+      address: [32m'::1'[39m,
+      port: [33m6379[39m
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+    [90m    at createConnectionError (node:net:1678:14)[39m
+    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
+      errno: [33m-61[39m,
+      code: [32m'ECONNREFUSED'[39m,
+      syscall: [32m'connect'[39m,
+      address: [32m'127.0.0.1'[39m,
+      port: [33m6379[39m
+    }
+  ]
+}
+
+[90mstderr[2m | tests/integration/storage_security.test.js[2m > [22m[2mStorage Security & Isolation Integration
+[22m[39mValidationError: The hit count for ::/56 was incremented more than once for a single request. See https://express-rate-limit.github.io/ERR_ERL_DOUBLE_COUNT/ for more information.
+    at Object.singleCount [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mexpress-rate-limit[24m/dist/index.cjs:436:13[90m)[39m
+    at Object.wrappedValidations.<computed> [as singleCount] [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mexpress-rate-limit[24m/dist/index.cjs:680:22[90m)[39m
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mexpress-rate-limit[24m/dist/index.cjs:863:26
+[90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mexpress-rate-limit[24m/dist/index.cjs:825:5 {
+  code: [32m'ERR_ERL_DOUBLE_COUNT'[39m,
+  help: [32m'https://express-rate-limit.github.io/ERR_ERL_DOUBLE_COUNT/'[39m
+}
+
+[90mstderr[2m | tests/integration/storage_security.test.js[2m > [22m[2mStorage Security & Isolation Integration
+[22m[39m[AuditLog] Error processing log: TypeError: Cannot read properties of undefined (reading 'catch')
+    at ServerResponse.res.end [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/middleware/auditLog.js:55:19[90m)[39m
+    at ServerResponse.send [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mexpress[24m/lib/response.js:221:10[90m)[39m
+    at ServerResponse.json [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mexpress[24m/lib/response.js:252:15[90m)[39m
+    at Statement.<anonymous> [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/routes/auth.js:73:17[90m)[39m
+    at Statement.replacement [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4msqlite3[24m/lib/trace.js:25:27[90m)[39m
+    at Statement.replacement [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4msqlite3[24m/lib/trace.js:25:27[90m)[39m
+
+[90mstderr[2m | tests/integration/storage_security.test.js[2m > [22m[2mStorage Security & Isolation Integration
+[22m[39m[AuditLog] Error processing log: TypeError: Cannot read properties of undefined (reading 'catch')
+    at ServerResponse.res.end [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/middleware/auditLog.js:55:19[90m)[39m
+    at ServerResponse.send [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mexpress[24m/lib/response.js:221:10[90m)[39m
+    at ServerResponse.json [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mexpress[24m/lib/response.js:252:15[90m)[39m
+    at Statement.<anonymous> [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/routes/auth.js:73:17[90m)[39m
+    at Statement.replacement [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4msqlite3[24m/lib/trace.js:25:27[90m)[39m
+    at Statement.replacement [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4msqlite3[24m/lib/trace.js:25:27[90m)[39m
+
+[90mstderr[2m | tests/integration/storage_security.test.js[2m > [22m[2mStorage Security & Isolation Integration[2m > [22m[2mshould NOT allow User B to see files uploaded by User A
+[22m[39m[RAG] Embedding Error: OpenAIError: It looks like you're running in a browser-like environment.
+
+This is disabled by default, as it risks exposing your secret API credentials to attackers.
+If you understand the risks and have appropriate mitigations in place,
+you can set the `dangerouslyAllowBrowser` option to `true`, e.g.,
+
+new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
+
+https://help.openai.com/en/articles/5112595-best-practices-for-api-key-safety
+
+    at new OpenAI [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mopenai[24m/client.js:103:19[90m)[39m
+    at Statement.<anonymous> [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/ragService.js:32:36[90m)[39m
+
+[90mstderr[2m | tests/integration/storage_security.test.js[2m > [22m[2mStorage Security & Isolation Integration[2m > [22m[2mshould NOT allow User B to see files uploaded by User A
+[22m[39m[AuditLog] Error processing log: TypeError: Cannot read properties of undefined (reading 'catch')
+    at ServerResponse.res.end [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/middleware/auditLog.js:55:19[90m)[39m
+    at ServerResponse.send [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mexpress[24m/lib/response.js:221:10[90m)[39m
+    at ServerResponse.json [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mexpress[24m/lib/response.js:252:15[90m)[39m
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/routes/knowledge.js:158:13
+
+[90mstderr[2m | tests/integration/storage_security.test.js[2m > [22m[2mStorage Security & Isolation Integration[2m > [22m[2mshould block upload if project storage limit is exceeded
+[22m[39m[RAG] Embedding Error: OpenAIError: It looks like you're running in a browser-like environment.
+
+This is disabled by default, as it risks exposing your secret API credentials to attackers.
+If you understand the risks and have appropriate mitigations in place,
+you can set the `dangerouslyAllowBrowser` option to `true`, e.g.,
+
+new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
+
+https://help.openai.com/en/articles/5112595-best-practices-for-api-key-safety
+
+    at new OpenAI [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mopenai[24m/client.js:103:19[90m)[39m
+    at Statement.<anonymous> [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/ragService.js:32:36[90m)[39m
+
+[90mstderr[2m | tests/integration/storage_security.test.js[2m > [22m[2mStorage Security & Isolation Integration[2m > [22m[2mshould block upload if project storage limit is exceeded
+[22m[39m[AuditLog] Error processing log: TypeError: Cannot read properties of undefined (reading 'catch')
+    at ServerResponse.res.end [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/middleware/auditLog.js:55:19[90m)[39m
+    at ServerResponse.send [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mexpress[24m/lib/response.js:221:10[90m)[39m
+    at ServerResponse.json [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mexpress[24m/lib/response.js:252:15[90m)[39m
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/routes/knowledge.js:158:13
+
+[90mstderr[2m | tests/integration/storage_security.test.js[2m > [22m[2mStorage Security & Isolation Integration[2m > [22m[2mshould soft delete files instead of removing them immediately
+[22m[39m[RAG] Embedding Error: OpenAIError: It looks like you're running in a browser-like environment.
+
+This is disabled by default, as it risks exposing your secret API credentials to attackers.
+If you understand the risks and have appropriate mitigations in place,
+you can set the `dangerouslyAllowBrowser` option to `true`, e.g.,
+
+new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
+
+https://help.openai.com/en/articles/5112595-best-practices-for-api-key-safety
+
+    at new OpenAI [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mopenai[24m/client.js:103:19[90m)[39m
+    at Statement.<anonymous> [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/ragService.js:32:36[90m)[39m
+
+[90mstderr[2m | tests/integration/storage_security.test.js[2m > [22m[2mStorage Security & Isolation Integration[2m > [22m[2mshould soft delete files instead of removing them immediately
+[22m[39m[AuditLog] Error processing log: TypeError: Cannot read properties of undefined (reading 'catch')
+    at ServerResponse.res.end [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/middleware/auditLog.js:55:19[90m)[39m
+    at ServerResponse.send [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mexpress[24m/lib/response.js:221:10[90m)[39m
+    at ServerResponse.json [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mexpress[24m/lib/response.js:252:15[90m)[39m
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/routes/knowledge.js:158:13
+
+[90mstderr[2m | tests/integration/storage_security.test.js[2m > [22m[2mStorage Security & Isolation Integration[2m > [22m[2mshould soft delete files instead of removing them immediately
+[22m[39m[AuditLog] Error processing log: TypeError: Cannot read properties of undefined (reading 'name')
+    at ServerResponse.res.end [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/middleware/auditLog.js:51:42[90m)[39m
+    at ServerResponse.send [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mexpress[24m/lib/response.js:221:10[90m)[39m
+    at ServerResponse.json [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mexpress[24m/lib/response.js:252:15[90m)[39m
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/routes/knowledge.js:185:17
+
+ [31m❯[39m tests/integration/storage_security.test.js [2m([22m[2m4 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 451[2mms[22m[39m
+     [32m✓[39m should NOT allow User B to see files uploaded by User A[32m 31[2mms[22m[39m
+[31m     [31m×[31m should block upload if project storage limit is exceeded[39m[32m 65[2mms[22m[39m
+     [32m✓[39m should sanitize filenames preventing directory traversal[32m 1[2mms[22m[39m
+     [32m✓[39m should soft delete files instead of removing them immediately[32m 71[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m tests/integration/storage_security.test.js[2m > [22mStorage Security & Isolation Integration[2m > [22mshould block upload if project storage limit is exceeded
+[31m[1mAssertionError[22m: expected 200 to be 429 // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 429[39m
+[31m+ 200[39m
+
+[36m [2m❯[22m tests/integration/storage_security.test.js:[2m132:28[22m[39m
+    [90m130| [39m            [33m.[39m[34mattach[39m([32m'file'[39m[33m,[39m testFilePath)[33m;[39m [90m// ~20 bytes[39m
+    [90m131| [39m
+    [90m132| [39m        [34mexpect[39m(res[33m.[39mstatus)[33m.[39m[34mtoBe[39m([34m429[39m)[33m;[39m
+    [90m   | [39m                           [31m^[39m
+    [90m133| [39m        [34mexpect[39m(res[33m.[39mbody[33m.[39merror)[33m.[39m[34mtoMatch[39m([36m/quota exceeded/i[39m)[33m;[39m
+    [90m134| [39m    })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m3 passed[39m[22m[90m (4)[39m
+[2m   Start at [22m 13:12:33
+[2m   Duration [22m 2.04s[2m (transform 107ms, setup 107ms, import 799ms, tests 451ms, environment 534ms)[22m
+
+JUNIT report written to /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/junit.xml

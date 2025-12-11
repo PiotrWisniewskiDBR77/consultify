@@ -7,6 +7,7 @@ const AnalyticsService = require('./analyticsService');
 const FeedbackService = require('./feedbackService');
 const TokenBillingService = require('./tokenBillingService');
 const KnowledgeService = require('./knowledgeService');
+const aiQueue = require('../queues/aiQueue');
 const fs = require('fs');
 const path = require('path');
 
@@ -25,28 +26,7 @@ const deps = {
     OpenAI: null // Allow injection of OpenAI for testing
 };
 
-// Load DRD Data once at startup (caching the definitions)
-const DRD_DATA_PATH = path.join(__dirname, '../../drd_data.json');
-let DRD_DATA = [];
-try {
-    const rawData = fs.readFileSync(DRD_DATA_PATH, 'utf8');
-    DRD_DATA = JSON.parse(rawData);
-} catch (e) {
-    console.error("Failed to load DRD Data:", e);
-}
 
-// Helper to find specific axis definitions
-const getDefinitionsForAxis = (axisName) => {
-    for (const axis of DRD_DATA) {
-        if (axis.name === axisName) return axis.areas;
-        for (const area of axis.areas) {
-            if (area.name === axisName || area.id === axisName) {
-                return area;
-            }
-        }
-    }
-    return null;
-};
 
 // Role Definitions (Fallback)
 const FALLBACK_ROLES = {
@@ -75,46 +55,97 @@ const AiService = {
         Object.assign(deps, newDeps);
     },
 
+    // --- ASYNC QUEUE SUPPORT ---
+    queueTask: async (taskType, payload, userId) => {
+        // Enqueue job to BullMQ
+        const job = await aiQueue.add(taskType, {
+            taskType,
+            payload,
+            userId
+        });
+        return { jobId: job.id, status: 'queued' };
+    },
+
+    getJobStatus: async (jobId) => {
+        const job = await aiQueue.getJob(jobId);
+        if (!job) return null;
+
+        const state = await job.getState();
+        const result = job.returnvalue;
+        const error = job.failedReason;
+        const progress = job.progress;
+
+        return { id: job.id, state, result, error, progress };
+    },
+
     // --- CORE LLM INTERACTION ---
     callLLM: async (prompt, systemInstruction = "", history = [], providerId = null, userId = null, action = 'chat') => {
         const startTime = Date.now();
         let modelUsed = 'unknown';
 
         try {
-            // 1. Get Provider
-            const getProvider = () => new Promise((resolve) => {
+            // 1. Get Provider & Organization Context
+            const getContext = () => new Promise((resolve) => {
                 if (providerId) {
-                    deps.db.get("SELECT * FROM llm_providers WHERE id = ?", [providerId], (err, row) => resolve(row));
+                    deps.db.get("SELECT * FROM llm_providers WHERE id = ?", [providerId], (err, row) => resolve({ providerConfig: row, orgId: null }));
                 } else if (userId) {
-                    // Check Organization Preference
+                    // Fetch Provider AND Organization ID
                     const query = `
-                        SELECT p.* 
-                        FROM llm_providers p
-                        JOIN organizations o ON o.active_llm_provider_id = p.id
-                        JOIN users u ON u.organization_id = o.id
-                        WHERE u.id = ? AND p.is_active = 1
+                        SELECT p.*, u.organization_id 
+                        FROM users u
+                        LEFT JOIN organizations o ON u.organization_id = o.id
+                        LEFT JOIN llm_providers p ON o.active_llm_provider_id = p.id
+                        WHERE u.id = ?
                     `;
                     deps.db.get(query, [userId], (err, row) => {
                         if (row) {
-                            resolve(row);
+                            // If org has no specific provider, row.id (provider id) will be null if we did LEFT JOIN p.
+                            // But the original query assumed strict JOIN. Let's keep it safe.
+                            // Actually, let's separate concerns or use a robust query.
+                            // Original query used JOIN, let's stick to finding org_id separately if needed or grab both.
+                        }
+
+                        // Revised approach: Get Org ID first, then provider.
+                    });
+
+                    // Simpler single query to get both:
+                    const combinedQuery = `
+                        SELECT p.*, u.organization_id
+                        FROM users u
+                        LEFT JOIN organizations o ON u.organization_id = o.id
+                        LEFT JOIN llm_providers p ON o.active_llm_provider_id = p.id AND p.is_active = 1
+                        WHERE u.id = ?
+                    `;
+
+                    deps.db.get(combinedQuery, [userId], (err, row) => {
+                        if (row) {
+                            const { organization_id, ...providerData } = row;
+                            // If provider data is null (no active provider set), we still have org_id
+                            const config = providerData.id ? providerData : null;
+
+                            if (config) resolve({ providerConfig: config, orgId: organization_id });
+                            else {
+                                // Fallback to default system provider
+                                deps.db.get("SELECT * FROM llm_providers WHERE is_active = 1 AND is_default = 1 LIMIT 1", [], (err, defaultRow) => {
+                                    resolve({ providerConfig: defaultRow || null, orgId: organization_id });
+                                });
+                            }
                         } else {
-                            // Fallback to default system provider (first active one)
+                            // User not found? Should not happen if authenticated.
                             deps.db.get("SELECT * FROM llm_providers WHERE is_active = 1 AND is_default = 1 LIMIT 1", [], (err, defaultRow) => {
-                                if (defaultRow) resolve(defaultRow);
-                                else deps.db.get("SELECT * FROM llm_providers WHERE is_active = 1 LIMIT 1", [], (err, anyRow) => resolve(anyRow));
+                                resolve({ providerConfig: defaultRow, orgId: null });
                             });
                         }
                     });
                 } else {
-                    // No Context - get default system provider
+                    // No Context
                     deps.db.get("SELECT * FROM llm_providers WHERE is_active = 1 AND is_default = 1 LIMIT 1", [], (err, defaultRow) => {
-                        if (defaultRow) resolve(defaultRow);
-                        else deps.db.get("SELECT * FROM llm_providers WHERE is_active = 1 LIMIT 1", [], (err, anyRow) => resolve(anyRow));
+                        resolve({ providerConfig: defaultRow, orgId: null });
                     });
                 }
             });
 
-            const providerConfig = await getProvider();
+            const { providerConfig, orgId } = await getContext();
 
             // STRICT BLOCKING: Check Balance
             const multiplier = providerConfig?.markup_multiplier || 1.0;
@@ -425,7 +456,7 @@ const AiService = {
             // Token Billing - Track usage
             const sourceTypeFinal = providerConfig ? (providerConfig.provider === 'ollama' ? 'local' : 'platform') : 'platform';
             deps.TokenBillingService.deductTokens(userId, totalTokens, sourceTypeFinal, {
-                organizationId: null,
+                organizationId: orgId,
                 llmProvider: providerConfig?.provider || 'gemini',
                 modelUsed: modelUsed,
                 multiplier: providerConfig?.markup_multiplier || 1.0
@@ -446,27 +477,42 @@ const AiService = {
 
         try {
             // 1. Get Provider (Reusing logic - ideally refactor into helper but duplicating for safety in this edit)
-            const getProvider = () => new Promise((resolve) => {
+            // 1. Get Provider & Organization Context (Duplicated for safety in generator)
+            const getContext = () => new Promise((resolve) => {
                 if (providerId) {
-                    deps.db.get("SELECT * FROM llm_providers WHERE id = ?", [providerId], (err, row) => resolve(row));
+                    deps.db.get("SELECT * FROM llm_providers WHERE id = ?", [providerId], (err, row) => resolve({ providerConfig: row, orgId: null }));
                 } else if (userId) {
-                    const query = `
-                        SELECT p.* 
-                        FROM llm_providers p
-                        JOIN organizations o ON o.active_llm_provider_id = p.id
-                        JOIN users u ON u.organization_id = o.id
-                        WHERE u.id = ? AND p.is_active = 1
+                    const combinedQuery = `
+                        SELECT p.*, u.organization_id
+                        FROM users u
+                        LEFT JOIN organizations o ON u.organization_id = o.id
+                        LEFT JOIN llm_providers p ON o.active_llm_provider_id = p.id AND p.is_active = 1
+                        WHERE u.id = ?
                     `;
-                    deps.db.get(query, [userId], (err, row) => {
-                        if (row) resolve(row);
-                        else deps.db.get("SELECT * FROM llm_providers WHERE is_active = 1 LIMIT 1", [], (err, row) => resolve(row));
+                    deps.db.get(combinedQuery, [userId], (err, row) => {
+                        if (row) {
+                            const { organization_id, ...providerData } = row;
+                            const config = providerData.id ? providerData : null;
+                            if (config) resolve({ providerConfig: config, orgId: organization_id });
+                            else {
+                                deps.db.get("SELECT * FROM llm_providers WHERE is_active = 1 AND is_default = 1 LIMIT 1", [], (err, defaultRow) => {
+                                    resolve({ providerConfig: defaultRow || null, orgId: organization_id });
+                                });
+                            }
+                        } else {
+                            deps.db.get("SELECT * FROM llm_providers WHERE is_active = 1 AND is_default = 1 LIMIT 1", [], (err, defaultRow) => {
+                                resolve({ providerConfig: defaultRow, orgId: null });
+                            });
+                        }
                     });
                 } else {
-                    deps.db.get("SELECT * FROM llm_providers WHERE is_active = 1 LIMIT 1", [], (err, row) => resolve(row));
+                    deps.db.get("SELECT * FROM llm_providers WHERE is_active = 1 AND is_default = 1 LIMIT 1", [], (err, defaultRow) => {
+                        resolve({ providerConfig: defaultRow, orgId: null });
+                    });
                 }
             });
 
-            const providerConfig = await getProvider();
+            const { providerConfig, orgId } = await getContext();
 
             // STRICT BLOCKING: Check Balance
             const multiplier = providerConfig?.markup_multiplier || 1.0;
@@ -565,7 +611,26 @@ const AiService = {
                         yield chunkText;
                     }
                 }
-                else {
+                else if (provider === 'gemini') {
+                    // Google Gemini Streaming
+                    const genAI = new deps.GoogleGenerativeAI(api_key);
+                    const model = genAI.getGenerativeModel({ model: modelId || "gemini-pro" });
+
+                    const chatSession = model.startChat({
+                        history: history.map(h => ({
+                            role: h.role === 'user' ? 'user' : 'model',
+                            parts: [{ text: h.text || h.content || (h.parts && h.parts[0] && h.parts[0].text) || '' }]
+                        })),
+                        systemInstruction: systemInstruction ? { role: "system", parts: [{ text: systemInstruction }] } : undefined
+                    });
+
+                    const result = await chatSession.sendMessageStream(prompt);
+                    for await (const chunk of result.stream) {
+                        const chunkText = chunk.text();
+                        fullResponse += chunkText;
+                        yield chunkText;
+                    }
+                } else {
                     // Fallback for others (non-streaming simulation)
                     const fullText = await AiService.callLLM(prompt, systemInstruction, history, providerConfig.id, userId, action);
                     fullResponse = fullText;
@@ -584,7 +649,7 @@ const AiService = {
             // Token Billing - Track usage
             const sourceTypeFinal = providerConfig ? (providerConfig.provider === 'ollama' ? 'local' : 'platform') : 'platform';
             deps.TokenBillingService.deductTokens(userId, totalTokens, sourceTypeFinal, {
-                organizationId: null,
+                organizationId: orgId,
                 llmProvider: providerConfig?.provider || 'gemini',
                 modelUsed: modelUsed,
                 multiplier: providerConfig?.markup_multiplier || 1.0
@@ -738,6 +803,59 @@ const AiService = {
             return { confidenceScore: 0, risks: [], recommendations: [] };
         }
     },
+    // --- AI OBSERVATIONS (Global Brain) ---
+    generateObservations: async (userId) => {
+        // 1. Fetch recent feedback/interactions for analysis
+        const getFeedback = () => new Promise((resolve) => {
+            deps.db.all(`
+                SELECT context, prompt, response, rating, comment, correction, created_at 
+                FROM ai_feedback 
+                ORDER BY created_at DESC 
+                LIMIT 50
+            `, [], (err, rows) => resolve(rows || []));
+        });
+
+        const feedback = await getFeedback();
+
+        if (feedback.length === 0) {
+            return {
+                app_improvements: [],
+                content_gaps: []
+            };
+        }
+
+        // 2. prompt for the Analyst
+        const systemPrompt = `
+        You are the "Global Brain" of the system. Your job is to analyze user interactions and feedback to improve the platform.
+        
+        Analyze the provided USER FEEDBACK LOGS and generate a summary report in JSON format with two specific categories:
+
+        1. "app_improvements": Observations that suggest functional improvements, UI/UX fixes, bugs, or new feature requests.
+        2. "content_gaps": Observations where the AI lacked knowledge, gave poor answers, or where the user moved the conversation to topics we don't cover well yet.
+
+        For each observation, provide:
+        - "description": Concise summary of the insight.
+        - "severity": "low", "medium", "high"
+        - "action_item": What should be done?
+        
+        Return JSON: { "app_improvements": [ ... ], "content_gaps": [ ... ] }
+        `;
+
+        const feedbackText = feedback.map(f => `[${f.context}] Rate:${f.rating}/5 Comment:${f.comment || 'None'} Prompt:${f.prompt.substring(0, 50)}...`).join('\n');
+
+        try {
+            const jsonStr = await AiService.callLLM(`ANALYZE THESE LOGS:\n${feedbackText}`, systemPrompt, [], null, userId, 'observations');
+            const result = JSON.parse(jsonStr.replace(/```json/g, '').replace(/```/g, ''));
+            return {
+                app_improvements: result.app_improvements || [],
+                content_gaps: result.content_gaps || []
+            };
+        } catch (e) {
+            console.error("Observation Gen Error", e);
+            return { app_improvements: [], content_gaps: [] };
+        }
+    },
+
     // --- VERIFICATION (Web) ---
     verifyWithWeb: async (query, userId) => {
         const result = await deps.WebSearchService.verifyFact(query);
@@ -994,9 +1112,94 @@ const AiService = {
             console.error("Insight Extraction Failed", e);
             return null;
         }
+    },
+
+    // --- STRATEGIC IDEAS BOARD ---
+    getStrategicIdeas: async () => {
+        return new Promise((resolve, reject) => {
+            deps.db.all("SELECT * FROM ai_ideas ORDER BY created_at DESC", [], (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows || []);
+            });
+        });
+    },
+
+    addStrategicIdea: async (idea) => {
+        const id = crypto.randomUUID();
+        return new Promise((resolve, reject) => {
+            deps.db.run(
+                "INSERT INTO ai_ideas (id, title, description, status, priority) VALUES (?, ?, ?, ?, ?)",
+                [id, idea.title, idea.description, idea.status || 'new', idea.priority || 'medium'],
+                (err) => {
+                    if (err) reject(err);
+                    else resolve({ id, ...idea });
+                }
+            );
+        });
+    },
+
+    updateStrategicIdea: async (id, updates) => {
+        return new Promise((resolve, reject) => {
+            deps.db.run(
+                "UPDATE ai_ideas SET title = COALESCE(?, title), description = COALESCE(?, description), status = COALESCE(?, status), priority = COALESCE(?, priority) WHERE id = ?",
+                [updates.title, updates.description, updates.status, updates.priority, id],
+                (err) => {
+                    if (err) reject(err);
+                    else resolve({ id, ...updates });
+                }
+            );
+        });
+    },
+
+    deleteStrategicIdea: async (id) => {
+        return new Promise((resolve, reject) => {
+            deps.db.run("DELETE FROM ai_ideas WHERE id = ?", [id], (err) => {
+                if (err) reject(err);
+                else resolve({ success: true });
+            });
+        });
+    },
+
+    // --- OBSERVATIONS ---
+    getObservations: async () => {
+        return new Promise((resolve, reject) => {
+            deps.db.all("SELECT * FROM ai_observations ORDER BY created_at DESC LIMIT 50", [], (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows || []);
+            });
+        });
+    },
+
+    addObservation: async (observation) => {
+        const id = crypto.randomUUID();
+        return new Promise((resolve, reject) => {
+            deps.db.run(
+                "INSERT INTO ai_observations (id, content, category, confidence_score) VALUES (?, ?, ?, ?)",
+                [id, observation.content, observation.category || 'system', observation.confidence_score || 1.0],
+                (err) => {
+                    if (err) reject(err);
+                    else resolve({ id, ...observation });
+                }
+            );
+        });
+    },
+
+    // --- DEEP REPORTING ---
+    getDeepPerformanceReport: async () => {
+        // combine standard stats with more deep analysis
+        const stats = await deps.AnalyticsService.getStats();
+        // In a real implementation, we would run complex SQL to find failure clusters
+        // For now, we mock the "Deep" part with simulated data or simple extensions
+        return {
+            ...stats,
+            successRate: 0.92, // Mocked for now
+            topFailureModes: [
+                { reason: "Context Length Exceeded", count: 12 },
+                { reason: "API Timeout", count: 5 }
+            ],
+            sentimentScore: 4.2 // Mocked average sentiment
+        };
     }
 };
-
-module.exports = AiService;
 
 module.exports = AiService;

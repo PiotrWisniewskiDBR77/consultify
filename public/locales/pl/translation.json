@@ -1,0 +1,348 @@
+{
+  "sidebar": {
+    "dashboard": "Pulpit",
+    "quickAssessment": "Szybka Ocena",
+    "fullProject": "Pełna Transformacja",
+    "masterclass": "Masterclass",
+    "resources": "Zasoby",
+    "quickStep1": "Firma i Oczekiwania",
+    "quickStep2": "Wyzwania i Pytania Profilowe",
+    "quickStep3": "Rekomendacje",
+    "fullStep1": "Ocena (DRD)",
+    "fullStep1_proc": "Procesy",
+    "fullStep1_prod": "Produkty Cyfrowe",
+    "fullStep1_model": "Modele Biznesowe",
+    "fullStep1_data": "Zarządzanie Danymi",
+    "fullStep1_cult": "Kultura",
+    "fullStep1_ai": "Dojrzałość AI",
+    "fullStep2": "Generator Inicjatyw",
+    "fullStep3": "Mapa Drogowa",
+    "fullStep4": "Ekonomia i ROI",
+    "fullStep5": "Pulpit Wykonawczy",
+    "fullStep6": "Raporty",
+    "newConversation": "Nowa Rozmowa",
+    "settings": "Ustawienia",
+    "mobileApp": "Aplikacja Mobilna",
+    "logOut": "Wyloguj"
+  },
+  "auth": {
+    "startQuick": "Rozpocznij Szybką Ocenę",
+    "setupFull": "Załóż Pełne Konto",
+    "unlockFull": "Odblokuj Pełną Transformację",
+    "enterCode": "Wprowadź 6-cyfrowy kod dostępu od DBR77.",
+    "verifyCode": "Zweryfikuj Kod",
+    "personalize": "Potrzebujemy kilku szczegółów, aby spersonalizować mapę drogową.",
+    "firstName": "Imię",
+    "lastName": "Nazwisko",
+    "email": "Email służbowy",
+    "phone": "Numer telefonu",
+    "company": "Nazwa Firmy",
+    "password": "Hasło (min. 8 znaków)",
+    "createStart": "Utwórz Konto i Start",
+    "haveAccount": "Masz już konto?",
+    "noAccount": "Nie masz konta?",
+    "logIn": "Zaloguj się",
+    "createOne": "Załóż je",
+    "welcomeBack": "Witaj ponownie!",
+    "signInText": "Zaloguj się, aby kontynuować transformację.",
+    "backToStart": "Wróć do ekranu startowego"
+  },
+  "step1": {
+    "title": "Krok 1 z 3 — Firma i Oczekiwania",
+    "subtitle": "Szybka Ocena",
+    "profile": "Profil Firmy",
+    "role": "Rola",
+    "industry": "Branża",
+    "size": "Wielkość",
+    "country": "Kraj",
+    "expectations": "Wyzwania i Cele",
+    "mainChallenges": "Główne Wyzwania",
+    "mainGoal": "Główny Cel Transformacji",
+    "horizon": "Horyzont Czasowy",
+    "nextStep": "Przejdź do Propozycji Działań (Krok 2)",
+    "notSelected": "Jeszcze nie wybrano...",
+    "toBeDefined": "Do zdefiniowania...",
+    "months": "miesięcy"
+  },
+  "step3": {
+    "title": "Krok 3 z 3 — Rekomendacje",
+    "snapshot": "Przegląd Firmy",
+    "focusAreas": "Rekomendowane Obszary",
+    "quickWins": "Szybkie Wygrane",
+    "startFull": "Rozpocznij Pełny Projekt",
+    "download": "Pobierz Podsumowanie",
+    "revenue": "Przychody",
+    "maturity": "Dojrzałość Cyfrowa"
+  },
+  "chat": {
+    "header": "Asystent Transformacji",
+    "subHeader": "Krok 1: Profilowanie",
+    "placeholder": "Wpisz odpowiedź...",
+    "scripts": {
+      "intro": "Cześć {name}. Jestem Twoim Asystentem Transformacji.\n\nW tej Szybkiej Ocenie (Free) przejdziemy przez 3 kroki:\n1. Firma i oczekiwania\n2. Wyzwania i profil\n3. Rekomendacje i szybkie wygrane.\n\nZaczynamy?",
+      "role": "Świetnie. Zacznijmy od podstaw.\n\nJaka jest Twoja rola w firmie?",
+      "industry": "Miło Cię poznać, {role}. Perspektywa ma znaczenie.\n\nW jakiej branży działacie?",
+      "industrySub": "Produkcja. Rozumiem. Jaka konkretnie?",
+      "size": "Ilu mniej więcej macie pracowników?",
+      "country": "Zrozumiałem. Skala zmienia dostępne rozwiązania.\n\nW jakim kraju głównie działacie?",
+      "challenges": "Świetnie, przeanalizujmy Twoje wyzwania, aby zbudować sensowne rekomendacje.\n\nJaki jest Twój główny problem operacyjny?",
+      "goal": "Rozumiem. Zajmiemy się tymi wyzwaniami.\n\nGdybyśmy rozmawiali za 12 miesięcy, co byłoby GŁÓWNYM sukcesem?",
+      "horizon": "Jasny cel.\n\nKiedy musisz zobaczyć pierwsze wymierne efekty?",
+      "summary": "Idealnie. Mamy profil.\n\nPodsumowanie:\n- Rola: {role}\n- Sektor: {industry}\n- Cel: {goal}\n\nTeraz wygeneruję dla Ciebie konkretne pomysły.",
+      "done": "Świetnie! Kliknij przycisk po prawej, aby zobaczyć Propozycje Działań.",
+      "step3Intro": "Na podstawie Twoich odpowiedzi, oto szybki przegląd Twojej sytuacji i moje rekomendacje.",
+      "step3Summary": "Twoja firma działa w sektorze {industry} z jasnym celem {goal}. Głównym wyzwaniem jest {painPoint}.",
+      "step3Focus": "Rekomenduję natychmiastowe skupienie się na tych obszarach:",
+      "step3Wins": "Oto kilka Szybkich Wygranych, które możesz zacząć w najbliższy poniedziałek:",
+      "step3Upsell": "Czy chciałbyś przejść do Pełnego Projektu Transformacji i zbudować pełną mapę drogową?"
+    },
+    "options": {
+      "start": "OK, zaczynajmy",
+      "explain": "Wyjaśnij proces",
+      "ceo": "Właściciel / Prezes",
+      "plant": "Dyrektor Zakładu",
+      "coo": "Dyrektor Operacyjny",
+      "mfg": "Produkcja",
+      "log": "Logistyka",
+      "inefficient": "Nieefektywne procesy",
+      "lackData": "Brak danych / widoczności",
+      "manual": "Zbyt wiele zadań ręcznych",
+      "quality": "Problemy z jakością",
+      "automation": "Niski poziom automatyzacji",
+      "proc": "Procesy",
+      "data": "Dane",
+      "auto": "Automatyzacja",
+      "culture": "Kultura",
+      "m3": "3 miesiące",
+      "m6": "6 miesięcy",
+      "m12": "12 miesięcy",
+      "confirm": "Zgadza się",
+      "edit": "Zmień coś",
+      "yesFull": "Tak, startuj Pełny Projekt",
+      "notNow": "Nie teraz"
+    }
+  },
+  "fullAssessment": {
+    "intro": "Witaj w Pełnej Diagnozie Gotowości Cyfrowej (DRD). Ocenimy 6 kluczowych osi Twojej firmy w skali 1-7. To wygeneruje Twoją Mapę Dojrzałości.",
+    "axisIntro": "Oceńmy Twój obszar: {axis}. Jak dojrzały jesteś w tym aspekcie?",
+    "startAxis": "Rozpocznij Oś",
+    "currentAxis": "Bieżąca Oś",
+    "continue": "Kontynuuj",
+    "completed": "Ukończono",
+    "score": "Wynik",
+    "maturityOverview": "Przegląd Dojrzałości",
+    "nextStep": "Przejdź do Generatora Inicjatyw (Krok 2)",
+    "summary": "Oto Twój profil dojrzałości cyfrowej w 6 osiach. Na podstawie wyników powinniśmy nadać priorytet: {weakest}.",
+    "introMicrocopy": "Ta ocena ewaluuje Twoją organizację w 6 wymiarach modelu Digital Readiness Diagnosis (DRD). Wyniki wahają się od 1 (Nowicjusz) do 7 (Lider).",
+    "descriptions": {
+      "processes": "Standaryzacja i Efektywność",
+      "digitalProducts": "Łączność i UX",
+      "businessModels": "Skalowalność i Przychody",
+      "dataManagement": "Jakość i Zarządzanie",
+      "culture": "Umiejętności i Nastawienie",
+      "aiMaturity": "Adopcja i Strategia"
+    },
+    "questions": {
+      "processes": [
+        {
+          "EN": "How standardized are your core production processes?",
+          "PL": "Jak ustandaryzowane są Twoje główne procesy produkcji?"
+        },
+        {
+          "EN": "How well are your processes measured and monitored?",
+          "PL": "Jak dobrze mierzone i monitorowane są procesy?"
+        },
+        {
+          "EN": "To what extent are your processes digitally supported?",
+          "PL": "W jakim stopniu procesy są wspierane cyfrowo?"
+        }
+      ],
+      "digitalProducts": [
+        {
+          "EN": "Does your product portfolio include digital services?",
+          "PL": "Czy Twoje portfolio zawiera usługi cyfrowe?"
+        },
+        {
+          "EN": "How integrated are your products with IoT?",
+          "PL": "Jak zintegrowane są produkty z IoT?"
+        },
+        {
+          "EN": "Do you use customer usage data to improve products?",
+          "PL": "Czy używasz danych o użyciu do ulepszania produktów?"
+        }
+      ],
+      "businessModels": [
+        {
+          "EN": "Are you shifting from CAPEX to OPEX models?",
+          "PL": "Czy przechodzisz z modeli CAPEX na OPEX?"
+        },
+        {
+          "EN": "Do you have digital ecosystem partnerships?",
+          "PL": "Czy masz partnerstwa w ekosystemie cyfrowym?"
+        },
+        {
+          "EN": "How scalable is your current business model?",
+          "PL": "Jak skalowalny jest obecny model biznesowy?"
+        }
+      ],
+      "dataManagement": [
+        {
+          "EN": "Is there a single source of truth for key data?",
+          "PL": "Czy istnieje jedno źródło prawdy dla kluczowych danych?"
+        },
+        {
+          "EN": "How automated is data collection?",
+          "PL": "Jak zautomatyzowane jest zbieranie danych?"
+        },
+        {
+          "EN": "Do you use predictive analytics?",
+          "PL": "Czy używasz analityki predykcyjnej?"
+        }
+      ],
+      "culture": [
+        {
+          "EN": "How open is the leadership to digital change?",
+          "PL": "Jak otwarte jest kierownictwo na zmiany cyfrowe?"
+        },
+        {
+          "EN": "Do employees have digital skills training?",
+          "PL": "Czy pracownicy mają szkolenia z umiejętności cyfrowych?"
+        },
+        {
+          "EN": "Is innovation rewarded in the company?",
+          "PL": "Czy innowacyjność jest nagradzana w firmie?"
+        }
+      ],
+      "aiMaturity": [
+        {
+          "EN": "Are you piloting any AI solutions currently?",
+          "PL": "Czy pilotujesz obecnie jakieś rozwiązania AI?"
+        },
+        {
+          "EN": "Do you have data ready for AI training?",
+          "PL": "Czy masz dane gotowe do trenowania AI?"
+        },
+        {
+          "EN": "Is there an AI strategy in place?",
+          "PL": "Czy istnieje strategia AI?"
+        }
+      ]
+    }
+  },
+  "fullInitiatives": {
+    "intro": "Na podstawie Twoich wyników dojrzałości wygenerowałem zestaw inicjatyw transformacyjnych. Możesz je przejrzeć i edytować w tabeli po prawej.",
+    "tableHeader": {
+      "initiative": "Nazwa Inicjatywy",
+      "axis": "Oś",
+      "priority": "Priorytet",
+      "complexity": "Złożoność",
+      "status": "Status",
+      "notes": "Notatki",
+      "actions": "Akcje"
+    },
+    "priorities": {
+      "High": "Wysoki",
+      "Medium": "Średni",
+      "Low": "Niski"
+    },
+    "complexities": {
+      "High": "Wysoka",
+      "Medium": "Średnia",
+      "Low": "Niska"
+    },
+    "statuses": {
+      "Draft": "Szkic",
+      "Ready": "Gotowe",
+      "Archived": "Zarchiwizowane"
+    },
+    "nextStep": "Przejdź do Mapy Drogowej (Krok 3)"
+  },
+  "fullRoadmap": {
+    "intro": "Przygotowałem dla Ciebie wstępną mapę drogową na podstawie priorytetu i złożoności inicjatyw. Zadania fundamentalne (Dane/Procesy) są zaplanowane wcześniej.",
+    "tableHeader": {
+      "quarter": "Kwartał",
+      "wave": "Fala"
+    },
+    "workload": {
+      "title": "Rozkład Pracy",
+      "initiatives": "inicjatyw",
+      "overloaded": "Przeciążenie"
+    },
+    "nextStep": "Przejdź do Ekonomii i ROI (Krok 4)"
+  },
+  "fullROI": {
+    "intro": "Teraz oszacujmy koszty i korzyści. Nie musisz być precyzyjny – wystarczą rzędy wielkości.",
+    "tableHeader": {
+      "cost": "Szac. Koszt (tys.$)",
+      "benefit": "Szac. Korzyść (tys.$/rok)"
+    },
+    "summary": {
+      "totalCost": "Koszt Całkowity",
+      "totalBenefit": "Całkowita Korzyść Roczna",
+      "roi": "Całkowite ROI",
+      "payback": "Okres Zwrotu",
+      "years": "lat"
+    },
+    "nextStep": "Przejdź do Pulpitu Wykonawczego (Krok 5)"
+  },
+  "fullExecution": {
+    "intro": "Witaj w Trybie Wykonawczym. Tutaj możesz śledzić postępy, przypisywać właścicieli i zarządzać blokadami.",
+    "columns": {
+      "todo": "Do Zrobienia",
+      "inProgress": "W Toku",
+      "blocked": "Zablokowane",
+      "done": "Zrobione"
+    },
+    "kpi": {
+      "total": "Wszystkie Inicjatywy",
+      "completion": "Wskaźnik Ukończenia"
+    },
+    "fields": {
+      "owner": "Właściciel",
+      "dueDate": "Termin",
+      "progress": "Postęp"
+    },
+    "nextStep": "Przejdź do Raportu Końcowego (Krok 6)"
+  },
+  "fullReports": {
+    "header": "Raport Transformacji",
+    "sections": {
+      "exec": "Podsumowanie Zarządcze",
+      "maturity": "Profil Dojrzałości Cyfrowej",
+      "initiatives": "Kluczowe Inicjatywy",
+      "roadmap": "Mapa Drogowa Transformacji",
+      "economics": "Ekonomia i ROI",
+      "execution": "Status Wykonania"
+    },
+    "cards": {
+      "maturity": "Dojrzałość i Skupienie",
+      "economics": "Ekonomia Projektu",
+      "execution": "Migawka Wykonania"
+    },
+    "buttons": {
+      "export": "Eksportuj Raport",
+      "copy": "Kopiuj Tekst"
+    },
+    "labels": {
+      "strongest": "Najsilniejszy Atut",
+      "weakest": "Krytyczna Luka",
+      "totalCost": "Koszt Całkowity",
+      "annualBenefit": "Roczna Korzyść",
+      "roi": "ROI",
+      "payback": "Okres Zwrotu",
+      "completionRate": "Wskaźnik Ukończenia",
+      "initiatives": "Inicjatywy",
+      "done": "Gotowe",
+      "inProg": "W Toku",
+      "blocked": "Zablok."
+    },
+    "reportTemplates": {
+      "execSummary": "{companyName} rozpoczęła strategiczną podróż transformacji cyfrowej. Na podstawie kompleksowej oceny DRD organizacja wykazuje silną dojrzałość w obszarze {strongest} ({strongestScore}/7), jednocześnie napotykając znaczące wyzwania w obszarze {weakest} ({weakestScore}/7).\n\nAby zaradzić tym lukom, opracowano mapę drogową składającą się z {initCount} inicjatyw strategicznych. Plan koncentruje się na budowaniu fundamentalnych zdolności w ciągu pierwszych 12 miesięcy przed skalowaniem zaawansowanych rozwiązań cyfrowych.\n\nZ perspektywy ekonomicznej przewiduje się, że transformacja przyniesie roczne korzyści w wysokości ${benefit}k przy całkowitej inwestycji ${cost}k. Daje to atrakcyjne ROI na poziomie {roi}% z okresem zwrotu wynoszącym {payback} lat.",
+      "finding1": "{strongest} to Twój najsilniejszy atut, stanowiący filar przyszłego wzrostu.",
+      "finding2": "{weakest} wymaga natychmiastowej uwagi, aby zapobiec wąskim gardłom w skalowaniu.",
+      "finding3": "Organizacja jest gotowa na {type} transformację.",
+      "aggressive": "agresywną",
+      "focused": "skoncentrowaną"
+    }
+  }
+}

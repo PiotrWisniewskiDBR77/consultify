@@ -25,8 +25,10 @@ router.get('/', (req, res) => {
     });
 });
 
+const { checkPlanLimit } = require('../middleware/planLimits');
+
 // CREATE Project
-router.post('/', (req, res) => {
+router.post('/', checkPlanLimit('max_projects'), (req, res) => {
     const orgId = req.user.organizationId;
     const { name, ownerId } = req.body;
 

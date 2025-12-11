@@ -4,7 +4,7 @@ import { toast } from 'react-hot-toast';
 import { Lightbulb, Target, Check, X, MessageSquare, Plus, Trash2, Power, BrainCircuit, Activity, FileText, Upload, RefreshCw } from 'lucide-react';
 
 export const AdminKnowledgeView: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<'candidates' | 'strategies' | 'documents'>('candidates');
+    const [activeTab, setActiveTab] = useState<'candidates' | 'strategies' | 'documents' | 'observations'>('candidates');
     const [candidates, setCandidates] = useState<any[]>([]);
     const [strategies, setStrategies] = useState<any[]>([]);
     const [documents, setDocuments] = useState<any[]>([]);
@@ -94,6 +94,23 @@ export const AdminKnowledgeView: React.FC = () => {
             toast.error(err.message || 'Upload failed');
         } finally {
             setUploading(false);
+        }
+    };
+
+    // Observations State
+    const [observations, setObservations] = useState<{ app_improvements: any[], content_gaps: any[] } | null>(null);
+
+    const generateObservations = async () => {
+        setLoading(true);
+        try {
+            const data = await Api.generateGlobalBrainObservations();
+            setObservations(data);
+            toast.success('Analysis Complete');
+        } catch (err) {
+            toast.error('Failed to generate observations');
+            console.error(err);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -331,6 +348,93 @@ export const AdminKnowledgeView: React.FC = () => {
                                 {strategies.length === 0 && (
                                     <div className="col-span-full py-12 text-center text-slate-500 bg-navy-900/30 border border-dashed border-white/10 rounded-xl">
                                         No active strategic directions. Add one to guide the AI.
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* --- AI OBSERVATIONS --- */}
+                        {activeTab === 'observations' && (
+                            <div className="space-y-6">
+                                <div className="bg-navy-900 border border-white/10 rounded-xl p-6 flex flex-col items-center justify-center text-center">
+                                    <div className="p-3 bg-purple-500/10 rounded-full mb-4">
+                                        <BrainCircuit size={32} className="text-purple-400" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-white mb-2">Analyze Global Interactions</h3>
+                                    <p className="text-slate-400 text-sm max-w-md mb-6">
+                                        The AI will analyze recent user interactions and feedback log to identify patterns, feature requests, and knowledge gaps.
+                                    </p>
+                                    <button
+                                        onClick={generateObservations}
+                                        disabled={loading}
+                                        className="px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-medium shadow-lg shadow-purple-900/20 flex items-center gap-2 transition-all"
+                                    >
+                                        {loading ? <RefreshCw className="animate-spin" size={18} /> : <Lightbulb size={18} />}
+                                        {loading ? 'Analyzing...' : 'Generate Observations'}
+                                    </button>
+                                </div>
+
+                                {(observations && (observations.app_improvements?.length > 0 || observations.content_gaps?.length > 0)) && (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                        {/* App Improvements */}
+                                        <div className="space-y-4">
+                                            <h3 className="flex items-center gap-2 text-lg font-bold text-white">
+                                                <div className="w-2 h-8 bg-blue-500 rounded-full"></div>
+                                                App Improvements
+                                            </h3>
+                                            <div className="space-y-3">
+                                                {observations.app_improvements.map((item: any, i: number) => (
+                                                    <div key={i} className="bg-navy-900 border border-white/5 rounded-xl p-4 hover:border-blue-500/30 transition-colors">
+                                                        <div className="flex justify-between items-start mb-2">
+                                                            <span className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wide ${item.severity === 'high' ? 'bg-red-500/10 text-red-400' :
+                                                                item.severity === 'medium' ? 'bg-yellow-500/10 text-yellow-500' :
+                                                                    'bg-blue-500/10 text-blue-400'
+                                                                }`}>
+                                                                {item.severity}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-slate-200 text-sm font-medium mb-2">{item.description}</p>
+                                                        <div className="flex items-center gap-2 text-xs text-slate-500 bg-navy-950 p-2 rounded">
+                                                            <Target size={12} className="text-blue-400" />
+                                                            Recommendation: <span className="text-slate-300">{item.action_item}</span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                {observations.app_improvements.length === 0 && (
+                                                    <p className="text-slate-500 text-sm italic">No improvements detected.</p>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Content Gaps */}
+                                        <div className="space-y-4">
+                                            <h3 className="flex items-center gap-2 text-lg font-bold text-white">
+                                                <div className="w-2 h-8 bg-purple-500 rounded-full"></div>
+                                                Knowledge Gaps
+                                            </h3>
+                                            <div className="space-y-3">
+                                                {observations.content_gaps.map((item: any, i: number) => (
+                                                    <div key={i} className="bg-navy-900 border border-white/5 rounded-xl p-4 hover:border-purple-500/30 transition-colors">
+                                                        <div className="flex justify-between items-start mb-2">
+                                                            <span className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wide ${item.severity === 'high' ? 'bg-red-500/10 text-red-400' :
+                                                                item.severity === 'medium' ? 'bg-yellow-500/10 text-yellow-500' :
+                                                                    'bg-purple-500/10 text-purple-400'
+                                                                }`}>
+                                                                {item.severity}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-slate-200 text-sm font-medium mb-2">{item.description}</p>
+                                                        <div className="flex items-center gap-2 text-xs text-slate-500 bg-navy-950 p-2 rounded">
+                                                            <Lightbulb size={12} className="text-purple-400" />
+                                                            Missing Topic: <span className="text-slate-300">{item.action_item}</span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                {observations.content_gaps.length === 0 && (
+                                                    <p className="text-slate-500 text-sm italic">No knowledge gaps detected.</p>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
                                 )}
                             </div>

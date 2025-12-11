@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const config = require('../config');
 const authMiddleware = require('../middleware/authMiddleware');
+const ActivityService = require('../services/activityService');
 
 // LOGIN
 router.post('/login', (req, res) => {
@@ -29,7 +30,10 @@ router.post('/login', (req, res) => {
             if (err) return res.status(500).json({ error: 'Server error' });
             if (!org) return res.status(404).json({ error: 'Organization not found' });
 
-            // Check if organization is blocked
+            // Check if organization is pending or blocked
+            if (org.status === 'pending' && user.role !== 'SUPERADMIN') {
+                return res.status(403).json({ error: 'Your organization is waiting for approval.', status: 'pending' });
+            }
             if (org.status === 'blocked' && user.role !== 'SUPERADMIN') {
                 return res.status(403).json({ error: 'Your organization has been blocked. Contact support.' });
             }
@@ -56,6 +60,16 @@ router.post('/login', (req, res) => {
                 companyName: org.name
             };
 
+            // Log successful login
+            ActivityService.log({
+                organizationId: user.organization_id,
+                userId: user.id,
+                action: 'login',
+                entityType: 'session',
+                entityId: jti,
+                entityName: 'User Login'
+            });
+
             res.json({ user: safeUser, token });
         });
     });
@@ -70,7 +84,8 @@ router.get('/me', authMiddleware, (req, res) => {
             id: req.user.id,
             email: req.user.email,
             role: req.user.role,
-            organizationId: req.user.organizationId
+            organizationId: req.user.organizationId,
+            impersonatorId: req.user.impersonator_id // Pass claim to frontend
             // Add other fields if needed, but keep it consistent with login response
         }
     });
@@ -113,9 +128,60 @@ router.post('/logout', authMiddleware, (req, res) => {
     }
 });
 
+// REVERT IMPERSONATION (Back to Admin)
+router.post('/revert-impersonation', authMiddleware, (req, res) => {
+    const impersonatorId = req.user.impersonator_id;
+    if (!impersonatorId) {
+        return res.status(400).json({ error: 'Not currently impersonating' });
+    }
+
+    db.get('SELECT * FROM users WHERE id = ?', [impersonatorId], (err, adminUser) => {
+        if (err || !adminUser) return res.status(404).json({ error: 'Original admin not found' });
+
+        // Verify the original user is indeed an admin/superadmin (security check)
+        if (adminUser.role !== 'SUPERADMIN' && adminUser.role !== 'ADMIN') {
+            return res.status(403).json({ error: 'Original user is not an admin' });
+        }
+
+        // Generate new token for the admin
+        const jti = uuidv4();
+        const token = jwt.sign({
+            id: adminUser.id,
+            email: adminUser.email,
+            role: adminUser.role,
+            organizationId: adminUser.organization_id,
+            jti: jti
+        }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRES_IN });
+
+        // Log the reversion
+        ActivityService.log({
+            userId: adminUser.id,
+            action: 'impersonate_end',
+            entityType: 'user',
+            entityId: req.user.id, // The user that was being impersonated
+            entityName: req.user.email
+        });
+
+        // Return admin user and token
+        const safeUser = {
+            id: adminUser.id,
+            email: adminUser.email,
+            firstName: adminUser.first_name,
+            lastName: adminUser.last_name,
+            role: adminUser.role,
+            status: adminUser.status,
+            organizationId: adminUser.organization_id,
+            companyName: 'Admin Console' // Simplified, or fetch org name if needed
+        };
+
+        res.json({ user: safeUser, token });
+    });
+});
+
+
 // REGISTER (New Company)
 router.post('/register', (req, res) => {
-    const { email, password, firstName, lastName, companyName } = req.body;
+    const { email, password, firstName, lastName, companyName, accessCode, isDemo } = req.body;
 
     // Check if user exists
     db.get('SELECT id FROM users WHERE email = ?', [email], (err, row) => {
@@ -125,50 +191,102 @@ router.post('/register', (req, res) => {
         const userId = uuidv4();
         const hashedPassword = bcrypt.hashSync(password, 8);
 
-        // 1. Create Organization
-        const insertOrg = db.prepare(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`);
-        insertOrg.run(orgId, companyName || 'My Company', 'free', 'active', (err) => {
-            if (err) {
-                // Log error server-side but don't expose details to client
-                if (process.env.NODE_ENV !== 'production') {
-                    console.error('Register Org Error:', err);
-                }
-                return res.status(500).json({ error: 'Failed to create organization' });
-            }
-            insertOrg.finalize();
-
-            // 2. Create Admin User for that Org
-            const insertUser = db.prepare(`INSERT INTO users (id, organization_id, email, password, first_name, last_name, role) VALUES (?, ?, ?, ?, ?, ?, ?)`);
-            insertUser.run(userId, orgId, email, hashedPassword, firstName, lastName, 'ADMIN', (err) => {
+        // Helper function to proceed with insertion
+        const proceedWithRegistration = (finalStatus, finalPlan) => {
+            // 1. Create Organization
+            const insertOrg = db.prepare(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`);
+            insertOrg.run(orgId, companyName || 'My Company', finalPlan, finalStatus, (err) => {
                 if (err) {
-                    // Log error server-side but don't expose details to client
-                    if (process.env.NODE_ENV !== 'production') {
-                        console.error('Register User Error:', err);
-                    }
-                    return res.status(500).json({ error: 'Failed to create user' });
+                    if (process.env.NODE_ENV !== 'production') console.error('Register Org Error:', err);
+                    return res.status(500).json({ error: 'Failed to create organization' });
                 }
-                insertUser.finalize();
+                insertOrg.finalize();
 
-                // Generate unique token ID for revocation support
-                const jti = uuidv4();
+                // 2. Create Admin User for that Org
+                const insertUser = db.prepare(`INSERT INTO users (id, organization_id, email, password, first_name, last_name, role) VALUES (?, ?, ?, ?, ?, ?, ?)`);
+                insertUser.run(userId, orgId, email, hashedPassword, firstName, lastName, 'ADMIN', (err) => {
+                    if (err) {
+                        if (process.env.NODE_ENV !== 'production') console.error('Register User Error:', err);
+                        return res.status(500).json({ error: 'Failed to create user' });
+                    }
+                    insertUser.finalize();
 
-                const token = jwt.sign({
-                    id: userId,
-                    email: email,
-                    role: 'ADMIN',
-                    organizationId: orgId,
-                    jti: jti
-                }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRES_IN });
+                    // If pending, do not issue token, but return success with "pending" status
+                    if (finalStatus === 'pending') {
+                        const insertRequest = db.prepare(`INSERT INTO access_requests (id, email, first_name, last_name, organization_id, organization_name, status) VALUES (?, ?, ?, ?, ?, ?, ?)`);
+                        insertRequest.run(uuidv4(), email, firstName, lastName, orgId, companyName || 'My Company', 'pending', (err) => {
+                            if (err) console.error("Error logging access request:", err);
+                            insertRequest.finalize();
+                            return res.json({
+                                status: 'pending',
+                                message: 'Registration successful. Waiting for approval.'
+                            });
+                        });
+                        return;
+                    }
 
-                res.json({
-                    user: {
-                        id: userId, email, firstName, lastName, role: 'ADMIN',
-                        companyName: companyName, organizationId: orgId
-                    },
-                    token
+                    // Generate unique token ID
+                    const jti = uuidv4();
+                    const token = jwt.sign({
+                        id: userId,
+                        email: email,
+                        role: 'ADMIN',
+                        organizationId: orgId,
+                        jti: jti
+                    }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRES_IN });
+
+                    // Log registration
+                    ActivityService.log({
+                        organizationId: orgId,
+                        userId: userId,
+                        action: 'registered',
+                        entityType: 'organization',
+                        entityId: orgId,
+                        entityName: companyName
+                    });
+
+                    res.json({
+                        user: {
+                            id: userId, email, firstName, lastName, role: 'ADMIN',
+                            companyName: companyName, organizationId: orgId
+                        },
+                        token
+                    });
                 });
             });
-        });
+        };
+
+        // Determine Status based on Repo / Code
+        if (isDemo) {
+            proceedWithRegistration('active', 'trial');
+            return;
+        }
+
+        if (accessCode) {
+            db.get('SELECT * FROM access_codes WHERE code = ? AND is_active = 1', [accessCode], (err, codeRow) => {
+                if (err || !codeRow) {
+                    // Invalid code: Proceed as pending
+                    proceedWithRegistration('pending', 'free');
+                } else {
+                    // Check limits
+                    if (codeRow.expires_at && new Date(codeRow.expires_at) < new Date()) {
+                        proceedWithRegistration('pending', 'free'); // Expired
+                    } else if (codeRow.max_uses > 0 && codeRow.current_uses >= codeRow.max_uses) {
+                        proceedWithRegistration('pending', 'free'); // Used up
+                    } else {
+                        // Valid code!
+                        db.run('UPDATE access_codes SET current_uses = current_uses + 1 WHERE id = ?', [codeRow.id]);
+
+                        // Log usage
+                        db.run(`INSERT INTO access_code_usage (id, code_id, user_id) VALUES (?, ?, ?)`, [uuidv4(), codeRow.id, userId]);
+
+                        proceedWithRegistration('active', 'pro');
+                    }
+                }
+            });
+        } else {
+            proceedWithRegistration('pending', 'free');
+        }
     });
 });
 
