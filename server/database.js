@@ -45,7 +45,7 @@ function initDb() {
         // In a real prod env, we would migrate. Here we wipe for simplicity as agreed.
         // ONLY drop in dev mode
         if (process.env.NODE_ENV !== 'production') {
-            db.run(`DROP TABLE IF EXISTS users`);
+            // db.run(`DROP TABLE IF EXISTS users`);
         }
         db.run(`CREATE TABLE IF NOT EXISTS users (
             id TEXT PRIMARY KEY,
@@ -836,10 +836,11 @@ function initDb() {
 
                 // Create Super Admin User
                 const insertUser = db.prepare(`INSERT INTO users(id, organization_id, email, password, first_name, last_name, role) VALUES(?, ?, ?, ?, ?, ?, ?)`);
-                insertUser.run(superAdminId, superAdminOrgId, 'admin@dbr77.ai', hashedPassword, 'Super', 'Admin', 'SUPERADMIN');
+                const superAdminPassword = bcrypt.hashSync('Admin123!', 8);
+                insertUser.run(superAdminId, superAdminOrgId, 'admin@dbr77.com', superAdminPassword, 'Super', 'Admin', 'SUPERADMIN');
                 insertUser.finalize();
 
-                console.log('Seeded SuperAdmin (admin@dbr77.ai) and System Org.');
+                console.log('Seeded SuperAdmin (admin@dbr77.com) and System Org.');
 
                 // --- SEED TEST ORGANIZATION: DBR77 ---
                 const dbr77OrgId = 'org-dbr77-test';

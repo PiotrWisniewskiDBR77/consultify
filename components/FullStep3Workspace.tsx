@@ -39,7 +39,7 @@ export const FullStep3Workspace: React.FC<FullStep3WorkspaceProps> = ({
   const getAxisLabel = (id: string) => {
     // @ts-ignore
     const key = `fullStep1_${id === 'digitalProducts' ? 'prod' : id.substring(0, 4)}` as any;
-    return ts[key]?.[language] || id;
+    return (t as any)[key]?.[language] || id;
   };
 
   const handleNext = () => {

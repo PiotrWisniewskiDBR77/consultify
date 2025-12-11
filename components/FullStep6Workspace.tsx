@@ -26,9 +26,9 @@ export const FullStep6Workspace: React.FC<FullStep6WorkspaceProps> = ({
    const highest = sortedScores[0];
    const lowest = sortedScores[scores.length - 1];
 
-   const getAxisLabel = (id: string) => {
+   const getAxisLabel = (id: string) => {    // @ts-ignore
       const key = `fullStep1_${id === 'digitalProducts' ? 'prod' : id.substring(0, 4)}` as any;
-      return ts[key]?.[language] || id;
+      return (t as any)[key]?.[language] || id;
    };
 
    // 2. Economics

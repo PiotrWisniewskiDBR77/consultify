@@ -8,6 +8,7 @@ import { sendMessageToAI, AIMessageHistory } from '../services/ai/gemini';
 import { Agent } from '../services/ai/agent';
 import { generateInitiatives as engineGenerate } from '../services/transformationEngine';
 import { Api } from '../services/api';
+import { useAIStream } from '../hooks/useAIStream';
 import { AIFeedbackButton } from '../components/AIFeedbackButton';
 
 export const FullInitiativesView: React.FC = () => {
@@ -22,6 +23,8 @@ export const FullInitiativesView: React.FC = () => {
     isBotTyping,
     currentProjectId
   } = useAppStore();
+
+  const { startStream } = useAIStream();
 
   const language = currentUser?.preferredLanguage || 'EN';
   const t = translations.fullInitiatives;
@@ -65,27 +68,7 @@ export const FullInitiativesView: React.FC = () => {
       timestamp: new Date()
     });
 
-    let currentText = "";
-
-    // Dynamically import to avoid circular dep issues if any, or just standard import usage
-    await import('../services/ai/gemini').then(async (mod) => {
-      await mod.sendMessageToAIStream(
-        history,
-        context, // Sending context as message or system instruction?
-        // Original code sent 'context' as message.
-        // sendMessageToAI signature: (history, message, system?)
-        // Here we are passing context as message.
-        // However, for streaming, the signature is same.
-        (chunk) => {
-          currentText += chunk;
-          useAppStore.getState().updateLastChatMessage(currentText);
-        },
-        () => {
-          setTyping(false);
-        }
-        // No system prompt override used in original, so undefined.
-      );
-    });
+    startStream(text, history, context);
   };
 
   const generateInitiatives = useCallback(async () => {

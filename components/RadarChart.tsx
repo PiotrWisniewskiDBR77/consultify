@@ -60,7 +60,7 @@ export const RadarChart: React.FC<RadarChartProps> = ({ data, size }) => {
                 ))}
 
                 {/* Axes */}
-                {data.forEach((_, i) => {
+                {data.map((_, i) => {
                     const { x, y } = getCoords(maxVal, i);
                     return <line key={i} x1={radius} y1={radius} x2={x} y2={y} stroke={axisColor} strokeWidth="1" />
                 })}

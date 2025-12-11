@@ -26,7 +26,7 @@ export const LiveDashboard: React.FC<LiveDashboardProps> = ({ session, onNavigat
         // Calculate Initiative Execution Progress
         const initiatives = session.initiatives || [];
         const totalInit = initiatives.length;
-        const completedInit = initiatives.filter(i => i.status === 'done' || i.status === 'completed').length;
+        const completedInit = initiatives.filter(i => i.status === 'Done' || i.status === 'completed').length;
         const executionScore = totalInit > 0 ? (completedInit / totalInit) * 20 : 0;
 
         return Math.min(100, score + executionScore);
@@ -45,8 +45,9 @@ export const LiveDashboard: React.FC<LiveDashboardProps> = ({ session, onNavigat
         const onTrack = inits.filter(i => ['In Progress', 'Done', 'completed'].includes(i.status)).length;
         const atRisk = inits.filter(i => i.priority === 'High' && ['Blocked', 'on_hold'].includes(i.status)).length;
         const delayed = inits.filter(i => i.status === 'Blocked').length; // Simplified logic
+        const done = inits.filter(i => i.status === 'Done').length; // Simplified logic
 
-        return { total: inits.length, onTrack, atRisk, delayed };
+        return { total: inits.length, onTrack, atRisk, delayed, done };
     }, [session]);
 
     // --- 4. KPIs (Mock for now, should come from session.kpis in future) ---

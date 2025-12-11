@@ -2,6 +2,7 @@ import React from 'react';
 import { ChatPanel } from './ChatPanel';
 import { useAppStore } from '../store/useAppStore';
 import { ChatMessage, ChatOption } from '../types';
+import { useAIStream } from '../hooks/useAIStream';
 
 interface SplitLayoutProps {
     children: React.ReactNode;
@@ -9,6 +10,7 @@ interface SplitLayoutProps {
     subtitle?: string;
     isFullScreen?: boolean; // Escape hatch for tools needing full width
     onSendMessage?: (text: string) => void; // Optional override
+    hideSidebar?: boolean;
 }
 
 export const SplitLayout: React.FC<SplitLayoutProps> = ({
@@ -16,7 +18,8 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
     title,
     subtitle,
     isFullScreen = false,
-    onSendMessage
+    onSendMessage,
+    hideSidebar = false
 }) => {
     const {
         activeChatMessages,
@@ -24,6 +27,8 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
         isBotTyping,
         setIsBotTyping
     } = useAppStore();
+
+    const { isStreaming, streamedContent, startStream } = useAIStream();
 
     // Resizable State
     const [sidebarWidth, setSidebarWidth] = React.useState(380);
@@ -107,24 +112,7 @@ Your role is to guide the user through strategic discovery and provide actionabl
 Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
 
         // Import API dynamically to avoid circular deps and call stream
-        import('../services/api').then(({ Api }) => {
-            Api.chatWithAIStream(
-                text,
-                history,
-                (chunk) => {
-                    // Update the AI message with streamed content
-                    useAppStore.getState().updateLastChatMessage(chunk);
-                },
-                () => {
-                    setIsBotTyping(false);
-                },
-                systemPrompt
-            ).catch(err => {
-                console.error('AI Stream Error:', err);
-                useAppStore.getState().updateLastChatMessage('Sorry, I encountered an error. Please try again.');
-                setIsBotTyping(false);
-            });
-        });
+        startStream(text, history, systemPrompt);
     };
 
     const handleOptionSelect = (option: ChatOption) => {
@@ -140,7 +128,7 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
         <div className="flex w-full h-full overflow-hidden bg-gray-50 dark:bg-navy-950 relative">
 
             {/* Desktop Left Panel: Consultant Chat */}
-            {!isCollapsed && (
+            {!isCollapsed && !hideSidebar && (
                 <div
                     ref={sidebarRef}
                     style={{ width: sidebarWidth }}
@@ -157,7 +145,16 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
                     </div>
 
                     <ChatPanel
-                        messages={activeChatMessages}
+                        messages={
+                            isStreaming
+                                ? [...activeChatMessages, {
+                                    id: 'streaming-ai',
+                                    role: 'ai',
+                                    content: streamedContent,
+                                    timestamp: new Date()
+                                } as ChatMessage]
+                                : activeChatMessages
+                        }
                         onSendMessage={handleSendMessage}
                         onOptionSelect={handleOptionSelect}
                         isTyping={isBotTyping}
@@ -196,7 +193,16 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
                 <div className="lg:hidden absolute inset-0 z-50 flex">
                     <div className="w-full sm:w-96 bg-white dark:bg-navy-950 border-r border-white/10 h-full flex flex-col shadow-2xl relative">
                         <ChatPanel
-                            messages={activeChatMessages}
+                            messages={
+                                isStreaming
+                                    ? [...activeChatMessages, {
+                                        id: 'streaming-ai',
+                                        role: 'ai',
+                                        content: streamedContent,
+                                        timestamp: new Date()
+                                    } as ChatMessage]
+                                    : activeChatMessages
+                            }
                             onSendMessage={handleSendMessage}
                             onOptionSelect={handleOptionSelect}
                             isTyping={isBotTyping}

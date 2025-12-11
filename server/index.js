@@ -132,9 +132,9 @@ if (require.main === module) {
     const { startCleanupJob } = require('./cron/cleanupRevokedTokens');
     startCleanupJob();
 
-    server.listen(PORT, () => {
-        console.log('Server running on http://localhost:' + PORT);
-        console.log('WebSocket available at ws://localhost:' + PORT + '/ws');
+    server.listen(PORT, '0.0.0.0', () => {
+        console.log('Server running on http://0.0.0.0:' + PORT);
+        console.log('WebSocket available at ws://0.0.0.0:' + PORT + '/ws');
     });
 }
 

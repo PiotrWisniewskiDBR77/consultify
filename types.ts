@@ -345,7 +345,8 @@ export interface FullReport {
 
 // --- MODULE 2 TYPES ---
 
-export type DRDAxis = 'processes' | 'products' | 'business_models' | 'data' | 'culture' | 'cybersecurity' | 'ai';
+// Align DRDAxis with AxisId
+export type DRDAxis = 'processes' | 'digitalProducts' | 'businessModels' | 'dataManagement' | 'culture' | 'cybersecurity' | 'aiMaturity';
 export type MaturityLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 export interface AxisAssessment {
@@ -392,7 +393,7 @@ export interface FullSession {
   };
 
   // Module 2 Assessment Data
-  assessment: Partial<Record<DRDAxis, AxisAssessment>>;
+  assessment: Partial<Record<DRDAxis, AxisAssessment>> & { completedAxes: AxisId[] };
   audits: AdditionalAudit[];
   gapMapAnalysis?: string; // AI generated summary of gaps
 

@@ -3,7 +3,8 @@ import { useAppStore } from '../store/useAppStore';
 import { AppView, FullSession, ChatMessage, SessionMode } from '../types';
 import { ChatPanel } from '../components/ChatPanel';
 import { Api } from '../services/api'; // Using Api service for consistency
-import { sendMessageToAIStream, AIMessageHistory, SYSTEM_PROMPTS } from '../services/ai/gemini';
+import { useAIStream } from '../hooks/useAIStream';
+import { AIMessageHistory } from '../services/ai/gemini';
 import { CheckCircle2, Lock, AlertTriangle, ShieldCheck, ChevronRight } from 'lucide-react';
 
 interface Module1ContextViewProps {
@@ -21,6 +22,8 @@ export const Module1ContextView: React.FC<Module1ContextViewProps> = ({ currentU
         setIsBotTyping,
         updateLastChatMessage
     } = useAppStore();
+
+    const { isStreaming, streamedContent, startStream } = useAIStream();
 
     const [sufficiency, setSufficiency] = useState({
         score: fullSession.contextSufficiency?.score || 0,
@@ -92,7 +95,7 @@ export const Module1ContextView: React.FC<Module1ContextViewProps> = ({ currentU
         // For now, we simulate "progress" to not block the user indefinitely in this demo.
         const msgCount = history.filter(m => m.role === 'user').length;
         let mockScore = Math.min(10 + (msgCount * 20), 100);
-        let mockGaps = [];
+        let mockGaps: string[] = [];
 
         if (mockScore < 40) mockGaps = ["Strategic Drivers", "Business Goals", "Financial Context"];
         else if (mockScore < 70) mockGaps = ["Business Goals", "Financial Context"];
@@ -116,21 +119,25 @@ export const Module1ContextView: React.FC<Module1ContextViewProps> = ({ currentU
         // Add user's new message to history for the API call
         history.push({ role: 'user', parts: [{ text }] });
 
+        // Add placeholder AI message
+        addChatMessage({ id: Date.now().toString(), role: 'ai', content: '', timestamp: new Date() });
+
         // 1. Generate AI Response (Conversation)
-        let currentText = "";
-        await sendMessageToAIStream(
+        startStream(
+            text,
             history,
-            "You are a strict Senior Consultant. Dig deep. Do not accept vague answers. If the user says 'we want to grow', ask 'How much? By when?'. Keep pushing until you have clear, quantifiable context.",
-            (chunk) => {
-                currentText += chunk;
-                updateLastChatMessage(currentText);
-            },
-            () => {
-                setIsBotTyping(false);
-                // 2. Analyze Sufficiency after response (Background)
-                analyzeSufficiency([...messages, { id: 'x', role: 'user', content: text, timestamp: new Date() }]);
-            }
-        );
+            "You are a strict Senior Consultant. Dig deep. Do not accept vague answers. If the user says 'we want to grow', ask 'How much? By when?'. Keep pushing until you have clear, quantifiable context."
+        ).then(() => {
+            // 2. Analyze Sufficiency after response (Background)
+            // Note: startStream is async but basic version usually just starts it. 
+            // However, my hook implementation is async awaiting the stream.
+            // Wait, useAIStream's startStream awaits the whole stream?
+            // Yes, looking at implementation: `await Api.chatWithAIStream(...)`.
+            // So this .then() happens when stream is DONE.
+
+            // Analyze Sufficiency
+            analyzeSufficiency([...messages, { id: 'x', role: 'user', content: text, timestamp: new Date() }]);
+        });
     };
 
     const handleProceed = () => {
@@ -173,9 +180,19 @@ export const Module1ContextView: React.FC<Module1ContextViewProps> = ({ currentU
                 </div>
 
                 <ChatPanel
-                    messages={messages}
+                    messages={
+                        isStreaming
+                            ? [...messages, {
+                                id: 'streaming-ai',
+                                role: 'ai',
+                                content: streamedContent,
+                                timestamp: new Date()
+                            } as ChatMessage]
+                            : messages
+                    }
                     onSendMessage={handleSendMessage}
                     isTyping={isBotTyping}
+                    onOptionSelect={(opt) => handleSendMessage(opt.value)}
                 />
             </div>
 

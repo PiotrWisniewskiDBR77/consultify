@@ -238,7 +238,7 @@ export const Sidebar: React.FC = () => {
           `}
         >
           <div className="flex items-center gap-2.5 overflow-hidden">
-            {item.icon && <span className={`${isActive || isParentActive ? 'text-purple-600 dark:text-purple-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`}>{React.cloneElement(item.icon as React.ReactElement, { size: 16 })}</span>}
+            {item.icon && <span className={`${isActive || isParentActive ? 'text-purple-600 dark:text-purple-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`}>{React.cloneElement(item.icon as React.ReactElement<{ size: number }>, { size: 16 })}</span>}
             {(!isSidebarCollapsed) && (
               <span className="truncate tracking-wide">
                 {item.label}

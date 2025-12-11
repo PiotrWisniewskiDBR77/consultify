@@ -9,10 +9,14 @@ interface ExecutiveSummaryViewProps {
 export const ExecutiveSummaryView: React.FC<ExecutiveSummaryViewProps> = ({ session }) => {
     // --- Data Aggregation ---
     const calculateOverallScore = () => {
-        const aggs = session.assessment.completedAxes;
-        if (aggs.length === 0) return 0;
-        const total = aggs.reduce((sum, a) => sum + (a.score || 0), 0);
-        return (total / aggs.length).toFixed(1);
+        const completedIds = session.assessment.completedAxes || [];
+        if (completedIds.length === 0) return 0;
+
+        // Map ID to score, handle undefined
+        const scores = completedIds.map(id => (session.assessment[id] as any)?.score || 0);
+        const total = scores.reduce((sum, score) => sum + score, 0);
+
+        return (total / completedIds.length).toFixed(1);
     };
 
     const financials = useMemo(() => {
@@ -35,9 +39,9 @@ export const ExecutiveSummaryView: React.FC<ExecutiveSummaryViewProps> = ({ sess
         })
         .slice(0, 5);
 
-    const maturityData = session.assessment.completedAxes.map(a => ({
-        name: a.axisId.substring(0, 10), // Short name
-        score: a.score
+    const maturityData = (session.assessment.completedAxes || []).map(axisId => ({
+        name: axisId.substring(0, 10), // Short name
+        score: (session.assessment[axisId] as any)?.score || 0
     }));
 
     return (

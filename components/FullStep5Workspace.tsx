@@ -115,10 +115,10 @@ export const FullStep5Workspace: React.FC<FullStep5WorkspaceProps> = ({
                               {/* Meta Info */}
                               <div className="flex items-center justify-between text-[10px] text-slate-400">
                                  <div className="flex items-center gap-1.5">
-                                    {init.owner ? (
-                                       <div className="flex items-center gap-1 text-blue-300" title={init.owner}>
+                                    {init.ownerBusiness ? (
+                                       <div className="flex items-center gap-1 text-blue-300" title={`${init.ownerBusiness.firstName} ${init.ownerBusiness.lastName}`}>
                                           <User size={10} />
-                                          <span className="max-w-[50px] truncate">{init.owner}</span>
+                                          <span className="max-w-[50px] truncate">{init.ownerBusiness.lastName}</span>
                                        </div>
                                     ) : (
                                        <span className="text-slate-600">-</span>
@@ -126,10 +126,10 @@ export const FullStep5Workspace: React.FC<FullStep5WorkspaceProps> = ({
                                  </div>
 
                                  <div className="flex items-center gap-1.5">
-                                    {init.dueDate ? (
-                                       <div className="flex items-center gap-1" title={init.dueDate}>
+                                    {init.endDate ? (
+                                       <div className="flex items-center gap-1" title={init.endDate}>
                                           <Calendar size={10} />
-                                          <span>{new Date(init.dueDate).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })}</span>
+                                          <span>{new Date(init.endDate).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })}</span>
                                        </div>
                                     ) : (
                                        <span className="text-slate-600">-</span>

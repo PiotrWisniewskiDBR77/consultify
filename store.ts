@@ -65,12 +65,13 @@ const initialFullSession: FullSession = {
     id: '',
     assessment: {
         processes: { actual: 1, target: 1, justification: '', notes: '' },
-        products: { actual: 1, target: 1, justification: '', notes: '' },
-        business_models: { actual: 1, target: 1, justification: '', notes: '' },
-        data: { actual: 1, target: 1, justification: '', notes: '' },
+        digitalProducts: { actual: 1, target: 1, justification: '', notes: '' },
+        businessModels: { actual: 1, target: 1, justification: '', notes: '' },
+        dataManagement: { actual: 1, target: 1, justification: '', notes: '' },
         culture: { actual: 1, target: 1, justification: '', notes: '' },
         cybersecurity: { actual: 1, target: 1, justification: '', notes: '' },
-        ai: { actual: 1, target: 1, justification: '', notes: '' }
+        aiMaturity: { actual: 1, target: 1, justification: '', notes: '' },
+        completedAxes: []
     },
     audits: [],
     roadmap: [],

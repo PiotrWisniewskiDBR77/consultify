@@ -26,24 +26,13 @@ interface Organization {
     user_count: number;
     discount_percent?: number;
 }
-interface SystemUser {
-    id: string;
-    email: string;
-    first_name: string;
-    last_name: string;
-    role: string;
-    status: string;
-    organization_id: string;
-    organization_name?: string;
-    created_at: string;
-    last_login?: string;
-}
+
 
 export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onNavigate }) => {
     const [activeSection, setActiveSection] = useState<SuperAdminSection>('overview');
     const [stats, setStats] = useState({ totalOrgs: 0, totalUsers: 0, revenue: 0, aiCalls: 0, tokens: 0, activeUsers7d: 0 });
     const [organizations, setOrganizations] = useState<Organization[]>([]);
-    const [allUsers, setAllUsers] = useState<SystemUser[]>([]);
+    const [allUsers, setAllUsers] = useState<User[]>([]);
     const [activities, setActivities] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -143,8 +132,8 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
 
     const filteredUsers = allUsers.filter(user =>
         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.last_name?.toLowerCase().includes(searchTerm.toLowerCase())
+        user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.lastName?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     // Render content based on active section
@@ -386,7 +375,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                         ) : (
                             filteredUsers.map(user => (
                                 <tr key={user.id} className="hover:bg-white/5 transition-colors">
-                                    <td className="p-4 font-medium text-white">{user.first_name} {user.last_name}</td>
+                                    <td className="p-4 font-medium text-white">{user.firstName} {user.lastName}</td>
                                     <td className="p-4 text-slate-300">{user.email}</td>
                                     <td className="p-4">
                                         <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${user.role === 'SUPERADMIN' ? 'bg-red-500/20 text-red-400' :
@@ -403,7 +392,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                                         </span>
                                     </td>
                                     <td className="p-4 text-slate-500 text-xs">
-                                        {user.last_login ? new Date(user.last_login).toLocaleString() : 'Never'}
+                                        {user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never'}
                                     </td>
                                 </tr>
                             ))
