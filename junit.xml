@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="37" failures="0" errors="0" time="0.147959958">
+    <testsuite name="tests/unit/backend/aiService.test.js" timestamp="2025-12-11T10:24:51.549Z" hostname="Air-Piotr.lan" tests="37" failures="0" errors="0" skipped="0" time="0.147959958">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; callLLM &gt; should fallback to Gemini (default) when no provider configured" time="0.089706208">
+            <system-out>
+[Database] Using SQLite Adapter
+Using MOCKED DB (No connection)
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; callLLM &gt; should use OpenAI when provider is configured" time="0.001610041">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; callLLM &gt; should handle OpenAI error gracefully" time="0.020163834">
+            <system-err>
+LLM Call Error Error: OpenAI error: Server Error
+    at Object.callLLM [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/aiService.js:192:45[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/aiService.test.js:195:13
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:20
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; callLLM &gt; should use Anthropic when provider is configured" time="0.001285083">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; callLLM &gt; should use Ollama when provider is configured" time="0.00093975">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; callLLM &gt; should use DeepSeek provider" time="0.000730542">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Provider Coverage &gt; should use deepseek provider correctly" time="0.000934583">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Provider Coverage &gt; should use qwen provider correctly" time="0.000770292">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Provider Coverage &gt; should use mistral provider correctly" time="0.000683084">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Provider Coverage &gt; should use anthropic provider correctly" time="0.000650125">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Provider Coverage &gt; should use groq provider correctly" time="0.000630458">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Provider Coverage &gt; should use together provider correctly" time="0.000850334">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Provider Coverage &gt; should use nvidia_nim provider correctly" time="0.0007785">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Provider Coverage &gt; should use zhipu provider correctly" time="0.000678042">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Provider Coverage &gt; should use cohere provider correctly" time="0.000727083">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Provider Coverage &gt; should use ernie provider correctly" time="0.00068975">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Diagnosis Logic &gt; deepDiagnose should run chain of thought and save analytics" time="0.001064833">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Helper Methods &gt; simulateEconomics should delegate to FinancialService and call LLM" time="0.000979291">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Helper Methods &gt; verifyWithWeb should delegate to WebSearchService" time="0.0008135">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Helper Methods &gt; enrichInitiative should use WebSearchService" time="0.000915875">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Helper Methods &gt; enrichInitiative should fallback to LLM if WebSearch fails" time="0.001607292">
+            <system-err>
+Web Search failed, using LLM knowledge Error: Web Fail
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/aiService.test.js:386:69
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:145:11
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:26
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1240:20
+    at new Promise (&lt;anonymous&gt;)
+    at runWithTimeout [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1206:10[90m)[39m
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1650:37
+    at Traces.$ [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/traces.U4xDYhzZ.js:115:27[90m)[39m
+    at trace [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/test.BT8LKgU9.js:239:21[90m)[39m
+    at runTest [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1650:12[90m)[39m
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Helper Methods &gt; validateInitiative should return safe default on error" time="0.001645375">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Helper Methods &gt; extractInsights should parse JSON and save to KnowledgeService" time="0.001262458">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Helper Methods &gt; suggestTasks should parse JSON list tasks" time="0.001348916">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; streamLLM &gt; should yield chunks for Gemini fallback" time="0.001301542">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; streamLLM &gt; should yield chunks for OpenAI stream" time="0.001896791">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; streamLLM &gt; should handle stream errors gracefully" time="0.001628667">
+            <system-err>
+[vitest] The vi.fn() mock did not use &apos;function&apos; or &apos;class&apos; in its implementation, see https://vitest.dev/api/vi#vi-spyon for examples.
+Stream LLM Error TypeError: () =&gt; ({
+                getGenerativeModel: () =&gt; ({
+                    startChat: () =&gt; ({
+                 ...&lt;omitted&gt;...}) is not a constructor
+    at new Mock [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/spy[24m/dist/index.js:262:27[90m)[39m
+    at Object.streamLLM [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/aiService.js:489:31[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/aiService.test.js:490:30
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:20
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; enhancePrompt &gt; should append strategies and context if available" time="0.000994084">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Deep Reasoning Layers &gt; generateInitiatives should parse JSON response" time="0.000882958">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Deep Reasoning Layers &gt; buildRoadmap should return empty object on error" time="0.001116375">
+            <system-err>
+LLM Call Error Error: Fail
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/aiService.test.js:557:59
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:145:11
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:26
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1240:20
+    at new Promise (&lt;anonymous&gt;)
+    at runWithTimeout [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1206:10[90m)[39m
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1650:37
+    at Traces.$ [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/traces.U4xDYhzZ.js:115:27[90m)[39m
+    at trace [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/test.BT8LKgU9.js:239:21[90m)[39m
+    at runTest [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1650:12[90m)[39m
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; testProviderConnection &gt; should return success for OpenAI" time="0.000901125">
+            <system-out>
+[AiService] Testing connection for: openai
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; testProviderConnection &gt; should return success for Google" time="0.000736042">
+            <system-out>
+[AiService] Testing connection for: google
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; testProviderConnection &gt; should return success for Generic Providers (DeepSeek)" time="0.000739834">
+            <system-out>
+[AiService] Testing connection for: deepseek
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; testProviderConnection &gt; should return success for Ollama" time="0.000775667">
+            <system-out>
+[AiService] Testing connection for: ollama
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; testProviderConnection &gt; should handle connection errors gracefully" time="0.001246167">
+            <system-out>
+[AiService] Testing connection for: ollama
+
+            </system-out>
+            <system-err>
+Test connection failed: Error: Network Error
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/aiService.test.js:613:54
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:145:11
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:26
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1240:20
+    at new Promise (&lt;anonymous&gt;)
+    at runWithTimeout [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1206:10[90m)[39m
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1650:37
+    at Traces.$ [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/traces.U4xDYhzZ.js:115:27[90m)[39m
+    at trace [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/test.BT8LKgU9.js:239:21[90m)[39m
+    at runTest [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1650:12[90m)[39m
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Chat &amp; Streams &gt; chat should enhance prompt with context and history" time="0.000982208">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AiService Tests &gt; Chat &amp; Streams &gt; chatStream should delegate to streamLLM" time="0.000936083">
+        </testcase>
+    </testsuite>
+</testsuites>
