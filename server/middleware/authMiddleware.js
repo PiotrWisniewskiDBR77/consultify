@@ -10,7 +10,7 @@ function verifyToken(req, res, next) {
     }
 
     // Remove 'Bearer ' if present
-    const cleanToken = token.startsWith('Bearer ') ? token.slice(7) : token;
+    const cleanToken = token && token.startsWith('Bearer ') ? token.slice(7) : token;
 
     jwt.verify(cleanToken, config.JWT_SECRET, (err, decoded) => {
         if (err) {

@@ -82,7 +82,8 @@ router.post('/chat/stream', async (req, res) => {
 // --- DIAGNOSE ---
 router.post('/diagnose', async (req, res) => {
     try {
-        const { axis, input, userId } = req.body;
+        const { axis, input } = req.body;
+        const userId = req.body.userId || req.user?.id;
         const result = await AiService.diagnose(axis, input, userId);
         res.json(result);
     } catch (error) {
@@ -93,7 +94,8 @@ router.post('/diagnose', async (req, res) => {
 // --- RECOMMEND ---
 router.post('/recommend', async (req, res) => {
     try {
-        const { diagnosisReport, userId } = req.body;
+        const { diagnosisReport } = req.body;
+        const userId = req.body.userId || req.user?.id;
         const initiatives = await AiService.generateInitiatives(diagnosisReport, userId);
         res.json(initiatives);
     } catch (error) {
@@ -104,7 +106,8 @@ router.post('/recommend', async (req, res) => {
 // --- ROADMAP ---
 router.post('/roadmap', async (req, res) => {
     try {
-        const { initiatives, userId } = req.body;
+        const { initiatives } = req.body;
+        const userId = req.body.userId || req.user?.id;
         const roadmap = await AiService.buildRoadmap(initiatives, userId);
         res.json(roadmap);
     } catch (error) {
@@ -115,7 +118,8 @@ router.post('/roadmap', async (req, res) => {
 // --- SIMULATE ---
 router.post('/simulate', async (req, res) => {
     try {
-        const { initiatives, revenue, userId } = req.body;
+        const { initiatives, revenue } = req.body;
+        const userId = req.body.userId || req.user?.id;
         const result = await AiService.simulateEconomics(initiatives, revenue, userId);
         res.json(result);
     } catch (error) {
@@ -126,7 +130,8 @@ router.post('/simulate', async (req, res) => {
 // --- VALIDATE ---
 router.post('/validate', async (req, res) => {
     try {
-        const { initiative, userId } = req.body;
+        const { initiative } = req.body;
+        const userId = req.body.userId || req.user?.id;
         const result = await AiService.validateInitiative(initiative, userId);
         res.json(result);
     } catch (error) {
@@ -137,7 +142,8 @@ router.post('/validate', async (req, res) => {
 // --- SUGGEST TASKS ---
 router.post('/suggest-tasks', async (req, res) => {
     try {
-        const { initiative, userId } = req.body;
+        const { initiative } = req.body;
+        const userId = req.body.userId || req.user?.id;
         const result = await AiService.suggestTasks(initiative, userId);
         res.json(result);
     } catch (error) {
@@ -148,7 +154,8 @@ router.post('/suggest-tasks', async (req, res) => {
 // --- VERIFY (WEB) ---
 router.post('/verify', async (req, res) => {
     try {
-        const { query, userId } = req.body;
+        const { query } = req.body;
+        const userId = req.body.userId || req.user?.id;
         const result = await AiService.verifyWithWeb(query, userId);
         res.json(result);
     } catch (error) {
@@ -159,7 +166,8 @@ router.post('/verify', async (req, res) => {
 // --- EXTRACT INSIGHTS (LEARNING) ---
 router.post('/extract-insight', async (req, res) => {
     try {
-        const { text, source, userId } = req.body;
+        const { text, source } = req.body;
+        const userId = req.body.userId || req.user?.id;
         const result = await AiService.extractInsights(text, source, userId);
         res.json(result || { found: false });
     } catch (error) {
