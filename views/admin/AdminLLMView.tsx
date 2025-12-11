@@ -293,19 +293,24 @@ export const AdminLLMView: React.FC = () => {
                                     <th className="px-6 py-4">Name</th>
                                     <th className="px-6 py-4">Provider</th>
                                     <th className="px-6 py-4">Model ID</th>
+                                    <th className="px-6 py-4">Pricing</th>
                                     <th className="px-6 py-4">Visibility</th>
                                     <th className="px-6 py-4">Status</th>
                                     <th className="px-6 py-4 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
-                                {loading ? <tr><td colSpan={6} className="p-8 text-center">Loading...</td></tr> : providers.map(p => (
+                                {loading ? <tr><td colSpan={8} className="p-8 text-center">Loading...</td></tr> : providers.map(p => (
                                     <tr key={p.id} className="hover:bg-white/5 transition-colors">
                                         <td className="px-6 py-4 font-medium text-white">{p.name}</td>
                                         <td className="px-6 py-4 capitalize">{p.provider}</td>
                                         <td className="px-6 py-4 font-mono text-xs">{p.model_id}</td>
+                                        <td className="px-6 py-4 font-mono text-xs text-slate-400">
+                                            I: ${p.input_cost_per_1k || 0}<br />
+                                            O: ${p.output_cost_per_1k || 0}
+                                        </td>
                                         <td className="px-6 py-4">
-                                            <span className={`px-2 py-1 rounded text-xs ${p.visibility === 'public' ? 'bg-green-500/20 text-green-400' : 'bg-slate-700 text-slate-300'}`}>
+                                            <span className={`px-2 py-1 rounded text-xs ${p.visibility === 'public' ? 'bg-green-500/20 text-green-400' : p.visibility === 'beta' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-slate-700 text-slate-300'}`}>
                                                 {p.visibility}
                                             </span>
                                         </td>
@@ -335,7 +340,7 @@ export const AdminLLMView: React.FC = () => {
                     {/* Modal */}
                     {showModal && (
                         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                            <div className="bg-navy-900 border border-white/10 rounded-xl p-8 w-full max-w-lg shadow-2xl">
+                            <div className="bg-navy-900 border border-white/10 rounded-xl p-8 w-full max-w-lg shadow-2xl overflow-y-auto max-h-[90vh]">
                                 <div className="flex justify-between items-center mb-6">
                                     <h2 className="text-xl font-bold text-white">{editingId ? 'Edit Provider' : 'Add Provider'}</h2>
                                     <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-white"><X size={20} /></button>
@@ -358,17 +363,14 @@ export const AdminLLMView: React.FC = () => {
                                                     <option value="mistral">Mistral AI</option>
                                                     <option value="groq">Groq (Ultra Fast)</option>
                                                     <option value="together">Together AI</option>
-                                                    <option value="nvidia_nim">NVIDIA NIM (LLaMA)</option>
+                                                    <option value="nvidia">NVIDIA NIM</option>
                                                     <option value="ollama">Ollama (Local)</option>
                                                 </optgroup>
                                                 <optgroup label="— Chinese Providers —">
                                                     <option value="deepseek">DeepSeek</option>
                                                     <option value="qwen">Alibaba Qwen</option>
                                                     <option value="ernie">Baidu ERNIE</option>
-                                                    <option value="zhipu">Zhipu AI (ChatGLM)</option>
-                                                </optgroup>
-                                                <optgroup label="— Enterprise —">
-                                                    <option value="cohere">Cohere (RAG)</option>
+                                                    <option value="z_ai">Zhipu AI (GLM)</option>
                                                 </optgroup>
                                                 <optgroup label="— Search / Tools —">
                                                     <option value="tavily">Tavily Search</option>
@@ -393,6 +395,17 @@ export const AdminLLMView: React.FC = () => {
                                         <div>
                                             <label className="block text-xs text-slate-400 mb-1">Endpoint (Optional)</label>
                                             <input value={form.endpoint} onChange={e => setForm({ ...form, endpoint: e.target.value })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" placeholder="https://api..." />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs text-slate-400 mb-1">Input Pricing ($/1k)</label>
+                                            <input type="number" step="0.000001" value={form.input_cost_per_1k || 0} onChange={e => setForm({ ...form, input_cost_per_1k: parseFloat(e.target.value) })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-slate-400 mb-1">Output Pricing ($/1k)</label>
+                                            <input type="number" step="0.000001" value={form.output_cost_per_1k || 0} onChange={e => setForm({ ...form, output_cost_per_1k: parseFloat(e.target.value) })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" />
                                         </div>
                                     </div>
 

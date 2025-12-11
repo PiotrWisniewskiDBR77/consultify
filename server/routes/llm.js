@@ -31,13 +31,21 @@ router.get('/providers', async (req, res) => {
 
 // POST /api/llm/providers
 router.post('/providers', async (req, res) => {
-    const { name, provider, api_key, endpoint, model_id, cost_per_1k, markup_multiplier, is_active, visibility } = req.body;
+    const { name, provider, api_key, endpoint, model_id, cost_per_1k, input_cost_per_1k, output_cost_per_1k, markup_multiplier, is_active, visibility } = req.body;
     try {
         const id = uuidv4();
         await dbRun(`
-            INSERT INTO llm_providers (id, name, provider, api_key, endpoint, model_id, cost_per_1k, markup_multiplier, is_active, visibility)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `, [id, name, provider, api_key, endpoint, model_id, cost_per_1k || 0, markup_multiplier || 1.0, is_active ? 1 : 0, visibility || 'admin']);
+            INSERT INTO llm_providers (id, name, provider, api_key, endpoint, model_id, cost_per_1k, input_cost_per_1k, output_cost_per_1k, markup_multiplier, is_active, visibility)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+            id, name, provider, api_key, endpoint, model_id,
+            cost_per_1k || 0,
+            input_cost_per_1k || 0,
+            output_cost_per_1k || 0,
+            markup_multiplier || 1.0,
+            is_active ? 1 : 0,
+            visibility || 'admin'
+        ]);
 
         res.json({ id, message: 'Provider added' });
     } catch (err) {
@@ -48,14 +56,23 @@ router.post('/providers', async (req, res) => {
 
 // PUT /api/llm/providers/:id
 router.put('/providers/:id', async (req, res) => {
-    const { name, api_key, endpoint, model_id, cost_per_1k, markup_multiplier, is_active, visibility } = req.body;
+    const { name, api_key, endpoint, model_id, cost_per_1k, input_cost_per_1k, output_cost_per_1k, markup_multiplier, is_active, visibility } = req.body;
     const { id } = req.params;
     try {
         await dbRun(`
             UPDATE llm_providers 
-            SET name = ?, api_key = ?, endpoint = ?, model_id = ?, cost_per_1k = ?, markup_multiplier = ?, is_active = ?, visibility = ?
+            SET name = ?, api_key = ?, endpoint = ?, model_id = ?, cost_per_1k = ?, input_cost_per_1k = ?, output_cost_per_1k = ?, markup_multiplier = ?, is_active = ?, visibility = ?
             WHERE id = ?
-        `, [name, api_key, endpoint, model_id, cost_per_1k, markup_multiplier || 1.0, is_active ? 1 : 0, visibility, id]);
+        `, [
+            name, api_key, endpoint, model_id,
+            cost_per_1k,
+            input_cost_per_1k || 0,
+            output_cost_per_1k || 0,
+            markup_multiplier || 1.0,
+            is_active ? 1 : 0,
+            visibility,
+            id
+        ]);
 
         res.json({ message: 'Provider updated' });
     } catch (err) {
