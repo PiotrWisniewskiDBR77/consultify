@@ -17,6 +17,27 @@ quotaProtectedRoutes.forEach(route => {
     router.use(route, enforceTokenQuota);
 });
 
+// --- TEST CONNECTION ---
+router.post('/test-connection', async (req, res) => {
+    try {
+        const config = req.body;
+        // Basic validation
+        if (!config.provider || !config.api_key) {
+            return res.status(400).json({ error: 'Missing provider or API Key' });
+        }
+
+        const result = await AiService.testProviderConnection(config);
+        if (result.success) {
+            res.json(result);
+        } else {
+            res.status(400).json({ error: result.message });
+        }
+    } catch (error) {
+        console.error('Test Connection Error:', error);
+        res.status(500).json({ error: 'Connection test failed' });
+    }
+});
+
 // --- CHAT ---
 router.post('/chat', async (req, res) => {
     try {

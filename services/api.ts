@@ -1,4 +1,4 @@
-import { User, SessionMode, FullSession } from '../types';
+import { User, SessionMode, FullSession, LLMProvider } from '../types';
 
 const API_URL = 'http://127.0.0.1:3005/api';
 
@@ -290,13 +290,25 @@ export const Api = {
         if (!res.ok) throw new Error('Failed to add provider');
     },
 
-    updateLLMProvider: async (id: string, provider: any): Promise<void> => {
-        const res = await fetch(`${API_URL}/llm/providers/${id}`, {
+    updateLLMProvider: async (id: string, data: Partial<LLMProvider>) => {
+        const res = await fetch(`${API_URL}/admin/llm-providers/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(provider)
+            body: JSON.stringify(data)
         });
         if (!res.ok) throw new Error('Failed to update provider');
+        return res.json();
+    },
+
+    testLLMConnection: async (config: Partial<LLMProvider>): Promise<{ success: boolean; message: string; response?: string }> => {
+        const res = await fetch(`${API_URL}/ai/test-connection`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(config)
+        });
+        const data = await res.json();
+        if (!res.ok) return { success: false, message: data.error || 'Connection failed' };
+        return data;
     },
 
     deleteLLMProvider: async (id: string): Promise<void> => {
