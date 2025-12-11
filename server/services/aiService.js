@@ -85,8 +85,11 @@ const AiService = {
                         }
                     });
                 } else {
-                    // No Context - just get default
-                    db.get("SELECT * FROM llm_providers WHERE is_active = 1 LIMIT 1", [], (err, row) => resolve(row));
+                    // No Context - get default system provider
+                    db.get("SELECT * FROM llm_providers WHERE is_active = 1 AND is_default = 1 LIMIT 1", [], (err, defaultRow) => {
+                        if (defaultRow) resolve(defaultRow);
+                        else db.get("SELECT * FROM llm_providers WHERE is_active = 1 LIMIT 1", [], (err, anyRow) => resolve(anyRow));
+                    });
                 }
             });
 
@@ -672,12 +675,100 @@ const AiService = {
             return { confidenceScore: 0, risks: [], recommendations: [] };
         }
     },
-
     // --- VERIFICATION (Web) ---
     verifyWithWeb: async (query, userId) => {
         const result = await WebSearchService.verifyFact(query);
-        AnalyticsService.logUsage(userId, 'verify', 'web-search', 0, 0, 800, query).catch(e => { });
+        // AnalyticsService.logUsage(userId, 'verify', 'web-search', 0, 0, 800, query).catch(e => { });
         return result;
+    },
+
+    testProviderConnection: async (config) => {
+        try {
+            // Create a temporary provider config for testing
+            const testConfig = {
+                ...config,
+                // Ensure cost is 0 for test
+                cost_per_1k: 0
+            };
+
+            console.log('[AiService] Testing connection for:', testConfig.provider);
+
+            // Simple "Hello" prompt to verify connectivity
+            // Wait, callLLM doesn't support explicit config injection easily without refactoring.
+            // Let's modify callLLM to accept an optional config object in the last argument or similar.
+            // Or simpler: implement a lightweight version of call directly here just for testing.
+
+            // Actually, let's implement a direct test function that reuses the logic.
+            // But reuse is hard without refactoring.
+            // Let's look at callLLM signature: (prompt, systemInstruction = "", history = [], providerId = null, userId = null, action = 'chat')
+
+            // To support testing unsaved config, I will add a special "test" action or a new method that accepts config.
+            // Let's implement `testConnection` logic directly here, reusing the switch case for providers.
+
+            let result;
+            const { provider, api_key, model_id, endpoint } = config;
+
+            if (!provider || !api_key) throw new Error("Missing provider or API key");
+
+            if (provider === 'openai') {
+                const OpenAI = require('openai');
+                const openai = new OpenAI({ apiKey: api_key });
+                const completion = await openai.chat.completions.create({
+                    messages: [{ role: "user", content: "Say OK" }],
+                    model: model_id || "gpt-3.5-turbo",
+                    max_tokens: 5
+                });
+                result = completion.choices[0].message.content;
+            } else if (provider === 'google') {
+                const { GoogleGenerativeAI } = require("@google/generative-ai");
+                const genAI = new GoogleGenerativeAI(api_key);
+                const model = genAI.getGenerativeModel({ model: model_id || "gemini-pro" });
+                const resultGen = await model.generateContent("Say OK");
+                result = resultGen.response.text();
+            } else if (['deepseek', 'mistral', 'groq', 'together', 'nvidia_nim', 'qwen', 'ernie', 'zhipu'].includes(provider)) {
+                // Generic OpenAI-compatible
+                const OpenAI = require('openai');
+                let baseURL = endpoint;
+                if (!baseURL) {
+                    // Set default base URLs if missing
+                    if (provider === 'deepseek') baseURL = 'https://api.deepseek.com';
+                    else if (provider === 'mistral') baseURL = 'https://api.mistral.ai/v1';
+                    else if (provider === 'groq') baseURL = 'https://api.groq.com/openai/v1';
+                    else if (provider === 'nvidia_nim') baseURL = 'https://integrate.api.nvidia.com/v1';
+                }
+
+                const client = new OpenAI({ apiKey: api_key, baseURL });
+                const completion = await client.chat.completions.create({
+                    messages: [{ role: "user", content: "Say OK" }],
+                    model: model_id,
+                    max_tokens: 5
+                });
+                result = completion.choices[0].message.content;
+            } else if (provider === 'ollama') {
+                // ... ollama fetch
+                const fetch = require('node-fetch'); // or global fetch
+                const res = await fetch(`${endpoint || 'http://localhost:11434'}/api/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: model_id,
+                        messages: [{ role: 'user', content: 'Say OK' }],
+                        stream: false
+                    })
+                });
+                if (!res.ok) throw new Error(`Ollama Error: ${res.statusText}`);
+                const data = await res.json();
+                result = data.message.content;
+            } else {
+                throw new Error(`Provider ${provider} testing not implemented yet.`);
+            }
+
+            return { success: true, message: "Connection successful!", response: result };
+
+        } catch (error) {
+            console.error("Test connection failed:", error);
+            return { success: false, message: error.message };
+        }
     },
 
     // --- ENRICHMENT (Legacy/Web) ---
