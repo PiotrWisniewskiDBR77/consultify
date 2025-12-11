@@ -14,17 +14,17 @@ test.describe('Project Management', () => {
     test('should create a new project', async ({ page }) => {
         // Navigate to projects (Admin Panel -> Projects)
         // Admin Panel might be auto-expanded
-        if (!(await page.isVisible('nav >> text="Projects"'))) {
-            await page.click('nav >> text="Admin Panel"');
+        if (!(await page.isVisible('text="Admin Panel"'))) {
+            await page.click('text="Admin Panel"');
         }
-        await page.click('nav >> text="Projects"');
+        await page.click('text="Projects"');
 
         // Open "New Project" modal/form
         await page.click('text=New Project');
 
         // Fill modal/form
         const testProjectName = `E2E Test Project ${Date.now()}`;
-        await page.fill('input[name="name"], input[placeholder="Project Name"]', testProjectName);
+        await page.fill('input[placeholder="Enter project name..."]', testProjectName);
 
         // Select status or other required fields if any (assuming defaults work or simple inputs)
         // await page.selectOption('select[name="status"]', 'Planning'); 

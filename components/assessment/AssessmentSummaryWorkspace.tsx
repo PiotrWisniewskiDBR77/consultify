@@ -123,7 +123,7 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
                     <h3 className="font-bold text-purple-200 mb-2">AI Assessment Summary</h3>
                     <div className="text-sm text-slate-300 space-y-2">
                         <p>
-                            Based on your assessment, the biggest transformation gap is in <strong>Data & Analytics ({assessment.dataManagement?.target! - assessment.dataManagement?.actual!} levels)</strong>.
+                            Based on your assessment, the biggest transformation gap is in <strong>Data & Analytics ({(assessment.dataManagement?.target || 0) - (assessment.dataManagement?.actual || 0)} levels)</strong>.
                             Since <strong>Cybersecurity</strong> is also lagging, I recommend treating Data Foundation and Security as a prerequisite before scaling AI initiatives.
                         </p>
                         <p className="text-slate-400 italic">

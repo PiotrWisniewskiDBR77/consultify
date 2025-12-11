@@ -30,7 +30,7 @@ const apiLimiter = rateLimit({
 
 const authLimiter = rateLimit({
     windowMs: 60 * 60 * 1000, // 1 hour
-    max: isProduction ? 10 : 100, // 10 login attempts per hour in production
+    max: isProduction ? 10 : 1000, // 10 login attempts per hour in production, 1000 in dev
     message: { error: 'Too many login attempts, please try again later.' }
 });
 

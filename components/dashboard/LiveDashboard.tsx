@@ -59,7 +59,7 @@ export const LiveDashboard: React.FC<LiveDashboardProps> = ({ session, onNavigat
     ];
 
     // --- 5. AI Insights (Mock/Placeholder logic) ---
-    const aiInsights = {
+    const aiInsights = useMemo(() => ({
         summary: `In this week, the project progressed by ${Math.floor(Math.random() * 5) + 1}%.The biggest risk identified is the delay in the Data Foundation workstream.`,
         actions: [
             "Strengthen the Process Owner role in Automation Workstream.",
@@ -67,7 +67,7 @@ export const LiveDashboard: React.FC<LiveDashboardProps> = ({ session, onNavigat
             "Schedule Cultural Workshop for middle management."
         ],
         risk: "Potential delay in AI User Training rollout due to resource constraints in Q3."
-    };
+    }), []);
 
     return (
         <div className="max-w-7xl mx-auto space-y-6 animate-fade-in pb-12">

@@ -165,7 +165,7 @@ export const Sidebar: React.FC = () => {
   // Auto-expand sidebar based on currentView
   useEffect(() => {
     if (isSidebarCollapsed) {
-      setExpandedItems([]);
+      setTimeout(() => setExpandedItems([]), 0);
       return;
     }
     const allItems = [...menuStructure, ...(currentUser?.role === UserRole.ADMIN ? [adminMenuItem] : [])];

@@ -54,8 +54,23 @@ export const AdminLLMView: React.FC = () => {
     };
 
     useEffect(() => {
-        loadProviders();
-        loadPrompts();
+        const initLLMData = async () => {
+            try {
+                const data = await Api.getLLMProviders();
+                setProviders(data);
+                setLoading(false);
+            } catch (err) {
+                toast.error('Failed to load providers');
+                setLoading(false);
+            }
+            try {
+                const promptsData = await Api.aiGetSystemPrompts();
+                setPrompts(promptsData);
+            } catch (e) {
+                console.error(e);
+            }
+        };
+        initLLMData();
     }, []);
 
     const testOllamaConnection = async () => {

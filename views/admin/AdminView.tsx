@@ -65,8 +65,16 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate, l
     };
 
     useEffect(() => {
-        loadUsers();
-        loadProjects();
+        const initData = async () => {
+            try {
+                const [u, p] = await Promise.all([Api.getUsers(), Api.getProjects()]);
+                setUsers(u);
+                setProjects(p);
+            } catch (e) {
+                console.error('Failed to load initial admin data', e);
+            }
+        };
+        initData();
     }, []);
 
     const handleDeleteUser = async (id: string) => {

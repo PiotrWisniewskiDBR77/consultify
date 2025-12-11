@@ -21,16 +21,25 @@ test.describe('Navigation Smoke Test', () => {
 
     for (const pageInfo of pages) {
         test(`should navigate to ${pageInfo.name}`, async ({ page }) => {
+            // Dictionary of special locations for items not in the main <nav>
+            const locationMap: Record<string, string> = {
+                'Admin Panel': 'text="Admin Panel"',
+                'Projects': 'text="Projects"',
+                'Settings': 'text="Settings"'
+            };
+
             // Expand parent if needed and not already visible
             if (pageInfo.parent) {
-                const linkSelector = `nav >> text="${pageInfo.link}"`;
+                const parentSelector = locationMap[pageInfo.parent] || `nav >> text="${pageInfo.parent}"`;
+                const linkSelector = locationMap[pageInfo.link] || `nav >> text="${pageInfo.link}"`;
+
                 if (!(await page.isVisible(linkSelector))) {
-                    await page.click(`nav >> text="${pageInfo.parent}"`);
+                    await page.click(parentSelector);
                 }
             }
 
-            // Click the actual link (Settings is outside nav)
-            const selector = pageInfo.name === 'Settings' ? `text="${pageInfo.link}"` : `nav >> text="${pageInfo.link}"`;
+            // Click the actual link
+            const selector = locationMap[pageInfo.link] || `nav >> text="${pageInfo.link}"`;
             await page.click(selector);
 
             // Verify main header or content exists
