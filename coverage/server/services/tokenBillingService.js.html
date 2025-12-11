@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">4.31% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/136</span>
+                <span class='fraction'>6/139</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">2.04% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/96</span>
+                <span class='fraction'>2/98</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">37.03% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/54</span>
+                <span class='fraction'>20/54</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">5.4% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/108</span>
+                <span class='fraction'>6/111</span>
             </div>
         
             
@@ -322,7 +322,16 @@
 <a name='L257'></a><a href='#L257'>257</a>
 <a name='L258'></a><a href='#L258'>258</a>
 <a name='L259'></a><a href='#L259'>259</a>
-<a name='L260'></a><a href='#L260'>260</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L260'></a><a href='#L260'>260</a>
+<a name='L261'></a><a href='#L261'>261</a>
+<a name='L262'></a><a href='#L262'>262</a>
+<a name='L263'></a><a href='#L263'>263</a>
+<a name='L264'></a><a href='#L264'>264</a>
+<a name='L265'></a><a href='#L265'>265</a>
+<a name='L266'></a><a href='#L266'>266</a>
+<a name='L267'></a><a href='#L267'>267</a>
+<a name='L268'></a><a href='#L268'>268</a>
+<a name='L269'></a><a href='#L269'>269</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -331,13 +340,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -459,7 +468,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -476,10 +489,15 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -580,7 +598,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * Token Billing Service
  * 
@@ -590,20 +608,20 @@
  * 3. Local Tokens - Self-hosted LLMs with minimal fee
  */
 &nbsp;
-const db = <span class="cstat-no" title="statement not covered" >require('../database');</span>
-const { v4: uuidv4 } = <span class="cstat-no" title="statement not covered" >require('uuid');</span>
-const crypto = <span class="cstat-no" title="statement not covered" >require('crypto');</span>
+const db = require('../database');
+const { v4: uuidv4 } = require('uuid');
+const crypto = require('crypto');
 &nbsp;
 // Encryption key for API keys (should be in env)
-const ENCRYPTION_KEY = <span class="cstat-no" title="statement not covered" >process.env.API_KEY_ENCRYPTION_SECRET || 'default-32-char-key-for-dev-only!';</span>
-const IV_LENGTH = <span class="cstat-no" title="statement not covered" >16;</span>
+const ENCRYPTION_KEY = process.env.API_KEY_ENCRYPTION_SECRET || 'default-32-char-key-for-dev-only!';
+const IV_LENGTH = 16;
 &nbsp;
 class TokenBillingService {
     // ==========================================
     // MARGIN MANAGEMENT
     // ==========================================
 &nbsp;
-    static async <span class="fstat-no" title="function not covered" >getMargins(</span>) {
+    static async getMargins() {
 <span class="cstat-no" title="statement not covered" >        return new Promise(<span class="fstat-no" title="function not covered" >(r</span>esolve, reject) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >            db.all('SELECT * FROM billing_margins ORDER BY source_type', [], <span class="fstat-no" title="function not covered" >(e</span>rr, rows) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >                if (err) <span class="cstat-no" title="statement not covered" >reject(err);</span></span>
@@ -612,7 +630,7 @@ class TokenBillingService {
         });
     }
 &nbsp;
-    static async <span class="fstat-no" title="function not covered" >getMargin(</span>sourceType) {
+    static async getMargin(sourceType) {
 <span class="cstat-no" title="statement not covered" >        return new Promise(<span class="fstat-no" title="function not covered" >(r</span>esolve, reject) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >            db.get('SELECT * FROM billing_margins WHERE source_type = ?', [sourceType], <span class="fstat-no" title="function not covered" >(e</span>rr, row) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >                if (err) <span class="cstat-no" title="statement not covered" >reject(err);</span></span>
@@ -621,7 +639,7 @@ class TokenBillingService {
         });
     }
 &nbsp;
-    static async <span class="fstat-no" title="function not covered" >updateMargin(</span>sourceType, { baseCostPer1k, marginPercent, minCharge, isActive }) {
+    static async updateMargin(sourceType, { baseCostPer1k, marginPercent, minCharge, isActive }) {
 <span class="cstat-no" title="statement not covered" >        return new Promise(<span class="fstat-no" title="function not covered" >(r</span>esolve, reject) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >            db.run(</span>
                 `UPDATE billing_margins 
@@ -644,7 +662,7 @@ class TokenBillingService {
     // TOKEN PACKAGES
     // ==========================================
 &nbsp;
-    static async <span class="fstat-no" title="function not covered" >getPackages(</span>) {
+    static async getPackages() {
 <span class="cstat-no" title="statement not covered" >        return new Promise(<span class="fstat-no" title="function not covered" >(r</span>esolve, reject) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >            db.all('SELECT * FROM token_packages WHERE is_active = 1 ORDER BY sort_order', [], <span class="fstat-no" title="function not covered" >(e</span>rr, rows) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >                if (err) <span class="cstat-no" title="statement not covered" >reject(err);</span></span>
@@ -653,7 +671,7 @@ class TokenBillingService {
         });
     }
 &nbsp;
-    static async <span class="fstat-no" title="function not covered" >getPackage(</span>packageId) {
+    static async getPackage(packageId) {
 <span class="cstat-no" title="statement not covered" >        return new Promise(<span class="fstat-no" title="function not covered" >(r</span>esolve, reject) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >            db.get('SELECT * FROM token_packages WHERE id = ?', [packageId], <span class="fstat-no" title="function not covered" >(e</span>rr, row) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >                if (err) <span class="cstat-no" title="statement not covered" >reject(err);</span></span>
@@ -662,7 +680,7 @@ class TokenBillingService {
         });
     }
 &nbsp;
-    static async <span class="fstat-no" title="function not covered" >upsertPackage(</span>{ id, name, description, tokens, priceUsd, bonusPercent, isPopular, sortOrder, stripePriceId }) {
+    static async upsertPackage({ id, name, description, tokens, priceUsd, bonusPercent, isPopular, sortOrder, stripePriceId }) {
         const packageId = <span class="cstat-no" title="statement not covered" >id || `pkg-${uuidv4().slice(0, 8)}`;</span>
 <span class="cstat-no" title="statement not covered" >        return new Promise(<span class="fstat-no" title="function not covered" >(r</span>esolve, reject) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >            db.run(</span>
@@ -685,7 +703,7 @@ class TokenBillingService {
     // USER BALANCE
     // ==========================================
 &nbsp;
-    static async <span class="fstat-no" title="function not covered" >getBalance(</span>userId) {
+    static async getBalance(userId) {
 <span class="cstat-no" title="statement not covered" >        return new Promise(<span class="fstat-no" title="function not covered" >(r</span>esolve, reject) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >            db.get('SELECT * FROM user_token_balance WHERE user_id = ?', [userId], <span class="fstat-no" title="function not covered" >(e</span>rr, row) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >                if (err) <span class="cstat-no" title="statement not covered" >reject(err);</span></span>
@@ -694,7 +712,7 @@ class TokenBillingService {
         });
     }
 &nbsp;
-    static async <span class="fstat-no" title="function not covered" >ensureBalance(</span>userId) {
+    static async ensureBalance(userId) {
 <span class="cstat-no" title="statement not covered" >        return new Promise(<span class="fstat-no" title="function not covered" >(r</span>esolve, reject) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >            db.run(`INSERT OR IGNORE INTO user_token_balance (user_id) VALUES (?)`, [userId], <span class="fstat-no" title="function not covered" >function </span>(err) {</span>
 <span class="cstat-no" title="statement not covered" >                if (err) <span class="cstat-no" title="statement not covered" >reject(err);</span></span>
@@ -703,7 +721,7 @@ class TokenBillingService {
         });
     }
 &nbsp;
-    static async <span class="fstat-no" title="function not covered" >creditTokens(</span>userId, tokens, bonusTokens = <span class="branch-0 cbranch-no" title="branch not covered" >0,</span> { packageId, stripePaymentId, organizationId } = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span> {
+    static async creditTokens(userId, tokens, bonusTokens = <span class="branch-0 cbranch-no" title="branch not covered" >0,</span> { packageId, stripePaymentId, organizationId } = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span> {
 <span class="cstat-no" title="statement not covered" >        await this.ensureBalance(userId);</span>
 <span class="cstat-no" title="statement not covered" >        return new Promise(<span class="fstat-no" title="function not covered" >(r</span>esolve, reject) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >            db.serialize(<span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
@@ -717,17 +735,21 @@ class TokenBillingService {
         });
     }
 &nbsp;
-    static async <span class="fstat-no" title="function not covered" >deductTokens(</span>userId, tokens, sourceType, { organizationId, llmProvider, modelUsed } = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span> {
+    static async deductTokens(userId, tokens, sourceType, { organizationId, llmProvider, modelUsed, multiplier } = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span> {
 <span class="cstat-no" title="statement not covered" >        await this.ensureBalance(userId);</span>
         const margin = <span class="cstat-no" title="statement not covered" >await this.getMargin(sourceType);</span>
 <span class="cstat-no" title="statement not covered" >        if (!margin) <span class="cstat-no" title="statement not covered" >throw new Error(`Unknown source type: ${sourceType}`);</span></span>
 &nbsp;
+        // Apply Markup Multiplier (Default 1.0)
+        const finalMultiplier = <span class="cstat-no" title="statement not covered" >multiplier || 1.0;</span>
+        const billedTokens = <span class="cstat-no" title="statement not covered" >Math.ceil(tokens * finalMultiplier);</span>
+&nbsp;
         let marginUsd = <span class="cstat-no" title="statement not covered" >0;</span>
 <span class="cstat-no" title="statement not covered" >        if (sourceType === 'platform') {</span>
-            const baseCost = <span class="cstat-no" title="statement not covered" >(tokens / 1000) * (margin.base_cost_per_1k || 0);</span>
+            const baseCost = <span class="cstat-no" title="statement not covered" >(billedTokens / 1000) * (margin.base_cost_per_1k || 0);</span>
 <span class="cstat-no" title="statement not covered" >            marginUsd = baseCost * (margin.margin_percent / 100);</span>
         } else {
-            const estimatedValue = <span class="cstat-no" title="statement not covered" >(tokens / 1000) * 0.01;</span>
+            const estimatedValue = <span class="cstat-no" title="statement not covered" >(billedTokens / 1000) * 0.01;</span>
 <span class="cstat-no" title="statement not covered" >            marginUsd = estimatedValue * (margin.margin_percent / 100);</span>
         }
 <span class="cstat-no" title="statement not covered" >        marginUsd = Math.max(marginUsd, margin.min_charge || 0);</span>
@@ -735,18 +757,23 @@ class TokenBillingService {
 <span class="cstat-no" title="statement not covered" >        return new Promise(<span class="fstat-no" title="function not covered" >(r</span>esolve, reject) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >            db.serialize(<span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
                 const field = <span class="cstat-no" title="statement not covered" >sourceType === 'platform' ? 'platform_tokens' : sourceType === 'byok' ? 'byok_usage_tokens' : 'local_usage_tokens';</span>
+                // Deduct BILLED tokens, not raw tokens
                 const op = <span class="cstat-no" title="statement not covered" >sourceType === 'platform' ? `${field} = MAX(0, ${field} - ?)` : `${field} = ${field} + ?`;</span>
-<span class="cstat-no" title="statement not covered" >                db.run(`UPDATE user_token_balance SET ${op}, lifetime_used = lifetime_used + ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?`, [tokens, tokens, userId]);</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >                db.run(`UPDATE user_token_balance SET ${op}, lifetime_used = lifetime_used + ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?`,</span>
+                    [billedTokens, billedTokens, userId]);
 &nbsp;
                 const txId = <span class="cstat-no" title="statement not covered" >`tx-${uuidv4()}`;</span>
-<span class="cstat-no" title="statement not covered" >                db.run(`INSERT INTO token_transactions (id, user_id, organization_id, type, source_type, tokens, margin_usd, net_revenue_usd, llm_provider, model_used, description) VALUES (?, ?, ?, 'usage', ?, ?, ?, ?, ?, ?, ?)`,</span>
-                    [txId, userId, organizationId, sourceType, -tokens, marginUsd, marginUsd, llmProvider, modelUsed, `Used ${tokens} tokens via ${sourceType}`],
-<span class="fstat-no" title="function not covered" >                    function </span>(err) { <span class="cstat-no" title="statement not covered" >if (err) <span class="cstat-no" title="statement not covered" >reject(err); </span>else <span class="cstat-no" title="statement not covered" >resolve({ transactionId: txId, tokens, marginUsd }); </span></span>});
+                const metadata = <span class="cstat-no" title="statement not covered" >JSON.stringify({ raw_tokens: tokens, multiplier: finalMultiplier });</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >                db.run(`INSERT INTO token_transactions (id, user_id, organization_id, type, source_type, tokens, margin_usd, net_revenue_usd, llm_provider, model_used, description, metadata) VALUES (?, ?, ?, 'usage', ?, ?, ?, ?, ?, ?, ?, ?)`,</span>
+                    [txId, userId, organizationId, sourceType, -billedTokens, marginUsd, marginUsd, llmProvider, modelUsed, `Used ${tokens} tokens (x${finalMultiplier}) via ${sourceType}`, metadata],
+<span class="fstat-no" title="function not covered" >                    function </span>(err) { <span class="cstat-no" title="statement not covered" >if (err) <span class="cstat-no" title="statement not covered" >reject(err); </span>else <span class="cstat-no" title="statement not covered" >resolve({ transactionId: txId, tokens: billedTokens, marginUsd }); </span></span>});
             });
         });
     }
 &nbsp;
-    static async <span class="fstat-no" title="function not covered" >hasSufficientBalance(</span>userId, requiredTokens) {
+    static async hasSufficientBalance(userId, requiredTokens) {
         const balance = <span class="cstat-no" title="statement not covered" >await this.getBalance(userId);</span>
 <span class="cstat-no" title="statement not covered" >        return (balance.platform_tokens || 0) + (balance.platform_tokens_bonus || 0) &gt;= requiredTokens;</span>
     }
@@ -755,7 +782,7 @@ class TokenBillingService {
     // USER API KEYS (BYOK)
     // ==========================================
 &nbsp;
-    static <span class="fstat-no" title="function not covered" >encryptApiKey(</span>apiKey) {
+    static encryptApiKey(apiKey) {
         const iv = <span class="cstat-no" title="statement not covered" >crypto.randomBytes(IV_LENGTH);</span>
         const key = <span class="cstat-no" title="statement not covered" >crypto.scryptSync(ENCRYPTION_KEY, 'salt', 32);</span>
         const cipher = <span class="cstat-no" title="statement not covered" >crypto.createCipheriv('aes-256-cbc', key, iv);</span>
@@ -764,7 +791,7 @@ class TokenBillingService {
 <span class="cstat-no" title="statement not covered" >        return iv.toString('hex') + ':' + encrypted;</span>
     }
 &nbsp;
-    static <span class="fstat-no" title="function not covered" >decryptApiKey(</span>encryptedKey) {
+    static decryptApiKey(encryptedKey) {
         const [ivHex, encrypted] = <span class="cstat-no" title="statement not covered" >encryptedKey.split(':');</span>
         const iv = <span class="cstat-no" title="statement not covered" >Buffer.from(ivHex, 'hex');</span>
         const key = <span class="cstat-no" title="statement not covered" >crypto.scryptSync(ENCRYPTION_KEY, 'salt', 32);</span>
@@ -774,7 +801,7 @@ class TokenBillingService {
 <span class="cstat-no" title="statement not covered" >        return decrypted;</span>
     }
 &nbsp;
-    static async <span class="fstat-no" title="function not covered" >addUserApiKey(</span>userId, { provider, apiKey, displayName, modelPreference, organizationId }) {
+    static async addUserApiKey(userId, { provider, apiKey, displayName, modelPreference, organizationId }) {
         const id = <span class="cstat-no" title="statement not covered" >`uak-${uuidv4()}`;</span>
         const encryptedKey = <span class="cstat-no" title="statement not covered" >this.encryptApiKey(apiKey);</span>
 <span class="cstat-no" title="statement not covered" >        return new Promise(<span class="fstat-no" title="function not covered" >(r</span>esolve, reject) =&gt; {</span>
@@ -784,14 +811,14 @@ class TokenBillingService {
         });
     }
 &nbsp;
-    static async <span class="fstat-no" title="function not covered" >getUserApiKeys(</span>userId) {
+    static async getUserApiKeys(userId) {
 <span class="cstat-no" title="statement not covered" >        return new Promise(<span class="fstat-no" title="function not covered" >(r</span>esolve, reject) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >            db.all(`SELECT id, user_id, provider, display_name, model_preference, is_active, is_default, usage_count, last_used_at, created_at FROM user_api_keys WHERE user_id = ? ORDER BY is_default DESC, created_at`, [userId],</span>
 <span class="fstat-no" title="function not covered" >                (e</span>rr, rows) =&gt; { <span class="cstat-no" title="statement not covered" >if (err) <span class="cstat-no" title="statement not covered" >reject(err); </span>else <span class="cstat-no" title="statement not covered" >resolve(rows || []); </span></span>});
         });
     }
 &nbsp;
-    static async <span class="fstat-no" title="function not covered" >getActiveByokKey(</span>userId, provider) {
+    static async getActiveByokKey(userId, provider) {
 <span class="cstat-no" title="statement not covered" >        return new Promise(<span class="fstat-no" title="function not covered" >(r</span>esolve, reject) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >            db.get(`SELECT * FROM user_api_keys WHERE user_id = ? AND provider = ? AND is_active = 1 ORDER BY is_default DESC LIMIT 1`, [userId, provider],</span>
 <span class="fstat-no" title="function not covered" >                (e</span>rr, row) =&gt; {
@@ -802,7 +829,7 @@ class TokenBillingService {
         });
     }
 &nbsp;
-    static async <span class="fstat-no" title="function not covered" >deleteUserApiKey(</span>keyId, userId) {
+    static async deleteUserApiKey(keyId, userId) {
 <span class="cstat-no" title="statement not covered" >        return new Promise(<span class="fstat-no" title="function not covered" >(r</span>esolve, reject) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >            db.run('DELETE FROM user_api_keys WHERE id = ? AND user_id = ?', [keyId, userId],</span>
 <span class="fstat-no" title="function not covered" >                function </span>(err) { <span class="cstat-no" title="statement not covered" >if (err) <span class="cstat-no" title="statement not covered" >reject(err); </span>else <span class="cstat-no" title="statement not covered" >resolve({ deleted: this.changes &gt; 0 }); </span></span>});
@@ -813,14 +840,14 @@ class TokenBillingService {
     // TRANSACTIONS &amp; ANALYTICS
     // ==========================================
 &nbsp;
-    static async <span class="fstat-no" title="function not covered" >getTransactions(</span>userId, { limit = <span class="branch-0 cbranch-no" title="branch not covered" >50,</span> offset = <span class="branch-0 cbranch-no" title="branch not covered" >0 </span>} = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span> {
+    static async getTransactions(userId, { limit = <span class="branch-0 cbranch-no" title="branch not covered" >50,</span> offset = <span class="branch-0 cbranch-no" title="branch not covered" >0 </span>} = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span> {
 <span class="cstat-no" title="statement not covered" >        return new Promise(<span class="fstat-no" title="function not covered" >(r</span>esolve, reject) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >            db.all('SELECT * FROM token_transactions WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?', [userId, limit, offset],</span>
 <span class="fstat-no" title="function not covered" >                (e</span>rr, rows) =&gt; { <span class="cstat-no" title="statement not covered" >if (err) <span class="cstat-no" title="statement not covered" >reject(err); </span>else <span class="cstat-no" title="statement not covered" >resolve(rows || []); </span></span>});
         });
     }
 &nbsp;
-    static async <span class="fstat-no" title="function not covered" >getRevenueAnalytics(</span>{ startDate, endDate } = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span> {
+    static async getRevenueAnalytics({ startDate, endDate } = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span> {
         const start = <span class="cstat-no" title="statement not covered" >startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();</span>
         const end = <span class="cstat-no" title="statement not covered" >endDate || new Date().toISOString();</span>
 <span class="cstat-no" title="statement not covered" >        return new Promise(<span class="fstat-no" title="function not covered" >(r</span>esolve, reject) =&gt; {</span>
@@ -829,7 +856,7 @@ class TokenBillingService {
         });
     }
 &nbsp;
-    static async <span class="fstat-no" title="function not covered" >determineTokenSource(</span>userId, preferredProvider = <span class="branch-0 cbranch-no" title="branch not covered" >null)</span> {
+    static async determineTokenSource(userId, preferredProvider = <span class="branch-0 cbranch-no" title="branch not covered" >null)</span> {
 <span class="cstat-no" title="statement not covered" >        if (preferredProvider) {</span>
             const byokKey = <span class="cstat-no" title="statement not covered" >await this.getActiveByokKey(userId, preferredProvider);</span>
 <span class="cstat-no" title="statement not covered" >            if (byokKey) <span class="cstat-no" title="statement not covered" >return { sourceType: 'byok', config: byokKey };</span></span>
@@ -839,7 +866,7 @@ class TokenBillingService {
     }
 }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >module.exports = TokenBillingService;</span>
+module.exports = TokenBillingService;
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -847,7 +874,7 @@ class TokenBillingService {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-12-10T21:00:00.580Z
+                at 2025-12-11T10:08:27.818Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

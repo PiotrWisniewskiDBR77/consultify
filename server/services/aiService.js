@@ -6,8 +6,22 @@ const WebSearchService = require('./webSearchService');
 const AnalyticsService = require('./analyticsService');
 const FeedbackService = require('./feedbackService');
 const TokenBillingService = require('./tokenBillingService');
+const KnowledgeService = require('./knowledgeService');
 const fs = require('fs');
 const path = require('path');
+
+// DEPENDENCY INJECTION CONTAINER
+const deps = {
+    db,
+    TokenBillingService,
+    AnalyticsService,
+    GoogleGenerativeAI,
+    RagService,
+    FinancialService,
+    WebSearchService,
+    FeedbackService,
+    KnowledgeService
+};
 
 // Load DRD Data once at startup (caching the definitions)
 const DRD_DATA_PATH = path.join(__dirname, '../../drd_data.json');
@@ -46,7 +60,7 @@ const FALLBACK_ROLES = {
 // Helper: Get System Prompt from DB or Fallback
 const getSystemPrompt = async (roleKey) => {
     return new Promise((resolve) => {
-        db.get("SELECT content FROM system_prompts WHERE key = ?", [roleKey], (err, row) => {
+        deps.db.get("SELECT content FROM system_prompts WHERE key = ?", [roleKey], (err, row) => {
             if (row && row.content) resolve(row.content);
             else resolve(FALLBACK_ROLES[roleKey] || FALLBACK_ROLES.CONSULTANT);
         });
@@ -54,6 +68,11 @@ const getSystemPrompt = async (roleKey) => {
 };
 
 const AiService = {
+    // For Testing: Allow overriding dependencies
+    setDependencies: (newDeps) => {
+        Object.assign(deps, newDeps);
+    },
+
     // --- CORE LLM INTERACTION ---
     callLLM: async (prompt, systemInstruction = "", history = [], providerId = null, userId = null, action = 'chat') => {
         const startTime = Date.now();
@@ -63,7 +82,7 @@ const AiService = {
             // 1. Get Provider
             const getProvider = () => new Promise((resolve) => {
                 if (providerId) {
-                    db.get("SELECT * FROM llm_providers WHERE id = ?", [providerId], (err, row) => resolve(row));
+                    deps.db.get("SELECT * FROM llm_providers WHERE id = ?", [providerId], (err, row) => resolve(row));
                 } else if (userId) {
                     // Check Organization Preference
                     const query = `
@@ -73,39 +92,55 @@ const AiService = {
                         JOIN users u ON u.organization_id = o.id
                         WHERE u.id = ? AND p.is_active = 1
                     `;
-                    db.get(query, [userId], (err, row) => {
+                    deps.db.get(query, [userId], (err, row) => {
                         if (row) {
                             resolve(row);
                         } else {
                             // Fallback to default system provider (first active one)
-                            db.get("SELECT * FROM llm_providers WHERE is_active = 1 AND is_default = 1 LIMIT 1", [], (err, defaultRow) => {
+                            deps.db.get("SELECT * FROM llm_providers WHERE is_active = 1 AND is_default = 1 LIMIT 1", [], (err, defaultRow) => {
                                 if (defaultRow) resolve(defaultRow);
-                                else db.get("SELECT * FROM llm_providers WHERE is_active = 1 LIMIT 1", [], (err, anyRow) => resolve(anyRow));
+                                else deps.db.get("SELECT * FROM llm_providers WHERE is_active = 1 LIMIT 1", [], (err, anyRow) => resolve(anyRow));
                             });
                         }
                     });
                 } else {
                     // No Context - get default system provider
-                    db.get("SELECT * FROM llm_providers WHERE is_active = 1 AND is_default = 1 LIMIT 1", [], (err, defaultRow) => {
+                    deps.db.get("SELECT * FROM llm_providers WHERE is_active = 1 AND is_default = 1 LIMIT 1", [], (err, defaultRow) => {
                         if (defaultRow) resolve(defaultRow);
-                        else db.get("SELECT * FROM llm_providers WHERE is_active = 1 LIMIT 1", [], (err, anyRow) => resolve(anyRow));
+                        else deps.db.get("SELECT * FROM llm_providers WHERE is_active = 1 LIMIT 1", [], (err, anyRow) => resolve(anyRow));
                     });
                 }
             });
 
             const providerConfig = await getProvider();
+
+            // STRICT BLOCKING: Check Balance
+            const multiplier = providerConfig?.markup_multiplier || 1.0;
+            const sourceType = providerConfig ? (providerConfig.provider === 'ollama' ? 'local' : 'platform') : 'platform';
+
+            // Allow small buffer (100 tokens) to start request
+            if (sourceType === 'platform') {
+                const minTokens = Math.ceil(100 * multiplier);
+                const hasBalance = await deps.TokenBillingService.hasSufficientBalance(userId, minTokens);
+                if (!hasBalance) {
+                    // Log failed attempt?
+                    console.warn(`[AiService] Blocked user ${userId} due to insufficient balance.`);
+                    throw new Error("Insufficient token balance. Please top up your wallet to continue using AI features.");
+                }
+            }
+
             let responseText = '';
 
             if (!providerConfig) {
                 // Fallback: GeminiEnv
                 const fallbackKey = process.env.GEMINI_API_KEY;
+
                 if (!fallbackKey || fallbackKey === 'YOUR_GEMINI_API_KEY_HERE') throw new Error("AI Provider not configured.");
 
                 modelUsed = 'gemini-pro (fallback)';
-                const genAI = new GoogleGenerativeAI(fallbackKey);
+                const genAI = new deps.GoogleGenerativeAI(fallbackKey);
                 const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
-                // Proper System Instruction for Gemini
                 // Proper System Instruction for Gemini
                 const chatSession = model.startChat({
                     history: history.map(h => ({
@@ -360,7 +395,7 @@ const AiService = {
                 }
                 else {
                     // Google Gemini (Configured) - Default
-                    const genAI = new GoogleGenerativeAI(api_key);
+                    const genAI = new deps.GoogleGenerativeAI(api_key);
                     const model = genAI.getGenerativeModel({ model: model_id || "gemini-pro" });
 
                     const chatSession = model.startChat({
@@ -377,19 +412,21 @@ const AiService = {
             }
 
             // Analytics Log
+            // Analytics Log
             const latency = Date.now() - startTime;
             const inputTokens = (prompt.length + systemInstruction.length) / 4;
             const outputTokens = responseText.length / 4;
             const totalTokens = Math.round(inputTokens) + Math.round(outputTokens);
-            AnalyticsService.logUsage(userId, action, modelUsed, Math.round(inputTokens), Math.round(outputTokens), latency)
+            deps.AnalyticsService.logUsage(userId, action, modelUsed, Math.round(inputTokens), Math.round(outputTokens), latency)
                 .catch(err => console.error("Analytics Log Error", err));
 
             // Token Billing - Track usage
-            const sourceType = providerConfig ? (providerConfig.provider === 'ollama' ? 'local' : 'platform') : 'platform';
-            TokenBillingService.deductTokens(userId, totalTokens, sourceType, {
+            const sourceTypeFinal = providerConfig ? (providerConfig.provider === 'ollama' ? 'local' : 'platform') : 'platform';
+            deps.TokenBillingService.deductTokens(userId, totalTokens, sourceTypeFinal, {
                 organizationId: null,
                 llmProvider: providerConfig?.provider || 'gemini',
-                modelUsed: modelUsed
+                modelUsed: modelUsed,
+                multiplier: providerConfig?.markup_multiplier || 1.0
             }).catch(err => console.error("Token Billing Error", err));
 
             return responseText;
@@ -409,7 +446,7 @@ const AiService = {
             // 1. Get Provider (Reusing logic - ideally refactor into helper but duplicating for safety in this edit)
             const getProvider = () => new Promise((resolve) => {
                 if (providerId) {
-                    db.get("SELECT * FROM llm_providers WHERE id = ?", [providerId], (err, row) => resolve(row));
+                    deps.db.get("SELECT * FROM llm_providers WHERE id = ?", [providerId], (err, row) => resolve(row));
                 } else if (userId) {
                     const query = `
                         SELECT p.* 
@@ -418,16 +455,28 @@ const AiService = {
                         JOIN users u ON u.organization_id = o.id
                         WHERE u.id = ? AND p.is_active = 1
                     `;
-                    db.get(query, [userId], (err, row) => {
+                    deps.db.get(query, [userId], (err, row) => {
                         if (row) resolve(row);
-                        else db.get("SELECT * FROM llm_providers WHERE is_active = 1 LIMIT 1", [], (err, row) => resolve(row));
+                        else deps.db.get("SELECT * FROM llm_providers WHERE is_active = 1 LIMIT 1", [], (err, row) => resolve(row));
                     });
                 } else {
-                    db.get("SELECT * FROM llm_providers WHERE is_active = 1 LIMIT 1", [], (err, row) => resolve(row));
+                    deps.db.get("SELECT * FROM llm_providers WHERE is_active = 1 LIMIT 1", [], (err, row) => resolve(row));
                 }
             });
 
             const providerConfig = await getProvider();
+
+            // STRICT BLOCKING: Check Balance
+            const multiplier = providerConfig?.markup_multiplier || 1.0;
+            const sourceType = providerConfig ? (providerConfig.provider === 'ollama' ? 'local' : 'platform') : 'platform';
+
+            if (sourceType === 'platform') {
+                const minTokens = Math.ceil(100 * multiplier);
+                const hasBalance = await deps.TokenBillingService.hasSufficientBalance(userId, minTokens);
+                if (!hasBalance) {
+                    throw new Error("Insufficient token balance. Please top up.");
+                }
+            }
 
             if (!providerConfig) {
                 // Fallback: GeminiEnv
@@ -435,7 +484,7 @@ const AiService = {
                 if (!fallbackKey || fallbackKey === 'YOUR_GEMINI_API_KEY_HERE') throw new Error("AI Provider not configured.");
 
                 modelUsed = 'gemini-pro (fallback)';
-                const genAI = new GoogleGenerativeAI(fallbackKey);
+                const genAI = new deps.GoogleGenerativeAI(fallbackKey);
                 const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
                 const chatSession = model.startChat({
@@ -458,6 +507,7 @@ const AiService = {
                 modelUsed = `${provider}:${model_id}`;
 
                 if (provider === 'openai') {
+                    // ... (OpenAI Streaming logic remains same as it uses fetch)
                     // OpenAI Streaming
                     const messages = history.map(h => ({
                         role: h.role === 'user' ? 'user' : 'assistant',
@@ -497,7 +547,7 @@ const AiService = {
                     }
                 }
                 else if (provider === 'gemini' || !provider) { // Default to gemini if provider set but matches gemini logic
-                    const genAI = new GoogleGenerativeAI(api_key);
+                    const genAI = new deps.GoogleGenerativeAI(api_key);
                     const model = genAI.getGenerativeModel({ model: model_id || "gemini-pro" });
                     const chatSession = model.startChat({
                         history: history.map(h => ({
@@ -525,7 +575,18 @@ const AiService = {
             const latency = Date.now() - startTime;
             const inputTokens = (prompt.length + systemInstruction.length) / 4;
             const outputTokens = fullResponse.length / 4;
-            AnalyticsService.logUsage(userId, action, modelUsed, Math.round(inputTokens), Math.round(outputTokens), latency).catch(e => { });
+            const totalTokens = Math.round(inputTokens) + Math.round(outputTokens);
+
+            deps.AnalyticsService.logUsage(userId, action, modelUsed, Math.round(inputTokens), Math.round(outputTokens), latency).catch(e => { });
+
+            // Token Billing - Track usage
+            const sourceTypeFinal = providerConfig ? (providerConfig.provider === 'ollama' ? 'local' : 'platform') : 'platform';
+            deps.TokenBillingService.deductTokens(userId, totalTokens, sourceTypeFinal, {
+                organizationId: null,
+                llmProvider: providerConfig?.provider || 'gemini',
+                modelUsed: modelUsed,
+                multiplier: providerConfig?.markup_multiplier || 1.0
+            }).catch(err => console.error("Token Billing Error", err));
 
         } catch (error) {
             console.error("Stream LLM Error", error);
@@ -538,7 +599,7 @@ const AiService = {
         let systemPrompt = await getSystemPrompt(roleKey);
 
         // 1. Inject "Learned Best Practices" (Feedback)
-        const examples = await FeedbackService.getLearningExamples(contextType);
+        const examples = await deps.FeedbackService.getLearningExamples(contextType);
         if (examples && examples.length > 50) {
             systemPrompt += `\n\n### LEARNED BEST PRACTICES (FROM FEEDBACK):\n${examples}\n### END LEARNED PRACTICES\n`;
         }
@@ -546,7 +607,7 @@ const AiService = {
         // 2. Inject "Global Strategic Directions" (Admin Overrides)
         // We fetch active strategies from DB
         const getStrategies = () => new Promise((resolve) => {
-            db.all("SELECT title, description FROM global_strategies WHERE is_active = 1", (err, rows) => resolve(rows || []));
+            deps.db.all("SELECT title, description FROM global_strategies WHERE is_active = 1", (err, rows) => resolve(rows || []));
         });
         const strategies = await getStrategies();
         if (strategies.length > 0) {
@@ -558,7 +619,7 @@ const AiService = {
         // 3. Inject "Client Context" (Memory)
         if (organizationId) {
             const getContext = () => new Promise((resolve) => {
-                db.all("SELECT key, value FROM client_context WHERE organization_id = ? AND confidence > 0.6", [organizationId], (err, rows) => resolve(rows || []));
+                deps.db.all("SELECT key, value FROM client_context WHERE organization_id = ? AND confidence > 0.6", [organizationId], (err, rows) => resolve(rows || []));
             });
             const clientContext = await getContext();
             if (clientContext.length > 0) {
@@ -611,7 +672,7 @@ const AiService = {
 
     // --- LAYER 4: SIMULATION ---
     simulateEconomics: async (initiatives, revenueBase = 10000000, userId) => {
-        const simulation = FinancialService.simulatePortfolio(initiatives, revenueBase);
+        const simulation = deps.FinancialService.simulatePortfolio(initiatives, revenueBase);
         const baseRole = await AiService.enhancePrompt('FINANCE', 'simulation');
         const systemPrompt = baseRole + `
         Provide CFO Commentary on: ${JSON.stringify(simulation)}
@@ -677,7 +738,7 @@ const AiService = {
     },
     // --- VERIFICATION (Web) ---
     verifyWithWeb: async (query, userId) => {
-        const result = await WebSearchService.verifyFact(query);
+        const result = await deps.WebSearchService.verifyFact(query);
         // AnalyticsService.logUsage(userId, 'verify', 'web-search', 0, 0, 800, query).catch(e => { });
         return result;
     },
@@ -776,7 +837,7 @@ const AiService = {
         const query = `Market trends and case studies for: ${initiativeContext.name} - ${initiativeContext.summary}`;
         try {
             // Try Web Search first
-            const searchResult = await WebSearchService.verifyFact(query);
+            const searchResult = await deps.WebSearchService.verifyFact(query);
             return searchResult;
         } catch (e) {
             console.error("Web Search failed, using LLM knowledge", e);
@@ -820,13 +881,13 @@ const AiService = {
 
         for (const step of steps) {
             const stepPrompt = `
-            ${currentContext}
-            
-            CURRENT STEP: ${step.name}
-            INSTRUCTION: ${step.instruction}
-            
-            Perform this step and provide the output.
-            `;
+                ${currentContext}
+                
+                CURRENT STEP: ${step.name}
+                INSTRUCTION: ${step.instruction}
+                
+                Perform this step and provide the output.
+                `;
 
             // Call LLM with a specific persona if needed, or generic 'Reasoning Engine'
             const response = await AiService.callLLM(stepPrompt, "You are a Deep Reasoning engine. Think step-by-step.", [], null, userId, `CoT_${step.name}`);
@@ -841,7 +902,7 @@ const AiService = {
     // --- UPGRADED DIAGNOSIS (Deep) ---
     deepDiagnose: async (axis, input, userId, organizationId = null) => {
         // 1. Fetch Definition & Maturity Levels (RAG)
-        const axisDefinition = await RagService.getAxisDefinitions(axis);
+        const axisDefinition = await deps.RagService.getAxisDefinitions(axis);
 
         // 2. Define CoT Steps
         const steps = [
@@ -873,7 +934,7 @@ const AiService = {
                 if (!orgId) {
                     // Resolve Org from User
                     orgId = await new Promise(resolve => {
-                        db.get("SELECT organization_id, (SELECT industry FROM organizations WHERE id = users.organization_id) as industry FROM users WHERE id = ?", [userId], (err, row) => {
+                        deps.db.get("SELECT organization_id, (SELECT industry FROM organizations WHERE id = users.organization_id) as industry FROM users WHERE id = ?", [userId], (err, row) => {
                             resolve(row ? row.organization_id : null);
                         });
                     });
@@ -881,11 +942,10 @@ const AiService = {
 
                 if (orgId && result.score) {
                     // We need to fetch industry if not available, but for now defaulting 'General' or fetching in separate query is fine.
-                    // Ideally we fetch industry with the orgId.
                     // Doing a quick lookup
-                    db.get("SELECT industry FROM organizations WHERE id = ?", [orgId], (err, row) => {
+                    deps.db.get("SELECT industry FROM organizations WHERE id = ?", [orgId], (err, row) => {
                         const industry = row ? row.industry : 'General';
-                        AnalyticsService.saveMaturityScore(orgId, axis, result.score, industry);
+                        deps.AnalyticsService.saveMaturityScore(orgId, axis, result.score, industry);
                     });
                 }
             }
@@ -910,8 +970,8 @@ const AiService = {
 
         Return JSON:
         { 
-            "idea": { "found": boolean, "content": "...", "reasoning": "...", "topic": "..." },
-            "context": { "found": boolean, "key": "e.g., risk_appetite", "value": "...", "confidence": 0.0-1.0 }
+            "idea": { "found": true/false, "content": "...", "reasoning": "...", "topic": "..." },
+            "context": { "found": true/false, "key": "e.g., risk_appetite", "value": "...", "confidence": 0.0-1.0 }
         }
         `;
 
@@ -920,14 +980,11 @@ const AiService = {
             const json = JSON.parse(raw.replace(/```json/g, '').replace(/```/g, ''));
 
             if (json.idea && json.idea.found) {
-                const KnowledgeService = require('./knowledgeService');
-                await KnowledgeService.addCandidate(json.idea.content, json.idea.reasoning, source, json.idea.topic, text.substring(0, 200));
+                await deps.KnowledgeService.addCandidate(json.idea.content, json.idea.reasoning, source, json.idea.topic, text.substring(0, 200));
             }
 
             if (json.context && json.context.found && organizationId) {
-                const KnowledgeService = require('./knowledgeService');
-                // Save context (Key: Value)
-                await KnowledgeService.setClientContext(organizationId, json.context.key, json.context.value, 'inferred', json.context.confidence);
+                await deps.KnowledgeService.setClientContext(organizationId, json.context.key, json.context.value, 'inferred', json.context.confidence);
             }
             return json;
         } catch (e) {
@@ -936,5 +993,7 @@ const AiService = {
         }
     }
 };
+
+module.exports = AiService;
 
 module.exports = AiService;

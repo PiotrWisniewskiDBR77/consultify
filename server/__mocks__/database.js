@@ -1,47 +1,22 @@
-/**
- * Manual mock for server/database.js
- * preventing real DB connection
- */
-
-// Since globals: true in vitest config, vi is available globally
-const mockPrepareRun = vi.fn();
-const mockFinalize = vi.fn();
-
-const mockPrepare = vi.fn(() => ({
-    run: mockPrepareRun,
-    finalize: mockFinalize
-}));
-
-const mockRun = vi.fn((sql, params, cb) => {
-    const callback = typeof params === 'function' ? params : cb;
-    if (callback) callback.call({ changes: 1 }, null);
-});
-
-const mockAll = vi.fn((sql, params, cb) => {
-    const callback = typeof params === 'function' ? params : cb;
-    if (callback) callback(null, []);
-});
-
-const mockGet = vi.fn((sql, params, cb) => {
-    const callback = typeof params === 'function' ? params : cb;
-    if (callback) callback(null, {});
-});
-
-const db = {
-    prepare: mockPrepare,
-    run: mockRun,
-    all: mockAll,
-    get: mockGet,
-    serialize: vi.fn((cb) => cb && cb()),
-    // Expose spies for assertions
-    _mocks: {
-        prepare: mockPrepare,
-        run: mockRun,
-        all: mockAll,
-        get: mockGet,
-        prepareRun: mockPrepareRun,
-        finalize: mockFinalize
-    }
+// Plain functions to allow spying in tests without requiring 'vitest' in source
+const mockDb = {
+    get: function (query, params, cb) {
+        const callback = typeof params === 'function' ? params : cb;
+        if (callback) callback(null, null);
+    },
+    all: function (query, params, cb) {
+        const callback = typeof params === 'function' ? params : cb;
+        if (callback) callback(null, []);
+    },
+    run: function () { },
+    prepare: function () {
+        return {
+            run: function () { },
+            finalize: function () { }
+        };
+    },
+    serialize: function (cb) { if (cb) cb(); },
+    exec: function (sql, cb) { if (cb) cb(null); }
 };
 
-module.exports = db;
+module.exports = mockDb;

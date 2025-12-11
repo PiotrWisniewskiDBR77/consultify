@@ -268,5 +268,117 @@ module.exports = {
     calculateOverage,
     updateUsageSummary,
     getUsageHistory,
-    getGlobalUsageStats
+    getGlobalUsageStats,
+
+    /**
+     * Get operational costs grouped by Provider/Model
+     */
+    getOperationalCosts: async (startDate, endDate) => {
+        return new Promise((resolve, reject) => {
+            // Default to last 30 days if no dates provided
+            const end = endDate ? new Date(endDate) : new Date();
+            const start = startDate ? new Date(startDate) : new Date(new Date().setDate(end.getDate() - 30));
+
+            const query = `
+                SELECT 
+                    u.metadata,
+                    SUM(u.amount) as total_tokens
+                FROM usage_records u
+                WHERE u.type = 'token' 
+                AND u.recorded_at >= ? 
+                AND u.recorded_at <= ?
+                GROUP BY u.metadata
+            `;
+
+            db.all(query, [start.toISOString(), end.toISOString()], async (err, rows) => {
+                if (err) return reject(err);
+
+                try {
+                    // Fetch current provider costs to calculate estimated spend
+                    const providers = await new Promise((res, rej) => {
+                        db.all("SELECT provider, model_id, cost_per_1k FROM llm_providers", (e, r) => e ? rej(e) : res(r));
+                    });
+
+                    // Create a lookup map for costs: "provider:model" -> cost
+                    const costMap = {};
+                    providers.forEach(p => {
+                        costMap[`${p.provider}:${p.model_id}`] = p.cost_per_1k || 0;
+                        // Also fallback for just provider if model specific not found? 
+                        // Or just fuzzy match. For now exact match on what we logged.
+                    });
+
+                    const aggregated = {};
+                    let totalCost = 0;
+
+                    for (const row of rows) {
+                        let meta = {};
+                        try {
+                            meta = JSON.parse(row.metadata || '{}');
+                        } catch (e) { continue; }
+
+                        const provider = meta.llmProvider || 'unknown';
+                        const model = meta.modelUsed || 'unknown';
+                        const key = `${provider}|${model}`;
+
+                        if (!aggregated[key]) {
+                            aggregated[key] = {
+                                provider,
+                                model,
+                                totalTokens: 0,
+                                cost: 0
+                            };
+                        }
+
+                        aggregated[key].totalTokens += row.total_tokens;
+
+                        // Calculate cost
+                        // Try to find cost in map
+                        // Metadata model might be "openai:gpt-4", but provider table has provider="openai", model_id="gpt-4"
+                        // Or metadata provider="openai", model="gpt-4"
+
+                        // We need to match efficiently.
+                        // Let's assume usage service logged: llmProvider="openai", modelUsed="openai:gpt-4" (as seen in aiService)
+                        // Wait, aiService logs: modelUsed = `${provider}:${model_id}`
+
+                        // So let's extract real model id if it contains colon
+                        let cleanModelId = model;
+                        if (model.includes(':')) {
+                            cleanModelId = model.split(':')[1];
+                        }
+
+                        // Lookup cost
+                        // We try matches: "provider:model"
+                        let costPer1k = 0;
+
+                        // 1. Direct match on modelUsed (which is provider:model)
+                        // 2. Match on provider + cleanModelId
+
+                        // Let's iterate providers to find best match
+                        const matchedProvider = providers.find(p =>
+                            (p.provider === provider && p.model_id === cleanModelId) ||
+                            (`${p.provider}:${p.model_id}` === model)
+                        );
+
+                        if (matchedProvider) {
+                            costPer1k = matchedProvider.cost_per_1k || 0;
+                        }
+
+                        aggregated[key].cost += (row.total_tokens / 1000) * costPer1k;
+                    }
+
+                    // Convert to array
+                    const results = Object.values(aggregated).sort((a, b) => b.cost - a.cost);
+
+                    resolve({
+                        period: { start, end },
+                        items: results,
+                        totalCost: results.reduce((sum, item) => sum + item.cost, 0)
+                    });
+
+                } catch (e) {
+                    reject(e);
+                }
+            });
+        });
+    }
 };

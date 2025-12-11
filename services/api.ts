@@ -291,7 +291,7 @@ export const Api = {
     },
 
     updateLLMProvider: async (id: string, data: Partial<LLMProvider>) => {
-        const res = await fetch(`${API_URL}/admin/llm-providers/${id}`, {
+        const res = await fetch(`${API_URL}/llm/providers/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
             body: JSON.stringify(data)
@@ -301,7 +301,7 @@ export const Api = {
     },
 
     testLLMConnection: async (config: Partial<LLMProvider>): Promise<{ success: boolean; message: string; response?: string }> => {
-        const res = await fetch(`${API_URL}/ai/test-connection`, {
+        const res = await fetch(`${API_URL}/llm/test`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify(config)
@@ -309,6 +309,19 @@ export const Api = {
         const data = await res.json();
         if (!res.ok) return { success: false, message: data.error || 'Connection failed' };
         return data;
+    },
+
+    getOperationalCosts: async (startDate?: string, endDate?: string): Promise<{ items: any[]; totalCost: number }> => {
+        let url = `${API_URL}/billing/admin/costs`;
+        const params = new URLSearchParams();
+        if (startDate) params.append('startDate', startDate);
+        if (endDate) params.append('endDate', endDate);
+        if (params.toString()) url += `?${params.toString()}`;
+
+        const res = await fetch(url, { headers: getHeaders() });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to fetch costs');
+        return data.costs;
     },
 
     deleteLLMProvider: async (id: string): Promise<void> => {

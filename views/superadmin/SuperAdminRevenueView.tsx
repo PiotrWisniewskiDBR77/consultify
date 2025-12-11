@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, DollarSign, Users, BarChart3, PieChart, Activity, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { TrendingUp, DollarSign, Users, BarChart3, PieChart, Activity, ArrowUpRight, ArrowDownRight, Server } from 'lucide-react';
 import { Api } from '../../services/api';
 
 interface RevenueStats {
@@ -23,6 +23,7 @@ interface UsageStats {
 export const SuperAdminRevenueView: React.FC = () => {
     const [revenueStats, setRevenueStats] = useState<RevenueStats | null>(null);
     const [usageStats, setUsageStats] = useState<UsageStats | null>(null);
+    const [operationalCosts, setOperationalCosts] = useState<{ items: any[]; totalCost: number } | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -31,12 +32,14 @@ export const SuperAdminRevenueView: React.FC = () => {
 
     const fetchData = async () => {
         try {
-            const [revenue, usage] = await Promise.all([
+            const [revenue, usage, costs] = await Promise.all([
                 Api.get('/billing/admin/revenue'),
-                Api.get('/billing/admin/usage')
+                Api.get('/billing/admin/usage'),
+                Api.getOperationalCosts()
             ]);
             setRevenueStats(revenue);
             setUsageStats(usage);
+            setOperationalCosts(costs);
         } catch (error) {
             console.error('Failed to fetch stats:', error);
         } finally {
@@ -286,7 +289,61 @@ export const SuperAdminRevenueView: React.FC = () => {
                     </table>
                 </div>
             </div>
-        </div>
+
+
+            {/* Operational Costs (Backend) */}
+            < div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700" >
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-6">
+                    <Server className="w-5 h-5 text-indigo-600" />
+                    Operational Costs (Backend)
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Estimated costs based on current provider pricing configuration.</p>
+
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead>
+                            <tr className="text-left text-sm text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                                <th className="pb-3 font-medium">Provider</th>
+                                <th className="pb-3 font-medium">Model</th>
+                                <th className="pb-3 font-medium text-right">Tokens</th>
+                                <th className="pb-3 font-medium text-right">Est. Cost</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                            {operationalCosts?.items.map((item: any, idx: number) => (
+                                <tr key={idx} className="text-gray-900 dark:text-white">
+                                    <td className="py-3 font-medium capitalize">{item.provider}</td>
+                                    <td className="py-3 text-gray-500 dark:text-gray-400 font-mono text-xs">{item.model}</td>
+                                    <td className="py-3 text-right">{formatNumber(item.totalTokens)}</td>
+                                    <td className="py-3 text-right font-semibold text-red-500">
+                                        {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 4 }).format(item.cost)}
+                                    </td>
+                                </tr>
+                            ))}
+                            {(!operationalCosts?.items || operationalCosts.items.length === 0) && (
+                                <tr>
+                                    <td colSpan={4} className="py-8 text-center text-gray-500 dark:text-gray-400">
+                                        No operational cost data available
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                        {operationalCosts && (
+                            <tfoot>
+                                <tr className="border-t-2 border-gray-200 dark:border-gray-600">
+                                    <td colSpan={3} className="py-3 font-bold text-gray-900 dark:text-white">
+                                        Total Operational Cost
+                                    </td>
+                                    <td className="py-3 text-right font-bold text-xl text-red-500">
+                                        {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(operationalCosts.totalCost)}
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        )}
+                    </table>
+                </div>
+            </div >
+        </div >
     );
 };
 
