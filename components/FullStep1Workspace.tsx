@@ -54,14 +54,14 @@ export const FullStep1Workspace: React.FC<FullStep1WorkspaceProps> = ({
     return 'text-emerald-400';
   };
 
-  const completedCount = fullSession.assessment.completedAxes.length;
+  const completedCount = axes.filter(a => !!fullSession.assessment[a.id]?.actual).length;
   const totalAxes = 7;
   const progressPercent = (completedCount / totalAxes) * 100;
   const allCompleted = completedCount === totalAxes;
 
   const chartData = axes.map(axis => ({
     label: axis.label,
-    value: fullSession.assessment[axis.id].score || 0
+    value: fullSession.assessment[axis.id]?.actual || 0
   }));
 
   return (
@@ -121,7 +121,7 @@ export const FullStep1Workspace: React.FC<FullStep1WorkspaceProps> = ({
               {axes.map(axis => {
                 const data = fullSession.assessment[axis.id];
                 const isCompleted = fullSession.assessment.completedAxes.includes(axis.id);
-                const inProgress = !isCompleted && data.answers.length > 0;
+                const inProgress = !isCompleted && !!data?.actual;
 
                 return (
                   <button
@@ -141,7 +141,7 @@ export const FullStep1Workspace: React.FC<FullStep1WorkspaceProps> = ({
                                             p-2 rounded-lg transition-colors
                                             ${isCompleted ? 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-500' : 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 group-hover:bg-blue-100 dark:group-hover:bg-blue-500/20 group-hover:text-blue-700 dark:group-hover:text-blue-300'}
                                         `}>
-                        {React.cloneElement(axis.icon as React.ReactElement, { size: 18 })}
+                        {React.cloneElement(axis.icon as React.ReactElement<{ size: number }>, { size: 18 })}
                       </div>
                       {isCompleted && (
                         <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-500 text-[10px] font-bold uppercase tracking-wider bg-emerald-100 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded-full">
@@ -162,8 +162,8 @@ export const FullStep1Workspace: React.FC<FullStep1WorkspaceProps> = ({
                       {isCompleted ? (
                         <div className="flex flex-col">
                           <span className="text-[10px] text-slate-500 uppercase tracking-widest">Score</span>
-                          <span className={`text-lg font-bold ${getScoreColor(data.score)}`}>
-                            {data.score.toFixed(1)} <span className="text-xs text-slate-400 dark:text-slate-600 font-normal">/ 7.0</span>
+                          <span className={`text-lg font-bold ${getScoreColor(data?.actual ?? 0)}`}>
+                            {data?.actual?.toFixed(1) || '0.0'} <span className="text-xs text-slate-400 dark:text-slate-600 font-normal">/ 7.0</span>
                           </span>
                         </div>
                       ) : (

@@ -24,6 +24,7 @@ interface AppState {
     // Chat State
     activeChatMessages: ChatMessage[];
     isBotTyping: boolean;
+    currentStreamContent: string; // Non-persisted high-frequency update
 
     freeSessionData: Partial<FreeSession>;
     fullSessionData: FullSession;
@@ -48,6 +49,7 @@ interface AppState {
     addChatMessage: (message: ChatMessage) => void;
     setChatMessages: (messages: ChatMessage[]) => void;
     setIsBotTyping: (isTyping: boolean) => void;
+    setCurrentStreamContent: (content: string) => void;
     clearChat: () => void;
 
     setFreeSessionData: (data: Partial<FreeSession> | ((prev: Partial<FreeSession>) => Partial<FreeSession>)) => void;
@@ -71,13 +73,14 @@ const initialFreeSession: Partial<FreeSession> = {
 const initialFullSession: FullSession = {
     id: '',
     assessment: {
+        completedAxes: [],
         processes: { actual: 1, target: 1, justification: '', notes: '' },
-        products: { actual: 1, target: 1, justification: '', notes: '' },
-        business_models: { actual: 1, target: 1, justification: '', notes: '' },
-        data: { actual: 1, target: 1, justification: '', notes: '' },
+        digitalProducts: { actual: 1, target: 1, justification: '', notes: '' },
+        businessModels: { actual: 1, target: 1, justification: '', notes: '' },
+        dataManagement: { actual: 1, target: 1, justification: '', notes: '' },
         culture: { actual: 1, target: 1, justification: '', notes: '' },
         cybersecurity: { actual: 1, target: 1, justification: '', notes: '' },
-        ai: { actual: 1, target: 1, justification: '', notes: '' }
+        aiMaturity: { actual: 1, target: 1, justification: '', notes: '' },
     },
     audits: [],
     roadmap: [],
@@ -101,6 +104,7 @@ export const useAppStore = create<AppState>()(
             isSidebarOpen: false,
             activeChatMessages: [],
             isBotTyping: false,
+            currentStreamContent: '',
             freeSessionData: initialFreeSession,
             fullSessionData: initialFullSession,
             currentProjectId: null,
@@ -121,6 +125,7 @@ export const useAppStore = create<AppState>()(
             addChatMessage: (message) => set((state) => ({ activeChatMessages: [...state.activeChatMessages, message] })),
             setChatMessages: (messages) => set({ activeChatMessages: messages }),
             setIsBotTyping: (isTyping) => set({ isBotTyping: isTyping }),
+            setCurrentStreamContent: (content) => set({ currentStreamContent: content }),
             clearChat: () => set({ activeChatMessages: [] }),
 
             setFreeSessionData: (data) => set((state) => ({

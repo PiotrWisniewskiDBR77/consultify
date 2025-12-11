@@ -72,4 +72,22 @@ describe('Auth Integration', () => {
 
         expect([400, 401, 404]).toContain(res.status);
     });
+    it('should validate token via /api/auth/me', async () => {
+        // First login to get token
+        const loginRes = await request(app)
+            .post('/api/auth/login')
+            .send({ email, password });
+
+        const token = loginRes.body.token;
+        expect(token).toBeDefined();
+
+        // Use token to check me endpoint
+        const res = await request(app)
+            .get('/api/auth/me')
+            .set('Authorization', `Bearer ${token}`);
+
+        expect(res.status).toBe(200);
+        expect(res.body).toHaveProperty('user');
+        expect(res.body.user).toHaveProperty('email', email);
+    });
 });

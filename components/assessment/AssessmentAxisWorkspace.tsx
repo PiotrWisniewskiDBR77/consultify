@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { DRDAxis, MaturityLevel, AxisAssessment, Language } from '../../types';
 import { ArrowRight, Info, CheckCircle2, AlertTriangle, Target, BrainCircuit, TrendingUp, Lightbulb } from 'lucide-react';
+import { translations } from '../../translations';
 
 interface AssessmentAxisWorkspaceProps {
     axis: DRDAxis;
@@ -29,20 +30,20 @@ const AXIS_CONTENT: Record<DRDAxis, { title: Record<Language, string>; levels: s
             'Symbiotic (Ecosystem)'
         ]
     },
-    products: {
+    digitalProducts: {
         title: { EN: 'Digital Products', PL: 'Produkty Cyfrowe', DE: 'Digitale Produkte', AR: 'Digital Products' },
         levels: [
             'Physical Only', 'Digital Extension', 'Connected Product', 'Smart Product', 'Product as a Service', 'Platform', 'Ecosystem'
         ]
     },
-    business_models: {
+    businessModels: {
         title: { EN: 'Business Models', PL: 'Modele Biznesowe', DE: 'Geschäftsmodelle', AR: 'Business Models' },
         levels: [
             'Traditional Sales', 'E-commerce', 'Service-based', 'Subscription', 'Usage-based', 'Outcome-based', 'Ecosystem orchestrator'
         ]
     },
-    data: {
-        title: { EN: 'Data & Analytics', PL: 'Dane i Analityka', DE: 'Daten & Analytik', AR: 'Data & Analytics' },
+    dataManagement: {
+        title: { EN: 'Data Management', PL: 'Zarządzanie Danymi', DE: 'Datenmanagement', AR: 'Data Management' },
         levels: [
             'No Data', 'Descriptive (What happened)', 'Diagnostic (Why)', 'Predictive (What will happen)', 'Prescriptive (What to do)', 'Cognitive (AI)', 'Generative'
         ]
@@ -54,13 +55,13 @@ const AXIS_CONTENT: Record<DRDAxis, { title: Record<Language, string>; levels: s
         ]
     },
     cybersecurity: {
-        title: { EN: 'Cybersecurity', PL: 'Cyberbezpieczeństwo', DE: 'Cybersicherheit', AR: 'Cybersecurity' },
+        title: { EN: "Cybersecurity", PL: "Cyberbezpieczeństwo", DE: "Cybersicherheit", AR: "الأمن السيبراني" },
         levels: [
             'None', 'Basic (Firewall)', 'Compliance-based', 'Proactive', 'Resilient', 'Zero Trust', 'Immune'
         ]
     },
-    ai: {
-        title: { EN: 'Artificial Intelligence', PL: 'Sztuczna Inteligencja', DE: 'Künstliche Intelligenz', AR: 'Artificial Intelligence' },
+    aiMaturity: {
+        title: { EN: 'AI Maturity', PL: 'Dojrzałość AI', DE: 'KI-Reife', AR: 'AI Maturity' },
         levels: [
             'None', 'Experiments', 'Point Solutions', 'Integrated AI', 'AI-First Strategy', 'Autonomous Agents', 'Superintelligence'
         ]
@@ -129,8 +130,8 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                         onClick={runSenseCheck}
                         disabled={!data.actual || !data.target || isAnalyzing}
                         className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${aiFeedback?.status === 'ok' ? 'bg-green-500/10 border-green-500/50 text-green-400' :
-                                aiFeedback?.status === 'warning' ? 'bg-yellow-500/10 border-yellow-500/50 text-yellow-400' :
-                                    'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
+                            aiFeedback?.status === 'warning' ? 'bg-yellow-500/10 border-yellow-500/50 text-yellow-400' :
+                                'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
                             }`}
                     >
                         {isAnalyzing ? <BrainCircuit size={14} className="animate-pulse" /> : <BrainCircuit size={14} />}

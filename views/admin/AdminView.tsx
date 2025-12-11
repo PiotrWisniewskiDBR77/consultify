@@ -122,7 +122,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate, l
         setEditingUser(user);
         setFormData({
             firstName: user.firstName, lastName: user.lastName, email: user.email,
-            role: user.role || UserRole.OTHER, status: user.status || 'active'
+            role: (user.role as UserRole) || UserRole.OTHER, status: user.status || 'active'
         });
         setShowAddUserModal(true);
     };

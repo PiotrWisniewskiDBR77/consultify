@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useAppStore } from '../store/useAppStore';
 import { FullSession, FullInitiative, Language } from '../types';
 import { translations } from '../translations';
 import {
@@ -24,6 +25,7 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
     onGenerateReport,
     language
 }) => {
+    const { currentUser } = useAppStore();
     const [activeTab, setActiveTab] = useState<DashboardTab>('overview');
 
     const handleDownloadPDF = async () => {
@@ -66,7 +68,7 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
                 <StatCard
                     title="Active Initiatives"
                     value={fullSession.initiatives.length.toString()}
-                    subtext={`${fullSession.initiatives.filter(i => i.status === 'in_progress').length} In Progress`}
+                    subtext={`${fullSession.initiatives.filter(i => i.status === 'In Progress').length} In Progress`}
                     icon={ListChecks}
                     color="blue"
                 />
@@ -203,8 +205,8 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
                                 </td>
                                 <td className="p-4">
                                     <span className={`px-2 py-1 rounded text-xs font-medium border
-                                        ${init.status === 'done' ? 'bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 border-green-200 dark:border-green-500/20' :
-                                            init.status === 'in_progress' ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/20' :
+                                        ${init.status === 'Done' ? 'bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 border-green-200 dark:border-green-500/20' :
+                                            init.status === 'In Progress' ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/20' :
                                                 'bg-slate-100 dark:bg-white/5 text-slate-500 border-slate-200 dark:border-white/10'}`}>
                                         {init.status.replace('_', ' ')}
                                     </span>
@@ -338,7 +340,7 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
                         </div>
                         Execution Dashboard
                     </h1>
-                    <p className="text-slate-500 text-sm mt-1 ml-1">{fullSession.companyName || 'Client'} Transformation Program</p>
+                    <p className="text-slate-500 text-sm mt-1 ml-1">{currentUser?.companyName || 'Client'} Transformation Program</p>
                 </div>
 
                 <div className="flex items-center gap-4">

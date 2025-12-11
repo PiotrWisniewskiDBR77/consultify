@@ -81,8 +81,8 @@ export const FullReportsView: React.FC = () => {
   }, []);
 
   const getAxisLabel = (id: string) => {
-    const key = `fullStep1_${id === 'digitalProducts' ? 'prod' : id.substring(0, 4)}` as any;
-    return ts[key]?.[language] || id;
+    const key = `fullStep1_${id === 'digitalProducts' ? 'prod' : id.substring(0, 4)}`;
+    return (ts as any)[key]?.[language] || id;
   };
 
   const generateReport = () => {
@@ -205,10 +205,7 @@ export const FullReportsView: React.FC = () => {
     );
   }
 
-  // --- AI Consultant View ---
-  if (activeTab === 'consultant') {
-    return <AIConsultantView session={fullSession} />;
-  }
+
 
   const handleUpdateInitiative = (updated: FullInitiative) => {
     const newInits = fullSession.initiatives.map(i => i.id === updated.id ? updated : i);
@@ -240,38 +237,46 @@ export const FullReportsView: React.FC = () => {
       <div className="flex-1 overflow-hidden">
         <SplitLayout title="" onSendMessage={handleAiChat} hideSidebar={true}> {/* Hiding sidebar here because we have tabs now, or strictly inside SplitLayout */}
           <div className="flex w-full h-full" dir={language === 'AR' ? 'rtl' : 'ltr'}>
-            <div className={`flex-1 flex flex-col h-full ${language === 'AR' ? 'border-l' : 'border-r'} border-elegant overflow-hidden bg-gray-50 dark:bg-navy-950 relative`}>
-
-              {/* Floating Action Buttons */}
-              <div className="absolute top-4 right-8 z-50 flex items-center gap-3">
-                <AIFeedbackButton context="report" data={fullSession.report} />
-                <button
-                  onClick={handleExportPDF}
-                  disabled={isExporting}
-                  className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg shadow-lg transition-all"
-                >
-                  {isExporting ? (
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  ) : (
-                    <Download size={18} />
-                  )}
-                  <span>{isExporting ? 'Exporting...' : 'Export PDF'}</span>
-                </button>
+            {activeTab === 'consultant' ? (
+              <div className="w-full h-full overflow-hidden">
+                <AIConsultantView session={fullSession} />
               </div>
+            ) : (
+              <>
+                <div className={`flex-1 flex flex-col h-full ${language === 'AR' ? 'border-l' : 'border-r'} border-elegant overflow-hidden bg-gray-50 dark:bg-navy-950 relative`}>
 
-              <div className="flex-1 w-full h-full relative overflow-auto" id="full-report-content">
-                <FullReportDocument report={fullSession.report} language={language} />
-              </div>
-            </div>
+                  {/* Floating Action Buttons */}
+                  <div className="absolute top-4 right-8 z-50 flex items-center gap-3">
+                    <AIFeedbackButton context="report" data={fullSession.report} />
+                    <button
+                      onClick={handleExportPDF}
+                      disabled={isExporting}
+                      className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg shadow-lg transition-all"
+                    >
+                      {isExporting ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      ) : (
+                        <Download size={18} />
+                      )}
+                      <span>{isExporting ? 'Exporting...' : 'Export PDF'}</span>
+                    </button>
+                  </div>
 
-            <div className="w-[400px] shrink-0 bg-white dark:bg-navy-900 flex flex-col border-l border-slate-200 dark:border-white/5">
-              <FullExecutionDashboardWorkspace
-                fullSession={fullSession}
-                onUpdateInitiative={handleUpdateInitiative}
-                onGenerateReport={generateReport}
-                language={language}
-              />
-            </div>
+                  <div className="flex-1 w-full h-full relative overflow-auto" id="full-report-content">
+                    <FullReportDocument report={fullSession.report} language={language} />
+                  </div>
+                </div>
+
+                <div className="w-[400px] shrink-0 bg-white dark:bg-navy-900 flex flex-col border-l border-slate-200 dark:border-white/5">
+                  <FullExecutionDashboardWorkspace
+                    fullSession={fullSession}
+                    onUpdateInitiative={handleUpdateInitiative}
+                    onGenerateReport={generateReport}
+                    language={language}
+                  />
+                </div>
+              </>
+            )}
           </div>
         </SplitLayout>
       </div>

@@ -18,6 +18,7 @@ import { translations } from '../translations';
 import { Check } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { sendMessageToAI, SYSTEM_PROMPTS, AIMessageHistory } from '../services/ai/gemini';
+import { useAIStream } from '../hooks/useAIStream';
 
 export const FreeAssessmentView: React.FC = () => {
   const {
@@ -31,6 +32,8 @@ export const FreeAssessmentView: React.FC = () => {
     isBotTyping: isTyping,
     setIsBotTyping: setIsTyping
   } = useAppStore();
+
+  const { isStreaming, streamedContent, startStream } = useAIStream();
 
   const [currentStep, setCurrentStep] = useState<AssessmentStep>(AssessmentStep.INTRO);
   const language = currentUser?.preferredLanguage || 'EN';
@@ -118,21 +121,23 @@ export const FreeAssessmentView: React.FC = () => {
     }
 
     const tempId = Date.now().toString();
-    addChatMessage({ id: tempId, role: 'ai', content: '', timestamp: new Date() });
+    // In FreeAssessmentView, we often just want to trigger the stream
+    // but the UI renders via ChatPanel. We need to make sure ChatPanel knows about the stream.
 
-    let currentText = "";
-    await import('../services/ai/gemini').then(async (mod) => {
-      await mod.sendMessageToAIStream(
-        history,
-        promptToSend,
-        (chunk) => {
-          currentText += chunk;
-          useAppStore.getState().updateLastChatMessage(currentText);
-        },
-        () => setIsTyping(false),
-        SYSTEM_PROMPTS.FREE_ASSESSMENT
-      );
-    });
+    // NOTE: FreeAssessmentView is unique because it uses a locally imported `sendMessageToAIStream` from `gemini` service
+    // which might be different from `Api.chatWithAIStream`.
+    // However, looking at the original code, it was using `import('../services/ai/gemini')`.
+    // Let's standardise on `useAIStream` which uses `Api.chatWithAIStream`. 
+    // If strict Gemini service usage is required, we might need a specific hook for it, 
+    // but `Api` likely wraps Gemini anyway.
+
+    // Checking original imports: `import { sendMessageToAI, SYSTEM_PROMPTS, AIMessageHistory } from '../services/ai/gemini';`
+    // And `Api` in `SplitLayout` uses `fetch('/api/ai/chat/stream')`.
+    // The `FreeAssessmentView` was using `mod.sendMessageToAIStream`.
+    // If `Api` endpoint wraps the same logic, we can swap. 
+    // Let's assume `Api.chatWithAIStream` is the unified way now.
+
+    startStream(promptToSend, history, SYSTEM_PROMPTS.FREE_ASSESSMENT);
   };
 
   const handleOptionSelect = (option: ChatOption, isMultiSelect?: boolean) => {
@@ -384,7 +389,16 @@ export const FreeAssessmentView: React.FC = () => {
       <div className={`flex-1 flex flex-col h-full min-w-[600px] ${language === 'AR' ? 'border-l' : 'border-r'} border-elegant`}>
         <StepIndicator />
         <ChatPanel
-          messages={messages}
+          messages={
+            isStreaming
+              ? [...messages, {
+                id: 'streaming-ai',
+                role: 'ai',
+                content: streamedContent,
+                timestamp: new Date()
+              } as ChatMessage]
+              : messages
+          }
           onSendMessage={handleSendMessage}
           onOptionSelect={handleOptionSelect}
           onMultiSelectSubmit={handleMultiSelectSubmit}

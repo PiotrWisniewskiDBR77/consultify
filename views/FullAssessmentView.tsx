@@ -4,6 +4,7 @@ import { AppView, DRDAxis, AxisAssessment, AdditionalAudit, SessionMode } from '
 import { useAppStore } from '../store/useAppStore';
 import { Api } from '../services/api';
 import { AIMessageHistory } from '../services/ai/gemini';
+import { useAIStream } from '../hooks/useAIStream';
 import { AssessmentAxisWorkspace } from '../components/assessment/AssessmentAxisWorkspace';
 import { AssessmentSummaryWorkspace } from '../components/assessment/AssessmentSummaryWorkspace';
 import { AssessmentAuditsWorkspace } from '../components/assessment/AssessmentAuditsWorkspace';
@@ -21,6 +22,8 @@ export const FullAssessmentView: React.FC = () => {
     setIsBotTyping,
     updateLastChatMessage
   } = useAppStore();
+
+  const { startStream } = useAIStream();
 
   const language = currentUser?.preferredLanguage || 'EN';
   const [dashboardTab, setDashboardTab] = useState<'summary' | 'audits'>('summary');
@@ -45,12 +48,12 @@ export const FullAssessmentView: React.FC = () => {
   const getAxisFromView = (view: AppView): DRDAxis | null => {
     switch (view) {
       case AppView.FULL_STEP1_PROCESSES: return 'processes';
-      case AppView.FULL_STEP1_DIGITAL: return 'products'; // Mapped 'digitalProducts' -> 'products' in new Type
-      case AppView.FULL_STEP1_MODELS: return 'business_models';
-      case AppView.FULL_STEP1_DATA: return 'data';
+      case AppView.FULL_STEP1_DIGITAL: return 'digitalProducts';
+      case AppView.FULL_STEP1_MODELS: return 'businessModels';
+      case AppView.FULL_STEP1_DATA: return 'dataManagement';
       case AppView.FULL_STEP1_CULTURE: return 'culture';
       case AppView.FULL_STEP1_CYBERSECURITY: return 'cybersecurity';
-      case AppView.FULL_STEP1_AI: return 'ai';
+      case AppView.FULL_STEP1_AI: return 'aiMaturity';
       default: return null;
     }
   };
@@ -61,7 +64,7 @@ export const FullAssessmentView: React.FC = () => {
 
   const handleAxisUpdate = async (axis: DRDAxis, data: Partial<AxisAssessment>) => {
     const updatedAssessment = { ...fullSession.assessment };
-    const current = updatedAssessment[axis] || { actual: 0, target: 0, justification: '' };
+    const current = updatedAssessment[axis] || { actual: 1, target: 1, justification: '' };
     updatedAssessment[axis] = { ...current, ...data } as AxisAssessment;
 
     const newSession = { ...fullSession, assessment: updatedAssessment };
@@ -72,19 +75,19 @@ export const FullAssessmentView: React.FC = () => {
   };
 
   const handleNextAxis = (current: DRDAxis) => {
-    const flow: DRDAxis[] = ['processes', 'products', 'business_models', 'data', 'culture', 'cybersecurity', 'ai'];
-    const idx = flow.indexOf(current);
-    if (idx < flow.length - 1) {
-      const next = flow[idx + 1];
+    const order: DRDAxis[] = ['processes', 'digitalProducts', 'businessModels', 'dataManagement', 'culture', 'cybersecurity', 'aiMaturity'];
+    const idx = order.indexOf(current);
+    if (idx < order.length - 1) {
+      const next = order[idx + 1];
       // Map back to AppView
       const viewMap: Record<DRDAxis, AppView> = {
-        'processes': AppView.FULL_STEP1_PROCESSES,
-        'products': AppView.FULL_STEP1_DIGITAL,
-        'business_models': AppView.FULL_STEP1_MODELS,
-        'data': AppView.FULL_STEP1_DATA,
-        'culture': AppView.FULL_STEP1_CULTURE,
-        'cybersecurity': AppView.FULL_STEP1_CYBERSECURITY,
-        'ai': AppView.FULL_STEP1_AI
+        processes: AppView.FULL_STEP1_PROCESSES,
+        digitalProducts: AppView.FULL_STEP1_DIGITAL,
+        businessModels: AppView.FULL_STEP1_MODELS,
+        dataManagement: AppView.FULL_STEP1_DATA,
+        culture: AppView.FULL_STEP1_CULTURE,
+        cybersecurity: AppView.FULL_STEP1_CYBERSECURITY,
+        aiMaturity: AppView.FULL_STEP1_AI
       };
       onNavigate(viewMap[next]);
     } else {
@@ -136,27 +139,22 @@ export const FullAssessmentView: React.FC = () => {
     context += `\nUser asks: ${text}`;
 
     // Placeholder message
-    addChatMessage({ id: Date.now().toString(), role: 'ai', content: '', timestamp: new Date() });
+    // Placeholder message (The hook handles streaming updates to store, but SplitLayout handles visual merging)
+    // Actually, SplitLayout uses the GLOBAL streaming content to display.
+    // So we just need to start the stream.
 
-    let currentText = "";
-    await import('../services/ai/gemini').then(async (mod) => {
-      await mod.sendMessageToAIStream(
-        history,
-        context,
-        (chunk) => {
-          currentText += chunk;
-          updateLastChatMessage(currentText);
-        },
-        () => setIsBotTyping(false)
-      );
-    });
+    // However, SplitLayout expects `activeChatMessages` + `streamingContent`.
+    // We already added the user message.
+
+    // Start Stream
+    startStream(text, history, context);
   };
 
   // --- RENDER ---
 
   // 1. Specific Axis View
   if (currentAxisId) {
-    const axisData = fullSession.assessment?.[currentAxisId] || { actual: 0, target: 0, justification: '' };
+    const axisData = fullSession.assessment?.[currentAxisId] || { actual: undefined, target: undefined, justification: '' };
 
     return (
       <SplitLayout title="DRD Assessment" onSendMessage={handleAiChat}>
@@ -216,18 +214,18 @@ export const FullAssessmentView: React.FC = () => {
             // Summary / Gap Map
             <>
               <div className="grid grid-cols-7 gap-1 p-4 bg-navy-950/50 border-b border-white/5">
-                {(['processes', 'products', 'business_models', 'data', 'culture', 'cybersecurity', 'ai'] as DRDAxis[]).map(axis => (
+                {(['processes', 'digitalProducts', 'businessModels', 'dataManagement', 'culture', 'cybersecurity', 'aiMaturity'] as DRDAxis[]).map(axis => (
                   <button
                     key={axis}
                     onClick={() => {
                       const viewMap: Record<DRDAxis, AppView> = {
-                        'processes': AppView.FULL_STEP1_PROCESSES,
-                        'products': AppView.FULL_STEP1_DIGITAL,
-                        'business_models': AppView.FULL_STEP1_MODELS,
-                        'data': AppView.FULL_STEP1_DATA,
-                        'culture': AppView.FULL_STEP1_CULTURE,
-                        'cybersecurity': AppView.FULL_STEP1_CYBERSECURITY,
-                        'ai': AppView.FULL_STEP1_AI
+                        processes: AppView.FULL_STEP1_PROCESSES,
+                        digitalProducts: AppView.FULL_STEP1_DIGITAL,
+                        businessModels: AppView.FULL_STEP1_MODELS,
+                        dataManagement: AppView.FULL_STEP1_DATA,
+                        culture: AppView.FULL_STEP1_CULTURE,
+                        cybersecurity: AppView.FULL_STEP1_CYBERSECURITY,
+                        aiMaturity: AppView.FULL_STEP1_AI
                       };
                       onNavigate(viewMap[axis]);
                     }}

@@ -18,10 +18,10 @@ export const generateInitiatives = (session: FullSession): FullInitiative[] => {
         if (!axisKey) return;
 
         const axisData = session.assessment[axisKey];
-        if (!axisData || !axisData.areaScores) return;
+        if (!axisData || !axisData.actual) return;
 
         axis.areas.forEach(area => {
-            const currentLevel = axisData.areaScores![area.id] || 0;
+            const currentLevel = axisData.actual || 0;
 
             // Find levels above current
             const nextLevels = area.levels.filter(l => l.level > currentLevel);
@@ -36,7 +36,7 @@ export const generateInitiatives = (session: FullSession): FullInitiative[] => {
                     name: `Advance ${area.name} to Level ${nextLevel.level}`,
                     description: `${nextLevel.title}. ${nextLevel.description} (Generated based on current level ${currentLevel}.)`,
                     axis: axisKey,
-                    priority: currentLevel === 0 ? 'High' : (currentLevel < 3 ? 'Medium' : 'Low'),
+                    priority: (!currentLevel || currentLevel === 1) ? 'High' : (currentLevel < 3 ? 'Medium' : 'Low'),
                     complexity: nextLevel.level > 4 ? 'High' : (nextLevel.level > 2 ? 'Medium' : 'Low'),
                     status: 'Draft',
                     estimatedCost: nextLevel.level * 10000,

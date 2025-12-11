@@ -52,6 +52,16 @@ export const App = () => {
         }
     }, [currentUser]);
 
+    // FIX: Reset to WELCOME if user is not authenticated but current view requires auth
+    useEffect(() => {
+        const publicViews = [AppView.WELCOME, AppView.AUTH];
+        const isPublicView = publicViews.includes(currentView);
+
+        if (!currentUser && !isPublicView) {
+            setCurrentView(AppView.WELCOME);
+        }
+    }, [currentUser, currentView, setCurrentView]);
+
     const handleStartSession = (mode: SessionMode) => {
         setSessionMode(mode);
 
@@ -177,13 +187,7 @@ export const App = () => {
             currentView === AppView.QUICK_STEP3_EXPECTATIONS
         ) {
             return (
-                <FreeAssessmentView
-                    currentUser={currentUser}
-                    sessionData={freeSessionData}
-                    setSessionData={setFreeSessionData}
-                    currentAppView={currentView}
-                    onNavigate={setCurrentView}
-                />
+                <FreeAssessmentView />
             );
         }
 
@@ -196,19 +200,19 @@ export const App = () => {
             return <Module1ContextView currentUser={currentUser} fullSession={fullSessionData} setFullSession={setFullSessionData} onNavigate={setCurrentView} />;
         }
         if (currentView === AppView.FULL_STEP1_ASSESSMENT || currentView.startsWith('FULL_STEP1_')) {
-            return <FullAssessmentView currentUser={currentUser} fullSession={fullSessionData} setFullSession={setFullSessionData} currentAppView={currentView} onNavigate={setCurrentView} />;
+            return <FullAssessmentView />;
         }
         if (currentView === AppView.FULL_STEP2_INITIATIVES) {
-            return <FullInitiativesView currentUser={currentUser} fullSession={fullSessionData} setFullSession={setFullSessionData} onNavigate={setCurrentView} />;
+            return <FullInitiativesView />;
         }
         if (currentView === AppView.FULL_STEP3_ROADMAP) {
-            return <FullRoadmapView currentUser={currentUser} fullSession={fullSessionData} setFullSession={setFullSessionData} onNavigate={setCurrentView} />;
+            return <FullRoadmapView />;
         }
         if (currentView === AppView.FULL_STEP4_ROI) {
-            return <FullROIView currentUser={currentUser} fullSession={fullSessionData} setFullSession={setFullSessionData} onNavigate={setCurrentView} />;
+            return <FullROIView />;
         }
         if (currentView === AppView.FULL_STEP5_EXECUTION) {
-            return <FullExecutionView currentUser={currentUser} fullSession={fullSessionData} setFullSession={setFullSessionData} onNavigate={setCurrentView} />;
+            return <FullExecutionView />;
         }
         if (currentView === AppView.FULL_PILOT_EXECUTION) {
             return <FullPilotView />;
@@ -217,7 +221,7 @@ export const App = () => {
             return <FullRolloutView />;
         }
         if (currentView === AppView.FULL_STEP6_REPORTS) {
-            return <FullReportsView currentUser={currentUser} fullSession={fullSessionData} setFullSession={setFullSessionData} onNavigate={setCurrentView} />;
+            return <FullReportsView />;
         }
 
         // Admin Views
@@ -231,7 +235,7 @@ export const App = () => {
                 <SettingsView
                     currentUser={currentUser}
                     language={language}
-                    onUpdateUser={setCurrentUser}
+                    onUpdateUser={(updates) => setCurrentUser(currentUser ? { ...currentUser, ...updates } : null)}
                     theme={theme}
                     toggleTheme={toggleTheme}
                     setLanguage={setLanguage}

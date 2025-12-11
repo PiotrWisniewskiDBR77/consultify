@@ -61,6 +61,21 @@ router.post('/login', (req, res) => {
     });
 });
 
+
+// GET ME - Validate token and return user data
+router.get('/me', authMiddleware, (req, res) => {
+    // req.user is populated by authMiddleware
+    res.json({
+        user: {
+            id: req.user.id,
+            email: req.user.email,
+            role: req.user.role,
+            organizationId: req.user.organizationId
+            // Add other fields if needed, but keep it consistent with login response
+        }
+    });
+});
+
 // LOGOUT - Revokes the current token
 router.post('/logout', authMiddleware, (req, res) => {
     try {

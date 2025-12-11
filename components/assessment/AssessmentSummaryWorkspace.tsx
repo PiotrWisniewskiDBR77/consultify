@@ -9,22 +9,24 @@ interface AssessmentSummaryWorkspaceProps {
     language: Language;
 }
 
-const AXIS_LABELS: Record<DRDAxis, string> = {
-    processes: 'Processes',
-    products: 'Products',
-    business_models: 'Biz Models',
-    data: 'Data',
-    culture: 'Culture',
-    cybersecurity: 'Security',
-    ai: 'AI'
-};
-
 export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProps> = ({
     assessment,
     onGenerateInitiatives,
     language
 }) => {
-    const axes: DRDAxis[] = ['processes', 'products', 'business_models', 'data', 'culture', 'cybersecurity', 'ai'];
+    const t = translations;
+
+    const labels: Record<DRDAxis, string> = {
+        processes: t.sidebar.fullStep1_proc[language],
+        digitalProducts: t.sidebar.fullStep1_prod[language],
+        businessModels: t.sidebar.fullStep1_model[language],
+        dataManagement: t.sidebar.fullStep1_data[language],
+        culture: t.sidebar.fullStep1_cult[language],
+        cybersecurity: "Cybersecurity",
+        aiMaturity: t.sidebar.fullStep1_ai[language],
+    };
+
+    const axes: DRDAxis[] = ['processes', 'digitalProducts', 'businessModels', 'dataManagement', 'culture', 'cybersecurity', 'aiMaturity'];
 
     // Calculate generic stats
     const totalGap = axes.reduce((acc, axis) => {
@@ -68,7 +70,7 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
             {/* Main Chart / Table */}
             <div className="bg-navy-950/50 border border-white/10 rounded-xl p-6 mb-6">
                 <div className="grid grid-cols-7 gap-4 mb-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center border-b border-white/5 pb-2">
-                    {axes.map(axis => <div key={axis}>{AXIS_LABELS[axis]}</div>)}
+                    {axes.map(axis => <div key={axis}>{labels[axis]}</div>)}
                 </div>
 
                 {/* Visual Bars */}
@@ -121,11 +123,11 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
                     <h3 className="font-bold text-purple-200 mb-2">AI Assessment Summary</h3>
                     <div className="text-sm text-slate-300 space-y-2">
                         <p>
-                            Based on your assessment, the biggest transformation gap is in <strong>Data & Analytics ({assessment.data?.target! - assessment.data?.actual!} levels)</strong>.
+                            Based on your assessment, the biggest transformation gap is in <strong>Data & Analytics ({assessment.dataManagement?.target! - assessment.dataManagement?.actual!} levels)</strong>.
                             Since <strong>Cybersecurity</strong> is also lagging, I recommend treating Data Foundation and Security as a prerequisite before scaling AI initiatives.
                         </p>
                         <p className="text-slate-400 italic">
-                            "Ambition in Business Models (Level {assessment.business_models?.target}) is high compared to current operational maturity. Consider bridging Process gaps first."
+                            "Ambition in Business Models (Level {assessment.businessModels?.target}) is high compared to current operational maturity. Consider bridging Process gaps first."
                         </p>
                     </div>
                 </div>
