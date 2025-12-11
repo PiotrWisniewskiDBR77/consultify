@@ -10,6 +10,7 @@ const KnowledgeService = require('./knowledgeService');
 const aiQueue = require('../queues/aiQueue');
 const fs = require('fs');
 const path = require('path');
+const jwt = require('jsonwebtoken');
 
 // DEPENDENCY INJECTION CONTAINER
 const deps = {
@@ -423,6 +424,77 @@ const AiService = {
                         body: JSON.stringify({ model: model_id || 'meta-llama/Llama-3-70b-chat-hf', messages, max_tokens: 1024 })
                     });
                     if (!response.ok) throw new Error(`Together error: ${response.statusText}`);
+                    const data = await response.json();
+                    responseText = data.choices[0]?.message?.content || '';
+                }
+                else if (provider === 'z_ai') {
+                    // Z.ai (GLM) - Requires JWT generation
+                    const zaiEndpoint = endpoint || 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
+
+                    // Generate Token
+                    let token = api_key;
+                    if (api_key.includes('.')) {
+                        try {
+                            // const jwt = require('jsonwebtoken'); // Removed as jwt is already declared at the top
+                            const [id, secret] = api_key.split('.');
+                            const now = Date.now();
+                            const payload = {
+                                api_key: id,
+                                exp: now + 3600 * 1000,
+                                timestamp: now
+                            };
+                            token = jwt.sign(payload, secret, {
+                                algorithm: 'HS256',
+                                header: { alg: 'HS256', sign_type: 'SIGN' }
+                            });
+                        } catch (e) {
+                            console.error("Error generating Z.ai token:", e);
+                            // Fallback to raw key if generation fails
+                        }
+                    }
+
+                    const messages = history.map(h => ({
+                        role: h.role === 'user' ? 'user' : 'assistant',
+                        content: h.text || h.content || (h.parts && h.parts[0] && h.parts[0].text) || ''
+                    }));
+                    if (systemInstruction) messages.unshift({ role: 'system', content: systemInstruction });
+                    messages.push({ role: 'user', content: prompt });
+
+                    const response = await fetch(zaiEndpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify({ model: model_id || 'glm-4', messages, stream: false })
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`Z.ai error: ${response.status} ${response.statusText} - ${errorText}`);
+                    }
+
+                    const data = await response.json();
+                    responseText = data.choices[0]?.message?.content || '';
+                }
+                else if (provider === 'nvidia') {
+                    // NVIDIA NIM - OpenAI compatible
+                    const nvidiaEndpoint = endpoint || 'https://integrate.api.nvidia.com/v1/chat/completions';
+                    const messages = history.map(h => ({
+                        role: h.role === 'user' ? 'user' : 'assistant',
+                        content: h.text || h.content || (h.parts && h.parts[0] && h.parts[0].text) || ''
+                    }));
+                    if (systemInstruction) messages.unshift({ role: 'system', content: systemInstruction });
+                    messages.push({ role: 'user', content: prompt });
+
+                    const response = await fetch(nvidiaEndpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${api_key}` },
+                        body: JSON.stringify({ model: model_id || 'meta/llama3-70b-instruct', messages, stream: false })
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`NVIDIA error: ${response.status} ${response.statusText} - ${errorText}`);
+                    }
+
                     const data = await response.json();
                     responseText = data.choices[0]?.message?.content || '';
                 }
