@@ -217,6 +217,20 @@ router.get('/analytics', authenticateToken, requireSuperAdmin, async (req, res) 
     }
 });
 
+// Get operational costs (superadmin)
+router.get('/costs', authenticateToken, requireSuperAdmin, async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+        // Lazily require usageService to avoid circular dependency issues if any
+        const UsageService = require('../services/usageService');
+        const costs = await UsageService.getOperationalCosts(startDate, endDate);
+        res.json({ success: true, costs });
+    } catch (error) {
+        console.error('Get costs error:', error);
+        res.status(500).json({ success: false, error: 'Failed to get operational costs' });
+    }
+});
+
 // Manage packages (superadmin)
 router.post('/packages', authenticateToken, requireSuperAdmin, async (req, res) => {
     try {

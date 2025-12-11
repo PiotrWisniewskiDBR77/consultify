@@ -25,28 +25,28 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/89</span>
+                <span class='fraction'>0/99</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/28</span>
+                <span class='fraction'>0/34</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/18</span>
+                <span class='fraction'>0/19</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/84</span>
+                <span class='fraction'>0/94</span>
             </div>
         
             
@@ -235,7 +235,28 @@
 <a name='L170'></a><a href='#L170'>170</a>
 <a name='L171'></a><a href='#L171'>171</a>
 <a name='L172'></a><a href='#L172'>172</a>
-<a name='L173'></a><a href='#L173'>173</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L173'></a><a href='#L173'>173</a>
+<a name='L174'></a><a href='#L174'>174</a>
+<a name='L175'></a><a href='#L175'>175</a>
+<a name='L176'></a><a href='#L176'>176</a>
+<a name='L177'></a><a href='#L177'>177</a>
+<a name='L178'></a><a href='#L178'>178</a>
+<a name='L179'></a><a href='#L179'>179</a>
+<a name='L180'></a><a href='#L180'>180</a>
+<a name='L181'></a><a href='#L181'>181</a>
+<a name='L182'></a><a href='#L182'>182</a>
+<a name='L183'></a><a href='#L183'>183</a>
+<a name='L184'></a><a href='#L184'>184</a>
+<a name='L185'></a><a href='#L185'>185</a>
+<a name='L186'></a><a href='#L186'>186</a>
+<a name='L187'></a><a href='#L187'>187</a>
+<a name='L188'></a><a href='#L188'>188</a>
+<a name='L189'></a><a href='#L189'>189</a>
+<a name='L190'></a><a href='#L190'>190</a>
+<a name='L191'></a><a href='#L191'>191</a>
+<a name='L192'></a><a href='#L192'>192</a>
+<a name='L193'></a><a href='#L193'>193</a>
+<a name='L194'></a><a href='#L194'>194</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -341,6 +362,27 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -440,13 +482,13 @@ const dbAll = <span class="cstat-no" title="statement not covered" ><span class=
 &nbsp;
 // POST /api/llm/providers
 <span class="cstat-no" title="statement not covered" >router.post('/providers', <span class="fstat-no" title="function not covered" >async </span>(req, res) =&gt; {</span>
-    const { name, provider, api_key, endpoint, model_id, cost_per_1k, is_active, visibility } = <span class="cstat-no" title="statement not covered" >req.body;</span>
+    const { name, provider, api_key, endpoint, model_id, cost_per_1k, markup_multiplier, is_active, visibility } = <span class="cstat-no" title="statement not covered" >req.body;</span>
 <span class="cstat-no" title="statement not covered" >    try {</span>
         const id = <span class="cstat-no" title="statement not covered" >uuidv4();</span>
 <span class="cstat-no" title="statement not covered" >        await dbRun(`</span>
-            INSERT INTO llm_providers (id, name, provider, api_key, endpoint, model_id, cost_per_1k, is_active, visibility)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `, [id, name, provider, api_key, endpoint, model_id, cost_per_1k || 0, is_active ? 1 : 0, visibility || 'admin']);
+            INSERT INTO llm_providers (id, name, provider, api_key, endpoint, model_id, cost_per_1k, markup_multiplier, is_active, visibility)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [id, name, provider, api_key, endpoint, model_id, cost_per_1k || 0, markup_multiplier || 1.0, is_active ? 1 : 0, visibility || 'admin']);
 &nbsp;
 <span class="cstat-no" title="statement not covered" >        res.json({ id, message: 'Provider added' });</span>
     } catch (err) {
@@ -457,14 +499,14 @@ const dbAll = <span class="cstat-no" title="statement not covered" ><span class=
 &nbsp;
 // PUT /api/llm/providers/:id
 <span class="cstat-no" title="statement not covered" >router.put('/providers/:id', <span class="fstat-no" title="function not covered" >async </span>(req, res) =&gt; {</span>
-    const { name, api_key, endpoint, model_id, cost_per_1k, is_active, visibility } = <span class="cstat-no" title="statement not covered" >req.body;</span>
+    const { name, api_key, endpoint, model_id, cost_per_1k, markup_multiplier, is_active, visibility } = <span class="cstat-no" title="statement not covered" >req.body;</span>
     const { id } = <span class="cstat-no" title="statement not covered" >req.params;</span>
 <span class="cstat-no" title="statement not covered" >    try {</span>
 <span class="cstat-no" title="statement not covered" >        await dbRun(`</span>
             UPDATE llm_providers 
-            SET name = ?, api_key = ?, endpoint = ?, model_id = ?, cost_per_1k = ?, is_active = ?, visibility = ?
+            SET name = ?, api_key = ?, endpoint = ?, model_id = ?, cost_per_1k = ?, markup_multiplier = ?, is_active = ?, visibility = ?
             WHERE id = ?
-        `, [name, api_key, endpoint, model_id, cost_per_1k, is_active ? 1 : 0, visibility, id]);
+        `, [name, api_key, endpoint, model_id, cost_per_1k, markup_multiplier || 1.0, is_active ? 1 : 0, visibility, id]);
 &nbsp;
 <span class="cstat-no" title="statement not covered" >        res.json({ message: 'Provider updated' });</span>
     } catch (err) {
@@ -495,7 +537,7 @@ const dbAll = <span class="cstat-no" title="statement not covered" ><span class=
     }
 });
 &nbsp;
-// POST /api/llm/test-ollama - Test Ollama connection
+// POST /api/llm/test-ollama - Test Ollama connection (Legacy/Specific)
 <span class="cstat-no" title="statement not covered" >router.post('/test-ollama', <span class="fstat-no" title="function not covered" >async </span>(req, res) =&gt; {</span>
     const { endpoint } = <span class="cstat-no" title="statement not covered" >req.body;</span>
     const ollamaUrl = <span class="cstat-no" title="statement not covered" >endpoint || 'http://localhost:11434';</span>
@@ -514,6 +556,27 @@ const dbAll = <span class="cstat-no" title="statement not covered" ><span class=
         });
     } catch (err) {
 <span class="cstat-no" title="statement not covered" >        res.status(400).json({ success: false, error: `Connection failed: ${err.message}` });</span>
+    }
+});
+&nbsp;
+// POST /api/llm/test - Generic Test Connection
+<span class="cstat-no" title="statement not covered" >router.post('/test', <span class="fstat-no" title="function not covered" >async </span>(req, res) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    try {</span>
+        const config = <span class="cstat-no" title="statement not covered" >req.body;</span>
+        // Import AiService dynamically to avoid circular dependencies if any, or just require at top if safe.
+        // Assuming AiService is in ../services/aiService
+        const AiService = <span class="cstat-no" title="statement not covered" >require('../services/aiService');</span>
+&nbsp;
+        const result = <span class="cstat-no" title="statement not covered" >await AiService.testProviderConnection(config);</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        if (result.success) {</span>
+<span class="cstat-no" title="statement not covered" >            res.json(result);</span>
+        } else {
+<span class="cstat-no" title="statement not covered" >            res.status(400).json(result);</span>
+        }
+    } catch (err) {
+<span class="cstat-no" title="statement not covered" >        console.error('Test connection error:', err);</span>
+<span class="cstat-no" title="statement not covered" >        res.status(500).json({ success: false, error: 'Internal server error during test' });</span>
     }
 });
 &nbsp;
@@ -586,7 +649,7 @@ const dbAll = <span class="cstat-no" title="statement not covered" ><span class=
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-12-10T21:00:00.580Z
+                at 2025-12-11T10:08:27.818Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

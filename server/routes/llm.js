@@ -31,13 +31,13 @@ router.get('/providers', async (req, res) => {
 
 // POST /api/llm/providers
 router.post('/providers', async (req, res) => {
-    const { name, provider, api_key, endpoint, model_id, cost_per_1k, is_active, visibility } = req.body;
+    const { name, provider, api_key, endpoint, model_id, cost_per_1k, markup_multiplier, is_active, visibility } = req.body;
     try {
         const id = uuidv4();
         await dbRun(`
-            INSERT INTO llm_providers (id, name, provider, api_key, endpoint, model_id, cost_per_1k, is_active, visibility)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `, [id, name, provider, api_key, endpoint, model_id, cost_per_1k || 0, is_active ? 1 : 0, visibility || 'admin']);
+            INSERT INTO llm_providers (id, name, provider, api_key, endpoint, model_id, cost_per_1k, markup_multiplier, is_active, visibility)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [id, name, provider, api_key, endpoint, model_id, cost_per_1k || 0, markup_multiplier || 1.0, is_active ? 1 : 0, visibility || 'admin']);
 
         res.json({ id, message: 'Provider added' });
     } catch (err) {
@@ -48,14 +48,14 @@ router.post('/providers', async (req, res) => {
 
 // PUT /api/llm/providers/:id
 router.put('/providers/:id', async (req, res) => {
-    const { name, api_key, endpoint, model_id, cost_per_1k, is_active, visibility } = req.body;
+    const { name, api_key, endpoint, model_id, cost_per_1k, markup_multiplier, is_active, visibility } = req.body;
     const { id } = req.params;
     try {
         await dbRun(`
             UPDATE llm_providers 
-            SET name = ?, api_key = ?, endpoint = ?, model_id = ?, cost_per_1k = ?, is_active = ?, visibility = ?
+            SET name = ?, api_key = ?, endpoint = ?, model_id = ?, cost_per_1k = ?, markup_multiplier = ?, is_active = ?, visibility = ?
             WHERE id = ?
-        `, [name, api_key, endpoint, model_id, cost_per_1k, is_active ? 1 : 0, visibility, id]);
+        `, [name, api_key, endpoint, model_id, cost_per_1k, markup_multiplier || 1.0, is_active ? 1 : 0, visibility, id]);
 
         res.json({ message: 'Provider updated' });
     } catch (err) {
@@ -86,7 +86,7 @@ router.get('/providers/public', async (req, res) => {
     }
 });
 
-// POST /api/llm/test-ollama - Test Ollama connection
+// POST /api/llm/test-ollama - Test Ollama connection (Legacy/Specific)
 router.post('/test-ollama', async (req, res) => {
     const { endpoint } = req.body;
     const ollamaUrl = endpoint || 'http://localhost:11434';
@@ -105,6 +105,27 @@ router.post('/test-ollama', async (req, res) => {
         });
     } catch (err) {
         res.status(400).json({ success: false, error: `Connection failed: ${err.message}` });
+    }
+});
+
+// POST /api/llm/test - Generic Test Connection
+router.post('/test', async (req, res) => {
+    try {
+        const config = req.body;
+        // Import AiService dynamically to avoid circular dependencies if any, or just require at top if safe.
+        // Assuming AiService is in ../services/aiService
+        const AiService = require('../services/aiService');
+
+        const result = await AiService.testProviderConnection(config);
+
+        if (result.success) {
+            res.json(result);
+        } else {
+            res.status(400).json(result);
+        }
+    } catch (err) {
+        console.error('Test connection error:', err);
+        res.status(500).json({ success: false, error: 'Internal server error during test' });
     }
 });
 

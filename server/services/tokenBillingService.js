@@ -134,17 +134,21 @@ class TokenBillingService {
         });
     }
 
-    static async deductTokens(userId, tokens, sourceType, { organizationId, llmProvider, modelUsed } = {}) {
+    static async deductTokens(userId, tokens, sourceType, { organizationId, llmProvider, modelUsed, multiplier } = {}) {
         await this.ensureBalance(userId);
         const margin = await this.getMargin(sourceType);
         if (!margin) throw new Error(`Unknown source type: ${sourceType}`);
 
+        // Apply Markup Multiplier (Default 1.0)
+        const finalMultiplier = multiplier || 1.0;
+        const billedTokens = Math.ceil(tokens * finalMultiplier);
+
         let marginUsd = 0;
         if (sourceType === 'platform') {
-            const baseCost = (tokens / 1000) * (margin.base_cost_per_1k || 0);
+            const baseCost = (billedTokens / 1000) * (margin.base_cost_per_1k || 0);
             marginUsd = baseCost * (margin.margin_percent / 100);
         } else {
-            const estimatedValue = (tokens / 1000) * 0.01;
+            const estimatedValue = (billedTokens / 1000) * 0.01;
             marginUsd = estimatedValue * (margin.margin_percent / 100);
         }
         marginUsd = Math.max(marginUsd, margin.min_charge || 0);
@@ -152,13 +156,18 @@ class TokenBillingService {
         return new Promise((resolve, reject) => {
             db.serialize(() => {
                 const field = sourceType === 'platform' ? 'platform_tokens' : sourceType === 'byok' ? 'byok_usage_tokens' : 'local_usage_tokens';
+                // Deduct BILLED tokens, not raw tokens
                 const op = sourceType === 'platform' ? `${field} = MAX(0, ${field} - ?)` : `${field} = ${field} + ?`;
-                db.run(`UPDATE user_token_balance SET ${op}, lifetime_used = lifetime_used + ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?`, [tokens, tokens, userId]);
+
+                db.run(`UPDATE user_token_balance SET ${op}, lifetime_used = lifetime_used + ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?`,
+                    [billedTokens, billedTokens, userId]);
 
                 const txId = `tx-${uuidv4()}`;
-                db.run(`INSERT INTO token_transactions (id, user_id, organization_id, type, source_type, tokens, margin_usd, net_revenue_usd, llm_provider, model_used, description) VALUES (?, ?, ?, 'usage', ?, ?, ?, ?, ?, ?, ?)`,
-                    [txId, userId, organizationId, sourceType, -tokens, marginUsd, marginUsd, llmProvider, modelUsed, `Used ${tokens} tokens via ${sourceType}`],
-                    function (err) { if (err) reject(err); else resolve({ transactionId: txId, tokens, marginUsd }); });
+                const metadata = JSON.stringify({ raw_tokens: tokens, multiplier: finalMultiplier });
+
+                db.run(`INSERT INTO token_transactions (id, user_id, organization_id, type, source_type, tokens, margin_usd, net_revenue_usd, llm_provider, model_used, description, metadata) VALUES (?, ?, ?, 'usage', ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [txId, userId, organizationId, sourceType, -billedTokens, marginUsd, marginUsd, llmProvider, modelUsed, `Used ${tokens} tokens (x${finalMultiplier}) via ${sourceType}`, metadata],
+                    function (err) { if (err) reject(err); else resolve({ transactionId: txId, tokens: billedTokens, marginUsd }); });
             });
         });
     }

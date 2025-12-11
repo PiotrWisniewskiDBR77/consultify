@@ -9,6 +9,7 @@ import { AdminKnowledgeView } from '../admin/AdminKnowledgeView';
 import { SuperAdminAccessRequestsView } from './SuperAdminAccessRequestsView';
 import { SuperAdminPlansView } from './SuperAdminPlansView';
 import { SuperAdminRevenueView } from './SuperAdminRevenueView';
+import { AdminLLMMultipliers } from '../admin/AdminLLMMultipliers';
 import { AdminMarginConfig } from '../admin/AdminMarginConfig';
 import { AdminTokenPackages } from '../admin/AdminTokenPackages';
 
@@ -158,6 +159,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                     <div className="p-8 overflow-y-auto">
                         <h1 className="text-2xl font-bold mb-6">Token Billing Management</h1>
                         <div className="grid grid-cols-1 gap-6">
+                            <AdminLLMMultipliers />
                             <AdminMarginConfig />
                             <AdminTokenPackages />
                         </div>

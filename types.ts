@@ -467,6 +467,7 @@ export interface LLMProvider {
   endpoint: string;
   model_id: string;
   cost_per_1k: number;
+  markup_multiplier?: number;
   is_active: boolean;
   visibility: 'admin' | 'public' | 'beta';
 }
