@@ -198,6 +198,8 @@ export interface User {
   tokenLimit?: number;
   industry?: string; // Company industry
   country?: string; // Company country
+  timezone?: string; // User timezone
+  units?: 'metric' | 'imperial'; // User preference
   impersonatorId?: string; // ID of the admin impersonating this user
 }
 
@@ -473,6 +475,12 @@ export interface LLMProvider {
   markup_multiplier?: number;
   is_active: boolean;
   visibility: 'admin' | 'public' | 'beta';
+
+  // Technical Conditions
+  context_window?: number;
+  max_outputs?: number; // Max output tokens
+  description?: string;
+  capabilities?: string[]; // e.g. "vision", "reasoning", "coding"
 }
 
 export type AIProviderType = 'system' | 'openai' | 'gemini' | 'ollama';
@@ -482,6 +490,7 @@ export interface AIProviderConfig {
   apiKey?: string;
   endpoint?: string; // For Ollama or Custom Proxy
   modelId?: string;
+  visibleModelIds?: string[]; // IDs of "System" models selected by user to be visible in Top Bar
 }
 
 // ==========================================

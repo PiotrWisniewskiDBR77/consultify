@@ -19,12 +19,16 @@ import { SuperAdminView } from './views/superadmin/SuperAdminView';
 import { UserDashboardView } from './views/UserDashboardView';
 import { Module1ContextView } from './views/Module1ContextView';
 import { AppView, SessionMode, AuthStep, User, UserRole } from './types';
-import { Menu, UserCircle, ChevronRight, Save } from 'lucide-react';
+import { Menu, UserCircle, ChevronRight, Save, Bell, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { useAppStore } from './store/useAppStore';
 import { Toaster } from 'react-hot-toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { Api } from './services/api';
+import { LLMSelector } from './components/LLMSelector';
+import { NotificationDropdown } from './components/NotificationDropdown';
+import { AutoSaveProvider, useAutoSave } from './src/context/AutoSaveContext';
 
-export const App = () => {
+const AppContent = () => {
     const {
         currentView, setCurrentView,
         sessionMode, setSessionMode,
@@ -38,6 +42,8 @@ export const App = () => {
         logout,
         theme, toggleTheme
     } = useAppStore();
+
+    const { status } = useAutoSave();
 
     useEffect(() => {
         if (theme === 'dark') {
@@ -320,20 +326,58 @@ export const App = () => {
                             </div>
 
                             <div className="flex items-center gap-4">
-                                <div className="flex items-center gap-2 text-xs text-slate-500">
-                                    <Save size={12} className="text-purple-500 animate-pulse" />
-                                    <span className="hidden sm:inline">Auto-saved</span>
+                                <div className="flex items-center gap-2 text-xs text-slate-500 min-w-[100px] justify-end">
+                                    {status === 'saved' && (
+                                        <>
+                                            <CheckCircle size={12} className="text-green-500" />
+                                            <span className="hidden sm:inline text-green-600 dark:text-green-400">Auto-saved</span>
+                                        </>
+                                    )}
+                                    {status === 'saving' && (
+                                        <>
+                                            <Loader2 size={12} className="text-purple-500 animate-spin" />
+                                            <span className="hidden sm:inline text-purple-500">Saving...</span>
+                                        </>
+                                    )}
+                                    {status === 'unsaved' && (
+                                        <>
+                                            <AlertCircle size={12} className="text-amber-500" />
+                                            <span className="hidden sm:inline text-amber-500">Unsaved changes</span>
+                                        </>
+                                    )}
+                                    {status === 'error' && (
+                                        <>
+                                            <AlertCircle size={12} className="text-red-500" />
+                                            <span className="hidden sm:inline text-red-500">Save failed</span>
+                                        </>
+                                    )}
                                 </div>
+
                                 <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
-                                <div className="flex items-center gap-2">
+                                <LLMSelector />
+                                <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
+
+                                <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
+                                <NotificationDropdown />
+
+                                <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
+
+                                <button
+                                    onClick={() => setCurrentView(AppView.SETTINGS_PROFILE as AppView)}
+                                    className="flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-white/5 rounded-lg p-1 transition-colors cursor-pointer text-left"
+                                >
                                     <div className="text-right hidden md:block">
                                         <div className="text-xs font-semibold text-navy-900 dark:text-white">{currentUser?.firstName} {currentUser?.lastName}</div>
                                         <div className="text-[10px] text-purple-600 dark:text-purple-400 uppercase tracking-wider">{currentUser?.companyName}</div>
                                     </div>
                                     <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-white/10 flex items-center justify-center">
-                                        <UserCircle size={20} className="text-slate-400" />
+                                        {currentUser?.avatarUrl ? (
+                                            <img src={currentUser.avatarUrl} alt="Profile" className="w-full h-full rounded-full object-cover" />
+                                        ) : (
+                                            <UserCircle size={20} className="text-slate-400" />
+                                        )}
                                     </div>
-                                </div>
+                                </button>
                             </div>
                         </div>
                     )}
@@ -370,3 +414,10 @@ export const App = () => {
         </ErrorBoundary>
     );
 };
+
+export const App = () => (
+    <AutoSaveProvider>
+        <AppContent />
+    </AutoSaveProvider>
+);
+

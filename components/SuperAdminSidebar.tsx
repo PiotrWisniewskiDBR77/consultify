@@ -94,6 +94,7 @@ export const SuperAdminSidebar: React.FC<SuperAdminSidebarProps> = ({
                         onClick={(e) => {
                             e.stopPropagation(); // Prevent drag/other
                             toggleSidebarCollapse();
+                            setIsHovered(false);
                         }}
                         className="absolute right-2 p-1.5 text-slate-500 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
                         title={isSidebarCollapsed ? "Pin Sidebar (Keep Open)" : "Unpin Sidebar (Collapse)"}

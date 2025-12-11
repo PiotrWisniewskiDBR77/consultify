@@ -9,7 +9,31 @@ export const translations = {
     fullProject: { EN: 'Full Transformation', PL: 'Pełna Transformacja', DE: 'Volle Transformation', AR: 'التحول الكامل' },
     masterclass: { EN: 'Masterclass', PL: 'Masterclass', DE: 'Meisterklasse', AR: 'فئة رئيسية' },
     resources: { EN: 'Resources', PL: 'Zasoby', DE: 'Ressourcen', AR: 'موارد' },
-    
+
+    // Modules
+    module1: { EN: '1. Expectations & Challenges', PL: '1. Oczekiwania & Wyzwania', DE: '1. Erwartungen & Herausforderungen', AR: '1. التوقعات والتحديات' },
+    module1_1: { EN: 'Company Profile', PL: 'Profil Firmy', DE: 'Unternehmensprofil', AR: 'ملف الشركة' },
+    module1_2: { EN: 'Goals & Expectations', PL: 'Cele Strategiczne', DE: 'Ziele & Erwartungen', AR: 'الأهداف والتوقعات' },
+    module1_3: { EN: 'Challenges Map', PL: 'Mapa Wyzwań', DE: 'Herausforderungskarte', AR: 'خريطة التحديات' },
+
+    module2: { EN: '2. Assessment (DRD)', PL: '2. Ocena DrD & Audyty', DE: '2. Bewertung (DRD)', AR: '2. تقييم (DRD)' },
+    module3: { EN: '3. Initiatives & Roadmap', PL: '3. Inicjatywy & Roadmapa', DE: '3. Initiativen & Roadmap', AR: '3. المبادرات وخارطة الطريق' },
+    module3_1: { EN: 'Initiatives List', PL: 'Generator & Lista', DE: 'Initiativenliste', AR: 'قائمة المبادرات' },
+    module3_2: { EN: 'Roadmap Builder', PL: 'Roadmapa', DE: 'Roadmap-Ersteller', AR: 'منشئ خارطة الطريق' },
+
+    module4: { EN: '4. Pilot Execution', PL: '4. Pilot Execution', DE: '4. Pilotdurchführung', AR: '4. تنفيذ تجريبي' },
+    module5: { EN: '5. Full Rollout', PL: '5. Full Rollout', DE: '5. Volle Einführung', AR: '5. طرح كامل' },
+    module6: { EN: '6. Economics & ROI', PL: '6. Ekonomia & ROI', DE: '6. Wirtschaft & ROI', AR: '6. الاقتصاد وعائد الاستثمار' },
+    module7: { EN: '7. Execution Reports', PL: '7. Raporty', DE: '7. Ausführungsberichte', AR: '7. تقارير التنفيذ' },
+
+    // Admin
+    adminPanel: { EN: 'Admin Panel', PL: 'Panel Administratora', DE: 'Admin-Bereich', AR: 'لوحة الإدارة' },
+    adminUsers: { EN: 'Users', PL: 'Użytkownicy', DE: 'Benutzer', AR: 'المستخدمون' },
+    adminProjects: { EN: 'Projects', PL: 'Projekty', DE: 'Projekte', AR: 'المشاريع' },
+    adminLLM: { EN: 'LLM Management', PL: 'Zarządzanie LLM', DE: 'LLM-Verwaltung', AR: 'إدارة LLM' },
+    adminKnowledge: { EN: 'Knowledge Base', PL: 'Baza Wiedzy', DE: 'Wissensdatenbank', AR: 'قاعدة المعرفة' },
+    adminFeedback: { EN: 'User Feedback', PL: 'Feedback', DE: 'Benutzerfeedback', AR: 'تعليقات المستخدمين' },
+
     // Quick Steps
     quickStep1: { EN: 'Company & Expectations', PL: 'Firma i Oczekiwania', DE: 'Firma & Erwartungen', AR: 'الشركة والتوقعات' },
     quickStep2: { EN: 'Challenges & Profile Questions', PL: 'Wyzwania i Pytania Profilowe', DE: 'Herausforderungen & Profilfragen', AR: 'التحديات وأسئلة الملف الشخصي' },

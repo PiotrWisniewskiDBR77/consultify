@@ -10,7 +10,7 @@ class RealtimeClient {
             this.disconnect();
         }
 
-        const wsUrl = `ws://localhost:3001/ws?token=${token}`;
+        const wsUrl = `ws://localhost:3005/ws?token=${token}`;
 
         try {
             this.ws = new WebSocket(wsUrl);

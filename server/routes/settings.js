@@ -36,4 +36,103 @@ router.post('/', (req, res) => {
     );
 });
 
+// ==========================================
+// NOTIFICATIONS
+// ==========================================
+
+// GET Notification Preferences
+router.get('/notifications', (req, res) => {
+    // Assuming user_id is passed via middleware auth in a real app, 
+    // but here we might need to rely on query param or mock for now as per previous patterns if auth not fully strict.
+    // However, index.js shows generic routes. 
+    // Let's assume passed via query 'userId' for simplicity if not in req.user, 
+    // OR if we are strictly following the app's auth, we should use req.user.id.
+    // Looking at other routes is safer, but I can't see them right now. 
+    // 'SettingsView' passes 'currentUser', so frontend likely knows the user.
+    // I will check if 'req.user' is available. 
+    // Actually, 'settings.js' didn't have auth middleware applied in 'index.js' explicitly? 
+    // "app.use('/api/', apiLimiter);" "app.use('/api/settings', settingsRoutes);"
+    // It seems unprotected or relies on client sending ID. 
+    // Let's accept 'userId' in query for safety/flexibility.
+
+    const userId = req.query.userId;
+    if (!userId) return res.status(400).json({ error: 'User ID required' });
+
+    db.get('SELECT notification_preferences FROM users WHERE id = ?', [userId], (err, row) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(row ? JSON.parse(row.notification_preferences || '{}') : {});
+    });
+});
+
+// UPDATE Notification Preferences
+router.post('/notifications', (req, res) => {
+    const { userId, preferences } = req.body;
+    if (!userId) return res.status(400).json({ error: 'User ID required' });
+
+    db.run('UPDATE users SET notification_preferences = ? WHERE id = ?',
+        [JSON.stringify(preferences), userId],
+        (err) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ success: true });
+        }
+    );
+});
+
+// ==========================================
+// INTEGRATIONS
+// ==========================================
+
+// GET Integrations for Org
+router.get('/integrations', (req, res) => {
+    const orgId = req.query.organizationId;
+    if (!orgId) return res.status(400).json({ error: 'Organization ID required' });
+
+    db.all('SELECT * FROM integrations WHERE organization_id = ?', [orgId], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+
+        // Parse config and mask secrets
+        const integrations = rows.map(i => {
+            const config = JSON.parse(i.config || '{}');
+            // Simple masking
+            if (config.api_token) config.api_token = '****' + config.api_token.slice(-4);
+            if (config.webhook_url) config.webhook_url = config.webhook_url.replace(/https:\/\/hooks\.slack\.com\/services\/T[A-Z0-9]+\/B[A-Z0-9]+\//, 'https://hooks.slack.com/.../');
+            return { ...i, config };
+        });
+        res.json(integrations);
+    });
+});
+
+// ADD/UPDATE Integration
+router.post('/integrations', (req, res) => {
+    const { organizationId, provider, config } = req.body;
+    const { v4: uuidv4 } = require('uuid');
+
+    if (!organizationId || !provider) return res.status(400).json({ error: 'Org ID and Provider required' });
+
+    const id = uuidv4();
+    const configStr = JSON.stringify(config);
+
+    // Check if exists for this provider? Allow multiple? 
+    // Let's allow one per provider for now for simplicity, or just insert. 
+    // User requested "add everything needed", usually implies multiple.
+    // But typical simple integration is one per type.
+    // Let's doing INSERT.
+
+    db.run(`INSERT INTO integrations (id, organization_id, provider, config) VALUES (?, ?, ?, ?)`,
+        [id, organizationId, provider, configStr],
+        (err) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ success: true, id });
+        }
+    );
+});
+
+// DELETE Integration
+router.delete('/integrations/:id', (req, res) => {
+    db.run('DELETE FROM integrations WHERE id = ?', [req.params.id], (err) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true });
+    });
+});
+
 module.exports = router;

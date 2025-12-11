@@ -12,7 +12,7 @@ router.get('/', (req, res) => {
     // SuperAdmin sees all? Or we keep strict tenant separation even for him unless impersonating.
     // For now: Admin sees own org users.
 
-    db.all('SELECT id, email, first_name, last_name, role, status, avatar_url, last_login FROM users WHERE organization_id = ?', [req.user.organizationId], (err, rows) => {
+    db.all('SELECT id, email, first_name, last_name, role, status, avatar_url, last_login, timezone, units FROM users WHERE organization_id = ?', [req.user.organizationId], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
 
         const users = rows.map(u => ({
@@ -23,7 +23,9 @@ router.get('/', (req, res) => {
             role: u.role,
             status: u.status,
             avatarUrl: u.avatar_url,
-            lastLogin: u.last_login
+            lastLogin: u.last_login,
+            timezone: u.timezone,
+            units: u.units
         }));
         res.json(users);
     });
@@ -51,7 +53,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 2 * 1024 * 1024 }, // 2MB limit
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
     fileFilter: (req, file, cb) => {
         const filetypes = /jpeg|jpg|png|webp/;
         const mimetype = filetypes.test(file.mimetype);
@@ -116,13 +118,13 @@ router.post('/', (req, res) => {
 // UPDATE USER
 router.put('/:id', (req, res) => {
     const { id } = req.params;
-    const { firstName, lastName, email, role, status } = req.body;
+    const { firstName, lastName, email, role, status, timezone, units } = req.body;
     const organizationId = req.user.organizationId;
 
     // Ensure we only update user in OUR org
-    const sql = `UPDATE users SET first_name = ?, last_name = ?, email = ?, role = ?, status = ? WHERE id = ? AND organization_id = ?`;
+    const sql = `UPDATE users SET first_name = ?, last_name = ?, email = ?, role = ?, status = ?, timezone = ?, units = ? WHERE id = ? AND organization_id = ?`;
 
-    db.run(sql, [firstName, lastName, email, role, status, id, organizationId], function (err) {
+    db.run(sql, [firstName, lastName, email, role, status, timezone, units, id, organizationId], function (err) {
         if (err) return res.status(500).json({ error: err.message });
         if (this.changes === 0) return res.status(404).json({ error: 'User not found or access denied' });
         res.json({ message: 'Updated successfully' });

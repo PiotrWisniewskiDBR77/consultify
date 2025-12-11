@@ -5,6 +5,24 @@
     "fullProject": "Pełna Transformacja",
     "masterclass": "Masterclass",
     "resources": "Zasoby",
+    "module1": "1. Oczekiwania & Wyzwania",
+    "module1_1": "Profil Firmy",
+    "module1_2": "Cele Strategiczne",
+    "module1_3": "Mapa Wyzwań",
+    "module2": "2. Ocena DrD & Audyty",
+    "module3": "3. Inicjatywy & Roadmapa",
+    "module3_1": "Generator & Lista",
+    "module3_2": "Roadmapa",
+    "module4": "4. Pilot Execution",
+    "module5": "5. Full Rollout",
+    "module6": "6. Ekonomia & ROI",
+    "module7": "7. Raporty",
+    "adminPanel": "Panel Administratora",
+    "adminUsers": "Użytkownicy",
+    "adminProjects": "Projekty",
+    "adminLLM": "Zarządzanie LLM",
+    "adminKnowledge": "Baza Wiedzy",
+    "adminFeedback": "Feedback",
     "quickStep1": "Firma i Oczekiwania",
     "quickStep2": "Wyzwania i Pytania Profilowe",
     "quickStep3": "Rekomendacje",
@@ -343,6 +361,34 @@
       "finding3": "Organizacja jest gotowa na {type} transformację.",
       "aggressive": "agresywną",
       "focused": "skoncentrowaną"
+    }
+  },
+  "settings": {
+    "menu": {
+      "header": "Ustawienia",
+      "myProfile": "Mój Profil",
+      "billing": "Płatności i Plany",
+      "aiConfig": "Konfiguracja AI",
+      "notifications": "Powiadomienia",
+      "integrations": "Integracje",
+      "regionalization": "Regionalizacja"
+    },
+    "profile": {
+      "header": "Dane Osobowe",
+      "photo": "Zdjęcie Profilowe",
+      "change": "Zmień",
+      "photoHint": "Akceptuje JPG, PNG (Auto-optymalizacja)",
+      "firstName": "Imię",
+      "lastName": "Nazwisko",
+      "role": "Rola / Stanowisko",
+      "email": "Adres Email (Zarządzany przez Admina)",
+      "preferences": "Preferencje",
+      "theme": "Motyw Interfejsu",
+      "light": "Jasny",
+      "dark": "Ciemny",
+      "language": "Język",
+      "save": "Zapisz Zmiany",
+      "saved": "Zapisano!"
     }
   }
 }

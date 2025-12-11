@@ -46,6 +46,9 @@ function recordStorageUsage(orgId, bytes, action, metadata = {}) {
 /**
  * Get current period usage for an organization
  */
+/**
+ * Get current period usage for an organization
+ */
 async function getCurrentUsage(orgId) {
     const billing = await billingService.getOrganizationBilling(orgId);
     const plan = billing?.subscription_plan_id
@@ -59,18 +62,24 @@ async function getCurrentUsage(orgId) {
         : new Date(now.getFullYear(), now.getMonth(), 1);
 
     return new Promise((resolve, reject) => {
+        // Fix: Token usage is periodic (monthly), but Storage usage is cumulative (all-time)
+        // We sum tokens only since periodStart
+        // We sum storage for ALL time (records are +bytes for upload, -bytes for delete)
         db.get(
             `SELECT 
-                COALESCE(SUM(CASE WHEN type = 'token' THEN amount ELSE 0 END), 0) as tokens_used,
+                COALESCE(SUM(CASE WHEN type = 'token' AND recorded_at >= ? THEN amount ELSE 0 END), 0) as tokens_used,
                 COALESCE(SUM(CASE WHEN type = 'storage' THEN amount ELSE 0 END), 0) as storage_bytes
              FROM usage_records
-             WHERE organization_id = ? AND recorded_at >= ?`,
-            [orgId, periodStart.toISOString()],
+             WHERE organization_id = ?`,
+            [periodStart.toISOString(), orgId],
             (err, row) => {
                 if (err) return reject(err);
 
                 const tokenLimit = plan?.token_limit || 0;
                 const storageLimit = (plan?.storage_limit_gb || 0) * 1024 * 1024 * 1024; // Convert GB to bytes
+
+                // Ensure storage never goes below 0 (in case of data anomalies)
+                const storageUsed = Math.max(0, row?.storage_bytes || 0);
 
                 resolve({
                     tokens: {
@@ -80,12 +89,12 @@ async function getCurrentUsage(orgId) {
                         percentage: tokenLimit > 0 ? Math.round(((row?.tokens_used || 0) / tokenLimit) * 100) : 0
                     },
                     storage: {
-                        used: row?.storage_bytes || 0,
+                        used: storageUsed,
                         limit: storageLimit,
-                        remaining: Math.max(0, storageLimit - (row?.storage_bytes || 0)),
-                        usedGB: (row?.storage_bytes || 0) / (1024 * 1024 * 1024),
+                        remaining: Math.max(0, storageLimit - storageUsed),
+                        usedGB: storageUsed / (1024 * 1024 * 1024),
                         limitGB: plan?.storage_limit_gb || 0,
-                        percentage: storageLimit > 0 ? Math.round(((row?.storage_bytes || 0) / storageLimit) * 100) : 0
+                        percentage: storageLimit > 0 ? Math.round((storageUsed / storageLimit) * 100) : 0
                     },
                     plan: plan?.name || 'Free',
                     periodStart,

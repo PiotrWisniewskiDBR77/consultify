@@ -180,6 +180,8 @@ const KnowledgeService = {
 
     deleteDocument: (docId, orgId) => {
         const StorageService = require('./storageService');
+        const usageService = require('./usageService');
+
         return new Promise((resolve, reject) => {
             // 1. Get document info
             db.get("SELECT * FROM knowledge_docs WHERE id = ?", [docId], async (err, doc) => {
@@ -193,9 +195,25 @@ const KnowledgeService = {
                     }
 
                     // 3. Mark as Deleted in DB
-                    db.run("UPDATE knowledge_docs SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?", [docId], (err) => {
-                        if (err) reject(err);
-                        else resolve(true);
+                    db.run("UPDATE knowledge_docs SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?", [docId], async (err) => {
+                        if (err) return reject(err);
+
+                        // 4. Record negative storage usage (free up space)
+                        if (doc.file_size_bytes > 0) {
+                            try {
+                                await usageService.recordStorageUsage(
+                                    orgId,
+                                    -doc.file_size_bytes,
+                                    'document_delete',
+                                    { filename: doc.filename }
+                                );
+                            } catch (e) {
+                                console.error('Failed to record storage release:', e);
+                                // Don't fail the deletion if metrics fail
+                            }
+                        }
+
+                        resolve(true);
                     });
                 } catch (e) {
                     reject(e);

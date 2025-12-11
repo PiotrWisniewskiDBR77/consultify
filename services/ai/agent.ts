@@ -15,13 +15,17 @@ export const Agent = {
     enrichInitiativeWithAI: async (
         initiative: FullInitiative,
         profile: Partial<CompanyProfile>,
-        fullSessionResponse: FullSession
+        fullSessionResponse: FullSession,
+        language: string = 'en'
     ): Promise<Partial<FullInitiative>> => {
 
         // Construct the "Senior Consultant" prompt
         const context = `
       CONTEXT:
-      You are an expert Digital Transformation Architect working for ${profile.name || "a Client"}, a ${profile.industry || "Company"} in ${profile.country || "the Global Market"}.
+      ACT AS: Expert Digital Transformation Architect.
+      LANGUAGE: ${language.toUpperCase()}. You MUST respond in ${language.toUpperCase()}.
+      
+      You are working for ${profile.name || "a Client"}, a ${profile.industry || "Company"} in ${profile.country || "the Global Market"}.
       
       TASK:
       The client has identified a high-level initiative: "${initiative.name}".
@@ -74,11 +78,13 @@ export const Agent = {
      */
     analyzeSessionForInsights: async (
         session: FullSession,
-        companyName: string
+        companyName: string,
+        language: string = 'en'
     ): Promise<{ type: 'risk' | 'opportunity' | 'anomaly', text: string, impact: string }[]> => {
 
         const context = `
             ACT AS: Chief Strategy Officer (Artificial Intelligence).
+            LANGUAGE: ${language.toUpperCase()}. You MUST respond in ${language.toUpperCase()}.
             
             CLIENT: ${companyName}
             DATA SUMMARY:

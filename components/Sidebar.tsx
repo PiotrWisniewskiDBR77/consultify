@@ -105,17 +105,17 @@ export const Sidebar: React.FC = () => {
     },
     {
       id: 'MODULE_1',
-      label: language === 'PL' ? '1. Oczekiwania & Wyzwania' : '1. Expectations & Challenges',
+      label: t('sidebar.module1'),
       icon: <Zap size={20} />,
       subItems: [
-        { id: 'M1_1', label: language === 'PL' ? 'Profil Firmy' : 'Company Profile', viewId: AppView.QUICK_STEP1_PROFILE },
-        { id: 'M1_2', label: language === 'PL' ? 'Cele Strategiczne' : 'Goals & Expectations', viewId: AppView.QUICK_STEP2_USER_CONTEXT, requiresView: AppView.QUICK_STEP1_PROFILE }, // Assuming STEP2 maps to Context/Goals
-        { id: 'M1_3', label: language === 'PL' ? 'Mapa Wyzwań' : 'Challenges Map', viewId: AppView.QUICK_STEP3_EXPECTATIONS, requiresView: AppView.QUICK_STEP2_USER_CONTEXT },
+        { id: 'M1_1', label: t('sidebar.module1_1'), viewId: AppView.QUICK_STEP1_PROFILE },
+        { id: 'M1_2', label: t('sidebar.module1_2'), viewId: AppView.QUICK_STEP2_USER_CONTEXT, requiresView: AppView.QUICK_STEP1_PROFILE },
+        { id: 'M1_3', label: t('sidebar.module1_3'), viewId: AppView.QUICK_STEP3_EXPECTATIONS, requiresView: AppView.QUICK_STEP2_USER_CONTEXT },
       ]
     },
     {
       id: 'MODULE_2',
-      label: language === 'PL' ? '2. Ocena DrD & Audyty' : '2. Assessment (DRD)',
+      label: t('sidebar.module2'),
       icon: <CheckCircle2 size={20} />,
       subItems: [
         { id: 'M2_1', label: t('sidebar.fullStep1_proc'), viewId: AppView.FULL_STEP1_PROCESSES },
@@ -128,37 +128,37 @@ export const Sidebar: React.FC = () => {
     },
     {
       id: 'MODULE_3',
-      label: language === 'PL' ? '3. Inicjatywy & Roadmapa' : '3. Initiatives & Roadmap',
+      label: t('sidebar.module3'),
       icon: <Layers size={20} />,
       subItems: [
-        { id: 'M3_1', label: language === 'PL' ? 'Generator & Lista' : 'Initiatives List', viewId: AppView.FULL_STEP2_INITIATIVES, requiresView: AppView.FULL_STEP1_ASSESSMENT },
-        { id: 'M3_2', label: language === 'PL' ? 'Roadmapa' : 'Roadmap Builder', viewId: AppView.FULL_STEP3_ROADMAP, requiresView: AppView.FULL_STEP2_INITIATIVES },
+        { id: 'M3_1', label: t('sidebar.module3_1'), viewId: AppView.FULL_STEP2_INITIATIVES, requiresView: AppView.FULL_STEP1_ASSESSMENT },
+        { id: 'M3_2', label: t('sidebar.module3_2'), viewId: AppView.FULL_STEP3_ROADMAP, requiresView: AppView.FULL_STEP2_INITIATIVES },
       ]
     },
     {
       id: 'MODULE_4',
-      label: language === 'PL' ? '4. Pilot Execution' : '4. Pilot Execution',
-      icon: <Rocket size={20} />, // Need to import Rocket if not present
+      label: t('sidebar.module4'),
+      icon: <Rocket size={20} />,
       viewId: AppView.FULL_PILOT_EXECUTION,
       requiresView: AppView.FULL_STEP3_ROADMAP
     },
     {
       id: 'MODULE_5',
-      label: language === 'PL' ? '5. Full Rollout' : '5. Full Rollout',
-      icon: <Map size={20} />, // Need to import Map if not present
+      label: t('sidebar.module5'),
+      icon: <Map size={20} />,
       viewId: AppView.FULL_ROLLOUT,
       requiresView: AppView.FULL_STEP3_ROADMAP
     },
     {
       id: 'MODULE_6',
-      label: language === 'PL' ? '6. Ekonomia & ROI' : '6. Economics & ROI',
-      icon: <Box size={20} />, // Using specific icon for ROI
+      label: t('sidebar.module6'),
+      icon: <Box size={20} />,
       viewId: AppView.FULL_STEP4_ROI,
       requiresView: AppView.FULL_STEP2_INITIATIVES
     },
     {
       id: 'MODULE_7',
-      label: language === 'PL' ? '7. Raporty' : '7. Execution Reports',
+      label: t('sidebar.module7'),
       icon: <BookOpen size={20} />,
       viewId: AppView.FULL_STEP6_REPORTS,
       requiresView: AppView.FULL_STEP5_EXECUTION
@@ -167,15 +167,15 @@ export const Sidebar: React.FC = () => {
 
   const adminMenuItem: MenuItem = {
     id: 'ADMIN',
-    label: language === 'PL' ? 'Panel Administratora' : 'Admin Panel',
+    label: t('sidebar.adminPanel'),
     icon: <Shield size={20} />,
     subItems: [
       { id: 'ADMIN_DASHBOARD', label: t('sidebar.dashboard'), viewId: AppView.ADMIN_DASHBOARD },
-      { id: 'ADMIN_USERS', label: language === 'PL' ? 'Użytkownicy' : 'Users', viewId: AppView.ADMIN_USERS },
-      { id: 'ADMIN_PROJECTS', label: language === 'PL' ? 'Projekty' : 'Projects', viewId: AppView.ADMIN_PROJECTS },
-      { id: 'ADMIN_LLM', label: language === 'PL' ? 'Zarządzanie LLM' : 'LLM Management', viewId: AppView.ADMIN_LLM },
-      { id: 'ADMIN_KNOWLEDGE', label: language === 'PL' ? 'Baza Wiedzy' : 'Knowledge Base', viewId: AppView.ADMIN_KNOWLEDGE },
-      { id: 'ADMIN_FEEDBACK', label: language === 'PL' ? 'Feedback' : 'User Feedback', viewId: AppView.ADMIN_FEEDBACK },
+      { id: 'ADMIN_USERS', label: t('sidebar.adminUsers'), viewId: AppView.ADMIN_USERS },
+      { id: 'ADMIN_PROJECTS', label: t('sidebar.adminProjects'), viewId: AppView.ADMIN_PROJECTS },
+      { id: 'ADMIN_LLM', label: t('sidebar.adminLLM'), viewId: AppView.ADMIN_LLM },
+      { id: 'ADMIN_KNOWLEDGE', label: t('sidebar.adminKnowledge'), viewId: AppView.ADMIN_KNOWLEDGE },
+      { id: 'ADMIN_FEEDBACK', label: t('sidebar.adminFeedback'), viewId: AppView.ADMIN_FEEDBACK },
     ]
   };
 
@@ -337,21 +337,27 @@ export const Sidebar: React.FC = () => {
         {/* Header */}
         <div className="h-16 flex items-center px-4 relative shrink-0">
           <button
-            onClick={() => !isSidebarCollapsed ? toggleSidebarCollapse() : null} // Clicking logo when pinned logic could go here, but let's stick to dedicated pin button
-            className="flex items-center gap-3 w-full group overflow-hidden"
+            onClick={() => !isSidebarCollapsed ? toggleSidebarCollapse() : null}
+            className={`flex items-center ${showFull ? 'justify-start' : 'justify-center'} w-full group overflow-hidden transition-all duration-300`}
           >
-            <div className="h-9 w-9 min-w-[2.25rem] rounded-xl bg-gradient-to-br from-brand to-brand-hover flex items-center justify-center shadow-lg shadow-brand/20">
-              <span className="text-white font-black text-xs tracking-tighter">DBR</span>
-            </div>
+            {/* Logo Icon / Full Logo Logic */}
+            {/* If collapsed (mini): show Icon only */}
+            {/* If expanded: show Full Logo (Light/Dark) */}
 
-            {showFull && (
-              <div className="flex items-center justify-between flex-1 animate-fade-in">
-                <div className="flex flex-col items-start leading-none">
-                  <span className="font-bold text-base tracking-tight text-navy-900 dark:text-white">CONSULTIFY</span>
-                  <span className="text-[10px] text-slate-400 font-medium tracking-widest uppercase">Enterprise</span>
-                </div>
-              </div>
-            )}</button>
+            {showFull ? (
+              <img
+                src={theme === 'dark' ? "/assets/logos/logo-dark.png" : "/assets/logos/logo-light.png"}
+                alt="DBR77 Consultify"
+                className="h-8 w-auto object-contain transition-all"
+              />
+            ) : (
+              <img
+                src="/assets/logos/logo-icon.png"
+                alt="DBR77"
+                className="h-9 w-9 object-contain"
+              />
+            )}
+          </button>
 
           {/* Pin / Unpin Button - Only visible if expanded */}
           {showFull && (
@@ -375,7 +381,10 @@ export const Sidebar: React.FC = () => {
         {showFull && (
           <div className="flex justify-end px-4 pb-2">
             <button
-              onClick={toggleSidebarCollapse}
+              onClick={() => {
+                toggleSidebarCollapse();
+                setIsHovered(false);
+              }}
               className="p-1.5 rounded-md text-slate-400 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-colors"
               title={isSidebarCollapsed ? "Pin Sidebar (Keep Open)" : "Unpin Sidebar (Collapse)"}
             >
