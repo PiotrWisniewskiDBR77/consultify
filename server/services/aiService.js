@@ -20,7 +20,9 @@ const deps = {
     FinancialService,
     WebSearchService,
     FeedbackService,
-    KnowledgeService
+
+    KnowledgeService,
+    OpenAI: null // Allow injection of OpenAI for testing
 };
 
 // Load DRD Data once at startup (caching the definitions)
@@ -769,11 +771,11 @@ const AiService = {
             let result;
             const { provider, api_key, model_id, endpoint } = config;
 
-            if (!provider || !api_key) throw new Error("Missing provider or API key");
+            if (!provider || (!api_key && provider !== 'ollama')) throw new Error("Missing provider or API key");
 
             if (provider === 'openai') {
-                const OpenAI = require('openai');
-                const openai = new OpenAI({ apiKey: api_key });
+                const OpenAIClass = deps.OpenAI || require('openai');
+                const openai = new OpenAIClass({ apiKey: api_key });
                 const completion = await openai.chat.completions.create({
                     messages: [{ role: "user", content: "Say OK" }],
                     model: model_id || "gpt-3.5-turbo",
@@ -781,14 +783,14 @@ const AiService = {
                 });
                 result = completion.choices[0].message.content;
             } else if (provider === 'google') {
-                const { GoogleGenerativeAI } = require("@google/generative-ai");
+                const GoogleGenerativeAI = deps.GoogleGenerativeAI;
                 const genAI = new GoogleGenerativeAI(api_key);
                 const model = genAI.getGenerativeModel({ model: model_id || "gemini-pro" });
                 const resultGen = await model.generateContent("Say OK");
                 result = resultGen.response.text();
             } else if (['deepseek', 'mistral', 'groq', 'together', 'nvidia_nim', 'qwen', 'ernie', 'zhipu'].includes(provider)) {
                 // Generic OpenAI-compatible
-                const OpenAI = require('openai');
+                const OpenAIClass = deps.OpenAI || require('openai');
                 let baseURL = endpoint;
                 if (!baseURL) {
                     // Set default base URLs if missing
@@ -798,7 +800,7 @@ const AiService = {
                     else if (provider === 'nvidia_nim') baseURL = 'https://integrate.api.nvidia.com/v1';
                 }
 
-                const client = new OpenAI({ apiKey: api_key, baseURL });
+                const client = new OpenAIClass({ apiKey: api_key, baseURL });
                 const completion = await client.chat.completions.create({
                     messages: [{ role: "user", content: "Say OK" }],
                     model: model_id,
@@ -807,7 +809,8 @@ const AiService = {
                 result = completion.choices[0].message.content;
             } else if (provider === 'ollama') {
                 // ... ollama fetch
-                const fetch = require('node-fetch'); // or global fetch
+                // Use global fetch
+
                 const res = await fetch(`${endpoint || 'http://localhost:11434'}/api/chat`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -851,7 +854,7 @@ const AiService = {
     },
 
     chat: async (message, history, roleName = 'CONSULTANT', userId, organizationId = null) => {
-        const context = await RagService.getContext(message);
+        const context = await deps.RagService.getContext(message);
         // Pass organizationId to enhancePrompt if available
         const baseRole = await AiService.enhancePrompt(roleName.toUpperCase(), 'chat', organizationId);
         let systemInstruction = baseRole;
@@ -862,7 +865,7 @@ const AiService = {
     },
 
     chatStream: async function* (message, history, roleName = 'CONSULTANT', userId, organizationId = null) {
-        const context = await RagService.getContext(message);
+        const context = await deps.RagService.getContext(message);
         const baseRole = await AiService.enhancePrompt(roleName.toUpperCase(), 'chat', organizationId);
         let systemInstruction = baseRole;
         if (context) systemInstruction += `\n\nCONTEXT:\n${context}`;

@@ -3,6 +3,32 @@ import path from 'path';
 // Determine absolute paths for robust mocking
 const serverDir = path.resolve(__dirname, '../../../server');
 
+// Mock Google Generative AI globally - MUST BE TOP LEVEL
+vi.mock('@google/generative-ai', () => {
+    return {
+        GoogleGenerativeAI: vi.fn().mockImplementation(() => ({
+            getGenerativeModel: vi.fn().mockReturnValue({
+                generateContent: vi.fn().mockResolvedValue({
+                    response: { text: () => "Google Test Response" }
+                })
+            })
+        }))
+    };
+});
+
+// Mock OpenAI globally for testProviderConnection - MUST BE TOP LEVEL
+vi.mock('openai', () => {
+    const MockOpenAI = vi.fn();
+    MockOpenAI.prototype.chat = {
+        completions: {
+            create: vi.fn().mockResolvedValue({
+                choices: [{ message: { content: "OpenAI Test Response" } }]
+            })
+        }
+    };
+    return { default: MockOpenAI };
+});
+
 describe('AiService Tests', () => {
     let AiService;
     let mockDb;
@@ -72,9 +98,6 @@ describe('AiService Tests', () => {
         };
 
         // 2. Import SUT (System Under Test)
-        // We can import directly because we are not doMock-ing the requires inside it anymore
-        // BUT, we need to reset dependencies. 'deps' is module-scoped in aiService.js.
-        // Importing it new ensures fresh state if resetModules works for commonjs.
         const module = await import('../../../server/services/aiService');
         AiService = module.default || module;
 
@@ -85,7 +108,18 @@ describe('AiService Tests', () => {
             AnalyticsService: mockAnalytics,
             GoogleGenerativeAI: mockGoogleGenerativeAI,
             RagService: mockRagService,
-            FeedbackService: mockFeedback
+            FeedbackService: mockFeedback,
+            OpenAI: class {
+                constructor() {
+                    this.chat = {
+                        completions: {
+                            create: vi.fn().mockResolvedValue({
+                                choices: [{ message: { content: "OpenAI Test Response" } }]
+                            })
+                        }
+                    };
+                }
+            }
         });
     });
 
@@ -215,13 +249,14 @@ describe('AiService Tests', () => {
         const providers = [
             { name: 'deepseek', modelId: 'deepseek-chat', endpoint: 'https://api.deepseek.com/v1', expectedUrl: 'https://api.deepseek.com/v1' },
             { name: 'qwen', modelId: 'qwen-turbo', endpoint: 'https://api.qwen.ai/v1', expectedUrl: 'https://api.qwen.ai/v1' },
-            { name: 'mistral', modelId: 'mistral-large', endpoint: 'https://api.mistral.ai/v1', expectedUrl: 'https://api.mistral.ai/v1' },
-            { name: 'anthropic', modelId: 'claude-3-opus', endpoint: 'https://api.anthropic.com/v1', expectedUrl: 'https://api.anthropic.com/v1/messages' },
-            { name: 'groq', modelId: 'llama3-70b', endpoint: 'https://api.groq.com/openai/v1', expectedUrl: 'https://api.groq.com/openai/v1/chat/completions' },
-            { name: 'together', modelId: 'meta-llama/Llama-3-700b', endpoint: 'https://api.together.xyz/v1', expectedUrl: 'https://api.together.xyz/v1' },
-            { name: 'nvidia_nim', modelId: 'llama-3.1-405b-instruct', endpoint: 'https://integrate.api.nvidia.com/v1', expectedUrl: 'https://integrate.api.nvidia.com/v1' },
-            { name: 'zhipu', modelId: 'glm-4', endpoint: 'https://open.bigmodel.cn/api/paas/v4', expectedUrl: 'https://open.bigmodel.cn/api/paas/v4' },
-            { name: 'cohere', modelId: 'command-r', endpoint: 'https://api.cohere.ai/v1', expectedUrl: 'https://api.cohere.ai/v1/chat' }
+            { name: 'mistral', modelId: 'mistral-large-latest', endpoint: 'https://api.mistral.ai/v1/chat/completions', expectedUrl: 'https://api.mistral.ai/v1/chat/completions' },
+            { name: 'anthropic', modelId: 'claude-3-opus-20240229', endpoint: 'https://api.anthropic.com/v1/messages', expectedUrl: 'https://api.anthropic.com/v1/messages' },
+            { name: 'groq', modelId: 'llama3-70b-8192', endpoint: 'https://api.groq.com/openai/v1/chat/completions', expectedUrl: 'https://api.groq.com/openai/v1/chat/completions' },
+            { name: 'together', modelId: 'meta-llama/Llama-3-700b', endpoint: 'https://api.together.xyz/v1/chat/completions', expectedUrl: 'https://api.together.xyz/v1/chat/completions' },
+            { name: 'nvidia_nim', modelId: 'llama-3.1-405b-instruct', endpoint: 'https://integrate.api.nvidia.com/v1/chat/completions', expectedUrl: 'https://integrate.api.nvidia.com/v1/chat/completions' },
+            { name: 'zhipu', modelId: 'glm-4', endpoint: 'https://open.bigmodel.cn/api/paas/v4/chat/completions', expectedUrl: 'https://open.bigmodel.cn/api/paas/v4/chat/completions' },
+            { name: 'cohere', modelId: 'command-r', endpoint: 'https://api.cohere.ai/v1/chat', expectedUrl: 'https://api.cohere.ai/v1/chat' },
+            { name: 'ernie', modelId: 'ernie-4.0', endpoint: 'https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions_pro', expectedUrl: 'https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions_pro' }
         ];
 
         providers.forEach(p => {
@@ -253,8 +288,8 @@ describe('AiService Tests', () => {
                         if (p.name === 'anthropic') {
                             return { content: [{ text: "Provider Response" }] };
                         }
-                        if (p.name === 'cohere') {
-                            return { text: "Provider Response" };
+                        if (p.name === 'cohere' || p.name === 'ernie') {
+                            return { text: "Provider Response", result: "Provider Response" }; // Ernie uses result
                         }
                         return {
                             choices: [{ message: { content: "Provider Response" } }],
@@ -270,9 +305,11 @@ describe('AiService Tests', () => {
                 // Verify Fetch calls
                 expect(global.fetch).toHaveBeenCalled();
                 const callArgs = global.fetch.mock.calls[0];
-                // Check URL includes endpoint
-                if (p.name === 'anthropic' || p.name === 'perplexity' || p.name === 'groq') {
-                    expect(callArgs[0]).toContain(p.endpoint); // Basic check
+                // Check URL includes endpoint for all providers except Gemini (which is mocked internally)
+                // Ollama is also handled by global.fetch, so it should be checked.
+                if (p.name !== 'gemini') {
+                    expect(callArgs[0]).toContain(p.expectedUrl);
+                    expect(callArgs[1].method).toBe('POST');
                 }
             });
         });
@@ -287,13 +324,6 @@ describe('AiService Tests', () => {
                 gaps: ["Gap1"],
                 recommendations: ["Rec1"]
             });
-            // We can't easily mock AiService.callLLM purely as it's partial.
-            // But we mocked deps.GoogleGenerativeAI/fetch.
-            // runChainOfThought calls callLLM 3 times.
-
-            // Mock fetch to return the JSON for the LAST step, or all steps?
-            // runChainOfThought passes output of previous as context.
-            // We just need the final output to be the JSON.
 
             global.fetch = vi.fn().mockResolvedValue({
                 ok: true,
@@ -352,6 +382,23 @@ describe('AiService Tests', () => {
             expect(result).toBe("Enriched Data");
         });
 
+        it('enrichInitiative should fallback to LLM if WebSearch fails', async () => {
+            const mockWeb = { verifyFact: vi.fn().mockRejectedValue(new Error("Web Fail")) };
+            AiService.setDependencies({ WebSearchService: mockWeb });
+            vi.spyOn(AiService, 'callLLM').mockResolvedValue("Enriched via LLM");
+
+            const result = await AiService.enrichInitiative({ name: "I1", summary: "S" });
+            expect(AiService.callLLM).toHaveBeenCalledWith(expect.stringContaining("market context"), expect.stringContaining("Market Researcher"));
+            expect(result).toBe("Enriched via LLM");
+        });
+
+        it('validateInitiative should return safe default on error', async () => {
+            vi.spyOn(AiService, 'callLLM').mockRejectedValue(new Error("LLM Fail"));
+            const result = await AiService.validateInitiative({ name: "Bad Init" }, 1);
+            expect(result.confidenceScore).toBe(0);
+            expect(result.risks).toEqual([]);
+        });
+
         it('extractInsights should parse JSON and save to KnowledgeService', async () => {
             const mockRawJSON = JSON.stringify({
                 idea: { found: true, content: "Idea", reasoning: "Reason", topic: "Topic" },
@@ -396,6 +443,55 @@ describe('AiService Tests', () => {
             }
             expect(chunks).toBe("Mock Chunk"); // We mocked the stream to yield this
         });
+        it('should yield chunks for OpenAI stream', async () => {
+            // Mock DB to return OpenAI
+            mockDb.get.mockImplementation((query, params, cb) => {
+                const callback = typeof params === 'function' ? params : cb;
+                callback(null, { id: 1, provider: 'openai', api_key: 'sk-test' });
+            });
+
+            // Mock Fetch Stream
+            const stream = new ReadableStream({
+                start(controller) {
+                    const chunk1 = { choices: [{ delta: { content: "Chunk1" } }] };
+                    const chunk2 = { choices: [{ delta: { content: "Chunk2" } }] };
+                    controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify(chunk1)}\n\n`));
+                    controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify(chunk2)}\n\n`));
+                    controller.enqueue(new TextEncoder().encode('data: [DONE]\n\n'));
+                    controller.close();
+                }
+            });
+
+            global.fetch = vi.fn().mockResolvedValue({
+                ok: true,
+                body: stream
+            });
+
+            const generator = AiService.streamLLM("Prompt", "", [], null, 1);
+            let parts = [];
+            for await (const chunk of generator) {
+                parts.push(chunk);
+            }
+            expect(parts).toEqual(["Chunk1", "Chunk2"]);
+        });
+
+        it('should handle stream errors gracefully', async () => {
+            // Mock Gemini error (since default)
+            mockGoogleGenerativeAI.mockImplementation(() => ({
+                getGenerativeModel: () => ({
+                    startChat: () => ({
+                        sendMessageStream: vi.fn().mockRejectedValue(new Error("Stream Fail"))
+                    })
+                })
+            }));
+
+            const generator = AiService.streamLLM("Fail Prompt", "", [], null, 1);
+            const parts = [];
+            for await (const chunk of generator) {
+                parts.push(chunk);
+            }
+            expect(parts[0]).toContain("[Error generating response]");
+        });
     });
 
     describe('enhancePrompt', () => {
@@ -418,14 +514,6 @@ describe('AiService Tests', () => {
                 }
             });
 
-            // We need to inject FeedbackService mock too for this to work fully without real DB
-            // For now enhancePrompt calls getLearningExamples which is in FeedbackService.
-            // We configured setDependencies but didn't pass FeedbackService mock.
-            // Let's rely on the fact that if we don't pass it, it uses the real one?
-            // No, AiService.js uses 'deps.FeedbackService'.
-            // Ideally we should mock FeedbackService.
-            // For this test to pass without Error, we must inject FeedbackService.
-
             const mockFeedback = {
                 getLearningExamples: vi.fn().mockResolvedValue("Example1 is a very long string that should definitely exceed fifty characters now to pass the check.")
             };
@@ -443,10 +531,6 @@ describe('AiService Tests', () => {
 
     describe('Deep Reasoning Layers', () => {
         it('generateInitiatives should parse JSON response', async () => {
-            // Mock callLLM response via mocking Gemini/Provider
-            // Actually callLLM uses getProvider which uses db.
-            // Let's just mock callLLM return via spy? No, callLLM is internal.
-            // valid JSON response
             const jsonResp = JSON.stringify([{ title: "Init 1" }]);
 
             // Mock Gemini response (since default fallback used)
@@ -488,16 +572,85 @@ describe('AiService Tests', () => {
 
     describe('testProviderConnection', () => {
         it('should return success for OpenAI', async () => {
-            // Mock OpenAI constructor or logic.
-            // In AiService.js, testProviderConnection requires 'openai' package if provider is openai.
-            // Since we didn't mock 'openai' module with setDependencies (it's require('openai') inside function),
-            // we must use vi.mock or create a mock capable of being required?
-            // Wait, testProviderConnection uses `require('openai')` inside the function.
-            // `vi.mock('openai')` at top level is needed.
+            const result = await AiService.testProviderConnection({
+                provider: 'openai', api_key: 'sk-test', model_id: 'gpt-4'
+            });
+            expect(result.success).toBe(true);
+            expect(result.response).toBe("OpenAI Test Response");
+        });
 
-            // Since we can't easily inject into a local variable require, we should use top level vi.mock for libraries.
-            // BUT, our test suite removed vi.doMock.
-            // We can add `vi.mock('openai')` at the top of the file.
+        it('should return success for Google', async () => {
+            // Should use injected GoogleGenerativeAI mock
+            const result = await AiService.testProviderConnection({
+                provider: 'google', api_key: 'test-key', model_id: 'gemini-pro'
+            });
+            expect(result.success).toBe(true);
+            expect(result.response).toBe("Mock Content");
+        });
+
+        it('should return success for Generic Providers (DeepSeek)', async () => {
+            const result = await AiService.testProviderConnection({
+                provider: 'deepseek', api_key: 'sk-test', endpoint: 'https://api.deepseek.com'
+            });
+            expect(result.success).toBe(true);
+            expect(result.response).toBe("OpenAI Test Response"); // Uses injected OpenAI mock
+        });
+
+        it('should return success for Ollama', async () => {
+            global.fetch = vi.fn().mockResolvedValue({
+                ok: true,
+                json: async () => ({ message: { content: "Ollama Hello" } })
+            });
+
+            const result = await AiService.testProviderConnection({
+                provider: 'ollama', endpoint: 'http://localhost:11434', model_id: 'llama3'
+            });
+            expect(result.success).toBe(true);
+            expect(result.response).toBe("Ollama Hello");
+        });
+
+        it('should handle connection errors gracefully', async () => {
+            global.fetch = vi.fn().mockRejectedValue(new Error("Network Error"));
+            const result = await AiService.testProviderConnection({
+                provider: 'ollama', endpoint: 'http://fail'
+            });
+            expect(result.success).toBe(false);
+            expect(result.message).toContain("Network Error");
+        });
+    });
+
+    describe('Chat & Streams', () => {
+        it('chat should enhance prompt with context and history', async () => {
+            mockRagService.getContext.mockResolvedValue("Retrieved Context");
+            vi.spyOn(AiService, 'callLLM').mockResolvedValue("Chat Response");
+
+            const res = await AiService.chat("Hello", [], 'CONSULTANT', 1, 10);
+            expect(mockRagService.getContext).toHaveBeenCalledWith("Hello");
+            expect(AiService.callLLM).toHaveBeenCalledWith(
+                "Hello",
+                expect.stringContaining("Retrieved Context"),
+                [], null, 1, 'chat'
+            );
+            expect(res).toBe("Chat Response");
+        });
+
+        it('chatStream should delegate to streamLLM', async () => {
+            mockRagService.getContext.mockResolvedValue("Stream Context");
+
+            // Generator mock
+            async function* mockGen() { yield "Chunk1"; yield "Chunk2"; }
+            vi.spyOn(AiService, 'streamLLM').mockImplementation(mockGen);
+
+            const stream = AiService.chatStream("Hello", [], 'CONSULTANT', 1);
+            const chunks = [];
+            for await (const c of stream) chunks.push(c);
+
+            expect(chunks).toEqual(["Chunk1", "Chunk2"]);
+            expect(AiService.streamLLM).toHaveBeenCalledWith(
+                "Hello",
+                expect.stringContaining("Stream Context"),
+                expect.anything(), null, 1, 'chat'
+            );
         });
     });
 });
