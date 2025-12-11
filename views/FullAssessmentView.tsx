@@ -19,8 +19,7 @@ export const FullAssessmentView: React.FC = () => {
     currentProjectId,
     addChatMessage,
     activeChatMessages: messages,
-    setIsBotTyping,
-    updateLastChatMessage
+    setIsBotTyping
   } = useAppStore();
 
   const { startStream } = useAIStream();
