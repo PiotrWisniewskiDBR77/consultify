@@ -379,6 +379,16 @@ function initDb() {
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
         )`);
 
+        // Password Resets Table
+        db.run(`CREATE TABLE IF NOT EXISTS password_resets (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            token TEXT NOT NULL UNIQUE,
+            expires_at DATETIME NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+
         // Invitations Table
         db.run(`CREATE TABLE IF NOT EXISTS invitations (
             id TEXT PRIMARY KEY,
