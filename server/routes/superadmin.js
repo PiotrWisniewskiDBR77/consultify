@@ -311,6 +311,70 @@ router.post('/users/invite', (req, res) => {
     });
 });
 
+// RESET PASSWORD (Public)
+router.post('/reset-password', (req, res) => {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) return res.status(400).json({ error: 'Token and new password required' });
+
+    db.get('SELECT * FROM password_resets WHERE token = ?', [token], (err, resetData) => {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        if (!resetData) return res.status(400).json({ error: 'Invalid or expired token' });
+
+        if (new Date(resetData.expires_at) < new Date()) {
+            return res.status(400).json({ error: 'Token has expired' });
+        }
+
+        const hashedPassword = require('bcryptjs').hashSync(newPassword, 8);
+
+        // Update User Password
+        db.run('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, resetData.user_id], function (err) {
+            if (err) return res.status(500).json({ error: 'Failed to update password' });
+
+            // Delete Protocol Token (Single Use)
+            db.run('DELETE FROM password_resets WHERE token = ?', [token]);
+
+            res.json({ message: 'Password updated successfully' });
+        });
+    });
+});
+
+// RESET PASSWORD LINK (Super Admin)
+router.post('/users/:id/reset-password', (req, res) => {
+    const { id } = req.params;
+
+    db.get('SELECT * FROM users WHERE id = ?', [id], (err, user) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        const token = uuidv4();
+        const resetId = uuidv4();
+        // Expires in 24 hours
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+        // Invalidate old tokens for this user? Optional, but good practice.
+        // For now, just insert new one.
+
+        const sql = `INSERT INTO password_resets(id, user_id, token, expires_at) VALUES(?, ?, ?, ?)`;
+
+        db.run(sql, [resetId, id, token, expiresAt], function (err) {
+            if (err) return res.status(500).json({ error: err.message });
+
+            const resetLink = `${req.protocol}://${req.get('host')}/reset-password?token=${token}`;
+
+            ActivityService.log({
+                userId: req.user.id,
+                action: 'password_reset_generated',
+                entityType: 'user',
+                entityId: id,
+                entityName: user.email
+            });
+
+            res.json({ message: 'Reset link generated', resetLink, token });
+        });
+    });
+});
+
 // ACCESS REQUESTS
 router.get('/access-requests', (req, res) => {
     db.all(`SELECT * FROM access_requests ORDER BY requested_at DESC`, [], (err, rows) => {
