@@ -16,7 +16,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { RadarChart } from "../RadarChart";
 
 // Types matching the backend response from /api/megatrends/radar
-interface RadarMegatrend {
+export interface RadarMegatrend {
     id: string; // stable key
     label: string;
     type: "Technology" | "Business" | "Societal";
@@ -41,13 +41,15 @@ const typeColors: Record<RadarMegatrend["type"], { bg: string; border: string; e
 
 const industryOptions = ["automotive", "FMCG", "machinery", "metal", "plastics", "general"];
 
-export const TrendRadarCard: React.FC = () => {
-    const [industry, setIndustry] = useState<string>("automotive");
-    const [data, setData] = useState<RadarMegatrend[]>([]);
-    const [loading, setLoading] = useState<boolean>(false);
-    const [error, setError] = useState<string | null>(null);
+interface TrendRadarCardProps {
+    data: RadarMegatrend[];
+    onTrendSelect?: (trendId: string) => void;
+    loading?: boolean;
+    error?: string | null;
+}
+
+export const TrendRadarCard: React.FC<TrendRadarCardProps> = ({ data = [], onTrendSelect, loading, error }) => {
     const [tooltip, setTooltip] = useState<{ x: number; y: number; text: string } | null>(null);
-    const [selectedTrend, setSelectedTrend] = useState<RadarMegatrend | null>(null);
 
     // Responsive size – based on container width (max 500 px)
     const containerRef = useRef<HTMLDivElement>(null);
@@ -64,24 +66,7 @@ export const TrendRadarCard: React.FC = () => {
         return () => window.removeEventListener("resize", updateSize);
     }, []);
 
-    // Load radar data whenever industry changes
-    useEffect(() => {
-        const fetchRadar = async () => {
-            setLoading(true);
-            setError(null);
-            try {
-                const res = await fetch(`/api/megatrends/radar?industry=${encodeURIComponent(industry)}`);
-                if (!res.ok) throw new Error("Failed to load radar data");
-                const json: RadarMegatrend[] = await res.json();
-                setData(json);
-            } catch (e: any) {
-                setError(e.message);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchRadar();
-    }, [industry]);
+
 
     // Helper to compute SVG coordinates (same as RadarChart)
     const radius = size / 2;
@@ -117,73 +102,19 @@ export const TrendRadarCard: React.FC = () => {
                             setTooltip({ x: rect.x + rect.width / 2, y: rect.y, text: `${emoji} ${mt.label}: ${mt.description ?? ""}` });
                         }}
                         onMouseLeave={() => setTooltip(null)}
-                        onClick={() => setSelectedTrend(mt)}
+                        onClick={() => onTrendSelect?.(mt.id)}
                         aria-label={`Megatrend ${mt.label}, type ${mt.type}, impact ${mt.impact}`}
                     />
                 </g>
             );
         });
 
-    // Simple modal for trend details (future AI insights placeholder)
-    const DetailModal = ({ trend }: { trend: RadarMegatrend }) => (
-        <div
-            className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50"
-            role="dialog"
-            aria-modal="true"
-            onClick={() => setSelectedTrend(null)}
-        >
-            <div
-                className="bg-white dark:bg-gray-800 rounded-xl shadow-lg max-w-md w-full p-6 relative"
-                onClick={e => e.stopPropagation()}
-            >
-                <button
-                    className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
-                    onClick={() => setSelectedTrend(null)}
-                    aria-label="Close"
-                >
-                    ✕
-                </button>
-                <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-gray-100">{trend.label}</h3>
-                <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">{trend.description}</p>
-                <div className="flex items-center space-x-4 mb-2">
-                    <span className="font-medium">Type:</span>
-                    <span>{typeColors[trend.type].emoji} {trend.type}</span>
-                </div>
-                <div className="flex items-center space-x-4 mb-2">
-                    <span className="font-medium">Impact:</span>
-                    <span>{trend.impact}/7</span>
-                </div>
-                <div className="flex items-center space-x-4 mb-2">
-                    <span className="font-medium">Ring:</span>
-                    <span>{trend.ring}</span>
-                </div>
-                <div className="border-t pt-2 mt-2 text-xs text-gray-500 dark:text-gray-400">
-                    AI insights will appear here.
-                </div>
-            </div>
-        </div>
-    );
+
 
     return (
         <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg p-6 space-y-4" ref={containerRef}>
             <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">Trend Radar Map</h2>
-            <div className="flex items-center space-x-3">
-                <label htmlFor="industry" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Industry:
-                </label>
-                <select
-                    id="industry"
-                    value={industry}
-                    onChange={e => setIndustry(e.target.value)}
-                    className="mt-1 block w-48 rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                >
-                    {industryOptions.map(opt => (
-                        <option key={opt} value={opt}>
-                            {opt.charAt(0).toUpperCase() + opt.slice(1)}
-                        </option>
-                    ))}
-                </select>
-            </div>
+
 
             {loading && (
                 <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-300">
@@ -228,8 +159,7 @@ export const TrendRadarCard: React.FC = () => {
                 </div>
             </div>
 
-            {/* Detail modal */}
-            {selectedTrend && <DetailModal trend={selectedTrend} />}
+            {/* Detail modal Removed: Handled by parent via onTrendSelect */}
         </div>
     );
 };

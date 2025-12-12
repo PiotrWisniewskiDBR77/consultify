@@ -15,7 +15,7 @@
 import React, { useEffect, useState } from "react";
 
 // Expected shape of a megatrend – matches backend model
-interface MegatrendDetail {
+export interface MegatrendDetail {
     id: string;
     label: string;
     shortDescription: string; // 2‑3 sentences, no buzzwords
@@ -39,9 +39,10 @@ interface MegatrendDetail {
 interface TrendDetailCardProps {
     trendId?: string;
     trend?: MegatrendDetail;
+    onClose?: () => void;
 }
 
-export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({ trendId, trend: propTrend }) => {
+export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({ trendId, trend: propTrend, onClose }) => {
     const [trend, setTrend] = useState<MegatrendDetail | null>(propTrend ?? null);
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
@@ -69,18 +70,30 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({ trendId, trend
 
     if (loading) {
         return (
-            <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-300">
-                <svg className="animate-spin h-5 w-5 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-                </svg>
-                <span>Loading trend details…</span>
+            <div className="flex items-center justify-center p-12 text-gray-600 dark:text-gray-300">
+                <div className="flex items-center space-x-2">
+                    <svg className="animate-spin h-5 w-5 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                    </svg>
+                    <span>Loading trend details…</span>
+                </div>
             </div>
         );
     }
 
     if (error) {
-        return <p className="text-red-600 dark:text-red-400">Error: {error}</p>;
+        return (
+            <div className="p-8 text-center text-red-600 dark:text-red-400">
+                <p>Error: {error}</p>
+                <button
+                    onClick={onClose}
+                    className="mt-4 px-4 py-2 bg-slate-100 dark:bg-navy-800 rounded hover:bg-slate-200"
+                >
+                    Go Back
+                </button>
+            </div>
+        );
     }
 
     if (!trend) {
@@ -104,111 +117,143 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({ trendId, trend
     );
 
     return (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50" role="dialog" aria-modal="true">
-            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-6">
-                {/* Close button */}
-                <button
-                    className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
-                    onClick={() => window.history.back()}
-                    aria-label="Close"
-                >
-                    ✕
-                </button>
+        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg w-full overflow-hidden border border-slate-200 dark:border-white/10 relative">
 
+            {/* Close button */}
+            <button
+                className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-navy-800 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+                onClick={onClose}
+                aria-label="Close"
+            >
+                ✕
+            </button>
+
+            <div className="p-6 md:p-8 space-y-8">
                 {/* Header */}
-                <div className="flex items-center gap-3">
-                    <span className="text-3xl">{typeEmoji}</span>
-                    <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">{label}</h2>
+                <div className="flex items-center gap-4 border-b border-slate-100 dark:border-white/5 pb-6">
+                    <span className="text-4xl shadow-sm rounded-full bg-slate-50 dark:bg-navy-800 p-2">{typeEmoji}</span>
+                    <div>
+                        <div className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-1">{type} Trend</div>
+                        <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100">{label}</h2>
+                    </div>
                 </div>
 
-                {/* What is it */}
-                <section>
-                    <SectionHeader icon={<span>📄</span>} title="What is it" />
-                    <p className="mt-1 text-gray-600 dark:text-gray-200">{shortDescription}</p>
-                </section>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Main Content - Left Column */}
+                    <div className="lg:col-span-2 space-y-8">
+                        {/* What is it */}
+                        <section className="bg-slate-50 dark:bg-navy-800/50 p-6 rounded-lg">
+                            <SectionHeader icon={<span>📄</span>} title="What is it" />
+                            <p className="mt-2 text-gray-600 dark:text-gray-200 leading-relaxed text-lg">{shortDescription}</p>
+                        </section>
 
-                {/* Trend Type */}
-                <section>
-                    <SectionHeader icon={<span>🧭</span>} title="Trend Type" />
-                    <p className="mt-1 text-gray-600 dark:text-gray-200">
-                        {type} – {typeEmoji} – shapes strategic opportunities, competitive pressure, or non‑negotiable standards.
-                    </p>
-                </section>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Why it matters for the industry */}
+                            <section>
+                                <SectionHeader icon={<span>🏭</span>} title="Industry Impact" />
+                                <p className="mt-2 text-gray-600 dark:text-gray-300">{industryImpact}</p>
+                            </section>
 
-                {/* Why it matters for the industry */}
-                <section>
-                    <SectionHeader icon={<span>🏭</span>} title="Why it matters for the industry" />
-                    <p className="mt-1 text-gray-600 dark:text-gray-200">{industryImpact}</p>
-                </section>
-
-                {/* Why it matters for YOUR company */}
-                <section>
-                    <SectionHeader icon={<span>👤</span>} title="Why it matters for YOUR company" />
-                    <p className="mt-1 text-gray-600 dark:text-gray-200">{companyImpact}</p>
-                </section>
-
-                {/* Impact Scoring */}
-                <section>
-                    <SectionHeader icon={<span>📊</span>} title="Impact Scoring" />
-                    <div className="grid grid-cols-2 gap-4 mt-2 text-gray-600 dark:text-gray-200">
-                        <div><span className="font-medium">Economic impact:</span> {impactScore}/7</div>
-                        <div><span className="font-medium">Likelihood (3‑5 yr):</span> {likelihood}</div>
-                        <div><span className="font-medium">Unavoidability:</span> {unavoidability}</div>
-                        <div><span className="font-medium">Competitive pressure:</span> {competitivePressure}</div>
-                    </div>
-                </section>
-
-                {/* AI Insight */}
-                {aiSuggestion && (
-                    <section>
-                        <SectionHeader icon={<span>🤖</span>} title="AI Insight" />
-                        <div className="mt-2 space-y-2 text-gray-600 dark:text-gray-200">
-                            <p><span className="font-medium">Suggested ring:</span> {aiSuggestion.ring}</p>
-                            <div><span className="font-medium">Risks:</span>
-                                <ul className="list-disc list-inside ml-4">
-                                    {aiSuggestion.risks.map((r, i) => (<li key={i}>{r}</li>))}
-                                </ul>
-                            </div>
-                            <div><span className="font-medium">Opportunities:</span>
-                                <ul className="list-disc list-inside ml-4">
-                                    {aiSuggestion.opportunities.map((o, i) => (<li key={i}>{o}</li>))}
-                                </ul>
-                            </div>
-                            <div><span className="font-medium">Recommended actions:</span>
-                                <ul className="list-disc list-inside ml-4">
-                                    {aiSuggestion.actions.map((a, i) => (<li key={i}>{a}</li>))}
-                                </ul>
-                            </div>
+                            {/* Why it matters for YOUR company */}
+                            <section>
+                                <SectionHeader icon={<span>👤</span>} title="Company Impact" />
+                                <p className="mt-2 text-gray-600 dark:text-gray-300">{companyImpact}</p>
+                            </section>
                         </div>
-                    </section>
-                )}
 
-                {/* Documents & Evidence */}
-                {documents && documents.length > 0 && (
-                    <section>
-                        <SectionHeader icon={<span>📁</span>} title="Documents & Evidence" />
-                        <ul className="mt-2 list-disc list-inside space-y-1 text-gray-600 dark:text-gray-200">
-                            {documents.map((doc, i) => (
-                                <li key={i}>
-                                    <a href={doc.url} target="_blank" rel="noopener noreferrer" className="underline hover:text-indigo-600 dark:hover:text-indigo-400">
-                                        {doc.title}
-                                    </a>
-                                </li>
-                            ))}
-                        </ul>
-                        <button
-                            className="mt-3 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition"
-                            onClick={() => {
-                                console.log('Download all documents / trigger AI re‑score');
-                            }}
-                        >
-                            Download all & re‑score
-                        </button>
-                        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                            AI will re‑evaluate the scoring when new documents are added.
-                        </p>
-                    </section>
-                )}
+                        {/* AI Insight */}
+                        {aiSuggestion && (
+                            <section className="bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-500/20 rounded-xl p-6">
+                                <SectionHeader icon={<span>🤖</span>} title="AI Insight" />
+                                <div className="mt-4 space-y-4 text-gray-600 dark:text-gray-300">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <span className="font-semibold text-indigo-900 dark:text-indigo-300">Suggested Ring:</span>
+                                        <span className="px-3 py-1 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded-full text-sm font-medium">{aiSuggestion.ring}</span>
+                                    </div>
+
+                                    <div className="grid md:grid-cols-3 gap-4 text-sm">
+                                        <div>
+                                            <span className="font-semibold text-red-600/80 dark:text-red-400 block mb-2">Risks</span>
+                                            <ul className="list-disc list-inside space-y-1">
+                                                {aiSuggestion.risks.map((r, i) => (<li key={i}>{r}</li>))}
+                                            </ul>
+                                        </div>
+                                        <div>
+                                            <span className="font-semibold text-emerald-600/80 dark:text-emerald-400 block mb-2">Opportunities</span>
+                                            <ul className="list-disc list-inside space-y-1">
+                                                {aiSuggestion.opportunities.map((o, i) => (<li key={i}>{o}</li>))}
+                                            </ul>
+                                        </div>
+                                        <div>
+                                            <span className="font-semibold text-blue-600/80 dark:text-blue-400 block mb-2">Actions</span>
+                                            <ul className="list-disc list-inside space-y-1">
+                                                {aiSuggestion.actions.map((a, i) => (<li key={i}>{a}</li>))}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+                        )}
+                    </div>
+
+                    {/* Sidebar - Right Column */}
+                    <div className="space-y-6">
+                        {/* Impact Scoring */}
+                        <section className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-5 shadow-sm">
+                            <SectionHeader icon={<span>📊</span>} title="Impact Scoring" />
+                            <div className="space-y-4 mt-4">
+                                <div>
+                                    <div className="flex justify-between text-sm mb-1">
+                                        <span className="text-slate-500">Economic Impact</span>
+                                        <span className="font-bold">{impactScore}/7</span>
+                                    </div>
+                                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                        <div className="h-full bg-blue-500" style={{ width: `${(impactScore / 7) * 100}%` }}></div>
+                                    </div>
+                                </div>
+                                <div className="pt-2 border-t border-slate-100 dark:border-white/5 space-y-3">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-slate-500">Likelihood (3-5yr)</span>
+                                        <span className="font-medium">{likelihood}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-slate-500">Unavoidability</span>
+                                        <span className="font-medium">{unavoidability}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-slate-500">Competitive Pressure</span>
+                                        <span className="font-medium">{competitivePressure}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Documents & Evidence */}
+                        {documents && documents.length > 0 && (
+                            <section className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-5 shadow-sm">
+                                <SectionHeader icon={<span>📁</span>} title="Evidence" />
+                                <ul className="mt-4 space-y-3">
+                                    {documents.map((doc, i) => (
+                                        <li key={i} className="flex items-start gap-2 text-sm">
+                                            <span className="text-slate-400 mt-0.5">•</span>
+                                            <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 dark:text-indigo-400 hover:underline leading-tight">
+                                                {doc.title}
+                                            </a>
+                                        </li>
+                                    ))}
+                                </ul>
+                                <button
+                                    className="mt-4 w-full px-4 py-2 bg-slate-50 dark:bg-navy-800 text-slate-600 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition"
+                                    onClick={() => {
+                                        console.log('Download all documents / trigger AI re‑score');
+                                    }}
+                                >
+                                    Download all & re‑score
+                                </button>
+                            </section>
+                        )}
+                    </div>
+                </div>
             </div>
         </div>
     );
