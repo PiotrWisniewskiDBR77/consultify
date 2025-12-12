@@ -920,6 +920,34 @@ function initDb() {
                                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
                                 )`);
 
+        // ==========================================
+        // PHASE 5: MEGATREND SCANNER
+        // ==========================================
+
+        // Megatrends (Baseline Data)
+        db.run(`CREATE TABLE IF NOT EXISTS megatrends (
+            id TEXT PRIMARY KEY,
+            industry TEXT NOT NULL,
+            type TEXT NOT NULL,          -- Technology, Business, Societal
+            label TEXT NOT NULL,
+            description TEXT,
+            base_impact_score REAL,
+            initial_ring TEXT DEFAULT 'Watch Closely'
+        )`);
+
+        // Custom Trends (Company Specific)
+        db.run(`CREATE TABLE IF NOT EXISTS custom_trends (
+            id TEXT PRIMARY KEY,
+            company_id TEXT NOT NULL,
+            industry TEXT,
+            type TEXT,
+            label TEXT NOT NULL,
+            description TEXT,
+            ring TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(company_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+
         // Seed Super Admin & Default Organization
         const superAdminOrgId = 'org-dbr77-system';
         const superAdminId = 'admin-001';

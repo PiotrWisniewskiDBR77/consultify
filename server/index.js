@@ -101,6 +101,8 @@ const billingRoutes = require('./routes/billing');
 const stripeWebhookRoutes = require('./routes/webhooks/stripe');
 const tokenBillingRoutes = require('./routes/tokenBilling');
 const documentRoutes = require('./routes/documents');
+const megatrendRoutes = require('./routes/megatrend');
+
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -127,6 +129,8 @@ app.use('/api/ai-training', aiTrainingRoutes);
 // Billing & Stripe
 app.use('/api/billing', billingRoutes);
 app.use('/api/token-billing', tokenBillingRoutes);
+app.use('/api/token-billing', tokenBillingRoutes);
+app.use('/api/megatrends', megatrendRoutes);
 app.use('/api/webhooks', stripeWebhookRoutes);
 const ssoRoutes = require('./routes/sso');
 app.use('/api/sso', ssoRoutes);

@@ -6,6 +6,7 @@ import { GoalsExpectationsModule } from './modules/GoalsExpectationsModule';
 import { ChallengeMapModule } from './modules/ChallengeMapModule';
 import { MegatrendScannerModule } from './modules/MegatrendScannerModule';
 import { StrategicSynthesisModule } from './modules/StrategicSynthesisModule';
+import { SplitLayout } from '../../components/SplitLayout';
 
 interface ContextBuilderProps {
     initialTab?: number;
@@ -40,43 +41,9 @@ export const ContextBuilderView: React.FC<ContextBuilderProps> = ({ initialTab =
 
     return (
         <div className="flex h-full w-full bg-slate-50 dark:bg-navy-950 overflow-hidden relative">
-            {/* Left Panel: AI Consultant Chat */}
-            <div className="w-1/3 min-w-[320px] max-w-[450px] border-r border-slate-200 dark:border-white/10 flex flex-col bg-white dark:bg-navy-900 z-10">
-                <div className="h-14 border-b border-slate-200 dark:border-white/10 flex items-center px-4 bg-white dark:bg-navy-900">
-                    <MessageSquare className="w-5 h-5 text-purple-600 mr-2" />
-                    <span className="font-semibold text-navy-900 dark:text-white">AI Strategy Consultant</span>
-                </div>
-                <div className="flex-1 p-4 overflow-y-auto">
-                    {/* Chat Placeholder */}
-                    <div className="flex flex-col gap-4">
-                        <div className="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg rounded-tl-none self-start max-w-[85%]">
-                            <p className="text-sm text-navy-800 dark:text-slate-200">
-                                Hello! I am ready to help you build the strategic context. Which module should we start with?
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <div className="p-4 border-t border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900">
-                    <input
-                        type="text"
-                        placeholder="Type your message..."
-                        className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-navy-800 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    />
-                </div>
-            </div>
-
-            {/* Right Panel: Workbench */}
-            <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50 dark:bg-navy-950 relative">
-
-                {/* Top Module Selector REMOVED - Navigation moved to Sidebar */}
-                {/* 
-                <div className="h-16 border-b border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 flex items-center px-4 gap-2 overflow-x-auto no-scrollbar">
-                   ... removed ...
-                </div> 
-                */}
-
+            <SplitLayout>
                 {/* Main Content Area (Tabs + Active View) */}
-                <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-white/10">
+                <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-white/10 h-full">
                     <div className="max-w-6xl mx-auto">
                         <div className="mb-6">
                             <h1 className="text-2xl font-bold text-navy-900 dark:text-white">
@@ -142,8 +109,7 @@ export const ContextBuilderView: React.FC<ContextBuilderProps> = ({ initialTab =
                         <FileText size={20} />
                     </button>
                 )}
-
-            </div>
+            </SplitLayout>
         </div>
     );
 };

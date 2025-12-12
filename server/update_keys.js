@@ -30,6 +30,13 @@ const ENDPOINT_UPDATES = {
 // Map provider keys to model IDs/configs if not already present
 const NEW_PROVIDERS = [
     {
+        name: 'OpenAI GPT-4o',
+        provider: 'openai',
+        model_id: 'gpt-4o',
+        endpoint: 'https://api.openai.com/v1/chat/completions',
+        cost: 0.03
+    },
+    {
         name: 'Zhipu AI (GLM-4.6)',
         provider: 'z_ai',
         model_id: 'glm-4.6',
