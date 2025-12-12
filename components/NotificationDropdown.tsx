@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, Check, Trash2, X, AlertCircle, Info, CheckCircle, Clock, Sparkles, ArrowRight } from 'lucide-react';
+import { Bell, Check, Trash2, AlertCircle, Info, CheckCircle, Sparkles, ArrowRight } from 'lucide-react';
 import { Api } from '../services/api';
 import { Notification } from '../types';
 import toast from 'react-hot-toast';
