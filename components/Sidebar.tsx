@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { AppView, SessionMode, UserRole } from '../types';
 import { useTranslation } from 'react-i18next'; // Refactored from translations object
 import { useAppStore } from '../store/useAppStore';
@@ -23,7 +23,13 @@ import {
   Map,
   Pin,
   PinOff,
-  Activity
+  Activity,
+  UserCircle,
+  CreditCard,
+  Cpu,
+  Bell,
+  Link as LinkIcon,
+  Globe
 } from 'lucide-react';
 import { SidebarUsage } from './SidebarUsage';
 
@@ -34,6 +40,7 @@ interface MenuItem {
   viewId?: AppView;
   subItems?: MenuItem[];
   requiresView?: AppView;
+  isFloating?: boolean; // NEW: Floating menu behavior
 }
 
 export const Sidebar: React.FC = () => {
@@ -62,7 +69,7 @@ export const Sidebar: React.FC = () => {
     }
   }, [language, i18n]);
 
-  // Local state for hover interaction
+  // Local state for sidebar hover interaction
   const [isHovered, setIsHovered] = useState(false);
 
   // Derived state: Show full content if Pinned (not collapsed) OR Hovered
@@ -87,8 +94,11 @@ export const Sidebar: React.FC = () => {
     return completed;
   }, [freeSessionData, fullSessionData]);
 
-  // State for expanded sections
+  // State for expanded sections (Accordion logic)
   const [expandedItems, setExpandedItems] = useState<string[]>(['QUICK', 'FULL', 'FULL_STEP1']);
+
+  // State for floating menus (hover logic)
+  const [hoveredFloatingItem, setHoveredFloatingItem] = useState<string | null>(null);
 
   const toggleExpand = (id: string) => {
     if (!showFull) return; // Cannot expand submenus in mini mode (unless we implement popovers, but hover expands sidebar first)
@@ -108,15 +118,19 @@ export const Sidebar: React.FC = () => {
       ]
     },
     {
-      id: 'MODULE_1',
-      label: t('sidebar.module1'),
-      icon: <Zap size={20} />,
+      id: 'INTRO_CONTEXT',
+      label: 'Intro',
+      icon: <BookOpen size={20} />,
+      isFloating: true, // User requested floating menu
       subItems: [
-        { id: 'M1_1', label: t('sidebar.module1_1'), viewId: AppView.QUICK_STEP1_PROFILE },
-        { id: 'M1_2', label: t('sidebar.module1_2'), viewId: AppView.QUICK_STEP2_USER_CONTEXT, requiresView: AppView.QUICK_STEP1_PROFILE },
-        { id: 'M1_3', label: t('sidebar.module1_3'), viewId: AppView.QUICK_STEP3_EXPECTATIONS, requiresView: AppView.QUICK_STEP2_USER_CONTEXT },
+        { id: 'CTX_1', label: 'Company Profile', viewId: AppView.CONTEXT_BUILDER_PROFILE },
+        { id: 'CTX_2', label: 'Goals & Expectations', viewId: AppView.CONTEXT_BUILDER_GOALS },
+        { id: 'CTX_3', label: 'Challenge Map', viewId: AppView.CONTEXT_BUILDER_CHALLENGES },
+        { id: 'CTX_4', label: 'Megatrend Scanner', viewId: AppView.CONTEXT_BUILDER_MEGATRENDS },
+        { id: 'CTX_5', label: 'Strategic Synthesis', viewId: AppView.CONTEXT_BUILDER_STRATEGY },
       ]
     },
+    // Removed legacy MODULE_1 as requested ("Usun caly ten obecny 1.")
     {
       id: 'MODULE_2',
       label: t('sidebar.module2'),
@@ -168,6 +182,20 @@ export const Sidebar: React.FC = () => {
       requiresView: AppView.FULL_STEP5_EXECUTION
     }
   ];
+
+  // Settings Menu Structure (Floating)
+  const settingsMenuItem: MenuItem = {
+    id: 'SETTINGS',
+    label: t('sidebar.settings'),
+    icon: <Settings size={20} />,
+    isFloating: true,
+    subItems: [
+      { id: 'SET_PROFILE', label: t('settings.menu.myProfile'), viewId: AppView.SETTINGS_PROFILE, icon: <UserCircle size={16} /> },
+      { id: 'SET_BILLING', label: t('settings.menu.billing'), viewId: AppView.SETTINGS_BILLING, icon: <CreditCard size={16} /> },
+      { id: 'SET_AI', label: t('settings.menu.aiConfig'), viewId: AppView.ADMIN_LLM, icon: <Cpu size={16} /> }, // Using ADMIN_LLM or appropriate view
+      { id: 'SET_NOTIFICATIONS', label: t('settings.menu.notifications'), viewId: AppView.SETTINGS_PROFILE /* Fallback to profile tab logic? SettingsView handles activeTab internal state, but here we navigate to View. AppView.SETTINGS_* are needed */, icon: <Bell size={16} /> },
+    ]
+  };
 
   const adminMenuItem: MenuItem = {
     id: 'ADMIN',
@@ -228,6 +256,9 @@ export const Sidebar: React.FC = () => {
     const isActive = item.viewId === currentView;
     const isCompleted = item.viewId && completedViews.includes(item.viewId);
 
+    // Check if floating menu is active (hovered)
+    const isFloatingOpen = item.isFloating && hoveredFloatingItem === item.id;
+
     // Determine if locked
     const isLocked = item.requiresView && !completedViews.includes(item.requiresView) && !(currentUser?.role === UserRole.ADMIN || currentUser?.role === 'SUPERADMIN');
 
@@ -244,15 +275,21 @@ export const Sidebar: React.FC = () => {
     const paddingLeft = showFull ? (level === 0 ? 'px-3' : level === 1 ? 'px-6' : 'px-9') : 'px-0 justify-center';
 
     return (
-      <div key={item.id} className="w-full">
+      <div
+        key={item.id}
+        className="w-full relative"
+        onMouseEnter={() => item.isFloating && setHoveredFloatingItem(item.id)}
+        onMouseLeave={() => item.isFloating && setHoveredFloatingItem(null)}
+      >
         <button
           onClick={() => {
             if (isLocked) return;
             if (hasSubItems) {
-              if (showFull) toggleExpand(item.id);
-              else {
-                // In mini mode, clicking a parent expanding its children might be handled by expanding the sidebar first?
-                // For now, assume user hovers to expand, then clicks.
+              if (item.isFloating) {
+                // Do nothing on click for floating parent, hover handles it, or maybe toggle generic logic?
+                // User behavior typically expects hover. Click might toggle expansion in responsive.
+              } else {
+                if (showFull) toggleExpand(item.id);
               }
             } else if (item.viewId) {
               setCurrentView(item.viewId);
@@ -268,13 +305,14 @@ export const Sidebar: React.FC = () => {
               ? 'bg-purple-600/10 text-purple-600 dark:text-purple-400 border-r-2 border-purple-600'
               : isParentActive
                 ? 'text-navy-900 dark:text-white font-medium'
-                : 'text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'}
+                : 'text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'
+            }
           `}
           title={!showFull ? item.label : undefined}
         >
-          <div className={`flex items-center gap-3 ${!showFull ? 'justify-center w-full' : ''}`}>
+          <div className={`flex items-center gap-3 ${!showFull ? 'justify-center w-full' : ''} `}>
             {item.icon && (
-              <span className={`transition-colors ${isActive || isParentActive ? 'text-purple-600 dark:text-purple-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`}>
+              <span className={`transition-colors ${isActive || isParentActive ? 'text-purple-600 dark:text-purple-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'} `}>
                 {React.cloneElement(item.icon as React.ReactElement<{ size: number }>, { size: 20 })}
               </span>
             )}
@@ -294,18 +332,57 @@ export const Sidebar: React.FC = () => {
               {isLocked && (
                 <Lock size={12} className="text-slate-400 dark:text-slate-500" />
               )}
-              {hasSubItems && (
+              {hasSubItems && !item.isFloating && (
                 <span className="text-slate-400 dark:text-slate-600">
                   {isExpanded ? <ChevronDown size={14} /> : <div className="rtl:rotate-180"><ChevronRight size={14} /></div>}
+                </span>
+              )}
+              {hasSubItems && item.isFloating && (
+                <span className="text-slate-400 dark:text-slate-600">
+                  <div className="rtl:rotate-180"><ChevronRight size={14} /></div>
                 </span>
               )}
             </div>
           )}
         </button>
 
-        {hasSubItems && isExpanded && showFull && (
+        {/* ACCORDION SUBMENU */}
+        {hasSubItems && isExpanded && showFull && !item.isFloating && (
           <div className="w-full bg-slate-50/50 dark:bg-navy-900/20 ltr:border-l rtl:border-r border-slate-200 dark:border-white/5 ltr:ml-4 rtl:mr-4 my-1">
             {item.subItems!.map(sub => renderMenuItem(sub, level + 1))}
+          </div>
+        )}
+
+        {/* FLOATING SUBMENU */}
+        {hasSubItems && isFloatingOpen && (
+          <div
+            className="absolute left-full top-0 ml-2 w-56 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-200"
+            onMouseEnter={() => setHoveredFloatingItem(item.id)} // Keep open while hovering menu
+            onMouseLeave={() => setHoveredFloatingItem(null)} // Close when leaving menu
+          >
+            <div className="px-3 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-white/5 mb-2">
+              {item.label}
+            </div>
+            {item.subItems!.map(sub => (
+              <button
+                key={sub.id}
+                onClick={() => {
+                  setCurrentView(sub.viewId || AppView.DASHBOARD);
+                  setHoveredFloatingItem(null); // Close after click
+                  setIsSidebarOpen(false);
+                }}
+                className={`
+                            w-full flex items-center gap-3 px-4 py-2 text-sm text-left transition-colors
+                            ${sub.viewId === currentView
+                    ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-300'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-navy-900 dark:hover:text-white'
+                  }
+                        `}
+              >
+                {sub.icon && React.cloneElement(sub.icon as React.ReactElement<{ size: number }>, { size: 16 })}
+                {sub.label}
+              </button>
+            ))}
           </div>
         )}
       </div>
@@ -335,7 +412,7 @@ export const Sidebar: React.FC = () => {
       <div
         className={`
           fixed inset-y-0 left-0 z-50
-          bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl 
+          bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl
           border-r border-slate-200 dark:border-white/5 shadow-2xl
           flex flex-col transition-all duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)]
           ${sidebarWidthClass}
@@ -436,25 +513,14 @@ export const Sidebar: React.FC = () => {
         {/* Bottom Actions */}
         <div className="p-3 border-t border-slate-200 dark:border-white/5 shrink-0">
           <div className="space-y-1">
-            <button
-              onClick={() => setCurrentView(AppView.SETTINGS_PROFILE as AppView)}
-              className={`
-                 w-full flex items-center gap-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
-                 ${currentView.startsWith('SETTINGS')
-                  ? 'bg-brand/10 text-brand dark:text-purple-300'
-                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-navy-900 dark:hover:text-white'} 
-                ${!showFull ? 'justify-center px-0' : ''}`}
-              title="Settings"
-            >
-              <Settings size={18} />
-              {showFull && <span>{t('sidebar.settings')}</span>}
-            </button>
+            {/* Render Settings as Floating Menu Item */}
+            {renderMenuItem(settingsMenuItem)}
 
             <button
               onClick={logout}
               className={`w-full flex items-center gap-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
-                text-slate-500 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400
-                ${!showFull ? 'justify-center px-0' : ''}`}
+text-slate-500 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400
+                ${!showFull ? 'justify-center px-0' : 'px-3'} `}
               title="Log Out"
             >
               <LogOut size={18} />
@@ -465,4 +531,5 @@ export const Sidebar: React.FC = () => {
       </div>
     </>
   );
+
 };

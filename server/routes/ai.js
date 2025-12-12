@@ -56,7 +56,7 @@ router.post('/chat/stream', async (req, res) => {
     // #region agent log
     const fs = require('fs');
     const logPath = '/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/.cursor/debug.log';
-    fs.appendFileSync(logPath, JSON.stringify({location:'ai.js:chat/stream:entry',message:'Stream endpoint hit',data:{hasUser:!!req.user,userId:req.user?.id,bodyUserId:req.body?.userId,hasAuth:!!req.headers?.authorization},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B'})+'\n');
+    fs.appendFileSync(logPath, JSON.stringify({ location: 'ai.js:chat/stream:entry', message: 'Stream endpoint hit', data: { hasUser: !!req.user, userId: req.user?.id, bodyUserId: req.body?.userId, hasAuth: !!req.headers?.authorization }, timestamp: Date.now(), sessionId: 'debug-session', hypothesisId: 'A,B' }) + '\n');
     // #endregion
     // Set headers for SSE
     res.setHeader('Content-Type', 'text/event-stream');
@@ -67,7 +67,7 @@ router.post('/chat/stream', async (req, res) => {
         const { message, history, roleName, context } = req.body;
         const userId = req.body.userId || req.user?.id;
         // #region agent log
-        fs.appendFileSync(logPath, JSON.stringify({location:'ai.js:chat/stream:userId',message:'UserId resolved',data:{userId,roleName,hasContext:!!context,contextScreenId:context?.screenId},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B,E'})+'\n');
+        fs.appendFileSync(logPath, JSON.stringify({ location: 'ai.js:chat/stream:userId', message: 'UserId resolved', data: { userId, roleName, hasContext: !!context, contextScreenId: context?.screenId }, timestamp: Date.now(), sessionId: 'debug-session', hypothesisId: 'B,E' }) + '\n');
         // #endregion
 
         const stream = AiService.chatStream(message, history, roleName, userId, null, context);
@@ -191,6 +191,17 @@ router.post('/feedback', async (req, res) => {
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
+    }
+});
+
+// --- GLOBAL LEARNING (Trigger) ---
+router.post('/learn', async (req, res) => {
+    try {
+        const result = await FeedbackService.consolidateLearning();
+        res.json(result);
+    } catch (error) {
+        console.error("Learning Loop Error:", error);
+        res.status(500).json({ error: 'Failed to consolidate learning.' });
     }
 });
 

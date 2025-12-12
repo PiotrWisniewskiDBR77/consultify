@@ -1,50 +1,63 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
 import { useAppStore } from '../store/useAppStore';
-import { User, CompanyProfile } from '../types';
+import {
+    ScreenContextPayload,
+    validateScreenContext,
+    ScreenContextSchema
+} from '../types/AIContract';
 
-export interface ScreenContextData {
-    screenId: string;
-    title: string;
-    data: any; // JSON summary of what's on screen
-    description?: string;
-}
-
-interface AIContextType {
+interface AIContextProps {
     isChatOpen: boolean;
     toggleChat: () => void;
     openChat: (initialMessage?: string) => void;
-    screenContext: ScreenContextData | null;
-    setScreenContext: (ctx: ScreenContextData) => void;
-    globalContext: {
-        user: User | null;
-        companyProfile: Partial<CompanyProfile> | null;
-    };
+    // screenContext is now strictly typed
+    screenContext: ScreenContextPayload | null;
+    setScreenContext: (ctx: unknown) => void;
+    globalContext: any;
 }
 
-const AIContext = createContext<AIContextType | undefined>(undefined);
+const AIContext = createContext<AIContextProps | undefined>(undefined);
 
 export const AIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const { currentUser, freeSessionData } = useAppStore();
-    const [isChatOpen, setIsChatOpen] = useState(false);
-    const [screenContext, setScreenContext] = useState<ScreenContextData | null>(null);
+    const {
+        currentUser
+    } = useAppStore();
 
-    // Global Context derived from AppStore
-    const globalContext = {
-        user: currentUser,
-        // Construct a profile summary depending on what we have (FreeSession or full)
-        companyProfile: {
-            name: currentUser?.companyName,
-            // Add more specific mapping if needed
+    // Local state for chat visibility
+    const [isChatOpen, setIsChatOpen] = useState(false);
+
+    // Strict Screen Context State
+    const [screenContext, _setScreenContext] = useState<ScreenContextPayload | null>(null);
+
+    // Robust setter with validation
+    const setScreenContext = useCallback((rawContext: unknown) => {
+        // If null/undefined passed, clear context
+        if (!rawContext) {
+            _setScreenContext(null);
+            return;
         }
-    };
+
+        // Validate against contract
+        const validContext = validateScreenContext(rawContext);
+        if (validContext) {
+            _setScreenContext(validContext);
+        } else {
+            console.warn("[AIContext] Invalid context payload rejected", rawContext);
+        }
+    }, []);
 
     const toggleChat = () => setIsChatOpen(prev => !prev);
+
     const openChat = (initialMessage?: string) => {
         setIsChatOpen(true);
-        // If we implement pre-filled message logic later
         if (initialMessage) {
             console.log("Open with message:", initialMessage);
         }
+    };
+
+    const globalContext = {
+        user: currentUser,
+        company: currentUser ? { name: currentUser.companyName } : null
     };
 
     return (

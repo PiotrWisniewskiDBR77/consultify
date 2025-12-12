@@ -508,6 +508,18 @@ function initDb() {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
 
+        // 2.5 Structured Entity Context (Facilities)
+        db.run(`CREATE TABLE IF NOT EXISTS organization_facilities (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            name TEXT NOT NULL, -- e.g. "Gdansk Plant"
+            headcount INTEGER DEFAULT 0,
+            location TEXT, -- City, Country
+            activity_profile TEXT, -- e.g. "Assembly Line", "R&D Center"
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+
         // 3. Client Context (Persistent Memory per Client)
         db.run(`CREATE TABLE IF NOT EXISTS client_context (
             id TEXT PRIMARY KEY,

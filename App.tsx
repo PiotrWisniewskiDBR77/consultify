@@ -19,6 +19,7 @@ import { SettingsView } from './views/SettingsView';
 import { SuperAdminView } from './views/superadmin/SuperAdminView';
 import { UserDashboardView } from './views/UserDashboardView';
 import { Module1ContextView } from './views/Module1ContextView';
+import { ContextBuilderView } from './views/ContextBuilder/ContextBuilderView';
 import { AppView, SessionMode, AuthStep, User, UserRole } from './types';
 import { Menu, UserCircle, ChevronRight, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
 import { useAppStore } from './store/useAppStore';
@@ -234,6 +235,25 @@ const AppContent = () => {
         // Full Transformation Views
         if (currentView === AppView.FULL_STEP1_CONTEXT) {
             return <Module1ContextView currentUser={currentUser} fullSession={fullSessionData} setFullSession={setFullSessionData} onNavigate={setCurrentView} />;
+        }
+        if (
+            currentView === AppView.CONTEXT_BUILDER ||
+            currentView === AppView.CONTEXT_BUILDER_PROFILE ||
+            currentView === AppView.CONTEXT_BUILDER_GOALS ||
+            currentView === AppView.CONTEXT_BUILDER_CHALLENGES ||
+            currentView === AppView.CONTEXT_BUILDER_MEGATRENDS ||
+            currentView === AppView.CONTEXT_BUILDER_STRATEGY
+        ) {
+            let initialTab = 1;
+            switch (currentView) {
+                case AppView.CONTEXT_BUILDER_PROFILE: initialTab = 1; break;
+                case AppView.CONTEXT_BUILDER_GOALS: initialTab = 2; break;
+                case AppView.CONTEXT_BUILDER_CHALLENGES: initialTab = 3; break;
+                case AppView.CONTEXT_BUILDER_MEGATRENDS: initialTab = 4; break;
+                case AppView.CONTEXT_BUILDER_STRATEGY: initialTab = 5; break;
+                default: initialTab = 1; break;
+            }
+            return <ContextBuilderView initialTab={initialTab} />;
         }
         if (currentView === AppView.FULL_STEP1_ASSESSMENT || currentView.startsWith('FULL_STEP1_')) {
             return <FullAssessmentView />;

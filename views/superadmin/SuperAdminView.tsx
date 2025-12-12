@@ -167,9 +167,9 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
     );
 
     const filteredUsers = allUsers.filter(user =>
-        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.lastName?.toLowerCase().includes(searchTerm.toLowerCase())
+        (user.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (user.firstName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (user.lastName || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     // Render content based on active section

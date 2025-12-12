@@ -166,7 +166,7 @@ export const Api = {
         // #region agent log
         const token = localStorage.getItem('token');
         console.log('[DEBUG-A] chatWithAIStream entry:', { hasToken: !!token, tokenLength: token?.length || 0, historyLength: history?.length || 0 });
-        fetch('http://127.0.0.1:7242/ingest/690b8f02-96fa-4527-ae57-5d2b028e8181',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.ts:chatWithAIStream:entry',message:'Stream request started',data:{hasToken:!!token,tokenLength:token?.length||0,historyLength:history?.length||0,hasContext:!!context},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7242/ingest/690b8f02-96fa-4527-ae57-5d2b028e8181', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'api.ts:chatWithAIStream:entry', message: 'Stream request started', data: { hasToken: !!token, tokenLength: token?.length || 0, historyLength: history?.length || 0, hasContext: !!context }, timestamp: Date.now(), sessionId: 'debug-session', hypothesisId: 'A' }) }).catch(() => { });
         // #endregion
         try {
             const response = await fetch(`${API_URL}/ai/chat/stream`, {
@@ -177,7 +177,7 @@ export const Api = {
 
             // #region agent log
             console.log('[DEBUG-A,C] chatWithAIStream response:', { status: response.status, ok: response.ok, statusText: response.statusText });
-            fetch('http://127.0.0.1:7242/ingest/690b8f02-96fa-4527-ae57-5d2b028e8181',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.ts:chatWithAIStream:response',message:'Response received',data:{status:response.status,ok:response.ok,statusText:response.statusText},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,C'})}).catch(()=>{});
+            fetch('http://127.0.0.1:7242/ingest/690b8f02-96fa-4527-ae57-5d2b028e8181', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'api.ts:chatWithAIStream:response', message: 'Response received', data: { status: response.status, ok: response.ok, statusText: response.statusText }, timestamp: Date.now(), sessionId: 'debug-session', hypothesisId: 'A,C' }) }).catch(() => { });
             // #endregion
 
             if (!response.body) throw new Error('ReadableStream not supported');
@@ -1124,6 +1124,28 @@ export const Api = {
             headers: headers,
             body: formData
         });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to upload document');
+        return data;
+    },
+
+    // --- GENERIC DOCUMENT UPLOAD (For Context Builder) ---
+    uploadDocument: async (file: File, context?: { tabName?: string, type?: string }): Promise<any> => {
+        const formData = new FormData();
+        formData.append('file', file);
+        if (context) {
+            formData.append('context', JSON.stringify(context));
+        }
+
+        const headers = getHeaders();
+        delete (headers as any)['Content-Type']; // Let browser set boundary
+
+        const res = await fetch(`${API_URL}/documents/upload`, {
+            method: 'POST',
+            headers: headers,
+            body: formData
+        });
+
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to upload document');
         return data;

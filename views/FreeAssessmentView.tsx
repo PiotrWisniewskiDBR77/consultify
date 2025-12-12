@@ -42,6 +42,11 @@ const StepIndicator = ({ activeIdx, language }: { activeIdx: number; language: s
   );
 };
 
+import { useScreenContext } from '../hooks/useScreenContext';
+import { useAIContext } from '../contexts/AIContext';
+
+// ... (imports)
+
 export const FreeAssessmentView: React.FC = () => {
   const {
     currentUser,
@@ -73,14 +78,27 @@ export const FreeAssessmentView: React.FC = () => {
     itLandscape: { erp: '', crm: '', mes: '', integrationLevel: 'Low' }
   });
 
-  // Sync profileData with sessionData/currentUser on mount or update
-  // For now local state handles the form.
+  // --- CONTEXT INJECTION ---
+  useScreenContext(
+    'quick_assessment',
+    'Quick Assessment (Profiling)',
+    {
+      currentStep,
+      profile: profileData,
+      goals: sessionData.strategicGoals,
+      challenges: sessionData.challengesMap,
+      constraints: sessionData.constraints
+    },
+    'User is going through the Quick Assessment wizard. Guide them to complete their profile, goals, and challenges.'
+  );
 
   // --- EFFECT: Handle View Switching ---
-
+  // Using a ref to prevent double-initialization
+  const initializedRef = React.useRef(false);
 
   useEffect(() => {
-    if (messages.length === 0 && currentAppView === AppView.QUICK_STEP1_PROFILE && currentUser) {
+    if (!initializedRef.current && messages.length === 0 && currentAppView === AppView.QUICK_STEP1_PROFILE && currentUser) {
+      initializedRef.current = true;
       const greeting = t.intro[language].replace('{name}', currentUser.firstName);
       const initialMsg: ChatMessage = {
         id: '1',
@@ -94,7 +112,7 @@ export const FreeAssessmentView: React.FC = () => {
       };
       addChatMessage(initialMsg);
     }
-  }, [currentUser, currentAppView, messages.length]);
+  }, [currentUser, currentAppView, messages.length, t.intro, language, opts.start, opts.explain, addChatMessage]);
 
   const addAiMessage = (content: string, options?: ChatOption[], multiSelect?: boolean, delay = 600) => {
     setIsTyping(true);
@@ -123,6 +141,8 @@ export const FreeAssessmentView: React.FC = () => {
   };
 
   // --- AI HANDLER (Generic) ---
+  const { screenContext } = useAIContext();
+
   const handleAiConversation = async (userText: string, contextOverride?: string) => {
     setIsTyping(true);
     const history: AIMessageHistory[] = messages.map(m => ({
@@ -134,24 +154,7 @@ export const FreeAssessmentView: React.FC = () => {
       promptToSend = `${contextOverride}\n\nUser says: ${userText}`;
     }
 
-    const tempId = Date.now().toString();
-    // In FreeAssessmentView, we often just want to trigger the stream
-    // but the UI renders via ChatPanel. We need to make sure ChatPanel knows about the stream.
-
-    // NOTE: FreeAssessmentView is unique because it uses a locally imported `sendMessageToAIStream` from `gemini` service
-    // which might be different from `Api.chatWithAIStream`.
-    // However, looking at the original code, it was using `import('../services/ai/gemini')`.
-    // Let's standardise on `useAIStream` which uses `Api.chatWithAIStream`. 
-    // If strict Gemini service usage is required, we might need a specific hook for it, 
-    // but `Api` likely wraps Gemini anyway.
-
-    // Checking original imports: `import { sendMessageToAI, SYSTEM_PROMPTS, AIMessageHistory } from '../services/ai/gemini';`
-    // And `Api` in `SplitLayout` uses `fetch('/api/ai/chat/stream')`.
-    // The `FreeAssessmentView` was using `mod.sendMessageToAIStream`.
-    // If `Api` endpoint wraps the same logic, we can swap. 
-    // Let's assume `Api.chatWithAIStream` is the unified way now.
-
-    startStream(promptToSend, history, SYSTEM_PROMPTS.FREE_ASSESSMENT);
+    startStream(promptToSend, history, SYSTEM_PROMPTS.FREE_ASSESSMENT, screenContext || undefined);
   };
 
   const handleOptionSelect = (option: ChatOption, isMultiSelect?: boolean) => {

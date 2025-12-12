@@ -100,11 +100,13 @@ const aiTrainingRoutes = require('./routes/ai-training');
 const billingRoutes = require('./routes/billing');
 const stripeWebhookRoutes = require('./routes/webhooks/stripe');
 const tokenBillingRoutes = require('./routes/tokenBilling');
+const documentRoutes = require('./routes/documents');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/documents', documentRoutes); // New Document Route
 app.use('/api/settings', settingsRoutes);
 app.use('/api/superadmin', superAdminRoutes);
 app.use('/api/projects', projectRoutes);
