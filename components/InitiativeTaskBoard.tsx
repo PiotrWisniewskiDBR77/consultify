@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FullInitiative, Task, TaskStatus } from '../types';
 import { Api } from '../services/api';
 import { TaskCard } from './TaskCard';
-import { Plus, Layout, List, Filter } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { translations } from '../translations';
 
 interface InitiativeTaskBoardProps {
@@ -17,11 +17,7 @@ export const InitiativeTaskBoard: React.FC<InitiativeTaskBoardProps> = ({ initia
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        loadTasks();
-    }, [initiative.id]);
-
-    const loadTasks = async () => {
+    const loadTasks = useCallback(async () => {
         setLoading(true);
         try {
             // Fetch tasks for this initiative
@@ -39,6 +35,7 @@ export const InitiativeTaskBoard: React.FC<InitiativeTaskBoardProps> = ({ initia
             // I will fetch all tasks for the organization (or project if linked) and filter client side for now to save a round trip of fixes. 
             // Or better, fetch by project if initiative is linked to project. 
 
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const allTasks = await Api.getTasks({ projectId: initiative.id }); // Using initiative ID as project ID context? No. 
             // We need to fix backend to support filtering by initiativeId to be scalable.
             // For now, I will filter client side if I fetch all tasks, but that's bad.
@@ -51,7 +48,11 @@ export const InitiativeTaskBoard: React.FC<InitiativeTaskBoardProps> = ({ initia
         } finally {
             setLoading(false);
         }
-    };
+    }, [initiative.id]);
+
+    useEffect(() => {
+        loadTasks();
+    }, [loadTasks]);
 
     const [generating, setGenerating] = useState(false);
 

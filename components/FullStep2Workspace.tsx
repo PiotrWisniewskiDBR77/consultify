@@ -196,7 +196,6 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
                 <InitiativeCard
                   key={init.id}
                   initiative={init}
-                  language={language}
                   onClick={() => handleEditClick(init)}
                   onEnrich={onEnrichInitiative}
                 />
@@ -243,7 +242,6 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
             setModalData(null);
           }}
           users={users}
-          language={language}
         />
       )}
     </div>
