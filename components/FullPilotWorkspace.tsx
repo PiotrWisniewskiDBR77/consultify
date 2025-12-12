@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { FullSession, FullInitiative, Language } from '../types';
-import { translations } from '../translations';
 import {
     Target, Users, Calendar, BarChart2, CheckCircle,
-    AlertTriangle, ArrowRight, Play, Edit3, Save, X
+    AlertTriangle, Play, Edit3, Save, X
 } from 'lucide-react';
 
 interface FullPilotWorkspaceProps {
@@ -17,11 +16,11 @@ interface FullPilotWorkspaceProps {
 type PilotTab = 'scope' | 'team' | 'plan' | 'kpis' | 'dashboard' | 'evaluation';
 
 export const FullPilotWorkspace: React.FC<FullPilotWorkspaceProps> = ({
-    fullSession,
+    fullSession: _fullSession,
     pilotInitiative,
     onUpdateInitiative,
     onNextStep,
-    language
+    language: _language
 }) => {
     const [activeTab, setActiveTab] = useState<PilotTab>('scope');
     const [isEditing, setIsEditing] = useState(false);

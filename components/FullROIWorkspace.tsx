@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { FullSession, FullInitiative, Language, EconomicsSummary } from '../types';
-import { translations } from '../translations';
+import { FullSession, FullInitiative, Language } from '../types';
 import {
     DollarSign, TrendingUp, PieChart, Layers, FileText,
-    ArrowRight, Activity, Clock
+    ArrowRight, Activity
 } from 'lucide-react';
 import { ROIPaybackChart } from './ROIPaybackChart';
 // We might reuse components from FullStep4Workspace or just inline them for now to get the structure right.
@@ -19,12 +18,11 @@ type ROITab = 'initiatives' | 'portfolio' | 'cost' | 'scenarios' | 'summary';
 
 export const FullROIWorkspace: React.FC<FullROIWorkspaceProps> = ({
     fullSession,
-    onUpdateInitiative,
+    onUpdateInitiative: _onUpdateInitiative,
     onNextStep,
     language
 }) => {
     const [activeTab, setActiveTab] = useState<ROITab>('portfolio'); // Default to Portfolio (Macro view)
-    const t = translations.fullROI;
     const initiatives = fullSession.initiatives || [];
     const economics = {
         totalCost: fullSession.economics?.totalCost ?? 0,

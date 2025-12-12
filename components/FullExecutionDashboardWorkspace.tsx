@@ -34,7 +34,15 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
 
     // --- Components ---
 
-    const StatCard = ({ title, value, subtext, icon: Icon, color }: any) => (
+    interface StatCardProps {
+        title: string;
+        value: string | number;
+        subtext?: string;
+        icon: React.ElementType; // Icon component type
+        color: string;
+    }
+
+    const StatCard = ({ title, value, subtext, icon: Icon, color }: StatCardProps) => (
         <div className="glass-card p-6 flex flex-col justify-between relative overflow-hidden group">
             <div className={`absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-${color}-500 group-hover:scale-110 duration-500`}>
                 <Icon size={64} />
