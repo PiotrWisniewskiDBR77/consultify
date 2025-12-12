@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AdditionalAudit, DRDAxis, Language } from '../../types';
+import { AdditionalAudit, Language } from '../../types';
 import { Plus, Trash2, FileText, Link as LinkIcon, UploadCloud, Search } from 'lucide-react';
 
 interface AssessmentAuditsWorkspaceProps {

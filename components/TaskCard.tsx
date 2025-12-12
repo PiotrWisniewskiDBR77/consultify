@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, User, CheckSquare, AlertCircle, Calendar } from 'lucide-react';
+import { User, AlertCircle, Calendar } from 'lucide-react';
 import { Task, TaskStatus } from '../types';
 
 interface TaskCardProps {
@@ -43,9 +43,9 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
                     </span>
                     {/* Priority Badge */}
                     <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded border ${task.priority === 'urgent' ? 'border-red-500 text-red-500 bg-red-500/10' :
-                            task.priority === 'high' ? 'border-orange-500 text-orange-500 bg-orange-500/10' :
-                                task.priority === 'medium' ? 'border-blue-500 text-blue-500 bg-blue-500/10' :
-                                    'border-slate-500 text-slate-500 bg-slate-500/10'
+                        task.priority === 'high' ? 'border-orange-500 text-orange-500 bg-orange-500/10' :
+                            task.priority === 'medium' ? 'border-blue-500 text-blue-500 bg-blue-500/10' :
+                                'border-slate-500 text-slate-500 bg-slate-500/10'
                         }`}>
                         {task.priority || 'Normal'}
                     </span>

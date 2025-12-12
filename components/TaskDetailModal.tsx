@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { Task, User, TaskType, RiskRating, TaskStatus } from '../types';
-import { translations } from '../translations';
+import { Task, User, RiskRating, TaskStatus } from '../types';
 import {
-    X, Save, Calendar, Clock, DollarSign,
-    AlertTriangle, CheckSquare, Link, MessageSquare
+    X, Save, Calendar, DollarSign,
+    AlertTriangle, CheckSquare, Link
 } from 'lucide-react';
 
 interface TaskDetailModalProps {
@@ -21,8 +20,10 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     isOpen,
     onClose,
     onSave,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     currentUser,
     users = [],
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     language = 'EN'
 }) => {
     const [task, setTask] = useState<Task>({ ...initialTask });
@@ -57,8 +58,8 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                                 {task.projectId || 'Task'} / {task.id.substring(0, 6)}
                             </span>
                             <span className={`text-[10px] uppercase px-1.5 py-0.5 rounded border ${task.taskType === 'analytical' ? 'border-purple-500/30 text-purple-400' :
-                                    task.taskType === 'execution' ? 'border-blue-500/30 text-blue-400' :
-                                        'border-slate-500/30 text-slate-400'
+                                task.taskType === 'execution' ? 'border-blue-500/30 text-blue-400' :
+                                    'border-slate-500/30 text-slate-400'
                                 }`}>
                                 {task.taskType || 'General'}
                             </span>
@@ -118,6 +119,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                                 <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Priority</label>
                                 <select
                                     value={task.priority}
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                     onChange={e => setTask({ ...task, priority: e.target.value as any })}
                                     className="w-full bg-navy-900 border border-white/10 rounded px-2 py-1.5 text-sm text-slate-300 outline-none"
                                 >
