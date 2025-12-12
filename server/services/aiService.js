@@ -11,6 +11,7 @@ const aiQueue = require('../queues/aiQueue');
 const fs = require('fs');
 const path = require('path');
 const jwt = require('jsonwebtoken');
+const PromptService = require('./promptService');
 
 // DEPENDENCY INJECTION CONTAINER
 const deps = {

@@ -5,7 +5,7 @@
  */
 
 const config = require('../config');
-const config = require('../config');
+
 const db = require('../database');
 // const nodemailer = require('nodemailer'); // Uncomment when credentials available
 

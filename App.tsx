@@ -13,10 +13,7 @@ import { FullExecutionView } from './views/FullExecutionView';
 import { FullPilotView } from './views/FullPilotView';
 import { FullRolloutView } from './views/FullRolloutView';
 import { FullReportsView } from './views/FullReportsView';
-import { LoginView } from './views/auth/LoginView';
-import { RegisterView } from './views/auth/RegisterView';
-import { ResetPasswordView } from './views/auth/ResetPasswordView';
-import { LoadingScreen } from './components/LoadingScreen';
+
 import { AdminView } from './views/admin/AdminView';
 import { SettingsView } from './views/SettingsView';
 import { SuperAdminView } from './views/superadmin/SuperAdminView';
@@ -32,6 +29,7 @@ import { LLMSelector } from './components/LLMSelector';
 import { NotificationDropdown } from './components/NotificationDropdown';
 import { AutoSaveProvider, useAutoSave } from './src/context/AutoSaveContext';
 import { SystemHealth } from './components/SystemHealth';
+import { ChatOverlay } from './components/AIChat/ChatOverlay';
 
 const AppContent = () => {
     const {
@@ -293,6 +291,7 @@ const AppContent = () => {
         <ErrorBoundary>
             <div className="flex h-screen w-full bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white font-sans overflow-hidden" dir={language === 'AR' ? 'rtl' : 'ltr'}>
                 <Toaster position="bottom-right" />
+                <ChatOverlay />
 
                 {/* Impersonation Banner */}
                 {currentUser?.impersonatorId && (
@@ -433,9 +432,13 @@ const AppContent = () => {
     );
 };
 
+import { AIProvider } from './contexts/AIContext';
+
 export const App = () => (
     <AutoSaveProvider>
-        <AppContent />
+        <AIProvider>
+            <AppContent />
+        </AIProvider>
     </AutoSaveProvider>
 );
 
