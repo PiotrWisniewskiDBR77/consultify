@@ -17,9 +17,9 @@ describe('Hook Test: useScreenContext', () => {
 
     it('sets screen context on mount', () => {
         const screenData = { test: 'data' };
-        
+
         renderHook(() => useScreenContext('screen-1', 'Test Screen', screenData, 'Test description'));
-        
+
         expect(mockSetScreenContext).toHaveBeenCalledWith({
             screenId: 'screen-1',
             title: 'Test Screen',
@@ -29,21 +29,21 @@ describe('Hook Test: useScreenContext', () => {
     });
 
     it('updates context when data changes', () => {
-        const { rerender } = renderHook(
+        const { rerender } = renderHook<any, { data: any }>(
             ({ data }) => useScreenContext('screen-1', 'Test', data),
             { initialProps: { data: { initial: 'data' } } }
         );
-        
+
         expect(mockSetScreenContext).toHaveBeenCalledTimes(1);
-        
+
         rerender({ data: { updated: 'data' } });
-        
+
         expect(mockSetScreenContext).toHaveBeenCalledTimes(2);
     });
 
     it('handles optional description', () => {
         renderHook(() => useScreenContext('screen-1', 'Test', { data: 'test' }));
-        
+
         expect(mockSetScreenContext).toHaveBeenCalledWith(
             expect.objectContaining({
                 screenId: 'screen-1',
