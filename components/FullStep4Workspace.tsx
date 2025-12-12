@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { FullSession, FullInitiative, Language, EconomicsSummary, CostRange, BenefitRange } from '../types';
+import { FullSession, FullInitiative, Language, CostRange, BenefitRange } from '../types';
 import { translations } from '../translations';
 import { ArrowRight, DollarSign, TrendingUp, Clock, Activity, Sliders, Hash } from 'lucide-react';
 import { ROIPaybackChart } from './ROIPaybackChart';

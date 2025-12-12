@@ -3,7 +3,7 @@ import { useAIContext } from '../../contexts/AIContext';
 import { useAppStore } from '../../store/useAppStore';
 import { ChatPanel } from '../ChatPanel';
 import { useAIStream } from '../../hooks/useAIStream';
-import { MessageCircle, X, Maximize2, Minimize2 } from 'lucide-react';
+import { MessageCircle, X } from 'lucide-react';
 import { ChatMessage, ChatOption } from '../../types';
 
 export const ChatOverlay: React.FC = () => {
@@ -28,7 +28,7 @@ export const ChatOverlay: React.FC = () => {
     const handleSendMessage = (text: string) => {
         // #region agent log
         console.log('[DEBUG-D] handleSendMessage entry:', { textLength: text?.length || 0, currentMessagesCount: activeChatMessages?.length || 0, hasScreenContext: !!screenContext });
-        fetch('http://127.0.0.1:7242/ingest/690b8f02-96fa-4527-ae57-5d2b028e8181',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ChatOverlay.tsx:handleSendMessage:entry',message:'Send message triggered',data:{textLength:text?.length||0,currentMessagesCount:activeChatMessages?.length||0,hasScreenContext:!!screenContext},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7242/ingest/690b8f02-96fa-4527-ae57-5d2b028e8181', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'ChatOverlay.tsx:handleSendMessage:entry', message: 'Send message triggered', data: { textLength: text?.length || 0, currentMessagesCount: activeChatMessages?.length || 0, hasScreenContext: !!screenContext }, timestamp: Date.now(), sessionId: 'debug-session', hypothesisId: 'D' }) }).catch(() => { });
         // #endregion
         // Add User Message
         const userMsg: ChatMessage = {
@@ -47,7 +47,7 @@ export const ChatOverlay: React.FC = () => {
 
         // #region agent log
         console.log('[DEBUG-D] handleSendMessage historyBuilt:', { historyLength: history?.length || 0, newMsgIncluded: history.some(h => h.parts[0]?.text === text) });
-        fetch('http://127.0.0.1:7242/ingest/690b8f02-96fa-4527-ae57-5d2b028e8181',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ChatOverlay.tsx:handleSendMessage:historyBuilt',message:'History prepared before stream',data:{historyLength:history?.length||0,newMsgIncluded:history.some(h=>h.parts[0]?.text===text)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7242/ingest/690b8f02-96fa-4527-ae57-5d2b028e8181', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'ChatOverlay.tsx:handleSendMessage:historyBuilt', message: 'History prepared before stream', data: { historyLength: history?.length || 0, newMsgIncluded: history.some(h => h.parts[0]?.text === text) }, timestamp: Date.now(), sessionId: 'debug-session', hypothesisId: 'D' }) }).catch(() => { });
         // #endregion
 
         // Context Injection via separate payload

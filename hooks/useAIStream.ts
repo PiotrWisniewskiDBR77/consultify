@@ -57,6 +57,7 @@ export const useAIStream = (options: UseAIStreamOptions = {}) => {
             );
         } catch (error) {
             // #region agent log
+            console.log('[DEBUG-A,C] startStream error:', { errorMsg: String(error) });
             fetch('http://127.0.0.1:7242/ingest/690b8f02-96fa-4527-ae57-5d2b028e8181',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useAIStream.ts:startStream:error',message:'Stream error caught',data:{errorMsg:String(error)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,C'})}).catch(()=>{});
             // #endregion
             console.error('AI Stream Error:', error);

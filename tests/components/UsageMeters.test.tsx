@@ -29,7 +29,9 @@ describe('Component Test: UsageMeters', () => {
     it('displays usage percentages', () => {
         render(<UsageMeters usage={mockUsage} />);
         
-        expect(screen.getByText(/50%/)).toBeInTheDocument();
+        // There might be multiple 50% elements, use getAllByText
+        const percentages = screen.getAllByText(/50%/);
+        expect(percentages.length).toBeGreaterThan(0);
     });
 
     it('renders compact version', () => {

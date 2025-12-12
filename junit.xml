@@ -1,0 +1,2307 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="68" failures="9" errors="0" time="12.718744042">
+    <testsuite name="tests/components/Button.test.tsx" timestamp="2025-12-12T08:46:43.415Z" hostname="MacBook-Air-Piotr.local" tests="3" failures="0" errors="0" skipped="0" time="0.10684825">
+        <testcase classname="tests/components/Button.test.tsx" name="Component Test: Button &gt; renders children correctly" time="0.088623625">
+        </testcase>
+        <testcase classname="tests/components/Button.test.tsx" name="Component Test: Button &gt; handles click events" time="0.006921375">
+        </testcase>
+        <testcase classname="tests/components/Button.test.tsx" name="Component Test: Button &gt; renders with correct variant class" time="0.008863208">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/components/ErrorBoundary.test.tsx" timestamp="2025-12-12T08:46:43.417Z" hostname="MacBook-Air-Piotr.local" tests="4" failures="0" errors="0" skipped="0" time="0.199673292">
+        <testcase classname="tests/components/ErrorBoundary.test.tsx" name="Component Test: ErrorBoundary &gt; renders children when there is no error" time="0.161441708">
+        </testcase>
+        <testcase classname="tests/components/ErrorBoundary.test.tsx" name="Component Test: ErrorBoundary &gt; displays error UI when child component throws" time="0.017400375">
+        </testcase>
+        <testcase classname="tests/components/ErrorBoundary.test.tsx" name="Component Test: ErrorBoundary &gt; displays error message in error UI" time="0.00549">
+        </testcase>
+        <testcase classname="tests/components/ErrorBoundary.test.tsx" name="Component Test: ErrorBoundary &gt; has reset button in error UI" time="0.0111685">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/components/FeedbackWidget.test.tsx" timestamp="2025-12-12T08:46:43.418Z" hostname="MacBook-Air-Piotr.local" tests="8" failures="4" errors="0" skipped="0" time="1.550372959">
+        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; does not render when user is not logged in" time="0.239230458">
+        </testcase>
+        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; renders trigger button when user is logged in" time="0.041611375">
+        </testcase>
+        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; opens modal when trigger button is clicked" time="0.228719792">
+        </testcase>
+        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; closes modal when X button is clicked" time="0.89535875">
+            <failure message="expect(element).not.toBeInTheDocument()
+
+expected document not to contain element, found &lt;textarea
+  class=&quot;w-full h-32 p-3 text-sm rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-navy-900 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none&quot;
+  placeholder=&quot;Describe your issue or idea...&quot;
+  required=&quot;&quot;
+/&gt; instead" type="Error">
+Error: expect(element).not.toBeInTheDocument()
+
+expected document not to contain element, found &lt;textarea
+  class=&quot;w-full h-32 p-3 text-sm rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-navy-900 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none&quot;
+  placeholder=&quot;Describe your issue or idea...&quot;
+  required=&quot;&quot;
+/&gt; instead
+ ❯ tests/components/FeedbackWidget.test.tsx:66:85
+            </failure>
+        </testcase>
+        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; allows selecting feedback type" time="0.00827175">
+        </testcase>
+        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; submits feedback successfully" time="0.026829125">
+            <failure message="Found multiple elements with the text: Send Feedback
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m&lt;div[39m
+  [33mclass[39m=[32m&quot;font-semibold flex items-center gap-2&quot;[39m
+[36m&gt;[39m
+  [36m&lt;svg[39m
+    [33maria-hidden[39m=[32m&quot;true&quot;[39m
+    [33mclass[39m=[32m&quot;lucide lucide-message-square&quot;[39m
+    [33mfill[39m=[32m&quot;none&quot;[39m
+    [33mheight[39m=[32m&quot;18&quot;[39m
+    [33mstroke[39m=[32m&quot;currentColor&quot;[39m
+    [33mstroke-linecap[39m=[32m&quot;round&quot;[39m
+    [33mstroke-linejoin[39m=[32m&quot;round&quot;[39m
+    [33mstroke-width[39m=[32m&quot;2&quot;[39m
+    [33mviewBox[39m=[32m&quot;0 0 24 24&quot;[39m
+    [33mwidth[39m=[32m&quot;18&quot;[39m
+    [33mxmlns[39m=[32m&quot;http://www.w3.org/2000/svg&quot;[39m
+  [36m&gt;[39m
+    [36m&lt;path[39m
+      [33md[39m=[32m&quot;M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z&quot;[39m
+    [36m/&gt;[39m
+  [36m&lt;/svg&gt;[39m
+  [0mSend Feedback[0m
+[36m&lt;/div&gt;[39m
+
+Ignored nodes: comments, script, style
+[36m&lt;button[39m
+  [33mclass[39m=[32m&quot;w-full py-2.5 bg-navy-900 dark:bg-white text-white dark:text-navy-900 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2&quot;[39m
+  [33mtype[39m=[32m&quot;submit&quot;[39m
+[36m&gt;[39m
+  [0mSend Feedback[0m
+  [36m&lt;svg[39m
+    [33maria-hidden[39m=[32m&quot;true&quot;[39m
+    [33mclass[39m=[32m&quot;lucide lucide-check&quot;[39m
+    [33mfill[39m=[32m&quot;none&quot;[39m
+    [33mheight[39m=[32m&quot;16&quot;[39m
+    [33mstroke[39m=[32m&quot;currentColor&quot;[39m
+    [33mstroke-linecap[39m=[32m&quot;round&quot;[39m
+    [33mstroke-linejoin[39m=[32m&quot;round&quot;[39m
+    [33mstroke-width[39m=[32m&quot;2&quot;[39m
+    [33mviewBox[39m=[32m&quot;0 0 24 24&quot;[39m
+    [33mwidth[39m=[32m&quot;16&quot;[39m
+    [33mxmlns[39m=[32m&quot;http://www.w3.org/2000/svg&quot;[39m
+  [36m&gt;[39m
+    [36m&lt;path[39m
+      [33md[39m=[32m&quot;M20 6 9 17l-5-5&quot;[39m
+    [36m/&gt;[39m
+  [36m&lt;/svg&gt;[39m
+[36m&lt;/button&gt;[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m&lt;body&gt;[39m
+  [36m&lt;div&gt;[39m
+    [36m&lt;button[39m
+      [33mclass[39m=[32m&quot;fixed bottom-6 right-6 z-50 p-4 rounded-full shadow-lg transition-all duration-300 hover:scale-105 scale-0 opacity-0 bg-purple-600 text-white hover:bg-purple-700&quot;[39m
+      [33mtitle[39m=[32m&quot;Send Feedback&quot;[39m
+    [36m&gt;[39m
+      [36m&lt;svg[39m
+        [33maria-hidden[39m=[32m&quot;true&quot;[39m
+        [33mclass[39m=[32m&quot;lucide lucide-message-square&quot;[39m
+        [33mfill[39m=[32m&quot;none&quot;[39m
+        [33mheight[39m=[32m&quot;24&quot;[39m
+        [33mstroke[39m=[32m&quot;currentColor&quot;[39m
+        [33mstroke-linecap[39m=[32m&quot;round&quot;[39m
+        [33mstroke-linejoin[39m=[32m&quot;round&quot;[39m
+        [33mstroke-width[39m=[32m&quot;2&quot;[39m
+        [33mviewBox[39m=[32m&quot;0 0 24 24&quot;[39m
+        [33mwidth[39m=[32m&quot;24&quot;[39m
+        [33mxmlns[39m=[32m&quot;http://www.w3.org/2000/svg&quot;[39m
+      [36m&gt;[39m
+        [36m&lt;path[39m
+          [33md[39m=[32m&quot;M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z&quot;[39m
+        [36m/&gt;[39m
+      [36m&lt;/svg&gt;[39m
+    [36m&lt;/button&gt;[39m
+    [36m&lt;div[39m
+      [33mclass[39m=[32m&quot;fixed bottom-6 right-6 z-50 w-80 md:w-96 bg-white dark:bg-navy-800 rounded-xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden flex flex-col animate-in slide-in-from-bottom-10 fade-in duration-200&quot;[39m
+    [36m&gt;[39m
+      [36m&lt;div[39m
+        [33mclass[39m=[32m&quot;bg-purple-600 p-4 flex items-center justify-between text-white&quot;[39m
+      [36m&gt;[39m
+        [36m&lt;div[39m
+          [33mclass[39m=[32m&quot;font-semibold flex items-center gap-2&quot;[39m
+        [36m&gt;[39m
+          [36m&lt;svg[39m
+            [33maria-hidden[39m=[32m&quot;true&quot;[39m
+            [33mclass[39m=[32m&quot;lucide lucide-message-square&quot;[39m
+            [33mfill[39m=[32m&quot;none&quot;[39m
+            [33mheight[39m=[32m&quot;18&quot;[39m
+            [33mstroke[39m=[32m&quot;currentColor&quot;[39m
+            [33mstroke-linecap[39m=[32m&quot;round&quot;[39m
+            [33mstroke-linejoin[39m=[32m&quot;round&quot;[39m
+            [33mstroke-width[39m=[32m&quot;2&quot;[39m
+            [33mviewBox[39m=[32m&quot;0 0 24 24&quot;[39m
+            [33mwidth[39m=[32m&quot;18&quot;[39m
+            [33mxmlns[39m=[32m&quot;http://www.w3.org/2000/svg&quot;[39m
+          [36m&gt;[39m
+            [36m&lt;path[39m
+              [33md[39m=[32m&quot;M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z&quot;[39m
+            [36m/&gt;[39m
+          [36m&lt;/svg&gt;[39m
+          [0mSend Feedback[0m
+        [36m&lt;/div&gt;[39m
+        [36m&lt;button[39m
+          [33mclass[39m=[32m&quot;p-1 hover:bg-white/20 rounded-full transition-colors&quot;[39m
+        [36m&gt;[39m
+          [36m&lt;svg[39m
+            [33maria-hidden[39m=[32m&quot;true&quot;[39m
+            [33mclass[39m=[32m&quot;lucide lucide-x&quot;[39m
+            [33mfill[39m=[32m&quot;none&quot;[39m
+            [33mheight[39m=[32m&quot;18&quot;[39m
+            [33mstroke[39m=[32m&quot;currentColor&quot;[39m
+            [33mstroke-linecap[39m=[32m&quot;round&quot;[39m
+            [33mstroke-linejoin[39m=[32m&quot;round&quot;[39m
+            [33mstroke-width[39m=[32m&quot;2&quot;[39m
+            [33mviewBox[39m=[32m&quot;0 0 24 24&quot;[39m
+            [33mwidth[39m=[32m&quot;18&quot;[39m
+            [33mxmlns[39m=[32m&quot;http://www.w3.org/2000/svg&quot;[39m
+          [36m&gt;[39m
+            [36m&lt;path[39m
+              [33md[39m=[32m&quot;M18 6 6 18&quot;[39m
+            [36m/&gt;[39m
+            [36m&lt;path[39m
+              [33md[39m=[32m&quot;m6 6 12 12&quot;[39m
+            [36m/&gt;[39m
+          [36m&lt;/svg&gt;[39m
+        [36m&lt;/button&gt;[39m
+      [36m&lt;/div&gt;[39m
+      [36m&lt;form[39m
+        [33mclass[39m=[32m&quot;p-4 flex flex-col gap-4&quot;[39m
+      [36m&gt;[39m
+        [36m&lt;div[39m
+          [33mclass[39m=[32m&quot;flex gap-2 p-1 bg-slate-100 dark:bg-navy-900 rounded-lg&quot;[39m
+        [36m&gt;[39m
+          [36m&lt;button[39m
+            [33mclass[39m=[32m&quot;flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-all bg-white dark:bg-navy-800 text-purple-600 shadow-sm&quot;[39m
+            [33mtype[39m=[32m&quot;button&quot;[39m
+          [36m&gt;[39m
+            [0mbug[0m
+          [36m&lt;/button&gt;[39m
+          [36m&lt;button[39m
+            [33mclass[39m=[32m&quot;flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-all text-slate-500 hover:text-navy-900 dark:hover:text-slate-300&quot;[39m
+            [33mtype[39m=[32m&quot;button&quot;[39m
+          [36m&gt;[39m
+            [0mfeature[0m
+          [36m&lt;/button&gt;[39m
+          [36m&lt;button[39m
+            [33mclass[39m=[32m&quot;flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-all text-slate-500 hover:text-navy-900 dark:hover:text-slate-300&quot;[39m
+            [33mtype[39m=[32m&quot;button&quot;[39m
+          [36m&gt;[39m
+            [0mgeneral[0m
+          [36m&lt;/button&gt;[39m
+        [36m&lt;/div&gt;[39m
+        [36m&lt;textarea[39m
+          [33mclass[39m=[32m&quot;w-full h-32 p-3 text-sm rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-navy-900 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none&quot;[39m
+          [33mplaceholder[39m=[32m&quot;Describe your issue or idea...&quot;[39m
+          [33mrequired[39m=[32m&quot;&quot;[39m
+        [36m&gt;[39m
+          [0mTest feedback message[0m
+        [36m&lt;/textarea&gt;[39m
+        [36m&lt;div[39m
+          [33mclass[39m=[32m&quot;flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400&quot;[39m
+        [36m&gt;[39m
+          [36m&lt;label[39m
+            [33mclass[39m=[32m&quot;flex items-center gap-2 cursor-pointer select-none&quot;[39m
+          [36m&gt;[39m
+            [36m&lt;input[39m
+              [33mclass[39m=[32m&quot;rounded border-slate-300 text-purple-600 focus:ring-purple-500&quot;[39m
+              [33mtype[39m=[32m&quot;checkbox&quot;[39m
+            [36m/&gt;[39m
+            [0mInclude screenshot (Coming Soon)[0m
+          [36m&lt;/label&gt;[39m
+          [36m&lt;svg[39m
+            [33maria-hidden[39m=[32m&quot;true&quot;[39m
+            [33mclass[39m=[32m&quot;lucide lucide-camera ml-auto opacity-50&quot;[39m
+            [33mfill[39m=[32m&quot;none&quot;[39m
+            [33mheight[39m=[32m&quot;14&quot;[39m
+            [33mstroke[39m=[32m&quot;currentColor&quot;[39m
+            [33mstroke-linecap[39m=[32m&quot;round&quot;[39m
+            [33mstroke-linejoin[39m=[32m&quot;round&quot;[39m
+            [33mstroke-width[39m=[32m&quot;2&quot;[39m
+            [33mviewBox[39m=[32m&quot;0 0 24 24&quot;[39m
+            [33mwidth[39m=[32m&quot;14&quot;[39m
+            [33mxmlns[39m=[32m&quot;http://www.w3.org/2000/svg&quot;[39m
+          [36m&gt;[39m
+            [36m&lt;path[39m
+              [33md[39m=[32m&quot;M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z&quot;[39m
+            [36m/&gt;[39m
+            [36m&lt;circle[39m
+              [33mcx[39m=[32m&quot;12&quot;[39m
+              [33mcy[39m=[32m&quot;13&quot;[39m
+              [33mr[39m=[32m&quot;3&quot;[39m
+            [36m/&gt;[39m
+          [36m&lt;/svg&gt;[39m
+        [36m&lt;/div&gt;[39m
+        [36m&lt;button[39m
+          [33mclass[39m=[32m&quot;w-full py-2.5 bg-navy-900 dark:bg-white text-white dark:text-navy-900 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2&quot;[39m
+          [33mtype[39m=[32m&quot;submit&quot;[39m
+        [36m&gt;[39m
+          [0mSend Feedback[0m
+          [36m&lt;svg[39m
+            [33maria-hidden[39m=[32m&quot;true&quot;[39m
+            [33mclass[39m=[32m&quot;lucide lucide-check&quot;[39m
+            [33mfill[39m=[32m&quot;none&quot;[39m
+            [33mheight[39m=[32m&quot;16&quot;[39m
+            [33mstroke[39m=[32m&quot;currentColor&quot;[39m
+            [33mstroke-linecap[39m=[32m&quot;round&quot;[39m
+            [33mstroke-linejoin[39m=[32m&quot;round&quot;[39m
+            [33mstroke-width[39m=[32m&quot;2&quot;[39m
+            [33mviewBox[39m=[32m&quot;0 0 24 24&quot;[39m
+            [33mwidth[39m=[32m&quot;16&quot;[39m
+            [33mxmlns[39m=[32m&quot;http://www.w3.org/2000/svg&quot;[39m
+          [36m&gt;[39m
+            [36m&lt;path[39m
+              [33md[39m=[32m&quot;M20 6 9 17l-5-5&quot;[39m
+            [36m/&gt;[39m
+          [36m&lt;/svg&gt;[39m
+        [36m&lt;/button&gt;[39m
+      [36m&lt;/form&gt;[39m
+    [36m&lt;/div&gt;[39m
+  [36m&lt;/div&gt;[39m
+[36m&lt;/body&gt;[39m" type="TestingLibraryElementError">
+TestingLibraryElementError: Found multiple elements with the text: Send Feedback
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+&lt;div
+  class=&quot;font-semibold flex items-center gap-2&quot;
+&gt;
+  &lt;svg
+    aria-hidden=&quot;true&quot;
+    class=&quot;lucide lucide-message-square&quot;
+    fill=&quot;none&quot;
+    height=&quot;18&quot;
+    stroke=&quot;currentColor&quot;
+    stroke-linecap=&quot;round&quot;
+    stroke-linejoin=&quot;round&quot;
+    stroke-width=&quot;2&quot;
+    viewBox=&quot;0 0 24 24&quot;
+    width=&quot;18&quot;
+    xmlns=&quot;http://www.w3.org/2000/svg&quot;
+  &gt;
+    &lt;path
+      d=&quot;M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z&quot;
+    /&gt;
+  &lt;/svg&gt;
+  Send Feedback
+&lt;/div&gt;
+
+Ignored nodes: comments, script, style
+&lt;button
+  class=&quot;w-full py-2.5 bg-navy-900 dark:bg-white text-white dark:text-navy-900 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2&quot;
+  type=&quot;submit&quot;
+&gt;
+  Send Feedback
+  &lt;svg
+    aria-hidden=&quot;true&quot;
+    class=&quot;lucide lucide-check&quot;
+    fill=&quot;none&quot;
+    height=&quot;16&quot;
+    stroke=&quot;currentColor&quot;
+    stroke-linecap=&quot;round&quot;
+    stroke-linejoin=&quot;round&quot;
+    stroke-width=&quot;2&quot;
+    viewBox=&quot;0 0 24 24&quot;
+    width=&quot;16&quot;
+    xmlns=&quot;http://www.w3.org/2000/svg&quot;
+  &gt;
+    &lt;path
+      d=&quot;M20 6 9 17l-5-5&quot;
+    /&gt;
+  &lt;/svg&gt;
+&lt;/button&gt;
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+&lt;body&gt;
+  &lt;div&gt;
+    &lt;button
+      class=&quot;fixed bottom-6 right-6 z-50 p-4 rounded-full shadow-lg transition-all duration-300 hover:scale-105 scale-0 opacity-0 bg-purple-600 text-white hover:bg-purple-700&quot;
+      title=&quot;Send Feedback&quot;
+    &gt;
+      &lt;svg
+        aria-hidden=&quot;true&quot;
+        class=&quot;lucide lucide-message-square&quot;
+        fill=&quot;none&quot;
+        height=&quot;24&quot;
+        stroke=&quot;currentColor&quot;
+        stroke-linecap=&quot;round&quot;
+        stroke-linejoin=&quot;round&quot;
+        stroke-width=&quot;2&quot;
+        viewBox=&quot;0 0 24 24&quot;
+        width=&quot;24&quot;
+        xmlns=&quot;http://www.w3.org/2000/svg&quot;
+      &gt;
+        &lt;path
+          d=&quot;M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z&quot;
+        /&gt;
+      &lt;/svg&gt;
+    &lt;/button&gt;
+    &lt;div
+      class=&quot;fixed bottom-6 right-6 z-50 w-80 md:w-96 bg-white dark:bg-navy-800 rounded-xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden flex flex-col animate-in slide-in-from-bottom-10 fade-in duration-200&quot;
+    &gt;
+      &lt;div
+        class=&quot;bg-purple-600 p-4 flex items-center justify-between text-white&quot;
+      &gt;
+        &lt;div
+          class=&quot;font-semibold flex items-center gap-2&quot;
+        &gt;
+          &lt;svg
+            aria-hidden=&quot;true&quot;
+            class=&quot;lucide lucide-message-square&quot;
+            fill=&quot;none&quot;
+            height=&quot;18&quot;
+            stroke=&quot;currentColor&quot;
+            stroke-linecap=&quot;round&quot;
+            stroke-linejoin=&quot;round&quot;
+            stroke-width=&quot;2&quot;
+            viewBox=&quot;0 0 24 24&quot;
+            width=&quot;18&quot;
+            xmlns=&quot;http://www.w3.org/2000/svg&quot;
+          &gt;
+            &lt;path
+              d=&quot;M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z&quot;
+            /&gt;
+          &lt;/svg&gt;
+          Send Feedback
+        &lt;/div&gt;
+        &lt;button
+          class=&quot;p-1 hover:bg-white/20 rounded-full transition-colors&quot;
+        &gt;
+          &lt;svg
+            aria-hidden=&quot;true&quot;
+            class=&quot;lucide lucide-x&quot;
+            fill=&quot;none&quot;
+            height=&quot;18&quot;
+            stroke=&quot;currentColor&quot;
+            stroke-linecap=&quot;round&quot;
+            stroke-linejoin=&quot;round&quot;
+            stroke-width=&quot;2&quot;
+            viewBox=&quot;0 0 24 24&quot;
+            width=&quot;18&quot;
+            xmlns=&quot;http://www.w3.org/2000/svg&quot;
+          &gt;
+            &lt;path
+              d=&quot;M18 6 6 18&quot;
+            /&gt;
+            &lt;path
+              d=&quot;m6 6 12 12&quot;
+            /&gt;
+          &lt;/svg&gt;
+        &lt;/button&gt;
+      &lt;/div&gt;
+      &lt;form
+        class=&quot;p-4 flex flex-col gap-4&quot;
+      &gt;
+        &lt;div
+          class=&quot;flex gap-2 p-1 bg-slate-100 dark:bg-navy-900 rounded-lg&quot;
+        &gt;
+          &lt;button
+            class=&quot;flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-all bg-white dark:bg-navy-800 text-purple-600 shadow-sm&quot;
+            type=&quot;button&quot;
+          &gt;
+            bug
+          &lt;/button&gt;
+          &lt;button
+            class=&quot;flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-all text-slate-500 hover:text-navy-900 dark:hover:text-slate-300&quot;
+            type=&quot;button&quot;
+          &gt;
+            feature
+          &lt;/button&gt;
+          &lt;button
+            class=&quot;flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-all text-slate-500 hover:text-navy-900 dark:hover:text-slate-300&quot;
+            type=&quot;button&quot;
+          &gt;
+            general
+          &lt;/button&gt;
+        &lt;/div&gt;
+        &lt;textarea
+          class=&quot;w-full h-32 p-3 text-sm rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-navy-900 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none&quot;
+          placeholder=&quot;Describe your issue or idea...&quot;
+          required=&quot;&quot;
+        &gt;
+          Test feedback message
+        &lt;/textarea&gt;
+        &lt;div
+          class=&quot;flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400&quot;
+        &gt;
+          &lt;label
+            class=&quot;flex items-center gap-2 cursor-pointer select-none&quot;
+          &gt;
+            &lt;input
+              class=&quot;rounded border-slate-300 text-purple-600 focus:ring-purple-500&quot;
+              type=&quot;checkbox&quot;
+            /&gt;
+            Include screenshot (Coming Soon)
+          &lt;/label&gt;
+          &lt;svg
+            aria-hidden=&quot;true&quot;
+            class=&quot;lucide lucide-camera ml-auto opacity-50&quot;
+            fill=&quot;none&quot;
+            height=&quot;14&quot;
+            stroke=&quot;currentColor&quot;
+            stroke-linecap=&quot;round&quot;
+            stroke-linejoin=&quot;round&quot;
+            stroke-width=&quot;2&quot;
+            viewBox=&quot;0 0 24 24&quot;
+            width=&quot;14&quot;
+            xmlns=&quot;http://www.w3.org/2000/svg&quot;
+          &gt;
+            &lt;path
+              d=&quot;M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z&quot;
+            /&gt;
+            &lt;circle
+              cx=&quot;12&quot;
+              cy=&quot;13&quot;
+              r=&quot;3&quot;
+            /&gt;
+          &lt;/svg&gt;
+        &lt;/div&gt;
+        &lt;button
+          class=&quot;w-full py-2.5 bg-navy-900 dark:bg-white text-white dark:text-navy-900 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2&quot;
+          type=&quot;submit&quot;
+        &gt;
+          Send Feedback
+          &lt;svg
+            aria-hidden=&quot;true&quot;
+            class=&quot;lucide lucide-check&quot;
+            fill=&quot;none&quot;
+            height=&quot;16&quot;
+            stroke=&quot;currentColor&quot;
+            stroke-linecap=&quot;round&quot;
+            stroke-linejoin=&quot;round&quot;
+            stroke-width=&quot;2&quot;
+            viewBox=&quot;0 0 24 24&quot;
+            width=&quot;16&quot;
+            xmlns=&quot;http://www.w3.org/2000/svg&quot;
+          &gt;
+            &lt;path
+              d=&quot;M20 6 9 17l-5-5&quot;
+            /&gt;
+          &lt;/svg&gt;
+        &lt;/button&gt;
+      &lt;/form&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/body&gt;
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/components/FeedbackWidget.test.tsx:89:37
+            </failure>
+        </testcase>
+        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; handles submission error" time="0.022059333">
+            <failure message="Found multiple elements with the text: Send Feedback
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m&lt;div[39m
+  [33mclass[39m=[32m&quot;font-semibold flex items-center gap-2&quot;[39m
+[36m&gt;[39m
+  [36m&lt;svg[39m
+    [33maria-hidden[39m=[32m&quot;true&quot;[39m
+    [33mclass[39m=[32m&quot;lucide lucide-message-square&quot;[39m
+    [33mfill[39m=[32m&quot;none&quot;[39m
+    [33mheight[39m=[32m&quot;18&quot;[39m
+    [33mstroke[39m=[32m&quot;currentColor&quot;[39m
+    [33mstroke-linecap[39m=[32m&quot;round&quot;[39m
+    [33mstroke-linejoin[39m=[32m&quot;round&quot;[39m
+    [33mstroke-width[39m=[32m&quot;2&quot;[39m
+    [33mviewBox[39m=[32m&quot;0 0 24 24&quot;[39m
+    [33mwidth[39m=[32m&quot;18&quot;[39m
+    [33mxmlns[39m=[32m&quot;http://www.w3.org/2000/svg&quot;[39m
+  [36m&gt;[39m
+    [36m&lt;path[39m
+      [33md[39m=[32m&quot;M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z&quot;[39m
+    [36m/&gt;[39m
+  [36m&lt;/svg&gt;[39m
+  [0mSend Feedback[0m
+[36m&lt;/div&gt;[39m
+
+Ignored nodes: comments, script, style
+[36m&lt;button[39m
+  [33mclass[39m=[32m&quot;w-full py-2.5 bg-navy-900 dark:bg-white text-white dark:text-navy-900 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2&quot;[39m
+  [33mtype[39m=[32m&quot;submit&quot;[39m
+[36m&gt;[39m
+  [0mSend Feedback[0m
+  [36m&lt;svg[39m
+    [33maria-hidden[39m=[32m&quot;true&quot;[39m
+    [33mclass[39m=[32m&quot;lucide lucide-check&quot;[39m
+    [33mfill[39m=[32m&quot;none&quot;[39m
+    [33mheight[39m=[32m&quot;16&quot;[39m
+    [33mstroke[39m=[32m&quot;currentColor&quot;[39m
+    [33mstroke-linecap[39m=[32m&quot;round&quot;[39m
+    [33mstroke-linejoin[39m=[32m&quot;round&quot;[39m
+    [33mstroke-width[39m=[32m&quot;2&quot;[39m
+    [33mviewBox[39m=[32m&quot;0 0 24 24&quot;[39m
+    [33mwidth[39m=[32m&quot;16&quot;[39m
+    [33mxmlns[39m=[32m&quot;http://www.w3.org/2000/svg&quot;[39m
+  [36m&gt;[39m
+    [36m&lt;path[39m
+      [33md[39m=[32m&quot;M20 6 9 17l-5-5&quot;[39m
+    [36m/&gt;[39m
+  [36m&lt;/svg&gt;[39m
+[36m&lt;/button&gt;[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m&lt;body&gt;[39m
+  [36m&lt;div&gt;[39m
+    [36m&lt;button[39m
+      [33mclass[39m=[32m&quot;fixed bottom-6 right-6 z-50 p-4 rounded-full shadow-lg transition-all duration-300 hover:scale-105 scale-0 opacity-0 bg-purple-600 text-white hover:bg-purple-700&quot;[39m
+      [33mtitle[39m=[32m&quot;Send Feedback&quot;[39m
+    [36m&gt;[39m
+      [36m&lt;svg[39m
+        [33maria-hidden[39m=[32m&quot;true&quot;[39m
+        [33mclass[39m=[32m&quot;lucide lucide-message-square&quot;[39m
+        [33mfill[39m=[32m&quot;none&quot;[39m
+        [33mheight[39m=[32m&quot;24&quot;[39m
+        [33mstroke[39m=[32m&quot;currentColor&quot;[39m
+        [33mstroke-linecap[39m=[32m&quot;round&quot;[39m
+        [33mstroke-linejoin[39m=[32m&quot;round&quot;[39m
+        [33mstroke-width[39m=[32m&quot;2&quot;[39m
+        [33mviewBox[39m=[32m&quot;0 0 24 24&quot;[39m
+        [33mwidth[39m=[32m&quot;24&quot;[39m
+        [33mxmlns[39m=[32m&quot;http://www.w3.org/2000/svg&quot;[39m
+      [36m&gt;[39m
+        [36m&lt;path[39m
+          [33md[39m=[32m&quot;M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z&quot;[39m
+        [36m/&gt;[39m
+      [36m&lt;/svg&gt;[39m
+    [36m&lt;/button&gt;[39m
+    [36m&lt;div[39m
+      [33mclass[39m=[32m&quot;fixed bottom-6 right-6 z-50 w-80 md:w-96 bg-white dark:bg-navy-800 rounded-xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden flex flex-col animate-in slide-in-from-bottom-10 fade-in duration-200&quot;[39m
+    [36m&gt;[39m
+      [36m&lt;div[39m
+        [33mclass[39m=[32m&quot;bg-purple-600 p-4 flex items-center justify-between text-white&quot;[39m
+      [36m&gt;[39m
+        [36m&lt;div[39m
+          [33mclass[39m=[32m&quot;font-semibold flex items-center gap-2&quot;[39m
+        [36m&gt;[39m
+          [36m&lt;svg[39m
+            [33maria-hidden[39m=[32m&quot;true&quot;[39m
+            [33mclass[39m=[32m&quot;lucide lucide-message-square&quot;[39m
+            [33mfill[39m=[32m&quot;none&quot;[39m
+            [33mheight[39m=[32m&quot;18&quot;[39m
+            [33mstroke[39m=[32m&quot;currentColor&quot;[39m
+            [33mstroke-linecap[39m=[32m&quot;round&quot;[39m
+            [33mstroke-linejoin[39m=[32m&quot;round&quot;[39m
+            [33mstroke-width[39m=[32m&quot;2&quot;[39m
+            [33mviewBox[39m=[32m&quot;0 0 24 24&quot;[39m
+            [33mwidth[39m=[32m&quot;18&quot;[39m
+            [33mxmlns[39m=[32m&quot;http://www.w3.org/2000/svg&quot;[39m
+          [36m&gt;[39m
+            [36m&lt;path[39m
+              [33md[39m=[32m&quot;M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z&quot;[39m
+            [36m/&gt;[39m
+          [36m&lt;/svg&gt;[39m
+          [0mSend Feedback[0m
+        [36m&lt;/div&gt;[39m
+        [36m&lt;button[39m
+          [33mclass[39m=[32m&quot;p-1 hover:bg-white/20 rounded-full transition-colors&quot;[39m
+        [36m&gt;[39m
+          [36m&lt;svg[39m
+            [33maria-hidden[39m=[32m&quot;true&quot;[39m
+            [33mclass[39m=[32m&quot;lucide lucide-x&quot;[39m
+            [33mfill[39m=[32m&quot;none&quot;[39m
+            [33mheight[39m=[32m&quot;18&quot;[39m
+            [33mstroke[39m=[32m&quot;currentColor&quot;[39m
+            [33mstroke-linecap[39m=[32m&quot;round&quot;[39m
+            [33mstroke-linejoin[39m=[32m&quot;round&quot;[39m
+            [33mstroke-width[39m=[32m&quot;2&quot;[39m
+            [33mviewBox[39m=[32m&quot;0 0 24 24&quot;[39m
+            [33mwidth[39m=[32m&quot;18&quot;[39m
+            [33mxmlns[39m=[32m&quot;http://www.w3.org/2000/svg&quot;[39m
+          [36m&gt;[39m
+            [36m&lt;path[39m
+              [33md[39m=[32m&quot;M18 6 6 18&quot;[39m
+            [36m/&gt;[39m
+            [36m&lt;path[39m
+              [33md[39m=[32m&quot;m6 6 12 12&quot;[39m
+            [36m/&gt;[39m
+          [36m&lt;/svg&gt;[39m
+        [36m&lt;/button&gt;[39m
+      [36m&lt;/div&gt;[39m
+      [36m&lt;form[39m
+        [33mclass[39m=[32m&quot;p-4 flex flex-col gap-4&quot;[39m
+      [36m&gt;[39m
+        [36m&lt;div[39m
+          [33mclass[39m=[32m&quot;flex gap-2 p-1 bg-slate-100 dark:bg-navy-900 rounded-lg&quot;[39m
+        [36m&gt;[39m
+          [36m&lt;button[39m
+            [33mclass[39m=[32m&quot;flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-all bg-white dark:bg-navy-800 text-purple-600 shadow-sm&quot;[39m
+            [33mtype[39m=[32m&quot;button&quot;[39m
+          [36m&gt;[39m
+            [0mbug[0m
+          [36m&lt;/button&gt;[39m
+          [36m&lt;button[39m
+            [33mclass[39m=[32m&quot;flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-all text-slate-500 hover:text-navy-900 dark:hover:text-slate-300&quot;[39m
+            [33mtype[39m=[32m&quot;button&quot;[39m
+          [36m&gt;[39m
+            [0mfeature[0m
+          [36m&lt;/button&gt;[39m
+          [36m&lt;button[39m
+            [33mclass[39m=[32m&quot;flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-all text-slate-500 hover:text-navy-900 dark:hover:text-slate-300&quot;[39m
+            [33mtype[39m=[32m&quot;button&quot;[39m
+          [36m&gt;[39m
+            [0mgeneral[0m
+          [36m&lt;/button&gt;[39m
+        [36m&lt;/div&gt;[39m
+        [36m&lt;textarea[39m
+          [33mclass[39m=[32m&quot;w-full h-32 p-3 text-sm rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-navy-900 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none&quot;[39m
+          [33mplaceholder[39m=[32m&quot;Describe your issue or idea...&quot;[39m
+          [33mrequired[39m=[32m&quot;&quot;[39m
+        [36m&gt;[39m
+          [0mTest feedback[0m
+        [36m&lt;/textarea&gt;[39m
+        [36m&lt;div[39m
+          [33mclass[39m=[32m&quot;flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400&quot;[39m
+        [36m&gt;[39m
+          [36m&lt;label[39m
+            [33mclass[39m=[32m&quot;flex items-center gap-2 cursor-pointer select-none&quot;[39m
+          [36m&gt;[39m
+            [36m&lt;input[39m
+              [33mclass[39m=[32m&quot;rounded border-slate-300 text-purple-600 focus:ring-purple-500&quot;[39m
+              [33mtype[39m=[32m&quot;checkbox&quot;[39m
+            [36m/&gt;[39m
+            [0mInclude screenshot (Coming Soon)[0m
+          [36m&lt;/label&gt;[39m
+          [36m&lt;svg[39m
+            [33maria-hidden[39m=[32m&quot;true&quot;[39m
+            [33mclass[39m=[32m&quot;lucide lucide-camera ml-auto opacity-50&quot;[39m
+            [33mfill[39m=[32m&quot;none&quot;[39m
+            [33mheight[39m=[32m&quot;14&quot;[39m
+            [33mstroke[39m=[32m&quot;currentColor&quot;[39m
+            [33mstroke-linecap[39m=[32m&quot;round&quot;[39m
+            [33mstroke-linejoin[39m=[32m&quot;round&quot;[39m
+            [33mstroke-width[39m=[32m&quot;2&quot;[39m
+            [33mviewBox[39m=[32m&quot;0 0 24 24&quot;[39m
+            [33mwidth[39m=[32m&quot;14&quot;[39m
+            [33mxmlns[39m=[32m&quot;http://www.w3.org/2000/svg&quot;[39m
+          [36m&gt;[39m
+            [36m&lt;path[39m
+              [33md[39m=[32m&quot;M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z&quot;[39m
+            [36m/&gt;[39m
+            [36m&lt;circle[39m
+              [33mcx[39m=[32m&quot;12&quot;[39m
+              [33mcy[39m=[32m&quot;13&quot;[39m
+              [33mr[39m=[32m&quot;3&quot;[39m
+            [36m/&gt;[39m
+          [36m&lt;/svg&gt;[39m
+        [36m&lt;/div&gt;[39m
+        [36m&lt;button[39m
+          [33mclass[39m=[32m&quot;w-full py-2.5 bg-navy-900 dark:bg-white text-white dark:text-navy-900 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2&quot;[39m
+          [33mtype[39m=[32m&quot;submit&quot;[39m
+        [36m&gt;[39m
+          [0mSend Feedback[0m
+          [36m&lt;svg[39m
+            [33maria-hidden[39m=[32m&quot;true&quot;[39m
+            [33mclass[39m=[32m&quot;lucide lucide-check&quot;[39m
+            [33mfill[39m=[32m&quot;none&quot;[39m
+            [33mheight[39m=[32m&quot;16&quot;[39m
+            [33mstroke[39m=[32m&quot;currentColor&quot;[39m
+            [33mstroke-linecap[39m=[32m&quot;round&quot;[39m
+            [33mstroke-linejoin[39m=[32m&quot;round&quot;[39m
+            [33mstroke-width[39m=[32m&quot;2&quot;[39m
+            [33mviewBox[39m=[32m&quot;0 0 24 24&quot;[39m
+            [33mwidth[39m=[32m&quot;16&quot;[39m
+            [33mxmlns[39m=[32m&quot;http://www.w3.org/2000/svg&quot;[39m
+          [36m&gt;[39m
+            [36m&lt;path[39m
+              [33md[39m=[32m&quot;M20 6 9 17l-5-5&quot;[39m
+            [36m/&gt;[39m
+          [36m&lt;/svg&gt;[39m
+        [36m&lt;/button&gt;[39m
+      [36m&lt;/form&gt;[39m
+    [36m&lt;/div&gt;[39m
+  [36m&lt;/div&gt;[39m
+[36m&lt;/body&gt;[39m" type="TestingLibraryElementError">
+TestingLibraryElementError: Found multiple elements with the text: Send Feedback
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+&lt;div
+  class=&quot;font-semibold flex items-center gap-2&quot;
+&gt;
+  &lt;svg
+    aria-hidden=&quot;true&quot;
+    class=&quot;lucide lucide-message-square&quot;
+    fill=&quot;none&quot;
+    height=&quot;18&quot;
+    stroke=&quot;currentColor&quot;
+    stroke-linecap=&quot;round&quot;
+    stroke-linejoin=&quot;round&quot;
+    stroke-width=&quot;2&quot;
+    viewBox=&quot;0 0 24 24&quot;
+    width=&quot;18&quot;
+    xmlns=&quot;http://www.w3.org/2000/svg&quot;
+  &gt;
+    &lt;path
+      d=&quot;M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z&quot;
+    /&gt;
+  &lt;/svg&gt;
+  Send Feedback
+&lt;/div&gt;
+
+Ignored nodes: comments, script, style
+&lt;button
+  class=&quot;w-full py-2.5 bg-navy-900 dark:bg-white text-white dark:text-navy-900 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2&quot;
+  type=&quot;submit&quot;
+&gt;
+  Send Feedback
+  &lt;svg
+    aria-hidden=&quot;true&quot;
+    class=&quot;lucide lucide-check&quot;
+    fill=&quot;none&quot;
+    height=&quot;16&quot;
+    stroke=&quot;currentColor&quot;
+    stroke-linecap=&quot;round&quot;
+    stroke-linejoin=&quot;round&quot;
+    stroke-width=&quot;2&quot;
+    viewBox=&quot;0 0 24 24&quot;
+    width=&quot;16&quot;
+    xmlns=&quot;http://www.w3.org/2000/svg&quot;
+  &gt;
+    &lt;path
+      d=&quot;M20 6 9 17l-5-5&quot;
+    /&gt;
+  &lt;/svg&gt;
+&lt;/button&gt;
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+&lt;body&gt;
+  &lt;div&gt;
+    &lt;button
+      class=&quot;fixed bottom-6 right-6 z-50 p-4 rounded-full shadow-lg transition-all duration-300 hover:scale-105 scale-0 opacity-0 bg-purple-600 text-white hover:bg-purple-700&quot;
+      title=&quot;Send Feedback&quot;
+    &gt;
+      &lt;svg
+        aria-hidden=&quot;true&quot;
+        class=&quot;lucide lucide-message-square&quot;
+        fill=&quot;none&quot;
+        height=&quot;24&quot;
+        stroke=&quot;currentColor&quot;
+        stroke-linecap=&quot;round&quot;
+        stroke-linejoin=&quot;round&quot;
+        stroke-width=&quot;2&quot;
+        viewBox=&quot;0 0 24 24&quot;
+        width=&quot;24&quot;
+        xmlns=&quot;http://www.w3.org/2000/svg&quot;
+      &gt;
+        &lt;path
+          d=&quot;M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z&quot;
+        /&gt;
+      &lt;/svg&gt;
+    &lt;/button&gt;
+    &lt;div
+      class=&quot;fixed bottom-6 right-6 z-50 w-80 md:w-96 bg-white dark:bg-navy-800 rounded-xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden flex flex-col animate-in slide-in-from-bottom-10 fade-in duration-200&quot;
+    &gt;
+      &lt;div
+        class=&quot;bg-purple-600 p-4 flex items-center justify-between text-white&quot;
+      &gt;
+        &lt;div
+          class=&quot;font-semibold flex items-center gap-2&quot;
+        &gt;
+          &lt;svg
+            aria-hidden=&quot;true&quot;
+            class=&quot;lucide lucide-message-square&quot;
+            fill=&quot;none&quot;
+            height=&quot;18&quot;
+            stroke=&quot;currentColor&quot;
+            stroke-linecap=&quot;round&quot;
+            stroke-linejoin=&quot;round&quot;
+            stroke-width=&quot;2&quot;
+            viewBox=&quot;0 0 24 24&quot;
+            width=&quot;18&quot;
+            xmlns=&quot;http://www.w3.org/2000/svg&quot;
+          &gt;
+            &lt;path
+              d=&quot;M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z&quot;
+            /&gt;
+          &lt;/svg&gt;
+          Send Feedback
+        &lt;/div&gt;
+        &lt;button
+          class=&quot;p-1 hover:bg-white/20 rounded-full transition-colors&quot;
+        &gt;
+          &lt;svg
+            aria-hidden=&quot;true&quot;
+            class=&quot;lucide lucide-x&quot;
+            fill=&quot;none&quot;
+            height=&quot;18&quot;
+            stroke=&quot;currentColor&quot;
+            stroke-linecap=&quot;round&quot;
+            stroke-linejoin=&quot;round&quot;
+            stroke-width=&quot;2&quot;
+            viewBox=&quot;0 0 24 24&quot;
+            width=&quot;18&quot;
+            xmlns=&quot;http://www.w3.org/2000/svg&quot;
+          &gt;
+            &lt;path
+              d=&quot;M18 6 6 18&quot;
+            /&gt;
+            &lt;path
+              d=&quot;m6 6 12 12&quot;
+            /&gt;
+          &lt;/svg&gt;
+        &lt;/button&gt;
+      &lt;/div&gt;
+      &lt;form
+        class=&quot;p-4 flex flex-col gap-4&quot;
+      &gt;
+        &lt;div
+          class=&quot;flex gap-2 p-1 bg-slate-100 dark:bg-navy-900 rounded-lg&quot;
+        &gt;
+          &lt;button
+            class=&quot;flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-all bg-white dark:bg-navy-800 text-purple-600 shadow-sm&quot;
+            type=&quot;button&quot;
+          &gt;
+            bug
+          &lt;/button&gt;
+          &lt;button
+            class=&quot;flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-all text-slate-500 hover:text-navy-900 dark:hover:text-slate-300&quot;
+            type=&quot;button&quot;
+          &gt;
+            feature
+          &lt;/button&gt;
+          &lt;button
+            class=&quot;flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-all text-slate-500 hover:text-navy-900 dark:hover:text-slate-300&quot;
+            type=&quot;button&quot;
+          &gt;
+            general
+          &lt;/button&gt;
+        &lt;/div&gt;
+        &lt;textarea
+          class=&quot;w-full h-32 p-3 text-sm rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-navy-900 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none&quot;
+          placeholder=&quot;Describe your issue or idea...&quot;
+          required=&quot;&quot;
+        &gt;
+          Test feedback
+        &lt;/textarea&gt;
+        &lt;div
+          class=&quot;flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400&quot;
+        &gt;
+          &lt;label
+            class=&quot;flex items-center gap-2 cursor-pointer select-none&quot;
+          &gt;
+            &lt;input
+              class=&quot;rounded border-slate-300 text-purple-600 focus:ring-purple-500&quot;
+              type=&quot;checkbox&quot;
+            /&gt;
+            Include screenshot (Coming Soon)
+          &lt;/label&gt;
+          &lt;svg
+            aria-hidden=&quot;true&quot;
+            class=&quot;lucide lucide-camera ml-auto opacity-50&quot;
+            fill=&quot;none&quot;
+            height=&quot;14&quot;
+            stroke=&quot;currentColor&quot;
+            stroke-linecap=&quot;round&quot;
+            stroke-linejoin=&quot;round&quot;
+            stroke-width=&quot;2&quot;
+            viewBox=&quot;0 0 24 24&quot;
+            width=&quot;14&quot;
+            xmlns=&quot;http://www.w3.org/2000/svg&quot;
+          &gt;
+            &lt;path
+              d=&quot;M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z&quot;
+            /&gt;
+            &lt;circle
+              cx=&quot;12&quot;
+              cy=&quot;13&quot;
+              r=&quot;3&quot;
+            /&gt;
+          &lt;/svg&gt;
+        &lt;/div&gt;
+        &lt;button
+          class=&quot;w-full py-2.5 bg-navy-900 dark:bg-white text-white dark:text-navy-900 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2&quot;
+          type=&quot;submit&quot;
+        &gt;
+          Send Feedback
+          &lt;svg
+            aria-hidden=&quot;true&quot;
+            class=&quot;lucide lucide-check&quot;
+            fill=&quot;none&quot;
+            height=&quot;16&quot;
+            stroke=&quot;currentColor&quot;
+            stroke-linecap=&quot;round&quot;
+            stroke-linejoin=&quot;round&quot;
+            stroke-width=&quot;2&quot;
+            viewBox=&quot;0 0 24 24&quot;
+            width=&quot;16&quot;
+            xmlns=&quot;http://www.w3.org/2000/svg&quot;
+          &gt;
+            &lt;path
+              d=&quot;M20 6 9 17l-5-5&quot;
+            /&gt;
+          &lt;/svg&gt;
+        &lt;/button&gt;
+      &lt;/form&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/body&gt;
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/components/FeedbackWidget.test.tsx:113:37
+            </failure>
+        </testcase>
+        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; disables submit button when message is empty" time="0.053608666">
+            <failure message="Found multiple elements with the text: Send Feedback
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m&lt;div[39m
+  [33mclass[39m=[32m&quot;font-semibold flex items-center gap-2&quot;[39m
+[36m&gt;[39m
+  [36m&lt;svg[39m
+    [33maria-hidden[39m=[32m&quot;true&quot;[39m
+    [33mclass[39m=[32m&quot;lucide lucide-message-square&quot;[39m
+    [33mfill[39m=[32m&quot;none&quot;[39m
+    [33mheight[39m=[32m&quot;18&quot;[39m
+    [33mstroke[39m=[32m&quot;currentColor&quot;[39m
+    [33mstroke-linecap[39m=[32m&quot;round&quot;[39m
+    [33mstroke-linejoin[39m=[32m&quot;round&quot;[39m
+    [33mstroke-width[39m=[32m&quot;2&quot;[39m
+    [33mviewBox[39m=[32m&quot;0 0 24 24&quot;[39m
+    [33mwidth[39m=[32m&quot;18&quot;[39m
+    [33mxmlns[39m=[32m&quot;http://www.w3.org/2000/svg&quot;[39m
+  [36m&gt;[39m
+    [36m&lt;path[39m
+      [33md[39m=[32m&quot;M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z&quot;[39m
+    [36m/&gt;[39m
+  [36m&lt;/svg&gt;[39m
+  [0mSend Feedback[0m
+[36m&lt;/div&gt;[39m
+
+Ignored nodes: comments, script, style
+[36m&lt;button[39m
+  [33mclass[39m=[32m&quot;w-full py-2.5 bg-navy-900 dark:bg-white text-white dark:text-navy-900 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2&quot;[39m
+  [33mdisabled[39m=[32m&quot;&quot;[39m
+  [33mtype[39m=[32m&quot;submit&quot;[39m
+[36m&gt;[39m
+  [0mSend Feedback[0m
+  [36m&lt;svg[39m
+    [33maria-hidden[39m=[32m&quot;true&quot;[39m
+    [33mclass[39m=[32m&quot;lucide lucide-check&quot;[39m
+    [33mfill[39m=[32m&quot;none&quot;[39m
+    [33mheight[39m=[32m&quot;16&quot;[39m
+    [33mstroke[39m=[32m&quot;currentColor&quot;[39m
+    [33mstroke-linecap[39m=[32m&quot;round&quot;[39m
+    [33mstroke-linejoin[39m=[32m&quot;round&quot;[39m
+    [33mstroke-width[39m=[32m&quot;2&quot;[39m
+    [33mviewBox[39m=[32m&quot;0 0 24 24&quot;[39m
+    [33mwidth[39m=[32m&quot;16&quot;[39m
+    [33mxmlns[39m=[32m&quot;http://www.w3.org/2000/svg&quot;[39m
+  [36m&gt;[39m
+    [36m&lt;path[39m
+      [33md[39m=[32m&quot;M20 6 9 17l-5-5&quot;[39m
+    [36m/&gt;[39m
+  [36m&lt;/svg&gt;[39m
+[36m&lt;/button&gt;[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m&lt;body&gt;[39m
+  [36m&lt;div&gt;[39m
+    [36m&lt;button[39m
+      [33mclass[39m=[32m&quot;fixed bottom-6 right-6 z-50 p-4 rounded-full shadow-lg transition-all duration-300 hover:scale-105 scale-0 opacity-0 bg-purple-600 text-white hover:bg-purple-700&quot;[39m
+      [33mtitle[39m=[32m&quot;Send Feedback&quot;[39m
+    [36m&gt;[39m
+      [36m&lt;svg[39m
+        [33maria-hidden[39m=[32m&quot;true&quot;[39m
+        [33mclass[39m=[32m&quot;lucide lucide-message-square&quot;[39m
+        [33mfill[39m=[32m&quot;none&quot;[39m
+        [33mheight[39m=[32m&quot;24&quot;[39m
+        [33mstroke[39m=[32m&quot;currentColor&quot;[39m
+        [33mstroke-linecap[39m=[32m&quot;round&quot;[39m
+        [33mstroke-linejoin[39m=[32m&quot;round&quot;[39m
+        [33mstroke-width[39m=[32m&quot;2&quot;[39m
+        [33mviewBox[39m=[32m&quot;0 0 24 24&quot;[39m
+        [33mwidth[39m=[32m&quot;24&quot;[39m
+        [33mxmlns[39m=[32m&quot;http://www.w3.org/2000/svg&quot;[39m
+      [36m&gt;[39m
+        [36m&lt;path[39m
+          [33md[39m=[32m&quot;M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z&quot;[39m
+        [36m/&gt;[39m
+      [36m&lt;/svg&gt;[39m
+    [36m&lt;/button&gt;[39m
+    [36m&lt;div[39m
+      [33mclass[39m=[32m&quot;fixed bottom-6 right-6 z-50 w-80 md:w-96 bg-white dark:bg-navy-800 rounded-xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden flex flex-col animate-in slide-in-from-bottom-10 fade-in duration-200&quot;[39m
+    [36m&gt;[39m
+      [36m&lt;div[39m
+        [33mclass[39m=[32m&quot;bg-purple-600 p-4 flex items-center justify-between text-white&quot;[39m
+      [36m&gt;[39m
+        [36m&lt;div[39m
+          [33mclass[39m=[32m&quot;font-semibold flex items-center gap-2&quot;[39m
+        [36m&gt;[39m
+          [36m&lt;svg[39m
+            [33maria-hidden[39m=[32m&quot;true&quot;[39m
+            [33mclass[39m=[32m&quot;lucide lucide-message-square&quot;[39m
+            [33mfill[39m=[32m&quot;none&quot;[39m
+            [33mheight[39m=[32m&quot;18&quot;[39m
+            [33mstroke[39m=[32m&quot;currentColor&quot;[39m
+            [33mstroke-linecap[39m=[32m&quot;round&quot;[39m
+            [33mstroke-linejoin[39m=[32m&quot;round&quot;[39m
+            [33mstroke-width[39m=[32m&quot;2&quot;[39m
+            [33mviewBox[39m=[32m&quot;0 0 24 24&quot;[39m
+            [33mwidth[39m=[32m&quot;18&quot;[39m
+            [33mxmlns[39m=[32m&quot;http://www.w3.org/2000/svg&quot;[39m
+          [36m&gt;[39m
+            [36m&lt;path[39m
+              [33md[39m=[32m&quot;M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z&quot;[39m
+            [36m/&gt;[39m
+          [36m&lt;/svg&gt;[39m
+          [0mSend Feedback[0m
+        [36m&lt;/div&gt;[39m
+        [36m&lt;button[39m
+          [33mclass[39m=[32m&quot;p-1 hover:bg-white/20 rounded-full transition-colors&quot;[39m
+        [36m&gt;[39m
+          [36m&lt;svg[39m
+            [33maria-hidden[39m=[32m&quot;true&quot;[39m
+            [33mclass[39m=[32m&quot;lucide lucide-x&quot;[39m
+            [33mfill[39m=[32m&quot;none&quot;[39m
+            [33mheight[39m=[32m&quot;18&quot;[39m
+            [33mstroke[39m=[32m&quot;currentColor&quot;[39m
+            [33mstroke-linecap[39m=[32m&quot;round&quot;[39m
+            [33mstroke-linejoin[39m=[32m&quot;round&quot;[39m
+            [33mstroke-width[39m=[32m&quot;2&quot;[39m
+            [33mviewBox[39m=[32m&quot;0 0 24 24&quot;[39m
+            [33mwidth[39m=[32m&quot;18&quot;[39m
+            [33mxmlns[39m=[32m&quot;http://www.w3.org/2000/svg&quot;[39m
+          [36m&gt;[39m
+            [36m&lt;path[39m
+              [33md[39m=[32m&quot;M18 6 6 18&quot;[39m
+            [36m/&gt;[39m
+            [36m&lt;path[39m
+              [33md[39m=[32m&quot;m6 6 12 12&quot;[39m
+            [36m/&gt;[39m
+          [36m&lt;/svg&gt;[39m
+        [36m&lt;/button&gt;[39m
+      [36m&lt;/div&gt;[39m
+      [36m&lt;form[39m
+        [33mclass[39m=[32m&quot;p-4 flex flex-col gap-4&quot;[39m
+      [36m&gt;[39m
+        [36m&lt;div[39m
+          [33mclass[39m=[32m&quot;flex gap-2 p-1 bg-slate-100 dark:bg-navy-900 rounded-lg&quot;[39m
+        [36m&gt;[39m
+          [36m&lt;button[39m
+            [33mclass[39m=[32m&quot;flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-all bg-white dark:bg-navy-800 text-purple-600 shadow-sm&quot;[39m
+            [33mtype[39m=[32m&quot;button&quot;[39m
+          [36m&gt;[39m
+            [0mbug[0m
+          [36m&lt;/button&gt;[39m
+          [36m&lt;button[39m
+            [33mclass[39m=[32m&quot;flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-all text-slate-500 hover:text-navy-900 dark:hover:text-slate-300&quot;[39m
+            [33mtype[39m=[32m&quot;button&quot;[39m
+          [36m&gt;[39m
+            [0mfeature[0m
+          [36m&lt;/button&gt;[39m
+          [36m&lt;button[39m
+            [33mclass[39m=[32m&quot;flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-all text-slate-500 hover:text-navy-900 dark:hover:text-slate-300&quot;[39m
+            [33mtype[39m=[32m&quot;button&quot;[39m
+          [36m&gt;[39m
+            [0mgeneral[0m
+          [36m&lt;/button&gt;[39m
+        [36m&lt;/div&gt;[39m
+        [36m&lt;textarea[39m
+          [33mclass[39m=[32m&quot;w-full h-32 p-3 text-sm rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-navy-900 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none&quot;[39m
+          [33mplaceholder[39m=[32m&quot;Describe your issue or idea...&quot;[39m
+          [33mrequired[39m=[32m&quot;&quot;[39m
+        [36m/&gt;[39m
+        [36m&lt;div[39m
+          [33mclass[39m=[32m&quot;flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400&quot;[39m
+        [36m&gt;[39m
+          [36m&lt;label[39m
+            [33mclass[39m=[32m&quot;flex items-center gap-2 cursor-pointer select-none&quot;[39m
+          [36m&gt;[39m
+            [36m&lt;input[39m
+              [33mclass[39m=[32m&quot;rounded border-slate-300 text-purple-600 focus:ring-purple-500&quot;[39m
+              [33mtype[39m=[32m&quot;checkbox&quot;[39m
+            [36m/&gt;[39m
+            [0mInclude screenshot (Coming Soon)[0m
+          [36m&lt;/label&gt;[39m
+          [36m&lt;svg[39m
+            [33maria-hidden[39m=[32m&quot;true&quot;[39m
+            [33mclass[39m=[32m&quot;lucide lucide-camera ml-auto opacity-50&quot;[39m
+            [33mfill[39m=[32m&quot;none&quot;[39m
+            [33mheight[39m=[32m&quot;14&quot;[39m
+            [33mstroke[39m=[32m&quot;currentColor&quot;[39m
+            [33mstroke-linecap[39m=[32m&quot;round&quot;[39m
+            [33mstroke-linejoin[39m=[32m&quot;round&quot;[39m
+            [33mstroke-width[39m=[32m&quot;2&quot;[39m
+            [33mviewBox[39m=[32m&quot;0 0 24 24&quot;[39m
+            [33mwidth[39m=[32m&quot;14&quot;[39m
+            [33mxmlns[39m=[32m&quot;http://www.w3.org/2000/svg&quot;[39m
+          [36m&gt;[39m
+            [36m&lt;path[39m
+              [33md[39m=[32m&quot;M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z&quot;[39m
+            [36m/&gt;[39m
+            [36m&lt;circle[39m
+              [33mcx[39m=[32m&quot;12&quot;[39m
+              [33mcy[39m=[32m&quot;13&quot;[39m
+              [33mr[39m=[32m&quot;3&quot;[39m
+            [36m/&gt;[39m
+          [36m&lt;/svg&gt;[39m
+        [36m&lt;/div&gt;[39m
+        [36m&lt;button[39m
+          [33mclass[39m=[32m&quot;w-full py-2.5 bg-navy-900 dark:bg-white text-white dark:text-navy-900 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2&quot;[39m
+          [33mdisabled[39m=[32m&quot;&quot;[39m
+          [33mtype[39m=[32m&quot;submit&quot;[39m
+        [36m&gt;[39m
+          [0mSend Feedback[0m
+          [36m&lt;svg[39m
+            [33maria-hidden[39m=[32m&quot;true&quot;[39m
+            [33mclass[39m=[32m&quot;lucide lucide-check&quot;[39m
+            [33mfill[39m=[32m&quot;none&quot;[39m
+            [33mheight[39m=[32m&quot;16&quot;[39m
+            [33mstroke[39m=[32m&quot;currentColor&quot;[39m
+            [33mstroke-linecap[39m=[32m&quot;round&quot;[39m
+            [33mstroke-linejoin[39m=[32m&quot;round&quot;[39m
+            [33mstroke-width[39m=[32m&quot;2&quot;[39m
+            [33mviewBox[39m=[32m&quot;0 0 24 24&quot;[39m
+            [33mwidth[39m=[32m&quot;16&quot;[39m
+            [33mxmlns[39m=[32m&quot;http://www.w3.org/2000/svg&quot;[39m
+          [36m&gt;[39m
+            [36m&lt;path[39m
+              [33md[39m=[32m&quot;M20 6 9 17l-5-5&quot;[39m
+            [36m/&gt;[39m
+          [36m&lt;/svg&gt;[39m
+        [36m&lt;/button&gt;[39m
+      [36m&lt;/form&gt;[39m
+    [36m&lt;/div&gt;[39m
+  [36m&lt;/div&gt;[39m
+[36m&lt;/body&gt;[39m" type="TestingLibraryElementError">
+TestingLibraryElementError: Found multiple elements with the text: Send Feedback
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+&lt;div
+  class=&quot;font-semibold flex items-center gap-2&quot;
+&gt;
+  &lt;svg
+    aria-hidden=&quot;true&quot;
+    class=&quot;lucide lucide-message-square&quot;
+    fill=&quot;none&quot;
+    height=&quot;18&quot;
+    stroke=&quot;currentColor&quot;
+    stroke-linecap=&quot;round&quot;
+    stroke-linejoin=&quot;round&quot;
+    stroke-width=&quot;2&quot;
+    viewBox=&quot;0 0 24 24&quot;
+    width=&quot;18&quot;
+    xmlns=&quot;http://www.w3.org/2000/svg&quot;
+  &gt;
+    &lt;path
+      d=&quot;M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z&quot;
+    /&gt;
+  &lt;/svg&gt;
+  Send Feedback
+&lt;/div&gt;
+
+Ignored nodes: comments, script, style
+&lt;button
+  class=&quot;w-full py-2.5 bg-navy-900 dark:bg-white text-white dark:text-navy-900 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2&quot;
+  disabled=&quot;&quot;
+  type=&quot;submit&quot;
+&gt;
+  Send Feedback
+  &lt;svg
+    aria-hidden=&quot;true&quot;
+    class=&quot;lucide lucide-check&quot;
+    fill=&quot;none&quot;
+    height=&quot;16&quot;
+    stroke=&quot;currentColor&quot;
+    stroke-linecap=&quot;round&quot;
+    stroke-linejoin=&quot;round&quot;
+    stroke-width=&quot;2&quot;
+    viewBox=&quot;0 0 24 24&quot;
+    width=&quot;16&quot;
+    xmlns=&quot;http://www.w3.org/2000/svg&quot;
+  &gt;
+    &lt;path
+      d=&quot;M20 6 9 17l-5-5&quot;
+    /&gt;
+  &lt;/svg&gt;
+&lt;/button&gt;
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+&lt;body&gt;
+  &lt;div&gt;
+    &lt;button
+      class=&quot;fixed bottom-6 right-6 z-50 p-4 rounded-full shadow-lg transition-all duration-300 hover:scale-105 scale-0 opacity-0 bg-purple-600 text-white hover:bg-purple-700&quot;
+      title=&quot;Send Feedback&quot;
+    &gt;
+      &lt;svg
+        aria-hidden=&quot;true&quot;
+        class=&quot;lucide lucide-message-square&quot;
+        fill=&quot;none&quot;
+        height=&quot;24&quot;
+        stroke=&quot;currentColor&quot;
+        stroke-linecap=&quot;round&quot;
+        stroke-linejoin=&quot;round&quot;
+        stroke-width=&quot;2&quot;
+        viewBox=&quot;0 0 24 24&quot;
+        width=&quot;24&quot;
+        xmlns=&quot;http://www.w3.org/2000/svg&quot;
+      &gt;
+        &lt;path
+          d=&quot;M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z&quot;
+        /&gt;
+      &lt;/svg&gt;
+    &lt;/button&gt;
+    &lt;div
+      class=&quot;fixed bottom-6 right-6 z-50 w-80 md:w-96 bg-white dark:bg-navy-800 rounded-xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden flex flex-col animate-in slide-in-from-bottom-10 fade-in duration-200&quot;
+    &gt;
+      &lt;div
+        class=&quot;bg-purple-600 p-4 flex items-center justify-between text-white&quot;
+      &gt;
+        &lt;div
+          class=&quot;font-semibold flex items-center gap-2&quot;
+        &gt;
+          &lt;svg
+            aria-hidden=&quot;true&quot;
+            class=&quot;lucide lucide-message-square&quot;
+            fill=&quot;none&quot;
+            height=&quot;18&quot;
+            stroke=&quot;currentColor&quot;
+            stroke-linecap=&quot;round&quot;
+            stroke-linejoin=&quot;round&quot;
+            stroke-width=&quot;2&quot;
+            viewBox=&quot;0 0 24 24&quot;
+            width=&quot;18&quot;
+            xmlns=&quot;http://www.w3.org/2000/svg&quot;
+          &gt;
+            &lt;path
+              d=&quot;M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z&quot;
+            /&gt;
+          &lt;/svg&gt;
+          Send Feedback
+        &lt;/div&gt;
+        &lt;button
+          class=&quot;p-1 hover:bg-white/20 rounded-full transition-colors&quot;
+        &gt;
+          &lt;svg
+            aria-hidden=&quot;true&quot;
+            class=&quot;lucide lucide-x&quot;
+            fill=&quot;none&quot;
+            height=&quot;18&quot;
+            stroke=&quot;currentColor&quot;
+            stroke-linecap=&quot;round&quot;
+            stroke-linejoin=&quot;round&quot;
+            stroke-width=&quot;2&quot;
+            viewBox=&quot;0 0 24 24&quot;
+            width=&quot;18&quot;
+            xmlns=&quot;http://www.w3.org/2000/svg&quot;
+          &gt;
+            &lt;path
+              d=&quot;M18 6 6 18&quot;
+            /&gt;
+            &lt;path
+              d=&quot;m6 6 12 12&quot;
+            /&gt;
+          &lt;/svg&gt;
+        &lt;/button&gt;
+      &lt;/div&gt;
+      &lt;form
+        class=&quot;p-4 flex flex-col gap-4&quot;
+      &gt;
+        &lt;div
+          class=&quot;flex gap-2 p-1 bg-slate-100 dark:bg-navy-900 rounded-lg&quot;
+        &gt;
+          &lt;button
+            class=&quot;flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-all bg-white dark:bg-navy-800 text-purple-600 shadow-sm&quot;
+            type=&quot;button&quot;
+          &gt;
+            bug
+          &lt;/button&gt;
+          &lt;button
+            class=&quot;flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-all text-slate-500 hover:text-navy-900 dark:hover:text-slate-300&quot;
+            type=&quot;button&quot;
+          &gt;
+            feature
+          &lt;/button&gt;
+          &lt;button
+            class=&quot;flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-all text-slate-500 hover:text-navy-900 dark:hover:text-slate-300&quot;
+            type=&quot;button&quot;
+          &gt;
+            general
+          &lt;/button&gt;
+        &lt;/div&gt;
+        &lt;textarea
+          class=&quot;w-full h-32 p-3 text-sm rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-navy-900 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none&quot;
+          placeholder=&quot;Describe your issue or idea...&quot;
+          required=&quot;&quot;
+        /&gt;
+        &lt;div
+          class=&quot;flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400&quot;
+        &gt;
+          &lt;label
+            class=&quot;flex items-center gap-2 cursor-pointer select-none&quot;
+          &gt;
+            &lt;input
+              class=&quot;rounded border-slate-300 text-purple-600 focus:ring-purple-500&quot;
+              type=&quot;checkbox&quot;
+            /&gt;
+            Include screenshot (Coming Soon)
+          &lt;/label&gt;
+          &lt;svg
+            aria-hidden=&quot;true&quot;
+            class=&quot;lucide lucide-camera ml-auto opacity-50&quot;
+            fill=&quot;none&quot;
+            height=&quot;14&quot;
+            stroke=&quot;currentColor&quot;
+            stroke-linecap=&quot;round&quot;
+            stroke-linejoin=&quot;round&quot;
+            stroke-width=&quot;2&quot;
+            viewBox=&quot;0 0 24 24&quot;
+            width=&quot;14&quot;
+            xmlns=&quot;http://www.w3.org/2000/svg&quot;
+          &gt;
+            &lt;path
+              d=&quot;M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z&quot;
+            /&gt;
+            &lt;circle
+              cx=&quot;12&quot;
+              cy=&quot;13&quot;
+              r=&quot;3&quot;
+            /&gt;
+          &lt;/svg&gt;
+        &lt;/div&gt;
+        &lt;button
+          class=&quot;w-full py-2.5 bg-navy-900 dark:bg-white text-white dark:text-navy-900 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2&quot;
+          disabled=&quot;&quot;
+          type=&quot;submit&quot;
+        &gt;
+          Send Feedback
+          &lt;svg
+            aria-hidden=&quot;true&quot;
+            class=&quot;lucide lucide-check&quot;
+            fill=&quot;none&quot;
+            height=&quot;16&quot;
+            stroke=&quot;currentColor&quot;
+            stroke-linecap=&quot;round&quot;
+            stroke-linejoin=&quot;round&quot;
+            stroke-width=&quot;2&quot;
+            viewBox=&quot;0 0 24 24&quot;
+            width=&quot;16&quot;
+            xmlns=&quot;http://www.w3.org/2000/svg&quot;
+          &gt;
+            &lt;path
+              d=&quot;M20 6 9 17l-5-5&quot;
+            /&gt;
+          &lt;/svg&gt;
+        &lt;/button&gt;
+      &lt;/form&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/body&gt;
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/components/FeedbackWidget.test.tsx:125:37
+            </failure>
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/components/InitiativeCard.test.tsx" timestamp="2025-12-12T08:46:43.424Z" hostname="MacBook-Air-Piotr.local" tests="6" failures="0" errors="0" skipped="0" time="1.04407875">
+        <testcase classname="tests/components/InitiativeCard.test.tsx" name="Component Test: InitiativeCard &gt; renders initiative name and description" time="0.195374917">
+        </testcase>
+        <testcase classname="tests/components/InitiativeCard.test.tsx" name="Component Test: InitiativeCard &gt; calls onClick when card is clicked" time="0.090042917">
+        </testcase>
+        <testcase classname="tests/components/InitiativeCard.test.tsx" name="Component Test: InitiativeCard &gt; displays status badge" time="0.042280083">
+        </testcase>
+        <testcase classname="tests/components/InitiativeCard.test.tsx" name="Component Test: InitiativeCard &gt; displays axis badge when present" time="0.064446334">
+        </testcase>
+        <testcase classname="tests/components/InitiativeCard.test.tsx" name="Component Test: InitiativeCard &gt; calls onEnrich when enrich button is clicked" time="0.18373375">
+            <system-err>
+An update to InitiativeCard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/components/InitiativeCard.test.tsx" name="Component Test: InitiativeCard &gt; handles different status values" time="0.365801167">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/components/LLMSelector.test.tsx" timestamp="2025-12-12T08:46:43.425Z" hostname="MacBook-Air-Piotr.local" tests="6" failures="1" errors="0" skipped="0" time="0.66817725">
+        <testcase classname="tests/components/LLMSelector.test.tsx" name="Component Test: LLMSelector &gt; renders selector button" time="0.2154075">
+        </testcase>
+        <testcase classname="tests/components/LLMSelector.test.tsx" name="Component Test: LLMSelector &gt; opens dropdown when clicked" time="0.166611625">
+        </testcase>
+        <testcase classname="tests/components/LLMSelector.test.tsx" name="Component Test: LLMSelector &gt; displays models in dropdown" time="0.198418459">
+        </testcase>
+        <testcase classname="tests/components/LLMSelector.test.tsx" name="Component Test: LLMSelector &gt; filters models by search query" time="0.044114">
+        </testcase>
+        <testcase classname="tests/components/LLMSelector.test.tsx" name="Component Test: LLMSelector &gt; selects model when clicked" time="0.034436833">
+        </testcase>
+        <testcase classname="tests/components/LLMSelector.test.tsx" name="Component Test: LLMSelector &gt; toggles auto mode" time="0.006834125">
+            <failure message="Unable to find an element with the text: /Auto/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m&lt;body&gt;[39m
+  [36m&lt;div&gt;[39m
+    [36m&lt;div[39m
+      [33mclass[39m=[32m&quot;relative z-50&quot;[39m
+    [36m&gt;[39m
+      [36m&lt;button[39m
+        [33mclass[39m=[32m&quot;flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-xs font-medium text-navy-900 dark:text-white&quot;[39m
+      [36m&gt;[39m
+        [36m&lt;svg[39m
+          [33maria-hidden[39m=[32m&quot;true&quot;[39m
+          [33mclass[39m=[32m&quot;lucide lucide-sparkles text-purple-500&quot;[39m
+          [33mfill[39m=[32m&quot;none&quot;[39m
+          [33mheight[39m=[32m&quot;14&quot;[39m
+          [33mstroke[39m=[32m&quot;currentColor&quot;[39m
+          [33mstroke-linecap[39m=[32m&quot;round&quot;[39m
+          [33mstroke-linejoin[39m=[32m&quot;round&quot;[39m
+          [33mstroke-width[39m=[32m&quot;2&quot;[39m
+          [33mviewBox[39m=[32m&quot;0 0 24 24&quot;[39m
+          [33mwidth[39m=[32m&quot;14&quot;[39m
+          [33mxmlns[39m=[32m&quot;http://www.w3.org/2000/svg&quot;[39m
+        [36m&gt;[39m
+          [36m&lt;path[39m
+            [33md[39m=[32m&quot;M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z&quot;[39m
+          [36m/&gt;[39m
+          [36m&lt;path[39m
+            [33md[39m=[32m&quot;M20 2v4&quot;[39m
+          [36m/&gt;[39m
+          [36m&lt;path[39m
+            [33md[39m=[32m&quot;M22 4h-4&quot;[39m
+          [36m/&gt;[39m
+          [36m&lt;circle[39m
+            [33mcx[39m=[32m&quot;4&quot;[39m
+            [33mcy[39m=[32m&quot;20&quot;[39m
+            [33mr[39m=[32m&quot;2&quot;[39m
+          [36m/&gt;[39m
+        [36m&lt;/svg&gt;[39m
+        [36m&lt;span&gt;[39m
+          [0mSelect Model[0m
+        [36m&lt;/span&gt;[39m
+        [36m&lt;svg[39m
+          [33maria-hidden[39m=[32m&quot;true&quot;[39m
+          [33mclass[39m=[32m&quot;lucide lucide-chevron-down transition-transform&quot;[39m
+          [33mfill[39m=[32m&quot;none&quot;[39m
+          [33mheight[39m=[32m&quot;12&quot;[39m
+          [33mstroke[39m=[32m&quot;currentColor&quot;[39m
+          [33mstroke-linecap[39m=[32m&quot;round&quot;[39m
+          [33mstroke-linejoin[39m=[32m&quot;round&quot;[39m
+          [33mstroke-width[39m=[32m&quot;2&quot;[39m
+          [33mviewBox[39m=[32m&quot;0 0 24 24&quot;[39m
+          [33mwidth[39m=[32m&quot;12&quot;[39m
+          [33mxmlns[39m=[32m&quot;http://www.w3.org/2000/svg&quot;[39m
+        [36m&gt;[39m
+          [36m&lt;path[39m
+            [33md[39m=[32m&quot;m6 9 6 6 6-6&quot;[39m
+          [36m/&gt;[39m
+        [36m&lt;/svg&gt;[39m
+      [36m&lt;/button&gt;[39m
+    [36m&lt;/div&gt;[39m
+  [36m&lt;/div&gt;[39m
+[36m&lt;/body&gt;[39m" type="TestingLibraryElementError">
+TestingLibraryElementError: Unable to find an element with the text: /Auto/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+&lt;body&gt;
+  &lt;div&gt;
+    &lt;div
+      class=&quot;relative z-50&quot;
+    &gt;
+      &lt;button
+        class=&quot;flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-xs font-medium text-navy-900 dark:text-white&quot;
+      &gt;
+        &lt;svg
+          aria-hidden=&quot;true&quot;
+          class=&quot;lucide lucide-sparkles text-purple-500&quot;
+          fill=&quot;none&quot;
+          height=&quot;14&quot;
+          stroke=&quot;currentColor&quot;
+          stroke-linecap=&quot;round&quot;
+          stroke-linejoin=&quot;round&quot;
+          stroke-width=&quot;2&quot;
+          viewBox=&quot;0 0 24 24&quot;
+          width=&quot;14&quot;
+          xmlns=&quot;http://www.w3.org/2000/svg&quot;
+        &gt;
+          &lt;path
+            d=&quot;M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z&quot;
+          /&gt;
+          &lt;path
+            d=&quot;M20 2v4&quot;
+          /&gt;
+          &lt;path
+            d=&quot;M22 4h-4&quot;
+          /&gt;
+          &lt;circle
+            cx=&quot;4&quot;
+            cy=&quot;20&quot;
+            r=&quot;2&quot;
+          /&gt;
+        &lt;/svg&gt;
+        &lt;span&gt;
+          Select Model
+        &lt;/span&gt;
+        &lt;svg
+          aria-hidden=&quot;true&quot;
+          class=&quot;lucide lucide-chevron-down transition-transform&quot;
+          fill=&quot;none&quot;
+          height=&quot;12&quot;
+          stroke=&quot;currentColor&quot;
+          stroke-linecap=&quot;round&quot;
+          stroke-linejoin=&quot;round&quot;
+          stroke-width=&quot;2&quot;
+          viewBox=&quot;0 0 24 24&quot;
+          width=&quot;12&quot;
+          xmlns=&quot;http://www.w3.org/2000/svg&quot;
+        &gt;
+          &lt;path
+            d=&quot;m6 9 6 6 6-6&quot;
+          /&gt;
+        &lt;/svg&gt;
+      &lt;/button&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/body&gt;
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/components/LLMSelector.test.tsx:93:35
+            </failure>
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/components/LoadingScreen.test.tsx" timestamp="2025-12-12T08:46:43.427Z" hostname="MacBook-Air-Piotr.local" tests="2" failures="1" errors="0" skipped="0" time="0.255813875">
+        <testcase classname="tests/components/LoadingScreen.test.tsx" name="Component Test: LoadingScreen &gt; renders loading spinner" time="0.220150167">
+            <failure message="Unable to find an element with the role &quot;status&quot;
+
+There are no available roles.
+
+Ignored nodes: comments, script, style
+[36m&lt;body&gt;[39m
+  [36m&lt;div&gt;[39m
+    [36m&lt;div[39m
+      [33mclass[39m=[32m&quot;flex items-center justify-center min-h-screen bg-navy-950 text-white&quot;[39m
+    [36m&gt;[39m
+      [36m&lt;svg[39m
+        [33maria-hidden[39m=[32m&quot;true&quot;[39m
+        [33mclass[39m=[32m&quot;lucide lucide-loader-circle animate-spin text-blue-500&quot;[39m
+        [33mfill[39m=[32m&quot;none&quot;[39m
+        [33mheight[39m=[32m&quot;48&quot;[39m
+        [33mstroke[39m=[32m&quot;currentColor&quot;[39m
+        [33mstroke-linecap[39m=[32m&quot;round&quot;[39m
+        [33mstroke-linejoin[39m=[32m&quot;round&quot;[39m
+        [33mstroke-width[39m=[32m&quot;2&quot;[39m
+        [33mviewBox[39m=[32m&quot;0 0 24 24&quot;[39m
+        [33mwidth[39m=[32m&quot;48&quot;[39m
+        [33mxmlns[39m=[32m&quot;http://www.w3.org/2000/svg&quot;[39m
+      [36m&gt;[39m
+        [36m&lt;path[39m
+          [33md[39m=[32m&quot;M21 12a9 9 0 1 1-6.219-8.56&quot;[39m
+        [36m/&gt;[39m
+      [36m&lt;/svg&gt;[39m
+    [36m&lt;/div&gt;[39m
+  [36m&lt;/div&gt;[39m
+[36m&lt;/body&gt;[39m" type="TestingLibraryElementError">
+TestingLibraryElementError: Unable to find an element with the role &quot;status&quot;
+
+There are no available roles.
+
+Ignored nodes: comments, script, style
+&lt;body&gt;
+  &lt;div&gt;
+    &lt;div
+      class=&quot;flex items-center justify-center min-h-screen bg-navy-950 text-white&quot;
+    &gt;
+      &lt;svg
+        aria-hidden=&quot;true&quot;
+        class=&quot;lucide lucide-loader-circle animate-spin text-blue-500&quot;
+        fill=&quot;none&quot;
+        height=&quot;48&quot;
+        stroke=&quot;currentColor&quot;
+        stroke-linecap=&quot;round&quot;
+        stroke-linejoin=&quot;round&quot;
+        stroke-width=&quot;2&quot;
+        viewBox=&quot;0 0 24 24&quot;
+        width=&quot;48&quot;
+        xmlns=&quot;http://www.w3.org/2000/svg&quot;
+      &gt;
+        &lt;path
+          d=&quot;M21 12a9 9 0 1 1-6.219-8.56&quot;
+        /&gt;
+      &lt;/svg&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/body&gt;
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/components/LoadingScreen.test.tsx:9:32
+            </failure>
+        </testcase>
+        <testcase classname="tests/components/LoadingScreen.test.tsx" name="Component Test: LoadingScreen &gt; has correct styling classes" time="0.033793708">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/components/PlanCard.test.tsx" timestamp="2025-12-12T08:46:43.428Z" hostname="MacBook-Air-Piotr.local" tests="7" failures="1" errors="0" skipped="0" time="0.644212792">
+        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; renders plan name and price" time="0.331055916">
+        </testcase>
+        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; displays current plan badge when isCurrentPlan is true" time="0.009567459">
+        </testcase>
+        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; displays popular badge when isPopular is true" time="0.017736">
+        </testcase>
+        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; calls onSelect when select button is clicked" time="0.048462958">
+        </testcase>
+        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; disables select button when disabled is true" time="0.191296292">
+            <failure message="Unable to find an element with the text: /Select|Upgrade/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m&lt;body&gt;[39m
+  [36m&lt;div&gt;[39m
+    [36m&lt;div[39m
+      [33mclass[39m=[32m&quot;relative rounded-2xl p-6 transition-all duration-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-md hover:shadow-lg&quot;[39m
+    [36m&gt;[39m
+      [36m&lt;div[39m
+        [33mclass[39m=[32m&quot;text-center mb-6&quot;[39m
+      [36m&gt;[39m
+        [36m&lt;h3[39m
+          [33mclass[39m=[32m&quot;text-xl font-bold mb-2 text-gray-900 dark:text-white&quot;[39m
+        [36m&gt;[39m
+          [0mBasic Plan[0m
+        [36m&lt;/h3&gt;[39m
+        [36m&lt;div[39m
+          [33mclass[39m=[32m&quot;flex items-baseline justify-center gap-1&quot;[39m
+        [36m&gt;[39m
+          [36m&lt;span[39m
+            [33mclass[39m=[32m&quot;text-4xl font-bold text-gray-900 dark:text-white&quot;[39m
+          [36m&gt;[39m
+            [0m$[0m
+            [0m29[0m
+          [36m&lt;/span&gt;[39m
+          [36m&lt;span[39m
+            [33mclass[39m=[32m&quot;text-sm text-gray-500 dark:text-gray-400&quot;[39m
+          [36m&gt;[39m
+            [0m/month[0m
+          [36m&lt;/span&gt;[39m
+        [36m&lt;/div&gt;[39m
+      [36m&lt;/div&gt;[39m
+      [36m&lt;ul[39m
+        [33mclass[39m=[32m&quot;space-y-3 mb-6&quot;[39m
+      [36m&gt;[39m
+        [36m&lt;li[39m
+          [33mclass[39m=[32m&quot;flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300&quot;[39m
+        [36m&gt;[39m
+          [36m&lt;div[39m
+            [33mclass[39m=[32m&quot;w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 bg-indigo-100 dark:bg-indigo-900/30&quot;[39m
+          [36m&gt;[39m
+            [36m&lt;svg[39m
+              [33maria-hidden[39m=[32m&quot;true&quot;[39m
+              [33mclass[39m=[32m&quot;lucide lucide-check w-3 h-3 text-indigo-600 dark:text-indigo-400&quot;[39m
+              [33mfill[39m=[32m&quot;none&quot;[39m
+              [33mheight[39m=[32m&quot;24&quot;[39m
+              [33mstroke[39m=[32m&quot;currentColor&quot;[39m
+              [33mstroke-linecap[39m=[32m&quot;round&quot;[39m
+              [33mstroke-linejoin[39m=[32m&quot;round&quot;[39m
+              [33mstroke-width[39m=[32m&quot;2&quot;[39m
+              [33mviewBox[39m=[32m&quot;0 0 24 24&quot;[39m
+              [33mwidth[39m=[32m&quot;24&quot;[39m
+              [33mxmlns[39m=[32m&quot;http://www.w3.org/2000/svg&quot;[39m
+            [36m&gt;[39m
+              [36m&lt;path[39m
+                [33md[39m=[32m&quot;M20 6 9 17l-5-5&quot;[39m
+              [36m/&gt;[39m
+            [36m&lt;/svg&gt;[39m
+          [36m&lt;/div&gt;[39m
+          [0m10K tokens/month[0m
+        [36m&lt;/li&gt;[39m
+        [36m&lt;li[39m
+          [33mclass[39m=[32m&quot;flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300&quot;[39m
+        [36m&gt;[39m
+          [36m&lt;div[39m
+            [33mclass[39m=[32m&quot;w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 bg-indigo-100 dark:bg-indigo-900/30&quot;[39m
+          [36m&gt;[39m
+            [36m&lt;svg[39m
+              [33maria-hidden[39m=[32m&quot;true&quot;[39m
+              [33mclass[39m=[32m&quot;lucide lucide-check w-3 h-3 text-indigo-600 dark:text-indigo-400&quot;[39m
+              [33mfill[39m=[32m&quot;none&quot;[39m
+              [33mheight[39m=[32m&quot;24&quot;[39m
+              [33mstroke[39m=[32m&quot;currentColor&quot;[39m
+              [33mstroke-linecap[39m=[32m&quot;round&quot;[39m
+              [33mstroke-linejoin[39m=[32m&quot;round&quot;[39m
+              [33mstroke-width[39m=[32m&quot;2&quot;[39m
+              [33mviewBox[39m=[32m&quot;0 0 24 24&quot;[39m
+              [33mwidth[39m=[32m&quot;24&quot;[39m
+              [33mxmlns[39m=[32m&quot;http://www.w3.org/2000/svg&quot;[39m
+            [36m&gt;[39m
+              [36m&lt;path[39m
+                [33md[39m=[32m&quot;M20 6 9 17l-5-5&quot;[39m
+              [36m/&gt;[39m
+            [36m&lt;/svg&gt;[39m
+          [36m&lt;/div&gt;[39m
+          [0m10 GB storage[0m
+        [36m&lt;/li&gt;[39m
+        [36m&lt;li[39m
+          [33mclass[39m=[32m&quot;flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300&quot;[39m
+        [36m&gt;[39m
+          [36m&lt;div[39m
+            [33mclass[39m=[32m&quot;w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 bg-indigo-100 dark:bg-indigo-900/30&quot;[39m
+          [36m&gt;[39m
+            [36m&lt;svg[39m
+              [33maria-hidden[39m=[32m&quot;true&quot;[39m
+              [33mclass[39m=[32m&quot;lucide lucide-check w-3 h-3 text-indigo-600 dark:text-indigo-400&quot;[39m
+              [33mfill[39m=[32m&quot;none&quot;[39m
+              [33mheight[39m=[32m&quot;24&quot;[39m
+              [33mstroke[39m=[32m&quot;currentColor&quot;[39m
+              [33mstroke-linecap[39m=[32m&quot;round&quot;[39m
+              [33mstroke-linejoin[39m=[32m&quot;round&quot;[39m
+              [33mstroke-width[39m=[32m&quot;2&quot;[39m
+              [33mviewBox[39m=[32m&quot;0 0 24 24&quot;[39m
+              [33mwidth[39m=[32m&quot;24&quot;[39m
+              [33mxmlns[39m=[32m&quot;http://www.w3.org/2000/svg&quot;[39m
+            [36m&gt;[39m
+              [36m&lt;path[39m
+                [33md[39m=[32m&quot;M20 6 9 17l-5-5&quot;[39m
+              [36m/&gt;[39m
+            [36m&lt;/svg&gt;[39m
+          [36m&lt;/div&gt;[39m
+          [0mEmail support[0m
+        [36m&lt;/li&gt;[39m
+        [36m&lt;li[39m
+          [33mclass[39m=[32m&quot;flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500 line-through&quot;[39m
+        [36m&gt;[39m
+          [36m&lt;div[39m
+            [33mclass[39m=[32m&quot;w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 bg-gray-100 dark:bg-gray-700&quot;[39m
+          [36m&gt;[39m
+            [36m&lt;svg[39m
+              [33maria-hidden[39m=[32m&quot;true&quot;[39m
+              [33mclass[39m=[32m&quot;lucide lucide-check w-3 h-3 text-gray-400&quot;[39m
+              [33mfill[39m=[32m&quot;none&quot;[39m
+              [33mheight[39m=[32m&quot;24&quot;[39m
+              [33mstroke[39m=[32m&quot;currentColor&quot;[39m
+              [33mstroke-linecap[39m=[32m&quot;round&quot;[39m
+              [33mstroke-linejoin[39m=[32m&quot;round&quot;[39m
+              [33mstroke-width[39m=[32m&quot;2&quot;[39m
+              [33mviewBox[39m=[32m&quot;0 0 24 24&quot;[39m
+              [33mwidth[39m=[32m&quot;24&quot;[39m
+              [33mxmlns[39m=[32m&quot;http://www.w3.org/2000/svg&quot;[39m
+            [36m&gt;[39m
+              [36m&lt;path[39m
+                [33md[39m=[32m&quot;M20 6 9 17l-5-5&quot;[39m
+              [36m/&gt;[39m
+            [36m&lt;/svg&gt;[39m
+          [36m&lt;/div&gt;[39m
+          [0mAPI access[0m
+        [36m&lt;/li&gt;[39m
+        [36m&lt;li[39m
+          [33mclass[39m=[32m&quot;flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500 line-through&quot;[39m
+        [36m&gt;[39m
+          [36m&lt;div[39m
+            [33mclass[39m=[32m&quot;w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 bg-gray-100 dark:bg-gray-700&quot;[39m
+          [36m&gt;[39m
+            [36m&lt;svg[39m
+              [33maria-hidden[39m=[32m&quot;true&quot;[39m
+              [33mclass[39m=[32m&quot;lucide lucide-check w-3 h-3 text-gray-400&quot;[39m
+              [33mfill[39m=[32m&quot;none&quot;[39m
+              [33mheight[39m=[32m&quot;24&quot;[39m
+              [33mstroke[39m=[32m&quot;currentColor&quot;[39m
+              [33mstroke-linecap[39m=[32m&quot;round&quot;[39m
+              [33mstroke-linejoin[39m=[32m&quot;round&quot;[39m
+              [33mstroke-width[39m=[32m&quot;2&quot;[39m
+              [33mviewBox[39m=[32m&quot;0 0 24 24&quot;[39m
+              [33mwidth[39m=[32m&quot;24&quot;[39m
+              [33mxmlns[39m=[32m&quot;http://www.w3.org/2000/svg&quot;[39m
+            [36m&gt;[39m
+              [36m&lt;path[39m
+                [33md[39m=[32m&quot;M20 6 9 17l-5-5&quot;[39m
+              [36m/&gt;[39m
+            [36m&lt;/svg&gt;[39m
+          [36m&lt;/div&gt;[39m
+          [0mPriority support[0m
+        [36m&lt;/li&gt;[39m
+        [36m&lt;li[39m
+          [33mclass[39m=[32m&quot;flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500 line-through&quot;[39m
+        [36m&gt;[39m
+          [36m&lt;div[39m
+            [33mclass[39m=[32m&quot;w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 bg-gray-100 dark:bg-gray-700&quot;[39m
+          [36m&gt;[39m
+            [36m&lt;svg[39m
+              [33maria-hidden[39m=[32m&quot;true&quot;[39m
+              [33mclass[39m=[32m&quot;lucide lucide-check w-3 h-3 text-gray-400&quot;[39m
+              [33mfill[39m=[32m&quot;none&quot;[39m
+              [33mheight[39m=[32m&quot;24&quot;[39m
+              [33mstroke[39m=[32m&quot;currentColor&quot;[39m
+              [33mstroke-linecap[39m=[32m&quot;round&quot;[39m
+              [33mstroke-linejoin[39m=[32m&quot;round&quot;[39m
+              [33mstroke-width[39m=[32m&quot;2&quot;[39m
+              [33mviewBox[39m=[32m&quot;0 0 24 24&quot;[39m
+              [33mwidth[39m=[32m&quot;24&quot;[39m
+              [33mxmlns[39m=[32m&quot;http://www.w3.org/2000/svg&quot;[39m
+            [36m&gt;[39m
+              [36m&lt;path[39m
+                [33md[39m=[32m&quot;M20 6 9 17l-5-5&quot;[39m
+              [36m/&gt;[39m
+            [36m&lt;/svg&gt;[39m
+          [36m&lt;/div&gt;[39m
+          [0mCustom integrations[0m
+        [36m&lt;/li&gt;[39m
+      [36m&lt;/ul&gt;[39m
+      [36m&lt;div[39m
+        [33mclass[39m=[32m&quot;text-xs text-center mb-6 text-gray-500 dark:text-gray-400&quot;[39m
+      [36m&gt;[39m
+        [0mOverage: $[0m
+        [0m0.01[0m
+        [0m/1K tokens • $[0m
+        [0m0.1[0m
+        [0m/GB[0m
+      [36m&lt;/div&gt;[39m
+      [36m&lt;button[39m
+        [33mclass[39m=[32m&quot;w-full py-3 rounded-xl font-semibold transition-all bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed&quot;[39m
+        [33mdisabled[39m=[32m&quot;&quot;[39m
+      [36m&gt;[39m
+        [0mProcessing...[0m
+      [36m&lt;/button&gt;[39m
+    [36m&lt;/div&gt;[39m
+  [36m&lt;/div&gt;[39m
+[36m&lt;/body&gt;[39m" type="TestingLibraryElementError">
+TestingLibraryElementError: Unable to find an element with the text: /Select|Upgrade/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+&lt;body&gt;
+  &lt;div&gt;
+    &lt;div
+      class=&quot;relative rounded-2xl p-6 transition-all duration-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-md hover:shadow-lg&quot;
+    &gt;
+      &lt;div
+        class=&quot;text-center mb-6&quot;
+      &gt;
+        &lt;h3
+          class=&quot;text-xl font-bold mb-2 text-gray-900 dark:text-white&quot;
+        &gt;
+          Basic Plan
+        &lt;/h3&gt;
+        &lt;div
+          class=&quot;flex items-baseline justify-center gap-1&quot;
+        &gt;
+          &lt;span
+            class=&quot;text-4xl font-bold text-gray-900 dark:text-white&quot;
+          &gt;
+            $
+            29
+          &lt;/span&gt;
+          &lt;span
+            class=&quot;text-sm text-gray-500 dark:text-gray-400&quot;
+          &gt;
+            /month
+          &lt;/span&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+      &lt;ul
+        class=&quot;space-y-3 mb-6&quot;
+      &gt;
+        &lt;li
+          class=&quot;flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300&quot;
+        &gt;
+          &lt;div
+            class=&quot;w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 bg-indigo-100 dark:bg-indigo-900/30&quot;
+          &gt;
+            &lt;svg
+              aria-hidden=&quot;true&quot;
+              class=&quot;lucide lucide-check w-3 h-3 text-indigo-600 dark:text-indigo-400&quot;
+              fill=&quot;none&quot;
+              height=&quot;24&quot;
+              stroke=&quot;currentColor&quot;
+              stroke-linecap=&quot;round&quot;
+              stroke-linejoin=&quot;round&quot;
+              stroke-width=&quot;2&quot;
+              viewBox=&quot;0 0 24 24&quot;
+              width=&quot;24&quot;
+              xmlns=&quot;http://www.w3.org/2000/svg&quot;
+            &gt;
+              &lt;path
+                d=&quot;M20 6 9 17l-5-5&quot;
+              /&gt;
+            &lt;/svg&gt;
+          &lt;/div&gt;
+          10K tokens/month
+        &lt;/li&gt;
+        &lt;li
+          class=&quot;flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300&quot;
+        &gt;
+          &lt;div
+            class=&quot;w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 bg-indigo-100 dark:bg-indigo-900/30&quot;
+          &gt;
+            &lt;svg
+              aria-hidden=&quot;true&quot;
+              class=&quot;lucide lucide-check w-3 h-3 text-indigo-600 dark:text-indigo-400&quot;
+              fill=&quot;none&quot;
+              height=&quot;24&quot;
+              stroke=&quot;currentColor&quot;
+              stroke-linecap=&quot;round&quot;
+              stroke-linejoin=&quot;round&quot;
+              stroke-width=&quot;2&quot;
+              viewBox=&quot;0 0 24 24&quot;
+              width=&quot;24&quot;
+              xmlns=&quot;http://www.w3.org/2000/svg&quot;
+            &gt;
+              &lt;path
+                d=&quot;M20 6 9 17l-5-5&quot;
+              /&gt;
+            &lt;/svg&gt;
+          &lt;/div&gt;
+          10 GB storage
+        &lt;/li&gt;
+        &lt;li
+          class=&quot;flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300&quot;
+        &gt;
+          &lt;div
+            class=&quot;w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 bg-indigo-100 dark:bg-indigo-900/30&quot;
+          &gt;
+            &lt;svg
+              aria-hidden=&quot;true&quot;
+              class=&quot;lucide lucide-check w-3 h-3 text-indigo-600 dark:text-indigo-400&quot;
+              fill=&quot;none&quot;
+              height=&quot;24&quot;
+              stroke=&quot;currentColor&quot;
+              stroke-linecap=&quot;round&quot;
+              stroke-linejoin=&quot;round&quot;
+              stroke-width=&quot;2&quot;
+              viewBox=&quot;0 0 24 24&quot;
+              width=&quot;24&quot;
+              xmlns=&quot;http://www.w3.org/2000/svg&quot;
+            &gt;
+              &lt;path
+                d=&quot;M20 6 9 17l-5-5&quot;
+              /&gt;
+            &lt;/svg&gt;
+          &lt;/div&gt;
+          Email support
+        &lt;/li&gt;
+        &lt;li
+          class=&quot;flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500 line-through&quot;
+        &gt;
+          &lt;div
+            class=&quot;w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 bg-gray-100 dark:bg-gray-700&quot;
+          &gt;
+            &lt;svg
+              aria-hidden=&quot;true&quot;
+              class=&quot;lucide lucide-check w-3 h-3 text-gray-400&quot;
+              fill=&quot;none&quot;
+              height=&quot;24&quot;
+              stroke=&quot;currentColor&quot;
+              stroke-linecap=&quot;round&quot;
+              stroke-linejoin=&quot;round&quot;
+              stroke-width=&quot;2&quot;
+              viewBox=&quot;0 0 24 24&quot;
+              width=&quot;24&quot;
+              xmlns=&quot;http://www.w3.org/2000/svg&quot;
+            &gt;
+              &lt;path
+                d=&quot;M20 6 9 17l-5-5&quot;
+              /&gt;
+            &lt;/svg&gt;
+          &lt;/div&gt;
+          API access
+        &lt;/li&gt;
+        &lt;li
+          class=&quot;flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500 line-through&quot;
+        &gt;
+          &lt;div
+            class=&quot;w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 bg-gray-100 dark:bg-gray-700&quot;
+          &gt;
+            &lt;svg
+              aria-hidden=&quot;true&quot;
+              class=&quot;lucide lucide-check w-3 h-3 text-gray-400&quot;
+              fill=&quot;none&quot;
+              height=&quot;24&quot;
+              stroke=&quot;currentColor&quot;
+              stroke-linecap=&quot;round&quot;
+              stroke-linejoin=&quot;round&quot;
+              stroke-width=&quot;2&quot;
+              viewBox=&quot;0 0 24 24&quot;
+              width=&quot;24&quot;
+              xmlns=&quot;http://www.w3.org/2000/svg&quot;
+            &gt;
+              &lt;path
+                d=&quot;M20 6 9 17l-5-5&quot;
+              /&gt;
+            &lt;/svg&gt;
+          &lt;/div&gt;
+          Priority support
+        &lt;/li&gt;
+        &lt;li
+          class=&quot;flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500 line-through&quot;
+        &gt;
+          &lt;div
+            class=&quot;w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 bg-gray-100 dark:bg-gray-700&quot;
+          &gt;
+            &lt;svg
+              aria-hidden=&quot;true&quot;
+              class=&quot;lucide lucide-check w-3 h-3 text-gray-400&quot;
+              fill=&quot;none&quot;
+              height=&quot;24&quot;
+              stroke=&quot;currentColor&quot;
+              stroke-linecap=&quot;round&quot;
+              stroke-linejoin=&quot;round&quot;
+              stroke-width=&quot;2&quot;
+              viewBox=&quot;0 0 24 24&quot;
+              width=&quot;24&quot;
+              xmlns=&quot;http://www.w3.org/2000/svg&quot;
+            &gt;
+              &lt;path
+                d=&quot;M20 6 9 17l-5-5&quot;
+              /&gt;
+            &lt;/svg&gt;
+          &lt;/div&gt;
+          Custom integrations
+        &lt;/li&gt;
+      &lt;/ul&gt;
+      &lt;div
+        class=&quot;text-xs text-center mb-6 text-gray-500 dark:text-gray-400&quot;
+      &gt;
+        Overage: $
+        0.01
+        /1K tokens • $
+        0.1
+        /GB
+      &lt;/div&gt;
+      &lt;button
+        class=&quot;w-full py-3 rounded-xl font-semibold transition-all bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed&quot;
+        disabled=&quot;&quot;
+      &gt;
+        Processing...
+      &lt;/button&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/body&gt;
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/components/PlanCard.test.tsx:49:37
+            </failure>
+        </testcase>
+        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; displays features list" time="0.025792208">
+        </testcase>
+        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; shows API access for premium plans" time="0.017344292">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/components/QuotaWarningBanner.test.tsx" timestamp="2025-12-12T08:46:43.430Z" hostname="MacBook-Air-Piotr.local" tests="7" failures="1" errors="0" skipped="0" time="1.180286708">
+        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; does not render when usage is below threshold" time="0.098626917">
+        </testcase>
+        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; renders warning when token usage is high" time="0.222389208">
+        </testcase>
+        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; renders warning when storage usage is high" time="0.024359125">
+        </testcase>
+        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; displays critical message when usage is very high" time="0.02302675">
+            <failure message="Unable to find an element with the text: /reached the quota limits/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m&lt;body&gt;[39m
+  [36m&lt;div&gt;[39m
+    [36m&lt;div[39m
+      [33mclass[39m=[32m&quot;relative px-4 py-3 rounded-lg flex items-center gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800&quot;[39m
+    [36m&gt;[39m
+      [36m&lt;svg[39m
+        [33maria-hidden[39m=[32m&quot;true&quot;[39m
+        [33mclass[39m=[32m&quot;lucide lucide-triangle-alert w-5 h-5 flex-shrink-0 text-red-500&quot;[39m
+        [33mfill[39m=[32m&quot;none&quot;[39m
+        [33mheight[39m=[32m&quot;24&quot;[39m
+        [33mstroke[39m=[32m&quot;currentColor&quot;[39m
+        [33mstroke-linecap[39m=[32m&quot;round&quot;[39m
+        [33mstroke-linejoin[39m=[32m&quot;round&quot;[39m
+        [33mstroke-width[39m=[32m&quot;2&quot;[39m
+        [33mviewBox[39m=[32m&quot;0 0 24 24&quot;[39m
+        [33mwidth[39m=[32m&quot;24&quot;[39m
+        [33mxmlns[39m=[32m&quot;http://www.w3.org/2000/svg&quot;[39m
+      [36m&gt;[39m
+        [36m&lt;path[39m
+          [33md[39m=[32m&quot;m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3&quot;[39m
+        [36m/&gt;[39m
+        [36m&lt;path[39m
+          [33md[39m=[32m&quot;M12 9v4&quot;[39m
+        [36m/&gt;[39m
+        [36m&lt;path[39m
+          [33md[39m=[32m&quot;M12 17h.01&quot;[39m
+        [36m/&gt;[39m
+      [36m&lt;/svg&gt;[39m
+      [36m&lt;div[39m
+        [33mclass[39m=[32m&quot;flex-1&quot;[39m
+      [36m&gt;[39m
+        [36m&lt;p[39m
+          [33mclass[39m=[32m&quot;text-sm font-medium text-red-800 dark:text-red-200&quot;[39m
+        [36m&gt;[39m
+          [0mYour organization has used 96% of monthly tokens.[0m
+        [36m&lt;/p&gt;[39m
+        [36m&lt;p[39m
+          [33mclass[39m=[32m&quot;text-xs text-red-600 dark:text-red-300 mt-0.5&quot;[39m
+        [36m&gt;[39m
+          [0mUpgrade your plan to avoid service interruption.[0m
+        [36m&lt;/p&gt;[39m
+      [36m&lt;/div&gt;[39m
+    [36m&lt;/div&gt;[39m
+  [36m&lt;/div&gt;[39m
+[36m&lt;/body&gt;[39m" type="TestingLibraryElementError">
+TestingLibraryElementError: Unable to find an element with the text: /reached the quota limits/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+&lt;body&gt;
+  &lt;div&gt;
+    &lt;div
+      class=&quot;relative px-4 py-3 rounded-lg flex items-center gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800&quot;
+    &gt;
+      &lt;svg
+        aria-hidden=&quot;true&quot;
+        class=&quot;lucide lucide-triangle-alert w-5 h-5 flex-shrink-0 text-red-500&quot;
+        fill=&quot;none&quot;
+        height=&quot;24&quot;
+        stroke=&quot;currentColor&quot;
+        stroke-linecap=&quot;round&quot;
+        stroke-linejoin=&quot;round&quot;
+        stroke-width=&quot;2&quot;
+        viewBox=&quot;0 0 24 24&quot;
+        width=&quot;24&quot;
+        xmlns=&quot;http://www.w3.org/2000/svg&quot;
+      &gt;
+        &lt;path
+          d=&quot;m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3&quot;
+        /&gt;
+        &lt;path
+          d=&quot;M12 9v4&quot;
+        /&gt;
+        &lt;path
+          d=&quot;M12 17h.01&quot;
+        /&gt;
+      &lt;/svg&gt;
+      &lt;div
+        class=&quot;flex-1&quot;
+      &gt;
+        &lt;p
+          class=&quot;text-sm font-medium text-red-800 dark:text-red-200&quot;
+        &gt;
+          Your organization has used 96% of monthly tokens.
+        &lt;/p&gt;
+        &lt;p
+          class=&quot;text-xs text-red-600 dark:text-red-300 mt-0.5&quot;
+        &gt;
+          Upgrade your plan to avoid service interruption.
+        &lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/body&gt;
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/components/QuotaWarningBanner.test.tsx:48:23
+            </failure>
+        </testcase>
+        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; calls onUpgrade when upgrade button is clicked" time="0.022917">
+        </testcase>
+        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; calls onDismiss when dismiss button is clicked" time="0.777041583">
+        </testcase>
+        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; handles both token and storage warnings" time="0.009444917">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/components/SystemHealth.test.tsx" timestamp="2025-12-12T08:46:43.431Z" hostname="MacBook-Air-Piotr.local" tests="5" failures="1" errors="0" skipped="0" time="5.578418458">
+        <testcase classname="tests/components/SystemHealth.test.tsx" name="Component Test: SystemHealth &gt; does not render while loading" time="0.031898333">
+        </testcase>
+        <testcase classname="tests/components/SystemHealth.test.tsx" name="Component Test: SystemHealth &gt; displays online status when system is healthy" time="0.257635166">
+        </testcase>
+        <testcase classname="tests/components/SystemHealth.test.tsx" name="Component Test: SystemHealth &gt; displays latency when online" time="0.187734542">
+        </testcase>
+        <testcase classname="tests/components/SystemHealth.test.tsx" name="Component Test: SystemHealth &gt; displays offline status when system is down" time="0.053549708">
+        </testcase>
+        <testcase classname="tests/components/SystemHealth.test.tsx" name="Component Test: SystemHealth &gt; polls health status periodically" time="5.045078125">
+            <failure message="Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with &quot;testTimeout&quot;." type="Error">
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with &quot;testTimeout&quot;.
+ ❯ tests/components/SystemHealth.test.tsx:51:5
+            </failure>
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/components/TaskCard.test.tsx" timestamp="2025-12-12T08:46:43.433Z" hostname="MacBook-Air-Piotr.local" tests="10" failures="0" errors="0" skipped="0" time="0.825029541">
+        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; renders task title" time="0.283184625">
+        </testcase>
+        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; calls onClick when card is clicked" time="0.015347834">
+        </testcase>
+        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; displays status badge" time="0.020594333">
+        </testcase>
+        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; displays priority badge" time="0.031799">
+        </testcase>
+        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; displays why text when present" time="0.105013208">
+        </testcase>
+        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; displays assignee when present" time="0.030037625">
+        </testcase>
+        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; displays unassigned when no assignee" time="0.007099791">
+        </testcase>
+        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; displays due date when present" time="0.12020725">
+        </testcase>
+        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; displays checklist progress when present" time="0.029966042">
+        </testcase>
+        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; handles different status values" time="0.177843208">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/components/UsageMeters.test.tsx" timestamp="2025-12-12T08:46:43.434Z" hostname="MacBook-Air-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.6123375">
+        <testcase classname="tests/components/UsageMeters.test.tsx" name="Component Test: UsageMeters &gt; renders token and storage meters" time="0.402163875">
+        </testcase>
+        <testcase classname="tests/components/UsageMeters.test.tsx" name="Component Test: UsageMeters &gt; displays usage percentages" time="0.135173666">
+        </testcase>
+        <testcase classname="tests/components/UsageMeters.test.tsx" name="Component Test: UsageMeters &gt; renders compact version" time="0.046164125">
+        </testcase>
+        <testcase classname="tests/components/UsageMeters.test.tsx" name="Component Test: UsageMeters &gt; displays warning when usage is high" time="0.014766583">
+        </testcase>
+        <testcase classname="tests/components/UsageMeters.test.tsx" name="Component Test: UsageMeters &gt; displays critical warning when usage is very high" time="0.011927083">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/components/a11y.test.tsx" timestamp="2025-12-12T08:46:43.435Z" hostname="MacBook-Air-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.053494667">
+        <testcase classname="tests/components/a11y.test.tsx" name="Component Test: Accessibility (a11y) &gt; Button should be keyboard accessible" time="0.026771917">
+        </testcase>
+        <testcase classname="tests/components/a11y.test.tsx" name="Component Test: Accessibility (a11y) &gt; Button should have proper semantic HTML" time="0.003244125">
+        </testcase>
+        <testcase classname="tests/components/a11y.test.tsx" name="Component Test: Accessibility (a11y) &gt; ErrorBoundary should have accessible error message" time="0.004117416">
+        </testcase>
+        <testcase classname="tests/components/a11y.test.tsx" name="Component Test: Accessibility (a11y) &gt; LoadingScreen should have accessible structure" time="0.009353041">
+        </testcase>
+        <testcase classname="tests/components/a11y.test.tsx" name="Component Test: Accessibility (a11y) &gt; components should have proper ARIA labels when needed" time="0.007377875">
+        </testcase>
+    </testsuite>
+</testsuites>

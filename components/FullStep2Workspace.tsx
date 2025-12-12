@@ -134,6 +134,7 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
           <select
             className="bg-slate-100 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-md px-2 py-1.5 text-xs text-navy-900 dark:text-slate-300 outline-none focus:border-blue-500"
             value={filterAxis}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             onChange={(e) => setFilterAxis(e.target.value as any)}
           >
             <option value="ALL">All Axes</option>
@@ -149,6 +150,7 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
           <select
             className="bg-slate-100 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-md px-2 py-1.5 text-xs text-navy-900 dark:text-slate-300 outline-none focus:border-blue-500"
             value={filterPriority}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             onChange={(e) => setFilterPriority(e.target.value as any)}
           >
             <option value="ALL">All Priorities</option>
@@ -166,6 +168,7 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
               {['none', 'axis', 'priority', 'status'].map((g) => (
                 <button
                   key={g}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   onClick={() => setGroupBy(g as any)}
                   className={`px-2 py-1 round text-[10px] font-medium transition-colors ${groupBy === g ? 'bg-white dark:bg-navy-800 text-blue-600 dark:text-blue-400 get-shadow-sm' : 'text-slate-400 hover:text-navy-900 dark:hover:text-white'}`}
                 >
