@@ -100,7 +100,7 @@ export const FullROIWorkspace: React.FC<FullROIWorkspaceProps> = ({
             {/* Chart */}
             <div className="bg-navy-950 border border-white/5 rounded-xl p-6 h-[400px]">
                 <h3 className="text-sm font-bold text-slate-400 mb-4 uppercase">Investment vs Return Over Time</h3>
-                <ROIPaybackChart economics={economics} language={language} />
+                <ROIPaybackChart economics={economics} />
             </div>
         </div>
     );

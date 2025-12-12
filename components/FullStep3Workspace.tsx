@@ -138,7 +138,7 @@ export const FullStep3Workspace: React.FC<FullStep3WorkspaceProps> = ({
             <RoadmapGantt
               initiatives={initiatives}
               onUpdateInitiative={onUpdateInitiative}
-              language={language}
+
             />
           </div>
         )}
@@ -148,7 +148,7 @@ export const FullStep3Workspace: React.FC<FullStep3WorkspaceProps> = ({
             <RoadmapKanban
               initiatives={initiatives}
               onUpdateInitiative={onUpdateInitiative}
-              language={language}
+
               users={users}
               currentUser={currentUser}
             />
