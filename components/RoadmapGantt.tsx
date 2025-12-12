@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { FullInitiative, Quarter, Language } from '../types';
+import { FullInitiative, Quarter } from '../types';
 
 import { GripVertical } from 'lucide-react';
 

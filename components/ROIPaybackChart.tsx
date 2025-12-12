@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { EconomicsSummary, Language } from '../types';
+import { EconomicsSummary } from '../types';
 
 interface Props {
     economics: EconomicsSummary;

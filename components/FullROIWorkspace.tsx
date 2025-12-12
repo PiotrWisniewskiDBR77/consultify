@@ -20,6 +20,7 @@ export const FullROIWorkspace: React.FC<FullROIWorkspaceProps> = ({
     fullSession,
     onUpdateInitiative: _onUpdateInitiative,
     onNextStep,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     language
 }) => {
     const [activeTab, setActiveTab] = useState<ROITab>('portfolio'); // Default to Portfolio (Macro view)

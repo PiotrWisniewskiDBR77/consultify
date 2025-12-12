@@ -83,7 +83,6 @@ export const RadarChart: React.FC<RadarChartProps> = ({ data, size }) => {
 
 
 
-                    // Move text slightly to avoid overlap
                     const textX = radius + (radius - 10) * Math.cos(angle);
                     const textY = radius + (radius - 10) * Math.sin(angle);
 
