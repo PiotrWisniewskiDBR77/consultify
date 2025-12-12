@@ -664,6 +664,24 @@ export const Api = {
         if (!res.ok) throw new Error('Failed to delete read notifications');
     },
 
+    createNotification: async (notification: {
+        userId?: string; // If null, broadcast to all
+        type: string;
+        title: string;
+        message: string;
+        priority?: 'high' | 'normal' | 'low';
+        category?: 'ai' | 'task' | 'system';
+        actionLabel?: string;
+        link?: string;
+    }): Promise<void> => {
+        const res = await fetch(`${API_URL}/notifications`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(notification)
+        });
+        if (!res.ok) throw new Error('Failed to create notification');
+    },
+
     // ==========================================
     // PHASE 6: AI INTEGRATION
     // ==========================================
@@ -1125,9 +1143,13 @@ export const Api = {
         if (!res.ok) throw new Error('Failed to generate access code');
     },
 
-    // Deactivate access code (Super Admin only) - not yet implemented in backend but keeping placeholder or removing if not needed.
-    // Removing deactivateAccessCode for now as it's not in my backend plan yet, can add later.
-
+    deactivateAccessCode: async (codeId: string): Promise<void> => {
+        const res = await fetch(`${API_URL}/superadmin/access-codes/${codeId}/deactivate`, {
+            method: 'POST',
+            headers: getHeaders()
+        });
+        if (!res.ok) throw new Error('Failed to deactivate access code');
+    },
     // ==========================================
     // BILLING & USAGE API
     // ==========================================

@@ -1,36 +1,42 @@
 import React, { useEffect, useState } from 'react';
-import { CheckCircle2, Circle, ArrowRight, Play, FileText, BarChart, MoveRight, Lock } from 'lucide-react';
-import { FullSession, AppView } from '../../types';
+import { CheckCircle2, Circle, ArrowRight, Play, FileText, BarChart, MoveRight, Lock, Plus, RefreshCw, Clock } from 'lucide-react';
+import { FullSession, AppView, Task } from '../../types';
+import { TaskDetailModal } from '../TaskDetailModal';
+import { Api } from '../../services/api';
+import { useAppStore } from '../../store/useAppStore';
+import toast from 'react-hot-toast';
 
 interface UserTaskListProps {
     session?: FullSession;
     onNavigate?: (view: AppView) => void;
 }
 
-interface Task {
-    id: string;
-    title: string;
-    description: string;
-    status: 'todo' | 'in_progress' | 'completed' | 'blocked';
-    stepPhase: string;
-    taskType: string;
-    dueDate?: string;
-}
-
 export const UserTaskList: React.FC<UserTaskListProps> = ({ session, onNavigate }) => {
-    const [tasks, setTasks] = useState<Task[]>([]);
+    const [tasks, setTasks] = useState<Task[]>([]); // Use Task
     const [loading, setLoading] = useState(true);
+    const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+    const { currentUser } = useAppStore();
+
+    // Empty task for creation
+    const initialTask: Task = {
+        id: '',
+        projectId: '', // User personal task? or Organization?
+        organizationId: currentUser?.organizationId || '',
+        title: '',
+        description: '',
+        status: 'todo',
+        priority: 'medium',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        taskType: 'execution',
+        stepPhase: 'design'
+    };
 
     const fetchTasks = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:3005/api/tasks', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (response.ok) {
-                const data = await response.json();
-                setTasks(data);
-            }
+            setLoading(true);
+            const data = await Api.getTasks(); // Use Api wrapper
+            setTasks(data);
         } catch (error) {
             console.error('Failed to fetch tasks', error);
         } finally {
@@ -45,7 +51,7 @@ export const UserTaskList: React.FC<UserTaskListProps> = ({ session, onNavigate 
     const handleNavigate = (task: Task) => {
         if (onNavigate) {
             if (task.stepPhase === 'design') onNavigate(AppView.FULL_STEP1_CONTEXT);
-            else if (task.stepPhase === 'pilot') onNavigate(AppView.FULL_STEP4_PILOT); // Assumed fallback if ROI not available
+            else if (task.stepPhase === 'pilot') onNavigate(AppView.FULL_PILOT_EXECUTION); // Updated to valid enum
             else onNavigate(AppView.FULL_STEP1_CONTEXT);
         }
     };
@@ -57,14 +63,52 @@ export const UserTaskList: React.FC<UserTaskListProps> = ({ session, onNavigate 
     };
 
     const getTimeEstimate = (task: Task) => {
-        return '45 min';
+        return task.estimatedHours ? `${task.estimatedHours}h` : '45 min';
+    };
+
+    const handleCreateTask = async (newTask: Task) => {
+        try {
+            await Api.createTask({
+                projectId: newTask.projectId,
+                title: newTask.title,
+                description: newTask.description,
+                status: newTask.status,
+                priority: newTask.priority,
+                assigneeId: newTask.assigneeId || currentUser?.id,
+                dueDate: newTask.dueDate,
+                estimatedHours: newTask.estimatedHours,
+                taskType: newTask.taskType,
+                stepPhase: newTask.stepPhase as any
+            });
+            toast.success('Task created successfully');
+            fetchTasks();
+        } catch (error) {
+            toast.error('Failed to create task');
+        }
     };
 
     return (
         <div className="h-full flex flex-col">
-            <div className="mb-6">
-                <h2 className="text-2xl font-bold text-navy-900 dark:text-white">My Action Plan</h2>
-                <p className="text-slate-500 dark:text-slate-400">Complete these steps to advance your transformation journey.</p>
+            <div className="mb-6 flex justify-between items-end">
+                <div>
+                    <h2 className="text-2xl font-bold text-navy-900 dark:text-white">My Action Plan</h2>
+                    <p className="text-slate-500 dark:text-slate-400">Complete these steps to advance your transformation journey.</p>
+                </div>
+                <div className="flex gap-2">
+                    <button
+                        onClick={fetchTasks}
+                        className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+                        title="Refresh"
+                    >
+                        <RefreshCw size={20} />
+                    </button>
+                    <button
+                        onClick={() => setIsTaskModalOpen(true)}
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg shadow-blue-500/20 transition-all"
+                    >
+                        <Plus size={18} /> Add Task
+                    </button>
+                </div>
             </div>
 
             <div className="space-y-4">
@@ -145,6 +189,16 @@ export const UserTaskList: React.FC<UserTaskListProps> = ({ session, onNavigate 
                     </div>
                 </div>
             </div>
+
+            {/* Task Creation Modal */}
+            <TaskDetailModal
+                isOpen={isTaskModalOpen}
+                onClose={() => setIsTaskModalOpen(false)}
+                task={initialTask}
+                currentUser={currentUser!}
+                onSave={handleCreateTask}
+                users={[]} // Ideally fetch users if we want to assign to others, or just self for now
+            />
         </div>
     );
 };

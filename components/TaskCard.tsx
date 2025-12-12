@@ -37,9 +37,25 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
       `}
         >
             <div className="flex justify-between items-start mb-2">
-                <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded border ${getStatusColor(task.status)} bg-opacity-10`}>
-                    {getStatusLabel(task.status)}
-                </span>
+                <div className="flex items-center gap-2">
+                    <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded border ${getStatusColor(task.status)} bg-opacity-10`}>
+                        {getStatusLabel(task.status)}
+                    </span>
+                    {/* Priority Badge */}
+                    <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded border ${task.priority === 'urgent' ? 'border-red-500 text-red-500 bg-red-500/10' :
+                            task.priority === 'high' ? 'border-orange-500 text-orange-500 bg-orange-500/10' :
+                                task.priority === 'medium' ? 'border-blue-500 text-blue-500 bg-blue-500/10' :
+                                    'border-slate-500 text-slate-500 bg-slate-500/10'
+                        }`}>
+                        {task.priority || 'Normal'}
+                    </span>
+                    {/* Scope Badge */}
+                    {task.scope && (
+                        <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border border-purple-500 text-purple-400 bg-purple-500/10">
+                            {task.scope}
+                        </span>
+                    )}
+                </div>
                 {task.priority === 'urgent' && <AlertCircle size={14} className="text-red-500" />}
             </div>
 

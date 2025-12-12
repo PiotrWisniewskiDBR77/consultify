@@ -42,7 +42,7 @@ export const FullStep3Workspace: React.FC<FullStep3WorkspaceProps> = ({
   }, {} as Record<string, number>);
 
   const getAxisLabel = (id: string) => {
-    // @ts-ignore
+    // TODO: Fix type definitions
     const key = `fullStep1_${id === 'digitalProducts' ? 'prod' : id.substring(0, 4)}` as any;
     return (t as any)[key]?.[language] || id;
   };

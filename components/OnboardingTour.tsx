@@ -53,10 +53,12 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
                     break;
             }
 
-            setPosition({ top, left });
 
-            // Highlight target
-            targetElement.classList.add('tour-highlight');
+            setTimeout(() => {
+                setPosition({ top, left });
+                // Highlight target
+                targetElement.classList.add('tour-highlight');
+            }, 0);
         }
 
         return () => {

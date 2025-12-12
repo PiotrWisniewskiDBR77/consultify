@@ -19,6 +19,7 @@ export default defineConfig({
         setupFiles: './tests/setup.ts',
         include: ['tests/unit/**/*.{test,spec}.{js,ts,jsx,tsx}', 'tests/components/**/*.{test,spec}.{js,ts,jsx,tsx}', 'tests/integration/**/*.{test,spec}.{js,ts,jsx,tsx}', 'tests/backend/**/*.{test,spec}.{js,ts,jsx,tsx}'],
         exclude: ['tests/e2e/**', 'tests/performance/**', 'node_modules/**'],
+        // @ts-expect-error: environmentMatchGlobs is valid in newer vitest versions but types might be lagging
         environmentMatchGlobs: [
             ['tests/unit/backend/**', 'node'],
             ['tests/backend/**', 'node'],

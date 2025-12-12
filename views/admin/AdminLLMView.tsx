@@ -286,7 +286,7 @@ export const AdminLLMView: React.FC = () => {
                         </button>
                     </div>
 
-                    <div className="bg-navy-900 border border-white/5 rounded-xl overflow-hidden">
+                    <div className="bg-navy-900 border border-white/5 rounded-xl overflow-auto custom-scrollbar">
                         <table className="w-full text-left text-sm text-slate-300">
                             <thead className="bg-navy-950 text-slate-400 uppercase text-xs font-semibold">
                                 <tr>

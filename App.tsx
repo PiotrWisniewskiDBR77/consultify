@@ -19,7 +19,7 @@ import { SuperAdminView } from './views/superadmin/SuperAdminView';
 import { UserDashboardView } from './views/UserDashboardView';
 import { Module1ContextView } from './views/Module1ContextView';
 import { AppView, SessionMode, AuthStep, User, UserRole } from './types';
-import { Menu, UserCircle, ChevronRight, Save, Bell, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { Menu, UserCircle, ChevronRight, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
 import { useAppStore } from './store/useAppStore';
 import { Toaster } from 'react-hot-toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -37,7 +37,7 @@ const AppContent = () => {
         language, setLanguage,
         isSidebarOpen, setIsSidebarOpen,
         isSidebarCollapsed, // Added for layout adjustment
-        freeSessionData, setFreeSessionData,
+        // setFreeSessionData,
         fullSessionData, setFullSessionData,
         logout,
         theme, toggleTheme
@@ -112,7 +112,7 @@ const AppContent = () => {
 
     const handleStopImpersonation = async () => {
         try {
-            const { token, user } = await Api.revertImpersonation();
+            const { token } = await Api.revertImpersonation();
             localStorage.setItem('token', token);
             // Force reload to pick up pure admin context
             window.location.href = '/';
@@ -124,13 +124,13 @@ const AppContent = () => {
         }
     };
 
-    const startChat = (mode: SessionMode) => {
-        if (mode === SessionMode.FREE) {
-            setCurrentView(AppView.QUICK_STEP1_PROFILE);
-        } else {
-            setCurrentView(AppView.FULL_STEP1_ASSESSMENT);
-        }
-    };
+    // const startChat = (mode: SessionMode) => {
+    //     if (mode === SessionMode.FREE) {
+    //         setCurrentView(AppView.QUICK_STEP1_PROFILE);
+    //     } else {
+    //         setCurrentView(AppView.FULL_STEP1_ASSESSMENT);
+    //     }
+    // };
 
     const isSessionView = currentView !== AppView.WELCOME &&
         currentView !== AppView.AUTH &&

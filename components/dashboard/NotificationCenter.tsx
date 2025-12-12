@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import {
     Bell, Info, CheckCircle2, AlertTriangle, ArrowRight,
-    Sparkles, Layout, Settings, Filter, Trash2
+    Sparkles, Layout, Settings, Filter, Trash2, Megaphone, Send, X, Plus
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Api } from '../../services/api';
+import toast from 'react-hot-toast';
 
 interface NotificationData {
     priority?: 'high' | 'normal' | 'low';
@@ -28,6 +30,9 @@ export const NotificationCenter: React.FC = () => {
     const [activePriority, setActivePriority] = useState<'all' | 'high' | 'normal' | 'low'>('all');
     const [activeDate, setActiveDate] = useState<'all' | 'today' | 'week'>('all');
     const [openFilter, setOpenFilter] = useState<'priority' | 'date' | null>(null);
+    const [isBroadcastOpen, setIsBroadcastOpen] = useState(false);
+    const [broadcastData, setBroadcastData] = useState({ title: '', message: '', priority: 'normal' as 'normal' | 'high' | 'low' });
+    const [sending, setSending] = useState(false);
 
     const toggleFilter = (filter: 'priority' | 'date') => {
         setOpenFilter(prev => prev === filter ? null : filter);
@@ -41,7 +46,8 @@ export const NotificationCenter: React.FC = () => {
             });
             if (response.ok) {
                 const data = await response.json();
-                setNotifications(data);
+                // Sort by date desc
+                setNotifications(data.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
             }
         } catch (error) {
             console.error('Failed to fetch notifications', error);
@@ -88,6 +94,28 @@ export const NotificationCenter: React.FC = () => {
             setNotifications(prev => prev.filter(n => n.id !== id));
         } catch (error) {
             console.error('Failed to delete', error);
+        }
+    };
+
+    const handleBroadcast = async () => {
+        if (!broadcastData.title || !broadcastData.message) return;
+        try {
+            setSending(true);
+            await Api.createNotification({
+                type: 'alert',
+                title: broadcastData.title,
+                message: broadcastData.message,
+                priority: broadcastData.priority,
+                category: 'system'
+            });
+            toast.success('Notification broadcasted!');
+            setIsBroadcastOpen(false);
+            setBroadcastData({ title: '', message: '', priority: 'normal' });
+            fetchNotifications();
+        } catch (error) {
+            toast.error('Failed to broadcast');
+        } finally {
+            setSending(false);
         }
     };
 
@@ -138,11 +166,12 @@ export const NotificationCenter: React.FC = () => {
 
         // Highlight high priority alerts
         if (priority === 'high' && !notif.read) {
-            borderClass = 'border-l-4 border-l-red-500 border-slate-200 bg-red-50/20';
+            borderClass = 'border-l-4 border-l-red-500 border-slate-200 dark:border-white/10 bg-red-50/20 dark:bg-red-900/20';
         } else if (notif.read) {
-            borderClass = 'border-transparent bg-transparent hover:bg-slate-50';
+            borderClass = 'border-transparent bg-transparent hover:bg-slate-50 dark:hover:bg-white/5';
         } else {
-            borderClass = 'bg-white border-slate-100';
+            // Unread normal
+            borderClass = 'bg-white dark:bg-navy-800 border-slate-100 dark:border-navy-700 shadow-sm dark:shadow-none bg-gradient-to-r from-purple-50/50 to-transparent dark:from-purple-900/20 dark:to-transparent';
         }
 
         return `group p-4 rounded-xl border transition-all hover:shadow-md cursor-pointer relative overflow-hidden ${borderClass}`;
@@ -168,6 +197,14 @@ export const NotificationCenter: React.FC = () => {
                     >
                         Mark all read
                     </button>
+                    {/* Broadcast Button (Visible for admins ideally, but here for all as requested) */}
+                    <button
+                        onClick={() => setIsBroadcastOpen(true)}
+                        className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-500/20 rounded-md transition-colors"
+                        title="Broadcast Notification"
+                    >
+                        <Megaphone size={16} />
+                    </button>
                 </div>
 
                 {/* Filters - Dropdowns */}
@@ -177,8 +214,8 @@ export const NotificationCenter: React.FC = () => {
                         <button
                             onClick={() => toggleFilter('priority')}
                             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${activePriority !== 'all'
-                                    ? 'bg-purple-50 border-purple-200 text-purple-700 dark:bg-purple-500/10 dark:border-purple-500/20 dark:text-purple-300'
-                                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 dark:bg-navy-900 dark:border-white/10 dark:text-slate-300'
+                                ? 'bg-purple-50 border-purple-200 text-purple-700 dark:bg-purple-500/10 dark:border-purple-500/20 dark:text-purple-300'
+                                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 dark:bg-navy-900 dark:border-white/10 dark:text-slate-300'
                                 }`}
                         >
                             <span className="opacity-70">Priority:</span>
@@ -219,8 +256,8 @@ export const NotificationCenter: React.FC = () => {
                         <button
                             onClick={() => toggleFilter('date')}
                             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${activeDate !== 'all'
-                                    ? 'bg-purple-50 border-purple-200 text-purple-700 dark:bg-purple-500/10 dark:border-purple-500/20 dark:text-purple-300'
-                                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 dark:bg-navy-900 dark:border-white/10 dark:text-slate-300'
+                                ? 'bg-purple-50 border-purple-200 text-purple-700 dark:bg-purple-500/10 dark:border-purple-500/20 dark:text-purple-300'
+                                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 dark:bg-navy-900 dark:border-white/10 dark:text-slate-300'
                                 }`}
                         >
                             <span className="opacity-70">Time:</span>
@@ -333,6 +370,63 @@ export const NotificationCenter: React.FC = () => {
                     ))}
                 </AnimatePresence>
             </div>
+
+            {/* Broadcast Modal */}
+            <AnimatePresence>
+                {isBroadcastOpen && (
+                    <div className="absolute inset-0 z-50 rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in zoom-in-95">
+                        <div className="w-full max-w-sm space-y-4">
+                            <div className="flex justify-between items-center mb-2">
+                                <h3 className="font-bold text-navy-900 dark:text-white flex items-center gap-2">
+                                    <Megaphone size={18} className="text-purple-500" /> Broadcast
+                                </h3>
+                                <button onClick={() => setIsBroadcastOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                                    <X size={18} />
+                                </button>
+                            </div>
+
+                            <input
+                                autoFocus
+                                className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-purple-500"
+                                placeholder="Title"
+                                value={broadcastData.title}
+                                onChange={e => setBroadcastData({ ...broadcastData, title: e.target.value })}
+                            />
+
+                            <textarea
+                                className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-purple-500 resize-none h-24"
+                                placeholder="Message to organization..."
+                                value={broadcastData.message}
+                                onChange={e => setBroadcastData({ ...broadcastData, message: e.target.value })}
+                            />
+
+                            <div className="flex gap-2">
+                                {['low', 'normal', 'high'].map(p => (
+                                    <button
+                                        key={p}
+                                        onClick={() => setBroadcastData({ ...broadcastData, priority: p as any })}
+                                        className={`flex-1 py-1 text-xs font-medium rounded-md border transition-colors ${broadcastData.priority === p
+                                            ? 'bg-purple-50 border-purple-200 text-purple-700 dark:bg-purple-500/20 dark:border-purple-500/30 dark:text-purple-300'
+                                            : 'border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5'
+                                            }`}
+                                    >
+                                        {p.charAt(0).toUpperCase() + p.slice(1)}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <button
+                                onClick={handleBroadcast}
+                                disabled={sending || !broadcastData.title || !broadcastData.message}
+                                className="w-full py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-lg font-medium shadow-lg shadow-purple-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                {sending ? 'Sending...' : <><Send size={16} /> Send Broadcast</>}
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
+
     );
 };

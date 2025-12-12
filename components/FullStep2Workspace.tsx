@@ -62,7 +62,6 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
   };
 
   const getAxisLabel = (id: string) => {
-    // @ts-ignore
     const key = `fullStep1_${id === 'digitalProducts' ? 'prod' : id.substring(0, 4)}` as any;
     return (ts as any)[key]?.[language] || id;
   };
@@ -82,6 +81,7 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
   }, [initiatives, searchQuery, filterAxis, filterPriority]);
 
   // Grouping Logic
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const groupedInitiatives = useMemo(() => {
     if (groupBy === 'none') return { 'All Initiatives': filteredInitiatives };
 

@@ -17,7 +17,7 @@ test.describe('Project Management', () => {
         await page.hover('div.fixed.z-50');
         await page.waitForTimeout(500);
         // Ensure expansion
-        try { await page.waitForSelector('text="CONSULTIFY"', { timeout: 2000 }); } catch (e) { }
+        try { await page.waitForSelector('text="CONSULTIFY"', { timeout: 2000 }); } catch { /* ignore */ }
 
         if (!(await page.isVisible('nav >> text="Projects"'))) {
             await page.click('nav >> text="Admin Panel"');

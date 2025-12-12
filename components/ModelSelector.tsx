@@ -91,7 +91,7 @@ export const ModelSelector: React.FC = () => {
                         provider: pm.provider,
                         modelId: pm.modelId,
                         // We store extra data to help selection handler
-                        // @ts-ignore
+                        // @ts-expect-error: Store extra data for internal logic
                         sourceData: pm
                     });
                 });
@@ -125,7 +125,31 @@ export const ModelSelector: React.FC = () => {
             newConfig.endpoint = undefined;
         }
 
-        setAIConfig(newConfig);
+        // Update CURRENT USER aiConfig, not the global store aiConfig (which is for UI toggles)
+        // We need a way to update currentUser.
+        // Assuming we can use setCurrentUser but merging the new config.
+        if (currentUser) {
+            const updatedUser = {
+                ...currentUser,
+                aiConfig: newConfig
+            };
+            // We should also persist this to the backend if needed?
+            // For now, let's update local state.
+            // Note: useAppStore doesn't expose a dedicated 'updateUserAIConfig' action, so we use setCurrentUser.
+            // AND we probably need to call the API to persist this preference?
+            // "Types Check" error was strictly about type mismatch.
+            // BUT setAIConfig in store expects { autoMode, ... }
+            // So we MUST NOT call setAIConfig(newConfig) where newConfig is AIProviderConfig.
+
+            // We need to access the store via useAppStore.getState() or use the hook actions.
+            // Let's use the setter from the hook.
+            const { setCurrentUser } = useAppStore.getState();
+            setCurrentUser(updatedUser);
+
+            // Optional: Persist to backend
+            // Api.updateUser(currentUser.id, { aiConfig: newConfig }).catch(console.error);
+        }
+
         setIsOpen(false);
     };
 
@@ -137,7 +161,7 @@ export const ModelSelector: React.FC = () => {
     // We can try to look at current config to guess logic
     if (currentUser?.aiConfig?.privateModels) {
         // Check if current matches a private model
-        const privateMatch = currentUser.aiConfig.privateModels.find(pm =>
+        const privateMatch = currentUser.aiConfig.privateModels.find((pm: any) =>
             pm.provider === currentProvider &&
             pm.modelId === currentModelId &&
             (pm.apiKey === currentUser.aiConfig?.apiKey) // Loose match

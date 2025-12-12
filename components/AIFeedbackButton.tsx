@@ -31,7 +31,7 @@ export const AIFeedbackButton: React.FC<AIFeedbackButtonProps> = ({ context, dat
             setRating(null);
             setComment('');
             if (onFeedbackSubmit) onFeedbackSubmit();
-        } catch (e) {
+        } catch {
             toast.error('Failed to submit feedback');
         } finally {
             setSubmitting(false);

@@ -9,17 +9,17 @@ interface FullReportDocumentProps {
    language: Language;
 }
 
+const SectionHeader = ({ title }: { title: string }) => (
+   <div className="mt-8 mb-4 border-b border-navy-800 pb-2">
+      <h3 className="text-lg font-bold text-purple-400 uppercase tracking-wide">{title}</h3>
+   </div>
+);
+
 export const FullReportDocument: React.FC<FullReportDocumentProps> = ({
    report,
    language
 }) => {
    const t = translations.fullReports;
-
-   const SectionHeader = ({ title }: { title: string }) => (
-      <div className="mt-8 mb-4 border-b border-navy-800 pb-2">
-         <h3 className="text-lg font-bold text-purple-400 uppercase tracking-wide">{title}</h3>
-      </div>
-   );
 
    return (
       <div className="h-full bg-gray-50 dark:bg-navy-950 flex flex-col">

@@ -428,30 +428,8 @@ const AiService = {
                     responseText = data.choices[0]?.message?.content || '';
                 }
                 else if (provider === 'z_ai') {
-                    // Z.ai (GLM) - Requires JWT generation
-                    const zaiEndpoint = endpoint || 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
-
-                    // Generate Token
-                    let token = api_key;
-                    if (api_key.includes('.')) {
-                        try {
-                            // const jwt = require('jsonwebtoken'); // Removed as jwt is already declared at the top
-                            const [id, secret] = api_key.split('.');
-                            const now = Date.now();
-                            const payload = {
-                                api_key: id,
-                                exp: now + 3600 * 1000,
-                                timestamp: now
-                            };
-                            token = jwt.sign(payload, secret, {
-                                algorithm: 'HS256',
-                                header: { alg: 'HS256', sign_type: 'SIGN' }
-                            });
-                        } catch (e) {
-                            console.error("Error generating Z.ai token:", e);
-                            // Fallback to raw key if generation fails
-                        }
-                    }
+                    // Z.ai - Uses standard Bearer Auth (verified via docs)
+                    const zaiEndpoint = endpoint || 'https://api.z.ai/api/paas/v4/chat/completions';
 
                     const messages = history.map(h => ({
                         role: h.role === 'user' ? 'user' : 'assistant',
@@ -462,8 +440,8 @@ const AiService = {
 
                     const response = await fetch(zaiEndpoint, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                        body: JSON.stringify({ model: model_id || 'glm-4', messages, stream: false })
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${api_key}` },
+                        body: JSON.stringify({ model: model_id || 'glm-4.6', messages, stream: false })
                     });
 
                     if (!response.ok) {
