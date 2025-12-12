@@ -1,5 +1,5 @@
 import React from 'react';
-import { FullSession, AppView } from '../../types';
+import { FullSession } from '../../types';
 import { UserTaskList } from './UserTaskList';
 import { NotificationCenter } from './NotificationCenter';
 import { useAppStore } from '../../store/useAppStore';

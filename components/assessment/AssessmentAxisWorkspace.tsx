@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { DRDAxis, MaturityLevel, AxisAssessment, Language } from '../../types';
-import { ArrowRight, Info, CheckCircle2, AlertTriangle, Target, BrainCircuit, TrendingUp, Lightbulb } from 'lucide-react';
-import { translations } from '../../translations';
+import { ArrowRight, Info, CheckCircle2, AlertTriangle, BrainCircuit, TrendingUp, Lightbulb } from 'lucide-react';
 
 interface AssessmentAxisWorkspaceProps {
     axis: DRDAxis;
@@ -74,6 +73,7 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
     onChange,
     onNext,
     language,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     context
 }) => {
     const content = AXIS_CONTENT[axis];
