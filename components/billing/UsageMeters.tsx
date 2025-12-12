@@ -1,5 +1,5 @@
 import React from 'react';
-import { Database, HardDrive, AlertTriangle, TrendingUp } from 'lucide-react';
+import { Database, HardDrive, AlertTriangle } from 'lucide-react';
 
 interface UsageData {
     tokens: {

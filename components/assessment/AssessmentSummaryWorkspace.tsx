@@ -1,6 +1,6 @@
 import React from 'react';
 import { DRDAxis, AxisAssessment, Language } from '../../types';
-import { ArrowRight, BarChart2, TrendingUp, AlertTriangle, CheckCircle } from 'lucide-react';
+import { ArrowRight, BarChart2, TrendingUp } from 'lucide-react';
 import { translations } from '../../translations';
 
 interface AssessmentSummaryWorkspaceProps {

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import {
-    LayoutDashboard, CheckCircle2, AlertTriangle, XCircle,
+    LayoutDashboard, CheckCircle2, AlertTriangle,
     TrendingUp, TrendingDown, Activity, Play, Clock
 } from 'lucide-react';
 import { FullSession, AppView } from '../../types';
@@ -151,8 +151,8 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
                         </div>
                         {/* Delayed */}
                         <div className={`rounded-xl p-5 border shadow-sm ${initiativeStats.delayed > 0
-                                ? 'bg-red-50 border-red-200 dark:bg-red-900/10 dark:border-red-900/30'
-                                : 'bg-white border-slate-200 dark:bg-navy-900 dark:border-white/10'
+                            ? 'bg-red-50 border-red-200 dark:bg-red-900/10 dark:border-red-900/30'
+                            : 'bg-white border-slate-200 dark:bg-navy-900 dark:border-white/10'
                             }`}>
                             <div className={`text-xs font-bold uppercase mb-2 flex items-center gap-1 ${initiativeStats.delayed > 0 ? 'text-red-500' : 'text-slate-400'
                                 }`}>
@@ -211,8 +211,8 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
                                                     </td>
                                                     <td className="py-3">
                                                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${initiative.priority === 'Critical' ? 'bg-red-100 text-red-600 dark:bg-red-900/30' :
-                                                                initiative.priority === 'High' ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30' :
-                                                                    'bg-blue-50 text-blue-600 dark:bg-blue-900/30'
+                                                            initiative.priority === 'High' ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30' :
+                                                                'bg-blue-50 text-blue-600 dark:bg-blue-900/30'
                                                             }`}>
                                                             {initiative.priority}
                                                         </span>
