@@ -56,7 +56,7 @@ export const NotificationDropdown = () => {
             await Api.markNotificationRead(id);
             setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
             setUnreadCount(prev => Math.max(0, prev - 1));
-        } catch (error) {
+        } catch {
             toast.error('Failed to mark as read');
         }
     };
@@ -67,7 +67,7 @@ export const NotificationDropdown = () => {
             setNotifications(prev => prev.map(n => ({ ...n, read: true })));
             setUnreadCount(0);
             toast.success('All marked as read');
-        } catch (error) {
+        } catch {
             toast.error('Failed to action');
         }
     };
@@ -80,7 +80,7 @@ export const NotificationDropdown = () => {
             if (!notifications.find(n => n.id === id)?.read) {
                 setUnreadCount(prev => Math.max(0, prev - 1));
             }
-        } catch (error) {
+        } catch {
             toast.error('Failed to delete');
         }
     };
@@ -166,6 +166,7 @@ export const NotificationDropdown = () => {
                                             ? (notification.type.includes('ai') ? 'bg-purple-900/20 dark:bg-purple-900/30' : 'bg-slate-100/50 dark:bg-navy-800/50')
                                             : ''
                                             }`}
+                                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                         onClick={() => !notification.read && handleMarkAsRead(notification.id, {} as any)}
                                     >
                                         <div className="flex gap-3">

@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
 import { FullSession, FullInitiative, Language } from '../types';
-import { translations } from '../translations';
-import { CheckCircle, AlertTriangle, Scale, ArrowRight, Lightbulb } from 'lucide-react';
+import { Scale, ArrowRight, Lightbulb, CheckCircle } from 'lucide-react';
 import { Button } from './Button';
 
 interface PilotDecisionWorkspaceProps {
     fullSession: FullSession;
     onUpdateInitiative: (initiative: FullInitiative) => void;
     onNextStep: () => void;
-    language: Language;
+
 }
 
 export const PilotDecisionWorkspace: React.FC<PilotDecisionWorkspaceProps> = ({
     fullSession,
     onUpdateInitiative,
     onNextStep,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     language
 }) => {
     const initiatives = fullSession.initiatives || [];
@@ -33,7 +33,7 @@ export const PilotDecisionWorkspace: React.FC<PilotDecisionWorkspaceProps> = ({
         if (selectedPilotId) {
             const init = initiatives.find(i => i.id === selectedPilotId);
             if (init) {
-                onUpdateInitiative({ ...init, status: 'step4' as any }); // 'step4' usually indicates Pilot Execution phase?
+                onUpdateInitiative({ ...init, status: 'step4' }); // 'step4' usually indicates Pilot Execution phase?
                 // Actually 'step4' in types is InitiativeStatus. Let's use 'In Progress' or a specialized tag. 
                 // Or just proceed. The main thing is identifying the scope for Module 4.
             }
@@ -62,8 +62,8 @@ export const PilotDecisionWorkspace: React.FC<PilotDecisionWorkspaceProps> = ({
                                     key={init.id}
                                     onClick={() => handleSelectPilot(init.id)}
                                     className={`p-3 rounded-lg border cursor-pointer transition-all ${selectedPilotId === init.id
-                                            ? 'bg-purple-500/10 border-purple-500 ring-1 ring-purple-500'
-                                            : 'bg-slate-50 dark:bg-navy-900 border-slate-200 dark:border-white/10 hover:border-purple-300'
+                                        ? 'bg-purple-500/10 border-purple-500 ring-1 ring-purple-500'
+                                        : 'bg-slate-50 dark:bg-navy-900 border-slate-200 dark:border-white/10 hover:border-purple-300'
                                         }`}
                                 >
                                     <div className="flex justify-between items-start">
