@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getQuestionsForAxis, DRDLevel } from '../services/drdStructure';
 import { AxisId } from '../types';
-import { ArrowRight, CheckCircle2, ChevronRight, Info, Sparkles, Bot, AlertTriangle } from 'lucide-react';
-import { AIFeedbackButton } from './AIFeedbackButton';
+import { ArrowRight, CheckCircle2, ChevronRight, Sparkles, Bot } from 'lucide-react';
 
 interface MaturityMatrixProps {
     axisId: number;
@@ -16,6 +15,7 @@ interface MaturityMatrixProps {
 
 export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
     axisId,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     axisKey,
     currentScores,
     onScoreSelect,

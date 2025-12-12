@@ -132,7 +132,7 @@ export const CustomTrendCard: React.FC<CustomTrendCardProps> = ({ trends, onAdd,
                             <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Type</label>
                             <select
                                 value={newTrend.type}
-                                onChange={e => setNewTrend({ ...newTrend, type: e.target.value as any })}
+                                onChange={e => setNewTrend({ ...newTrend, type: e.target.value as CustomTrend['type'] })}
                                 className="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-600 dark:bg-navy-900 text-sm"
                             >
                                 <option value="Technology">Technology</option>
@@ -144,7 +144,7 @@ export const CustomTrendCard: React.FC<CustomTrendCardProps> = ({ trends, onAdd,
                             <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Horizon (Ring)</label>
                             <select
                                 value={newTrend.ring}
-                                onChange={e => setNewTrend({ ...newTrend, ring: e.target.value as any })}
+                                onChange={e => setNewTrend({ ...newTrend, ring: e.target.value as CustomTrend['ring'] })}
                                 className="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-600 dark:bg-navy-900 text-sm"
                             >
                                 <option value="Now">Impact Now</option>

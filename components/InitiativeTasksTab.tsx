@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Task, User } from '../types';
 import { Button } from './Button';
 import { Plus, CheckCircle, Clock } from 'lucide-react';
@@ -17,11 +17,9 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-    useEffect(() => {
-        fetchTasks();
-    }, [initiativeId]);
 
-    const fetchTasks = async () => {
+
+    const fetchTasks = useCallback(async () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
@@ -37,7 +35,11 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
         } finally {
             setLoading(false);
         }
-    };
+    }, [initiativeId]);
+
+    useEffect(() => {
+        fetchTasks();
+    }, [fetchTasks]);
 
     const handleCreateTask = async (newTask: Task) => {
         try {
