@@ -53,6 +53,11 @@ router.post('/chat', async (req, res) => {
 });
 
 router.post('/chat/stream', async (req, res) => {
+    // #region agent log
+    const fs = require('fs');
+    const logPath = '/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/.cursor/debug.log';
+    fs.appendFileSync(logPath, JSON.stringify({location:'ai.js:chat/stream:entry',message:'Stream endpoint hit',data:{hasUser:!!req.user,userId:req.user?.id,bodyUserId:req.body?.userId,hasAuth:!!req.headers?.authorization},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B'})+'\n');
+    // #endregion
     // Set headers for SSE
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
@@ -61,6 +66,9 @@ router.post('/chat/stream', async (req, res) => {
     try {
         const { message, history, roleName, context } = req.body;
         const userId = req.body.userId || req.user?.id;
+        // #region agent log
+        fs.appendFileSync(logPath, JSON.stringify({location:'ai.js:chat/stream:userId',message:'UserId resolved',data:{userId,roleName,hasContext:!!context,contextScreenId:context?.screenId},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B,E'})+'\n');
+        // #endregion
 
         const stream = AiService.chatStream(message, history, roleName, userId, null, context);
 

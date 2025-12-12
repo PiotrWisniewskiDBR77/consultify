@@ -11,8 +11,10 @@ interface AIInterviewModalProps {
     onComplete: (score: number, reasoning: string) => void;
 }
 
+// ANTYGRACITY FIX: Zmieniono nieużywany parametr axisId na _axisId zgodnie z konwencją ESLint
+// Parametr axisId jest częścią interfejsu ale nie jest używany w obecnej implementacji
 export const AIInterviewModal: React.FC<AIInterviewModalProps> = ({
-    isOpen, onClose, axisLabel, onComplete
+    isOpen, onClose, axisId: _axisId, axisLabel, onComplete
 }) => {
     const { currentUser } = useAppStore();
     const language = currentUser?.preferredLanguage || 'en';

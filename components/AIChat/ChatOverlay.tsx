@@ -26,6 +26,10 @@ export const ChatOverlay: React.FC = () => {
     }, [activeChatMessages, streamedContent, isChatOpen]);
 
     const handleSendMessage = (text: string) => {
+        // #region agent log
+        console.log('[DEBUG-D] handleSendMessage entry:', { textLength: text?.length || 0, currentMessagesCount: activeChatMessages?.length || 0, hasScreenContext: !!screenContext });
+        fetch('http://127.0.0.1:7242/ingest/690b8f02-96fa-4527-ae57-5d2b028e8181',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ChatOverlay.tsx:handleSendMessage:entry',message:'Send message triggered',data:{textLength:text?.length||0,currentMessagesCount:activeChatMessages?.length||0,hasScreenContext:!!screenContext},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
         // Add User Message
         const userMsg: ChatMessage = {
             id: Date.now().toString(),
@@ -41,17 +45,14 @@ export const ChatOverlay: React.FC = () => {
             parts: [{ text: m.content }]
         }));
 
-        // Context Injection
-        let contextPrefix = "";
-        if (screenContext) {
-            contextPrefix = `[CONTEXT: User is on "${screenContext.title}" (ID: ${screenContext.screenId}). Data: ${JSON.stringify(screenContext.data)}]`;
-        }
+        // #region agent log
+        console.log('[DEBUG-D] handleSendMessage historyBuilt:', { historyLength: history?.length || 0, newMsgIncluded: history.some(h => h.parts[0]?.text === text) });
+        fetch('http://127.0.0.1:7242/ingest/690b8f02-96fa-4527-ae57-5d2b028e8181',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ChatOverlay.tsx:handleSendMessage:historyBuilt',message:'History prepared before stream',data:{historyLength:history?.length||0,newMsgIncluded:history.some(h=>h.parts[0]?.text===text)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
 
-        const promptToSend = contextPrefix ? `${contextPrefix}\n\n${text}` : text;
-
-        // Start Stream
-        setIsBotTyping(true); // Will be handled by hook usually, but good to force UI state
-        startStream(promptToSend, history);
+        // Context Injection via separate payload
+        // We pass screenContext directly to the backend which will use PromptService
+        startStream(text, history, undefined, screenContext || undefined);
     };
 
     const handleOptionSelect = (option: ChatOption) => {

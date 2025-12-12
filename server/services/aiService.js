@@ -1086,11 +1086,60 @@ const AiService = {
         return AiService.callLLM(message, systemInstruction, history, null, userId, 'chat');
     },
 
-    chatStream: async function* (message, history, roleName = 'CONSULTANT', userId, organizationId = null) {
-        const context = await deps.RagService.getContext(message);
-        const baseRole = await AiService.enhancePrompt(roleName.toUpperCase(), 'chat', organizationId);
-        let systemInstruction = baseRole;
-        if (context) systemInstruction += `\n\nCONTEXT:\n${context}`;
+    chatStream: async function* (message, history, roleName = 'CONSULTANT', userId, organizationId = null, extraContext = null) {
+        // #region agent log
+        const fs = require('fs');
+        const logPath = '/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/.cursor/debug.log';
+        fs.appendFileSync(logPath, JSON.stringify({location:'aiService.js:chatStream:entry',message:'ChatStream started',data:{userId,organizationId,roleName,hasExtraContext:!!extraContext,extraContextScreenId:extraContext?.screenId,messageLength:message?.length||0},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B,E'})+'\n');
+        // #endregion
+        // 1. Resolve Org/User if needed
+        let user;
+        let orgId = organizationId;
+
+        if (userId && !user) {
+            user = await new Promise(resolve => deps.db.get("SELECT * FROM users WHERE id = ?", [userId], (err, row) => resolve(row)));
+            if (user && !orgId) orgId = user.organization_id;
+        }
+        // #region agent log
+        fs.appendFileSync(logPath, JSON.stringify({location:'aiService.js:chatStream:userResolved',message:'User and org resolved',data:{hasUser:!!user,orgId,userOrgId:user?.organization_id},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B,E'})+'\n');
+        // #endregion
+
+        // 2. Fetch Knowledge Base (RAG) - Always useful
+        const ragContext = await deps.RagService.getContext(message);
+
+        // 3. Determine System Instruction
+        let systemInstruction = "";
+
+        // If we have screen context (OR just generally want rich context), use PromptService
+        // Ideally we transition to PromptService for ALL chats, but let's do it if screen is present for now to be safe.
+        // Actually, user requested "AI chat in whole app". 
+        // Let's use PromptService if extraContext is passed, or if we just want consistent behavior.
+        // But extraContext comes from frontend.
+
+        if (extraContext && extraContext.screenId) {
+            // Fetch Company & Strategies
+            const company = await new Promise(resolve => {
+                if (!orgId) return resolve({});
+                deps.db.get("SELECT * FROM organizations WHERE id = ?", [orgId], (err, row) => resolve(row || {}));
+            });
+
+            const strategies = await new Promise(resolve => {
+                deps.db.all("SELECT title, description FROM global_strategies WHERE is_active = 1", [], (err, rows) => resolve(rows || []));
+            });
+
+            systemInstruction = PromptService.buildSystemPrompt({
+                user,
+                company,
+                screen: extraContext,
+                strategies,
+                knowledge: ragContext
+            });
+        } else {
+            // Fallback / Legacy (but inject RAG)
+            const baseRole = await AiService.enhancePrompt(roleName.toUpperCase(), 'chat', orgId);
+            systemInstruction = baseRole;
+            if (ragContext) systemInstruction += `\n\nCONTEXT:\n${ragContext}`;
+        }
 
         const generator = AiService.streamLLM(message, systemInstruction, history, null, userId, 'chat');
         for await (const chunk of generator) {

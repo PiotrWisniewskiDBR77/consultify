@@ -9,12 +9,26 @@ interface UserDashboardViewProps {
     onNavigate: (view: AppView) => void;
 }
 
+import { useScreenContext } from '../hooks/useScreenContext';
+
 export const UserDashboardView: React.FC<UserDashboardViewProps> = ({ currentUser, onNavigate }) => {
     const { fullSessionData, currentView } = useAppStore();
 
     // Simple Render Logic based on currentView
     // Default to Overview if generic dashboard view
     const isSnapshot = currentView === AppView.DASHBOARD_SNAPSHOT;
+
+    // Register Context for AI
+    useScreenContext(
+        'user_dashboard',
+        isSnapshot ? 'Execution Snapshot' : 'Executive Dashboard',
+        {
+            mode: isSnapshot ? 'Snapshot' : 'Overview',
+            projectStatus: fullSessionData?.step5Completed ? 'Execution' : (fullSessionData?.step3Completed ? 'Roadmap' : 'Planning'),
+            keyMetrics: fullSessionData?.kpiResults || {}
+        },
+        "User is reviewing their transformation progress and high-level KPIs."
+    );
 
     const handleStartTransformation = () => {
         onNavigate(AppView.FULL_STEP1_CONTEXT);
