@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Api } from '../../services/api';
 import { User, AppView } from '../../types';
-import { Users, Building, AlertCircle, CheckCircle, CreditCard, Trash2, Edit2, Search, Plus, RefreshCw } from 'lucide-react';
+import { Users, Building, AlertCircle, CheckCircle, CreditCard, Trash2, Edit2, Search, Plus, RefreshCw, Lock } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useAppStore } from '../../store/useAppStore';
 import { SuperAdminSidebar, SuperAdminSection } from '../../components/SuperAdminSidebar';
@@ -16,6 +16,8 @@ import { AdminTokenPackages } from '../admin/AdminTokenPackages';
 import { SuperAdminOrgDetailsModal } from './SuperAdminOrgDetailsModal';
 import { TokenBillingManagementView } from '../admin/TokenBillingManagementView';
 import { SystemSettings } from './SystemSettings';
+import { SuperAdminDatabaseView } from './SuperAdminDatabaseView';
+import { SuperAdminStorageView } from './SuperAdminStorageView';
 
 interface SuperAdminViewProps {
     currentUser: User;
@@ -110,7 +112,8 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
     }, []);
 
     useEffect(() => {
-        fetchData(false);
+        const timer = setTimeout(() => fetchData(false), 0);
+        return () => clearTimeout(timer);
     }, [fetchData]);
 
     const handleDeleteOrg = async (id: string, name: string) => {
@@ -148,7 +151,6 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
             const { token } = await Api.impersonateUser(userId);
             localStorage.setItem('token', token);
             // Force reload to pick up new user context
-            // eslint-disable-next-line react-hooks/immutability
             window.location.href = '/';
         } catch (err: any) {
             toast.error(err.message || 'Failed to impersonate user');
@@ -193,8 +195,12 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                 return <div className="p-8 overflow-y-auto"><SuperAdminRevenueView /></div>;
             case 'settings':
                 return <div className="p-8 overflow-y-auto h-full"><SystemSettings /></div>;
+            case 'storage':
+                return <div className="p-8 overflow-y-auto h-full"><SuperAdminStorageView /></div>;
             case 'audit':
                 return renderAuditLogs();
+            case 'database':
+                return <div className="p-8 overflow-y-auto h-full"><SuperAdminDatabaseView /></div>;
             default:
                 return renderOverview();
         }
@@ -395,7 +401,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
             await Api.updateSuperAdminUser(userId, { status: newStatus });
             toast.success(`User ${newStatus === 'blocked' ? 'blocked' : 'unblocked'} successfully`);
             fetchData();
-        } catch (err) {
+        } catch {
             toast.error(`Failed to ${action.toLowerCase()} user`);
         }
     };
@@ -413,6 +419,18 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
             setInviteForm({ email: '', role: 'USER', organizationId: '' });
         } catch (err: any) {
             toast.error(err.message || 'Failed to send invitation');
+        }
+    };
+
+    // Reset Password Logic
+    const [resetLinkData, setResetLinkData] = useState<{ resetLink: string, token: string } | null>(null);
+
+    const handleResetPassword = async (userId: string) => {
+        try {
+            const data = await Api.adminResetPassword(userId);
+            setResetLinkData(data);
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to generate reset link');
         }
     };
 
@@ -484,6 +502,13 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                                     <td className="p-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
                                             <button
+                                                onClick={() => handleResetPassword(user.id)}
+                                                className="p-1.5 hover:bg-yellow-500/20 text-slate-400 hover:text-yellow-400 rounded transition-colors text-xs font-medium"
+                                                title="Reset Password"
+                                            >
+                                                <Lock size={14} />
+                                            </button>
+                                            <button
                                                 onClick={() => handleImpersonateUser(user.id)}
                                                 className="p-1.5 hover:bg-purple-500/20 text-slate-400 hover:text-purple-400 rounded transition-colors text-xs font-medium"
                                                 title="Impersonate User"
@@ -516,6 +541,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
             </div>
         </div>
     );
+
 
 
 
@@ -587,6 +613,43 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                     onClose={() => { setShowEditModal(false); setEditingOrg(null); }}
                     onUpdate={() => { setShowEditModal(false); setEditingOrg(null); fetchData(); }}
                 />
+            )}
+
+            {/* Reset Password Link Modal */}
+            {resetLinkData && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                    <div className="bg-navy-900 border border-white/10 rounded-xl p-6 w-full max-w-md shadow-2xl text-center">
+                        <div className="mx-auto w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mb-4">
+                            <Lock className="text-blue-500" size={24} />
+                        </div>
+                        <h3 className="text-xl font-bold mb-2">Password Reset Link Generated</h3>
+                        <p className="text-sm text-slate-400 mb-6">
+                            Copy this link and send it to the user. This link is valid for 24 hours.
+                        </p>
+
+                        <div className="bg-navy-950 p-3 rounded border border-white/10 mb-6 break-all font-mono text-xs text-slate-300">
+                            {resetLinkData.resetLink}
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => {
+                                    navigator.clipboard.writeText(resetLinkData.resetLink);
+                                    toast.success('Copied to clipboard');
+                                }}
+                                className="flex-1 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-medium"
+                            >
+                                Copy Link
+                            </button>
+                            <button
+                                onClick={() => setResetLinkData(null)}
+                                className="flex-1 py-2 bg-transparent border border-white/10 hover:bg-white/5 rounded text-slate-300"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
 
             {/* Invite User Modal */}

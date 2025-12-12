@@ -79,11 +79,22 @@ export const LLMSelector: React.FC = () => {
         setIsOpen(false);
     };
 
+    // If no model is selected, and we have models, select the first one (or system default)
+    useEffect(() => {
+        if (!aiConfig.selectedModelId && models.length > 0) {
+            // Prefer one marked as default if possible, otherwise first
+            // Since we don't have is_default property easily exposed here without looking at raw data or guessing, 
+            // we'll just pick the first one to ensure "Unknown" isn't shown.
+            // Ideally backend returns 'is_default' but 'models' is simplified.
+            setAIConfig({ selectedModelId: models[0].id });
+        }
+    }, [models, aiConfig.selectedModelId, setAIConfig]);
+
     const getActiveLabel = () => {
         if (aiConfig.autoMode) return 'Auto';
         if (aiConfig.selectedModelId) {
-            const m = models.find(x => x.id === aiConfig.selectedModelId);
-            return m ? m.name : 'Unknown Model';
+            const currentModel = models.find(m => m.id === aiConfig.selectedModelId);
+            return currentModel ? currentModel.name : 'Unknown Model';
         }
         return 'Select Model';
     };

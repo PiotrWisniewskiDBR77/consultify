@@ -111,7 +111,14 @@ export const Api = {
         if (!res.ok) throw new Error('Failed to delete user');
     },
 
-    // --- SESSIONS ---
+    checkSystemHealth: async (): Promise<{ status: string, latency: number }> => {
+        const res = await fetch(`${API_URL}/health`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Health check failed');
+        return data;
+    },
+
+    // Session Management
     getSession: async (userId: string, type: SessionMode, projectId?: string): Promise<any> => {
         let url = `${API_URL}/sessions/${userId}?type=${type}`;
         if (projectId) url += `&projectId=${projectId}`;
@@ -306,6 +313,54 @@ export const Api = {
         return data;
     },
 
+    adminGetDatabaseTables: async (): Promise<string[]> => {
+        const res = await fetch(`${API_URL}/superadmin/database/tables`, {
+            headers: getHeaders()
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to fetch tables');
+        return data;
+    },
+
+    adminGetTableRows: async (tableName: string): Promise<any[]> => {
+        const res = await fetch(`${API_URL}/superadmin/database/rows/${tableName}`, {
+            headers: getHeaders()
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to fetch rows');
+        return data;
+    },
+
+    adminGetStorageStats: async (): Promise<any> => {
+        const res = await fetch(`${API_URL}/superadmin/storage/usage`, {
+            headers: getHeaders()
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to fetch storage stats');
+        return data;
+    },
+
+    adminGetOrgFiles: async (orgId: string): Promise<any[]> => {
+        const res = await fetch(`${API_URL}/superadmin/storage/files/${orgId}`, {
+            headers: getHeaders()
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to fetch files');
+        return data;
+    },
+
+    adminDeleteFile: async (orgId: string, path: string): Promise<void> => {
+        const res = await fetch(`${API_URL}/superadmin/storage/files`, {
+            method: 'DELETE',
+            headers: {
+                ...getHeaders(),
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ orgId, path })
+        });
+        if (!res.ok) throw new Error('Failed to delete file');
+    },
+
     resetPassword: async (token: string, newPassword: string): Promise<void> => {
         // Use auth route, or ensure route is publicly accessible without superadmin middleware
         // NOTE: We implemented this in superadmin.js in previous step, but it should be public.
@@ -314,7 +369,7 @@ export const Api = {
         // The generation is Admin, the consumption is Public.
         // I need to move the consumption endpoint to auth.js or a public route.
         // For now let's assume I fix it.
-        const res = await fetch(`${1 == 1 ? API_URL.replace('/api', '/api/auth') : API_URL}/reset-password`, { // Hacky url fix or just put in auth
+        const res = await fetch(`${API_URL}/auth/reset-password`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ token, newPassword })
@@ -1241,6 +1296,16 @@ export const Api = {
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to fetch plans');
+        return json;
+    },
+
+    // Get user license plans
+    getUserPlans: async (): Promise<any[]> => {
+        const res = await fetch(`${API_URL}/billing/user-plans`, {
+            headers: getHeaders()
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Failed to fetch user plans');
         return json;
     },
 

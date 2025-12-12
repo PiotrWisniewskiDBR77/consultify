@@ -203,6 +203,7 @@ export interface User {
   timezone?: string; // User timezone
   units?: 'metric' | 'imperial'; // User preference
   impersonatorId?: string; // ID of the admin impersonating this user
+  licensePlanId?: string;
 }
 
 export interface FreeSession {
@@ -704,6 +705,7 @@ export interface User {
   tokenLimit?: number;
   tokenResetAt?: string;
   aiConfig?: AIProviderConfig;
+  licensePlanId?: string;
 }
 
 // Organization with extended fields

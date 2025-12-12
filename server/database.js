@@ -734,6 +734,17 @@ function initDb() {
             token_overage_rate REAL,
             storage_overage_rate REAL,
             stripe_price_id TEXT,
+            features TEXT DEFAULT '{}', -- JSON: printing, analytics_level, etc.
+            is_active INTEGER DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        // 1.5 USER LICENSE PLANS (New)
+        db.run(`CREATE TABLE IF NOT EXISTS user_license_plans (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL, -- Standard, Premium
+            price_monthly REAL NOT NULL,
+            features TEXT DEFAULT '{}', -- JSON
             is_active INTEGER DEFAULT 1,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
@@ -798,37 +809,56 @@ function initDb() {
             stripe_invoice_id TEXT UNIQUE,
             amount_due REAL,
             amount_paid REAL,
-            currency TEXT DEFAULT 'usd',
-            status TEXT,
-            period_start DATE,
-            period_end DATE,
+            status TEXT, -- paid, open, void, uncollectible
+            period_start DATETIME,
+            period_end DATETIME,
             pdf_url TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
         )`);
 
-        // 6. FEATURE FLAGS (per plan)
-        db.run(`CREATE TABLE IF NOT EXISTS plan_features (
-            id TEXT PRIMARY KEY,
-            plan_id TEXT NOT NULL,
-            feature_key TEXT NOT NULL,
-            enabled INTEGER DEFAULT 1,
-            limit_value INTEGER,
-            FOREIGN KEY(plan_id) REFERENCES subscription_plans(id) ON DELETE CASCADE
-        )`);
-
-        // Seed Default Subscription Plans
-        const defaultPlans = [
-            { id: 'plan-starter', name: 'Starter', price: 20, tokens: 100000, storage: 5, tokenOverage: 0.015, storageOverage: 0.10 },
-            { id: 'plan-growth', name: 'Growth', price: 100, tokens: 1000000, storage: 50, tokenOverage: 0.012, storageOverage: 0.08 },
-            { id: 'plan-payg', name: 'Pay As You Go', price: 0, tokens: 0, storage: 0, tokenOverage: 0.020, storageOverage: 0.12 }
-        ];
-
-        const insertPlan = db.prepare(`INSERT OR IGNORE INTO subscription_plans (id, name, price_monthly, token_limit, storage_limit_gb, token_overage_rate, storage_overage_rate) VALUES (?, ?, ?, ?, ?, ?, ?)`);
-        defaultPlans.forEach(p => {
-            insertPlan.run(p.id, p.name, p.price, p.tokens, p.storage, p.tokenOverage, p.storageOverage);
+        // User License Link
+        db.run(`ALTER TABLE users ADD COLUMN license_plan_id TEXT`, (err) => {
+            // Ignore if exists
         });
-        insertPlan.finalize();
+
+        // Add features column to subscription_plans if not exists (for existing dbs)
+        db.run(`ALTER TABLE subscription_plans ADD COLUMN features TEXT DEFAULT '{}'`, (err) => {
+            // Ignore if exists
+        });
+
+        // SEED PRICING DATA
+        const seedPricing = async () => {
+            const { v4: uuidv4 } = require('uuid');
+
+            // ORG PLANS
+            const orgPlans = [
+                { id: 'plan-trial', name: 'Trial (7 Days)', price: 0, tokens: 10000, storage: 1, features: JSON.stringify({ printing: false, analytics: 'basic', duration_days: 7 }) },
+                { id: 'plan-pro', name: 'Pro', price: 299, tokens: 500000, storage: 50, features: JSON.stringify({ printing: true, analytics: 'standard' }) },
+                { id: 'plan-elite', name: 'Elite', price: 999, tokens: 2000000, storage: 500, features: JSON.stringify({ printing: true, analytics: 'advanced' }) },
+                { id: 'plan-enterprise', name: 'Enterprise', price: 2999, tokens: 10000000, storage: 5000, features: JSON.stringify({ printing: true, analytics: 'full', support: 'dedicated' }) }
+            ];
+
+            const insertOrgPlan = db.prepare(`INSERT OR IGNORE INTO subscription_plans (id, name, price_monthly, token_limit, storage_limit_gb, features) VALUES (?, ?, ?, ?, ?, ?)`);
+            for (const p of orgPlans) {
+                insertOrgPlan.run(p.id, p.name, p.price, p.tokens, p.storage, p.features);
+            }
+            insertOrgPlan.finalize();
+
+            // USER LICENSES
+            const userPlans = [
+                { id: 'license-standard', name: 'Standard User', price: 20, features: JSON.stringify({ access: 'standard' }) },
+                { id: 'license-premium', name: 'Premium User', price: 100, features: JSON.stringify({ access: 'full' }) }
+            ];
+
+            const insertUserPlan = db.prepare(`INSERT OR IGNORE INTO user_license_plans (id, name, price_monthly, features) VALUES (?, ?, ?, ?)`);
+            for (const p of userPlans) {
+                insertUserPlan.run(p.id, p.name, p.price, p.features);
+            }
+            insertUserPlan.finalize();
+        };
+        seedPricing();
+
 
         console.log('Created billing tables and seeded default subscription plans.');
 
@@ -846,7 +876,7 @@ function initDb() {
         ];
 
         projectStorageCols.forEach(col => {
-            db.run(`ALTER TABLE projects ADD COLUMN ${col.name} ${col.type} DEFAULT ${col.default}`, (err) => {
+            db.run(`ALTER TABLE projects ADD COLUMN ${col.name} ${col.type} DEFAULT ${col.default} `, (err) => {
                 // Ignore if exists
             });
         });
@@ -861,22 +891,22 @@ function initDb() {
         ];
 
         docStorageCols.forEach(col => {
-            db.run(`ALTER TABLE knowledge_docs ADD COLUMN ${col.name} ${col.type} DEFAULT ${col.default}`, (err) => {
+            db.run(`ALTER TABLE knowledge_docs ADD COLUMN ${col.name} ${col.type} DEFAULT ${col.default} `, (err) => {
                 // Ignore if exists
             });
         });
 
         // 3. STORAGE AUDIT LOG (Physical File Reconciliation)
-        db.run(`CREATE TABLE IF NOT EXISTS storage_audit_logs (
-            id TEXT PRIMARY KEY,
-            organization_id TEXT NOT NULL,
-            action TEXT, -- 'reconciliation', 'cleanup'
+        db.run(`CREATE TABLE IF NOT EXISTS storage_audit_logs(
+                                    id TEXT PRIMARY KEY,
+                                    organization_id TEXT NOT NULL,
+                                    action TEXT, -- 'reconciliation', 'cleanup'
             files_scanned INTEGER,
-            files_deleted INTEGER,
-            space_reclaimed_bytes INTEGER,
-            discrepancies_found INTEGER,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`);
+                                    files_deleted INTEGER,
+                                    space_reclaimed_bytes INTEGER,
+                                    discrepancies_found INTEGER,
+                                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                                )`);
 
         // Seed Super Admin & Default Organization
         const superAdminOrgId = 'org-dbr77-system';

@@ -311,33 +311,7 @@ router.post('/users/invite', (req, res) => {
     });
 });
 
-// RESET PASSWORD (Public)
-router.post('/reset-password', (req, res) => {
-    const { token, newPassword } = req.body;
-
-    if (!token || !newPassword) return res.status(400).json({ error: 'Token and new password required' });
-
-    db.get('SELECT * FROM password_resets WHERE token = ?', [token], (err, resetData) => {
-        if (err) return res.status(500).json({ error: 'Database error' });
-        if (!resetData) return res.status(400).json({ error: 'Invalid or expired token' });
-
-        if (new Date(resetData.expires_at) < new Date()) {
-            return res.status(400).json({ error: 'Token has expired' });
-        }
-
-        const hashedPassword = require('bcryptjs').hashSync(newPassword, 8);
-
-        // Update User Password
-        db.run('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, resetData.user_id], function (err) {
-            if (err) return res.status(500).json({ error: 'Failed to update password' });
-
-            // Delete Protocol Token (Single Use)
-            db.run('DELETE FROM password_resets WHERE token = ?', [token]);
-
-            res.json({ message: 'Password updated successfully' });
-        });
-    });
-});
+// Route moved to auth.js
 
 // RESET PASSWORD LINK (Super Admin)
 router.post('/users/:id/reset-password', (req, res) => {
@@ -503,6 +477,75 @@ router.post('/impersonate', (req, res) => {
             res.json({ user: safeUser, token });
         });
     });
+});
+
+// DATABASE EXPLORER
+router.get('/database/tables', (req, res) => {
+    db.all("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows.map(r => r.name));
+    });
+});
+
+router.get('/database/rows/:tableName', (req, res) => {
+    const { tableName } = req.params;
+    // Sanitize table name to prevent SQL injection (basic check)
+    if (!/^[a-zA-Z0-9_]+$/.test(tableName)) {
+        return res.status(400).json({ error: 'Invalid table name' });
+    }
+
+    db.all(`SELECT * FROM ${tableName} ORDER BY rowid DESC LIMIT 100`, [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+
+// STORAGE STATS
+const StorageService = require('../services/storageService');
+router.get('/storage/usage', async (req, res) => {
+    try {
+        const stats = await StorageService.getGlobalUsage();
+
+        // Enrich breakdown with organization names if possible
+        const orgs = await new Promise((resolve) => {
+            db.all('SELECT id, name FROM organizations', [], (err, rows) => resolve(rows || []));
+        });
+
+        const enrichedBreakdown = stats.breakdown.map(item => {
+            const org = orgs.find(o => o.id === item.name);
+            return {
+                ...item,
+                displayName: org ? org.name : (item.name === 'global' ? 'Global System' : item.name)
+            };
+        });
+
+        res.json({ ...stats, breakdown: enrichedBreakdown });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.get('/storage/files/:orgId', async (req, res) => {
+    try {
+        const { orgId } = req.params;
+        const files = await StorageService.listFiles(orgId);
+        res.json(files);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.delete('/storage/files', async (req, res) => {
+    try {
+        const { orgId, path } = req.body;
+        if (!orgId || !path) return res.status(400).json({ error: 'Missing params' });
+
+        const success = await StorageService.deleteFile(orgId, path);
+        if (success) res.json({ success: true });
+        else res.status(404).json({ error: 'File not found' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 module.exports = router;

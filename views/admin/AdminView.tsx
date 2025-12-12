@@ -31,6 +31,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate, l
     // const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'USERS' | 'PROJECTS'>('DASHBOARD'); // Removed internal state
     const [users, setUsers] = useState<User[]>([]);
     const [projects, setProjects] = useState<Project[]>([]);
+    const [userPlans, setUserPlans] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
 
     // Modals
@@ -41,7 +42,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate, l
 
     // User Form State
     const [formData, setFormData] = useState({
-        firstName: '', lastName: '', email: '', role: UserRole.OTHER, status: 'active'
+        firstName: '', lastName: '', email: '', role: UserRole.OTHER, status: 'active', licensePlanId: ''
     });
 
     const loadUsers = async () => {
@@ -67,9 +68,10 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate, l
     useEffect(() => {
         const initData = async () => {
             try {
-                const [u, p] = await Promise.all([Api.getUsers(), Api.getProjects()]);
+                const [u, p, up] = await Promise.all([Api.getUsers(), Api.getProjects(), Api.getUserPlans()]);
                 setUsers(u);
                 setProjects(p);
+                setUserPlans(up);
             } catch (e) {
                 console.error('Failed to load initial admin data', e);
             }
@@ -130,14 +132,15 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate, l
         setEditingUser(user);
         setFormData({
             firstName: user.firstName, lastName: user.lastName, email: user.email,
-            role: (user.role as UserRole) || UserRole.OTHER, status: user.status || 'active'
+            role: (user.role as UserRole) || UserRole.OTHER, status: user.status || 'active',
+            licensePlanId: user.licensePlanId || ''
         });
         setShowAddUserModal(true);
     };
 
     const openAddModal = () => {
         setEditingUser(null);
-        setFormData({ firstName: '', lastName: '', email: '', role: UserRole.OTHER, status: 'active' });
+        setFormData({ firstName: '', lastName: '', email: '', role: UserRole.OTHER, status: 'active', licensePlanId: '' });
         setShowAddUserModal(true);
     };
 
@@ -241,6 +244,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate, l
                         <tr>
                             <th className="px-6 py-4">User</th>
                             <th className="px-6 py-4">Role</th>
+                            <th className="px-6 py-4">License</th>
                             <th className="px-6 py-4">Status</th>
                             <th className="px-6 py-4 text-right">Actions</th>
                         </tr>
@@ -262,6 +266,11 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate, l
                                 <td className="px-6 py-4">
                                     <span className={`px-2 py-1 rounded-full text-xs border ${getRoleBadgeColor(user.role)}`}>
                                         {user.role || 'USER'}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4">
+                                    <span className="text-xs text-slate-400">
+                                        {userPlans.find(p => p.id === user.licensePlanId)?.name || 'Standard'}
                                     </span>
                                 </td>
                                 <td className="px-6 py-4">
@@ -319,6 +328,12 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate, l
                                 <option value="USER">User</option>
                                 <option value="MANAGER">Manager</option>
                                 <option value="ADMIN">Admin</option>
+                            </select>
+                            <select value={formData.licensePlanId} onChange={e => setFormData({ ...formData, licensePlanId: e.target.value })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white">
+                                <option value="">Select License...</option>
+                                {userPlans.map(p => (
+                                    <option key={p.id} value={p.id}>{p.name} (${p.price_monthly})</option>
+                                ))}
                             </select>
                             <button type="submit" className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-semibold mt-4">Save</button>
                         </form>

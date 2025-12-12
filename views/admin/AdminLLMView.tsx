@@ -10,6 +10,7 @@ export const AdminLLMView: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
+    const [showInactive, setShowInactive] = useState(false);
 
     // Ollama Configuration State
     const [ollamaEndpoint, setOllamaEndpoint] = useState('http://localhost:11434');
@@ -278,12 +279,21 @@ export const AdminLLMView: React.FC = () => {
                             </h2>
                             <p className="text-slate-400 text-sm mt-1">Configure AI models available to tenants.</p>
                         </div>
-                        <button
-                            onClick={() => { setEditingId(null); setForm({ name: '', provider: 'openai', api_key: '', endpoint: '', is_active: true, visibility: 'admin' }); setShowModal(true); }}
-                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors text-sm font-medium"
-                        >
-                            <Plus size={16} /> Add Provider
-                        </button>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowInactive(!showInactive)}
+                                className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors text-sm font-medium ${showInactive ? 'bg-white/10 border-white/20 text-white' : 'border-white/10 text-slate-400 hover:text-white'}`}
+                            >
+                                {showInactive ? <Eye size={16} /> : <EyeOff size={16} />}
+                                {showInactive ? 'Hide Inactive' : 'Show Inactive'}
+                            </button>
+                            <button
+                                onClick={() => { setEditingId(null); setForm({ name: '', provider: 'openai', api_key: '', endpoint: '', is_active: true, visibility: 'admin' }); setShowModal(true); }}
+                                className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors text-sm font-medium"
+                            >
+                                <Plus size={16} /> Add Provider
+                            </button>
+                        </div>
                     </div>
 
                     <div className="bg-navy-900 border border-white/5 rounded-xl overflow-auto custom-scrollbar">
@@ -300,39 +310,41 @@ export const AdminLLMView: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
-                                {loading ? <tr><td colSpan={8} className="p-8 text-center">Loading...</td></tr> : providers.map(p => (
-                                    <tr key={p.id} className="hover:bg-white/5 transition-colors">
-                                        <td className="px-6 py-4 font-medium text-white">{p.name}</td>
-                                        <td className="px-6 py-4 capitalize">{p.provider}</td>
-                                        <td className="px-6 py-4 font-mono text-xs">{p.model_id}</td>
-                                        <td className="px-6 py-4 font-mono text-xs text-slate-400">
-                                            I: ${p.input_cost_per_1k || 0}<br />
-                                            O: ${p.output_cost_per_1k || 0}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-2 py-1 rounded text-xs ${p.visibility === 'public' ? 'bg-green-500/20 text-green-400' : p.visibility === 'beta' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-slate-700 text-slate-300'}`}>
-                                                {p.visibility}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            {p.is_active ? <span className="text-green-400 flex items-center gap-1"><Check size={14} /> Active</span> : <span className="text-slate-500">Inactive</span>}
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <button
-                                                    onClick={() => handleTestConnection(p)}
-                                                    title="Test Connection"
-                                                    disabled={testingConnection}
-                                                    className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-green-400 transition-colors"
-                                                >
-                                                    <Wifi size={16} />
-                                                </button>
-                                                <button onClick={() => handleEdit(p)} className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white"><Edit size={16} /></button>
-                                                <button onClick={() => handleDelete(p.id)} className="p-2 hover:bg-red-500/20 rounded-lg text-slate-400 hover:text-red-400"><Trash2 size={16} /></button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
+                                {loading ? <tr><td colSpan={8} className="p-8 text-center">Loading...</td></tr> : providers
+                                    .filter(p => showInactive || p.is_active)
+                                    .map(p => (
+                                        <tr key={p.id} className="hover:bg-white/5 transition-colors">
+                                            <td className="px-6 py-4 font-medium text-white">{p.name}</td>
+                                            <td className="px-6 py-4 capitalize">{p.provider}</td>
+                                            <td className="px-6 py-4 font-mono text-xs">{p.model_id}</td>
+                                            <td className="px-6 py-4 font-mono text-xs text-slate-400">
+                                                I: ${p.input_cost_per_1k || 0}<br />
+                                                O: ${p.output_cost_per_1k || 0}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`px-2 py-1 rounded text-xs ${p.visibility === 'public' ? 'bg-green-500/20 text-green-400' : p.visibility === 'beta' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-slate-700 text-slate-300'}`}>
+                                                    {p.visibility}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                {p.is_active ? <span className="text-green-400 flex items-center gap-1"><Check size={14} /> Active</span> : <span className="text-slate-500">Inactive</span>}
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <button
+                                                        onClick={() => handleTestConnection(p)}
+                                                        title="Test Connection"
+                                                        disabled={testingConnection}
+                                                        className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-green-400 transition-colors"
+                                                    >
+                                                        <Wifi size={16} />
+                                                    </button>
+                                                    <button onClick={() => handleEdit(p)} className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white"><Edit size={16} /></button>
+                                                    <button onClick={() => handleDelete(p.id)} className="p-2 hover:bg-red-500/20 rounded-lg text-slate-400 hover:text-red-400"><Trash2 size={16} /></button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
                             </tbody>
                         </table>
                     </div>

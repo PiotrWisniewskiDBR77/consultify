@@ -16,6 +16,10 @@ const Scheduler = require('./cron/scheduler');
 // Init Scheduler
 Scheduler.init();
 
+// Init Health Check Monitor
+const { startHealthCheck } = require('./cron/healthCheckJob');
+startHealthCheck();
+
 // Security Headers (production-ready)
 app.use(helmet({
     contentSecurityPolicy: isProduction ? undefined : false, // Disable CSP in dev for hot reload
@@ -128,9 +132,19 @@ app.use('/api/sso', ssoRoutes);
 const aiAsyncRoutes = require('./routes/aiAsync');
 app.use('/api/ai-async', aiAsyncRoutes); // New Async Endpoint
 
+const db = require('./database');
+
 // Health Check - MUST be before catchall
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date() });
+    const start = Date.now();
+    db.get('SELECT 1', [], (err) => {
+        const duration = Date.now() - start;
+        if (err) {
+            console.error('Health Check DB Error:', err);
+            return res.status(500).json({ status: 'error', message: 'Database unreachable', error: err.message });
+        }
+        res.json({ status: 'ok', timestamp: new Date(), latency: duration, database: 'connected' });
+    });
 });
 
 // Serve static files from the React app
