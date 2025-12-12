@@ -185,8 +185,18 @@ const AiService = {
                 modelUsed = `${provider}:${model_id}`;
 
                 if (provider === 'ollama') {
-                    // DISABLED PER USER REQUEST
-                    throw new Error("Ollama connection is disabled by system configuration.");
+                    const response = await fetch(`${endpoint || 'http://localhost:11434'}/api/chat`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            model: model_id || 'llama2',
+                            messages,
+                            stream: false
+                        })
+                    });
+                    if (!response.ok) throw new Error(`Ollama error: ${response.statusText}`);
+                    const data = await response.json();
+                    responseText = data.message?.content || '';
                 }
                 else if (provider === 'openai' || ['qwen', 'deepseek', 'mistral', 'groq', 'nvidia_nim', 'z_ai', 'together'].includes(provider)) {
                     const messages = history.map(h => ({
@@ -199,9 +209,25 @@ const AiService = {
                     const userContent = formatOpenAIVisionInfo(prompt, images);
                     messages.push({ role: 'user', content: userContent });
 
+                    let authHeader = `Bearer ${api_key}`;
+                    if (provider === 'z_ai') {
+                        try {
+                            const [id, secret] = api_key.split('.');
+                            const now = Date.now();
+                            const payload = {
+                                api_key: id,
+                                exp: now + 3600 * 1000,
+                                timestamp: now
+                            };
+                            authHeader = jwt.sign(payload, secret, { algorithm: 'HS256', header: { alg: 'HS256', sign_type: 'SIGN' } });
+                        } catch (e) {
+                            console.error("Zhipu Token Gen Error:", e);
+                        }
+                    }
+
                     const response = await fetch(endpoint || 'https://api.openai.com/v1/chat/completions', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${api_key}` },
+                        headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
                         body: JSON.stringify({ model: model_id, messages })
                     });
                     if (!response.ok) throw new Error(`Provider ${provider} error: ${response.statusText}`);
@@ -247,7 +273,7 @@ const AiService = {
                     const data = await response.json();
                     responseText = data.result || '';
                 }
-                else if (provider === 'gemini') {
+                else if (provider === 'gemini' || provider === 'google') {
                     const genAI = new deps.GoogleGenerativeAI(api_key);
                     const model = genAI.getGenerativeModel({ model: model_id });
 

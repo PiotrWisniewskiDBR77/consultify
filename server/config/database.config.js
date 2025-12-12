@@ -11,12 +11,33 @@ const isProduction = process.env.NODE_ENV === 'production';
 const databaseUrl = process.env.DATABASE_URL;
 
 // Determine database type
+// Determine database type
 const getDatabaseType = () => {
+    // 1. Strict Mode: If DB_TYPE is explicitly set, we MUST satisfy it or crash.
+    if (process.env.DB_TYPE) {
+        if (process.env.DB_TYPE === 'postgres') {
+            if (!databaseUrl && !process.env.DB_HOST) {
+                console.error('\n\x1b[31m%s\x1b[0m', 'FATAL ERROR: DB_TYPE is set to "postgres" but no DATABASE_URL or DB_HOST is provided.');
+                console.error('Please configure your .env file with the correct database credentials.\n');
+                process.exit(1);
+            }
+            return 'postgres';
+        }
+        if (process.env.DB_TYPE === 'sqlite') {
+            return 'sqlite';
+        }
+    }
+
+    // 2. Legacy/Auto-Detect Mode (Warn if falling back)
     if (databaseUrl) {
         if (databaseUrl.startsWith('postgres://') || databaseUrl.startsWith('postgresql://')) {
             return 'postgres';
         }
     }
+
+    // Warn about implicit fallback
+    console.warn('\n\x1b[33m%s\x1b[0m', 'WARNING: No DB_TYPE set. Falling back to SQLite default.');
+    console.warn('To prevent this, set DB_TYPE=sqlite or DB_TYPE=postgres in your .env file.\n');
     return 'sqlite';
 };
 

@@ -121,7 +121,7 @@ export const Sidebar: React.FC = () => {
       id: 'INTRO_CONTEXT',
       label: 'Intro',
       icon: <BookOpen size={20} />,
-      isFloating: true, // User requested floating menu
+      isFloating: false,
       subItems: [
         { id: 'CTX_1', label: 'Company Profile', viewId: AppView.CONTEXT_BUILDER_PROFILE },
         { id: 'CTX_2', label: 'Goals & Expectations', viewId: AppView.CONTEXT_BUILDER_GOALS },

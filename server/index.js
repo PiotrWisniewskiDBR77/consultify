@@ -149,6 +149,13 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// Run Integrity Check at Startup
+const SystemIntegrity = require('./services/systemIntegrity');
+// Give DB a moment to connect (SQLite/PG async init)
+setTimeout(() => {
+    SystemIntegrity.check();
+}, 2000);
+
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, '../dist')));
 
