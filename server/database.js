@@ -42,9 +42,9 @@ function initDb() {
         // We will drop the old one if it exists to ensure clean schema for this major refactor
         // In a real prod env, we would migrate. Here we wipe for simplicity as agreed.
         // ONLY drop in dev mode
-        if (process.env.NODE_ENV !== 'production') {
-            db.run(`DROP TABLE IF EXISTS users`);
-        }
+        // if (process.env.NODE_ENV !== 'production') {
+        //    db.run(`DROP TABLE IF EXISTS users`);
+        // }
         db.run(`CREATE TABLE IF NOT EXISTS users (
             id TEXT PRIMARY KEY,
             organization_id TEXT,

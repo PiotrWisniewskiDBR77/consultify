@@ -54,48 +54,59 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
 
     const fetchData = useCallback(async (showLoading = true) => {
         if (showLoading) setLoading(true);
-        try {
-            const [orgs, dashboardData] = await Promise.all([
-                Api.getOrganizations(),
-                Api.getSuperAdminDashboard().catch(() => null)
-            ]);
 
+        // 1. Fetch Core Data (Orgs) - Critical
+        try {
+            const orgs = await Api.getOrganizations();
             setOrganizations(orgs);
 
-            // Calculate Stats from dashboard API
-            const totalUsers = dashboardData?.counts?.total_users || orgs.reduce((acc: number, org: Organization) => acc + (org.user_count || 0), 0);
-            setStats({
-                totalOrgs: dashboardData?.counts?.total_orgs || orgs.length,
-                totalUsers: totalUsers,
-                revenue: 0,
+            // Calculate basic stats from orgs immediately so UI is not empty
+            const totalUsers = orgs.reduce((acc: number, org: Organization) => acc + (org.user_count || 0), 0);
+            setStats(prev => ({
+                ...prev,
+                totalOrgs: orgs.length,
+                totalUsers: totalUsers
+            }));
+
+        } catch (err) {
+            console.error('Failed to load organizations', err);
+            toast.error('Failed to load organizations');
+        }
+
+        // 2. Fetch Dashboard Stats (Optional / Diagnostic)
+        try {
+            const dashboardData = await Api.getSuperAdminDashboard();
+            setStats(prev => ({
+                ...prev,
+                totalOrgs: dashboardData?.counts?.total_orgs || prev.totalOrgs,
+                totalUsers: dashboardData?.counts?.total_users || prev.totalUsers,
                 aiCalls: dashboardData?.ai?.total_ai_calls || 0,
                 tokens: dashboardData?.ai?.total_tokens || 0,
                 activeUsers7d: dashboardData?.counts?.active_users_7d || 0,
                 liveUsers: dashboardData?.live?.total_active_connections || 0
-            });
-
-            // Fetch all users (for Users section)
-            try {
-                const users = await Api.getSuperAdminUsers();
-                setAllUsers(users);
-            } catch (e) {
-                console.warn('Could not fetch users', e);
-            }
-
-            // Fetch recent activities
-            try {
-                const acts = await Api.getActivities(20);
-                setActivities(acts);
-            } catch (e) {
-                console.warn('Could not fetch activities', e);
-            }
-
-            setLoading(false);
+            }));
         } catch (err) {
-            console.error(err);
-            toast.error('Failed to load data');
-            setLoading(false);
+            console.warn('Could not fetch dashboard stats', err);
+            // Don't show toast error for stats, as it's secondary
         }
+
+        // 3. Fetch Users (Critical for Users Tab)
+        try {
+            const users = await Api.getSuperAdminUsers();
+            setAllUsers(users);
+        } catch (e) {
+            console.warn('Could not fetch users', e);
+        }
+
+        // 4. Fetch Activities
+        try {
+            const acts = await Api.getActivities(20);
+            setActivities(acts);
+        } catch (e) {
+            console.warn('Could not fetch activities', e);
+        }
+
+        setLoading(false);
     }, []);
 
     useEffect(() => {
@@ -171,17 +182,17 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
             case 'access-requests':
                 return <div className="p-8 overflow-y-auto"><SuperAdminAccessRequestsView /></div>;
             case 'llm':
-                return <AdminLLMView />;
+                return <div className="p-8 overflow-y-auto h-full"><AdminLLMView /></div>;
             case 'knowledge':
-                return <AdminKnowledgeView />;
+                return <div className="p-8 overflow-y-auto h-full"><AdminKnowledgeView /></div>;
             case 'plans':
-                return <div className="p-8 overflow-y-auto"><SuperAdminPlansView /></div>;
+                return <div className="p-8 overflow-y-auto h-full"><SuperAdminPlansView /></div>;
             case 'token-billing':
-                return <TokenBillingManagementView />;
+                return <div className="p-8 overflow-y-auto h-full"><TokenBillingManagementView /></div>;
             case 'revenue':
                 return <div className="p-8 overflow-y-auto"><SuperAdminRevenueView /></div>;
             case 'settings':
-                return <SystemSettings />;
+                return <div className="p-8 overflow-y-auto h-full"><SystemSettings /></div>;
             case 'audit':
                 return renderAuditLogs();
             default:

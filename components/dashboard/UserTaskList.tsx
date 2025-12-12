@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { CheckCircle2, Circle, ArrowRight, Play, FileText, BarChart, MoveRight, Lock, Plus, RefreshCw, Clock } from 'lucide-react';
+import { CheckCircle2, Circle, ArrowRight, Play, FileText, BarChart, MoveRight, Lock, Plus, RefreshCw } from 'lucide-react';
 import { FullSession, AppView, Task } from '../../types';
 import { TaskDetailModal } from '../TaskDetailModal';
 import { Api } from '../../services/api';
@@ -123,15 +123,15 @@ export const UserTaskList: React.FC<UserTaskListProps> = ({ session, onNavigate 
                         <div
                             key={task.id}
                             className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 ${isActive
-                                ? 'bg-white dark:bg-navy-800 border-blue-500 shadow-lg shadow-blue-500/10 scale-[1.01]'
+                                ? 'bg-white dark:bg-navy-900 border-purple-500 dark:border-purple-500/50 shadow-[0_0_20px_rgba(168,85,247,0.15)] scale-[1.01]'
                                 : 'bg-slate-50 dark:bg-navy-900/50 border-slate-200 dark:border-white/5 opacity-80'
                                 }`}
                         >
-                            {isActive && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-blue-500"></div>}
+                            {isActive && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-purple-500 to-indigo-600"></div>}
 
                             <div className="p-6 flex items-start gap-6">
                                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${isActive
-                                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
                                     : 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400'
                                     }`}>
                                     {isCompleted ? <CheckCircle2 size={24} /> : getIcon(task)}
@@ -143,8 +143,8 @@ export const UserTaskList: React.FC<UserTaskListProps> = ({ session, onNavigate 
                                             {task.title}
                                         </h3>
                                         {isActive && (
-                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-500/20 text-xs font-semibold text-blue-600 dark:text-blue-300">
-                                                <Clock size={12} /> {getTimeEstimate(task)}
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-500/20 text-xs font-semibold text-purple-600 dark:text-purple-300">
+                                                <TaskClock size={12} /> {getTimeEstimate(task)}
                                             </span>
                                         )}
                                     </div>
@@ -157,7 +157,7 @@ export const UserTaskList: React.FC<UserTaskListProps> = ({ session, onNavigate 
                                         {isActive ? (
                                             <button
                                                 onClick={() => handleNavigate(task)}
-                                                className="flex items-center gap-2 bg-navy-900 dark:bg-blue-600 hover:bg-navy-800 dark:hover:bg-blue-500 text-white px-5 py-2.5 rounded-lg text-sm font-bold transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                                                className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white px-5 py-2.5 rounded-lg text-sm font-bold transition-all shadow-lg shadow-purple-500/25 transform hover:-translate-y-0.5"
                                             >
                                                 Start Task
                                                 <ArrowRight size={16} />
@@ -203,8 +203,7 @@ export const UserTaskList: React.FC<UserTaskListProps> = ({ session, onNavigate 
     );
 };
 
-// Local Clock component since it might be missing in older lucide versions or causing issues
-const Clock = ({ size, className }: { size: number, className?: string }) => (
+const TaskClock = ({ size, className }: { size: number, className?: string }) => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
         width={size}

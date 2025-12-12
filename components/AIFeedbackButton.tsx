@@ -5,7 +5,7 @@ import { toast } from 'react-hot-toast';
 
 interface AIFeedbackButtonProps {
     context: string; // e.g., "diagnosis", "recommendation"
-    data?: any;      // The content being rated (optional)
+    data?: unknown;      // The content being rated (optional)
     onFeedbackSubmit?: () => void;
 }
 
