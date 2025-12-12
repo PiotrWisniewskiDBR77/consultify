@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { AppView, SessionMode, UserRole } from '../types';
+import React, { useState, useEffect } from 'react';
+import { AppView, UserRole } from '../types';
 import { useTranslation } from 'react-i18next'; // Refactored from translations object
 import { useAppStore } from '../store/useAppStore';
 
@@ -10,24 +10,6 @@ import {
   LogOut,
   ChevronDown,
   ChevronRight,
-  Zap,
-  Layers,
-  BookOpen,
-  Box,
-  CheckCircle2,
-  Lock,
-  X,
-  PanelLeftClose,
-  PanelLeftOpen, // We utilize these for Pin/Unpin visual
-  Rocket,
-  Map,
-  Pin,
-  PinOff,
-  Activity,
-  UserCircle,
-  CreditCard,
-  Cpu,
-  Bell,
   Link as LinkIcon,
   Globe
 } from 'lucide-react';

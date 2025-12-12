@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FullSession, FullInitiative, Language } from '../types';
+import { FullSession, FullInitiative } from '../types';
 import { Scale, ArrowRight, Lightbulb, CheckCircle } from 'lucide-react';
 import { Button } from './Button';
 
@@ -14,8 +14,7 @@ export const PilotDecisionWorkspace: React.FC<PilotDecisionWorkspaceProps> = ({
     fullSession,
     onUpdateInitiative,
     onNextStep,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    language
+
 }) => {
     const initiatives = fullSession.initiatives || [];
 

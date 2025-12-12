@@ -112,7 +112,7 @@ export const FullStep4Workspace: React.FC<FullStep4WorkspaceProps> = ({
 
         {/* ROI Chart */}
         <div className="bg-navy-950/50 border border-white/5 rounded-xl p-4 h-[350px]">
-          <ROIPaybackChart economics={economics} language={language} />
+          <ROIPaybackChart economics={economics} />
         </div>
 
         {/* Input Mode Toggle */}
