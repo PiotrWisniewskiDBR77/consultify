@@ -22,12 +22,12 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { FullInitiative, Quarter, Language, User } from '../types';
 import { InitiativeDetailModal } from './InitiativeDetailModal';
-import { GripVertical, Clock, AlertTriangle } from 'lucide-react';
+import { GripVertical, Clock } from 'lucide-react';
 
 interface Props {
     initiatives: FullInitiative[];
     onUpdateInitiative: (init: FullInitiative) => void;
-    language: Language;
+
     users?: User[];
     currentUser?: User | null;
 }
@@ -107,7 +107,7 @@ const SortableItem: React.FC<{ id: string, initiative: FullInitiative, onClick: 
     );
 };
 
-export const RoadmapKanban: React.FC<Props> = ({ initiatives, onUpdateInitiative, language, users, currentUser }) => {
+export const RoadmapKanban: React.FC<Props> = ({ initiatives, onUpdateInitiative, users, currentUser }) => {
     const [activeId, setActiveId] = useState<string | null>(null);
     const [selectedInitiative, setSelectedInitiative] = useState<FullInitiative | null>(null);
 

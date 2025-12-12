@@ -3,10 +3,10 @@ import { EconomicsSummary, Language } from '../types';
 
 interface Props {
     economics: EconomicsSummary;
-    language: Language;
+
 }
 
-export const ROIPaybackChart: React.FC<Props> = ({ economics, language }) => {
+export const ROIPaybackChart: React.FC<Props> = ({ economics }) => {
     const { totalCost, totalAnnualBenefit } = economics;
 
     // Generate data points for 5 years
