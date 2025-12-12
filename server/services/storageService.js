@@ -107,6 +107,98 @@ class StorageService {
         }
         return size;
     }
+
+    /**
+     * Get storage usage for a specific organization
+     */
+    async getUsageByOrganization(orgId) {
+        const orgPath = path.join(BASE_UPLOAD_DIR, orgId);
+        return await this.getDirectorySize(orgPath);
+    }
+
+    /**
+     * Get global storage usage stats
+     */
+    async getGlobalUsage() {
+        const totalSize = await this.getDirectorySize(BASE_UPLOAD_DIR);
+
+        // Get breakdown by top-level folders (organizations)
+        const breakdown = [];
+        try {
+            const entries = await fs.promises.readdir(BASE_UPLOAD_DIR, { withFileTypes: true });
+            for (const entry of entries) {
+                if (entry.isDirectory()) {
+                    const size = await this.getDirectorySize(path.join(BASE_UPLOAD_DIR, entry.name));
+                    breakdown.push({ name: entry.name, size });
+                }
+            }
+        } catch (e) {
+            // Ignore error if base dir doesn't exist yet
+        }
+
+        return { totalSize, breakdown };
+    }
+
+    /**
+     * List all files in an organization's directory
+     */
+    async listFiles(orgId) {
+        const orgPath = path.join(BASE_UPLOAD_DIR, orgId);
+        const files = [];
+
+        try {
+            await this._scanDir(orgPath, files, orgId); // Pass root orgId for relative path logic
+        } catch (e) {
+            // Likely dir doesn't exist
+        }
+        return files;
+    }
+
+    async _scanDir(dir, fileList, rootOrgId) {
+        const entries = await fs.promises.readdir(dir, { withFileTypes: true });
+        for (const entry of entries) {
+            const fullPath = path.join(dir, entry.name);
+            if (entry.isDirectory()) {
+                await this._scanDir(fullPath, fileList, rootOrgId);
+            } else {
+                const stats = await fs.promises.stat(fullPath);
+                // Create a relative path for display/ID purposes
+                // If fullPath is ".../uploads/org-123/global/file.png" and root is ".../uploads/org-123"
+                // relative is "global/file.png"
+
+                // Construct root path to subtract
+                const rootPath = path.join(BASE_UPLOAD_DIR, rootOrgId);
+                const relPath = fullPath.replace(rootPath + path.sep, '');
+
+                fileList.push({
+                    name: entry.name,
+                    path: relPath, // Use this as the ID for deletion
+                    fullPath: fullPath, // Keep for debugging if needed, but don't expose to client if risky
+                    size: stats.size,
+                    created_at: stats.birthtime
+                });
+            }
+        }
+    }
+
+    /**
+     * Delete a specific file by relative path within org
+     */
+    async deleteFile(orgId, relativePath) {
+        const fullPath = path.join(BASE_UPLOAD_DIR, orgId, relativePath);
+
+        // Security check: Ensure path is still within org dir
+        const orgRoot = path.join(BASE_UPLOAD_DIR, orgId);
+        if (!fullPath.startsWith(orgRoot)) {
+            throw new Error('Security: Invalid file path');
+        }
+
+        if (fs.existsSync(fullPath)) {
+            await fs.promises.unlink(fullPath);
+            return true;
+        }
+        return false;
+    }
 }
 
 module.exports = new StorageService();

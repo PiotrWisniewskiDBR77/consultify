@@ -86,62 +86,69 @@ const AiService = {
 
         try {
             // 1. Get Provider & Organization Context
+            // 1. Get Provider & Organization Context
             const getContext = () => new Promise((resolve) => {
                 if (providerId) {
                     deps.db.get("SELECT * FROM llm_providers WHERE id = ?", [providerId], (err, row) => resolve({ providerConfig: row, orgId: null }));
-                } else if (userId) {
-                    // Fetch Provider AND Organization ID
-                    const query = `
-                        SELECT p.*, u.organization_id 
-                        FROM users u
-                        LEFT JOIN organizations o ON u.organization_id = o.id
-                        LEFT JOIN llm_providers p ON o.active_llm_provider_id = p.id
-                        WHERE u.id = ?
-                    `;
-                    deps.db.get(query, [userId], (err, row) => {
-                        if (row) {
-                            // If org has no specific provider, row.id (provider id) will be null if we did LEFT JOIN p.
-                            // But the original query assumed strict JOIN. Let's keep it safe.
-                            // Actually, let's separate concerns or use a robust query.
-                            // Original query used JOIN, let's stick to finding org_id separately if needed or grab both.
+                    return;
+                }
+
+                if (userId) {
+                    deps.db.get("SELECT organization_id, ai_config FROM users WHERE id = ?", [userId], (err, user) => {
+                        const orgId = user ? user.organization_id : null;
+
+                        // A. Check User Preference (selectedModelId)
+                        let userPrefId = null;
+                        if (user && user.ai_config) {
+                            try {
+                                const cfg = JSON.parse(user.ai_config);
+                                if (cfg.selectedModelId) userPrefId = cfg.selectedModelId;
+                            } catch (e) { }
                         }
 
-                        // Revised approach: Get Org ID first, then provider.
-                    });
-
-                    // Simpler single query to get both:
-                    const combinedQuery = `
-                        SELECT p.*, u.organization_id
-                        FROM users u
-                        LEFT JOIN organizations o ON u.organization_id = o.id
-                        LEFT JOIN llm_providers p ON o.active_llm_provider_id = p.id AND p.is_active = 1
-                        WHERE u.id = ?
-                    `;
-
-                    deps.db.get(combinedQuery, [userId], (err, row) => {
-                        if (row) {
-                            const { organization_id, ...providerData } = row;
-                            // If provider data is null (no active provider set), we still have org_id
-                            const config = providerData.id ? providerData : null;
-
-                            if (config) resolve({ providerConfig: config, orgId: organization_id });
-                            else {
-                                // Fallback to default system provider
-                                deps.db.get("SELECT * FROM llm_providers WHERE is_active = 1 AND is_default = 1 LIMIT 1", [], (err, defaultRow) => {
-                                    resolve({ providerConfig: defaultRow || null, orgId: organization_id });
-                                });
-                            }
-                        } else {
-                            // User not found? Should not happen if authenticated.
-                            deps.db.get("SELECT * FROM llm_providers WHERE is_active = 1 AND is_default = 1 LIMIT 1", [], (err, defaultRow) => {
-                                resolve({ providerConfig: defaultRow, orgId: null });
+                        if (userPrefId) {
+                            deps.db.get("SELECT * FROM llm_providers WHERE id = ? AND is_active = 1", [userPrefId], (err, prefRow) => {
+                                if (prefRow) {
+                                    resolve({ providerConfig: prefRow, orgId });
+                                    return;
+                                }
+                                // If not found (e.g. invalid ID or inactive), fall through to Org Default
+                                checkOrgDefault(orgId, resolve);
                             });
+                        } else {
+                            checkOrgDefault(orgId, resolve);
                         }
                     });
                 } else {
-                    // No Context
-                    deps.db.get("SELECT * FROM llm_providers WHERE is_active = 1 AND is_default = 1 LIMIT 1", [], (err, defaultRow) => {
-                        resolve({ providerConfig: defaultRow, orgId: null });
+                    checkOrgDefault(null, resolve);
+                }
+
+                function checkOrgDefault(orgId, resolve) {
+                    if (orgId) {
+                        deps.db.get(`
+                            SELECT p.* 
+                            FROM organizations o 
+                            JOIN llm_providers p ON o.active_llm_provider_id = p.id 
+                            WHERE o.id = ? AND p.is_active = 1
+                         `, [orgId], (err, row) => {
+                            if (row) resolve({ providerConfig: row, orgId });
+                            else checkSystemDefault(orgId, resolve);
+                        });
+                    } else {
+                        checkSystemDefault(null, resolve);
+                    }
+                }
+
+                function checkSystemDefault(orgId, resolve) {
+                    deps.db.get("SELECT * FROM llm_providers WHERE is_active = 1 AND is_default = 1 LIMIT 1", [], (err, row) => {
+                        // If no default marked, just get any active one
+                        if (!row) {
+                            deps.db.get("SELECT * FROM llm_providers WHERE is_active = 1 ORDER BY name ASC LIMIT 1", [], (err, anyRow) => {
+                                resolve({ providerConfig: anyRow || null, orgId });
+                            });
+                        } else {
+                            resolve({ providerConfig: row, orgId });
+                        }
                     });
                 }
             });
@@ -528,36 +535,67 @@ const AiService = {
         try {
             // 1. Get Provider (Reusing logic - ideally refactor into helper but duplicating for safety in this edit)
             // 1. Get Provider & Organization Context (Duplicated for safety in generator)
+            // 1. Get Provider & Organization Context
             const getContext = () => new Promise((resolve) => {
                 if (providerId) {
                     deps.db.get("SELECT * FROM llm_providers WHERE id = ?", [providerId], (err, row) => resolve({ providerConfig: row, orgId: null }));
-                } else if (userId) {
-                    const combinedQuery = `
-                        SELECT p.*, u.organization_id
-                        FROM users u
-                        LEFT JOIN organizations o ON u.organization_id = o.id
-                        LEFT JOIN llm_providers p ON o.active_llm_provider_id = p.id AND p.is_active = 1
-                        WHERE u.id = ?
-                    `;
-                    deps.db.get(combinedQuery, [userId], (err, row) => {
-                        if (row) {
-                            const { organization_id, ...providerData } = row;
-                            const config = providerData.id ? providerData : null;
-                            if (config) resolve({ providerConfig: config, orgId: organization_id });
-                            else {
-                                deps.db.get("SELECT * FROM llm_providers WHERE is_active = 1 AND is_default = 1 LIMIT 1", [], (err, defaultRow) => {
-                                    resolve({ providerConfig: defaultRow || null, orgId: organization_id });
-                                });
-                            }
-                        } else {
-                            deps.db.get("SELECT * FROM llm_providers WHERE is_active = 1 AND is_default = 1 LIMIT 1", [], (err, defaultRow) => {
-                                resolve({ providerConfig: defaultRow, orgId: null });
+                    return;
+                }
+
+                if (userId) {
+                    deps.db.get("SELECT organization_id, ai_config FROM users WHERE id = ?", [userId], (err, user) => {
+                        const orgId = user ? user.organization_id : null;
+
+                        // A. Check User Preference (selectedModelId)
+                        let userPrefId = null;
+                        if (user && user.ai_config) {
+                            try {
+                                const cfg = JSON.parse(user.ai_config);
+                                if (cfg.selectedModelId) userPrefId = cfg.selectedModelId;
+                            } catch (e) { }
+                        }
+
+                        if (userPrefId) {
+                            deps.db.get("SELECT * FROM llm_providers WHERE id = ?", [userPrefId], (err, prefRow) => {
+                                if (prefRow) {
+                                    resolve({ providerConfig: prefRow, orgId });
+                                    return;
+                                }
+                                checkOrgDefault(orgId, resolve);
                             });
+                        } else {
+                            checkOrgDefault(orgId, resolve);
                         }
                     });
                 } else {
-                    deps.db.get("SELECT * FROM llm_providers WHERE is_active = 1 AND is_default = 1 LIMIT 1", [], (err, defaultRow) => {
-                        resolve({ providerConfig: defaultRow, orgId: null });
+                    checkOrgDefault(null, resolve);
+                }
+
+                function checkOrgDefault(orgId, resolve) {
+                    if (orgId) {
+                        deps.db.get(`
+                            SELECT p.* 
+                            FROM organizations o 
+                            JOIN llm_providers p ON o.active_llm_provider_id = p.id 
+                            WHERE o.id = ? AND p.is_active = 1
+                         `, [orgId], (err, row) => {
+                            if (row) resolve({ providerConfig: row, orgId });
+                            else checkSystemDefault(orgId, resolve);
+                        });
+                    } else {
+                        checkSystemDefault(null, resolve);
+                    }
+                }
+
+                function checkSystemDefault(orgId, resolve) {
+                    deps.db.get("SELECT * FROM llm_providers WHERE is_active = 1 AND is_default = 1 LIMIT 1", [], (err, row) => {
+                        if (!row) {
+                            deps.db.get("SELECT * FROM llm_providers WHERE is_active = 1 ORDER BY name ASC LIMIT 1", [], (err, anyRow) => {
+                                resolve({ providerConfig: anyRow || null, orgId });
+                            });
+                        } else {
+                            resolve({ providerConfig: row, orgId });
+                        }
                     });
                 }
             });
@@ -604,7 +642,7 @@ const AiService = {
                 const { provider, api_key, model_id, endpoint } = providerConfig;
                 modelUsed = `${provider}:${model_id}`;
 
-                if (provider === 'openai') {
+                if (provider === 'openai' || ['qwen', 'deepseek', 'mistral', 'groq', 'together', 'nvidia_nim', 'z_ai'].includes(provider)) {
                     // ... (OpenAI Streaming logic remains same as it uses fetch)
                     // OpenAI Streaming
                     const messages = history.map(h => ({

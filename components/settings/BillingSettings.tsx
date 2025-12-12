@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '../../types';
 import { Api } from '../../services/api';
-import { CreditCard, Globe, Cpu } from 'lucide-react';
+import { CreditCard, Globe, Cpu, UserCircle } from 'lucide-react';
 
 interface BillingSettingsProps {
     currentUser: User;
@@ -87,9 +87,60 @@ export const BillingSettings: React.FC<BillingSettingsProps> = ({ currentUser })
     const currentPlanId = billingData?.billing?.subscription_plan_id;
     const currentPlan = plans.find(p => p.id === currentPlanId);
 
+    // Filter user plans
+    const [userPlans, setUserPlans] = useState<any[]>([]);
+    useEffect(() => {
+        Api.getUserPlans().then(setUserPlans).catch(err => console.error('Failed to fetch user plans', err));
+    }, []);
+
+    const userLicenseId = currentUser.licensePlanId;
+    const userLicense = userPlans.find(p => p.id === userLicenseId);
+
     return (
         <div className="max-w-4xl space-y-8">
             <h2 className="text-lg font-semibold text-white mb-6">Subscription & Billing</h2>
+
+            {/* User License Card */}
+            <div className="bg-navy-900 border border-white/10 rounded-xl p-5 mb-8">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400">
+                            <UserCircle size={24} />
+                        </div>
+                        <div>
+                            <h3 className="text-white font-semibold text-lg">Your User License</h3>
+                            <p className="text-slate-400 text-sm">
+                                {userLicense ? userLicense.name : 'Standard License'}
+                                {userLicense && <span className="text-slate-500 ml-2">(${userLicense.price_monthly}/mo)</span>}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="text-right">
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium border ${userLicense ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : 'bg-slate-700/50 text-slate-400 border-white/5'}`}>
+                            {userLicense ? 'Active' : 'Default'}
+                        </span>
+                    </div>
+                </div>
+                {userLicense?.features && (
+                    <div className="mt-4 pt-4 border-t border-white/5">
+                        <p className="text-xs font-medium text-slate-500 mb-2 uppercase tracking-wide">Included Features</p>
+                        <ul className="grid grid-cols-2 gap-2 text-sm text-slate-300">
+                            {(() => {
+                                try {
+                                    const f = JSON.parse(userLicense.features);
+                                    return Object.entries(f).map(([k, v]) => (
+                                        <li key={k} className="flex items-center gap-2">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-purple-500"></div>
+                                            <span className="capitalize">{k.replace(/_/g, ' ')}: {String(v)}</span>
+                                        </li>
+                                    ));
+                                } catch (e) { return null; }
+                            })()}
+                        </ul>
+                    </div>
+                )}
+            </div>
+
 
             {/* Current Plan Card */}
             {currentPlan && (
@@ -218,6 +269,29 @@ export const BillingSettings: React.FC<BillingSettingsProps> = ({ currentUser })
                                         Overage: ${plan.token_overage_rate}/1K • ${plan.storage_overage_rate}/GB
                                     </li>
                                 </ul>
+
+                                {/* Plan Features */}
+                                {plan.features && (() => {
+                                    try {
+                                        const feats = JSON.parse(plan.features);
+                                        const entries = Object.entries(feats);
+                                        if (entries.length === 0) return null;
+                                        return (
+                                            <div className="mt-3 pt-3 border-t border-white/5 mb-4">
+                                                <ul className="text-xs text-slate-400 space-y-1.5">
+                                                    {entries.map(([key, val]) => (
+                                                        <li key={key} className="flex justify-between items-start">
+                                                            <span className="capitalize">{key.replace(/_/g, ' ')}</span>
+                                                            <span className="text-slate-200 font-medium text-right max-w-[50%] break-words">
+                                                                {String(val) === 'true' ? 'Yes' : String(val) === 'false' ? 'No' : String(val)}
+                                                            </span>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        );
+                                    } catch (e) { return null; }
+                                })()}
                                 {plan.id === currentPlanId ? (
                                     <div className="w-full py-2 rounded-lg text-center text-sm font-medium text-purple-400 bg-purple-500/10 border border-purple-500/20">
                                         Current Plan

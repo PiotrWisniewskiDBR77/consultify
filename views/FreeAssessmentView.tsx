@@ -373,15 +373,20 @@ export const FreeAssessmentView: React.FC = () => {
   useEffect(() => {
     // Logic to resume specific steps based on View
     const timeout = setTimeout(() => {
-      if (currentAppView === AppView.QUICK_STEP2_USER_CONTEXT && !sessionData.step2Completed && currentStep !== AssessmentStep.STRATEGIC_GOALS) {
+      // Check if we already have the "starter message" for Step 2 to avoid duplicate triggers
+      const hasStep2Msg = messages.some(m => m.content.includes("Strategic Goals"));
+      // Check if we already have the "starter message" for Step 3
+      const hasStep3Msg = messages.some(m => m.content.includes("Challenges Map"));
+
+      if (currentAppView === AppView.QUICK_STEP2_USER_CONTEXT && !sessionData.step2Completed && currentStep !== AssessmentStep.STRATEGIC_GOALS && !hasStep2Msg) {
         startStep2Flow();
       }
-      if (currentAppView === AppView.QUICK_STEP3_EXPECTATIONS && !sessionData.step3Completed && currentStep !== AssessmentStep.CHALLENGES_MAP) {
+      if (currentAppView === AppView.QUICK_STEP3_EXPECTATIONS && !sessionData.step3Completed && currentStep !== AssessmentStep.CHALLENGES_MAP && !hasStep3Msg) {
         startStep3Flow();
       }
-    }, 0);
+    }, 100);
     return () => clearTimeout(timeout);
-  }, [currentAppView]);
+  }, [currentAppView, messages, sessionData, currentStep]);
 
   const getActiveStepIndex = () => {
     if (currentAppView === AppView.QUICK_STEP3_EXPECTATIONS) return 3;

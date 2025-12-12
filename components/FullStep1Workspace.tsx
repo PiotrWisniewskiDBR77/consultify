@@ -11,7 +11,6 @@ import {
   Smartphone,
   Briefcase,
   BrainCircuit,
-  Info,
   Bot
 } from 'lucide-react';
 import { RadarChart } from './RadarChart';
@@ -28,7 +27,7 @@ interface FullStep1WorkspaceProps {
 
 export const FullStep1Workspace: React.FC<FullStep1WorkspaceProps> = ({
   fullSession,
-  currentAxisId,
+  currentAxisId: _currentAxisId,
   onStartAxis,
   onNextStep,
   language

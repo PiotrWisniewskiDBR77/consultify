@@ -140,7 +140,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
                             <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center text-green-400"><CreditCard size={20} /></div>
                             <div>
                                 <h4 className="text-sm font-semibold text-white">Current Subscription</h4>
-                                <p className="text-xs text-slate-400">{billing.plan_name || org.plan.toUpperCase()} Plan</p>
+                                <p className="text-xs text-slate-400">{billing.plan_name || org.plan?.toUpperCase() || '-'} Plan</p>
                             </div>
                         </div>
                         <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${billing.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
@@ -279,8 +279,8 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id as any)}
                                 className={`py-4 text-sm font-medium flex items-center gap-2 border-b-2 transition-colors ${activeTab === tab.id
-                                        ? 'border-blue-500 text-white'
-                                        : 'border-transparent text-slate-400 hover:text-slate-300 hover:border-slate-700'
+                                    ? 'border-blue-500 text-white'
+                                    : 'border-transparent text-slate-400 hover:text-slate-300 hover:border-slate-700'
                                     }`}
                             >
                                 {tab.icon} {tab.label}

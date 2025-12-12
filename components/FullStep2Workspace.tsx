@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { FullSession, FullInitiative, Language, AxisId, InitiativeStatus } from '../types';
+import { FullSession, FullInitiative, Language, AxisId } from '../types';
 import { translations } from '../translations';
-import { ArrowRight, Save, X, Plus, Filter, Search, Layers, Grid, List } from 'lucide-react';
+import { ArrowRight, Plus, Search, Layers } from 'lucide-react';
 import { InitiativeCard } from './InitiativeCard';
 import { InitiativeDetailModal } from './InitiativeDetailModal';
 import { useAppStore } from '../store/useAppStore';
@@ -25,7 +25,7 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
 }) => {
   const t = translations.fullInitiatives;
   const ts = translations.sidebar;
-  const initiatives = fullSession.initiatives || [];
+  const initiatives = useMemo(() => fullSession.initiatives || [], [fullSession.initiatives]);
   const { currentUser } = useAppStore();
 
   // Temporary: use currentUser as the only available user for assignment
@@ -37,7 +37,6 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [filterAxis, setFilterAxis] = useState<AxisId | 'ALL'>('ALL');
   const [filterPriority, setFilterPriority] = useState<'ALL' | 'High' | 'Medium' | 'Low'>('ALL');
-  const [activeTab, setActiveTab] = useState<'list' | 'kanban'>('list'); // Future use, currently just list/grid
   const [groupBy, setGroupBy] = useState<'none' | 'axis' | 'priority' | 'status'>('none');
 
   const handleEditClick = (init: FullInitiative) => {
@@ -61,10 +60,10 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
     setModalData(newInit);
   };
 
-  const getAxisLabel = (id: string) => {
+  const getAxisLabel = React.useCallback((id: string) => {
     const key = `fullStep1_${id === 'digitalProducts' ? 'prod' : id.substring(0, 4)}` as any;
     return (ts as any)[key]?.[language] || id;
-  };
+  }, [language, ts]);
 
   // Filter Logic
   const filteredInitiatives = useMemo(() => {

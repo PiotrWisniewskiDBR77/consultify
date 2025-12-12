@@ -14,7 +14,8 @@ import {
     CreditCard,
     TrendingUp,
     Pin,
-    PanelLeftClose
+    PanelLeftClose,
+    HardDrive
 } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 
@@ -29,8 +30,10 @@ export type SuperAdminSection =
     | 'token-billing'
     | 'revenue'
     | 'settings'
+    | 'storage'
     | 'analytics'
-    | 'audit';
+    | 'audit'
+    | 'database';
 
 interface SuperAdminSidebarProps {
     activeSection: SuperAdminSection;
@@ -50,8 +53,10 @@ const menuItems: { id: SuperAdminSection; label: string; icon: React.ReactNode }
     { id: 'llm', label: 'LLM Providers', icon: <Brain size={20} /> },
     { id: 'knowledge', label: 'Knowledge Base', icon: <BookOpen size={20} /> },
     { id: 'settings', label: 'System Settings', icon: <Settings size={20} /> },
+    { id: 'storage', label: 'Storage', icon: <HardDrive size={20} /> },
     { id: 'analytics', label: 'AI Analytics', icon: <LayoutDashboard size={20} /> },
     { id: 'audit', label: 'Audit Logs', icon: <FileText size={20} /> },
+    { id: 'database', label: 'Database Explorer', icon: <Settings size={20} /> },
 ];
 
 export const SuperAdminSidebar: React.FC<SuperAdminSidebarProps> = ({

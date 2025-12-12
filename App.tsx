@@ -13,6 +13,10 @@ import { FullExecutionView } from './views/FullExecutionView';
 import { FullPilotView } from './views/FullPilotView';
 import { FullRolloutView } from './views/FullRolloutView';
 import { FullReportsView } from './views/FullReportsView';
+import { LoginView } from './views/auth/LoginView';
+import { RegisterView } from './views/auth/RegisterView';
+import { ResetPasswordView } from './views/auth/ResetPasswordView';
+import { LoadingScreen } from './components/LoadingScreen';
 import { AdminView } from './views/admin/AdminView';
 import { SettingsView } from './views/SettingsView';
 import { SuperAdminView } from './views/superadmin/SuperAdminView';
@@ -27,6 +31,7 @@ import { Api } from './services/api';
 import { LLMSelector } from './components/LLMSelector';
 import { NotificationDropdown } from './components/NotificationDropdown';
 import { AutoSaveProvider, useAutoSave } from './src/context/AutoSaveContext';
+import { SystemHealth } from './components/SystemHealth';
 
 const AppContent = () => {
     const {
@@ -364,6 +369,8 @@ const AppContent = () => {
                                     )}
                                 </div>
 
+                                <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
+                                <SystemHealth />
                                 <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
                                 <LLMSelector />
                                 <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>

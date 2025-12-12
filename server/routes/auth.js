@@ -337,5 +337,33 @@ function performRevocation(userId, res) {
     );
 }
 
+// RESET PASSWORD (Public)
+router.post('/reset-password', (req, res) => {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) return res.status(400).json({ error: 'Token and new password required' });
+
+    db.get('SELECT * FROM password_resets WHERE token = ?', [token], (err, resetData) => {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        if (!resetData) return res.status(400).json({ error: 'Invalid or expired token' });
+
+        if (new Date(resetData.expires_at) < new Date()) {
+            return res.status(400).json({ error: 'Token has expired' });
+        }
+
+        const hashedPassword = require('bcryptjs').hashSync(newPassword, 8);
+
+        // Update User Password
+        db.run('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, resetData.user_id], function (err) {
+            if (err) return res.status(500).json({ error: 'Failed to update password' });
+
+            // Delete Protocol Token (Single Use)
+            db.run('DELETE FROM password_resets WHERE token = ?', [token]);
+
+            res.json({ message: 'Password updated successfully' });
+        });
+    });
+});
+
 module.exports = router;
 

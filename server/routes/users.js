@@ -12,7 +12,7 @@ router.get('/', (req, res) => {
     // SuperAdmin sees all? Or we keep strict tenant separation even for him unless impersonating.
     // For now: Admin sees own org users.
 
-    db.all('SELECT id, email, first_name, last_name, role, status, avatar_url, last_login, timezone, units FROM users WHERE organization_id = ?', [req.user.organizationId], (err, rows) => {
+    db.all('SELECT id, email, first_name, last_name, role, status, avatar_url, last_login, timezone, units, license_plan_id, ai_config FROM users WHERE organization_id = ?', [req.user.organizationId], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
 
         const users = rows.map(u => ({
@@ -29,7 +29,10 @@ router.get('/', (req, res) => {
             lastLogin: u.last_login,
             timezone: u.timezone,
             units: u.units,
-            aiConfig: u.ai_config ? JSON.parse(u.ai_config) : {}
+            timezone: u.timezone,
+            units: u.units,
+            aiConfig: u.ai_config ? JSON.parse(u.ai_config) : {},
+            licensePlanId: u.license_plan_id
         }));
         res.json(users);
     });
@@ -122,7 +125,7 @@ router.post('/', (req, res) => {
 // UPDATE USER
 router.put('/:id', (req, res) => {
     const { id } = req.params;
-    const { firstName, lastName, email, role, status, timezone, units, aiConfig } = req.body;
+    const { firstName, lastName, email, role, status, timezone, units, aiConfig, licensePlanId } = req.body;
     const organizationId = req.user.organizationId;
 
     // Build dynamic query to avoid overwriting with nulls if partial update
@@ -136,6 +139,11 @@ router.put('/:id', (req, res) => {
     if (aiConfig !== undefined) {
         sql += `, ai_config = ?`;
         params.push(JSON.stringify(aiConfig));
+    }
+
+    if (licensePlanId !== undefined) {
+        sql += `, license_plan_id = ?`;
+        params.push(licensePlanId);
     }
 
     sql += ` WHERE id = ? AND organization_id = ?`;

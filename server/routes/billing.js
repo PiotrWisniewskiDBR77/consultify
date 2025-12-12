@@ -28,6 +28,20 @@ router.get('/plans', async (req, res) => {
 });
 
 /**
+ * GET /billing/user-plans
+ * List all active user license plans
+ */
+router.get('/user-plans', async (req, res) => {
+    try {
+        const plans = await billingService.getUserPlans();
+        res.json(plans);
+    } catch (error) {
+        console.error('Get user plans error:', error);
+        res.status(500).json({ error: 'Failed to fetch user plans' });
+    }
+});
+
+/**
  * GET /billing/current
  * Get current organization's billing info and usage
  */
@@ -246,6 +260,62 @@ router.delete('/admin/plans/:id', verifySuperAdmin, async (req, res) => {
     } catch (error) {
         console.error('Delete plan error:', error);
         res.status(500).json({ error: error.message || 'Failed to deactivate plan' });
+    }
+});
+
+/**
+ * GET /billing/admin/user-plans
+ * Get all user license plans
+ */
+router.get('/admin/user-plans', verifySuperAdmin, async (req, res) => {
+    try {
+        const plans = await billingService.getUserPlans();
+        res.json(plans);
+    } catch (error) {
+        console.error('Get user plans error:', error);
+        res.status(500).json({ error: 'Failed to fetch user plans' });
+    }
+});
+
+/**
+ * POST /billing/admin/user-plans
+ * Create a new user license plan
+ */
+router.post('/admin/user-plans', verifySuperAdmin, async (req, res) => {
+    try {
+        const plan = await billingService.createUserPlan(req.body);
+        res.json({ success: true, plan });
+    } catch (error) {
+        console.error('Create user plan error:', error);
+        res.status(500).json({ error: error.message || 'Failed to create user plan' });
+    }
+});
+
+/**
+ * PUT /billing/admin/user-plans/:id
+ * Update user license plan
+ */
+router.put('/admin/user-plans/:id', verifySuperAdmin, async (req, res) => {
+    try {
+        const result = await billingService.updateUserPlan(req.params.id, req.body);
+        res.json({ success: true, ...result });
+    } catch (error) {
+        console.error('Update user plan error:', error);
+        res.status(500).json({ error: error.message || 'Failed to update user plan' });
+    }
+});
+
+/**
+ * DELETE /billing/admin/user-plans/:id
+ * Deactivate user license plan
+ */
+router.delete('/admin/user-plans/:id', verifySuperAdmin, async (req, res) => {
+    try {
+        await billingService.deleteUserPlan(req.params.id);
+        res.json({ success: true, message: 'User plan deactivated' });
+    } catch (error) {
+        console.error('Delete user plan error:', error);
+        res.status(500).json({ error: error.message || 'Failed to deactivate user plan' });
     }
 });
 

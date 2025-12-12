@@ -47,10 +47,11 @@ function createPlan(planData) {
     const id = `plan-${uuidv4()}`;
     return new Promise((resolve, reject) => {
         db.run(
-            `INSERT INTO subscription_plans (id, name, price_monthly, token_limit, storage_limit_gb, token_overage_rate, storage_overage_rate, stripe_price_id, is_active)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO subscription_plans (id, name, price_monthly, token_limit, storage_limit_gb, token_overage_rate, storage_overage_rate, stripe_price_id, features, is_active)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [id, planData.name, planData.price_monthly, planData.token_limit, planData.storage_limit_gb,
-                planData.token_overage_rate, planData.storage_overage_rate, planData.stripe_price_id, 1],
+                planData.token_overage_rate, planData.storage_overage_rate, planData.stripe_price_id,
+                JSON.stringify(planData.features || {}), 1],
             function (err) {
                 if (err) reject(err);
                 else resolve({ id, ...planData });
@@ -66,7 +67,7 @@ function updatePlan(planId, updates) {
     const fields = [];
     const values = [];
 
-    ['name', 'price_monthly', 'token_limit', 'storage_limit_gb', 'token_overage_rate', 'storage_overage_rate', 'stripe_price_id', 'is_active'].forEach(field => {
+    ['name', 'price_monthly', 'token_limit', 'storage_limit_gb', 'token_overage_rate', 'storage_overage_rate', 'stripe_price_id', 'features', 'is_active'].forEach(field => {
         if (updates[field] !== undefined) {
             fields.push(`${field} = ?`);
             values.push(updates[field]);
@@ -94,6 +95,70 @@ function updatePlan(planId, updates) {
  */
 function deletePlan(planId) {
     return updatePlan(planId, { is_active: 0 });
+}
+
+// ==========================================
+// USER LICENSE PLANS
+// ==========================================
+
+function getUserPlans() {
+    return new Promise((resolve, reject) => {
+        db.all('SELECT * FROM user_license_plans WHERE is_active = 1 ORDER BY price_monthly ASC', [], (err, rows) => {
+            if (err) reject(err);
+            else resolve(rows || []);
+        });
+    });
+}
+
+function createUserPlan(planData) {
+    const id = `license-${uuidv4()}`;
+    return new Promise((resolve, reject) => {
+        db.run(
+            `INSERT INTO user_license_plans (id, name, price_monthly, features, is_active)
+             VALUES (?, ?, ?, ?, ?)`,
+            [id, planData.name, planData.price_monthly, JSON.stringify(planData.features || {}), 1],
+            function (err) {
+                if (err) reject(err);
+                else resolve({ id, ...planData });
+            }
+        );
+    });
+}
+
+function updateUserPlan(planId, updates) {
+    const fields = [];
+    const values = [];
+
+    ['name', 'price_monthly', 'features', 'is_active'].forEach(field => {
+        if (updates[field] !== undefined) {
+            fields.push(`${field} = ?`);
+            // Stringify JSON if it's the features field and it's an object
+            if (field === 'features' && typeof updates[field] === 'object') {
+                values.push(JSON.stringify(updates[field]));
+            } else {
+                values.push(updates[field]);
+            }
+        }
+    });
+
+    if (fields.length === 0) return Promise.resolve(null);
+
+    values.push(planId);
+
+    return new Promise((resolve, reject) => {
+        db.run(
+            `UPDATE user_license_plans SET ${fields.join(', ')} WHERE id = ?`,
+            values,
+            function (err) {
+                if (err) reject(err);
+                else resolve({ id: planId, changes: this.changes });
+            }
+        );
+    });
+}
+
+function deleteUserPlan(planId) {
+    return updateUserPlan(planId, { is_active: 0 });
 }
 
 /**
@@ -351,5 +416,9 @@ module.exports = {
     changePlan,
     getInvoices,
     recordInvoice,
-    getRevenueStats
+    getRevenueStats,
+    getUserPlans,
+    createUserPlan,
+    updateUserPlan,
+    deleteUserPlan
 };
