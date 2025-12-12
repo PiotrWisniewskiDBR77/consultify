@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { ArrowRight, Lightbulb, Target, Users, Zap, CheckCircle2, Box, Layers, Server } from 'lucide-react';
+import { ArrowRight, Box, Layers, Server } from 'lucide-react';
 import { CompanyProfile, FreeSession, Language } from '../types';
 import { translations } from '../translations';
 
@@ -13,6 +12,7 @@ interface Step1WorkspaceProps {
 
 export const Step1Workspace: React.FC<Step1WorkspaceProps> = ({
   profile,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   sessionData,
   isStepComplete,
   onNextStep,

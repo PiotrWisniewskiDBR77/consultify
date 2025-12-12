@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowRight, Target, CheckCircle2 } from 'lucide-react';
 import { CompanyProfile, FreeSession, Language } from '../types';
-import { translations } from '../translations';
+
 
 interface Step2WorkspaceProps {
   profile: Partial<CompanyProfile>;

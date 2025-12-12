@@ -1,6 +1,6 @@
 import React from 'react';
 import { CompanyProfile, FreeSession, Language } from '../types';
-import { translations } from '../translations';
+
 import { ArrowRight, AlertTriangle, Lock, FileText, CheckCircle } from 'lucide-react';
 
 interface Step3WorkspaceProps {
