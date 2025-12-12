@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { Api } from '../services/api';
-import { ChevronDown, Search, Check, Cpu, Zap, Layers, Sparkles } from 'lucide-react';
+import { ChevronDown, Search, Check, Zap, Layers, Sparkles } from 'lucide-react';
 
 interface LLMModel {
     id: string;
@@ -34,7 +34,7 @@ export const LLMSelector: React.FC = () => {
         if (isOpen && models.length === 0) {
             fetchModels();
         }
-    }, [isOpen]);
+    }, [isOpen, models.length]);
 
     // Close on click outside
     useEffect(() => {
@@ -68,11 +68,7 @@ export const LLMSelector: React.FC = () => {
         return matchesSearch && isVisibleByUser;
     });
 
-    const toggleSwitch = (key: keyof typeof aiConfig, value: boolean) => {
-        // If Auto is turned on, maybe we should turn off specific selection visually or keep it as "preferred"
-        // For now, just toggle state.
-        setAIConfig({ [key]: value });
-    };
+
 
     const handleModelSelect = (modelId: string) => {
         setAIConfig({ selectedModelId: modelId, autoMode: false });
