@@ -63,7 +63,7 @@ export const FullStep3Workspace: React.FC<FullStep3WorkspaceProps> = ({
         fullSession={fullSession}
         onUpdateInitiative={onUpdateInitiative}
         onNextStep={onNextStep}
-        language={language}
+
       />
     );
   }

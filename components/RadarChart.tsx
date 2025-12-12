@@ -78,13 +78,10 @@ export const RadarChart: React.FC<RadarChartProps> = ({ data, size }) => {
                     // Push labels out a bit further than maxVal
                     const angle = i * angleSlice - Math.PI / 2;
                     const labelRadius = radius - 5; // fit inside or just on edge
-                    const x = radius + labelRadius * Math.cos(angle);
-                    const y = radius + labelRadius * Math.sin(angle);
 
-                    // Simple adjustment for text anchor based on position
-                    let anchor = "middle";
-                    if (i === 1 || i === 2) anchor = "start";
-                    if (i === 4 || i === 5) anchor = "end";
+
+
+
 
                     // Move text slightly to avoid overlap
                     const textX = radius + (radius - 10) * Math.cos(angle);
