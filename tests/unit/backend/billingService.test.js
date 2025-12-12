@@ -1,18 +1,19 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import db from '../../../server/database';
-import BillingService from '../../../server/services/billingService';
+import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+const db = require('../../../server/database.js');
+const BillingService = require('../../../server/services/billingService.js');
 
 describe('BillingService (Unit)', () => {
 
+    beforeAll(async () => {
+        await db.initPromise;
+    });
+
     beforeEach(() => {
         vi.restoreAllMocks();
-        // Since db methods are properties of the default export object when mocked
-        // we can just overwrite them or spy on them. 
-        // Note: db.all is a function on the object.
-        // We need to ensure we provide a default implementation that calls back to avoid hangs.
-        if (!db.all) db.all = () => { };
-        if (!db.run) db.run = () => { };
-        if (!db.get) db.get = () => { };
+        // Since we are using the real singleton instance required via CJS, spyOn should work
     });
 
     describe('getPlans', () => {

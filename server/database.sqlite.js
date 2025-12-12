@@ -264,6 +264,9 @@ function initDb() {
         db.run(`ALTER TABLE users ADD COLUMN avatar_url TEXT`, (err) => {
             // Ignore error if column already exists
         });
+        db.run(`ALTER TABLE users ADD COLUMN title TEXT`, (err) => {
+            // Ignore error if column already exists
+        });
 
         // ==========================================
         // PHASE 3: AI EVOLUTION TABLES

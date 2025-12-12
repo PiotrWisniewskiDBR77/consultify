@@ -9,6 +9,7 @@ const rateLimit = require('express-rate-limit');
 const app = express();
 const PORT = process.env.PORT || 3005;
 const isProduction = process.env.NODE_ENV === 'production';
+const isTest = process.env.NODE_ENV === 'test';
 
 const Scheduler = require('./cron/scheduler');
 
@@ -38,6 +39,7 @@ const apiLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     store: redisStore, // Use Custom Redis Store
+    skip: (req) => isTest, // Skip in test environment
     message: { error: 'Too many requests, please try again later.' }
 });
 
@@ -45,6 +47,7 @@ const authLimiter = rateLimit({
     windowMs: 60 * 60 * 1000,
     max: isProduction ? 10 : 1000,
     store: authRedisStore,
+    skip: (req) => isTest, // Skip in test environment
     message: { error: 'Too many login attempts, please try again later.' }
 });
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FullSession, FullInitiative, Language, Quarter, Wave } from '../types';
+import { FullSession, FullInitiative, Language, Quarter, Wave, User } from '../types';
 import { translations } from '../translations';
 import { ArrowRight, AlertTriangle, Calendar, LayoutGrid, List, Clock } from 'lucide-react';
 import { RoadmapKanban } from './RoadmapKanban';
@@ -11,13 +11,17 @@ interface FullStep3WorkspaceProps {
   onUpdateInitiative: (initiative: FullInitiative) => void;
   onNextStep: () => void;
   language: Language;
+  users?: User[]; // Added
+  currentUser?: User | null; // Added
 }
 
 export const FullStep3Workspace: React.FC<FullStep3WorkspaceProps> = ({
   fullSession,
   onUpdateInitiative,
   onNextStep,
-  language
+  language,
+  users, // Destructure
+  currentUser // Destructure
 }) => {
   const [subStep, setSubStep] = useState<'roadmap' | 'pilot'>('roadmap');
   const [viewMode, setViewMode] = useState<'gantt' | 'board' | 'table'>('gantt');
@@ -29,6 +33,7 @@ export const FullStep3Workspace: React.FC<FullStep3WorkspaceProps> = ({
 
   const quarters: Quarter[] = ['Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7', 'Q8'];
   const waves: Wave[] = ['Wave 1', 'Wave 2', 'Wave 3'];
+  // ... (rest of code logic remains same until return)
 
   // Workload Calc
   const workload = quarters.reduce((acc, q) => {
@@ -143,6 +148,8 @@ export const FullStep3Workspace: React.FC<FullStep3WorkspaceProps> = ({
               initiatives={initiatives}
               onUpdateInitiative={onUpdateInitiative}
               language={language}
+              users={users}
+              currentUser={currentUser}
             />
           </div>
         )}

@@ -7,6 +7,7 @@ import {
     AlertTriangle, FileText, Globe
 } from 'lucide-react';
 import { Button } from './Button';
+import { InitiativeTasksTab } from './InitiativeTasksTab';
 
 interface InitiativeDetailModalProps {
     initiative: FullInitiative;
@@ -14,6 +15,7 @@ interface InitiativeDetailModalProps {
     onClose: () => void;
     onSave: (initiative: FullInitiative) => void;
     users?: User[];
+    currentUser?: User | null; // Added currentUser
     language?: 'EN' | 'PL' | 'DE' | 'AR';
 }
 
@@ -23,10 +25,11 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
     onClose,
     onSave,
     users = [],
+    currentUser,
     language = 'EN'
 }) => {
     const [initiative, setInitiative] = useState<FullInitiative>({ ...initialInitiative });
-    const [activeTab, setActiveTab] = useState<'overview' | 'definition' | 'execution' | 'economics'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'definition' | 'execution' | 'tasks' | 'economics'>('overview');
 
     if (!isOpen) return null;
 
@@ -79,6 +82,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                 <div className="flex border-b border-white/5 bg-navy-900/50 px-6 gap-6">
                     {[
                         { id: 'overview', label: 'Overview', icon: FileText },
+                        { id: 'tasks', label: 'Tasks', icon: CheckCircle }, // New Tab
                         { id: 'definition', label: 'Definition & Scope', icon: Target },
                         { id: 'execution', label: 'Execution & Risks', icon: Calendar },
                         { id: 'economics', label: 'Value & Finance', icon: DollarSign },
@@ -99,6 +103,15 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
 
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-6 bg-navy-900">
+
+                    {/* TASKS TAB */}
+                    {activeTab === 'tasks' && (
+                        <InitiativeTasksTab
+                            initiativeId={initiative.id}
+                            users={users}
+                            currentUser={currentUser!}
+                        />
+                    )}
 
                     {/* OVERVIEW TAB */}
                     {activeTab === 'overview' && (

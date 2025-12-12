@@ -160,6 +160,28 @@ export const FullRoadmapView: React.FC = () => {
     // Keeping flow: Roadmap -> ROI -> Pilot Execution
   };
 
+  const [users, setUsers] = React.useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('http://localhost:3001/api/users', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setUsers(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch users", error);
+      }
+    };
+    if (currentUser?.organizationId) {
+      fetchUsers();
+    }
+  }, [currentUser?.organizationId]);
+
   return (
     <SplitLayout title="Strategic Roadmap" onSendMessage={handleAiChat}>
       <div className="w-full h-full bg-gray-50 dark:bg-navy-900 flex flex-col overflow-hidden relative">
@@ -172,6 +194,8 @@ export const FullRoadmapView: React.FC = () => {
           onUpdateInitiative={handleUpdateInitiative}
           onNextStep={handleNext}
           language={language}
+          users={users} // Pass users
+          currentUser={currentUser} // Pass currentUser
         />
 
         {showPilotDecision && (

@@ -127,6 +127,70 @@ db.serialize(() => {
     db.run(`INSERT INTO sessions (user_id, type, data, project_id) VALUES (?, ?, ?, ?)`,
         [PIOTR_ID, 'full', JSON.stringify(MOCK_SESSION_DATA), PROJECT_ID]);
 
+    // 7. Create Tasks Table
+    db.run(`CREATE TABLE IF NOT EXISTS tasks (
+        id TEXT PRIMARY KEY,
+        project_id TEXT,
+        organization_id TEXT,
+        title TEXT,
+        description TEXT,
+        status TEXT,
+        priority TEXT,
+        step_phase TEXT,
+        task_type TEXT,
+        due_date TEXT,
+        assignee_id TEXT,
+        reporter_id TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        completed_at DATETIME,
+        FOREIGN KEY (project_id) REFERENCES projects(id),
+        FOREIGN KEY (organization_id) REFERENCES organizations(id),
+        FOREIGN KEY (assignee_id) REFERENCES users(id)
+    )`);
+
+    // 8. Seed Consulting Tasks
+    const TASKS = [
+        {
+            title: 'Define Expectations & Challenges',
+            description: 'Begin your journey by outlining your company\'s current state and strategic goals.',
+            status: 'completed',
+            stepPhase: 'design',
+            taskType: 'analytical',
+            dueDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days ago
+        },
+        {
+            title: 'Complete Maturity Assessment',
+            description: 'Evaluate your organization across 7 key dimensions to identify gaps.',
+            status: 'in_progress',
+            stepPhase: 'design',
+            taskType: 'analytical',
+            dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString() // in 2 days
+        },
+        {
+            title: 'Review Initiatives & Roadmap',
+            description: 'Analyze AI-recommended initiatives and approve the transformation roadmap.',
+            status: 'todo',
+            stepPhase: 'design',
+            taskType: 'execution',
+            dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString() // in 14 days
+        }
+    ];
+
+    const insertTask = db.prepare(`
+        INSERT INTO tasks (
+            id, project_id, organization_id, title, description, status, priority, 
+            step_phase, task_type, due_date, assignee_id, reporter_id, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    TASKS.forEach(t => {
+        insertTask.run(
+            uuidv4(), PROJECT_ID, ORG_ID, t.title, t.description, t.status, 'high',
+            t.stepPhase, t.taskType, t.dueDate, PIOTR_ID, PIOTR_ID, new Date().toISOString()
+        );
+    });
+    insertTask.finalize();
+
 });
 
 setTimeout(() => {

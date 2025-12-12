@@ -3,15 +3,27 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 
-const dbPath = path.resolve(__dirname, 'consultify.db');
+const dbPath = process.env.NODE_ENV === 'test'
+    ? ':memory:'
+    : path.resolve(__dirname, 'consultify.db');
 
+const dbId = Math.random().toString(36).substring(7);
 const db = new sqlite3.Database(dbPath, (err) => {
+    console.log(`[DB:${dbId}] Initializing database at ${dbPath}`);
     if (err) {
         console.error('Error opening database', err.message);
+        if (db.initReject) db.initReject(err);
     } else {
         console.log('Connected to the SQLite database.');
         initDb();
+        // db.initResolve will be called inside initDb after serialization
+        // if (db.initResolve) db.initResolve();
     }
+});
+
+db.initPromise = new Promise((resolve, reject) => {
+    db.initResolve = resolve;
+    db.initReject = reject;
 });
 
 function initDb() {
@@ -78,7 +90,10 @@ function initDb() {
                                                         owner_id TEXT,
                                                         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                                                         FOREIGN KEY(organization_id) REFERENCES organizations(id)
-                                                    )`);
+                                                    )`, (err) => {
+            if (err) console.error('Error creating projects table:', err.message);
+            else console.log('Projects table created successfully (or already exists).');
+        });
 
         // Knowledge Base: Documents
         db.run(`CREATE TABLE IF NOT EXISTS knowledge_docs(
@@ -241,6 +256,11 @@ function initDb() {
             // Ignore error if column already exists
         });
         db.run(`ALTER TABLE users ADD COLUMN token_reset_at DATETIME`, (err) => {
+            // Ignore error if column already exists
+        });
+
+        // AI Config (JSON)
+        db.run(`ALTER TABLE users ADD COLUMN ai_config TEXT DEFAULT '{}'`, (err) => {
             // Ignore error if column already exists
         });
 
@@ -443,6 +463,11 @@ function initDb() {
             // Ignore if exists
         });
 
+        // Add priority to notifications if not exists
+        db.run(`ALTER TABLE notifications ADD COLUMN priority TEXT DEFAULT 'normal'`, (err) => {
+            // Ignore if exists
+        });
+
         // ==========================================
         // PHASE 2: DRD STRATEGY EXECUTION ENGINE
         // ==========================================
@@ -602,6 +627,92 @@ function initDb() {
         // ==========================================
         // PHASE: ENTERPRISE SAAS BILLING
         // ==========================================
+
+        // 0. TOKEN BILLING & MARGINS
+        db.run(`CREATE TABLE IF NOT EXISTS billing_margins (
+            source_type TEXT PRIMARY KEY, -- platform, byok, local
+            base_cost_per_1k REAL DEFAULT 0,
+            margin_percent REAL DEFAULT 20,
+            min_charge REAL DEFAULT 0.01,
+            is_active INTEGER DEFAULT 1,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        // Seed default margins
+        db.run(`INSERT OR IGNORE INTO billing_margins (source_type, base_cost_per_1k, margin_percent) VALUES 
+            ('platform', 0.03, 30),
+            ('byok', 0, 5),
+            ('local', 0, 0)
+        `);
+
+        db.run(`CREATE TABLE IF NOT EXISTS token_packages (
+            id TEXT PRIMARY KEY,
+            name TEXT,
+            description TEXT,
+            tokens INTEGER,
+            price_usd REAL,
+            bonus_percent REAL DEFAULT 0,
+            is_popular INTEGER DEFAULT 0,
+            sort_order INTEGER DEFAULT 0,
+            stripe_price_id TEXT,
+            is_active INTEGER DEFAULT 1
+        )`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS user_token_balance (
+            user_id TEXT PRIMARY KEY,
+            platform_tokens INTEGER DEFAULT 0,
+            platform_tokens_bonus INTEGER DEFAULT 0,
+            byok_usage_tokens INTEGER DEFAULT 0,
+            local_usage_tokens INTEGER DEFAULT 0,
+            lifetime_purchased INTEGER DEFAULT 0,
+            lifetime_used INTEGER DEFAULT 0,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS token_transactions (
+            id TEXT PRIMARY KEY,
+            user_id TEXT,
+            organization_id TEXT,
+            type TEXT, -- purchase, usage
+            source_type TEXT, -- platform, byok, local
+            tokens INTEGER,
+            package_id TEXT,
+            stripe_payment_id TEXT,
+            description TEXT,
+            margin_usd REAL,
+            net_revenue_usd REAL,
+            llm_provider TEXT,
+            model_used TEXT,
+            metadata TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS billing_invoices (
+             id TEXT PRIMARY KEY,
+             organization_id TEXT,
+             amount_due REAL,
+             currency TEXT DEFAULT 'USD',
+             status TEXT,
+             stripe_invoice_id TEXT,
+             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS user_api_keys (
+             id TEXT PRIMARY KEY,
+             user_id TEXT,
+             organization_id TEXT,
+             provider TEXT,
+             display_name TEXT,
+             encrypted_key TEXT,
+             model_preference TEXT,
+             is_active INTEGER DEFAULT 1,
+             is_default INTEGER DEFAULT 0,
+             usage_count INTEGER DEFAULT 0,
+             last_used_at DATETIME,
+             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
 
         // 1. SUBSCRIPTION PLANS (Superadmin-managed)
         db.run(`CREATE TABLE IF NOT EXISTS subscription_plans (
@@ -797,6 +908,11 @@ function initDb() {
         const insertProject = db.prepare(`INSERT OR IGNORE INTO projects(id, organization_id, name, status, owner_id) VALUES(?, ?, ?, ?, ?)`);
         insertProject.run(dbr77ProjectId, dbr77OrgId, 'Digital Transformation 2025', 'active', dbr77AdminId);
         insertProject.finalize();
+        // Ensure all previous commands are finished before resolving initPromise
+        db.run("SELECT 1", () => {
+            console.log('Database initialization complete.');
+            if (db.initResolve) db.initResolve();
+        });
     });
 }
 

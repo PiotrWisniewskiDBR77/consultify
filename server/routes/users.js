@@ -25,7 +25,11 @@ router.get('/', (req, res) => {
             avatarUrl: u.avatar_url,
             lastLogin: u.last_login,
             timezone: u.timezone,
-            units: u.units
+            avatarUrl: u.avatar_url,
+            lastLogin: u.last_login,
+            timezone: u.timezone,
+            units: u.units,
+            aiConfig: u.ai_config ? JSON.parse(u.ai_config) : {}
         }));
         res.json(users);
     });
@@ -118,13 +122,26 @@ router.post('/', (req, res) => {
 // UPDATE USER
 router.put('/:id', (req, res) => {
     const { id } = req.params;
-    const { firstName, lastName, email, role, status, timezone, units } = req.body;
+    const { firstName, lastName, email, role, status, timezone, units, aiConfig } = req.body;
     const organizationId = req.user.organizationId;
 
-    // Ensure we only update user in OUR org
-    const sql = `UPDATE users SET first_name = ?, last_name = ?, email = ?, role = ?, status = ?, timezone = ?, units = ? WHERE id = ? AND organization_id = ?`;
+    // Build dynamic query to avoid overwriting with nulls if partial update
+    // But for simplicity in this project, we often do full updates or use specific handlers.
+    // Let's assume frontend sends what it wants to update, or we handle the specific field additions.
 
-    db.run(sql, [firstName, lastName, email, role, status, timezone, units, id, organizationId], function (err) {
+    // If aiConfig is present, include it.
+    let sql = `UPDATE users SET first_name = ?, last_name = ?, email = ?, role = ?, status = ?, timezone = ?, units = ?`;
+    const params = [firstName, lastName, email, role, status, timezone, units];
+
+    if (aiConfig !== undefined) {
+        sql += `, ai_config = ?`;
+        params.push(JSON.stringify(aiConfig));
+    }
+
+    sql += ` WHERE id = ? AND organization_id = ?`;
+    params.push(id, organizationId);
+
+    db.run(sql, params, function (err) {
         if (err) return res.status(500).json({ error: err.message });
         if (this.changes === 0) return res.status(404).json({ error: 'User not found or access denied' });
         res.json({ message: 'Updated successfully' });

@@ -39,7 +39,7 @@ const providers = [
     },
     {
         name: 'Ollama (Local)',
-        provider: 'local',
+        provider: 'ollama',
         model_id: 'llama3',
         endpoint: 'http://localhost:11434',
         cost_per_1k: 0,

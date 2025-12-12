@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import {
     LayoutDashboard, CheckCircle2, AlertTriangle, XCircle,
-    TrendingUp, TrendingDown, Activity, Play, PauseCircle, Clock
+    TrendingUp, TrendingDown, Activity, Play, Clock
 } from 'lucide-react';
 import { FullSession, AppView } from '../../types';
 
@@ -32,8 +32,7 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
         if (session.step2Completed) score += 20;
         if (session.step3Completed) score += 25;
         if (session.step5Completed) score += 15;
-        // Rollout logic: For now, if step 5 is done, we assume some rollout progress. 
-        // Let's add partial rollout credit based on completed initiatives if step 5 is done.
+        // Rollout logic: For now, if step 5 is done, we assume some rollout progress.
         if (session.step5Completed && initiativeStats.total > 0) {
             const rolloutProgress = (initiativeStats.completed / initiativeStats.total) * 20;
             score += rolloutProgress;
@@ -123,92 +122,150 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* SECTION 2: Execution Details */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
-                {/* ITEM 2: Initiative Counters */}
-                <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    {/* Total */}
-                    <div className="bg-white dark:bg-navy-900 rounded-xl p-5 border border-slate-200 dark:border-white/10 shadow-sm">
-                        <div className="text-slate-500 text-xs font-bold uppercase mb-2">Total Initiatives</div>
-                        <div className="text-3xl font-bold text-navy-900 dark:text-white">{initiativeStats.total}</div>
-                        <div className="text-xs text-slate-400 mt-1">Active Scope</div>
-                    </div>
+                {/* LEFT COLUMN: Counters & Live Tasks */}
+                <div className="lg:col-span-2 space-y-6">
 
-                    {/* In Progress */}
-                    <div className="bg-white dark:bg-navy-900 rounded-xl p-5 border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden">
-                        <div className="text-blue-500 text-xs font-bold uppercase mb-2 flex items-center gap-1">
-                            <Play size={12} className="fill-current" /> In Progress
+                    {/* Initiative Counters */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        {/* Total */}
+                        <div className="bg-white dark:bg-navy-900 rounded-xl p-5 border border-slate-200 dark:border-white/10 shadow-sm">
+                            <div className="text-slate-500 text-xs font-bold uppercase mb-2">Total Initiatives</div>
+                            <div className="text-3xl font-bold text-navy-900 dark:text-white">{initiativeStats.total}</div>
                         </div>
-                        <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">{initiativeStats.inProgress}</div>
-                        <div className="absolute bottom-0 left-0 w-full h-1 bg-blue-100 dark:bg-white/5">
-                            <div className="h-full bg-blue-500" style={{ width: '40%' }}></div>
-                            {/* Mock width for visual style */}
-                        </div>
-                    </div>
-
-                    {/* Completed */}
-                    <div className="bg-white dark:bg-navy-900 rounded-xl p-5 border border-slate-200 dark:border-white/10 shadow-sm">
-                        <div className="text-green-500 text-xs font-bold uppercase mb-2 flex items-center gap-1">
-                            <CheckCircle2 size={12} /> Completed
-                        </div>
-                        <div className="text-3xl font-bold text-green-600 dark:text-green-400">{initiativeStats.completed}</div>
-                    </div>
-
-                    {/* Delayed */}
-                    <div className={`rounded-xl p-5 border shadow-sm ${initiativeStats.delayed > 0
-                        ? 'bg-red-50 border-red-200 dark:bg-red-900/10 dark:border-red-900/30'
-                        : 'bg-white border-slate-200 dark:bg-navy-900 dark:border-white/10'
-                        }`}>
-                        <div className={`text-xs font-bold uppercase mb-2 flex items-center gap-1 ${initiativeStats.delayed > 0 ? 'text-red-500' : 'text-slate-400'
-                            }`}>
-                            <AlertTriangle size={12} /> Delayed
-                        </div>
-                        <div className={`text-3xl font-bold ${initiativeStats.delayed > 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-300'
-                            }`}>
-                            {initiativeStats.delayed}
-                        </div>
-                    </div>
-                </div>
-
-                {/* ITEM 3: Simple KPIs */}
-                <div className="bg-white dark:bg-navy-900 rounded-xl p-6 border border-slate-200 dark:border-white/10 shadow-sm">
-                    <h3 className="text-sm font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-                        <Activity size={16} className="text-purple-500" />
-                        Key Performance Indicators
-                    </h3>
-                    <div className="space-y-4">
-                        {kpis.map((kpi, idx) => (
-                            <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
-                                <div>
-                                    <div className="text-xs text-slate-500 font-medium">{kpi.label}</div>
-                                    <div className="text-lg font-bold text-navy-900 dark:text-white">{kpi.value}</div>
-                                </div>
-                                <div className={`flex items-center gap-1 text-xs font-bold ${kpi.isPositive ? 'text-green-500' : 'text-red-500'
-                                    }`}>
-                                    {kpi.isPositive ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                                    {kpi.trend}
-                                </div>
+                        {/* In Progress */}
+                        <div className="bg-white dark:bg-navy-900 rounded-xl p-5 border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden">
+                            <div className="text-blue-500 text-xs font-bold uppercase mb-2 flex items-center gap-1">
+                                <Play size={12} className="fill-current" /> In Progress
                             </div>
-                        ))}
+                            <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">{initiativeStats.inProgress}</div>
+                        </div>
+                        {/* Completed */}
+                        <div className="bg-white dark:bg-navy-900 rounded-xl p-5 border border-slate-200 dark:border-white/10 shadow-sm">
+                            <div className="text-green-500 text-xs font-bold uppercase mb-2 flex items-center gap-1">
+                                <CheckCircle2 size={12} /> Completed
+                            </div>
+                            <div className="text-3xl font-bold text-green-600 dark:text-green-400">{initiativeStats.completed}</div>
+                        </div>
+                        {/* Delayed */}
+                        <div className={`rounded-xl p-5 border shadow-sm ${initiativeStats.delayed > 0
+                                ? 'bg-red-50 border-red-200 dark:bg-red-900/10 dark:border-red-900/30'
+                                : 'bg-white border-slate-200 dark:bg-navy-900 dark:border-white/10'
+                            }`}>
+                            <div className={`text-xs font-bold uppercase mb-2 flex items-center gap-1 ${initiativeStats.delayed > 0 ? 'text-red-500' : 'text-slate-400'
+                                }`}>
+                                <AlertTriangle size={12} /> Delayed
+                            </div>
+                            <div className={`text-3xl font-bold ${initiativeStats.delayed > 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-300'
+                                }`}>
+                                {initiativeStats.delayed}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Live Active Tasks List */}
+                    <div className="bg-white dark:bg-navy-900 rounded-xl p-6 border border-slate-200 dark:border-white/10 shadow-sm">
+                        <h3 className="text-sm font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
+                            <Play size={16} className="text-blue-500 fill-current" />
+                            Live Active Initiatives
+                        </h3>
+
+                        {session.initiatives?.filter(i => ['In Progress', 'To Do'].includes(i.status)).length === 0 ? (
+                            <div className="text-sm text-slate-400 italic py-4">No active initiatives currently tracked.</div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="border-b border-slate-100 dark:border-white/5 text-xs text-slate-400 uppercase tracking-wider">
+                                            <th className="py-2 font-medium">Initiative</th>
+                                            <th className="py-2 font-medium">Owner</th>
+                                            <th className="py-2 font-medium">Priority</th>
+                                            <th className="py-2 font-medium text-right">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="text-sm divide-y divide-slate-100 dark:divide-white/5">
+                                        {session.initiatives
+                                            ?.filter(i => ['In Progress', 'To Do'].includes(i.status))
+                                            .slice(0, 5)
+                                            .map((initiative) => (
+                                                <tr key={initiative.id} className="group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                                    <td className="py-3 pr-4">
+                                                        <div className="font-bold text-navy-900 dark:text-white group-hover:text-blue-600 transition-colors">
+                                                            {initiative.name}
+                                                        </div>
+                                                        <div className="text-xs text-slate-500 truncate max-w-[200px]">
+                                                            {initiative.description || 'No description provided'}
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                                                                {initiative.ownerExecution?.lastName?.charAt(0) || initiative.ownerBusiness?.lastName?.charAt(0) || 'U'}
+                                                            </div>
+                                                            <span className="text-xs text-slate-600 dark:text-slate-400">
+                                                                {initiative.ownerExecution?.lastName || initiative.ownerBusiness?.lastName || 'Unassigned'}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-3">
+                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${initiative.priority === 'Critical' ? 'bg-red-100 text-red-600 dark:bg-red-900/30' :
+                                                                initiative.priority === 'High' ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30' :
+                                                                    'bg-blue-50 text-blue-600 dark:bg-blue-900/30'
+                                                            }`}>
+                                                            {initiative.priority}
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-3 text-right">
+                                                        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 text-xs font-bold">
+                                                            <Play size={10} className="fill-current" />
+                                                            {initiative.status}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                        {/* View All Actions Button */}
+                        <div className="mt-4 text-center">
+                            <button onClick={() => onNavigate(AppView.FULL_STEP2_INITIATIVES)} className="text-sm font-bold text-purple-600 hover:text-purple-700 flex items-center justify-center gap-2 dark:text-purple-400">
+                                <LayoutDashboard size={14} />
+                                Manage All Initiatives
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+                {/* RIGHT COLUMN: KPIs & Shortcuts */}
+                <div className="space-y-6">
+                    {/* KPIs */}
+                    <div className="bg-white dark:bg-navy-900 rounded-xl p-6 border border-slate-200 dark:border-white/10 shadow-sm">
+                        <h3 className="text-sm font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
+                            <Activity size={16} className="text-purple-500" />
+                            Key Performance Indicators
+                        </h3>
+                        <div className="space-y-4">
+                            {kpis.map((kpi, idx) => (
+                                <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
+                                    <div>
+                                        <div className="text-xs text-slate-500 font-medium">{kpi.label}</div>
+                                        <div className="text-lg font-bold text-navy-900 dark:text-white">{kpi.value}</div>
+                                    </div>
+                                    <div className={`flex items-center gap-1 text-xs font-bold ${kpi.isPositive ? 'text-green-500' : 'text-red-500'
+                                        }`}>
+                                        {kpi.isPositive ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                                        {kpi.trend}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
 
-            </div>
-
-            {/* Quick Actions / Shortcuts (optional but helpful for "Snapshot") */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <button onClick={() => onNavigate(AppView.FULL_STEP2_INITIATIVES)} className="p-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-left group">
-                    <div className="text-purple-600 mb-2 group-hover:translate-x-1 transition-transform">
-                        <LayoutDashboard size={20} />
-                    </div>
-                    <div className="text-sm font-bold text-navy-900 dark:text-white">Manage Initiatives</div>
-                    <div className="text-xs text-slate-500">Add or update tasks</div>
-                </button>
-
-                {/* Placeholder buttons for consistency */}
-                <div className="p-4 border border-dashed border-slate-200 dark:border-white/10 rounded-xl flex items-center justify-center text-slate-400 text-sm">
-                    More actions coming
-                </div>
             </div>
 
         </div>

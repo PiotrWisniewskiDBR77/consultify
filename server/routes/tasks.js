@@ -50,6 +50,10 @@ router.get('/', (req, res) => {
         sql += ` AND t.priority = ?`;
         params.push(priority);
     }
+    if (req.query.initiativeId) {
+        sql += ` AND t.initiative_id = ?`;
+        params.push(req.query.initiativeId);
+    }
 
     // For regular users, show only tasks assigned to them or reported by them
     // Admins and SuperAdmins see all

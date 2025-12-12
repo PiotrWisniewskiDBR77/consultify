@@ -22,7 +22,8 @@ import {
   Rocket,
   Map,
   Pin,
-  PinOff
+  PinOff,
+  Activity
 } from 'lucide-react';
 import { SidebarUsage } from './SidebarUsage';
 
@@ -101,7 +102,10 @@ export const Sidebar: React.FC = () => {
       id: 'DASHBOARD',
       label: t('sidebar.dashboard'), // Module 0
       icon: <LayoutDashboard size={20} />,
-      viewId: AppView.DASHBOARD
+      subItems: [
+        { id: 'DASHBOARD_OVERVIEW', label: 'Overview', viewId: AppView.DASHBOARD_OVERVIEW, icon: <Map size={16} /> },
+        { id: 'DASHBOARD_SNAPSHOT', label: 'Execution Snapshot', viewId: AppView.DASHBOARD_SNAPSHOT, icon: <Activity size={16} /> }
+      ]
     },
     {
       id: 'MODULE_1',
