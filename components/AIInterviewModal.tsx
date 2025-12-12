@@ -39,13 +39,13 @@ export const AIInterviewModal: React.FC<AIInterviewModalProps> = ({
     const handleSend = async () => {
         if (!input.trim()) return;
 
-        const newHistory = [...messages, { role: 'user', text: input }];
-        setMessages(newHistory as any);
+        const newHistory: { role: 'model' | 'user'; text: string }[] = [...messages, { role: 'user', text: input }];
+        setMessages(newHistory);
         setInput('');
         setIsLoading(true);
 
         try {
-            const result = await Agent.conductAssessmentInterview(axisLabel, newHistory as any, language); // pass language if needed
+            const result = await Agent.conductAssessmentInterview(axisLabel, newHistory, language); // pass language if needed
 
             if (result.isFinished && result.conclusion) {
                 setMessages(prev => [...prev, {

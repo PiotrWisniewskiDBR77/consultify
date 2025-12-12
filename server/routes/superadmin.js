@@ -24,6 +24,8 @@ router.get('/organizations', (req, res) => {
         ORDER BY o.created_at DESC
     `;
 
+    console.log('[SuperAdmin] Fetching all organizations');
+
     db.all(sql, [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
@@ -55,7 +57,10 @@ router.get('/activities/stats', async (req, res) => {
 router.get('/dashboard', async (req, res) => {
     try {
         const [activityStats, aiStats] = await Promise.all([
-            ActivityService.getStats(),
+            ActivityService.getStats().catch(err => {
+                console.error('[SuperAdmin] Activity Stats Error:', err);
+                return { total: 0, last_hour: 0, last_24h: 0, last_7d: 0 };
+            }),
             new Promise((resolve) => {
                 db.get(`
                     SELECT 
@@ -181,11 +186,12 @@ router.get('/organizations/:id/billing', async (req, res) => {
 
 // GET All Users (Super Admin)
 router.get('/users', (req, res) => {
+    console.log('[SuperAdmin] Fetching all users');
     const sql = `
-        SELECT 
-            u.id, u.organization_id, u.email, u.first_name, u.last_name, 
-            u.role, u.status, u.last_login, u.created_at,
-            o.name as organization_name
+        SELECT
+    u.id, u.organization_id, u.email, u.first_name, u.last_name,
+        u.role, u.status, u.last_login, u.created_at,
+        o.name as organization_name
         FROM users u
         LEFT JOIN organizations o ON u.organization_id = o.id
         ORDER BY u.created_at DESC
@@ -215,7 +221,7 @@ router.put('/users/:id', (req, res) => {
     const { id } = req.params;
     const { organizationId, role, status } = req.body; // Add other fields as needed
 
-    const sql = `UPDATE users SET organization_id = COALESCE(?, organization_id), role = COALESCE(?, role), status = COALESCE(?, status) WHERE id = ?`;
+    const sql = `UPDATE users SET organization_id = COALESCE(?, organization_id), role = COALESCE(?, role), status = COALESCE(?, status) WHERE id = ? `;
 
     db.run(sql, [organizationId, role, status, id], function (err) {
         if (err) return res.status(500).json({ error: err.message });
@@ -245,7 +251,7 @@ router.post('/users', (req, res) => {
     const id = require('uuid').v4();
     const systemOrgId = 'org-dbr77-system'; // Or standard system org
 
-    const sql = `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`;
+    const sql = `INSERT INTO users(id, organization_id, email, password, first_name, last_name, role, status, created_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`;
 
     db.run(sql, [id, systemOrgId, email, hashedPassword, firstName, lastName, 'SUPERADMIN', 'active'], function (err) {
         if (err) {
@@ -280,15 +286,15 @@ router.post('/access-requests/:id/approve', (req, res) => {
     const { id } = req.params;
 
     // 1. Get request to find org id
-    db.get(`SELECT * FROM access_requests WHERE id = ?`, [id], (err, request) => {
+    db.get(`SELECT * FROM access_requests WHERE id = ? `, [id], (err, request) => {
         if (err || !request) return res.status(404).json({ error: 'Request not found' });
 
         // 2. Update Org Status
-        db.run(`UPDATE organizations SET status = 'active' WHERE id = ?`, [request.organization_id], (err) => {
+        db.run(`UPDATE organizations SET status = 'active' WHERE id = ? `, [request.organization_id], (err) => {
             if (err) return res.status(500).json({ error: 'Failed to activate organization' });
 
             // 3. Update Request Status
-            db.run(`UPDATE access_requests SET status = 'approved', reviewed_by = ?, reviewed_at = datetime('now') WHERE id = ?`,
+            db.run(`UPDATE access_requests SET status = 'approved', reviewed_by = ?, reviewed_at = datetime('now') WHERE id = ? `,
                 [req.user.id, id],
                 (err) => {
                     if (err) console.error("Error updating request status", err);
@@ -302,13 +308,13 @@ router.post('/access-requests/:id/reject', (req, res) => {
     const { id } = req.params;
     const { reason } = req.body;
 
-    db.get(`SELECT * FROM access_requests WHERE id = ?`, [id], (err, request) => {
+    db.get(`SELECT * FROM access_requests WHERE id = ? `, [id], (err, request) => {
         if (err || !request) return res.status(404).json({ error: 'Request not found' });
 
         // Update Org Status to blocked/rejected so they can't login
-        db.run(`UPDATE organizations SET status = 'blocked' WHERE id = ?`, [request.organization_id], (err) => {
+        db.run(`UPDATE organizations SET status = 'blocked' WHERE id = ? `, [request.organization_id], (err) => {
             // Update Request Status
-            db.run(`UPDATE access_requests SET status = 'rejected', rejection_reason = ?, reviewed_by = ?, reviewed_at = datetime('now') WHERE id = ?`,
+            db.run(`UPDATE access_requests SET status = 'rejected', rejection_reason = ?, reviewed_by = ?, reviewed_at = datetime('now') WHERE id = ? `,
                 [reason, req.user.id, id],
                 (err) => {
                     res.json({ message: 'Access rejected' });
@@ -333,7 +339,7 @@ router.post('/access-codes', (req, res) => {
     // Or simpler: just require a value. Let's use the SuperAdmin's org ID.
     const orgId = req.user.organizationId;
 
-    db.run(`INSERT INTO access_codes (id, organization_id, code, created_by, role, max_uses, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    db.run(`INSERT INTO access_codes(id, organization_id, code, created_by, role, max_uses, expires_at) VALUES(?, ?, ?, ?, ?, ?, ?)`,
         [uuidv4(), orgId, newCode, req.user.id, role || 'USER', maxUses || 100, expiresAt],
         function (err) {
             if (err) return res.status(500).json({ error: err.message });

@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { FullSession, FullInitiative, Language } from '../types';
-import { translations } from '../translations';
+// import { translations } from '../translations';
 import {
     LayoutDashboard, ListChecks, Activity, TrendingUp,
-    AlertTriangle, Bot, FileText, ArrowRight, Download, BarChart3, PieChart,
-    Calendar, CheckCircle2, Clock, Zap
+    AlertTriangle, Bot, FileText, ArrowRight, Download, BarChart3,
+    CheckCircle2, Clock, Zap
 } from 'lucide-react';
-import { exportReportToPDF } from '../services/pdf/pdfExport';
+// import { exportReportToPDF } from '../services/pdf/pdfExport';
 import { AIInsightFeed } from './AIInsightFeed';
 import { Button } from './Button';
 
@@ -23,7 +23,7 @@ type DashboardTab = 'overview' | 'progress' | 'kpi' | 'roi' | 'risks' | 'ai' | '
 export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWorkspaceProps> = ({
     fullSession,
     onGenerateReport,
-    language
+    language: _language
 }) => {
     const { currentUser } = useAppStore();
     const [activeTab, setActiveTab] = useState<DashboardTab>('overview');

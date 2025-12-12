@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, MessageSquare, Camera, Check, Loader2, AlertCircle } from 'lucide-react';
+import { X, MessageSquare, Camera, Check, Loader2 } from 'lucide-react';
 import { Api } from '../services/api';
 import { useAppStore } from '../store/useAppStore';
 import toast from 'react-hot-toast';

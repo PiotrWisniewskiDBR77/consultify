@@ -166,19 +166,19 @@ export const NotificationCenter: React.FC = () => {
 
         // Highlight high priority alerts
         if (priority === 'high' && !notif.read) {
-            borderClass = 'border-l-4 border-l-red-500 border-slate-200 dark:border-white/10 bg-red-50/20 dark:bg-red-900/20';
+            borderClass = 'border-l-4 border-l-red-500 border-slate-200 dark:border-white/10 bg-red-50/20 dark:bg-red-900/10';
         } else if (notif.read) {
             borderClass = 'border-transparent bg-transparent hover:bg-slate-50 dark:hover:bg-white/5';
         } else {
-            // Unread normal
-            borderClass = 'bg-white dark:bg-navy-800 border-slate-100 dark:border-navy-700 shadow-sm dark:shadow-none bg-gradient-to-r from-purple-50/50 to-transparent dark:from-purple-900/20 dark:to-transparent';
+            // Unread normal - SuperAdmin Style
+            borderClass = 'bg-white dark:bg-navy-900 border-purple-200 dark:border-purple-500/30 shadow-sm dark:shadow-[0_0_15px_rgba(168,85,247,0.1)] bg-gradient-to-r from-purple-50 to-transparent dark:from-purple-900/20 dark:to-transparent';
         }
 
         return `group p-4 rounded-xl border transition-all hover:shadow-md cursor-pointer relative overflow-hidden ${borderClass}`;
     };
 
     return (
-        <div className="bg-white dark:bg-navy-800 rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm h-full flex flex-col">
+        <div className="bg-white dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm h-full flex flex-col">
             {/* Header */}
             <div className="p-5 border-b border-slate-200 dark:border-white/5">
                 <div className="flex items-center justify-between mb-4">

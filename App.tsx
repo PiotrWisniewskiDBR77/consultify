@@ -35,7 +35,7 @@ const AppContent = () => {
         currentUser, setCurrentUser,
         authInitialStep, setAuthInitialStep,
         language, setLanguage,
-        isSidebarOpen, setIsSidebarOpen,
+        setIsSidebarOpen,
         isSidebarCollapsed, // Added for layout adjustment
         // setFreeSessionData,
         fullSessionData, setFullSessionData,
