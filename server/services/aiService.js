@@ -199,22 +199,8 @@ const AiService = {
                 modelUsed = `${provider}:${model_id}`;
 
                 if (provider === 'ollama') {
-                    const ollamaEndpoint = endpoint || 'http://localhost:11434';
-                    const messages = history.map(h => ({
-                        role: h.role === 'user' ? 'user' : 'assistant',
-                        content: h.text || h.content || (h.parts && h.parts[0] && h.parts[0].text) || ''
-                    }));
-                    if (systemInstruction) messages.unshift({ role: 'system', content: systemInstruction });
-                    messages.push({ role: 'user', content: prompt });
-
-                    const response = await fetch(`${ollamaEndpoint}/api/chat`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ model: model_id || 'llama2', messages, stream: false })
-                    });
-                    if (!response.ok) throw new Error(`Ollama error: ${response.statusText}`);
-                    const data = await response.json();
-                    responseText = data.message?.content || data.response || '';
+                    // DISABLED PER USER REQUEST
+                    throw new Error("Ollama connection is disabled by system configuration.");
                 }
                 else if (provider === 'openai') {
                     const messages = history.map(h => ({
@@ -1090,7 +1076,7 @@ const AiService = {
         // #region agent log
         const fs = require('fs');
         const logPath = '/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/.cursor/debug.log';
-        fs.appendFileSync(logPath, JSON.stringify({location:'aiService.js:chatStream:entry',message:'ChatStream started',data:{userId,organizationId,roleName,hasExtraContext:!!extraContext,extraContextScreenId:extraContext?.screenId,messageLength:message?.length||0},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B,E'})+'\n');
+        fs.appendFileSync(logPath, JSON.stringify({ location: 'aiService.js:chatStream:entry', message: 'ChatStream started', data: { userId, organizationId, roleName, hasExtraContext: !!extraContext, extraContextScreenId: extraContext?.screenId, messageLength: message?.length || 0 }, timestamp: Date.now(), sessionId: 'debug-session', hypothesisId: 'B,E' }) + '\n');
         // #endregion
         // 1. Resolve Org/User if needed
         let user;
@@ -1101,7 +1087,7 @@ const AiService = {
             if (user && !orgId) orgId = user.organization_id;
         }
         // #region agent log
-        fs.appendFileSync(logPath, JSON.stringify({location:'aiService.js:chatStream:userResolved',message:'User and org resolved',data:{hasUser:!!user,orgId,userOrgId:user?.organization_id},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B,E'})+'\n');
+        fs.appendFileSync(logPath, JSON.stringify({ location: 'aiService.js:chatStream:userResolved', message: 'User and org resolved', data: { hasUser: !!user, orgId, userOrgId: user?.organization_id }, timestamp: Date.now(), sessionId: 'debug-session', hypothesisId: 'B,E' }) + '\n');
         // #endregion
 
         // 2. Fetch Knowledge Base (RAG) - Always useful
@@ -1116,7 +1102,7 @@ const AiService = {
         // Let's use PromptService if extraContext is passed, or if we just want consistent behavior.
         // But extraContext comes from frontend.
 
-        if (extraContext && extraContext.screenId) {
+        if (extraContext && (extraContext.screenId || extraContext.title)) {
             // Fetch Company & Strategies
             const company = await new Promise(resolve => {
                 if (!orgId) return resolve({});

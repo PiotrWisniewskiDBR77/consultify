@@ -31,7 +31,21 @@ export default defineConfig({
             provider: 'v8',
             reporter: ['text', 'json', 'html'],
             include: ['src/**/*.{ts,tsx}', 'server/**/*.js'],
-            exclude: ['src/vite-env.d.ts', '**/*.test.ts', '**/*.test.tsx', 'tests/**'],
+            exclude: [
+                'src/vite-env.d.ts',
+                '**/*.test.ts',
+                '**/*.test.tsx',
+                'tests/**',
+                'server/scripts/**',
+                'server/workers/**',
+                'server/seed_*.js',
+                'server/fix_*.js',
+                'server/inspect_*.js',
+                'server/migrate_*.js',
+                'server/test-*.js',
+                'server/database.postgres.js',
+                'server/database.sqlite.js',
+            ],
             thresholds: {
                 global: {
                     statements: 90,

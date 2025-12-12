@@ -1,4 +1,5 @@
 import React, { useEffect, useCallback } from 'react';
+import { useScreenContext } from '../hooks/useScreenContext';
 import { SplitLayout } from '../components/SplitLayout';
 import { FullStep5Workspace } from '../components/FullStep5Workspace';
 import { FullInitiative, AppView, AIMessageHistory } from '../types';
@@ -19,7 +20,24 @@ export const FullExecutionView: React.FC = () => {
   } = useAppStore();
 
   const language = currentUser?.preferredLanguage || 'EN';
-  const t = translations.fullExecution;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const t = translations.fullExecution; // Use t?
+
+  // --- AI CONTEXT INJECTION ---
+  const todoCount = fullSession.initiatives.filter(i => i.status === 'To Do' || i.status === 'Draft' || i.status === 'Ready').length;
+  const inProgCount = fullSession.initiatives.filter(i => i.status === 'In Progress').length;
+  const blockedCount = fullSession.initiatives.filter(i => i.status === 'Blocked').length;
+
+  useScreenContext(
+    'execution_kanban',
+    'Execution Phase (Kanban)',
+    {
+      stats: { todo: todoCount, inProgress: inProgCount, blocked: blockedCount },
+      count: fullSession.initiatives.length,
+      initiatives: fullSession.initiatives.map(i => ({ id: i.id, name: i.name, status: i.status }))
+    },
+    'User is managing initiative execution on a Kanban board.'
+  );
 
   const addUserMessage = (content: string) => {
     addMessage({ id: Date.now().toString(), role: 'user', content, timestamp: new Date() });

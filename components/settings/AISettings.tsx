@@ -119,7 +119,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
 
             {/* Tabs */}
             <div className="flex p-1 bg-navy-900 rounded-lg mb-6 border border-white/5">
-                {(['system', 'gemini', 'openai', 'ollama'] as AIProviderType[]).map((mode) => (
+                {(['system', 'gemini', 'openai'] as AIProviderType[]).map((mode) => (
                     <button
                         key={mode}
                         onClick={() => setConfigMode(mode)}
@@ -131,7 +131,6 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                         {mode === 'system' && 'Default (System)'}
                         {mode === 'gemini' && 'Google Gemini'}
                         {mode === 'openai' && 'OpenAI'}
-                        {mode === 'ollama' && 'Local (Ollama)'}
                     </button>
                 ))}
             </div>
@@ -250,50 +249,6 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                 </div>
                             </div>
                         </div>
-                    </div>
-                )}
-
-                {configMode === 'ollama' && (
-                    <div className="space-y-4">
-                        <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-300 text-xs flex gap-2">
-                            <Monitor size={16} className="shrink-0" />
-                            <p>Connect to your local LLM instance. Ensure Ollama is running (`ollama serve`).</p>
-                        </div>
-                        <div className="grid grid-cols-3 gap-4">
-                            <div className="col-span-2 space-y-1.5">
-                                <label className="text-xs font-medium text-slate-300">Endpoint URL</label>
-                                <input
-                                    value={localEndpoint}
-                                    onChange={e => setLocalEndpoint(e.target.value)}
-                                    placeholder="http://localhost:11434"
-                                    className="w-full px-4 py-2.5 bg-navy-950 border border-white/10 rounded-lg text-white focus:border-purple-500 outline-none transition-all text-sm font-mono"
-                                />
-                            </div>
-                            <div className="space-y-1.5">
-                                <label className="text-xs font-medium text-slate-300">&nbsp;</label>
-                                <button
-                                    type="button"
-                                    onClick={fetchOllamaModels}
-                                    disabled={isLoadingModels}
-                                    className="w-full px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-slate-300 text-sm transition-all"
-                                >
-                                    {isLoadingModels ? '...' : 'Fetch Models'}
-                                </button>
-                            </div>
-                        </div>
-
-                        {ollamaModels.length > 0 && (
-                            <div className="space-y-1.5">
-                                <label className="text-xs font-medium text-slate-300">Select Model</label>
-                                <select
-                                    value={selectedModel}
-                                    onChange={e => setSelectedModel(e.target.value)}
-                                    className="w-full px-4 py-2.5 bg-navy-950 border border-white/10 rounded-lg text-white focus:border-purple-500 outline-none transition-all text-sm"
-                                >
-                                    {ollamaModels.map(m => <option key={m} value={m}>{m}</option>)}
-                                </select>
-                            </div>
-                        )}
                     </div>
                 )}
 
