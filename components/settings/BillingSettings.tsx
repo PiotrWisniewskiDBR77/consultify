@@ -71,6 +71,12 @@ export const BillingSettings: React.FC<BillingSettingsProps> = ({ currentUser })
         }
     };
 
+    // Filter user plans
+    const [userPlans, setUserPlans] = useState<any[]>([]);
+    useEffect(() => {
+        Api.getUserPlans().then(setUserPlans).catch(err => console.error('Failed to fetch user plans', err));
+    }, []);
+
     if (loadingBilling) {
         return (
             <div className="flex items-center justify-center h-64">
@@ -86,12 +92,6 @@ export const BillingSettings: React.FC<BillingSettingsProps> = ({ currentUser })
 
     const currentPlanId = billingData?.billing?.subscription_plan_id;
     const currentPlan = plans.find(p => p.id === currentPlanId);
-
-    // Filter user plans
-    const [userPlans, setUserPlans] = useState<any[]>([]);
-    useEffect(() => {
-        Api.getUserPlans().then(setUserPlans).catch(err => console.error('Failed to fetch user plans', err));
-    }, []);
 
     const userLicenseId = currentUser.licensePlanId;
     const userLicense = userPlans.find(p => p.id === userLicenseId);

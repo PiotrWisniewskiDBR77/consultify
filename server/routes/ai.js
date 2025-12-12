@@ -59,10 +59,10 @@ router.post('/chat/stream', async (req, res) => {
     res.setHeader('Connection', 'keep-alive');
 
     try {
-        const { message, history, roleName } = req.body;
+        const { message, history, roleName, context } = req.body;
         const userId = req.body.userId || req.user?.id;
 
-        const stream = AiService.chatStream(message, history, roleName, userId);
+        const stream = AiService.chatStream(message, history, roleName, userId, null, context);
 
         for await (const chunk of stream) {
             if (chunk) {

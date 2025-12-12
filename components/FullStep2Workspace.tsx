@@ -61,7 +61,9 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
   };
 
   const getAxisLabel = React.useCallback((id: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const key = `fullStep1_${id === 'digitalProducts' ? 'prod' : id.substring(0, 4)}` as any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (ts as any)[key]?.[language] || id;
   }, [language, ts]);
 
@@ -97,7 +99,7 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
     });
 
     return groups;
-  }, [filteredInitiatives, groupBy, language]);
+  }, [filteredInitiatives, groupBy, getAxisLabel]);
 
   return (
     <div className="flex flex-col h-full bg-transparent">

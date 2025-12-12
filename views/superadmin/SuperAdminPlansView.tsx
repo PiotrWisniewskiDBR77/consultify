@@ -177,8 +177,8 @@ export const SuperAdminPlansView: React.FC = () => {
                 <button
                     onClick={() => { setActiveTab('organization'); resetForm(); }}
                     className={`pb-2 px-4 font-medium flex items-center gap-2 ${activeTab === 'organization'
-                            ? 'text-indigo-600 border-b-2 border-indigo-600'
-                            : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+                        ? 'text-indigo-600 border-b-2 border-indigo-600'
+                        : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
                         }`}
                 >
                     <Building2 className="w-4 h-4" />
@@ -187,8 +187,8 @@ export const SuperAdminPlansView: React.FC = () => {
                 <button
                     onClick={() => { setActiveTab('user'); resetForm(); }}
                     className={`pb-2 px-4 font-medium flex items-center gap-2 ${activeTab === 'user'
-                            ? 'text-indigo-600 border-b-2 border-indigo-600'
-                            : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+                        ? 'text-indigo-600 border-b-2 border-indigo-600'
+                        : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
                         }`}
                 >
                     <Users className="w-4 h-4" />
@@ -228,8 +228,8 @@ export const SuperAdminPlansView: React.FC = () => {
                     <div
                         key={plan.id}
                         className={`relative rounded-xl p-6 transition-all ${plan.is_active
-                                ? 'bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700'
-                                : 'bg-gray-100 dark:bg-gray-800/50 opacity-60'
+                            ? 'bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700'
+                            : 'bg-gray-100 dark:bg-gray-800/50 opacity-60'
                             }`}
                     >
                         {editingId === plan.id ? (
@@ -304,7 +304,9 @@ const OrgPlanForm = ({ formData, setFormData, onSave, onCancel, saving, isNew }:
                     try {
                         // Just store as string to allow editing, validate on backend or messy parse here
                         setFormData({ ...formData, features: e.target.value });
-                    } catch (err) { }
+                    } catch {
+                        // Ignore JSON parse errors for features while typing
+                    }
                 }}
                 className="input-field w-full mt-1 p-2 rounded border h-24 font-mono text-xs dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             />
