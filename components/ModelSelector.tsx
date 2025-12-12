@@ -19,7 +19,7 @@ const PROVIDER_ICONS: Record<string, React.ReactNode> = {
 };
 
 export const ModelSelector: React.FC = () => {
-    const { currentUser, setAIConfig, language, setCurrentView } = useAppStore();
+    const { currentUser, language, setCurrentView } = useAppStore();
     const [options, setOptions] = useState<ModelOption[]>([]);
     const [isOpen, setIsOpen] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -41,23 +41,7 @@ export const ModelSelector: React.FC = () => {
     const currentProvider = currentUser?.aiConfig?.provider || 'system';
     const currentModelId = currentUser?.aiConfig?.modelId || '';
 
-    useEffect(() => {
-        if (isOpen) {
-            loadOptions();
-        }
-    }, [isOpen]);
-
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setIsOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
-    const loadOptions = async () => {
+    const loadOptions = React.useCallback(async () => {
         setLoading(true);
         const newOptions: ModelOption[] = [];
 
@@ -66,9 +50,6 @@ export const ModelSelector: React.FC = () => {
             const systemProviders = await Api.getPublicLLMProviders();
             const visibleIds = currentUser?.aiConfig?.visibleModelIds;
 
-            // If user has never configured visibility, show ALL or NONE? 
-            // Implementation Plan said: "default to all". 
-            // AIConfigSettings logic also defaults to all if undefined.
             const isVisible = (id: string) => !visibleIds || visibleIds.includes(id);
 
             systemProviders.forEach(p => {
@@ -77,20 +58,19 @@ export const ModelSelector: React.FC = () => {
                         id: `system:${p.id}`,
                         name: p.name,
                         provider: 'system',
-                        modelId: p.id // The ID in our DB
+                        modelId: p.id
                     });
                 }
             });
 
-            // 2. Private Models (From User Config)
             if (currentUser?.aiConfig?.privateModels) {
-                currentUser.aiConfig.privateModels.forEach(pm => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                currentUser.aiConfig.privateModels.forEach((pm: any) => {
                     newOptions.push({
                         id: pm.id, // e.g. private-123
                         name: `${pm.name} (Private)`,
                         provider: pm.provider,
                         modelId: pm.modelId,
-                        // We store extra data to help selection handler
                         // @ts-expect-error: Store extra data for internal logic
                         sourceData: pm
                     });
@@ -103,7 +83,24 @@ export const ModelSelector: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    };
+
+        useEffect(() => {
+            const handleClickOutside = (event: MouseEvent) => {
+                if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                    setIsOpen(false);
+                }
+            };
+            document.addEventListener('mousedown', handleClickOutside);
+            return () => document.removeEventListener('mousedown', handleClickOutside);
+        }, []);
+
+    }, [currentUser?.aiConfig?.visibleModelIds, currentUser?.aiConfig?.privateModels]);
+
+    useEffect(() => {
+        if (isOpen) {
+            loadOptions();
+        }
+    }, [isOpen, loadOptions]);
 
     const handleSelect = (option: ModelOption) => {
         // Prepare new config
@@ -115,8 +112,9 @@ export const ModelSelector: React.FC = () => {
 
         // If it's a Private Model, we must inject its credentials into active config
         // (This is how the rest of the app "knows" what key to use for the current session)
-        if ((option as any).sourceData) {
-            const pm: any = (option as any).sourceData;
+        if ((option as unknown as { sourceData?: unknown }).sourceData) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const pm: any = (option as unknown as { sourceData: any }).sourceData;
             newConfig.apiKey = pm.apiKey;
             newConfig.endpoint = pm.endpoint;
         } else if (option.provider === 'system') {
@@ -161,7 +159,7 @@ export const ModelSelector: React.FC = () => {
     // We can try to look at current config to guess logic
     if (currentUser?.aiConfig?.privateModels) {
         // Check if current matches a private model
-        const privateMatch = currentUser.aiConfig.privateModels.find((pm: any) =>
+        const privateMatch = currentUser.aiConfig.privateModels.find((pm: { provider: string; modelId: string; apiKey?: string; name: string; }) =>
             pm.provider === currentProvider &&
             pm.modelId === currentModelId &&
             (pm.apiKey === currentUser.aiConfig?.apiKey) // Loose match
@@ -205,6 +203,7 @@ export const ModelSelector: React.FC = () => {
                             {language === 'PL' ? 'Wybierz Dostawcę' : 'Active Provider'}
                         </div>
                         <button
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             onClick={() => { setIsOpen(false); setCurrentView('SETTINGS_PROFILE' as any); }}
                             className="p-1 hover:bg-slate-200 dark:hover:bg-white/10 rounded text-slate-400"
                             title="Configure Keys"

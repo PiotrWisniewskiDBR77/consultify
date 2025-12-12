@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getQuestionsForAxis, DRDLevel } from '../services/drdStructure';
+import { getQuestionsForAxis } from '../services/drdStructure';
 import { AxisId } from '../types';
 import { ArrowRight, CheckCircle2, ChevronRight, Sparkles, Bot } from 'lucide-react';
 
