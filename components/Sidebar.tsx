@@ -19,7 +19,11 @@ import {
   Rocket,
   Map,
   Pin,
-  Bell
+  Bell,
+  Activity,
+  UserCircle,
+  CreditCard,
+  Cpu
 } from 'lucide-react';
 import { SidebarUsage } from './SidebarUsage';
 

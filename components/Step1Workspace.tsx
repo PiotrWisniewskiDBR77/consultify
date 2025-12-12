@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Pencil, ArrowRight, Server, Box, Layers, Monitor } from 'lucide-react';
+```typescript
+import React from 'react';
+import { ArrowRight, Lightbulb, Target, Users, Zap, CheckCircle2 } from 'lucide-react';
 import { CompanyProfile, FreeSession, Language } from '../types';
 import { translations } from '../translations';
 
@@ -136,9 +137,10 @@ export const Step1Workspace: React.FC<Step1WorkspaceProps> = ({
             </div>
             <div className="p-3 bg-white/5 rounded-lg">
               <label className="text-xs text-slate-500 block mb-1">Integrations</label>
-              <span className={`text-sm font-medium ${profile.itLandscape?.integrationLevel === 'High' ? 'text-green-400' :
-                  profile.itLandscape?.integrationLevel === 'Medium' ? 'text-yellow-400' : 'text-slate-400'
-                }`}>
+              <span className={`text - sm font - medium ${
+  profile.itLandscape?.integrationLevel === 'High' ? 'text-green-400' :
+  profile.itLandscape?.integrationLevel === 'Medium' ? 'text-yellow-400' : 'text-slate-400'
+} `}>
                 {profile.itLandscape?.integrationLevel || 'Unknown'}
               </span>
             </div>
@@ -152,10 +154,11 @@ export const Step1Workspace: React.FC<Step1WorkspaceProps> = ({
         <button
           onClick={onNextStep}
           disabled={!isStepComplete}
-          className={`flex items-center gap-2 px-8 py-4 rounded-lg font-semibold text-sm transition-all shadow-lg ${isStepComplete
-            ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-purple-900/30'
-            : 'bg-navy-800 text-slate-500 cursor-not-allowed'
-            }`}
+          className={`flex items - center gap - 2 px - 8 py - 4 rounded - lg font - semibold text - sm transition - all shadow - lg ${
+  isStepComplete
+    ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-purple-900/30'
+    : 'bg-navy-800 text-slate-500 cursor-not-allowed'
+} `}
         >
           {t.nextStep[language]}
           <ArrowRight size={18} className={language === 'AR' ? 'rotate-180' : ''} />
