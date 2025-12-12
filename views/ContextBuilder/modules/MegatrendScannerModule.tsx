@@ -1,22 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Globe, Radar, FileText, PlusCircle, ArrowRight, Sparkles, AlertCircle } from 'lucide-react';
 import { DynamicList, DynamicListItem } from '../shared/DynamicList';
+import { useMegatrendStore } from '../../../store/megatrendStore';
 
 export const MegatrendScannerModule: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'baseline' | 'radar' | 'detail' | 'custom'>('baseline');
     const [selectedTrendId, setSelectedTrendId] = useState<string | null>(null);
 
-    // MOCK DATA for Radar
-    // zones: 0-30 (Direct), 30-70 (Observe), 70-100 (Horizon)
-    const trends = [
-        { id: '1', label: 'AI Automation', zone: 'Direct Impact', distance: 15, angle: 45, impact: 'High' },
-        { id: '2', label: 'Green Energy', zone: 'Need to Observe', distance: 50, angle: 120, impact: 'Medium' },
-        { id: '3', label: 'Quantum Comp', zone: 'On the Horizon', distance: 85, angle: 280, impact: 'Low' },
-        { id: '4', label: 'Labor Shortage', zone: 'Direct Impact', distance: 25, angle: 200, impact: 'Critical' },
-        { id: '5', label: 'Supply Chain 4.0', zone: 'Need to Observe', distance: 60, angle: 330, impact: 'High' },
-    ];
+    // Use megatrend store for data
+    const { megatrends, loading, error, fetchMegatrends } = useMegatrendStore();
 
-    // MOCK DATA for Custom Trends
+    // Load data on mount
+    useEffect(() => {
+        fetchMegatrends();
+    }, []);
+
+    // For custom trends, keep local state (could be extended to store)
     const [customTrends, setCustomTrends] = useState<DynamicListItem[]>([
         { id: '1', name: 'Local Competitor Pricing', reason: 'Aggressive undercutting in Q3' }
     ]);
@@ -74,14 +73,10 @@ export const MegatrendScannerModule: React.FC = () => {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {[
-                                { title: 'Generative AI in Design', type: 'Technology', pressure: 'High' },
-                                { title: 'Carbon Neutrality 2030', type: 'Regulatory', pressure: 'Critical' },
-                                { title: 'Reshoring Supply Chains', type: 'Geopolitical', pressure: 'Medium' },
-                                { title: 'Aging Workforce', type: 'Social', pressure: 'High' }
-                            ].map((trend, i) => (
-                                <div key={i} className="p-4 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 hover:shadow-md transition-shadow relative overflow-hidden">
-                                    {i === 1 && (
+                            {megatrends.map((trend) => (
+                                <div key={trend.id} className="p-4 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 hover:shadow-md transition-shadow relative overflow-hidden">
+                                    {/* Example of client specific flag could be based on trend data */}
+                                    {trend.type === 'Technology' && (
                                         <div className="absolute top-0 right-0 bg-purple-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-bl-lg">
                                             Client Specific
                                         </div>
@@ -93,7 +88,7 @@ export const MegatrendScannerModule: React.FC = () => {
                                         </span>
                                     </div>
                                     <h3 className="font-bold text-navy-900 dark:text-white text-lg">{trend.title}</h3>
-                                    <div className="mt-4 flex items-center gap-2 text-xs text-purple-600 cursor-pointer hover:underline" onClick={() => setActiveTab('detail')}>
+                                    <div className="mt-4 flex items-center gap-2 text-xs text-purple-600 cursor-pointer hover:underline" onClick={() => { setSelectedTrendId(trend.id); setActiveTab('detail'); }}>
                                         See Impacts <ArrowRight size={12} />
                                     </div>
                                 </div>
@@ -123,30 +118,43 @@ export const MegatrendScannerModule: React.FC = () => {
                             <div className="absolute w-2 h-2 bg-navy-900 dark:bg-white rounded-full z-10"></div>
 
                             {/* Dots */}
-                            {trends.map(trend => {
-                                // Convert visual distance/angle to x/y
-                                // angle 0 = top (need to subtract 90deg or PI/2)
-                                const rad = (trend.angle - 90) * (Math.PI / 180);
-                                // distance is percent of radius (200px)
-                                const r = (trend.distance / 100) * 200;
-
+                            {megatrends.map((trend) => {
+                                // Map zone to distance/angle approximations (simple example)
+                                const zoneMap: Record<string, { distance: number; angle: number }> = {
+                                    Direct: { distance: 20, angle: 45 },
+                                    Observe: { distance: 55, angle: 120 },
+                                    Horizon: { distance: 85, angle: 280 }
+                                };
+                                const { distance, angle } = zoneMap[trend.zone] || { distance: 50, angle: 180 };
+                                const rad = (angle - 90) * (Math.PI / 180);
+                                const r = (distance / 100) * 200;
                                 return (
                                     <div
                                         key={trend.id}
                                         className="absolute w-3 h-3 bg-purple-600 rounded-full hover:scale-150 transition-transform cursor-pointer shadow-lg group z-20"
                                         style={{
-                                            transform: `translate(${r * Math.cos(rad)}px, ${r * Math.sin(rad)}px)` // center is 0,0 relative to flex center thanks to absolute
+                                            transform: `translate(${r * Math.cos(rad)}px, ${r * Math.sin(rad)}px)`
                                         }}
                                         onClick={() => { setSelectedTrendId(trend.id); setActiveTab('detail'); }}
-                                        title={trend.label}
+                                        title={trend.title}
                                     >
                                         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none z-50">
-                                            {trend.label}
+                                            {trend.title}
                                         </div>
                                     </div>
                                 );
                             })}
                         </div>
+                        {loading && (
+                            <div className="flex items-center justify-center py-4 text-slate-600 dark:text-slate-400">
+                                <span className="animate-spin mr-2">⏳</span>Loading megatrends...
+                            </div>
+                        )}
+                        {error && (
+                            <div className="p-4 bg-red-100 text-red-600 rounded">
+                                {error}
+                            </div>
+                        )}
                         <p className="mt-8 text-xs text-slate-500">Click on a trend node to view detailed impact analysis.</p>
                     </div>
                 )}
@@ -156,9 +164,9 @@ export const MegatrendScannerModule: React.FC = () => {
                     <div className="space-y-6 max-w-4xl">
                         <div className="flex items-center justify-between">
                             <h3 className="text-xl font-bold text-navy-900 dark:text-white">
-                                {selectedTrendId ? trends.find(t => t.id === selectedTrendId)?.label : 'Artificial Intelligence (Example)'}
+                                {selectedTrendId ? megatrends.find(t => t.id === selectedTrendId)?.title || megatrends.find(t => t.id === selectedTrendId)?.label : 'Select a trend'}
                             </h3>
-                            <span className="text-xs font-bold bg-purple-100 text-purple-600 px-2 py-1 rounded">High Impact</span>
+                            <span className="text-xs font-bold bg-purple-100 text-purple-600 px-2 py-1 rounded">{selectedTrendId ? megatrends.find(t => t.id === selectedTrendId)?.impact : ''}</span>
                         </div>
 
                         {/* AI Suggested Edit */}
@@ -166,7 +174,7 @@ export const MegatrendScannerModule: React.FC = () => {
                             <div className="flex items-center gap-2">
                                 <Sparkles size={16} className="text-purple-600" />
                                 <span className="text-xs text-purple-800 dark:text-purple-200">
-                                    <strong>AI Suggestion:</strong> Update impact to "Critical" based on competitors' recent moves.
+                                    <strong>AI Suggestion:</strong> Update impact based on latest market data.
                                 </span>
                             </div>
                             <button className="text-xs font-bold text-purple-600 hover:text-purple-800">Accept</button>
@@ -178,7 +186,7 @@ export const MegatrendScannerModule: React.FC = () => {
                                 <textarea
                                     className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-navy-800 text-sm"
                                     rows={3}
-                                    defaultValue="The adoption of machine learning to automate complex decision-making processes."
+                                    defaultValue={selectedTrendId ? megatrends.find(t => t.id === selectedTrendId)?.description || '' : ''}
                                 />
                             </div>
                             <div>
@@ -186,15 +194,15 @@ export const MegatrendScannerModule: React.FC = () => {
                                 <textarea
                                     className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-navy-800 text-sm"
                                     rows={2}
-                                    defaultValue="Potential to reduce overhead by 15%, but requires significant data infrastructure investment."
+                                    defaultValue={selectedTrendId ? megatrends.find(t => t.id === selectedTrendId)?.impactDetail || ''}
                                 />
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-navy-900 dark:text-white mb-2">Recommended Actions</label>
                                 <ul className="list-disc list-inside space-y-1 text-sm text-slate-600 dark:text-slate-300 bg-white dark:bg-navy-800 p-4 rounded-lg border border-slate-200 dark:border-white/10">
-                                    <li>Pilot predictive maintenance in Plant A.</li>
-                                    <li>Hire Data Science lead.</li>
-                                    <li>Audit current data quality.</li>
+                                    {selectedTrendId && megatrends.find(t => t.id === selectedTrendId)?.actions?.map((act: string, idx: number) => (
+                                        <li key={idx}>{act}</li>
+                                    ))}
                                 </ul>
                             </div>
                         </div>
