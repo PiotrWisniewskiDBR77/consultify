@@ -64,7 +64,7 @@ export const ModelSelector: React.FC = () => {
             });
 
             if (currentUser?.aiConfig?.privateModels) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                 
                 currentUser.aiConfig.privateModels.forEach((pm: any) => {
                     newOptions.push({
                         id: pm.id, // e.g. private-123
@@ -112,7 +112,7 @@ export const ModelSelector: React.FC = () => {
         // If it's a Private Model, we must inject its credentials into active config
         // (This is how the rest of the app "knows" what key to use for the current session)
         if ((option as unknown as { sourceData?: unknown }).sourceData) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             const pm: any = (option as unknown as { sourceData: any }).sourceData;
             newConfig.apiKey = pm.apiKey;
             newConfig.endpoint = pm.endpoint;
@@ -202,7 +202,7 @@ export const ModelSelector: React.FC = () => {
                             {language === 'PL' ? 'Wybierz Dostawcę' : 'Active Provider'}
                         </div>
                         <button
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                             
                             onClick={() => { setIsOpen(false); setCurrentView('SETTINGS_PROFILE' as any); }}
                             className="p-1 hover:bg-slate-200 dark:hover:bg-white/10 rounded text-slate-400"
                             title="Configure Keys"

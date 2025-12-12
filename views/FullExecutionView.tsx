@@ -20,7 +20,7 @@ export const FullExecutionView: React.FC = () => {
   } = useAppStore();
 
   const language = currentUser?.preferredLanguage || 'EN';
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   const t = translations.fullExecution; // Use t?
 
   // --- AI CONTEXT INJECTION ---

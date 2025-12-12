@@ -21,7 +21,7 @@ export const FullStep6Workspace: React.FC<FullStep6WorkspaceProps> = ({
    const scores = Object.entries(fullSession.assessment)
       .filter(([key]) => key !== 'completedAxes')
       .map(([key, val]) => {
-         // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          
          const axis = val as any;
          return { id: key, score: axis.actual || axis.score || 0 };
       });

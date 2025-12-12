@@ -22,7 +22,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
     // Calculate grid layout
     // We'll use a CSS grid for the timeline
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const handleDragEnd = (init: FullInitiative, info: any) => {
         setActiveDrag(null);
         if (!containerRef.current) return;

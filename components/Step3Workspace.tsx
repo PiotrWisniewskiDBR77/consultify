@@ -12,7 +12,7 @@ interface Step3WorkspaceProps {
 }
 
 export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   profile,
   sessionData,
   onStartFullProject,

@@ -73,7 +73,7 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
     onChange,
     onNext,
     language,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     context
 }) => {
     const content = AXIS_CONTENT[axis];
