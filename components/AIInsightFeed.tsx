@@ -19,7 +19,7 @@ export const AIInsightFeed: React.FC<AIInsightFeedProps> = ({ session }) => {
     const [loading, setLoading] = useState(false);
     const { currentUser } = useAppStore();
 
-    const generateInsights = async () => {
+    const generateInsights = React.useCallback(async () => {
         setLoading(true);
         try {
             // Call the Agent to analyze the full session state
@@ -30,14 +30,14 @@ export const AIInsightFeed: React.FC<AIInsightFeedProps> = ({ session }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [session, currentUser?.companyName]);
 
     useEffect(() => {
         // Generate on mount if empty
         if (insights.length === 0) {
             generateInsights();
         }
-    }, []);
+    }, [generateInsights, insights.length]);
 
     const getIcon = (type: string) => {
         switch (type) {

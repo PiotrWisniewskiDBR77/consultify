@@ -1,16 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Api } from '../../services/api';
-import { User, AIProviderType } from '../../types';
-import { Cpu, Monitor, Lock, Check, Layers } from 'lucide-react';
 
-interface AIConfigSettingsProps {
-    currentUser: User;
-    onUpdateUser: (updates: Partial<User>) => void;
-}
 
 import React, { useState, useEffect } from 'react';
 import { Api } from '../../services/api';
-import { User, AIProviderType, PrivateModel } from '../../types';
+import { User, AIProviderType, PrivateModel, AIProviderConfig } from '../../types';
 import { Cpu, Monitor, Lock, Check, Layers, Plus, Trash2, X } from 'lucide-react';
 
 interface AIConfigSettingsProps {
@@ -42,14 +34,15 @@ export const AIConfigSettings: React.FC<AIConfigSettingsProps> = ({ currentUser,
 
     useEffect(() => {
         // Init from props
-        if (currentUser.aiConfig) {
-            setVisibleModelIds(currentUser.aiConfig.visibleModelIds || []);
-            setPrivateModels(currentUser.aiConfig.privateModels || []);
-        }
+        setTimeout(() => {
+            setVisibleModelIds(currentUser.aiConfig?.visibleModelIds || []);
+            setPrivateModels(currentUser.aiConfig?.privateModels || []);
+        }, 0);
+
     }, [currentUser]);
 
     useEffect(() => {
-        setIsLoadingModels(true);
+        setTimeout(() => setIsLoadingModels(true), 0);
         Api.getPublicLLMProviders()
             .then(models => {
                 setSystemModels(models);
@@ -66,7 +59,10 @@ export const AIConfigSettings: React.FC<AIConfigSettingsProps> = ({ currentUser,
     }, []);
 
     const handleSave = async () => {
-        const newConfig = {
+        const newConfig: AIProviderConfig = {
+            provider: 'openai', // Default provider
+            apiKey: '',
+            modelId: 'gpt-4', // Default model
             ...currentUser.aiConfig,
             visibleModelIds,
             privateModels
@@ -132,8 +128,8 @@ export const AIConfigSettings: React.FC<AIConfigSettingsProps> = ({ currentUser,
                 <button
                     onClick={() => setActiveTab('system')}
                     className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'system'
-                            ? 'border-purple-500 text-purple-400'
-                            : 'border-transparent text-slate-400 hover:text-white'
+                        ? 'border-purple-500 text-purple-400'
+                        : 'border-transparent text-slate-400 hover:text-white'
                         }`}
                 >
                     System Models
@@ -141,8 +137,8 @@ export const AIConfigSettings: React.FC<AIConfigSettingsProps> = ({ currentUser,
                 <button
                     onClick={() => setActiveTab('private')}
                     className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'private'
-                            ? 'border-purple-500 text-purple-400'
-                            : 'border-transparent text-slate-400 hover:text-white'
+                        ? 'border-purple-500 text-purple-400'
+                        : 'border-transparent text-slate-400 hover:text-white'
                         }`}
                 >
                     My Private Models
@@ -163,15 +159,15 @@ export const AIConfigSettings: React.FC<AIConfigSettingsProps> = ({ currentUser,
                                 <div
                                     key={model.id}
                                     className={`p-4 rounded-xl border transition-all cursor-pointer ${visibleModelIds.includes(model.id)
-                                            ? 'bg-purple-500/10 border-purple-500/30'
-                                            : 'bg-navy-950 border-white/5 hover:border-white/10'
+                                        ? 'bg-purple-500/10 border-purple-500/30'
+                                        : 'bg-navy-950 border-white/5 hover:border-white/10'
                                         }`}
                                     onClick={() => toggleSystemModel(model.id)}
                                 >
                                     <div className="flex items-center gap-4">
                                         <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${visibleModelIds.includes(model.id)
-                                                ? 'bg-purple-600 border-purple-600'
-                                                : 'border-slate-600'
+                                            ? 'bg-purple-600 border-purple-600'
+                                            : 'border-slate-600'
                                             }`}>
                                             {visibleModelIds.includes(model.id) && <Check size={12} className="text-white" />}
                                         </div>

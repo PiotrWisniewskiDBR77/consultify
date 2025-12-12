@@ -209,12 +209,18 @@ export const Sidebar: React.FC = () => {
 
     const parentsToExpand = findParentIds(allItems, currentView);
     if (parentsToExpand && parentsToExpand.length > 0) {
-      setExpandedItems(prev => {
-        const next = new Set([...prev, ...parentsToExpand]);
-        return Array.from(next);
-      });
+
+      setTimeout(() => {
+        setExpandedItems(prev => {
+          const next = new Set([...prev, ...parentsToExpand]);
+          if (prev.length === next.size && prev.every(x => next.has(x))) {
+            return prev;
+          }
+          return Array.from(next);
+        });
+      }, 0);
     }
-  }, [currentView, currentUser, isSidebarCollapsed]);
+  }, [currentView, currentUser?.role]); // Removed isSidebarCollapsed to avoid re-expanding when collapsing
 
   const renderMenuItem = (item: MenuItem, level: number = 0) => {
     const isExpanded = expandedItems.includes(item.id);

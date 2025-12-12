@@ -26,7 +26,7 @@ export const FullStep6Workspace: React.FC<FullStep6WorkspaceProps> = ({
    const highest = sortedScores[0];
    const lowest = sortedScores[scores.length - 1];
 
-   const getAxisLabel = (id: string) => {    // @ts-ignore
+   const getAxisLabel = (id: string) => {    // TODO: Fix type definitions
       const key = `fullStep1_${id === 'digitalProducts' ? 'prod' : id.substring(0, 4)}` as any;
       return (t as any)[key]?.[language] || id;
    };

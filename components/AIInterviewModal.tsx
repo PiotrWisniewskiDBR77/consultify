@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Agent } from '../services/ai/agent';
-import { Bot, Send, User, Mic, X, CheckCircle } from 'lucide-react';
+import { Bot, Send, User, X, CheckCircle } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 
 interface AIInterviewModalProps {
@@ -12,7 +12,7 @@ interface AIInterviewModalProps {
 }
 
 export const AIInterviewModal: React.FC<AIInterviewModalProps> = ({
-    isOpen, onClose, axisId, axisLabel, onComplete
+    isOpen, onClose, axisLabel, onComplete
 }) => {
     const { currentUser } = useAppStore();
     const language = currentUser?.preferredLanguage || 'en';
@@ -29,7 +29,7 @@ export const AIInterviewModal: React.FC<AIInterviewModalProps> = ({
                 text: `Hello! I am your AI Auditor for "${axisLabel}". I will ask a few questions to help assess your maturity level. Ready?`
             }]);
         }
-    }, [isOpen, axisLabel]);
+    }, [isOpen, axisLabel, messages.length]);
 
     // Scroll to bottom
     useEffect(() => {

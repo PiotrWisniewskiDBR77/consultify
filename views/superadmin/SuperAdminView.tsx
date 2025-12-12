@@ -99,7 +99,6 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
     }, []);
 
     useEffect(() => {
-        // eslint-disable-next-line react-hooks/exhaustive-deps
         fetchData(false);
     }, [fetchData]);
 
@@ -138,6 +137,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
             const { token } = await Api.impersonateUser(userId);
             localStorage.setItem('token', token);
             // Force reload to pick up new user context
+            // eslint-disable-next-line react-hooks/immutability
             window.location.href = '/';
         } catch (err: any) {
             toast.error(err.message || 'Failed to impersonate user');

@@ -163,8 +163,8 @@ export const NotificationDropdown = () => {
                                     <div
                                         key={notification.id}
                                         className={`group relative p-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer ${!notification.read
-                                                ? (notification.type.includes('ai') ? 'bg-indigo-50/40 dark:bg-indigo-900/10' : 'bg-purple-50/50 dark:bg-purple-900/10')
-                                                : ''
+                                            ? (notification.type.includes('ai') ? 'bg-purple-900/20 dark:bg-purple-900/30' : 'bg-slate-100/50 dark:bg-navy-800/50')
+                                            : ''
                                             }`}
                                         onClick={() => !notification.read && handleMarkAsRead(notification.id, {} as any)}
                                     >

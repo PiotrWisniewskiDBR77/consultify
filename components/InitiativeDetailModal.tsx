@@ -337,8 +337,8 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                                     <h4 className="text-sm font-bold text-white mb-2 flex justify-between items-center">
                                         <span>Key Milestones</span>
                                         <button onClick={() => {
-                                            const newMilestones = [...(initiative.milestones || []), { name: '', date: '', status: 'pending' }];
-                                            // @ts-ignore
+                                            const newMilestones = [...(initiative.milestones || []), { name: '', date: '', status: 'pending' as const }];
+                                            // TODO: Fix type definitions
                                             setInitiative({ ...initiative, milestones: newMilestones });
                                         }} className="text-xs text-blue-400 hover:text-white">+ Add</button>
                                     </h4>
@@ -351,9 +351,9 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                                                     value={m.date}
                                                     onChange={e => {
                                                         const list = [...(initiative.milestones || [])];
-                                                        // @ts-ignore
+                                                        // TODO: Fix type definitions
                                                         list[idx] = { ...m, date: e.target.value };
-                                                        // @ts-ignore
+                                                        // TODO: Fix type definitions
                                                         setInitiative({ ...initiative, milestones: list });
                                                     }}
                                                 />
@@ -363,16 +363,16 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                                                     value={m.name}
                                                     onChange={e => {
                                                         const list = [...(initiative.milestones || [])];
-                                                        // @ts-ignore
+                                                        // TODO: Fix type definitions
                                                         list[idx] = { ...m, name: e.target.value };
-                                                        // @ts-ignore
+                                                        // TODO: Fix type definitions
                                                         setInitiative({ ...initiative, milestones: list });
                                                     }}
                                                 />
                                                 <button onClick={() => {
                                                     const list = [...(initiative.milestones || [])];
                                                     list.splice(idx, 1);
-                                                    // @ts-ignore
+                                                    // TODO: Fix type definitions
                                                     setInitiative({ ...initiative, milestones: list });
                                                 }} className="text-slate-500 hover:text-red-500"><X size={14} /></button>
                                             </div>

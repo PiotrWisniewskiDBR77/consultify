@@ -487,6 +487,15 @@ export interface LLMProvider {
 
 export type AIProviderType = 'system' | 'openai' | 'gemini' | 'ollama';
 
+export interface AIProviderConfig {
+  provider: AIProviderType;
+  modelId: string;
+  apiKey?: string;
+  endpoint?: string;
+  visibleModelIds?: string[];
+  privateModels?: PrivateModel[]; // Using PrivateModel defined below
+}
+
 export interface UserAIConfig {
   provider?: AIProviderType; // Default/Active provider
   modelId?: string;          // Default/Active model ID
@@ -562,7 +571,9 @@ export interface Task {
   blockingIssues?: string;
   stepPhase?: 'design' | 'pilot' | 'rollout';
   initiativeId?: string;
+  steps?: string[]; // Or checklist items?
   why?: string;
+  scope?: string;
 }
 
 export interface TaskComment {
