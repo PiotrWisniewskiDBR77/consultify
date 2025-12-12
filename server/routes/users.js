@@ -128,25 +128,24 @@ router.put('/:id', (req, res) => {
     const { firstName, lastName, email, role, status, timezone, units, aiConfig, licensePlanId } = req.body;
     const organizationId = req.user.organizationId;
 
-    // Build dynamic query to avoid overwriting with nulls if partial update
-    // But for simplicity in this project, we often do full updates or use specific handlers.
-    // Let's assume frontend sends what it wants to update, or we handle the specific field additions.
+    let fields = [];
+    let params = [];
 
-    // If aiConfig is present, include it.
-    let sql = `UPDATE users SET first_name = ?, last_name = ?, email = ?, role = ?, status = ?, timezone = ?, units = ?`;
-    const params = [firstName, lastName, email, role, status, timezone, units];
+    if (firstName !== undefined) { fields.push('first_name = ?'); params.push(firstName); }
+    if (lastName !== undefined) { fields.push('last_name = ?'); params.push(lastName); }
+    if (email !== undefined) { fields.push('email = ?'); params.push(email); }
+    if (role !== undefined) { fields.push('role = ?'); params.push(role); }
+    if (status !== undefined) { fields.push('status = ?'); params.push(status); }
+    if (timezone !== undefined) { fields.push('timezone = ?'); params.push(timezone); }
+    if (units !== undefined) { fields.push('units = ?'); params.push(units); }
+    if (aiConfig !== undefined) { fields.push('ai_config = ?'); params.push(JSON.stringify(aiConfig)); }
+    if (licensePlanId !== undefined) { fields.push('license_plan_id = ?'); params.push(licensePlanId); }
 
-    if (aiConfig !== undefined) {
-        sql += `, ai_config = ?`;
-        params.push(JSON.stringify(aiConfig));
+    if (fields.length === 0) {
+        return res.json({ message: 'No changes provided' });
     }
 
-    if (licensePlanId !== undefined) {
-        sql += `, license_plan_id = ?`;
-        params.push(licensePlanId);
-    }
-
-    sql += ` WHERE id = ? AND organization_id = ?`;
+    const sql = `UPDATE users SET ${fields.join(', ')} WHERE id = ? AND organization_id = ?`;
     params.push(id, organizationId);
 
     db.run(sql, params, function (err) {

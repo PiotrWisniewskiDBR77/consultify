@@ -4,7 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const IngestionService = require('../services/ingestionService');
-const { authenticateToken } = require('../middleware/authMiddleware');
+const authenticateToken = require('../middleware/authMiddleware');
 
 // Ensure upload directory exists
 const uploadDir = path.join(__dirname, '../../uploads');
