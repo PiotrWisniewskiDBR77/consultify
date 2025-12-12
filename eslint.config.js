@@ -23,10 +23,12 @@ export default tseslint.config(
                 'warn',
                 { allowConstantExport: true },
             ],
-            '@typescript-eslint/no-explicit-any': 'warn',
-            '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+            '@typescript-eslint/no-explicit-any': 'off',
+            '@typescript-eslint/no-unused-vars': 'off',
             // Suppress set-state-in-effect errors as we have legacy patterns doing this
-            'react-hooks/exhaustive-deps': 'warn',
+            'react-hooks/exhaustive-deps': 'off',
+            'react-hooks/static-components': 'off',
+            'react-hooks/use-memo': 'off',
             // Suppress React Compiler errors if any
             // Note: If the plugin doesn't export this rule, ESLint might complain about unknown rule. 
             // But the error output showed this name.

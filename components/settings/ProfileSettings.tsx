@@ -68,7 +68,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
     };
 
     // Create a callback that is debounced
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
     const debouncedSave = useCallback(
         simpleDebounce((data: typeof formData) => {
             saveChanges(data);

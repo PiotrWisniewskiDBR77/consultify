@@ -15,7 +15,7 @@ interface MaturityMatrixProps {
 
 export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
     axisId,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     axisKey,
     currentScores,
     onScoreSelect,

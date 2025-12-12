@@ -20,10 +20,10 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     isOpen,
     onClose,
     onSave,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     currentUser,
     users = [],
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     language = 'EN'
 }) => {
     const [task, setTask] = useState<Task>({ ...initialTask });
@@ -119,7 +119,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                                 <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Priority</label>
                                 <select
                                     value={task.priority}
-                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                     
                                     onChange={e => setTask({ ...task, priority: e.target.value as any })}
                                     className="w-full bg-navy-900 border border-white/10 rounded px-2 py-1.5 text-sm text-slate-300 outline-none"
                                 >

@@ -16,9 +16,9 @@ interface SplitLayoutProps {
 
 export const SplitLayout: React.FC<SplitLayoutProps> = ({
     children,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     title,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     subtitle,
     isFullScreen = false,
     onSendMessage,

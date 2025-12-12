@@ -11,7 +11,7 @@ export const PresenceIndicator: React.FC<PresenceIndicatorProps> = ({ className 
     const [isConnected, setIsConnected] = useState(false);
 
     useEffect(() => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         const handlePresence = (data: any) => {
             setActiveUsers(data.users || []);
         };

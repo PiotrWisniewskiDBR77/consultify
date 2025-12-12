@@ -166,7 +166,7 @@ export const NotificationDropdown = () => {
                                             ? (notification.type.includes('ai') ? 'bg-purple-900/20 dark:bg-purple-900/30' : 'bg-slate-100/50 dark:bg-navy-800/50')
                                             : ''
                                             }`}
-                                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                         
                                         onClick={() => !notification.read && handleMarkAsRead(notification.id, {} as any)}
                                     >
                                         <div className="flex gap-3">

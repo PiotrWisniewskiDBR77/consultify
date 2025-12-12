@@ -11,7 +11,7 @@ interface Step2WorkspaceProps {
 }
 
 export const Step2Workspace: React.FC<Step2WorkspaceProps> = ({
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   profile,
   sessionData,
   onNextStep,
