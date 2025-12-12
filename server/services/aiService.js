@@ -12,6 +12,7 @@ const fs = require('fs');
 const path = require('path');
 const jwt = require('jsonwebtoken');
 const PromptService = require('./promptService');
+const ModelRouter = require('./modelRouter');
 
 // DEPENDENCY INJECTION CONTAINER
 const deps = {
@@ -23,8 +24,8 @@ const deps = {
     FinancialService,
     WebSearchService,
     FeedbackService,
-
     KnowledgeService,
+    ModelRouter, // Add Router to deps
     OpenAI: null // Allow injection of OpenAI for testing
 };
 
@@ -81,119 +82,104 @@ const AiService = {
     },
 
     // --- CORE LLM INTERACTION ---
-    callLLM: async (prompt, systemInstruction = "", history = [], providerId = null, userId = null, action = 'chat') => {
+    callLLM: async (prompt, systemInstruction = "", history = [], providerId = null, userId = null, action = 'chat', images = []) => {
         const startTime = Date.now();
         let modelUsed = 'unknown';
 
         try {
-            // 1. Get Provider & Organization Context
-            // 1. Get Provider & Organization Context
-            const getContext = () => new Promise((resolve) => {
-                if (providerId) {
-                    deps.db.get("SELECT * FROM llm_providers WHERE id = ?", [providerId], (err, row) => resolve({ providerConfig: row, orgId: null }));
-                    return;
-                }
+            // 1. ROUTE REQUEST
+            let routingResult;
 
-                if (userId) {
-                    deps.db.get("SELECT organization_id, ai_config FROM users WHERE id = ?", [userId], (err, user) => {
-                        const orgId = user ? user.organization_id : null;
+            // Determine Intent
+            const intent = (images && images.length > 0) ? 'vision' : (action === 'deep_diagnose' ? 'analysis' : 'chat');
 
-                        // A. Check User Preference (selectedModelId)
-                        let userPrefId = null;
-                        if (user && user.ai_config) {
-                            try {
-                                const cfg = JSON.parse(user.ai_config);
-                                if (cfg.selectedModelId) userPrefId = cfg.selectedModelId;
-                            } catch (e) { }
-                        }
+            if (providerId) {
+                const getManual = () => new Promise(res => deps.db.get("SELECT * FROM llm_providers WHERE id = ?", [providerId], (e, r) => res(r)));
+                const pConfig = await getManual();
+                routingResult = { providerConfig: pConfig, orgId: null, sourceType: 'platform', model: pConfig?.model_id };
+            } else {
+                routingResult = await deps.ModelRouter.route(userId, intent);
+            }
 
-                        if (userPrefId) {
-                            deps.db.get("SELECT * FROM llm_providers WHERE id = ? AND is_active = 1", [userPrefId], (err, prefRow) => {
-                                if (prefRow) {
-                                    resolve({ providerConfig: prefRow, orgId });
-                                    return;
-                                }
-                                // If not found (e.g. invalid ID or inactive), fall through to Org Default
-                                checkOrgDefault(orgId, resolve);
-                            });
-                        } else {
-                            checkOrgDefault(orgId, resolve);
-                        }
-                    });
-                } else {
-                    checkOrgDefault(null, resolve);
-                }
-
-                function checkOrgDefault(orgId, resolve) {
-                    if (orgId) {
-                        deps.db.get(`
-                            SELECT p.* 
-                            FROM organizations o 
-                            JOIN llm_providers p ON o.active_llm_provider_id = p.id 
-                            WHERE o.id = ? AND p.is_active = 1
-                         `, [orgId], (err, row) => {
-                            if (row) resolve({ providerConfig: row, orgId });
-                            else checkSystemDefault(orgId, resolve);
-                        });
-                    } else {
-                        checkSystemDefault(null, resolve);
-                    }
-                }
-
-                function checkSystemDefault(orgId, resolve) {
-                    deps.db.get("SELECT * FROM llm_providers WHERE is_active = 1 AND is_default = 1 LIMIT 1", [], (err, row) => {
-                        // If no default marked, just get any active one
-                        if (!row) {
-                            deps.db.get("SELECT * FROM llm_providers WHERE is_active = 1 ORDER BY name ASC LIMIT 1", [], (err, anyRow) => {
-                                resolve({ providerConfig: anyRow || null, orgId });
-                            });
-                        } else {
-                            resolve({ providerConfig: row, orgId });
-                        }
-                    });
-                }
-            });
-
-            const { providerConfig, orgId } = await getContext();
+            const { providerConfig, orgId, sourceType } = routingResult || {};
 
             // STRICT BLOCKING: Check Balance
             const multiplier = providerConfig?.markup_multiplier || 1.0;
-            const sourceType = providerConfig ? (providerConfig.provider === 'ollama' ? 'local' : 'platform') : 'platform';
 
-            // Allow small buffer (100 tokens) to start request
             if (sourceType === 'platform') {
                 const minTokens = Math.ceil(100 * multiplier);
                 const hasBalance = await deps.TokenBillingService.hasSufficientBalance(userId, minTokens);
                 if (!hasBalance) {
-                    // Log failed attempt?
-                    console.warn(`[AiService] Blocked user ${userId} due to insufficient balance.`);
-                    throw new Error("Insufficient token balance. Please top up your wallet to continue using AI features.");
+                    throw new Error("Insufficient token balance. Please top up.");
                 }
             }
 
             let responseText = '';
 
+            // Helper to format OpenAI Vision Content
+            const formatOpenAIVisionInfo = (txt, imgs) => {
+                if (!imgs || imgs.length === 0) return txt;
+                return [
+                    { type: "text", text: txt },
+                    ...imgs.map(img => ({
+                        type: "image_url",
+                        image_url: { url: img.startsWith('http') ? img : `data:image/jpeg;base64,${img}` }
+                    }))
+                ];
+            };
+
+            // Helper to format Gemini Vision Content
+            const formatGeminiVisionParts = (txt, imgs) => {
+                const parts = [{ text: txt }];
+                if (imgs && imgs.length > 0) {
+                    imgs.forEach(img => {
+                        // Assuming img is base64 for Gemini if not http
+                        // If http, Gemini might need fetch? usually expects base64 or storage uri
+                        // For this implemented, we assume base64 data without prefix or clean it
+                        const b64 = img.replace(/^data:image\/\w+;base64,/, "");
+                        parts.push({
+                            inlineData: {
+                                mimeType: "image/jpeg",
+                                data: b64
+                            }
+                        });
+                    });
+                }
+                return parts;
+            };
+
+
             if (!providerConfig) {
                 // Fallback: GeminiEnv
                 const fallbackKey = process.env.GEMINI_API_KEY;
+                if (!fallbackKey) throw new Error("AI Provider not configured.");
 
-                if (!fallbackKey || fallbackKey === 'YOUR_GEMINI_API_KEY_HERE') throw new Error("AI Provider not configured.");
-
-                modelUsed = 'gemini-pro (fallback)';
+                modelUsed = 'gemini-pro-vision (fallback)';
                 const genAI = new deps.GoogleGenerativeAI(fallbackKey);
-                const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+                // Switch model if vision
+                const modelName = (images.length > 0) ? "gemini-1.5-flash" : "gemini-pro";
+                const model = genAI.getGenerativeModel({ model: modelName });
 
-                // Proper System Instruction for Gemini
-                const chatSession = model.startChat({
-                    history: history.map(h => ({
-                        role: h.role === 'user' ? 'user' : 'model',
-                        parts: [{ text: h.text || h.content || (h.parts && h.parts[0] && h.parts[0].text) || '' }]
-                    })),
-                    systemInstruction: systemInstruction ? { role: "system", parts: [{ text: systemInstruction }] } : undefined
-                });
+                // Gemini Vision is often single-turn in older SDKs, but 1.5 supports chat.
+                // We'll use generateContent for vision to be safe if history not supported perfectly
+                if (images.length > 0) {
+                    const parts = formatGeminiVisionParts(prompt, images);
+                    if (systemInstruction) parts.unshift({ text: `System: ${systemInstruction}` }); // Hack for single turn
+                    const result = await model.generateContent(parts);
+                    responseText = result.response.text();
+                } else {
+                    // Standard Text Chat
+                    const chatSession = model.startChat({
+                        history: history.map(h => ({
+                            role: h.role === 'user' ? 'user' : 'model',
+                            parts: [{ text: h.text || h.content || '' }]
+                        })),
+                        systemInstruction: systemInstruction ? { role: "system", parts: [{ text: systemInstruction }] } : undefined
+                    });
+                    const result = await chatSession.sendMessage(prompt);
+                    responseText = (await result.response).text();
+                }
 
-                const result = await chatSession.sendMessage(prompt);
-                responseText = (await result.response).text();
             } else {
                 const { provider, api_key, model_id, endpoint } = providerConfig;
                 modelUsed = `${provider}:${model_id}`;
@@ -202,20 +188,23 @@ const AiService = {
                     // DISABLED PER USER REQUEST
                     throw new Error("Ollama connection is disabled by system configuration.");
                 }
-                else if (provider === 'openai') {
+                else if (provider === 'openai' || ['qwen', 'deepseek', 'mistral', 'groq', 'nvidia_nim', 'z_ai', 'together'].includes(provider)) {
                     const messages = history.map(h => ({
                         role: h.role === 'user' ? 'user' : 'assistant',
-                        content: h.text || h.content || (h.parts && h.parts[0] && h.parts[0].text) || ''
+                        content: h.text || h.content || ''
                     }));
                     if (systemInstruction) messages.unshift({ role: 'system', content: systemInstruction });
-                    messages.push({ role: 'user', content: prompt });
+
+                    // Add User Message (Text or Multi-modal)
+                    const userContent = formatOpenAIVisionInfo(prompt, images);
+                    messages.push({ role: 'user', content: userContent });
 
                     const response = await fetch(endpoint || 'https://api.openai.com/v1/chat/completions', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${api_key}` },
-                        body: JSON.stringify({ model: model_id || 'gpt-4', messages })
+                        body: JSON.stringify({ model: model_id, messages })
                     });
-                    if (!response.ok) throw new Error(`OpenAI error: ${response.statusText}`);
+                    if (!response.ok) throw new Error(`Provider ${provider} error: ${response.statusText}`);
                     const data = await response.json();
                     responseText = data.choices[0]?.message?.content || '';
                 }
@@ -240,71 +229,6 @@ const AiService = {
                     const data = await response.json();
                     responseText = data.content[0]?.text || '';
                 }
-                else if (provider === 'nvidia_nim') {
-                    // NVIDIA NIM uses OpenAI-compatible API
-                    const nimEndpoint = endpoint || 'https://integrate.api.nvidia.com/v1/chat/completions';
-                    const messages = history.map(h => ({
-                        role: h.role === 'user' ? 'user' : 'assistant',
-                        content: h.text || h.content || (h.parts && h.parts[0] && h.parts[0].text) || ''
-                    }));
-                    if (systemInstruction) messages.unshift({ role: 'system', content: systemInstruction });
-                    messages.push({ role: 'user', content: prompt });
-
-                    const response = await fetch(nimEndpoint, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${api_key}`
-                        },
-                        body: JSON.stringify({
-                            model: model_id || 'meta/llama-3.1-405b-instruct',
-                            messages,
-                            max_tokens: 1024,
-                            temperature: 0.7
-                        })
-                    });
-                    if (!response.ok) throw new Error(`NVIDIA NIM error: ${response.statusText}`);
-                    const data = await response.json();
-                    responseText = data.choices[0]?.message?.content || '';
-                }
-                else if (provider === 'deepseek') {
-                    // DeepSeek - OpenAI compatible
-                    const deepseekEndpoint = endpoint || 'https://api.deepseek.com/v1/chat/completions';
-                    const messages = history.map(h => ({
-                        role: h.role === 'user' ? 'user' : 'assistant',
-                        content: h.text || h.content || (h.parts && h.parts[0] && h.parts[0].text) || ''
-                    }));
-                    if (systemInstruction) messages.unshift({ role: 'system', content: systemInstruction });
-                    messages.push({ role: 'user', content: prompt });
-
-                    const response = await fetch(deepseekEndpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${api_key}` },
-                        body: JSON.stringify({ model: model_id || 'deepseek-chat', messages, max_tokens: 1024 })
-                    });
-                    if (!response.ok) throw new Error(`DeepSeek error: ${response.statusText}`);
-                    const data = await response.json();
-                    responseText = data.choices[0]?.message?.content || '';
-                }
-                else if (provider === 'qwen') {
-                    // Alibaba Qwen (DashScope) - OpenAI compatible
-                    const qwenEndpoint = endpoint || 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
-                    const messages = history.map(h => ({
-                        role: h.role === 'user' ? 'user' : 'assistant',
-                        content: h.text || h.content || (h.parts && h.parts[0] && h.parts[0].text) || ''
-                    }));
-                    if (systemInstruction) messages.unshift({ role: 'system', content: systemInstruction });
-                    messages.push({ role: 'user', content: prompt });
-
-                    const response = await fetch(qwenEndpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${api_key}` },
-                        body: JSON.stringify({ model: model_id || 'qwen-max', messages, max_tokens: 1024 })
-                    });
-                    if (!response.ok) throw new Error(`Qwen error: ${response.statusText}`);
-                    const data = await response.json();
-                    responseText = data.choices[0]?.message?.content || '';
-                }
                 else if (provider === 'ernie') {
                     // Baidu ERNIE - Uses access_token auth
                     const ernieEndpoint = endpoint || 'https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions_pro';
@@ -323,188 +247,49 @@ const AiService = {
                     const data = await response.json();
                     responseText = data.result || '';
                 }
-                else if (provider === 'zhipu') {
-                    // Zhipu AI (ChatGLM) - OpenAI compatible
-                    const zhipuEndpoint = endpoint || 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
-                    const messages = history.map(h => ({
-                        role: h.role === 'user' ? 'user' : 'assistant',
-                        content: h.text || h.content || (h.parts && h.parts[0] && h.parts[0].text) || ''
-                    }));
-                    if (systemInstruction) messages.unshift({ role: 'system', content: systemInstruction });
-                    messages.push({ role: 'user', content: prompt });
+                else if (provider === 'gemini') {
+                    const genAI = new deps.GoogleGenerativeAI(api_key);
+                    const model = genAI.getGenerativeModel({ model: model_id });
 
-                    const response = await fetch(zhipuEndpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${api_key}` },
-                        body: JSON.stringify({ model: model_id || 'glm-4', messages, max_tokens: 1024 })
-                    });
-                    if (!response.ok) throw new Error(`Zhipu error: ${response.statusText}`);
-                    const data = await response.json();
-                    responseText = data.choices[0]?.message?.content || '';
-                }
-                else if (provider === 'mistral') {
-                    // Mistral AI - OpenAI compatible
-                    const mistralEndpoint = endpoint || 'https://api.mistral.ai/v1/chat/completions';
-                    const messages = history.map(h => ({
-                        role: h.role === 'user' ? 'user' : 'assistant',
-                        content: h.text || h.content || (h.parts && h.parts[0] && h.parts[0].text) || ''
-                    }));
-                    if (systemInstruction) messages.unshift({ role: 'system', content: systemInstruction });
-                    messages.push({ role: 'user', content: prompt });
-
-                    const response = await fetch(mistralEndpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${api_key}` },
-                        body: JSON.stringify({ model: model_id || 'mistral-large-latest', messages, max_tokens: 1024 })
-                    });
-                    if (!response.ok) throw new Error(`Mistral error: ${response.statusText}`);
-                    const data = await response.json();
-                    responseText = data.choices[0]?.message?.content || '';
-                }
-                else if (provider === 'cohere') {
-                    // Cohere - Different API format
-                    const cohereEndpoint = endpoint || 'https://api.cohere.ai/v1/chat';
-                    const chatHistory = history.map(h => ({
-                        role: h.role === 'user' ? 'USER' : 'CHATBOT',
-                        message: h.text || h.content || (h.parts && h.parts[0] && h.parts[0].text) || ''
-                    }));
-
-                    const response = await fetch(cohereEndpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${api_key}` },
-                        body: JSON.stringify({
-                            model: model_id || 'command-r-plus',
-                            message: prompt,
-                            chat_history: chatHistory,
-                            preamble: systemInstruction || ''
-                        })
-                    });
-                    if (!response.ok) throw new Error(`Cohere error: ${response.statusText}`);
-                    const data = await response.json();
-                    responseText = data.text || '';
-                }
-                else if (provider === 'groq') {
-                    // Groq - OpenAI compatible (ultra fast)
-                    const groqEndpoint = endpoint || 'https://api.groq.com/openai/v1/chat/completions';
-                    const messages = history.map(h => ({
-                        role: h.role === 'user' ? 'user' : 'assistant',
-                        content: h.text || h.content || (h.parts && h.parts[0] && h.parts[0].text) || ''
-                    }));
-                    if (systemInstruction) messages.unshift({ role: 'system', content: systemInstruction });
-                    messages.push({ role: 'user', content: prompt });
-
-                    const response = await fetch(groqEndpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${api_key}` },
-                        body: JSON.stringify({ model: model_id || 'llama-3.1-70b-versatile', messages, max_tokens: 1024 })
-                    });
-                    if (!response.ok) throw new Error(`Groq error: ${response.statusText}`);
-                    const data = await response.json();
-                    responseText = data.choices[0]?.message?.content || '';
-                }
-                else if (provider === 'together') {
-                    // Together AI - OpenAI compatible
-                    const togetherEndpoint = endpoint || 'https://api.together.xyz/v1/chat/completions';
-                    const messages = history.map(h => ({
-                        role: h.role === 'user' ? 'user' : 'assistant',
-                        content: h.text || h.content || (h.parts && h.parts[0] && h.parts[0].text) || ''
-                    }));
-                    if (systemInstruction) messages.unshift({ role: 'system', content: systemInstruction });
-                    messages.push({ role: 'user', content: prompt });
-
-                    const response = await fetch(togetherEndpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${api_key}` },
-                        body: JSON.stringify({ model: model_id || 'meta-llama/Llama-3-70b-chat-hf', messages, max_tokens: 1024 })
-                    });
-                    if (!response.ok) throw new Error(`Together error: ${response.statusText}`);
-                    const data = await response.json();
-                    responseText = data.choices[0]?.message?.content || '';
-                }
-                else if (provider === 'z_ai') {
-                    // Z.ai - Uses standard Bearer Auth (verified via docs)
-                    const zaiEndpoint = endpoint || 'https://api.z.ai/api/paas/v4/chat/completions';
-
-                    const messages = history.map(h => ({
-                        role: h.role === 'user' ? 'user' : 'assistant',
-                        content: h.text || h.content || (h.parts && h.parts[0] && h.parts[0].text) || ''
-                    }));
-                    if (systemInstruction) messages.unshift({ role: 'system', content: systemInstruction });
-                    messages.push({ role: 'user', content: prompt });
-
-                    const response = await fetch(zaiEndpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${api_key}` },
-                        body: JSON.stringify({ model: model_id || 'glm-4.6', messages, stream: false })
-                    });
-
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        throw new Error(`Z.ai error: ${response.status} ${response.statusText} - ${errorText}`);
+                    if (images.length > 0) {
+                        // Vision turn
+                        const parts = formatGeminiVisionParts(prompt, images);
+                        if (systemInstruction) parts.unshift({ text: `System Guide: ${systemInstruction}` });
+                        const result = await model.generateContent(parts);
+                        responseText = result.response.text();
+                    } else {
+                        const chatSession = model.startChat({
+                            history: history.map(h => ({
+                                role: h.role === 'user' ? 'user' : 'model',
+                                parts: [{ text: h.text || h.content || '' }]
+                            })),
+                            systemInstruction: systemInstruction ? { role: "system", parts: [{ text: systemInstruction }] } : undefined
+                        });
+                        const result = await chatSession.sendMessage(prompt);
+                        responseText = (await result.response).text();
                     }
-
-                    const data = await response.json();
-                    responseText = data.choices[0]?.message?.content || '';
-                }
-                else if (provider === 'nvidia') {
-                    // NVIDIA NIM - OpenAI compatible
-                    const nvidiaEndpoint = endpoint || 'https://integrate.api.nvidia.com/v1/chat/completions';
-                    const messages = history.map(h => ({
-                        role: h.role === 'user' ? 'user' : 'assistant',
-                        content: h.text || h.content || (h.parts && h.parts[0] && h.parts[0].text) || ''
-                    }));
-                    if (systemInstruction) messages.unshift({ role: 'system', content: systemInstruction });
-                    messages.push({ role: 'user', content: prompt });
-
-                    const response = await fetch(nvidiaEndpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${api_key}` },
-                        body: JSON.stringify({ model: model_id || 'meta/llama3-70b-instruct', messages, stream: false })
-                    });
-
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        throw new Error(`NVIDIA error: ${response.status} ${response.statusText} - ${errorText}`);
-                    }
-
-                    const data = await response.json();
-                    responseText = data.choices[0]?.message?.content || '';
                 }
                 else {
-                    // Google Gemini (Configured) - Default
-                    const genAI = new deps.GoogleGenerativeAI(api_key);
-                    const model = genAI.getGenerativeModel({ model: model_id || "gemini-pro" });
-
-                    const chatSession = model.startChat({
-                        history: history.map(h => ({
-                            role: h.role === 'user' ? 'user' : 'model',
-                            parts: [{ text: h.text || h.content || (h.parts && h.parts[0] && h.parts[0].text) || '' }]
-                        })),
-                        systemInstruction: systemInstruction ? { role: "system", parts: [{ text: systemInstruction }] } : undefined
-                    });
-
-                    const result = await chatSession.sendMessage(prompt);
-                    responseText = (await result.response).text();
+                    // Fallback for others not supporting vision explicitly in this code
+                    if (images.length > 0) throw new Error("Vision not supported for this provider yet.");
+                    throw new Error("Provider not fully implemented in this block.");
                 }
             }
 
-            // Analytics Log
-            // Analytics Log
+            // Analytics & Billing (Deduct)
             const latency = Date.now() - startTime;
-            const inputTokens = (prompt.length + systemInstruction.length) / 4;
+            const inputTokens = (prompt.length + systemInstruction.length + (images.length * 255)) / 4;
             const outputTokens = responseText.length / 4;
             const totalTokens = Math.round(inputTokens) + Math.round(outputTokens);
-            deps.AnalyticsService.logUsage(userId, action, modelUsed, Math.round(inputTokens), Math.round(outputTokens), latency)
-                .catch(err => console.error("Analytics Log Error", err));
 
-            // Token Billing - Track usage
-            const sourceTypeFinal = providerConfig ? (providerConfig.provider === 'ollama' ? 'local' : 'platform') : 'platform';
-            deps.TokenBillingService.deductTokens(userId, totalTokens, sourceTypeFinal, {
+            deps.AnalyticsService.logUsage(userId, action, modelUsed, Math.round(inputTokens), Math.round(outputTokens), latency).catch(e => { });
+
+            deps.TokenBillingService.deductTokens(userId, totalTokens, sourceType, {
                 organizationId: orgId,
                 llmProvider: providerConfig?.provider || 'gemini',
                 modelUsed: modelUsed,
                 multiplier: providerConfig?.markup_multiplier || 1.0
-            }).catch(err => console.error("Token Billing Error", err));
+            }).catch(e => console.error("Billing Error", e));
 
             return responseText;
         } catch (error) {
@@ -514,142 +299,141 @@ const AiService = {
     },
 
     // --- STREAMING SUPPORT ---
-    streamLLM: async function* (prompt, systemInstruction = "", history = [], providerId = null, userId = null, action = 'chat') {
+    streamLLM: async function* (prompt, systemInstruction = "", history = [], providerId = null, userId = null, action = 'chat', images = []) {
         const startTime = Date.now();
         let modelUsed = 'unknown';
         let fullResponse = '';
 
         try {
-            // 1. Get Provider (Reusing logic - ideally refactor into helper but duplicating for safety in this edit)
-            // 1. Get Provider & Organization Context (Duplicated for safety in generator)
-            // 1. Get Provider & Organization Context
-            const getContext = () => new Promise((resolve) => {
-                if (providerId) {
-                    deps.db.get("SELECT * FROM llm_providers WHERE id = ?", [providerId], (err, row) => resolve({ providerConfig: row, orgId: null }));
-                    return;
-                }
+            // 1. ROUTE REQUEST
+            const intent = (images && images.length > 0) ? 'vision' : (action === 'deep_diagnose' ? 'analysis' : 'chat');
 
-                if (userId) {
-                    deps.db.get("SELECT organization_id, ai_config FROM users WHERE id = ?", [userId], (err, user) => {
-                        const orgId = user ? user.organization_id : null;
+            let routingResult;
+            if (providerId) {
+                const getManual = () => new Promise(res => deps.db.get("SELECT * FROM llm_providers WHERE id = ?", [providerId], (e, r) => res(r)));
+                const pConfig = await getManual();
+                routingResult = { providerConfig: pConfig, orgId: null, sourceType: 'platform', model: pConfig?.model_id };
+            } else {
+                routingResult = await deps.ModelRouter.route(userId, intent);
+            }
 
-                        // A. Check User Preference (selectedModelId)
-                        let userPrefId = null;
-                        if (user && user.ai_config) {
-                            try {
-                                const cfg = JSON.parse(user.ai_config);
-                                if (cfg.selectedModelId) userPrefId = cfg.selectedModelId;
-                            } catch (e) { }
-                        }
-
-                        if (userPrefId) {
-                            deps.db.get("SELECT * FROM llm_providers WHERE id = ?", [userPrefId], (err, prefRow) => {
-                                if (prefRow) {
-                                    resolve({ providerConfig: prefRow, orgId });
-                                    return;
-                                }
-                                checkOrgDefault(orgId, resolve);
-                            });
-                        } else {
-                            checkOrgDefault(orgId, resolve);
-                        }
-                    });
-                } else {
-                    checkOrgDefault(null, resolve);
-                }
-
-                function checkOrgDefault(orgId, resolve) {
-                    if (orgId) {
-                        deps.db.get(`
-                            SELECT p.* 
-                            FROM organizations o 
-                            JOIN llm_providers p ON o.active_llm_provider_id = p.id 
-                            WHERE o.id = ? AND p.is_active = 1
-                         `, [orgId], (err, row) => {
-                            if (row) resolve({ providerConfig: row, orgId });
-                            else checkSystemDefault(orgId, resolve);
-                        });
-                    } else {
-                        checkSystemDefault(null, resolve);
-                    }
-                }
-
-                function checkSystemDefault(orgId, resolve) {
-                    deps.db.get("SELECT * FROM llm_providers WHERE is_active = 1 AND is_default = 1 LIMIT 1", [], (err, row) => {
-                        if (!row) {
-                            deps.db.get("SELECT * FROM llm_providers WHERE is_active = 1 ORDER BY name ASC LIMIT 1", [], (err, anyRow) => {
-                                resolve({ providerConfig: anyRow || null, orgId });
-                            });
-                        } else {
-                            resolve({ providerConfig: row, orgId });
-                        }
-                    });
-                }
-            });
-
-            const { providerConfig, orgId } = await getContext();
-
-            // STRICT BLOCKING: Check Balance
+            const { providerConfig, orgId, sourceType } = routingResult || {};
             const multiplier = providerConfig?.markup_multiplier || 1.0;
-            const sourceType = providerConfig ? (providerConfig.provider === 'ollama' ? 'local' : 'platform') : 'platform';
 
             if (sourceType === 'platform') {
                 const minTokens = Math.ceil(100 * multiplier);
                 const hasBalance = await deps.TokenBillingService.hasSufficientBalance(userId, minTokens);
                 if (!hasBalance) {
-                    throw new Error("Insufficient token balance. Please top up.");
+                    throw new Error("Insufficient token balance.");
                 }
             }
 
+            // Helper Helpers (duplicated for closure)
+            const formatOpenAIVisionInfo = (txt, imgs) => {
+                if (!imgs || imgs.length === 0) return txt;
+                return [
+                    { type: "text", text: txt },
+                    ...imgs.map(img => ({
+                        type: "image_url",
+                        image_url: { url: img.startsWith('http') ? img : `data:image/jpeg;base64,${img}` }
+                    }))
+                ];
+            };
+            const formatGeminiVisionParts = (txt, imgs) => {
+                const parts = [{ text: txt }];
+                if (imgs && imgs.length > 0) {
+                    imgs.forEach(img => {
+                        const b64 = img.replace(/^data:image\/\w+;base64,/, "");
+                        parts.push({ inlineData: { mimeType: "image/jpeg", data: b64 } });
+                    });
+                }
+                return parts;
+            };
+
             if (!providerConfig) {
-                // Fallback: GeminiEnv
                 const fallbackKey = process.env.GEMINI_API_KEY;
-                if (!fallbackKey || fallbackKey === 'YOUR_GEMINI_API_KEY_HERE') throw new Error("AI Provider not configured.");
-
-                modelUsed = 'gemini-pro (fallback)';
+                if (!fallbackKey) throw new Error("AI Provider not configured.");
+                modelUsed = 'gemini-1.5-flash (fallback)';
                 const genAI = new deps.GoogleGenerativeAI(fallbackKey);
-                const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+                const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // 1.5 Flash is good for vision
 
-                const chatSession = model.startChat({
-                    history: history.map(h => ({
-                        role: h.role === 'user' ? 'user' : 'model',
-                        parts: [{ text: h.text || h.content || (h.parts && h.parts[0] && h.parts[0].text) || '' }]
-                    })),
-                    systemInstruction: systemInstruction ? { role: "system", parts: [{ text: systemInstruction }] } : undefined
-                });
-
-                const result = await chatSession.sendMessageStream(prompt);
-                for await (const chunk of result.stream) {
-                    const chunkText = chunk.text();
-                    fullResponse += chunkText;
-                    yield chunkText;
+                if (images.length > 0) {
+                    const parts = formatGeminiVisionParts(prompt, images);
+                    if (systemInstruction) parts.unshift({ text: `System: ${systemInstruction}` });
+                    const result = await model.generateContentStream(parts);
+                    for await (const chunk of result.stream) {
+                        const chunkText = chunk.text();
+                        fullResponse += chunkText;
+                        yield chunkText;
+                    }
+                } else {
+                    const chatSession = model.startChat({
+                        history: history.map(h => ({
+                            role: h.role === 'user' ? 'user' : 'model',
+                            parts: [{ text: h.text || h.content || '' }]
+                        })),
+                        systemInstruction: systemInstruction ? { role: "system", parts: [{ text: systemInstruction }] } : undefined
+                    });
+                    const result = await chatSession.sendMessageStream(prompt);
+                    for await (const chunk of result.stream) {
+                        const chunkText = chunk.text();
+                        fullResponse += chunkText;
+                        yield chunkText;
+                    }
                 }
 
             } else {
                 const { provider, api_key, model_id, endpoint } = providerConfig;
                 modelUsed = `${provider}:${model_id}`;
 
-                if (provider === 'openai' || ['qwen', 'deepseek', 'mistral', 'groq', 'together', 'nvidia_nim', 'z_ai'].includes(provider)) {
-                    // ... (OpenAI Streaming logic remains same as it uses fetch)
-                    // OpenAI Streaming
+                if (provider === 'gemini') {
+                    const genAI = new deps.GoogleGenerativeAI(api_key);
+                    const model = genAI.getGenerativeModel({ model: model_id });
+                    if (images.length > 0) {
+                        const parts = formatGeminiVisionParts(prompt, images);
+                        if (systemInstruction) parts.unshift({ text: `System: ${systemInstruction}` });
+                        const result = await model.generateContentStream(parts);
+                        for await (const chunk of result.stream) {
+                            const chunkText = chunk.text();
+                            fullResponse += chunkText;
+                            yield chunkText;
+                        }
+                    } else {
+                        const chatSession = model.startChat({
+                            history: history.map(h => ({
+                                role: h.role === 'user' ? 'user' : 'model',
+                                parts: [{ text: h.text || h.content || '' }]
+                            })),
+                            systemInstruction: systemInstruction ? { role: "system", parts: [{ text: systemInstruction }] } : undefined
+                        });
+                        const result = await chatSession.sendMessageStream(prompt);
+                        for await (const chunk of result.stream) {
+                            const chunkText = chunk.text();
+                            fullResponse += chunkText;
+                            yield chunkText;
+                        }
+                    }
+                }
+                else if (['openai', 'qwen', 'deepseek', 'mistral', 'groq', 'together', 'nvidia_nim', 'z_ai'].includes(provider)) {
                     const messages = history.map(h => ({
                         role: h.role === 'user' ? 'user' : 'assistant',
-                        content: h.text || h.content || (h.parts && h.parts[0] && h.parts[0].text) || ''
+                        content: h.text || h.content || ''
                     }));
                     if (systemInstruction) messages.unshift({ role: 'system', content: systemInstruction });
-                    messages.push({ role: 'user', content: prompt });
+
+                    const userContent = formatOpenAIVisionInfo(prompt, images);
+                    messages.push({ role: 'user', content: userContent });
 
                     const response = await fetch(endpoint || 'https://api.openai.com/v1/chat/completions', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${api_key}` },
-                        body: JSON.stringify({ model: model_id || 'gpt-4', messages, stream: true })
+                        body: JSON.stringify({ model: model_id, messages, stream: true })
                     });
 
-                    if (!response.ok) throw new Error(`OpenAI stream error: ${response.statusText}`);
+                    if (!response.ok) throw new Error(`Provider stream error: ${response.statusText}`);
 
                     const reader = response.body.getReader();
                     const decoder = new TextDecoder();
-
                     while (true) {
                         const { done, value } = await reader.read();
                         if (done) break;
@@ -659,7 +443,7 @@ const AiService = {
                             if (line.startsWith('data: ') && line !== 'data: [DONE]') {
                                 try {
                                     const data = JSON.parse(line.substring(6));
-                                    const content = data.choices[0]?.delta?.content;
+                                    const content = data.choices && data.choices[0]?.delta?.content;
                                     if (content) {
                                         fullResponse += content;
                                         yield content;
@@ -669,66 +453,28 @@ const AiService = {
                         }
                     }
                 }
-                else if (provider === 'gemini' || !provider) { // Default to gemini if provider set but matches gemini logic
-                    const genAI = new deps.GoogleGenerativeAI(api_key);
-                    const model = genAI.getGenerativeModel({ model: model_id || "gemini-pro" });
-                    const chatSession = model.startChat({
-                        history: history.map(h => ({
-                            role: h.role === 'user' ? 'user' : 'model',
-                            parts: [{ text: h.text || h.content || (h.parts && h.parts[0] && h.parts[0].text) || '' }]
-                        })),
-                        systemInstruction: systemInstruction ? { role: "system", parts: [{ text: systemInstruction }] } : undefined
-                    });
-                    const result = await chatSession.sendMessageStream(prompt);
-                    for await (const chunk of result.stream) {
-                        const chunkText = chunk.text();
-                        fullResponse += chunkText;
-                        yield chunkText;
-                    }
-                }
-                else if (provider === 'gemini') {
-                    // Google Gemini Streaming
-                    const genAI = new deps.GoogleGenerativeAI(api_key);
-                    const model = genAI.getGenerativeModel({ model: modelId || "gemini-pro" });
-
-                    const chatSession = model.startChat({
-                        history: history.map(h => ({
-                            role: h.role === 'user' ? 'user' : 'model',
-                            parts: [{ text: h.text || h.content || (h.parts && h.parts[0] && h.parts[0].text) || '' }]
-                        })),
-                        systemInstruction: systemInstruction ? { role: "system", parts: [{ text: systemInstruction }] } : undefined
-                    });
-
-                    const result = await chatSession.sendMessageStream(prompt);
-                    for await (const chunk of result.stream) {
-                        const chunkText = chunk.text();
-                        fullResponse += chunkText;
-                        yield chunkText;
-                    }
-                } else {
-                    // Fallback for others (non-streaming simulation)
-                    const fullText = await AiService.callLLM(prompt, systemInstruction, history, providerConfig.id, userId, action);
+                else {
+                    // Fallback for non-streaming / other providers
+                    const fullText = await AiService.callLLM(prompt, systemInstruction, history, providerId, userId, action, images);
                     fullResponse = fullText;
                     yield fullText;
                 }
             }
 
-            // Log Analytics after stream
+            // Analytics & Billing (Deduct)
             const latency = Date.now() - startTime;
-            const inputTokens = (prompt.length + systemInstruction.length) / 4;
+            const inputTokens = (prompt.length + systemInstruction.length + (images.length * 255)) / 4;
             const outputTokens = fullResponse.length / 4;
             const totalTokens = Math.round(inputTokens) + Math.round(outputTokens);
 
             deps.AnalyticsService.logUsage(userId, action, modelUsed, Math.round(inputTokens), Math.round(outputTokens), latency).catch(e => { });
 
-            // Token Billing - Track usage
-            const sourceTypeFinal = providerConfig ? (providerConfig.provider === 'ollama' ? 'local' : 'platform') : 'platform';
-            deps.TokenBillingService.deductTokens(userId, totalTokens, sourceTypeFinal, {
+            deps.TokenBillingService.deductTokens(userId, totalTokens, sourceType, {
                 organizationId: orgId,
                 llmProvider: providerConfig?.provider || 'gemini',
                 modelUsed: modelUsed,
                 multiplier: providerConfig?.markup_multiplier || 1.0
-            }).catch(err => console.error("Token Billing Error", err));
+            }).catch(e => console.error("Billing Error", e));
 
         } catch (error) {
             console.error("Stream LLM Error", error);
@@ -759,13 +505,38 @@ const AiService = {
         }
 
         // 3. Inject "Client Context" (Memory)
+        // 3. Inject "Client Context" (Memory)
         if (organizationId) {
+            // A. Hard Facts (Name, Facilities)
+            const getOrgDetails = () => new Promise((resolve) => {
+                db.get("SELECT name, industry FROM organizations WHERE id = ?", [organizationId], (err, row) => resolve(row));
+            });
+            const getFacilities = () => new Promise((resolve) => {
+                db.all("SELECT name, headcount, location, activity_profile FROM organization_facilities WHERE organization_id = ?", [organizationId], (err, rows) => resolve(rows || []));
+            });
             const getContext = () => new Promise((resolve) => {
                 deps.db.all("SELECT key, value FROM client_context WHERE organization_id = ? AND confidence > 0.6", [organizationId], (err, rows) => resolve(rows || []));
             });
-            const clientContext = await getContext();
+
+            const [orgDetails, facilities, clientContext] = await Promise.all([
+                getOrgDetails(),
+                getFacilities(),
+                getContext()
+            ]);
+
+            if (orgDetails) {
+                systemPrompt += `\n\n### CLIENT PROFILE:\nName: ${orgDetails.name}\nIndustry: ${orgDetails.industry || 'General'}\n`;
+            }
+
+            if (facilities.length > 0) {
+                systemPrompt += `\n### FACILITIES / SITES:\n`;
+                facilities.forEach(f => {
+                    systemPrompt += `- ${f.name} (${f.location}): ${f.headcount} employees. Profile: ${f.activity_profile}\n`;
+                });
+            }
+
             if (clientContext.length > 0) {
-                systemPrompt += `\n\n### CLIENT SPECIFIC CONTEXT (MEMORY):\n`;
+                systemPrompt += `\n### CLIENT SPECIFIC CONTEXT (SOFT FACTS):\n`;
                 clientContext.forEach(c => systemPrompt += `- ${c.key}: ${c.value}\n`);
                 systemPrompt += `### END CLIENT CONTEXT\n`;
             }
@@ -1118,7 +889,8 @@ const AiService = {
                 company,
                 screen: extraContext,
                 strategies,
-                knowledge: ragContext
+                knowledge: ragContext,
+                baseInstruction: roleName // Pass the incoming roleName/instruction as base
             });
         } else {
             // Fallback / Legacy (but inject RAG)

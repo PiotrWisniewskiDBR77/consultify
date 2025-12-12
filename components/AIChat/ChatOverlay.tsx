@@ -82,7 +82,7 @@ export const ChatOverlay: React.FC = () => {
                     <div>
                         <div className="text-sm font-bold text-white leading-tight">Consultify AI</div>
                         <div className="text-[10px] text-slate-400">
-                            {screenContext ? `Viewing: ${screenContext.title}` : 'Global Assistant'}
+                            {screenContext ? `Viewing: ${screenContext.data?._meta?.title || screenContext.screenId}` : 'Global Assistant'}
                         </div>
                     </div>
                 </div>

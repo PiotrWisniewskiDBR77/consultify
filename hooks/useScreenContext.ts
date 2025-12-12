@@ -1,35 +1,47 @@
-import { useEffect } from 'react';
-import { useAIContext, ScreenContextData } from '../contexts/AIContext';
+import { useEffect, useRef } from 'react';
+import { useAIContext } from '../contexts/AIContext';
+import { ScreenContextPayload, AIContextPersona } from '../types/AIContract';
+
+// Global sequence counter
+let globalSequenceId = 0;
 
 export const useScreenContext = (
     screenId: string,
     title: string,
     data: any,
-    description?: string
+    description?: string,
+    persona: AIContextPersona = 'consultant'
 ) => {
     const { setScreenContext } = useAIContext();
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
-        const context: ScreenContextData = {
-            screenId,
-            title,
-            data,
-            description
-        };
+        // Debounce updates to avoid jitter
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
-        // Set context on mount/update
-        setScreenContext(context);
+        timeoutRef.current = setTimeout(() => {
+            globalSequenceId++;
 
-        // Optional: Clear context on unmount? 
-        // Usually we want the LAST active context to remain until a new one takes over, 
-        // or we can set to null. Setting to null prevents "stale" context if we navigate to a page that DOESN'T use the hook.
-        // Let's safe clear it.
+            const payload: ScreenContextPayload = {
+                version: '1.0',
+                screenId,
+                timestamp: Date.now(),
+                sequenceId: globalSequenceId,
+                persona,
+                data: {
+                    ...data,
+                    _meta: { title, description }
+                },
+                intent: description
+            };
+
+            setScreenContext(payload);
+        }, 300);
+
         return () => {
-            // We only clear if the current context ID matches ours (avoid race conditions if next page mounted first)
-            // Limitation: context state is simple value. 
-            // For simplicity, we just won't clear it on unmount, expecting the next page to Overwrite it.
-            // Or we can leave it. Stale context > No context? 
-            // Decision: Leave it for now. Next screen overwrites.
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            // We consciously DO NOT clear context on unmount here to prevent flashing.
+            // The next screen will overwrite it.
         };
-    }, [screenId, title, JSON.stringify(data), description, setScreenContext]);
+    }, [screenId, title, JSON.stringify(data), description, persona, setScreenContext]);
 };

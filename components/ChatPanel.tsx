@@ -9,6 +9,8 @@ interface ChatPanelProps {
   onOptionSelect: (option: ChatOption, isMultiSelect?: boolean) => void;
   onMultiSelectSubmit?: (selectedOptions: string[]) => void;
   isTyping: boolean;
+  title?: string;
+  subtitle?: string;
 }
 
 export const ChatPanel: React.FC<ChatPanelProps> = ({
@@ -16,7 +18,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   onSendMessage,
   onOptionSelect,
   onMultiSelectSubmit,
-  isTyping
+  isTyping,
+  title = 'Transformation Assistant',
+  subtitle = 'Step 1: Profiling'
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [selectedMultiOptions, setSelectedMultiOptions] = useState<string[]>([]);
@@ -60,8 +64,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       {/* Chat Header */}
       <div className="px-4 py-3 border-b border-navy-800 flex justify-between items-center bg-navy-950/50 backdrop-blur-sm sticky top-0 z-10">
         <div>
-          <h2 className="text-xs font-bold text-white tracking-wide uppercase">Transformation Assistant</h2>
-          <p className="text-[10px] text-slate-400">Step 1: Profiling</p>
+          <h2 className="text-xs font-bold text-white tracking-wide uppercase">{title}</h2>
+          <p className="text-[10px] text-slate-400">{subtitle}</p>
         </div>
       </div>
 
@@ -76,16 +80,16 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
 
                 {/* Avatar */}
                 <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 border ${msg.role === 'ai'
-                    ? 'bg-primary-900/50 border-primary-700'
-                    : 'bg-slate-700 border-slate-600'
+                  ? 'bg-primary-900/50 border-primary-700'
+                  : 'bg-slate-700 border-slate-600'
                   }`}>
                   {msg.role === 'ai' ? <Bot size={14} className="text-primary-400" /> : <User size={14} className="text-slate-300" />}
                 </div>
 
                 {/* Bubble */}
                 <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm ${msg.role === 'user'
-                    ? 'bg-primary-600 text-white rounded-tr-none'
-                    : 'bg-navy-800 text-slate-200 border border-navy-700 rounded-tl-none'
+                  ? 'bg-primary-600 text-white rounded-tr-none'
+                  : 'bg-navy-800 text-slate-200 border border-navy-700 rounded-tl-none'
                   }`}>
                   {msg.content}
                 </div>
@@ -105,8 +109,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                               key={option.id}
                               onClick={() => handleMultiSelectToggle(option.value)}
                               className={`px-3 py-1.5 text-xs rounded-full border transition-all flex items-center gap-1.5 ${isSelected
-                                  ? 'bg-purple-600/20 border-purple-500 text-purple-200'
-                                  : 'bg-navy-900 border-white/10 text-slate-300 hover:bg-navy-800 hover:border-white/20'
+                                ? 'bg-purple-600/20 border-purple-500 text-purple-200'
+                                : 'bg-navy-900 border-white/10 text-slate-300 hover:bg-navy-800 hover:border-white/20'
                                 }`}
                             >
                               {option.label}

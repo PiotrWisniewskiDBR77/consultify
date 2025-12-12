@@ -8,7 +8,8 @@ import {
     Language,
     FreeSession,
     FullSession,
-    ChatMessage
+    ChatMessage,
+    Notification
 } from '../types';
 
 interface AppState {
@@ -48,6 +49,12 @@ interface AppState {
         selectedModelId: string | null;
     };
     setAIConfig: (config: Partial<AppState['aiConfig']>) => void;
+
+    // Notifications
+    notifications: Notification[];
+    addNotification: (notification: Notification) => void;
+    markNotificationAsRead: (id: string) => void;
+    clearNotifications: () => void;
 
     // Actions
     setCurrentView: (view: AppView) => void;
@@ -119,6 +126,7 @@ export const useAppStore = create<AppState>()(
             freeSessionData: initialFreeSession,
             fullSessionData: initialFullSession,
             currentProjectId: null,
+            notifications: [],
 
             // AI Config
             aiConfig: {
@@ -130,6 +138,12 @@ export const useAppStore = create<AppState>()(
             setAIConfig: (newConfig) => set((state) => ({
                 aiConfig: { ...state.aiConfig, ...newConfig }
             })),
+
+            addNotification: (notification) => set((state) => ({ notifications: [notification, ...state.notifications] })),
+            markNotificationAsRead: (id) => set((state) => ({
+                notifications: state.notifications.map(n => n.id === id ? { ...n, read: true } : n)
+            })),
+            clearNotifications: () => set({ notifications: [] }),
 
             setCurrentView: (view) => set({ currentView: view }),
             setSessionMode: (mode) => set({ sessionMode: mode }),
@@ -164,6 +178,7 @@ export const useAppStore = create<AppState>()(
                 freeSessionData: initialFreeSession,
                 fullSessionData: initialFullSession,
                 currentProjectId: null,
+                notifications: [],
                 aiConfig: { autoMode: true, maxMode: false, multiModel: false, selectedModelId: null }
             }),
             theme: 'dark',
@@ -194,7 +209,8 @@ export const useAppStore = create<AppState>()(
                 fullSessionData: state.fullSessionData,
                 currentProjectId: state.currentProjectId,
                 aiConfig: state.aiConfig,
-                theme: state.theme
+                theme: state.theme,
+                notifications: state.notifications
             }),
         }
     )

@@ -9,9 +9,9 @@ const PromptService = {
      * @returns {String} The formatted System Instruction
      */
     buildSystemPrompt: (context) => {
-        const { user, company, screen, strategies } = context;
+        const { user, company, screen, strategies, baseInstruction } = context;
 
-        let prompt = `You are an Elite Digital Transformation Consultant. 
+        let prompt = baseInstruction || `You are an Elite Digital Transformation Consultant. 
 Your goal is to assist ${user?.firstName || 'the user'} (Role: ${user?.role || 'User'}) in transforming their company: ${company?.name || 'their organization'}.\n`;
 
         // 1. Company Context
