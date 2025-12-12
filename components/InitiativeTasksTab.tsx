@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Task, User, TaskStatus } from '../types';
+import { Task, User } from '../types';
 import { Button } from './Button';
-import { Plus, Filter, Search, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { Plus, CheckCircle, Clock } from 'lucide-react';
 import { TaskDetailModal } from './TaskDetailModal';
 
 interface Props {

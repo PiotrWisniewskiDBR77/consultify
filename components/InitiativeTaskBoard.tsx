@@ -3,7 +3,7 @@ import { FullInitiative, Task, TaskStatus } from '../types';
 import { Api } from '../services/api';
 import { TaskCard } from './TaskCard';
 import { Plus } from 'lucide-react';
-import { translations } from '../translations';
+
 
 interface InitiativeTaskBoardProps {
     initiative: FullInitiative;
@@ -15,10 +15,10 @@ type Phase = 'design' | 'pilot' | 'rollout';
 export const InitiativeTaskBoard: React.FC<InitiativeTaskBoardProps> = ({ initiative, onClose }) => {
     const [activePhase, setActivePhase] = useState<Phase>('design');
     const [tasks, setTasks] = useState<Task[]>([]);
-    const [loading, setLoading] = useState(false);
+    // const [loading, setLoading] = useState(false);
 
     const loadTasks = useCallback(async () => {
-        setLoading(true);
+        // setLoading(true);
         try {
             // Fetch tasks for this initiative
             // Note: We need to filter by initiativeId locally or via API if supported
@@ -42,11 +42,9 @@ export const InitiativeTaskBoard: React.FC<InitiativeTaskBoardProps> = ({ initia
             // Let's rely on standard filtering: 
             // Temporary: fetch all tasks and filter. 
             const res = await Api.getTasks();
-            setTasks(res.filter((t: any) => t.initiativeId === initiative.id));
-        } catch (e) {
-            // Error loading tasks - silently fail or implement proper error UI
+            setTasks(res.filter((t: Task) => t.initiativeId === initiative.id));
         } finally {
-            setLoading(false);
+            // setLoading(false);
         }
     }, [initiative.id]);
 
@@ -71,13 +69,13 @@ export const InitiativeTaskBoard: React.FC<InitiativeTaskBoardProps> = ({ initia
                     priority: t.priority,
                     estimatedHours: t.estimatedHours,
                     why: t.why,
-                    stepPhase: t.stepPhase as any, // 'design' | 'pilot' | 'rollout'
+                    stepPhase: t.stepPhase as Phase, // 'design' | 'pilot' | 'rollout'
                     checklist: t.acceptanceCriteria ? [{ id: Date.now().toString(), text: t.acceptanceCriteria, completed: false }] : [],
                     taskType: 'execution'
                 });
             }
             await loadTasks();
-        } catch (e) {
+        } catch {
             alert("Failed to generate tasks. Please try again.");
         } finally {
             setGenerating(false);
