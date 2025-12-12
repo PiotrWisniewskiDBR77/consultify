@@ -30,9 +30,10 @@ export const SuperAdminPlansView: React.FC = () => {
     const fetchPlans = async () => {
         try {
             const data = await Api.get('/billing/admin/plans');
-            setPlans(data);
+            setPlans(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error('Failed to fetch plans:', error);
+            setPlans([]);
         } finally {
             setLoading(false);
         }
@@ -147,8 +148,8 @@ export const SuperAdminPlansView: React.FC = () => {
                     <div
                         key={plan.id}
                         className={`relative rounded-xl p-6 transition-all ${plan.is_active
-                                ? 'bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700'
-                                : 'bg-gray-100 dark:bg-gray-800/50 opacity-60'
+                            ? 'bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700'
+                            : 'bg-gray-100 dark:bg-gray-800/50 opacity-60'
                             }`}
                     >
                         {editingId === plan.id ? (

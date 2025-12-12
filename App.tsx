@@ -162,7 +162,7 @@ const AppContent = () => {
             else if (viewParts.includes('STEP6')) sub = t.fullStep6[lang];
             else sub = `${t.fullProject[lang]} ${stepNum}`;
         } else if (viewParts.includes('ADMIN')) {
-            section = 'Admin Panel'; // TODO: add to translations
+            section = 'Admin Panel';
             sub = viewParts[1] || 'Dashboard';
         } else if (viewParts.includes('SETTINGS')) {
             section = t.settings[lang];

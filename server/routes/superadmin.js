@@ -274,6 +274,43 @@ router.post('/users', (req, res) => {
     });
 });
 
+// INVITE USER (Super Admin)
+router.post('/users/invite', (req, res) => {
+    const { email, role, organizationId } = req.body;
+
+    if (!email || !organizationId) return res.status(400).json({ error: 'Email and Organization are required' });
+
+    // Check if user exists
+    db.get('SELECT id FROM users WHERE email = ?', [email], (err, user) => {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        if (user) return res.status(400).json({ error: 'User already exists' });
+
+        const token = uuidv4();
+        const inviteId = uuidv4();
+        // Expires in 7 days
+        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+        const sql = `INSERT INTO invitations(id, organization_id, email, role, token, status, invited_by, expires_at) VALUES(?, ?, ?, ?, ?, 'pending', ?, ?)`;
+
+        db.run(sql, [inviteId, organizationId, email, role || 'USER', token, req.user.id, expiresAt], function (err) {
+            if (err) return res.status(500).json({ error: err.message });
+
+            // In a real app, send email here. For now, return the link.
+            const inviteLink = `${req.protocol}://${req.get('host')}/register?token=${token}`;
+
+            ActivityService.log({
+                userId: req.user.id,
+                action: 'invited',
+                entityType: 'user',
+                entityName: email,
+                details: { organizationId, role }
+            });
+
+            res.json({ message: 'Invitation created', inviteLink, token });
+        });
+    });
+});
+
 // ACCESS REQUESTS
 router.get('/access-requests', (req, res) => {
     db.all(`SELECT * FROM access_requests ORDER BY requested_at DESC`, [], (err, rows) => {

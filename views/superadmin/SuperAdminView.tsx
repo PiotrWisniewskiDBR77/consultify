@@ -385,19 +385,58 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
         </div>
     );
 
+    const handleBlockUser = async (userId: string, currentStatus: string) => {
+        const newStatus = currentStatus === 'active' ? 'blocked' : 'active';
+        const action = newStatus === 'blocked' ? 'Block' : 'Unblock';
+
+        if (!confirm(`Are you sure you want to ${action} this user?`)) return;
+
+        try {
+            await Api.updateSuperAdminUser(userId, { status: newStatus });
+            toast.success(`User ${newStatus === 'blocked' ? 'blocked' : 'unblocked'} successfully`);
+            fetchData();
+        } catch (err) {
+            toast.error(`Failed to ${action.toLowerCase()} user`);
+        }
+    };
+
+    // Invite User Logic
+    const [showInviteModal, setShowInviteModal] = useState(false);
+    const [inviteForm, setInviteForm] = useState({ email: '', role: 'USER', organizationId: '' });
+
+    const handleInviteSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            await Api.inviteUser(inviteForm.email, inviteForm.role, inviteForm.organizationId);
+            toast.success('Invitation sent successfully');
+            setShowInviteModal(false);
+            setInviteForm({ email: '', role: 'USER', organizationId: '' });
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to send invitation');
+        }
+    };
+
     const renderUsers = () => (
         <div className="p-8 overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
                 <h1 className="text-2xl font-bold">All Users</h1>
-                <div className="relative">
-                    <Search className="absolute left-3 top-2.5 text-slate-500" size={16} />
-                    <input
-                        type="text"
-                        placeholder="Search users..."
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                        className="pl-10 pr-4 py-2 bg-navy-900 border border-white/10 rounded-lg text-sm text-white focus:border-blue-500 outline-none w-64"
-                    />
+                <div className="flex gap-4">
+                    <button
+                        onClick={() => setShowInviteModal(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm transition-colors"
+                    >
+                        <Plus size={16} /> Invite User
+                    </button>
+                    <div className="relative">
+                        <Search className="absolute left-3 top-2.5 text-slate-500" size={16} />
+                        <input
+                            type="text"
+                            placeholder="Search users..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            className="pl-10 pr-4 py-2 bg-navy-900 border border-white/10 rounded-lg text-sm text-white focus:border-blue-500 outline-none w-64"
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -458,6 +497,15 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                                             >
                                                 Move
                                             </button>
+                                            {user.role !== 'SUPERADMIN' && (
+                                                <button
+                                                    onClick={() => handleBlockUser(user.id, user.status)}
+                                                    className={`p-1.5 rounded transition-colors text-xs font-medium ${user.status === 'active' ? 'hover:bg-red-500/20 text-slate-400 hover:text-red-400' : 'hover:bg-green-500/20 text-red-400 hover:text-green-400'}`}
+                                                    title={user.status === 'active' ? 'Block User' : 'Unblock User'}
+                                                >
+                                                    {user.status === 'active' ? 'Block' : 'Unblock'}
+                                                </button>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>
@@ -539,6 +587,58 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                     onClose={() => { setShowEditModal(false); setEditingOrg(null); }}
                     onUpdate={() => { setShowEditModal(false); setEditingOrg(null); fetchData(); }}
                 />
+            )}
+
+            {/* Invite User Modal */}
+            {showInviteModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                    <div className="bg-navy-900 border border-white/10 rounded-xl p-6 w-full max-w-md shadow-2xl">
+                        <h3 className="text-xl font-bold mb-4">Invite New User</h3>
+                        <form onSubmit={handleInviteSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-medium text-slate-400 mb-1">Email Address</label>
+                                <input
+                                    type="email"
+                                    required
+                                    value={inviteForm.email}
+                                    onChange={e => setInviteForm({ ...inviteForm, email: e.target.value })}
+                                    className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-blue-500 outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-slate-400 mb-1">Role</label>
+                                <select
+                                    value={inviteForm.role}
+                                    onChange={e => setInviteForm({ ...inviteForm, role: e.target.value })}
+                                    className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-blue-500 outline-none"
+                                >
+                                    <option value="USER">User (Standard)</option>
+                                    <option value="ADMIN">Admin (Organization)</option>
+                                    <option value="MANAGER">Manager</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-slate-400 mb-1">Organization</label>
+                                <select
+                                    value={inviteForm.organizationId}
+                                    onChange={e => setInviteForm({ ...inviteForm, organizationId: e.target.value })}
+                                    required
+                                    className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-blue-500 outline-none"
+                                >
+                                    <option value="">Select Organization...</option>
+                                    {organizations.map(org => (
+                                        <option key={org.id} value={org.id}>{org.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="flex gap-3 pt-4">
+                                <button type="button" onClick={() => setShowInviteModal(false)} className="flex-1 py-2 bg-transparent border border-white/10 hover:bg-white/5 rounded text-slate-300">Cancel</button>
+                                <button type="submit" className="flex-1 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-medium">Send Invitation</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             )}
 
             {/* Move User Modal */}

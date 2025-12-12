@@ -195,7 +195,6 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
                     task={emptyTask as Task}
                     isOpen={isCreateModalOpen}
                     onClose={() => setIsCreateModalOpen(false)}
-                    // TODO: Fix type definitions
                     onSave={handleCreateTask}
                     currentUser={currentUser}
                     users={users}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, AIProviderType } from '../../types';
 import { Api } from '../../services/api';
-import { Cpu, Check, Monitor, Lock } from 'lucide-react';
+import { Cpu, Check, Monitor, Lock, Sparkles } from 'lucide-react';
 
 interface AISettingsProps {
     currentUser: User;
@@ -17,9 +17,26 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
     const [isLoadingModels, setIsLoadingModels] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
 
+    // User Preferences State
+    const [visibleModelIds, setVisibleModelIds] = useState<string[]>(currentUser.aiConfig?.visibleModelIds || []);
+    const [availableModels, setAvailableModels] = useState<any[]>([]);
+
+    useEffect(() => {
+        // Fetch public models for preference selection
+        Api.getPublicLLMProviders().then(data => {
+            setAvailableModels(data);
+            // If no preferences set yet, maybe select all? Or keep empty to mean "all"?
+            // LLMSelector logic says: empty/null = all. 
+            // So we leave it as initialized.
+        }).catch(err => console.error(err));
+    }, []);
+
     const handleSaveConfig = async (e: React.FormEvent) => {
         e.preventDefault();
-        const newConfig: any = { provider: configMode };
+        const newConfig: any = {
+            provider: configMode,
+            visibleModelIds: visibleModelIds // Save visibility preference
+        };
 
         if (configMode === 'openai' || configMode === 'gemini') {
             newConfig.apiKey = customKey;
@@ -132,6 +149,45 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                 You are using the organization's default AI provider.
                                 No configuration is needed. Usage counts towards your plan limit.
                             </p>
+                        </div>
+
+                        {/* Personal Model Preferences */}
+                        <div className="mt-8 pt-8 border-t border-white/5 text-left bg-navy-950/50 rounded-lg p-6">
+                            <div className="flex items-center gap-2 mb-4">
+                                <div className="p-2 rounded bg-purple-500/20 text-purple-400"><Sparkles size={16} /></div>
+                                <div>
+                                    <h4 className="text-sm font-bold text-white">Your Preferred Models</h4>
+                                    <p className="text-xs text-slate-400">Select which models appear in your top bar selector.</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2 max-h-48 overflow-y-auto">
+                                {availableModels.length === 0 ? (
+                                    <div className="text-xs text-slate-500">Loading available models...</div>
+                                ) : (
+                                    availableModels.map(model => (
+                                        <label key={model.id} className="flex items-center gap-3 p-2 hover:bg-white/5 rounded cursor-pointer group">
+                                            <input
+                                                type="checkbox"
+                                                checked={visibleModelIds.includes(model.id)}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        setVisibleModelIds([...visibleModelIds, model.id]);
+                                                    } else {
+                                                        setVisibleModelIds(visibleModelIds.filter(id => id !== model.id));
+                                                    }
+                                                }}
+                                                className="w-4 h-4 rounded border-slate-600 bg-navy-900 text-purple-500 focus:ring-purple-500/50"
+                                            />
+                                            <div className="flex-1">
+                                                <div className="text-sm text-slate-200 group-hover:text-white">{model.name}</div>
+                                                <div className="text-[10px] text-slate-500 uppercase">{model.provider} • {model.model_id}</div>
+                                            </div>
+                                            {visibleModelIds.includes(model.id) && <Check size={14} className="text-purple-500" />}
+                                        </label>
+                                    ))
+                                )}
+                            </div>
                         </div>
 
                         {/* Organization Admin Control */}

@@ -285,6 +285,17 @@ export const Api = {
         return data;
     },
 
+    inviteUser: async (email: string, role: string, organizationId: string): Promise<any> => {
+        const res = await fetch(`${API_URL}/superadmin/users/invite`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ email, role, organizationId })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to invite user');
+        return data;
+    },
+
     revertImpersonation: async (): Promise<{ user: User; token: string }> => {
         const res = await fetch(`${API_URL}/auth/revert-impersonation`, {
             method: 'POST',
