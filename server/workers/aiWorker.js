@@ -40,19 +40,29 @@ const processor = async (job) => {
 };
 
 const initWorker = () => {
-    const worker = new Worker('ai-tasks', processor, redisConfig);
+    if (process.env.MOCK_REDIS === 'true') {
+        console.log(`[BullMQ] MOCK_REDIS=true, skipping worker initialization.`);
+        return null;
+    }
 
-    worker.on('completed', (job) => {
-        // Optional: Notify user via WebSocket or update DB status
-        console.log(`[BullMQ] Job ${job.id} completed successfully.`);
-    });
+    try {
+        const worker = new Worker('ai-tasks', processor, redisConfig);
 
-    worker.on('failed', (job, err) => {
-        console.log(`[BullMQ] Job ${job.id} failed: ${err.message}`);
-    });
+        worker.on('completed', (job) => {
+            // Optional: Notify user via WebSocket or update DB status
+            console.log(`[BullMQ] Job ${job.id} completed successfully.`);
+        });
 
-    console.log(`[BullMQ] Worker initialized for 'ai-tasks'`);
-    return worker;
+        worker.on('failed', (job, err) => {
+            console.log(`[BullMQ] Job ${job.id} failed: ${err.message}`);
+        });
+
+        console.log(`[BullMQ] Worker initialized for 'ai-tasks'`);
+        return worker;
+    } catch (err) {
+        console.error('[BullMQ] Failed to initialize worker:', err.message);
+        return null;
+    }
 };
 
 module.exports = { initWorker };

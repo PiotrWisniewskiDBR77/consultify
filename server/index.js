@@ -170,8 +170,12 @@ if (require.main === module) {
     startCleanupJob();
 
     // Init AI Worker
-    const { initWorker } = require('./workers/aiWorker');
-    initWorker();
+    try {
+        const { initWorker } = require('./workers/aiWorker');
+        initWorker();
+    } catch (err) {
+        console.warn('[Server] AI Worker failed to start (likely Redis missing):', err.message);
+    }
 
     server.listen(PORT, '0.0.0.0', () => {
         console.log('Server running on http://0.0.0.0:' + PORT);

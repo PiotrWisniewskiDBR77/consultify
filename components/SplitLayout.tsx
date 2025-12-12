@@ -3,6 +3,7 @@ import { ChatPanel } from './ChatPanel';
 import { useAppStore } from '../store/useAppStore';
 import { ChatMessage, ChatOption } from '../types';
 import { useAIStream } from '../hooks/useAIStream';
+import { useAIContext } from '../contexts/AIContext';
 
 interface SplitLayoutProps {
     children: React.ReactNode;
@@ -28,6 +29,7 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
         setIsBotTyping
     } = useAppStore();
 
+    const { screenContext } = useAIContext();
     const { isStreaming, streamedContent, startStream } = useAIStream();
 
     // Resizable State
@@ -112,7 +114,7 @@ Your role is to guide the user through strategic discovery and provide actionabl
 Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
 
         // Import API dynamically to avoid circular deps and call stream
-        startStream(text, history, systemPrompt);
+        startStream(text, history, systemPrompt, screenContext || undefined);
     };
 
     const handleOptionSelect = (option: ChatOption) => {

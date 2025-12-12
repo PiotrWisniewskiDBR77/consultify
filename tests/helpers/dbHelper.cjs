@@ -12,6 +12,10 @@ async function initTestDb() {
     await db.initPromise;
     // Clear mock flag if set
     delete process.env.MOCK_DB;
+    // Enable foreign keys for SQLite
+    await new Promise((resolve) => {
+        db.run('PRAGMA foreign_keys = ON', resolve);
+    });
 }
 
 /**

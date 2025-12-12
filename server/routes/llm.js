@@ -105,24 +105,7 @@ router.get('/providers/public', async (req, res) => {
 
 // POST /api/llm/test-ollama - Test Ollama connection (Legacy/Specific)
 router.post('/test-ollama', async (req, res) => {
-    const { endpoint } = req.body;
-    const ollamaUrl = endpoint || 'http://localhost:11434';
-
-    try {
-        const response = await fetch(`${ollamaUrl}/api/tags`);
-        if (!response.ok) {
-            return res.status(400).json({ success: false, error: 'Failed to connect to Ollama' });
-        }
-        const data = await response.json();
-        const models = data.models || [];
-        res.json({
-            success: true,
-            message: `Connected! Found ${models.length} models.`,
-            models: models.map(m => ({ name: m.name, size: m.size }))
-        });
-    } catch (err) {
-        res.status(400).json({ success: false, error: `Connection failed: ${err.message}` });
-    }
+    return res.status(400).json({ success: false, error: 'Ollama integration is disabled.' });
 });
 
 // POST /api/llm/test - Generic Test Connection
@@ -147,19 +130,9 @@ router.post('/test', async (req, res) => {
 });
 
 // GET /api/llm/ollama-models - List available Ollama models
+// GET /api/llm/ollama-models - List available Ollama models
 router.get('/ollama-models', async (req, res) => {
-    const endpoint = req.query.endpoint || 'http://localhost:11434';
-
-    try {
-        const response = await fetch(`${endpoint}/api/tags`);
-        if (!response.ok) {
-            return res.status(400).json({ error: 'Failed to fetch Ollama models' });
-        }
-        const data = await response.json();
-        res.json(data.models || []);
-    } catch (err) {
-        res.status(400).json({ error: `Failed to connect: ${err.message}` });
-    }
+    res.json([]);
 });
 
 // GET /api/llm/organization-config/:orgId

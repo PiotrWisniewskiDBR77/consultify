@@ -231,7 +231,6 @@ export const AIConfigSettings: React.FC<AIConfigSettingsProps> = ({ currentUser,
                                         <option value="openai">OpenAI</option>
                                         <option value="gemini">Google Gemini</option>
                                         <option value="anthropic">Anthropic</option>
-                                        <option value="ollama">Ollama (Local)</option>
                                     </select>
                                 </div>
                                 <div className="space-y-1 col-span-2">
@@ -240,35 +239,20 @@ export const AIConfigSettings: React.FC<AIConfigSettingsProps> = ({ currentUser,
                                         value={newModel.modelId}
                                         onChange={e => setNewModel({ ...newModel, modelId: e.target.value })}
                                         className="w-full bg-navy-950 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-purple-500 outline-none"
-                                        placeholder={newModel.provider === 'ollama' ? 'llama3' : 'gpt-4-turbo'}
+                                        placeholder={'gpt-4-turbo'}
                                     />
-                                    {newModel.provider === 'ollama' && (
-                                        <p className="text-[10px] text-slate-500">Run `ollama list` to see available names.</p>
-                                    )}
                                 </div>
 
-                                {newModel.provider === 'ollama' ? (
-                                    <div className="space-y-1 col-span-2">
-                                        <label className="text-xs text-slate-400">Endpoint URL</label>
-                                        <input
-                                            value={newModel.endpoint}
-                                            onChange={e => setNewModel({ ...newModel, endpoint: e.target.value })}
-                                            className="w-full bg-navy-950 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-purple-500 outline-none font-mono"
-                                            placeholder="http://localhost:11434"
-                                        />
-                                    </div>
-                                ) : (
-                                    <div className="space-y-1 col-span-2">
-                                        <label className="text-xs text-slate-400">API Key</label>
-                                        <input
-                                            type="password"
-                                            value={newModel.apiKey}
-                                            onChange={e => setNewModel({ ...newModel, apiKey: e.target.value })}
-                                            className="w-full bg-navy-950 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-purple-500 outline-none font-mono"
-                                            placeholder="sk-..."
-                                        />
-                                    </div>
-                                )}
+                                <div className="space-y-1 col-span-2">
+                                    <label className="text-xs text-slate-400">API Key</label>
+                                    <input
+                                        type="password"
+                                        value={newModel.apiKey}
+                                        onChange={e => setNewModel({ ...newModel, apiKey: e.target.value })}
+                                        className="w-full bg-navy-950 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-purple-500 outline-none font-mono"
+                                        placeholder="sk-..."
+                                    />
+                                </div>
                             </div>
 
                             <div className="flex justify-end pt-2">
