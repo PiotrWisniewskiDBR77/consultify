@@ -19,13 +19,7 @@ import {
   Rocket,
   Map,
   Pin,
-  Activity,
-  UserCircle,
-  CreditCard,
-  Cpu,
-  Bell,
-  Link as LinkIcon,
-  Globe
+  Bell
 } from 'lucide-react';
 import { SidebarUsage } from './SidebarUsage';
 
@@ -51,7 +45,6 @@ export const Sidebar: React.FC = () => {
     freeSessionData,
     fullSessionData,
     theme,
-    toggleTheme,
     isSidebarCollapsed, // acts as "isPinned" (false = pinned/full, true = unpinned/mini)
     toggleSidebarCollapse
   } = useAppStore();
@@ -232,6 +225,7 @@ export const Sidebar: React.FC = () => {
     };
 
     const parentsToExpand = findParentIds(allItems, currentView);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     if (parentsToExpand && parentsToExpand.length > 0) {
 
       setTimeout(() => {

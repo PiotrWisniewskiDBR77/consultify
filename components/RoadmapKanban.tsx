@@ -20,7 +20,7 @@ import {
     useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { FullInitiative, Quarter, Language, User } from '../types';
+import { FullInitiative, Quarter, User } from '../types';
 import { InitiativeDetailModal } from './InitiativeDetailModal';
 import { GripVertical, Clock } from 'lucide-react';
 
