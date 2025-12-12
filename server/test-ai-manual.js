@@ -7,6 +7,20 @@ async function testAllProviders() {
     // Give DB a moment to connect
     await new Promise(resolve => setTimeout(resolve, 1000));
 
+    // Get a valid user with tokens (Piotr)
+    const user = await new Promise((resolve) => {
+        db.get("SELECT id FROM users WHERE email = 'piotr.wisniewski@dbr77.com'", (err, row) => {
+            resolve(row);
+        });
+    });
+
+    if (!user) {
+        console.error("❌ Test User (Piotr) not found. Please run seed_dbr77.js first.");
+        return;
+    }
+    const userId = user.id;
+    console.log(`Using Test User ID: ${userId}`);
+
     // Get all active providers
     const providers = await new Promise((resolve, reject) => {
         db.all("SELECT * FROM llm_providers WHERE is_active = 1", (err, rows) => {
@@ -23,13 +37,13 @@ async function testAllProviders() {
         console.log(`Endpoint: ${provider.endpoint || 'Default'}`);
 
         try {
-            // We need to force callLLM to use this specific provider.
-            // valid way is passing providerId as 4th argument
+            // Pass userId as 5th argument
             const response = await AiService.callLLM(
                 "Hello! Reply with 'OK'.",
                 "You are a test bot.",
                 [],
-                provider.id // providerId
+                provider.id, // providerId
+                userId       // userId
             );
             console.log(`✅ SUCCESS: ${provider.name} responded: "${response.slice(0, 50)}..."`);
         } catch (error) {

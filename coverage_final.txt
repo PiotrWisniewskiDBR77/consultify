@@ -1,0 +1,380 @@
+
+[1m[46m RUN [49m[22m [36mv4.0.15 [39m[90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify[39m
+      [2mCoverage enabled with [22m[33mv8[39m
+
+[90mstdout[2m | tests/unit/backend/knowledgeService.test.js[2m > [22m[2mKnowledgeService - Integration
+[22m[39m[DB:jgqrof] Initializing database at :memory:
+Connected to the SQLite database.
+Created billing tables and seeded default subscription plans.
+Seeded SuperAdmin and DBR77 Users.
+
+[90mstdout[2m | tests/unit/backend/knowledgeService.test.js[2m > [22m[2mKnowledgeService - Integration
+[22m[39mProjects table created successfully (or already exists).
+
+[90mstdout[2m | tests/unit/backend/tokenBillingService.test.js[2m > [22m[2mTokenBillingService - Integration
+[22m[39m[DB:zq2qhk] Initializing database at :memory:
+Connected to the SQLite database.
+Created billing tables and seeded default subscription plans.
+Seeded SuperAdmin and DBR77 Users.
+
+[90mstdout[2m | tests/unit/backend/tokenBillingService.test.js[2m > [22m[2mTokenBillingService - Integration
+[22m[39mProjects table created successfully (or already exists).
+
+[90mstdout[2m | tests/unit/backend/knowledgeService.test.js[2m > [22m[2mKnowledgeService - Integration
+[22m[39mDatabase initialization complete.
+
+[90mstdout[2m | tests/unit/backend/tokenBillingService.test.js[2m > [22m[2mTokenBillingService - Integration
+[22m[39mDatabase initialization complete.
+
+ [32m✓[39m tests/unit/backend/knowledgeService.test.js [2m([22m[2m11 tests[22m[2m)[22m[32m 288[2mms[22m[39m
+[90mstdout[2m | tests/integration/storage_security.test.js
+[22m[39m[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+[Scheduler] Initializing Cron Jobs...
+[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM)
+[Redis] Initializing client...
+
+[90mstdout[2m | tests/integration/projects.test.js
+[22m[39m[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔄 add secrets lifecycle management: https://dotenvx.com/ops
+[Scheduler] Initializing Cron Jobs...
+[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM)
+[Redis] Initializing client...
+
+[90mstdout[2m | tests/integration/storage_security.test.js[2m > [22m[2mStorage Security & Isolation Integration
+[22m[39m[DB:xtsw2] Initializing database at :memory:
+Connected to the SQLite database.
+Created billing tables and seeded default subscription plans.
+Seeded SuperAdmin and DBR77 Users.
+
+[90mstdout[2m | tests/integration/storage_security.test.js[2m > [22m[2mStorage Security & Isolation Integration
+[22m[39m[Redis] Connected
+
+[90mstdout[2m | tests/integration/storage_security.test.js[2m > [22m[2mStorage Security & Isolation Integration
+[22m[39mProjects table created successfully (or already exists).
+
+[90mstdout[2m | tests/integration/projects.test.js[2m > [22m[2mProjects Integration
+[22m[39m[DB:3krg5f] Initializing database at :memory:
+Connected to the SQLite database.
+Created billing tables and seeded default subscription plans.
+Seeded SuperAdmin and DBR77 Users.
+
+[90mstdout[2m | tests/integration/storage_security.test.js[2m > [22m[2mStorage Security & Isolation Integration
+[22m[39mDatabase initialization complete.
+
+[90mstdout[2m | tests/integration/projects.test.js[2m > [22m[2mProjects Integration
+[22m[39m[Redis] Connected
+
+[90mstdout[2m | tests/integration/projects.test.js[2m > [22m[2mProjects Integration
+[22m[39mProjects table created successfully (or already exists).
+
+ [32m✓[39m tests/unit/backend/tokenBillingService.test.js [2m([22m[2m16 tests[22m[2m)[22m[33m 459[2mms[22m[39m
+[90mstdout[2m | tests/integration/projects.test.js[2m > [22m[2mProjects Integration
+[22m[39mDatabase initialization complete.
+
+[90mstdout[2m | tests/integration/auth.test.js
+[22m[39m[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  override existing env vars with { override: true }
+[Scheduler] Initializing Cron Jobs...
+[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM)
+[Redis] Initializing client...
+
+[90mstdout[2m | tests/integration/tasks.test.js
+[22m[39m[dotenv@17.2.3] injecting env (0) from .env -- tip: 👥 sync secrets across teammates & machines: https://dotenvx.com/ops
+[Scheduler] Initializing Cron Jobs...
+[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM)
+[Redis] Initializing client...
+
+[90mstdout[2m | tests/integration/auth.test.js[2m > [22m[2mAuth Integration
+[22m[39m[DB:d6lh4m] Initializing database at :memory:
+Connected to the SQLite database.
+Created billing tables and seeded default subscription plans.
+Seeded SuperAdmin and DBR77 Users.
+
+[90mstdout[2m | tests/integration/auth.test.js[2m > [22m[2mAuth Integration
+[22m[39m[Redis] Connected
+
+[90mstdout[2m | tests/integration/tasks.test.js
+[22m[39m[DB:3f4tck] Initializing database at :memory:
+Connected to the SQLite database.
+Created billing tables and seeded default subscription plans.
+Seeded SuperAdmin and DBR77 Users.
+
+[90mstdout[2m | tests/integration/tasks.test.js[2m > [22m[2mTasks Integration
+[22m[39m[Redis] Connected
+
+[90mstdout[2m | tests/integration/auth.test.js[2m > [22m[2mAuth Integration
+[22m[39mProjects table created successfully (or already exists).
+
+[90mstdout[2m | tests/integration/tasks.test.js[2m > [22m[2mTasks Integration
+[22m[39mProjects table created successfully (or already exists).
+
+[90mstdout[2m | tests/integration/initiatives.test.js
+[22m[39m[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔑 add access controls to secrets: https://dotenvx.com/ops
+[Scheduler] Initializing Cron Jobs...
+[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM)
+[Redis] Initializing client...
+
+[90mstdout[2m | tests/integration/tasks.test.js[2m > [22m[2mTasks Integration
+[22m[39mDatabase initialization complete.
+
+[90mstdout[2m | tests/integration/auth.test.js[2m > [22m[2mAuth Integration
+[22m[39mDatabase initialization complete.
+
+[90mstdout[2m | tests/integration/initiatives.test.js[2m > [22m[2mInitiatives Integration
+[22m[39m[DB:nb4vcg] Initializing database at :memory:
+Connected to the SQLite database.
+Created billing tables and seeded default subscription plans.
+Seeded SuperAdmin and DBR77 Users.
+
+[90mstdout[2m | tests/integration/initiatives.test.js[2m > [22m[2mInitiatives Integration
+[22m[39m[Redis] Connected
+
+[90mstdout[2m | tests/integration/initiatives.test.js[2m > [22m[2mInitiatives Integration
+[22m[39mProjects table created successfully (or already exists).
+
+ [32m✓[39m tests/integration/projects.test.js [2m([22m[2m2 tests[22m[2m)[22m[33m 474[2mms[22m[39m
+[90mstdout[2m | tests/integration/initiatives.test.js[2m > [22m[2mInitiatives Integration
+[22m[39mDatabase initialization complete.
+
+[90mstdout[2m | tests/unit/backend/ragService.test.js[2m > [22m[2mRagService - Integration[2m > [22m[2mgenerateEmbedding[2m > [22m[2mshould return null if no provider configured in database
+[22m[39m[DB:z2myup] Initializing database at :memory:
+Connected to the SQLite database.
+Created billing tables and seeded default subscription plans.
+Seeded SuperAdmin and DBR77 Users.
+
+[90mstdout[2m | tests/unit/backend/ragService.test.js[2m > [22m[2mRagService - Integration[2m > [22m[2mgetContext[2m > [22m[2mshould return context string without throwing
+[22m[39mProjects table created successfully (or already exists).
+
+[90mstdout[2m | tests/unit/backend/ragService.test.js[2m > [22m[2mRagService - Integration[2m > [22m[2mgetContext[2m > [22m[2mshould return context string without throwing
+[22m[39mDatabase initialization complete.
+
+ [32m✓[39m tests/unit/backend/ragService.test.js [2m([22m[2m5 tests[22m[2m)[22m[32m 106[2mms[22m[39m
+[90mstdout[2m | tests/unit/backend/analyticsService.test.js[2m > [22m[2mAnalyticsService - Integration
+[22m[39m[DB:oxzhqm] Initializing database at :memory:
+Connected to the SQLite database.
+Created billing tables and seeded default subscription plans.
+Seeded SuperAdmin and DBR77 Users.
+
+[90mstdout[2m | tests/unit/backend/analyticsService.test.js[2m > [22m[2mAnalyticsService - Integration
+[22m[39mProjects table created successfully (or already exists).
+
+[90mstdout[2m | tests/unit/backend/analyticsService.test.js[2m > [22m[2mAnalyticsService - Integration
+[22m[39mDatabase initialization complete.
+
+ [32m✓[39m tests/unit/backend/analyticsService.test.js [2m([22m[2m5 tests[22m[2m)[22m[32m 78[2mms[22m[39m
+ [32m✓[39m tests/integration/auth.test.js [2m([22m[2m4 tests[22m[2m)[22m[33m 480[2mms[22m[39m
+ [32m✓[39m tests/integration/initiatives.test.js [2m([22m[2m2 tests[22m[2m)[22m[33m 368[2mms[22m[39m
+ [32m✓[39m tests/integration/tasks.test.js [2m([22m[2m2 tests[22m[2m)[22m[33m 484[2mms[22m[39m
+ [32m✓[39m tests/integration/storage_security.test.js [2m([22m[2m4 tests[22m[2m)[22m[33m 1090[2mms[22m[39m
+     [33m[2m✓[22m[39m should soft delete files instead of removing them immediately [33m 568[2mms[22m[39m
+[90mstdout[2m | tests/integration/api.test.ts
+[22m[39m[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+[Scheduler] Initializing Cron Jobs...
+[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM)
+[Redis] Initializing client...
+
+[90mstdout[2m | tests/unit/backend/billingService.test.js
+[22m[39m[DB:z7lz1] Initializing database at :memory:
+Connected to the SQLite database.
+Created billing tables and seeded default subscription plans.
+Seeded SuperAdmin and DBR77 Users.
+
+[90mstdout[2m | tests/unit/backend/billingService.test.js[2m > [22m[2mBillingService (Unit)
+[22m[39mProjects table created successfully (or already exists).
+
+[90mstdout[2m | tests/integration/api.test.ts[2m > [22m[2mIntegration Test: API Health[2m > [22m[2mGET /health should return 200 OK
+[22m[39m[DB:vnundo] Initializing database at :memory:
+Connected to the SQLite database.
+Created billing tables and seeded default subscription plans.
+Seeded SuperAdmin and DBR77 Users.
+
+[90mstdout[2m | tests/integration/api.test.ts[2m > [22m[2mIntegration Test: API Health[2m > [22m[2mGET /health should return 200 OK
+[22m[39m[Redis] Connected
+
+[90mstdout[2m | tests/integration/api.test.ts[2m > [22m[2mIntegration Test: API Health[2m > [22m[2mGET /non-existent-route should return 404 (handled by catchall serving index.html)
+[22m[39mProjects table created successfully (or already exists).
+
+[90mstdout[2m | tests/unit/backend/billingService.test.js[2m > [22m[2mBillingService (Unit)
+[22m[39mDatabase initialization complete.
+
+ [32m✓[39m tests/unit/backend/billingService.test.js [2m([22m[2m4 tests[22m[2m)[22m[32m 64[2mms[22m[39m
+ [32m✓[39m tests/integration/api.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 102[2mms[22m[39m
+[90mstdout[2m | tests/unit/backend/usageService.test.js[2m > [22m[2mUsageService - Integration
+[22m[39m[DB:b637dq] Initializing database at :memory:
+Connected to the SQLite database.
+Created billing tables and seeded default subscription plans.
+Seeded SuperAdmin and DBR77 Users.
+
+[90mstdout[2m | tests/unit/backend/usageService.test.js[2m > [22m[2mUsageService - Integration
+[22m[39mProjects table created successfully (or already exists).
+
+[90mstdout[2m | tests/unit/backend/usageService.test.js[2m > [22m[2mUsageService - Integration
+[22m[39mDatabase initialization complete.
+
+ [32m✓[39m tests/components/Button.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[32m 69[2mms[22m[39m
+ [32m✓[39m tests/unit/backend/usageService.test.js [2m([22m[2m4 tests[22m[2m)[22m[32m 257[2mms[22m[39m
+[90mstdout[2m | tests/unit/backend/aiService.test.js[2m > [22m[2mAIService Unit Tests[2m > [22m[2mGeneration Methods[2m > [22m[2mtestProviderConnection[2m > [22m[2mshould test OpenAI connection
+[22m[39m[AiService] Testing connection for: openai
+
+[90mstdout[2m | tests/unit/api.service.test.ts[2m > [22m[2mApi Service Unit Tests[2m > [22m[2mlogin: should store token and return user on success
+[22m[39mApi.login called: { email: [32m'test@test.com'[39m, url: [32m'http://127.0.0.1:3005/api/auth/login'[39m }
+
+[90mstdout[2m | tests/unit/api.service.test.ts[2m > [22m[2mApi Service Unit Tests[2m > [22m[2mlogin: should store token and return user on success
+[22m[39mLogin response status: [90mundefined[39m
+
+[90mstdout[2m | tests/unit/api.service.test.ts[2m > [22m[2mApi Service Unit Tests[2m > [22m[2mlogin: should store token and return user on success
+[22m[39mLogin response data: { token: [32m'abc-123'[39m, user: { id: [32m'1'[39m, email: [32m'test@test.com'[39m } }
+
+[90mstdout[2m | tests/unit/api.service.test.ts[2m > [22m[2mApi Service Unit Tests[2m > [22m[2mlogin: should throw error on failure
+[22m[39mApi.login called: { email: [32m'test@test.com'[39m, url: [32m'http://127.0.0.1:3005/api/auth/login'[39m }
+
+[90mstdout[2m | tests/unit/api.service.test.ts[2m > [22m[2mApi Service Unit Tests[2m > [22m[2mlogin: should throw error on failure
+[22m[39mLogin response status: [90mundefined[39m
+
+[90mstdout[2m | tests/unit/api.service.test.ts[2m > [22m[2mApi Service Unit Tests[2m > [22m[2mlogin: should throw error on failure
+[22m[39mLogin response data: { error: [32m'Invalid credentials'[39m }
+
+[90mstdout[2m | tests/unit/backend/aiService.test.js
+[22m[39m[DB:8gi7z] Initializing database at :memory:
+Connected to the SQLite database.
+Created billing tables and seeded default subscription plans.
+Seeded SuperAdmin and DBR77 Users.
+
+ [32m✓[39m tests/unit/api.service.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m tests/unit/backend/aiService.test.js [2m([22m[2m15 tests[22m[2m)[22m[32m 31[2mms[22m[39m
+[90mstdout[2m | tests/integration/backend/planLimits.test.js
+[22m[39m[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+[Scheduler] Initializing Cron Jobs...
+[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM)
+[Redis] Initializing client...
+
+[90mstdout[2m | tests/integration/backend/planLimits.test.js[2m > [22m[2mPlan Limits Integration
+[22m[39m[DB:0mactu] Initializing database at :memory:
+Connected to the SQLite database.
+Created billing tables and seeded default subscription plans.
+Seeded SuperAdmin and DBR77 Users.
+
+[90mstdout[2m | tests/integration/backend/planLimits.test.js[2m > [22m[2mPlan Limits Integration
+[22m[39m[Redis] Connected
+
+[90mstdout[2m | tests/integration/backend/planLimits.test.js[2m > [22m[2mPlan Limits Integration
+[22m[39mProjects table created successfully (or already exists).
+
+[90mstdout[2m | tests/integration/backend/planLimits.test.js[2m > [22m[2mPlan Limits Integration
+[22m[39mDatabase initialization complete.
+
+ [32m✓[39m tests/unit/roi.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 2[2mms[22m[39m
+[90mstdout[2m | tests/unit/backend/middleware/authMiddleware.test.js
+[22m[39m[DB:g5hi6w] Initializing database at :memory:
+Connected to the SQLite database.
+Created billing tables and seeded default subscription plans.
+Seeded SuperAdmin and DBR77 Users.
+
+[90mstdout[2m | tests/unit/backend/middleware/authMiddleware.test.js
+[22m[39mProjects table created successfully (or already exists).
+
+ [32m✓[39m tests/integration/backend/planLimits.test.js [2m([22m[2m2 tests[22m[2m)[22m[32m 71[2mms[22m[39m
+ [32m✓[39m tests/unit/backend/middleware/authMiddleware.test.js [2m([22m[2m6 tests[22m[2m | [22m[33m4 skipped[39m[2m)[22m[32m 3[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m18 passed[39m[22m[90m (18)[39m
+[2m      Tests [22m [1m[32m92 passed[39m[22m[2m | [22m[33m4 skipped[39m[90m (96)[39m
+[2m   Start at [22m 23:24:08
+[2m   Duration [22m 3.70s[2m (transform 395ms, setup 1.32s, import 6.03s, tests 4.44s, environment 6.59s)[22m
+
+JUNIT report written to /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/junit.xml
+[34m % [39m[2mCoverage report from [22m[33mv8[39m
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------|---------|----------|---------|---------|-------------------
+All files          |   27.78 |    18.79 |   23.64 |   29.19 |                   
+ server            |   26.04 |    22.29 |   21.42 |   26.72 |                   
+  config.js        |     100 |      100 |     100 |     100 |                   
+  database.js      |   96.87 |    58.33 |     100 |    97.6 | 10,15-17          
+  ...e.postgres.js |       0 |        0 |       0 |       0 | 1-803             
+  ...ase.sqlite.js |       0 |        0 |       0 |       0 | 1-920             
+  fix_password.js  |       0 |        0 |       0 |       0 | 1-25              
+  index.js         |   98.94 |      100 |     100 |   98.94 | 164               
+  ...ect_schema.js |       0 |        0 |       0 |       0 | 1-19              
+  inspect_users.js |       0 |        0 |       0 |       0 | 1-14              
+  ..._add_title.js |       0 |        0 |       0 |       0 | 1-24              
+  ...x_sessions.js |       0 |        0 |       0 |       0 | 1-32              
+  seed_dbr77.js    |       0 |        0 |       0 |       0 | 1-198             
+  seed_legolex.js  |       0 |        0 |       0 |       0 | 1-235             
+  seed_models.js   |       0 |        0 |       0 |       0 | 1-74              
+  ...ifications.js |       0 |        0 |       0 |       0 | 1-104             
+  seed_saudi.js    |       0 |        0 |       0 |       0 | 1-159             
+  seed_tokens.js   |       0 |        0 |       0 |       0 | 1-53              
+  ...-ai-manual.js |       0 |        0 |       0 |       0 | 1-56              
+ server/__mocks__  |       0 |        0 |       0 |       0 |                   
+  database.js      |       0 |        0 |       0 |       0 | 2-22              
+ server/config     |   10.52 |    15.78 |       0 |   10.52 |                   
+  ...ase.config.js |       0 |        0 |       0 |       0 | 8-79              
+  queue.config.js  |     100 |      100 |     100 |     100 |                   
+ server/cron       |   29.03 |        0 |    12.5 |   29.03 |                   
+  ...okedTokens.js |       0 |        0 |       0 |       0 | 6-45              
+  scheduler.js     |   69.23 |      100 |   33.33 |   69.23 | 11-12,17-18       
+ server/middleware |    54.5 |       46 |   58.62 |   57.52 |                   
+  ...Middleware.js |   15.62 |     7.69 |       0 |   17.85 | 9-25,35-82        
+  auditLog.js      |   91.66 |    88.88 |      75 |    91.3 | 55-58             
+  ...Middleware.js |   78.78 |    70.83 |     100 |   78.78 | 18,30,44,49-52,65 
+  planLimits.js    |   64.28 |    45.83 |      75 |   72.97 | 56-57,71-78,91-92 
+  ...Middleware.js |   76.47 |       70 |     100 |      80 | 14,40-42          
+  ...Middleware.js |   31.57 |    20.68 |      50 |   31.57 | ...83-104,116-122 
+  ...Middleware.js |   28.57 |       20 |       0 |   33.33 | 5-16              
+ server/queues     |     100 |      100 |     100 |     100 |                   
+  aiQueue.js       |     100 |      100 |     100 |     100 |                   
+ server/routes     |   21.91 |     6.85 |    6.81 |   23.98 |                   
+  ...ss-control.js |   11.37 |        0 |       0 |    12.5 | ...87-349,372-388 
+  ai-training.js   |   18.75 |        0 |       0 |   21.05 | ...01-117,124-139 
+  ai.js            |   21.51 |        0 |    3.84 |   21.76 | ...78-282,288-292 
+  aiAsync.js       |   26.08 |        0 |       0 |   26.08 | 7-19,25-36        
+  analytics.js     |   29.03 |        0 |       0 |   32.14 | 14-40,50-67,73-97 
+  auth.js          |   33.09 |    16.12 |   31.57 |   32.55 | ...77-215,217-340 
+  billing.js       |   15.15 |        0 |       0 |   16.39 | ...57-262,271-276 
+  feedback.js      |   22.22 |        0 |       0 |   22.22 | 16-27,33-47,53-69 
+  initiatives.js   |   26.54 |     9.61 |   22.22 |   30.61 | ...54-273,282-310 
+  invitations.js   |       0 |        0 |       0 |       0 | 1-217             
+  knowledge.js     |   47.57 |    32.25 |   27.27 |      49 | ...67,180,185-194 
+  llm.js           |   17.17 |        0 |       0 |   18.08 | ...67-192,198-206 
+  notifications.js |   23.43 |        0 |       0 |   27.77 | ...01-105,114-126 
+  projects.js      |   67.56 |    41.66 |   66.66 |   78.12 | 50-59             
+  sessions.js      |    15.9 |        0 |       0 |   17.94 | 8-31,38-66        
+  settings.js      |   15.94 |        0 |       0 |      20 | ...07-125,132-134 
+  sso.js           |   66.66 |      100 |       0 |   66.66 | 7,12,17           
+  superadmin.js    |   17.15 |        0 |       0 |      20 | ...29-340,349-396 
+  tasks.js         |   25.88 |    23.48 |      16 |   30.34 | ...30-555,569-584 
+  teams.js         |    14.7 |        0 |       0 |   18.07 | ...94-219,230-241 
+  tokenBilling.js  |   19.23 |        0 |       0 |   19.23 | ...22-230,236-240 
+  users.js         |   21.42 |        0 |   14.28 |   23.37 | ...24-147,153-159 
+  webhooks.js      |   17.24 |        0 |       0 |      20 | ...2,79-88,95-150 
+ ...outes/webhooks |    7.44 |        0 |       0 |    8.13 |                   
+  stripe.js        |    7.44 |        0 |       0 |    8.13 | 22-247            
+ server/scripts    |       0 |        0 |       0 |       0 |                   
+  ...o-postgres.js |       0 |        0 |       0 |       0 | 8-261             
+ server/services   |   36.77 |    27.49 |   42.46 |    38.1 |                   
+  ...ityService.js |      28 |    35.71 |      10 |   31.81 | 65-130            
+  aiService.js     |   37.13 |    18.58 |   36.08 |   40.85 | ...1141,1148-1265 
+  ...icsService.js |   77.14 |     62.5 |      75 |   77.41 | ...67,77,82,92-93 
+  ...ingService.js |   17.39 |    10.71 |   26.47 |   18.62 | ...,66-96,122-332 
+  ...ackService.js |   26.66 |        0 |       0 |   30.76 | 9-37              
+  ...ialService.js |    5.71 |        0 |       0 |    6.06 | 8-78              
+  ...dgeService.js |   79.36 |    74.66 |   79.06 |   80.73 | ...22-224,232-233 
+  ragService.js    |   35.29 |    25.92 |      40 |   35.71 | ...63-102,126-127 
+  ...imeService.js |    4.58 |     4.34 |    5.88 |    4.76 | 13-262            
+  ...icyService.js |   21.87 |        0 |       0 |   23.33 | 15-75             
+  ...ionService.js |   16.66 |        0 |       0 |   19.35 | 12-63             
+  ...ageService.js |   43.58 |    53.84 |   66.66 |   43.24 | 18,66-108         
+  ...ingService.js |   66.66 |    66.03 |   74.54 |   65.81 | ...63,270,280-283 
+  usageService.js  |   31.29 |    29.68 |   35.13 |   35.04 | ...83,304,340-442 
+  ...rchService.js |      20 |        0 |       0 |      20 | 6-8,19-82         
+  ...ookService.js |       0 |        0 |       0 |       0 | 1-159             
+ ...ices/__mocks__ |       0 |      100 |       0 |       0 |                   
+  ...ingService.js |       0 |      100 |       0 |       0 | 4-15              
+ server/utils      |   14.51 |     5.26 |     9.3 |   14.52 |                   
+  logger.js        |       0 |        0 |       0 |       0 | 6-78              
+  queryAdapter.js  |       0 |        0 |       0 |       0 | 8-146             
+  redisClient.js   |   54.16 |    66.66 |   15.38 |   54.54 | 10-21,40          
+  ...LimitStore.js |   20.83 |        0 |      40 |   20.83 | 18-60             
+ server/workers    |       0 |        0 |       0 |       0 |                   
+  aiWorker.js      |       0 |        0 |       0 |       0 | 1-58              
+ src/context       |       0 |        0 |       0 |       0 |                   
+  ...veContext.tsx |       0 |        0 |       0 |       0 | 12-30             
+-------------------|---------|----------|---------|---------|-------------------

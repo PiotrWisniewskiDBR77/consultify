@@ -25,12 +25,21 @@ export const ModelSelector: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
+    // Current State
+    // We treat 'provider' and 'modelId' as the source of truth for "Active" model for this session.
+    // NOTE: If a user selects a Private model, we set provider=privateModel.provider and modelId=privateModel.modelId 
+    // BUT we need to know WHICH private key to use. 
+    // The current backend/frontend logic for "chat" simply looks at currentUser.aiConfig.
+    // If we select a private model, we probably need to temporarily inject its key/endpoint into the active config structure?
+    // OR, better, we store the *ID* of the selected private model if it is one?
+    // Complex.
+    // SIMPLE APPROACH: 
+    // The `currentUser.aiConfig` stores the active configuration.
+    // When we select a System model, we set provider=system, modelId=ID.
+    // When we select a Private model, we set provider=OPTION.provider (e.g. openai), modelId=OPTION.modelId, AND we also need to set apiKey/endpoint from that private model into the active state.
+
     const currentProvider = currentUser?.aiConfig?.provider || 'system';
     const currentModelId = currentUser?.aiConfig?.modelId || '';
-
-    // Composite ID for selection matching: "provider:modelId"
-    // Note: For system, models have IDs like "gpt-4". For local, "llama3".
-    // We'll use a getter to match.
 
     useEffect(() => {
         if (isOpen) {
@@ -53,53 +62,38 @@ export const ModelSelector: React.FC = () => {
         const newOptions: ModelOption[] = [];
 
         try {
-            // 1. System Models
-            // Assuming Api.getPublicLLMProviders returns a list of system-enabled models
+            // 1. System Models (Filtered by User Prefs)
             const systemProviders = await Api.getPublicLLMProviders();
-            // Map standard format to our options
-            // systemProviders usually has { id, name, provider: 'openai'|'anthropic' } from valid_llm_providers table
-            // In our current logic, 'system' provider uses backend proxy.
-            // The backend might route 'system' requests to specific models.
-            // Let's assume getPublicLLMProviders returns selectable backend configurations.
+            const visibleIds = currentUser?.aiConfig?.visibleModelIds;
+
+            // If user has never configured visibility, show ALL or NONE? 
+            // Implementation Plan said: "default to all". 
+            // AIConfigSettings logic also defaults to all if undefined.
+            const isVisible = (id: string) => !visibleIds || visibleIds.includes(id);
+
             systemProviders.forEach(p => {
-                newOptions.push({
-                    id: `system:${p.id}`,
-                    name: p.name, // e.g. "GPT-4 (System)"
-                    provider: 'system',
-                    modelId: p.id
-                });
-            });
-
-            // 2. Local Models (Ollama)
-            // Only if configured or we just try default localhost?
-            // Let's use config endpoint if available, else default.
-            const localEndpoint = currentUser?.aiConfig?.provider === 'ollama' && currentUser?.aiConfig?.endpoint
-                ? currentUser.aiConfig.endpoint
-                : 'http://localhost:11434';
-
-            try {
-                const localModels = await Api.getOllamaModels(localEndpoint);
-                if (localModels && Array.isArray(localModels)) {
-                    localModels.forEach((m: any) => {
-                        newOptions.push({
-                            id: `ollama:${m.name}`,
-                            name: `${m.name} (Local)`,
-                            provider: 'ollama',
-                            modelId: m.name
-                        });
+                if (isVisible(p.id)) {
+                    newOptions.push({
+                        id: `system:${p.id}`,
+                        name: p.name,
+                        provider: 'system',
+                        modelId: p.id // The ID in our DB
                     });
                 }
-            } catch (e) {
-                // Ignore local fetch error, maybe not running
-            }
+            });
 
-            // 3. Custom Configs (Placeholder for current custom setup)
-            if (currentUser?.aiConfig?.apiKey && (currentUser.aiConfig.provider === 'openai' || currentUser.aiConfig.provider === 'gemini')) {
-                newOptions.push({
-                    id: `${currentUser.aiConfig.provider}:custom`,
-                    name: `Custom ${currentUser.aiConfig.provider === 'openai' ? 'OpenAI' : 'Gemini'}`,
-                    provider: currentUser.aiConfig.provider,
-                    modelId: currentUser.aiConfig.modelId || 'default'
+            // 2. Private Models (From User Config)
+            if (currentUser?.aiConfig?.privateModels) {
+                currentUser.aiConfig.privateModels.forEach(pm => {
+                    newOptions.push({
+                        id: pm.id, // e.g. private-123
+                        name: `${pm.name} (Private)`,
+                        provider: pm.provider,
+                        modelId: pm.modelId,
+                        // We store extra data to help selection handler
+                        // @ts-ignore
+                        sourceData: pm
+                    });
                 });
             }
 
@@ -112,36 +106,57 @@ export const ModelSelector: React.FC = () => {
     };
 
     const handleSelect = (option: ModelOption) => {
-        // Update user config
+        // Prepare new config
         const newConfig = {
             ...currentUser?.aiConfig,
             provider: option.provider,
-            modelId: option.modelId
+            modelId: option.modelId,
         };
 
-        // If switching to ollama, ensure endpoint exists (preserve from previous or default)
-        if (option.provider === 'ollama' && !newConfig.endpoint) {
-            newConfig.endpoint = 'http://localhost:11434';
+        // If it's a Private Model, we must inject its credentials into active config
+        // (This is how the rest of the app "knows" what key to use for the current session)
+        if ((option as any).sourceData) {
+            const pm: any = (option as any).sourceData;
+            newConfig.apiKey = pm.apiKey;
+            newConfig.endpoint = pm.endpoint;
+        } else if (option.provider === 'system') {
+            // Clear custom credentials to ensure we use system proxy
+            newConfig.apiKey = undefined;
+            newConfig.endpoint = undefined;
         }
-
-        // If switching to custom, ensure key exists (it should if option was shown)
 
         setAIConfig(newConfig);
         setIsOpen(false);
     };
 
-    // Determine current display label
+    // Determine display label
     let displayLabel = "Select AI";
     const activeIcon = PROVIDER_ICONS[currentProvider] || PROVIDER_ICONS['system'];
 
-    if (currentProvider === 'system') {
-        const found = options.find(o => o.provider === 'system' && o.modelId === currentModelId);
-        // If options not loaded yet, use generic
-        displayLabel = found ? found.name : "System AI";
-    } else if (currentProvider === 'ollama') {
-        displayLabel = `${currentModelId || 'Llama'} (Local)`;
-    } else {
-        displayLabel = `Custom ${currentProvider === 'gemini' ? 'Gemini' : 'OpenAI'}`;
+    // Find in options if possible (but options might not be loaded if menu closed)
+    // We can try to look at current config to guess logic
+    if (currentUser?.aiConfig?.privateModels) {
+        // Check if current matches a private model
+        const privateMatch = currentUser.aiConfig.privateModels.find(pm =>
+            pm.provider === currentProvider &&
+            pm.modelId === currentModelId &&
+            (pm.apiKey === currentUser.aiConfig?.apiKey) // Loose match
+        );
+        if (privateMatch) {
+            displayLabel = `${privateMatch.name}`;
+        }
+    }
+
+    if (displayLabel === "Select AI") {
+        if (currentProvider === 'system') {
+            displayLabel = `System: ${currentModelId || 'Default'}`;
+            // Try to find nice name from system options if loaded or we can cache? 
+            // For now, if options are empty, just show ID. If options user opens menu, it re-renders.
+            const found = options.find(o => o.provider === 'system' && o.modelId === currentModelId);
+            if (found) displayLabel = found.name;
+        } else {
+            displayLabel = `${currentModelId} (${currentProvider})`;
+        }
     }
 
     return (
@@ -166,7 +181,7 @@ export const ModelSelector: React.FC = () => {
                             {language === 'PL' ? 'Wybierz Dostawcę' : 'Active Provider'}
                         </div>
                         <button
-                            onClick={() => { setIsOpen(false); setCurrentView('SETTINGS_PROFILE' as any); }} // Assuming shortcut to settings
+                            onClick={() => { setIsOpen(false); setCurrentView('SETTINGS_PROFILE' as any); }}
                             className="p-1 hover:bg-slate-200 dark:hover:bg-white/10 rounded text-slate-400"
                             title="Configure Keys"
                         >
@@ -183,7 +198,11 @@ export const ModelSelector: React.FC = () => {
                             </div>
                         ) : (
                             options.map(opt => {
+                                // Match logic:
+                                // System: provider=system, modelId=same
+                                // Private: provider=same, modelId=same
                                 const isSelected = opt.provider === currentProvider && opt.modelId === currentModelId;
+
                                 return (
                                     <button
                                         key={opt.id}

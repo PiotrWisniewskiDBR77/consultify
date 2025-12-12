@@ -169,6 +169,12 @@ const AppContent = () => {
             sub = viewParts[1] || 'Profile';
         } else if (currentView === AppView.USER_DASHBOARD) {
             section = t.dashboard[lang];
+        } else if (currentView === AppView.DASHBOARD_OVERVIEW) {
+            section = t.dashboard[lang];
+            sub = 'Overview';
+        } else if (currentView === AppView.DASHBOARD_SNAPSHOT) {
+            section = t.dashboard[lang];
+            sub = 'Execution Snapshot';
         }
 
         return [section, sub];
@@ -196,8 +202,13 @@ const AppContent = () => {
             );
         }
 
-        // --- USER ASHBOARD ---
-        if (currentView === AppView.USER_DASHBOARD) {
+        // --- USER Dashboard ---
+        if (
+            currentView === AppView.USER_DASHBOARD ||
+            currentView === AppView.DASHBOARD ||
+            currentView === AppView.DASHBOARD_OVERVIEW ||
+            currentView === AppView.DASHBOARD_SNAPSHOT
+        ) {
             return <UserDashboardView currentUser={currentUser} onNavigate={setCurrentView} />;
         }
 

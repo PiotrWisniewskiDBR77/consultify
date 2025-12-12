@@ -13,7 +13,7 @@
     "preview": "vite preview",
     "test:unit": "vitest run tests/unit",
     "test:component": "vitest run tests/components",
-    "test:integration": "vitest run tests/integration",
+    "test:integration": "vitest run tests/integration --no-file-parallelism",
     "test:backend": "vitest run tests/unit/backend --environment node",
     "test:e2e": "playwright test",
     "test:load": "node tests/performance/load-test.js",

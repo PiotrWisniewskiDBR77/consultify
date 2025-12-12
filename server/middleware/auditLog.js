@@ -42,17 +42,17 @@ const auditLogMiddleware = (req, res, next) => {
                 const action = actionMap[req.method] || 'modified';
 
                 // Log asynchronously
-                ActivityService.log({
+                Promise.resolve(ActivityService.log({
                     organizationId,
                     userId,
                     action,
                     entityType: entityType.replace(/s$/, ''), // singularize roughly
                     entityId,
-                    entityName: req.body.name || req.body.title || entityType,
-                    newValue: (req.method !== 'DELETE') ? req.body : null,
+                    entityName: (req.body && (req.body.name || req.body.title)) || entityType,
+                    newValue: (req.method !== 'DELETE' && req.body) ? req.body : null,
                     ipAddress: req.ip,
                     userAgent: req.get('user-agent')
-                }).catch(err => console.error('[AuditLog] Failed to log:', err.message));
+                })).catch(err => console.error('[AuditLog] Failed to log:', err.message));
 
             } catch (err) {
                 console.error('[AuditLog] Error processing log:', err);

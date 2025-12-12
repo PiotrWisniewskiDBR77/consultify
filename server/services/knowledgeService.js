@@ -108,13 +108,33 @@ const KnowledgeService = {
         });
     },
 
-    getDocuments: (orgId) => {
+    getDocuments: (orgId, userId = null, userRole = 'USER') => {
         return new Promise((resolve, reject) => {
-            const sql = orgId
-                ? "SELECT * FROM knowledge_docs WHERE organization_id = ? ORDER BY created_at DESC"
-                : "SELECT * FROM knowledge_docs ORDER BY created_at DESC";
+            // If superadmin or org admin, return all
+            const isAdmin = ['ADMIN', 'OWNER', 'SUPERADMIN'].includes(userRole.toUpperCase());
 
-            const params = orgId ? [orgId] : [];
+            let sql = "";
+            let params = [];
+
+            if (isAdmin || !userId) {
+                // Admin can see all files in org
+                sql = orgId
+                    ? "SELECT * FROM knowledge_docs WHERE organization_id = ? AND deleted_at IS NULL ORDER BY created_at DESC"
+                    : "SELECT * FROM knowledge_docs WHERE deleted_at IS NULL ORDER BY created_at DESC";
+                params = orgId ? [orgId] : [];
+            } else {
+                // Regular user: Can see global docs (project_id IS NULL) OR docs in their projects
+                sql = `
+                    SELECT DISTINCT kd.* 
+                    FROM knowledge_docs kd
+                    LEFT JOIN project_users pu ON kd.project_id = pu.project_id AND pu.user_id = ?
+                    WHERE kd.organization_id = ? 
+                    AND kd.deleted_at IS NULL
+                    AND (kd.project_id IS NULL OR pu.user_id IS NOT NULL)
+                    ORDER BY kd.created_at DESC
+                `;
+                params = [userId, orgId];
+            }
 
             db.all(sql, params, (err, rows) => {
                 if (err) reject(err);
@@ -191,26 +211,31 @@ const KnowledgeService = {
                 try {
                     // 2. Soft Delete File (Move to trash)
                     if (doc.filepath) {
-                        await StorageService.softDeleteFile(doc.filepath, orgId);
+                        try {
+                            await StorageService.softDeleteFile(doc.filepath, orgId);
+                        } catch (e) {
+                            console.warn("Storage soft delete failed or not implemented:", e.message);
+                        }
                     }
 
                     // 3. Mark as Deleted in DB
-                    db.run("UPDATE knowledge_docs SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?", [docId], async (err) => {
+                    const deletedAt = new Date().toISOString().replace('T', ' ').split('.')[0];
+
+                    db.run("UPDATE knowledge_docs SET deleted_at = ? WHERE id = ?", [deletedAt, docId], function (err) {
                         if (err) return reject(err);
+
+                        if (this.changes === 0) {
+                            return reject(new Error('Soft delete failed: No rows updated'));
+                        }
 
                         // 4. Record negative storage usage (free up space)
                         if (doc.file_size_bytes > 0) {
-                            try {
-                                await usageService.recordStorageUsage(
-                                    orgId,
-                                    -doc.file_size_bytes,
-                                    'document_delete',
-                                    { filename: doc.filename }
-                                );
-                            } catch (e) {
-                                console.error('Failed to record storage release:', e);
-                                // Don't fail the deletion if metrics fail
-                            }
+                            usageService.recordStorageUsage(
+                                orgId,
+                                -doc.file_size_bytes,
+                                'document_delete',
+                                { filename: doc.filename }
+                            ).catch(e => console.error('Failed to record storage release:', e));
                         }
 
                         resolve(true);

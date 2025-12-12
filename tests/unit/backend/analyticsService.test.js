@@ -8,6 +8,13 @@ describe('AnalyticsService - Integration', () => {
     let AnalyticsService;
 
     beforeAll(async () => {
+        const { createRequire } = await import('module');
+        const require = createRequire(import.meta.url);
+
+        // Ensure DB is initialized
+        const db = require('../../../server/database.js');
+        await db.initPromise;
+
         // Clear any mock flags
         delete process.env.MOCK_DB;
 

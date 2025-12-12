@@ -1,47 +1,44 @@
 import request from 'supertest';
 import { describe, it, expect, beforeAll } from 'vitest';
-import db from '../../server/database.js';
-import app from '../../server/index.js';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+const db = require('../../server/database.js');
+const app = require('../../server/index.js');
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 describe('Initiatives Integration', () => {
     let token;
-    const testId = Date.now() + Math.floor(Math.random() * 10000);
+    const testId = Date.now();
     const orgId = `org-init-${testId}`;
     const userId = `user-init-${testId}`;
     const email = `init-${testId}@dbr77.com`;
     const password = 'password123';
 
     beforeAll(async () => {
+        if (db.initPromise) {
+            await db.initPromise;
+        }
+
         const bcrypt = require('bcryptjs');
         const hash = bcrypt.hashSync(password, 8);
 
-        // Create org
-        await new Promise((resolve) => {
+        db.serialize(() => {
+            // Create org
             db.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)',
                 [orgId, 'Init Test Org', 'free', 'active'], (err) => {
                     if (err) console.error('Init org error:', err.message);
-                    resolve();
                 });
-        });
 
-        await sleep(100);
-
-        // Create user
-        await new Promise((resolve, reject) => {
+            // Create user
             db.run('INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
                 [userId, orgId, email, hash, 'InitTester', 'ADMIN'], (err) => {
-                    if (err) {
-                        console.error('Init user error:', err.message);
-                        reject(err);
-                    } else {
-                        resolve();
-                    }
+                    if (err) console.error('Init user error:', err.message);
                 });
         });
 
-        await sleep(100);
+        await sleep(200);
 
         // Login
         const res = await request(app)

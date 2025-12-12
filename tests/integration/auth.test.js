@@ -1,49 +1,45 @@
 import request from 'supertest';
 import { describe, it, expect, beforeAll } from 'vitest';
-import db from '../../server/database.js';
-import app from '../../server/index.js';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+const db = require('../../server/database.js');
+const app = require('../../server/index.js');
 
 // Helper to wait for DB to sync
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 describe('Auth Integration', () => {
-    const testId = Date.now() + Math.floor(Math.random() * 10000);
-    const orgId = `org-auth-${testId}`;
-    const userId = `user-auth-${testId}`;
+    let token;
+    const testId = Date.now();
     const email = `auth-${testId}@dbr77.com`;
-    const password = '123456';
+    const password = 'password123';
 
     beforeAll(async () => {
+        if (db.initPromise) {
+            await db.initPromise;
+        }
+
         const bcrypt = require('bcryptjs');
         const hash = bcrypt.hashSync(password, 8);
+        const orgId = `org-auth-${testId}`;
+        const userId = `user-auth-${testId}`;
 
-        // Create org first
-        await new Promise((resolve) => {
+        db.serialize(() => {
+            // Create org
             db.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)',
                 [orgId, 'Auth Test Org', 'free', 'active'], (err) => {
                     if (err) console.error('Auth org error:', err.message);
-                    resolve();
                 });
-        });
 
-        // Wait for DB sync
-        await sleep(100);
-
-        // Create user
-        await new Promise((resolve, reject) => {
+            // Create user
             db.run('INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
-                [userId, orgId, email, hash, 'Test', 'ADMIN'], (err) => {
-                    if (err) {
-                        console.error('Auth user error:', err.message);
-                        reject(err);
-                    } else {
-                        resolve();
-                    }
+                [userId, orgId, email, hash, 'AuthTester', 'ADMIN'], (err) => {
+                    if (err) console.error('Auth user error:', err.message);
                 });
         });
 
-        // Wait for DB sync
-        await sleep(100);
+        await sleep(200);
     });
 
     it('should login successfully with valid credentials', async () => {
@@ -72,6 +68,7 @@ describe('Auth Integration', () => {
 
         expect([400, 401, 404]).toContain(res.status);
     });
+
     it('should validate token via /api/auth/me', async () => {
         // First login to get token
         const loginRes = await request(app)

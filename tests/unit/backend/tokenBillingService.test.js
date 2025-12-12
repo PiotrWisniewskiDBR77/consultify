@@ -8,6 +8,13 @@ describe('TokenBillingService - Integration', () => {
     let TokenBillingService;
 
     beforeAll(async () => {
+        const { createRequire } = await import('module');
+        const require = createRequire(import.meta.url);
+
+        // Ensure DB is initialized
+        const db = require('../../../server/database.js');
+        await db.initPromise;
+
         // Clear any mock flags
         delete process.env.MOCK_DB;
 
@@ -83,4 +90,107 @@ describe('TokenBillingService - Integration', () => {
             expect(typeof hasSufficient === 'boolean').toBe(true);
         });
     });
+
+    describe('Margin Updates', () => {
+        it('should update margin and persist changes', async () => {
+            const update = { baseCostPer1k: 0.05, marginPercent: 35, minCharge: 0.02, isActive: 1 };
+            await TokenBillingService.updateMargin('platform', update);
+
+            const margin = await TokenBillingService.getMargin('platform');
+            expect(margin.base_cost_per_1k).toBe(0.05);
+            expect(margin.margin_percent).toBe(35);
+        });
+    });
+
+    describe('Token Deduction / Usage', () => {
+        it('should deduct tokens correctly for platform usage', async () => {
+            const userId = 'user-deduct-' + Date.now();
+            await TokenBillingService.creditTokens(userId, 5000, 0, {}); // Credit 5000
+
+            // Deduct 1000
+            const result = await TokenBillingService.deductTokens(userId, 1000, 'platform', { llmProvider: 'openai', modelUsed: 'gpt-4' });
+            expect(result.tokens).toBe(1000);
+
+            const balance = await TokenBillingService.getBalance(userId);
+            expect(balance.platform_tokens).toBe(4000);
+            expect(balance.lifetime_used).toBe(1000);
+        });
+
+        it('should handle markup multipliers', async () => {
+            const userId = 'user-markup-' + Date.now();
+            await TokenBillingService.creditTokens(userId, 5000, 0, {});
+
+            // Deduct 1000 with 1.5 multiplier
+            const result = await TokenBillingService.deductTokens(userId, 1000, 'platform', { multiplier: 1.5 });
+            expect(result.tokens).toBe(1500); // 1000 * 1.5
+
+            const balance = await TokenBillingService.getBalance(userId);
+            expect(balance.platform_tokens).toBe(3500);
+        });
+    });
+
+    describe('User API Keys (BYOK)', () => {
+        it('should add, get and delete user API keys', async () => {
+            const userId = 'user-byok-' + Date.now();
+            const keyData = {
+                provider: 'openai',
+                apiKey: 'sk-test-key-123',
+                displayName: 'My OpenAI',
+                organizationId: 'org-1'
+            };
+
+            // Add
+            const added = await TokenBillingService.addUserApiKey(userId, keyData);
+            expect(added.id).toBeDefined();
+
+            // Get
+            const keys = await TokenBillingService.getUserApiKeys(userId);
+            expect(keys).toHaveLength(1);
+            expect(keys[0].provider).toBe('openai');
+            // Check decryption
+            const activeKey = await TokenBillingService.getActiveByokKey(userId, 'openai');
+            expect(activeKey.api_key).toBe('sk-test-key-123');
+
+            // Delete
+            await TokenBillingService.deleteUserApiKey(added.id, userId);
+            const keysAfter = await TokenBillingService.getUserApiKeys(userId);
+            expect(keysAfter).toHaveLength(0);
+        });
+    });
+
+    describe('Source Determination', () => {
+        it('should prefer BYOK if available and requested', async () => {
+            const userId = 'user-src-' + Date.now();
+            await TokenBillingService.addUserApiKey(userId, { provider: 'openai', apiKey: 'k', organizationId: 'o' });
+
+            const source = await TokenBillingService.determineTokenSource(userId, 'openai');
+            expect(source.sourceType).toBe('byok');
+            expect(source.config).toBeDefined();
+        });
+
+        it('should fallback to platform if no BYOK key', async () => {
+            const userId = 'user-src-platform-' + Date.now();
+            await TokenBillingService.ensureBalance(userId); // Ensure 0 balance
+
+            const source = await TokenBillingService.determineTokenSource(userId, 'openai');
+            expect(source.sourceType).toBe('platform');
+        });
+    });
+
+    describe('Analytics', () => {
+        it('should retrieve revenue analytics', async () => {
+            // We need some transactions first, deduction tests created some
+            const analytics = await TokenBillingService.getRevenueAnalytics();
+            expect(Array.isArray(analytics)).toBe(true);
+        });
+
+        it('should retrieve transactions for user', async () => {
+            const userId = 'user-tx-' + Date.now();
+            await TokenBillingService.creditTokens(userId, 100);
+
+            const txs = await TokenBillingService.getTransactions(userId);
+            expect(txs.length).toBeGreaterThan(0);
+        });
+    });
+
 });

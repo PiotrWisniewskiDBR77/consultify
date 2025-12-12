@@ -4,6 +4,8 @@ export enum AppView {
   AUTH = 'AUTH',
   DASHBOARD = 'DASHBOARD',
   USER_DASHBOARD = 'USER_DASHBOARD',
+  DASHBOARD_OVERVIEW = 'DASHBOARD_OVERVIEW',
+  DASHBOARD_SNAPSHOT = 'DASHBOARD_SNAPSHOT',
 
   // Quick Assessment
   QUICK_STEP1_PROFILE = 'QUICK_STEP1_PROFILE',
@@ -485,12 +487,24 @@ export interface LLMProvider {
 
 export type AIProviderType = 'system' | 'openai' | 'gemini' | 'ollama';
 
-export interface AIProviderConfig {
+export interface UserAIConfig {
+  provider?: AIProviderType; // Default/Active provider
+  modelId?: string;          // Default/Active model ID
+  endpoint?: string;         // Local endpoint
+  apiKey?: string;           // Custom API Key (Legacy/Single)
+
+  // New Multi-Model Config
+  visibleModelIds?: string[]; // IDs of system models user wants to see
+  privateModels?: PrivateModel[]; // User's custom models
+}
+
+export interface PrivateModel {
+  id: string;
+  name: string;
   provider: AIProviderType;
   apiKey?: string;
-  endpoint?: string; // For Ollama or Custom Proxy
-  modelId?: string;
-  visibleModelIds?: string[]; // IDs of "System" models selected by user to be visible in Top Bar
+  endpoint?: string;
+  modelId: string;
 }
 
 // ==========================================
@@ -612,12 +626,16 @@ export type NotificationType =
 export interface Notification {
   id: string;
   userId: string;
-  type: NotificationType;
+  type: 'system' | 'task' | 'task_assigned' | 'task_completed' | 'deadline' | 'status_changed' | 'alert' | 'info' | 'ai_insight' | 'ai_message';
   title: string;
   message?: string;
   data?: {
-    entityType: 'task' | 'project' | 'team' | 'user';
-    entityId: string;
+    priority?: 'high' | 'normal' | 'low';
+    category?: 'ai' | 'task' | 'system';
+    actionLabel?: string;
+    link?: string;
+    entityType?: 'task' | 'project' | 'team' | 'user';
+    entityId?: string;
     entityName?: string;
     [key: string]: any;
   };

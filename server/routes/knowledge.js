@@ -171,7 +171,10 @@ router.post('/documents', verifyToken, enforceStorageQuota, upload.single('file'
 router.get('/documents', verifyToken, async (req, res) => {
     try {
         const orgId = req.user?.organizationId || req.user?.organization_id;
-        const docs = await KnowledgeService.getDocuments(orgId);
+        const userId = req.user?.id;
+        const role = req.user?.role || 'USER';
+
+        const docs = await KnowledgeService.getDocuments(orgId, userId, role);
         res.json(docs);
     } catch (err) {
         res.status(500).json({ error: err.message });

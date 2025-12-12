@@ -8,80 +8,72 @@ interface AIConfigSettingsProps {
     onUpdateUser: (updates: Partial<User>) => void;
 }
 
+import React, { useState, useEffect } from 'react';
+import { Api } from '../../services/api';
+import { User, AIProviderType, PrivateModel } from '../../types';
+import { Cpu, Monitor, Lock, Check, Layers, Plus, Trash2, X } from 'lucide-react';
+
+interface AIConfigSettingsProps {
+    currentUser: User;
+    onUpdateUser: (updates: Partial<User>) => void;
+}
+
 export const AIConfigSettings: React.FC<AIConfigSettingsProps> = ({ currentUser, onUpdateUser }) => {
-    const [configMode, setConfigMode] = useState<AIProviderType>(currentUser.aiConfig?.provider || 'system');
-    const [customKey, setCustomKey] = useState(currentUser.aiConfig?.apiKey || '');
-    const [localEndpoint, setLocalEndpoint] = useState(currentUser.aiConfig?.endpoint || 'http://localhost:11434');
-    const [ollamaModels, setOllamaModels] = useState<string[]>([]);
-    const [selectedModel, setSelectedModel] = useState(currentUser.aiConfig?.modelId || '');
-    const [isLoadingModels, setIsLoadingModels] = useState(false);
+    const [activeTab, setActiveTab] = useState<'system' | 'private'>('system');
     const [isSaved, setIsSaved] = useState(false);
 
-    // New State for System Models
+    // System Models State
     const [systemModels, setSystemModels] = useState<any[]>([]);
-    const [visibleModels, setVisibleModels] = useState<string[]>(currentUser.aiConfig?.visibleModelIds || []);
+    const [isLoadingModels, setIsLoadingModels] = useState(false);
+    const [visibleModelIds, setVisibleModelIds] = useState<string[]>(currentUser.aiConfig?.visibleModelIds || []);
+
+    // Private Models State
+    const [privateModels, setPrivateModels] = useState<PrivateModel[]>(currentUser.aiConfig?.privateModels || []);
+    const [showAddForm, setShowAddForm] = useState(false);
+
+    // New Model Form State
+    const [newModel, setNewModel] = useState<Partial<PrivateModel>>({
+        provider: 'openai',
+        name: '',
+        modelId: '',
+        apiKey: '',
+        endpoint: ''
+    });
 
     useEffect(() => {
-        // Init visible models from user prop if updated
-        if (currentUser.aiConfig?.visibleModelIds) {
-            setVisibleModels(currentUser.aiConfig.visibleModelIds);
+        // Init from props
+        if (currentUser.aiConfig) {
+            setVisibleModelIds(currentUser.aiConfig.visibleModelIds || []);
+            setPrivateModels(currentUser.aiConfig.privateModels || []);
         }
     }, [currentUser]);
 
     useEffect(() => {
-        if (configMode === 'system') {
-            setIsLoadingModels(true);
-            Api.getPublicLLMProviders()
-                .then(models => {
-                    setSystemModels(models);
-                    // If user has NO visible models defined, enable ALL by default?
-                    // Or keep it empty? User experience: if empty, maybe they didn't configure it.
-                    // Let's decide: if undefined in user object, we select all initially in UI state (but don't save yet).
-                    if (!currentUser.aiConfig?.visibleModelIds) {
-                        const allIds = models.map((m: any) => m.id);
-                        setVisibleModels(allIds);
-                    }
-                })
-                .catch(err => console.error("Failed to fetch public models", err))
-                .finally(() => setIsLoadingModels(false));
-        }
-    }, [configMode]);
+        setIsLoadingModels(true);
+        Api.getPublicLLMProviders()
+            .then(models => {
+                setSystemModels(models);
+                // If user encounters this for the first time (undefined), maybe select all by default?
+                // logic: if visibleModelIds is undefined in DB, it comes as undefined here. 
+                // We'll handle "if undefined, treat as all" in the selector logic or init it here.
+                // Let's init it here so they can uncheck.
+                if (!currentUser.aiConfig?.visibleModelIds) {
+                    setVisibleModelIds(models.map((m: any) => m.id));
+                }
+            })
+            .catch(err => console.error("Failed to fetch public models", err))
+            .finally(() => setIsLoadingModels(false));
+    }, []);
 
-    const toggleModelVisibility = (id: string) => {
-        setVisibleModels(prev =>
-            prev.includes(id)
-                ? prev.filter(x => x !== id)
-                : [...prev, id]
-        );
-    };
-
-    const handleSaveConfig = async (e: React.FormEvent) => {
-        e.preventDefault();
-        const newConfig: any = { provider: configMode };
-
-        // Save persistent visibility for system models
-        if (configMode === 'system') {
-            newConfig.visibleModelIds = visibleModels;
-        }
-
-        if (configMode === 'openai' || configMode === 'gemini') {
-            newConfig.apiKey = customKey;
-            newConfig.modelId = selectedModel; // Optional for custom
-        } else if (configMode === 'ollama') {
-            newConfig.endpoint = localEndpoint;
-            newConfig.modelId = selectedModel;
-        }
+    const handleSave = async () => {
+        const newConfig = {
+            ...currentUser.aiConfig,
+            visibleModelIds,
+            privateModels
+        };
 
         try {
-            // Update local store via AppStore action which syncs to LocalStorage/State
-            // In a real app we might also sync this to backend if we want persistence across devices
-            // For now, per requirements, user can set their own keys locally or use system.
-            // We'll trust the store update to handle currentUser.aiConfig
-            // const updatedUser = { ...currentUser, aiConfig: newConfig }; // unused variable
             onUpdateUser({ aiConfig: newConfig });
-            // We also call Api to save if we want backend persistence, but requirements said "user can provide own api... visible in top bar".
-            // I'll assume updating the user object is enough for the store wrapper.
-
             setIsSaved(true);
             setTimeout(() => setIsSaved(false), 2000);
         } catch (err) {
@@ -89,273 +81,240 @@ export const AIConfigSettings: React.FC<AIConfigSettingsProps> = ({ currentUser,
         }
     };
 
-    const [orgConfig, setOrgConfig] = useState<{ activeProviderId: string | null; availableProviders: any[] } | null>(null);
-
-    useEffect(() => {
-        if (currentUser.role === 'ADMIN' || currentUser.role === 'SUPERADMIN') {
-            // Fetch Org Config
-            // We need the org ID. Assuming currentUser has it or we can get it.
-            // Actually User type just has string... let's check `currentUser.organizationId` ?? 
-            // The User interface in file doesn't explicitly show it but backend sends `organization_id`.
-            // Let's assume the mapped user object has it, or we use `currentUser['organizationId']`.
-            // Checking `types.ts` might be good but let's assume it's there or we can safely cast.
-            const orgId = (currentUser as any).organizationId || (currentUser as any).organization_id;
-            if (orgId) {
-                Api.getOrganizationLLMConfig(orgId).then(setOrgConfig).catch(console.error);
-            }
-        }
-    }, [currentUser]);
-
-    const handleSaveOrgConfig = async () => {
-        const orgId = (currentUser as any).organizationId || (currentUser as any).organization_id;
-        if (!orgId || !orgConfig) return;
-        try {
-            await Api.updateOrganizationLLMConfig(orgId, orgConfig.activeProviderId);
-            setIsSaved(true);
-            setTimeout(() => setIsSaved(false), 2000);
-        } catch (e) {
-            alert('Failed to save organization settings');
-        }
+    const toggleSystemModel = (id: string) => {
+        setVisibleModelIds(prev =>
+            prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+        );
     };
 
-    const fetchOllamaModels = async () => {
-        setIsLoadingModels(true);
-        try {
-            // We can try client-side fetch first if CORS allows, else fallback to backend proxy
-            // Assuming local ollama allows CORS or we use backend proxy 'Api.getOllamaModels'
-            // Let's try direct first for "Local" feel, but usually browser blocks localhost mixed calls if not secured.
-            // Best to use backend proxy I added in Api.
-            const models = await Api.getOllamaModels(localEndpoint);
-            if (models && models.length > 0) {
-                setOllamaModels(models.map((m: any) => m.name));
-                if (!selectedModel) setSelectedModel(models[0].name);
-            } else {
-                alert("No models found or connection failed. Check if Ollama is running.");
-            }
-        } catch (e) {
-            alert("Failed to fetch Ollama models.");
-        } finally {
-            setIsLoadingModels(false);
+    const addPrivateModel = () => {
+        if (!newModel.name || !newModel.provider || !newModel.modelId) {
+            alert("Please fill in Name, Provider and Model ID");
+            return;
+        }
+
+        const id = `private-${Date.now()}`;
+        const modelToAdd: PrivateModel = {
+            id,
+            name: newModel.name,
+            provider: newModel.provider as AIProviderType,
+            modelId: newModel.modelId,
+            apiKey: newModel.apiKey,
+            endpoint: newModel.endpoint
+        };
+
+        setPrivateModels([...privateModels, modelToAdd]);
+        setNewModel({ provider: 'openai', name: '', modelId: '', apiKey: '', endpoint: '' });
+        setShowAddForm(false);
+    };
+
+    const removePrivateModel = (id: string) => {
+        if (confirm('Are you sure you want to remove this model?')) {
+            setPrivateModels(prev => prev.filter(m => m.id !== id));
         }
     };
 
     return (
-        <div className="max-w-2xl">
-            <h2 className="text-lg font-semibold text-white mb-6">AI Configuration</h2>
-
-            {/* Tabs */}
-            <div className="flex p-1 bg-navy-900 rounded-lg mb-6 border border-white/5">
-                {(['system', 'gemini', 'openai', 'ollama'] as AIProviderType[]).map((mode) => (
-                    <button
-                        key={mode}
-                        onClick={() => setConfigMode(mode)}
-                        className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${configMode === mode
-                            ? 'bg-purple-600 text-white shadow-lg'
-                            : 'text-slate-400 hover:text-white hover:bg-white/5'
-                            }`}
-                    >
-                        {mode === 'system' && 'Default (System)'}
-                        {mode === 'gemini' && 'Google Gemini'}
-                        {mode === 'openai' && 'OpenAI'}
-                        {mode === 'ollama' && 'Local (Ollama)'}
-                    </button>
-                ))}
+        <div className="max-w-3xl">
+            <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-semibold text-white">AI Model Selection</h2>
+                <button
+                    onClick={handleSave}
+                    className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                >
+                    {isSaved ? <Check size={16} /> : null}
+                    {isSaved ? 'Saved' : 'Save Changes'}
+                </button>
             </div>
 
-            <form onSubmit={handleSaveConfig} className="bg-navy-900 border border-white/10 rounded-xl p-6">
+            {/* Top Tabs */}
+            <div className="flex border-b border-white/10 mb-6">
+                <button
+                    onClick={() => setActiveTab('system')}
+                    className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'system'
+                            ? 'border-purple-500 text-purple-400'
+                            : 'border-transparent text-slate-400 hover:text-white'
+                        }`}
+                >
+                    System Models
+                </button>
+                <button
+                    onClick={() => setActiveTab('private')}
+                    className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'private'
+                            ? 'border-purple-500 text-purple-400'
+                            : 'border-transparent text-slate-400 hover:text-white'
+                        }`}
+                >
+                    My Private Models
+                </button>
+            </div>
 
-                {configMode === 'system' && (
-                    <div className="space-y-6">
-                        <div className="text-center py-6">
-                            <div className="w-16 h-16 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4 text-purple-400">
-                                <Cpu size={32} />
-                            </div>
-                            <h3 className="text-white font-medium mb-2">System AI Models</h3>
-                            <p className="text-slate-400 text-sm max-w-sm mx-auto">
-                                Enable the models you want to use in the Top Bar selector.
-                                All usage counts towards your organization's plan.
-                            </p>
-                        </div>
+            {activeTab === 'system' && (
+                <div className="space-y-4">
+                    <p className="text-sm text-slate-400 mb-4">
+                        Select which standard models you want to appear in your quick selection menu.
+                    </p>
 
-                        {/* List of System Models */}
-                        <div className="space-y-3">
-                            {isLoadingModels ? (
-                                <div className="text-center text-slate-500 py-4">Loading available models...</div>
-                            ) : (
-                                systemModels.map((model) => {
-                                    const isSelected = (currentUser.aiConfig?.visibleModelIds || []).includes(model.id) ||
-                                        (currentUser.aiConfig?.visibleModelIds === undefined); // Default to all if undefined? Or none? Let's say all by default if list is empty/undefined, BUT logic below assumes explicit check. 
-                                    // Better: If undefined/empty, maybe we assume ALL are visible or NONE.
-                                    // Let's rely on explicit toggle. If undefined, treat as "All"? No, let's treat as "None" or require explicit enable.
-                                    // Actually, to avoid breaking existing users, if undefined, we should probably toggle ALL on save, or treat undefined as "Show All".
-                                    // Let's handle state separately.
-
-                                    const isChecked = visibleModels.includes(model.id);
-
-                                    return (
-                                        <div key={model.id} className={`p-4 rounded-xl border transition-all ${isChecked ? 'bg-purple-500/5 border-purple-500/30' : 'bg-navy-950/50 border-white/5 hover:border-white/10'}`}>
-                                            <div className="flex items-start justify-between gap-4">
-                                                <div className="flex-1">
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        <h4 className="text-sm font-semibold text-white">{model.name}</h4>
-                                                        {model.provider === 'openai' && <span className="px-1.5 py-0.5 rounded bg-green-500/20 text-green-400 text-[10px] uppercase font-bold tracking-wider">OpenAI</span>}
-                                                        {model.provider === 'google' && <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 text-[10px] uppercase font-bold tracking-wider">Google</span>}
-                                                        {model.provider === 'anthropic' && <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 text-[10px] uppercase font-bold tracking-wider">Anthropic</span>}
-                                                    </div>
-
-                                                    <div className="text-xs text-slate-400 mb-2 line-clamp-2">
-                                                        {model.description || 'Advanced LLM provided by the platform.'}
-                                                    </div>
-
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {model.context_window && (
-                                                            <div className="inline-flex items-center gap-1 px-2 py-1 rounded bg-white/5 border border-white/5 text-[10px] text-slate-300">
-                                                                <Layers size={10} />
-                                                                <span>{model.context_window.toLocaleString()} ctx</span>
-                                                            </div>
-                                                        )}
-                                                        {model.max_outputs && (
-                                                            <div className="inline-flex items-center gap-1 px-2 py-1 rounded bg-white/5 border border-white/5 text-[10px] text-slate-300">
-                                                                <Monitor size={10} />
-                                                                <span>{model.max_outputs.toLocaleString()} output</span>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-
-                                                <label className="relative inline-flex items-center cursor-pointer">
-                                                    <input
-                                                        type="checkbox"
-                                                        className="sr-only peer"
-                                                        checked={isChecked}
-                                                        onChange={() => toggleModelVisibility(model.id)}
-                                                    />
-                                                    <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-                                                </label>
-                                            </div>
+                    {isLoadingModels ? (
+                        <div className="text-slate-500 text-center py-8">Loading models...</div>
+                    ) : (
+                        <div className="grid gap-3">
+                            {systemModels.map(model => (
+                                <div
+                                    key={model.id}
+                                    className={`p-4 rounded-xl border transition-all cursor-pointer ${visibleModelIds.includes(model.id)
+                                            ? 'bg-purple-500/10 border-purple-500/30'
+                                            : 'bg-navy-950 border-white/5 hover:border-white/10'
+                                        }`}
+                                    onClick={() => toggleSystemModel(model.id)}
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${visibleModelIds.includes(model.id)
+                                                ? 'bg-purple-600 border-purple-600'
+                                                : 'border-slate-600'
+                                            }`}>
+                                            {visibleModelIds.includes(model.id) && <Check size={12} className="text-white" />}
                                         </div>
-                                    );
-                                })
-                            )}
-                        </div>
 
-                        {/* Organization Admin Control */}
-                        {(currentUser.role === 'ADMIN' || currentUser.role === 'SUPERADMIN') && orgConfig && (
-                            <div className="mt-8 pt-8 border-t border-white/5 text-left bg-navy-950/50 rounded-lg p-6">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <div className="p-2 rounded bg-blue-500/20 text-blue-400"><Monitor size={16} /></div>
-                                    <div>
-                                        <h4 className="text-sm font-bold text-white">Organization Default Model</h4>
-                                        <p className="text-xs text-slate-400">Select which model powers your organization's default behavior.</p>
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2">
+                                                <h4 className="text-sm font-medium text-white">{model.name}</h4>
+                                                <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-white/5 text-slate-400">
+                                                    {model.provider}
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-slate-500 line-clamp-1">{model.description || model.model_id}</p>
+                                        </div>
                                     </div>
                                 </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
 
-                                <div className="flex gap-3">
+            {activeTab === 'private' && (
+                <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                        <p className="text-sm text-slate-400">
+                            Add your own API keys or local models. These are only visible to you.
+                        </p>
+                        <button
+                            onClick={() => setShowAddForm(true)}
+                            className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white text-xs font-medium rounded-lg flex items-center gap-2 border border-white/5"
+                        >
+                            <Plus size={14} />
+                            Add Model
+                        </button>
+                    </div>
+
+                    {showAddForm && (
+                        <div className="p-4 bg-navy-900 border border-white/10 rounded-xl space-y-4 animate-in fade-in slide-in-from-top-2">
+                            <div className="flex justify-between items-start">
+                                <h3 className="text-sm font-medium text-white">Add New Model</h3>
+                                <button onClick={() => setShowAddForm(false)} className="text-slate-500 hover:text-white"><X size={16} /></button>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <label className="text-xs text-slate-400">Name (Display Label)</label>
+                                    <input
+                                        value={newModel.name}
+                                        onChange={e => setNewModel({ ...newModel, name: e.target.value })}
+                                        className="w-full bg-navy-950 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-purple-500 outline-none"
+                                        placeholder="e.g. My GPT-4"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs text-slate-400">Provider</label>
                                     <select
-                                        value={orgConfig.activeProviderId || ''}
-                                        onChange={(e) => setOrgConfig({ ...orgConfig, activeProviderId: e.target.value || null })}
-                                        className="flex-1 bg-navy-900 border border-white/10 rounded-lg px-4 py-2 text-white text-sm"
+                                        value={newModel.provider}
+                                        onChange={e => setNewModel({ ...newModel, provider: e.target.value as AIProviderType })}
+                                        className="w-full bg-navy-950 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-purple-500 outline-none"
                                     >
-                                        <option value="">System Default (Auto)</option>
-                                        {orgConfig.availableProviders.map(p => (
-                                            <option key={p.id} value={p.id}>
-                                                {p.name} ({p.provider}) {p.model_id}
-                                            </option>
-                                        ))}
+                                        <option value="openai">OpenAI</option>
+                                        <option value="gemini">Google Gemini</option>
+                                        <option value="anthropic">Anthropic</option>
+                                        <option value="ollama">Ollama (Local)</option>
                                     </select>
-                                    <button
-                                        type="button"
-                                        onClick={handleSaveOrgConfig}
-                                        className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg text-sm"
-                                    >
-                                        Save Choice
-                                    </button>
                                 </div>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {(configMode === 'gemini' || configMode === 'openai') && (
-                    <div className="space-y-4">
-                        <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-300 text-xs flex gap-2">
-                            <Monitor size={16} className="shrink-0" />
-                            <p>Your API key is stored locally in your browser and used directly. It is never sent to our servers.</p>
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-medium text-slate-300">
-                                {configMode === 'gemini' ? 'Google AI Studio Key' : 'OpenAI API Key'}
-                            </label>
-                            <div className="relative">
-                                <input
-                                    type="password"
-                                    value={customKey}
-                                    onChange={e => setCustomKey(e.target.value)}
-                                    placeholder="sk-..."
-                                    className="w-full px-4 py-2.5 bg-navy-950 border border-white/10 rounded-lg text-white focus:border-purple-500 outline-none transition-all text-sm font-mono"
-                                />
-                                <div className="absolute right-3 top-2.5 text-slate-500">
-                                    <Lock size={16} />
+                                <div className="space-y-1 col-span-2">
+                                    <label className="text-xs text-slate-400">Model ID (Technical Name)</label>
+                                    <input
+                                        value={newModel.modelId}
+                                        onChange={e => setNewModel({ ...newModel, modelId: e.target.value })}
+                                        className="w-full bg-navy-950 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-purple-500 outline-none"
+                                        placeholder={newModel.provider === 'ollama' ? 'llama3' : 'gpt-4-turbo'}
+                                    />
+                                    {newModel.provider === 'ollama' && (
+                                        <p className="text-[10px] text-slate-500">Run `ollama list` to see available names.</p>
+                                    )}
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
 
-                {configMode === 'ollama' && (
-                    <div className="space-y-4">
-                        <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-300 text-xs flex gap-2">
-                            <Monitor size={16} className="shrink-0" />
-                            <p>Connect to your local LLM instance. Ensure Ollama is running (`ollama serve`).</p>
-                        </div>
-                        <div className="grid grid-cols-3 gap-4">
-                            <div className="col-span-2 space-y-1.5">
-                                <label className="text-xs font-medium text-slate-300">Endpoint URL</label>
-                                <input
-                                    value={localEndpoint}
-                                    onChange={e => setLocalEndpoint(e.target.value)}
-                                    placeholder="http://localhost:11434"
-                                    className="w-full px-4 py-2.5 bg-navy-950 border border-white/10 rounded-lg text-white focus:border-purple-500 outline-none transition-all text-sm font-mono"
-                                />
+                                {newModel.provider === 'ollama' ? (
+                                    <div className="space-y-1 col-span-2">
+                                        <label className="text-xs text-slate-400">Endpoint URL</label>
+                                        <input
+                                            value={newModel.endpoint}
+                                            onChange={e => setNewModel({ ...newModel, endpoint: e.target.value })}
+                                            className="w-full bg-navy-950 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-purple-500 outline-none font-mono"
+                                            placeholder="http://localhost:11434"
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="space-y-1 col-span-2">
+                                        <label className="text-xs text-slate-400">API Key</label>
+                                        <input
+                                            type="password"
+                                            value={newModel.apiKey}
+                                            onChange={e => setNewModel({ ...newModel, apiKey: e.target.value })}
+                                            className="w-full bg-navy-950 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-purple-500 outline-none font-mono"
+                                            placeholder="sk-..."
+                                        />
+                                    </div>
+                                )}
                             </div>
-                            <div className="space-y-1.5">
-                                <label className="text-xs font-medium text-slate-300">&nbsp;</label>
+
+                            <div className="flex justify-end pt-2">
                                 <button
-                                    type="button"
-                                    onClick={fetchOllamaModels}
-                                    disabled={isLoadingModels}
-                                    className="w-full px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-slate-300 text-sm transition-all"
+                                    onClick={addPrivateModel}
+                                    className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium rounded-lg"
                                 >
-                                    {isLoadingModels ? '...' : 'Fetch Models'}
+                                    Add Model
                                 </button>
                             </div>
                         </div>
+                    )}
 
-                        {ollamaModels.length > 0 && (
-                            <div className="space-y-1.5">
-                                <label className="text-xs font-medium text-slate-300">Select Model</label>
-                                <select
-                                    value={selectedModel}
-                                    onChange={e => setSelectedModel(e.target.value)}
-                                    className="w-full px-4 py-2.5 bg-navy-950 border border-white/10 rounded-lg text-white focus:border-purple-500 outline-none transition-all text-sm"
-                                >
-                                    {ollamaModels.map(m => <option key={m} value={m}>{m}</option>)}
-                                </select>
+                    <div className="space-y-2">
+                        {privateModels.length === 0 ? (
+                            <div className="text-center py-8 bg-navy-950/30 rounded-xl border border-dashed border-white/5 text-slate-500 text-sm">
+                                You haven't added any private models yet.
                             </div>
+                        ) : (
+                            privateModels.map(model => (
+                                <div key={model.id} className="flex items-center justify-between p-4 bg-navy-950 rounded-xl border border-white/5">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400">
+                                            {model.provider === 'ollama' ? <Monitor size={14} /> : <Lock size={14} />}
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-medium text-white">{model.name}</h4>
+                                            <p className="text-xs text-slate-500">{model.provider} • {model.modelId}</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => removePrivateModel(model.id)}
+                                        className="p-2 hover:bg-red-500/10 hover:text-red-400 text-slate-500 rounded-lg transition-colors"
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
+                                </div>
+                            ))
                         )}
                     </div>
-                )}
-
-                <div className="pt-6 mt-6 border-t border-white/10 flex justify-end">
-                    <button
-                        type="submit"
-                        className="px-6 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-                    >
-                        {isSaved ? <Check size={16} /> : null}
-                        {isSaved ? 'Configuration Saved' : 'Save Configuration'}
-                    </button>
                 </div>
-            </form>
+            )}
         </div>
     );
 };
