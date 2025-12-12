@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Api } from '../services/api';
-import { Activity, AlertTriangle, CheckCircle } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 
 export const SystemHealth = () => {
     const [status, setStatus] = useState<'online' | 'offline' | 'loading'>('loading');

@@ -1,7 +1,7 @@
 import React from 'react';
 import { CompanyProfile, FreeSession, Language } from '../types';
 import { translations } from '../translations';
-import { ArrowRight, Target, AlertTriangle, Lock, FileText, CheckCircle } from 'lucide-react';
+import { ArrowRight, AlertTriangle, Lock, FileText, CheckCircle } from 'lucide-react';
 
 interface Step3WorkspaceProps {
   profile: Partial<CompanyProfile>;
@@ -12,12 +12,14 @@ interface Step3WorkspaceProps {
 }
 
 export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   profile,
   sessionData,
   onStartFullProject,
   language
 }) => {
-  const t = translations.step1;
+  // const t = translations.step1;
+
 
   return (
     <div className="flex flex-col h-full bg-navy-900">
