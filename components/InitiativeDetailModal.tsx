@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { FullInitiative, User } from '../types';
-import { translations } from '../translations';
+
 import {
     X, Save, Target, TrendingUp, DollarSign,
-    Calendar, Users, Shield, CheckCircle,
+    Calendar, Users, CheckCircle,
     AlertTriangle, FileText, Globe
 } from 'lucide-react';
 import { Button } from './Button';
@@ -16,7 +16,6 @@ interface InitiativeDetailModalProps {
     onSave: (initiative: FullInitiative) => void;
     users?: User[];
     currentUser?: User | null; // Added currentUser
-    language?: 'EN' | 'PL' | 'DE' | 'AR';
 }
 
 export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
@@ -25,8 +24,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
     onClose,
     onSave,
     users = [],
-    currentUser,
-    language = 'EN'
+    currentUser
 }) => {
     const [initiative, setInitiative] = useState<FullInitiative>({ ...initialInitiative });
     const [activeTab, setActiveTab] = useState<'overview' | 'definition' | 'execution' | 'tasks' | 'economics'>('overview');
@@ -89,7 +87,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                     ].map(tab => (
                         <button
                             key={tab.id}
-                            onClick={() => setActiveTab(tab.id as any)}
+                            onClick={() => setActiveTab(tab.id as typeof activeTab)}
                             className={`flex items-center gap-2 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.id
                                 ? 'text-blue-400 border-blue-500'
                                 : 'text-slate-400 border-transparent hover:text-white'
@@ -343,7 +341,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                                         }} className="text-xs text-blue-400 hover:text-white">+ Add</button>
                                     </h4>
                                     <div className="space-y-2">
-                                        {initiative.milestones?.map((m: any, idx: number) => (
+                                        {initiative.milestones?.map((m, idx: number) => (
                                             <div key={idx} className="flex gap-2">
                                                 <input
                                                     type="date"
@@ -401,7 +399,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                                     {/* We are storing risks as simple array in JSON for this iteration, or strictly adhering to types updated */}
                                     {/* Currently logic stores keyRisks as JSON array. Let's make it simple strings for now or update UI for complex objects later. */}
                                     {/* To match updated types { risk: string; mitigation: string; metric: 'Low' | 'Medium' | 'High' }[] */}
-                                    {initiative.keyRisks?.map((risk: any, idx: number) => (
+                                    {initiative.keyRisks?.map((risk, idx: number) => (
                                         <div key={idx} className="mb-4 bg-navy-900 p-3 rounded border border-white/5">
                                             <input
                                                 className="w-full bg-transparent border-b border-white/10 mb-2 text-sm text-white focus:outline-none"
@@ -448,7 +446,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                                     <select
                                         className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white"
                                         value={initiative.businessValue}
-                                        onChange={e => setInitiative({ ...initiative, businessValue: e.target.value as any })}
+                                        onChange={e => setInitiative({ ...initiative, businessValue: e.target.value as 'High' | 'Medium' | 'Low' })}
                                     >
                                         <option value="High">High</option>
                                         <option value="Medium">Medium</option>

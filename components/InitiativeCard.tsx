@@ -1,22 +1,22 @@
 import React from 'react';
 import { Initiative, InitiativeStatus } from '../types';
-import { translations } from '../translations';
+
 import {
     Target, Users, DollarSign, TrendingUp,
-    Calendar, CheckCircle, AlertCircle, Clock,
-    MoreHorizontal, ChevronRight, BarChart, Globe
+    CheckCircle, Clock,
+    MoreHorizontal, ChevronRight, Globe
 } from 'lucide-react';
 
 interface InitiativeCardProps {
     initiative: Initiative;
     onClick: () => void;
     onEnrich?: (id: string) => Promise<void>;
-    language: 'EN' | 'PL' | 'DE' | 'AR';
+
 }
 
 import { useState } from 'react';
 
-export const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick, onEnrich, language }) => {
+export const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick, onEnrich }) => {
     const [isEnriching, setIsEnriching] = useState(false);
 
     const handleEnrich = async (e: React.MouseEvent) => {
