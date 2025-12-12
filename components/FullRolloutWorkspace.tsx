@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { FullSession, FullInitiative, Language } from '../types';
-import { translations } from '../translations';
 import {
     Layout, Users, Calendar, Activity,
     AlertOctagon, Megaphone, TrendingUp, Flag,
