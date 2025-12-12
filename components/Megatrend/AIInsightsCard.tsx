@@ -73,7 +73,7 @@ export const AIInsightsCard: React.FC<AIInsightsCardProps> = ({ megatrends, load
                             <div key={trend.id} className="bg-slate-50 dark:bg-navy-900 p-3 rounded-lg border border-slate-200 dark:border-white/10">
                                 <div className="text-[10px] uppercase font-bold text-slate-500 mb-1">{trend.type}</div>
                                 <div className="font-bold text-sm text-navy-900 dark:text-gray-100 leading-tight mb-2 h-10 overflow-hidden">
-                                    {trend.label || trend.title}
+                                    {trend.label}
                                 </div>
                                 <div className="flex items-center gap-1 text-xs font-bold text-purple-600">
                                     Impact: {trend.impactScore}/7
@@ -94,7 +94,7 @@ export const AIInsightsCard: React.FC<AIInsightsCardProps> = ({ megatrends, load
                             <li key={risk.id} className="flex items-start gap-3">
                                 <span className="bg-orange-100 text-orange-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mt-0.5">!</span>
                                 <div>
-                                    <div className="font-bold text-sm text-gray-800 dark:text-gray-200">{risk.label || risk.title}</div>
+                                    <div className="font-bold text-sm text-gray-800 dark:text-gray-200">{risk.label}</div>
                                     <div className="text-xs text-gray-500 dark:text-gray-400">Pressure: {risk.competitivePressure || 'High'}</div>
                                 </div>
                             </li>
@@ -113,7 +113,7 @@ export const AIInsightsCard: React.FC<AIInsightsCardProps> = ({ megatrends, load
                             <li key={opp.id} className="flex items-start gap-3">
                                 <span className="bg-green-100 text-green-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mt-0.5">✓</span>
                                 <div>
-                                    <div className="font-bold text-sm text-gray-800 dark:text-gray-200">{opp.label || opp.title}</div>
+                                    <div className="font-bold text-sm text-gray-800 dark:text-gray-200">{opp.label}</div>
                                     <div className="text-xs text-gray-500 dark:text-gray-400">Potential: High Value</div>
                                 </div>
                             </li>

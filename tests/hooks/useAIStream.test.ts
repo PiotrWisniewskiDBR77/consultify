@@ -25,23 +25,23 @@ describe('Hook Test: useAIStream', () => {
 
     it('initializes with correct default values', () => {
         const { result } = renderHook(() => useAIStream());
-        
+
         expect(result.current.isStreaming).toBe(false);
         expect(result.current.streamedContent).toBe('');
         expect(typeof result.current.startStream).toBe('function');
     });
 
     it('calls API with correct parameters', async () => {
-        (Api.chatWithAIStream as any).mockImplementation((message, history, onChunk, onDone) => {
+        (Api.chatWithAIStream as any).mockImplementation((message: string, history: any[], onChunk: (chunk: string) => void, onDone: () => void) => {
             onChunk('Hello');
             onChunk(' World');
             onDone();
         });
 
         const { result } = renderHook(() => useAIStream());
-        
+
         await result.current.startStream('Test message', [], 'System prompt');
-        
+
         expect(Api.chatWithAIStream).toHaveBeenCalledWith(
             'Test message',
             [],
@@ -53,31 +53,30 @@ describe('Hook Test: useAIStream', () => {
     });
 
     it('updates stream content as chunks arrive', async () => {
-        const chunks: string[] = [];
-        (Api.chatWithAIStream as any).mockImplementation((message, history, onChunk, onDone) => {
+        (Api.chatWithAIStream as any).mockImplementation((message: string, history: any[], onChunk: (chunk: string) => void, onDone: () => void) => {
             onChunk('Hello');
             onChunk(' World');
             onDone();
         });
 
         const { result } = renderHook(() => useAIStream());
-        
+
         await result.current.startStream('Test', []);
-        
+
         expect(mockSetCurrentStreamContent).toHaveBeenCalled();
     });
 
     it('calls onStreamDone callback when stream completes', async () => {
         const onDoneCallback = vi.fn();
-        (Api.chatWithAIStream as any).mockImplementation((message, history, onChunk, onDone) => {
+        (Api.chatWithAIStream as any).mockImplementation((message: string, history: any[], onChunk: (chunk: string) => void, onDone: () => void) => {
             onChunk('Complete');
             onDone();
         });
 
         const { result } = renderHook(() => useAIStream({ onStreamDone: onDoneCallback }));
-        
+
         await result.current.startStream('Test', []);
-        
+
         await waitFor(() => {
             expect(onDoneCallback).toHaveBeenCalled();
         });
@@ -89,9 +88,9 @@ describe('Hook Test: useAIStream', () => {
         (Api.chatWithAIStream as any).mockRejectedValue(error);
 
         const { result } = renderHook(() => useAIStream({ onStreamError: onErrorCallback }));
-        
+
         await result.current.startStream('Test', []);
-        
+
         await waitFor(() => {
             expect(mockSetIsBotTyping).toHaveBeenCalledWith(false);
             expect(onErrorCallback).toHaveBeenCalledWith(error);
@@ -99,14 +98,15 @@ describe('Hook Test: useAIStream', () => {
     });
 
     it('sets bot typing state correctly', async () => {
-        (Api.chatWithAIStream as any).mockImplementation((message, history, onChunk, onDone) => {
+        (Api.chatWithAIStream as any).mockImplementation((message: string, history: any[], onChunk: (chunk: string) => void, onDone: () => void) => {
+            onChunk('Hello');
+            onChunk(' World');
             onDone();
         });
-
         const { result } = renderHook(() => useAIStream());
-        
+
         await result.current.startStream('Test', []);
-        
+
         expect(mockSetIsBotTyping).toHaveBeenCalledWith(true);
         await waitFor(() => {
             expect(mockSetIsBotTyping).toHaveBeenCalledWith(false);

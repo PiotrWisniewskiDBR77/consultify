@@ -20,15 +20,19 @@ export const FullStep6Workspace: React.FC<FullStep6WorkspaceProps> = ({
    // 1. Maturity Calculations
    const scores = Object.entries(fullSession.assessment)
       .filter(([key]) => key !== 'completedAxes')
-      .map(([key, val]: [string, any]) => ({ id: key, score: val.score }));
+      .map(([key, val]) => {
+         // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         const axis = val as any;
+         return { id: key, score: axis.actual || axis.score || 0 };
+      });
 
    const sortedScores = [...scores].sort((a, b) => b.score - a.score);
    const highest = sortedScores[0];
    const lowest = sortedScores[scores.length - 1];
 
    const getAxisLabel = (id: string) => {
-      const key = `fullStep1_${id === 'digitalProducts' ? 'prod' : id.substring(0, 4)}` as any;
-      return (t as any)[key]?.[language] || id;
+      const key = `fullStep1_${id === 'digitalProducts' ? 'prod' : id.substring(0, 4)}` as keyof typeof ts;
+      return ts[key]?.[language] || id;
    };
 
    // 2. Economics

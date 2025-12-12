@@ -11,8 +11,7 @@ export const ChatOverlay: React.FC = () => {
     const {
         activeChatMessages,
         addChatMessage,
-        isBotTyping,
-        setIsBotTyping
+        isBotTyping
     } = useAppStore();
 
     const { isStreaming, streamedContent, startStream } = useAIStream();

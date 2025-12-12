@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
-import { FullSession, FullInitiative, Language, InitiativeStatus } from '../types';
+import { FullSession, FullInitiative, Language } from '../types';
 import { translations } from '../translations';
-import { ArrowRight, User, Calendar, AlertCircle, Clock, X, BarChart2 } from 'lucide-react';
+import { ArrowRight, User, Calendar, BarChart2 } from 'lucide-react';
 import { InitiativeTaskBoard } from './InitiativeTaskBoard';
 
 interface FullStep5WorkspaceProps {
@@ -14,7 +14,7 @@ interface FullStep5WorkspaceProps {
 
 export const FullStep5Workspace: React.FC<FullStep5WorkspaceProps> = ({
    fullSession,
-   onUpdateInitiative,
+   onUpdateInitiative: _onUpdateInitiative,
    onNextStep,
    language
 }) => {

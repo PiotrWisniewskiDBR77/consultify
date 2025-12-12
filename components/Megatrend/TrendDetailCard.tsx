@@ -7,7 +7,7 @@
 //   • Trend Type – classification and strategic role
 //   • Why it matters for the industry – production impact mechanism
 //   • Why it matters for YOUR company – personalised context
-//   • Impact Scoring – economics, likelihood (3‑5 yr), unavoidability, competitive pressure
+//   • Impact Scoring - economics, likelihood (3-5 yr), unavoidability, competitive pressure
 //   • AI Insight – suggested ring, risks, opportunities, recommended actions
 //   • Documents & Evidence – list of attached files/links, AI can re‑score after upload
 // ---------------------------------------------------------------
@@ -23,7 +23,7 @@ export interface MegatrendDetail {
     industryImpact: string; // why it matters for the industry
     companyImpact: string; // personalised for the user's company
     impactScore: number; // 1‑7 economic impact
-    likelihood: string; // e.g. "High (3‑5 yr)"
+    likelihood: string; // e.g. "High (3-5 yr)"
     unavoidability: string; // e.g. "Medium"
     competitivePressure: string; // e.g. "Low"
     aiSuggestion?: {
@@ -59,8 +59,8 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({ trendId, trend
                 if (!res.ok) throw new Error("Failed to load trend detail");
                 const json: MegatrendDetail = await res.json();
                 setTrend(json);
-            } catch (e: any) {
-                setError(e.message);
+            } catch (e: unknown) {
+                setError((e as Error).message);
             } finally {
                 setLoading(false);
             }

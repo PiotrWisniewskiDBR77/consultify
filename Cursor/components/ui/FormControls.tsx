@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { User } from '../../types';
+import { User } from '../../../types';
 
 // ============================================================================
 // InputGroup - wspólny wrapper dla pól formularza
@@ -33,10 +33,10 @@ interface FormInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
     variant?: 'default' | 'large' | 'small';
 }
 
-export const FormInput: React.FC<FormInputProps> = ({ 
-    variant = 'default', 
-    className = '', 
-    ...props 
+export const FormInput: React.FC<FormInputProps> = ({
+    variant = 'default',
+    className = '',
+    ...props
 }) => {
     const sizeClasses = {
         small: 'p-1 text-xs',
@@ -64,10 +64,10 @@ interface FormTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaEle
     variant?: 'default' | 'highlighted';
 }
 
-export const FormTextarea: React.FC<FormTextareaProps> = ({ 
+export const FormTextarea: React.FC<FormTextareaProps> = ({
     variant = 'default',
-    className = '', 
-    ...props 
+    className = '',
+    ...props
 }) => {
     const variantClasses = {
         default: 'bg-navy-950 border-white/10',
@@ -95,11 +95,11 @@ interface FormSelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> 
     placeholder?: string;
 }
 
-export const FormSelect: React.FC<FormSelectProps> = ({ 
-    options, 
+export const FormSelect: React.FC<FormSelectProps> = ({
+    options,
     placeholder,
-    className = '', 
-    ...props 
+    className = '',
+    ...props
 }) => (
     <select
         className={`
@@ -202,8 +202,8 @@ export const ArrayFieldEditor: React.FC<ArrayFieldEditorProps> = ({
                         onChange={e => handleItemChange(idx, e.target.value)}
                         placeholder={placeholder}
                     />
-                    <button 
-                        onClick={() => removeItem(idx)} 
+                    <button
+                        onClick={() => removeItem(idx)}
                         className="text-slate-500 hover:text-red-500 px-2"
                         type="button"
                     >
@@ -211,8 +211,8 @@ export const ArrayFieldEditor: React.FC<ArrayFieldEditorProps> = ({
                     </button>
                 </div>
             ))}
-            <button 
-                onClick={addItem} 
+            <button
+                onClick={addItem}
                 className={`text-sm font-medium ${colorClasses[colorScheme]}`}
                 type="button"
             >
