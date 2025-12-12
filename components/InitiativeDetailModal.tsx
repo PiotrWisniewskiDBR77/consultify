@@ -351,9 +351,9 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                                                     value={m.date}
                                                     onChange={e => {
                                                         const list = [...(initiative.milestones || [])];
-                                                        // TODO: Fix type definitions
+
                                                         list[idx] = { ...m, date: e.target.value };
-                                                        // TODO: Fix type definitions
+
                                                         setInitiative({ ...initiative, milestones: list });
                                                     }}
                                                 />
@@ -363,9 +363,9 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                                                     value={m.name}
                                                     onChange={e => {
                                                         const list = [...(initiative.milestones || [])];
-                                                        // TODO: Fix type definitions
+
                                                         list[idx] = { ...m, name: e.target.value };
-                                                        // TODO: Fix type definitions
+
                                                         setInitiative({ ...initiative, milestones: list });
                                                     }}
                                                 />

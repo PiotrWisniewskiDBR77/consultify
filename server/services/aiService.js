@@ -915,33 +915,33 @@ const AiService = {
 
     testProviderConnection: async (config) => {
         try {
-            // Create a temporary provider config for testing
-            const testConfig = {
-                ...config,
-                // Ensure cost is 0 for test
-                cost_per_1k: 0
-            };
-
-            console.log('[AiService] Testing connection for:', testConfig.provider);
-
-            // Simple "Hello" prompt to verify connectivity
-            // Wait, callLLM doesn't support explicit config injection easily without refactoring.
-            // Let's modify callLLM to accept an optional config object in the last argument or similar.
-            // Or simpler: implement a lightweight version of call directly here just for testing.
-
-            // Actually, let's implement a direct test function that reuses the logic.
-            // But reuse is hard without refactoring.
-            // Let's look at callLLM signature: (prompt, systemInstruction = "", history = [], providerId = null, userId = null, action = 'chat')
-
-            // To support testing unsaved config, I will add a special "test" action or a new method that accepts config.
-            // Let's implement `testConnection` logic directly here, reusing the switch case for providers.
-
-            let result;
             const { provider, api_key, model_id, endpoint } = config;
 
             if (!provider || (!api_key && provider !== 'ollama')) throw new Error("Missing provider or API key");
+            console.log('[AiService] Testing connection for:', provider);
 
-            if (provider === 'openai') {
+            let result = '';
+
+            // 1. ANTHROPIC
+            if (provider === 'anthropic') {
+                const response = await fetch(endpoint || 'https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-api-key': api_key, 'anthropic-version': '2023-06-01' },
+                    body: JSON.stringify({
+                        model: model_id || 'claude-3-sonnet-20240229',
+                        max_tokens: 10,
+                        messages: [{ role: 'user', content: 'Say OK' }]
+                    })
+                });
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Anthropic Error: ${response.status} ${errorText}`);
+                }
+                const data = await response.json();
+                result = data.content[0]?.text || 'OK';
+            }
+            // 2. OPENAI
+            else if (provider === 'openai') {
                 const OpenAIClass = deps.OpenAI || require('openai');
                 const openai = new OpenAIClass({ apiKey: api_key });
                 const completion = await openai.chat.completions.create({
@@ -950,40 +950,52 @@ const AiService = {
                     max_tokens: 5
                 });
                 result = completion.choices[0].message.content;
-            } else if (provider === 'google') {
+            }
+            // 3. GOOGLE GEMINI
+            else if (provider === 'google' || provider === 'gemini') {
                 const GoogleGenerativeAI = deps.GoogleGenerativeAI;
                 const genAI = new GoogleGenerativeAI(api_key);
                 const model = genAI.getGenerativeModel({ model: model_id || "gemini-pro" });
                 const resultGen = await model.generateContent("Say OK");
                 result = resultGen.response.text();
-            } else if (['deepseek', 'mistral', 'groq', 'together', 'nvidia_nim', 'qwen', 'ernie', 'zhipu'].includes(provider)) {
-                // Generic OpenAI-compatible
-                const OpenAIClass = deps.OpenAI || require('openai');
+            }
+            // 4. OPENAI COMPATIBLE (DeepSeek, Mistral, etc.)
+            else if (['deepseek', 'mistral', 'groq', 'together', 'nvidia_nim', 'qwen', 'ernie', 'zhipu', 'z_ai'].includes(provider)) {
+                // Define Endpoints
                 let baseURL = endpoint;
                 if (!baseURL) {
-                    // Set default base URLs if missing
                     if (provider === 'deepseek') baseURL = 'https://api.deepseek.com';
                     else if (provider === 'mistral') baseURL = 'https://api.mistral.ai/v1';
                     else if (provider === 'groq') baseURL = 'https://api.groq.com/openai/v1';
                     else if (provider === 'nvidia_nim') baseURL = 'https://integrate.api.nvidia.com/v1';
+                    else if (provider === 'z_ai') baseURL = 'https://api.z.ai/api/paas/v4';
                 }
 
-                const client = new OpenAIClass({ apiKey: api_key, baseURL });
-                const completion = await client.chat.completions.create({
-                    messages: [{ role: "user", content: "Say OK" }],
-                    model: model_id,
-                    max_tokens: 5
+                // Use fetch for manual control if OpenAI SDK fails or for simplicity with various endpoints
+                const response = await fetch(`${baseURL}/chat/completions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${api_key}` },
+                    body: JSON.stringify({
+                        model: model_id || 'gpt-3.5-turbo', // Fallback model name if needed
+                        messages: [{ role: "user", content: "Say OK" }],
+                        max_tokens: 5
+                    })
                 });
-                result = completion.choices[0].message.content;
-            } else if (provider === 'ollama') {
-                // ... ollama fetch
-                // Use global fetch
 
+                if (!response.ok) {
+                    const errText = await response.text();
+                    throw new Error(`${provider} Error: ${response.status} ${errText}`);
+                }
+                const data = await response.json();
+                result = data.choices[0]?.message?.content || 'OK';
+            }
+            // 5. OLLAMA
+            else if (provider === 'ollama') {
                 const res = await fetch(`${endpoint || 'http://localhost:11434'}/api/chat`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        model: model_id,
+                        model: model_id || 'llama2',
                         messages: [{ role: 'user', content: 'Say OK' }],
                         stream: false
                     })
@@ -991,7 +1003,9 @@ const AiService = {
                 if (!res.ok) throw new Error(`Ollama Error: ${res.statusText}`);
                 const data = await res.json();
                 result = data.message.content;
-            } else {
+            }
+            else {
+                // Try Generic Fallback?
                 throw new Error(`Provider ${provider} testing not implemented yet.`);
             }
 
@@ -999,6 +1013,7 @@ const AiService = {
 
         } catch (error) {
             console.error("Test connection failed:", error);
+            // Return error in a way the frontend expects
             return { success: false, message: error.message };
         }
     },
