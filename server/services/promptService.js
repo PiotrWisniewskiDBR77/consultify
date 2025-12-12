@@ -28,7 +28,12 @@ Your goal is to assist ${user?.firstName || 'the user'} (Role: ${user?.role || '
             strategies.forEach(s => prompt += `- ${s.title}: ${s.description}\n`);
         }
 
-        // 3. Immediate Screen Context (The most important part for "Where am I?")
+        // 3. Knowledge Base (RAG)
+        if (context.knowledge) {
+            prompt += `\n### RELEVANT KNOWLEDGE BASE:\n${context.knowledge}\n`;
+        }
+
+        // 4. Immediate Screen Context (The most important part for "Where am I?")
         if (screen) {
             prompt += `\n### CURRENT SCREEN CONTEXT (User is looking at this NOW):\n`;
             prompt += `Screen Name: ${screen.title}\n`;

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+// ANTYGRACITY FIX: Usunięto nieużywany import AlertCircle (był w oryginalnym kodzie ale nigdy nie używany)
 import { X, MessageSquare, Camera, Check, Loader2 } from 'lucide-react';
 import { Api } from '../services/api';
 import { useAppStore } from '../store/useAppStore';

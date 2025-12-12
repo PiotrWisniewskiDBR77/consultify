@@ -160,14 +160,25 @@ export const Api = {
         history: any[],
         onChunk: (text: string) => void,
         onDone: () => void,
-        systemInstruction?: string
+        systemInstruction?: string,
+        context?: any
     ) => {
+        // #region agent log
+        const token = localStorage.getItem('token');
+        console.log('[DEBUG-A] chatWithAIStream entry:', { hasToken: !!token, tokenLength: token?.length || 0, historyLength: history?.length || 0 });
+        fetch('http://127.0.0.1:7242/ingest/690b8f02-96fa-4527-ae57-5d2b028e8181',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.ts:chatWithAIStream:entry',message:'Stream request started',data:{hasToken:!!token,tokenLength:token?.length||0,historyLength:history?.length||0,hasContext:!!context},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         try {
             const response = await fetch(`${API_URL}/ai/chat/stream`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message, history, systemInstruction })
+                body: JSON.stringify({ message, history, systemInstruction, context })
             });
+
+            // #region agent log
+            console.log('[DEBUG-A,C] chatWithAIStream response:', { status: response.status, ok: response.ok, statusText: response.statusText });
+            fetch('http://127.0.0.1:7242/ingest/690b8f02-96fa-4527-ae57-5d2b028e8181',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.ts:chatWithAIStream:response',message:'Response received',data:{status:response.status,ok:response.ok,statusText:response.statusText},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,C'})}).catch(()=>{});
+            // #endregion
 
             if (!response.body) throw new Error('ReadableStream not supported');
 
