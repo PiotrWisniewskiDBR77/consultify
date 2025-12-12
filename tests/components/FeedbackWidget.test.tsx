@@ -44,7 +44,9 @@ describe('Component Test: FeedbackWidget', () => {
         render(<FeedbackWidget />);
         const button = screen.getByTitle('Send Feedback');
         fireEvent.click(button);
-        expect(screen.getByText('Send Feedback')).toBeInTheDocument();
+        // Use getAllByText since "Send Feedback" appears multiple times
+        const feedbackTexts = screen.getAllByText('Send Feedback');
+        expect(feedbackTexts.length).toBeGreaterThan(0);
         expect(screen.getByPlaceholderText('Describe your issue or idea...')).toBeInTheDocument();
     });
 
