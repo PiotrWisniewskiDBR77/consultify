@@ -78,7 +78,7 @@ describe('Service Test: transformationEngine', () => {
 
     it('assigns priority based on current level', () => {
         const session = createMockSession();
-        session.assessment.processes.actual = 1;
+        session.assessment.processes!.actual = 1;
         const initiatives = generateInitiatives(session);
 
         const processInitiatives = initiatives.filter(i => i.axis === 'processes');

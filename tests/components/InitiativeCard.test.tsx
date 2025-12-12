@@ -20,7 +20,8 @@ describe('Component Test: InitiativeCard', () => {
             <InitiativeCard
                 initiative={mockInitiative}
                 onClick={vi.fn()}
-                language="EN"
+
+
             />
         );
 
@@ -34,7 +35,7 @@ describe('Component Test: InitiativeCard', () => {
             <InitiativeCard
                 initiative={mockInitiative}
                 onClick={handleClick}
-                language="EN"
+
             />
         );
 
@@ -47,7 +48,8 @@ describe('Component Test: InitiativeCard', () => {
             <InitiativeCard
                 initiative={mockInitiative}
                 onClick={vi.fn()}
-                language="EN"
+
+
             />
         );
 
@@ -59,7 +61,8 @@ describe('Component Test: InitiativeCard', () => {
             <InitiativeCard
                 initiative={mockInitiative}
                 onClick={vi.fn()}
-                language="EN"
+
+
             />
         );
 
@@ -73,7 +76,6 @@ describe('Component Test: InitiativeCard', () => {
                 initiative={mockInitiative}
                 onClick={vi.fn()}
                 onEnrich={handleEnrich}
-                language="EN"
             />
         );
 
@@ -87,13 +89,14 @@ describe('Component Test: InitiativeCard', () => {
 
     it('handles different status values', () => {
         const statuses: Array<Initiative['status']> = ['step3', 'step4', 'step5', 'completed', 'on_hold'];
-        
+
         statuses.forEach(status => {
             const { unmount } = render(
                 <InitiativeCard
                     initiative={{ ...mockInitiative, status }}
                     onClick={vi.fn()}
-                    language="EN"
+
+
                 />
             );
             expect(screen.getByText(mockInitiative.name)).toBeInTheDocument();

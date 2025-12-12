@@ -240,7 +240,6 @@ export const RoadmapKanban: React.FC<Props> = ({ initiatives, onUpdateInitiative
                     }}
                     users={users}
                     currentUser={currentUser}
-                    language={language}
                 />
             )}
         </>
