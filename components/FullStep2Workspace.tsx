@@ -82,7 +82,6 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
   }, [initiatives, searchQuery, filterAxis, filterPriority]);
 
   // Grouping Logic
-  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const groupedInitiatives = useMemo(() => {
     if (groupBy === 'none') return { 'All Initiatives': filteredInitiatives };
 
@@ -196,7 +195,7 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
               {groupedInitiatives[groupKey].map((init) => (
                 <InitiativeCard
                   key={init.id}
-                  initiative={init as any}
+                  initiative={init}
                   language={language}
                   onClick={() => handleEditClick(init)}
                   onEnrich={onEnrichInitiative}

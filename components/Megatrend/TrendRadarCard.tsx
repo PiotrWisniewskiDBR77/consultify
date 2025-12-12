@@ -39,8 +39,6 @@ const typeColors: Record<RadarMegatrend["type"], { bg: string; border: string; e
     Societal: { bg: "bg-orange-500", border: "border-orange-700", emoji: "🟠" },
 };
 
-const industryOptions = ["automotive", "FMCG", "machinery", "metal", "plastics", "general"];
-
 interface TrendRadarCardProps {
     data: RadarMegatrend[];
     onTrendSelect?: (trendId: string) => void;
@@ -51,7 +49,7 @@ interface TrendRadarCardProps {
 export const TrendRadarCard: React.FC<TrendRadarCardProps> = ({ data = [], onTrendSelect, loading, error }) => {
     const [tooltip, setTooltip] = useState<{ x: number; y: number; text: string } | null>(null);
 
-    // Responsive size – based on container width (max 500 px)
+    // Responsive size - based on container width (max 500 px)
     const containerRef = useRef<HTMLDivElement>(null);
     const [size, setSize] = useState<number>(400);
     useEffect(() => {
@@ -72,13 +70,7 @@ export const TrendRadarCard: React.FC<TrendRadarCardProps> = ({ data = [], onTre
     const radius = size / 2;
     const maxVal = 7; // impact range
     const angleSlice = data.length ? (Math.PI * 2) / data.length : 0;
-    const getCoords = (value: number, index: number) => {
-        const angle = index * angleSlice - Math.PI / 2; // start at top
-        const r = (value / maxVal) * (radius - 30); // 30 px padding for labels
-        const x = radius + r * Math.cos(angle);
-        const y = radius + r * Math.sin(angle);
-        return { x, y };
-    };
+    // getCoords removed (unused)
 
     // Render SVG points on top of the RadarChart
     const renderPoints = () =>
@@ -88,7 +80,7 @@ export const TrendRadarCard: React.FC<TrendRadarCardProps> = ({ data = [], onTre
             const angle = i * angleSlice - Math.PI / 2;
             const x = radius + baseRadius * Math.cos(angle);
             const y = radius + baseRadius * Math.sin(angle);
-            const sizePx = Math.max(6, (mt.impact / maxVal) * 20); // 6‑20 px
+            const sizePx = Math.max(6, (mt.impact / maxVal) * 20); // 6-20 px
             const { bg, border, emoji } = typeColors[mt.type];
             return (
                 <g key={mt.id}>
