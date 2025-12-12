@@ -1,31 +1,31 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="68" failures="9" errors="0" time="12.718744042">
-    <testsuite name="tests/components/Button.test.tsx" timestamp="2025-12-12T08:46:43.415Z" hostname="MacBook-Air-Piotr.local" tests="3" failures="0" errors="0" skipped="0" time="0.10684825">
-        <testcase classname="tests/components/Button.test.tsx" name="Component Test: Button &gt; renders children correctly" time="0.088623625">
+<testsuites name="vitest tests" tests="68" failures="9" errors="0" time="7.935433251">
+    <testsuite name="tests/components/Button.test.tsx" timestamp="2025-12-12T08:49:02.130Z" hostname="MacBook-Air-Piotr.local" tests="3" failures="0" errors="0" skipped="0" time="0.041586917">
+        <testcase classname="tests/components/Button.test.tsx" name="Component Test: Button &gt; renders children correctly" time="0.029574167">
         </testcase>
-        <testcase classname="tests/components/Button.test.tsx" name="Component Test: Button &gt; handles click events" time="0.006921375">
+        <testcase classname="tests/components/Button.test.tsx" name="Component Test: Button &gt; handles click events" time="0.006705709">
         </testcase>
-        <testcase classname="tests/components/Button.test.tsx" name="Component Test: Button &gt; renders with correct variant class" time="0.008863208">
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/components/ErrorBoundary.test.tsx" timestamp="2025-12-12T08:46:43.417Z" hostname="MacBook-Air-Piotr.local" tests="4" failures="0" errors="0" skipped="0" time="0.199673292">
-        <testcase classname="tests/components/ErrorBoundary.test.tsx" name="Component Test: ErrorBoundary &gt; renders children when there is no error" time="0.161441708">
-        </testcase>
-        <testcase classname="tests/components/ErrorBoundary.test.tsx" name="Component Test: ErrorBoundary &gt; displays error UI when child component throws" time="0.017400375">
-        </testcase>
-        <testcase classname="tests/components/ErrorBoundary.test.tsx" name="Component Test: ErrorBoundary &gt; displays error message in error UI" time="0.00549">
-        </testcase>
-        <testcase classname="tests/components/ErrorBoundary.test.tsx" name="Component Test: ErrorBoundary &gt; has reset button in error UI" time="0.0111685">
+        <testcase classname="tests/components/Button.test.tsx" name="Component Test: Button &gt; renders with correct variant class" time="0.003783083">
         </testcase>
     </testsuite>
-    <testsuite name="tests/components/FeedbackWidget.test.tsx" timestamp="2025-12-12T08:46:43.418Z" hostname="MacBook-Air-Piotr.local" tests="8" failures="4" errors="0" skipped="0" time="1.550372959">
-        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; does not render when user is not logged in" time="0.239230458">
+    <testsuite name="tests/components/ErrorBoundary.test.tsx" timestamp="2025-12-12T08:49:02.130Z" hostname="MacBook-Air-Piotr.local" tests="4" failures="0" errors="0" skipped="0" time="0.053035916">
+        <testcase classname="tests/components/ErrorBoundary.test.tsx" name="Component Test: ErrorBoundary &gt; renders children when there is no error" time="0.027200667">
         </testcase>
-        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; renders trigger button when user is logged in" time="0.041611375">
+        <testcase classname="tests/components/ErrorBoundary.test.tsx" name="Component Test: ErrorBoundary &gt; displays error UI when child component throws" time="0.010176708">
         </testcase>
-        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; opens modal when trigger button is clicked" time="0.228719792">
+        <testcase classname="tests/components/ErrorBoundary.test.tsx" name="Component Test: ErrorBoundary &gt; displays error message in error UI" time="0.008437792">
         </testcase>
-        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; closes modal when X button is clicked" time="0.89535875">
+        <testcase classname="tests/components/ErrorBoundary.test.tsx" name="Component Test: ErrorBoundary &gt; has reset button in error UI" time="0.005431792">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/components/FeedbackWidget.test.tsx" timestamp="2025-12-12T08:49:02.131Z" hostname="MacBook-Air-Piotr.local" tests="8" failures="4" errors="0" skipped="0" time="0.697701708">
+        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; does not render when user is not logged in" time="0.097211167">
+        </testcase>
+        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; renders trigger button when user is logged in" time="0.027970209">
+        </testcase>
+        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; opens modal when trigger button is clicked" time="0.049567083">
+        </testcase>
+        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; closes modal when X button is clicked" time="0.376080292">
             <failure message="expect(element).not.toBeInTheDocument()
 
 expected document not to contain element, found &lt;textarea
@@ -43,9 +43,9 @@ expected document not to contain element, found &lt;textarea
  ❯ tests/components/FeedbackWidget.test.tsx:66:85
             </failure>
         </testcase>
-        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; allows selecting feedback type" time="0.00827175">
+        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; allows selecting feedback type" time="0.016867084">
         </testcase>
-        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; submits feedback successfully" time="0.026829125">
+        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; submits feedback successfully" time="0.062974916">
             <failure message="Found multiple elements with the text: Send Feedback
 
 Here are the matching elements:
@@ -508,7 +508,7 @@ Ignored nodes: comments, script, style
  ❯ tests/components/FeedbackWidget.test.tsx:89:37
             </failure>
         </testcase>
-        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; handles submission error" time="0.022059333">
+        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; handles submission error" time="0.037284667">
             <failure message="Found multiple elements with the text: Send Feedback
 
 Here are the matching elements:
@@ -971,7 +971,7 @@ Ignored nodes: comments, script, style
  ❯ tests/components/FeedbackWidget.test.tsx:113:37
             </failure>
         </testcase>
-        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; disables submit button when message is empty" time="0.053608666">
+        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; disables submit button when message is empty" time="0.027267958">
             <failure message="Found multiple elements with the text: Send Feedback
 
 Here are the matching elements:
@@ -1435,16 +1435,16 @@ Ignored nodes: comments, script, style
             </failure>
         </testcase>
     </testsuite>
-    <testsuite name="tests/components/InitiativeCard.test.tsx" timestamp="2025-12-12T08:46:43.424Z" hostname="MacBook-Air-Piotr.local" tests="6" failures="0" errors="0" skipped="0" time="1.04407875">
-        <testcase classname="tests/components/InitiativeCard.test.tsx" name="Component Test: InitiativeCard &gt; renders initiative name and description" time="0.195374917">
+    <testsuite name="tests/components/InitiativeCard.test.tsx" timestamp="2025-12-12T08:49:02.133Z" hostname="MacBook-Air-Piotr.local" tests="6" failures="0" errors="0" skipped="0" time="0.458388625">
+        <testcase classname="tests/components/InitiativeCard.test.tsx" name="Component Test: InitiativeCard &gt; renders initiative name and description" time="0.1330835">
         </testcase>
-        <testcase classname="tests/components/InitiativeCard.test.tsx" name="Component Test: InitiativeCard &gt; calls onClick when card is clicked" time="0.090042917">
+        <testcase classname="tests/components/InitiativeCard.test.tsx" name="Component Test: InitiativeCard &gt; calls onClick when card is clicked" time="0.030691792">
         </testcase>
-        <testcase classname="tests/components/InitiativeCard.test.tsx" name="Component Test: InitiativeCard &gt; displays status badge" time="0.042280083">
+        <testcase classname="tests/components/InitiativeCard.test.tsx" name="Component Test: InitiativeCard &gt; displays status badge" time="0.027135792">
         </testcase>
-        <testcase classname="tests/components/InitiativeCard.test.tsx" name="Component Test: InitiativeCard &gt; displays axis badge when present" time="0.064446334">
+        <testcase classname="tests/components/InitiativeCard.test.tsx" name="Component Test: InitiativeCard &gt; displays axis badge when present" time="0.011167334">
         </testcase>
-        <testcase classname="tests/components/InitiativeCard.test.tsx" name="Component Test: InitiativeCard &gt; calls onEnrich when enrich button is clicked" time="0.18373375">
+        <testcase classname="tests/components/InitiativeCard.test.tsx" name="Component Test: InitiativeCard &gt; calls onEnrich when enrich button is clicked" time="0.049161625">
             <system-err>
 An update to InitiativeCard inside a test was not wrapped in act(...).
 
@@ -1459,21 +1459,21 @@ This ensures that you&apos;re testing the behavior the user would see in the bro
 
             </system-err>
         </testcase>
-        <testcase classname="tests/components/InitiativeCard.test.tsx" name="Component Test: InitiativeCard &gt; handles different status values" time="0.365801167">
+        <testcase classname="tests/components/InitiativeCard.test.tsx" name="Component Test: InitiativeCard &gt; handles different status values" time="0.190889125">
         </testcase>
     </testsuite>
-    <testsuite name="tests/components/LLMSelector.test.tsx" timestamp="2025-12-12T08:46:43.425Z" hostname="MacBook-Air-Piotr.local" tests="6" failures="1" errors="0" skipped="0" time="0.66817725">
-        <testcase classname="tests/components/LLMSelector.test.tsx" name="Component Test: LLMSelector &gt; renders selector button" time="0.2154075">
+    <testsuite name="tests/components/LLMSelector.test.tsx" timestamp="2025-12-12T08:49:02.134Z" hostname="MacBook-Air-Piotr.local" tests="6" failures="1" errors="0" skipped="0" time="0.431426709">
+        <testcase classname="tests/components/LLMSelector.test.tsx" name="Component Test: LLMSelector &gt; renders selector button" time="0.084874583">
         </testcase>
-        <testcase classname="tests/components/LLMSelector.test.tsx" name="Component Test: LLMSelector &gt; opens dropdown when clicked" time="0.166611625">
+        <testcase classname="tests/components/LLMSelector.test.tsx" name="Component Test: LLMSelector &gt; opens dropdown when clicked" time="0.048169458">
         </testcase>
-        <testcase classname="tests/components/LLMSelector.test.tsx" name="Component Test: LLMSelector &gt; displays models in dropdown" time="0.198418459">
+        <testcase classname="tests/components/LLMSelector.test.tsx" name="Component Test: LLMSelector &gt; displays models in dropdown" time="0.156346583">
         </testcase>
-        <testcase classname="tests/components/LLMSelector.test.tsx" name="Component Test: LLMSelector &gt; filters models by search query" time="0.044114">
+        <testcase classname="tests/components/LLMSelector.test.tsx" name="Component Test: LLMSelector &gt; filters models by search query" time="0.11350525">
         </testcase>
-        <testcase classname="tests/components/LLMSelector.test.tsx" name="Component Test: LLMSelector &gt; selects model when clicked" time="0.034436833">
+        <testcase classname="tests/components/LLMSelector.test.tsx" name="Component Test: LLMSelector &gt; selects model when clicked" time="0.020659042">
         </testcase>
-        <testcase classname="tests/components/LLMSelector.test.tsx" name="Component Test: LLMSelector &gt; toggles auto mode" time="0.006834125">
+        <testcase classname="tests/components/LLMSelector.test.tsx" name="Component Test: LLMSelector &gt; toggles auto mode" time="0.006138291">
             <failure message="Unable to find an element with the text: /Auto/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
 
 Ignored nodes: comments, script, style
@@ -1608,8 +1608,8 @@ Ignored nodes: comments, script, style
             </failure>
         </testcase>
     </testsuite>
-    <testsuite name="tests/components/LoadingScreen.test.tsx" timestamp="2025-12-12T08:46:43.427Z" hostname="MacBook-Air-Piotr.local" tests="2" failures="1" errors="0" skipped="0" time="0.255813875">
-        <testcase classname="tests/components/LoadingScreen.test.tsx" name="Component Test: LoadingScreen &gt; renders loading spinner" time="0.220150167">
+    <testsuite name="tests/components/LoadingScreen.test.tsx" timestamp="2025-12-12T08:49:02.135Z" hostname="MacBook-Air-Piotr.local" tests="2" failures="1" errors="0" skipped="0" time="0.103893541">
+        <testcase classname="tests/components/LoadingScreen.test.tsx" name="Component Test: LoadingScreen &gt; renders loading spinner" time="0.091713">
             <failure message="Unable to find an element with the role &quot;status&quot;
 
 There are no available roles.
@@ -1677,19 +1677,19 @@ Ignored nodes: comments, script, style
  ❯ tests/components/LoadingScreen.test.tsx:9:32
             </failure>
         </testcase>
-        <testcase classname="tests/components/LoadingScreen.test.tsx" name="Component Test: LoadingScreen &gt; has correct styling classes" time="0.033793708">
+        <testcase classname="tests/components/LoadingScreen.test.tsx" name="Component Test: LoadingScreen &gt; has correct styling classes" time="0.009508">
         </testcase>
     </testsuite>
-    <testsuite name="tests/components/PlanCard.test.tsx" timestamp="2025-12-12T08:46:43.428Z" hostname="MacBook-Air-Piotr.local" tests="7" failures="1" errors="0" skipped="0" time="0.644212792">
-        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; renders plan name and price" time="0.331055916">
+    <testsuite name="tests/components/PlanCard.test.tsx" timestamp="2025-12-12T08:49:02.135Z" hostname="MacBook-Air-Piotr.local" tests="7" failures="1" errors="0" skipped="0" time="0.217325583">
+        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; renders plan name and price" time="0.076666583">
         </testcase>
-        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; displays current plan badge when isCurrentPlan is true" time="0.009567459">
+        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; displays current plan badge when isCurrentPlan is true" time="0.011888916">
         </testcase>
-        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; displays popular badge when isPopular is true" time="0.017736">
+        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; displays popular badge when isPopular is true" time="0.008912417">
         </testcase>
-        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; calls onSelect when select button is clicked" time="0.048462958">
+        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; calls onSelect when select button is clicked" time="0.038584958">
         </testcase>
-        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; disables select button when disabled is true" time="0.191296292">
+        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; disables select button when disabled is true" time="0.046706333">
             <failure message="Unable to find an element with the text: /Select|Upgrade/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
 
 Ignored nodes: comments, script, style
@@ -2117,19 +2117,19 @@ Ignored nodes: comments, script, style
  ❯ tests/components/PlanCard.test.tsx:49:37
             </failure>
         </testcase>
-        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; displays features list" time="0.025792208">
+        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; displays features list" time="0.025366166">
         </testcase>
-        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; shows API access for premium plans" time="0.017344292">
+        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; shows API access for premium plans" time="0.00610825">
         </testcase>
     </testsuite>
-    <testsuite name="tests/components/QuotaWarningBanner.test.tsx" timestamp="2025-12-12T08:46:43.430Z" hostname="MacBook-Air-Piotr.local" tests="7" failures="1" errors="0" skipped="0" time="1.180286708">
-        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; does not render when usage is below threshold" time="0.098626917">
+    <testsuite name="tests/components/QuotaWarningBanner.test.tsx" timestamp="2025-12-12T08:49:02.136Z" hostname="MacBook-Air-Piotr.local" tests="7" failures="1" errors="0" skipped="0" time="0.453935042">
+        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; does not render when usage is below threshold" time="0.018551708">
         </testcase>
-        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; renders warning when token usage is high" time="0.222389208">
+        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; renders warning when token usage is high" time="0.036555583">
         </testcase>
-        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; renders warning when storage usage is high" time="0.024359125">
+        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; renders warning when storage usage is high" time="0.005185083">
         </testcase>
-        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; displays critical message when usage is very high" time="0.02302675">
+        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; displays critical message when usage is very high" time="0.016315375">
             <failure message="Unable to find an element with the text: /reached the quota limits/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
 
 Ignored nodes: comments, script, style
@@ -2233,23 +2233,23 @@ Ignored nodes: comments, script, style
  ❯ tests/components/QuotaWarningBanner.test.tsx:48:23
             </failure>
         </testcase>
-        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; calls onUpgrade when upgrade button is clicked" time="0.022917">
+        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; calls onUpgrade when upgrade button is clicked" time="0.028112167">
         </testcase>
-        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; calls onDismiss when dismiss button is clicked" time="0.777041583">
+        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; calls onDismiss when dismiss button is clicked" time="0.344591416">
         </testcase>
-        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; handles both token and storage warnings" time="0.009444917">
+        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; handles both token and storage warnings" time="0.002441833">
         </testcase>
     </testsuite>
-    <testsuite name="tests/components/SystemHealth.test.tsx" timestamp="2025-12-12T08:46:43.431Z" hostname="MacBook-Air-Piotr.local" tests="5" failures="1" errors="0" skipped="0" time="5.578418458">
-        <testcase classname="tests/components/SystemHealth.test.tsx" name="Component Test: SystemHealth &gt; does not render while loading" time="0.031898333">
+    <testsuite name="tests/components/SystemHealth.test.tsx" timestamp="2025-12-12T08:49:02.136Z" hostname="MacBook-Air-Piotr.local" tests="5" failures="1" errors="0" skipped="0" time="5.137206625">
+        <testcase classname="tests/components/SystemHealth.test.tsx" name="Component Test: SystemHealth &gt; does not render while loading" time="0.083117333">
         </testcase>
-        <testcase classname="tests/components/SystemHealth.test.tsx" name="Component Test: SystemHealth &gt; displays online status when system is healthy" time="0.257635166">
+        <testcase classname="tests/components/SystemHealth.test.tsx" name="Component Test: SystemHealth &gt; displays online status when system is healthy" time="0.032642666">
         </testcase>
-        <testcase classname="tests/components/SystemHealth.test.tsx" name="Component Test: SystemHealth &gt; displays latency when online" time="0.187734542">
+        <testcase classname="tests/components/SystemHealth.test.tsx" name="Component Test: SystemHealth &gt; displays latency when online" time="0.008875916">
         </testcase>
-        <testcase classname="tests/components/SystemHealth.test.tsx" name="Component Test: SystemHealth &gt; displays offline status when system is down" time="0.053549708">
+        <testcase classname="tests/components/SystemHealth.test.tsx" name="Component Test: SystemHealth &gt; displays offline status when system is down" time="0.006053791">
         </testcase>
-        <testcase classname="tests/components/SystemHealth.test.tsx" name="Component Test: SystemHealth &gt; polls health status periodically" time="5.045078125">
+        <testcase classname="tests/components/SystemHealth.test.tsx" name="Component Test: SystemHealth &gt; polls health status periodically" time="5.00381875">
             <failure message="Test timed out in 5000ms.
 If this is a long-running test, pass a timeout value as the last argument or configure it globally with &quot;testTimeout&quot;." type="Error">
 Error: Test timed out in 5000ms.
@@ -2258,50 +2258,50 @@ If this is a long-running test, pass a timeout value as the last argument or con
             </failure>
         </testcase>
     </testsuite>
-    <testsuite name="tests/components/TaskCard.test.tsx" timestamp="2025-12-12T08:46:43.433Z" hostname="MacBook-Air-Piotr.local" tests="10" failures="0" errors="0" skipped="0" time="0.825029541">
-        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; renders task title" time="0.283184625">
+    <testsuite name="tests/components/TaskCard.test.tsx" timestamp="2025-12-12T08:49:02.137Z" hostname="MacBook-Air-Piotr.local" tests="10" failures="0" errors="0" skipped="0" time="0.177261584">
+        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; renders task title" time="0.043035333">
         </testcase>
-        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; calls onClick when card is clicked" time="0.015347834">
+        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; calls onClick when card is clicked" time="0.010154667">
         </testcase>
-        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; displays status badge" time="0.020594333">
+        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; displays status badge" time="0.013650292">
         </testcase>
-        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; displays priority badge" time="0.031799">
+        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; displays priority badge" time="0.003574083">
         </testcase>
-        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; displays why text when present" time="0.105013208">
+        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; displays why text when present" time="0.002880958">
         </testcase>
-        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; displays assignee when present" time="0.030037625">
+        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; displays assignee when present" time="0.015721666">
         </testcase>
-        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; displays unassigned when no assignee" time="0.007099791">
+        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; displays unassigned when no assignee" time="0.0040245">
         </testcase>
-        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; displays due date when present" time="0.12020725">
+        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; displays due date when present" time="0.047491292">
         </testcase>
-        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; displays checklist progress when present" time="0.029966042">
+        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; displays checklist progress when present" time="0.014216083">
         </testcase>
-        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; handles different status values" time="0.177843208">
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/components/UsageMeters.test.tsx" timestamp="2025-12-12T08:46:43.434Z" hostname="MacBook-Air-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.6123375">
-        <testcase classname="tests/components/UsageMeters.test.tsx" name="Component Test: UsageMeters &gt; renders token and storage meters" time="0.402163875">
-        </testcase>
-        <testcase classname="tests/components/UsageMeters.test.tsx" name="Component Test: UsageMeters &gt; displays usage percentages" time="0.135173666">
-        </testcase>
-        <testcase classname="tests/components/UsageMeters.test.tsx" name="Component Test: UsageMeters &gt; renders compact version" time="0.046164125">
-        </testcase>
-        <testcase classname="tests/components/UsageMeters.test.tsx" name="Component Test: UsageMeters &gt; displays warning when usage is high" time="0.014766583">
-        </testcase>
-        <testcase classname="tests/components/UsageMeters.test.tsx" name="Component Test: UsageMeters &gt; displays critical warning when usage is very high" time="0.011927083">
+        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; handles different status values" time="0.019855042">
         </testcase>
     </testsuite>
-    <testsuite name="tests/components/a11y.test.tsx" timestamp="2025-12-12T08:46:43.435Z" hostname="MacBook-Air-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.053494667">
-        <testcase classname="tests/components/a11y.test.tsx" name="Component Test: Accessibility (a11y) &gt; Button should be keyboard accessible" time="0.026771917">
+    <testsuite name="tests/components/UsageMeters.test.tsx" timestamp="2025-12-12T08:49:02.137Z" hostname="MacBook-Air-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.132289917">
+        <testcase classname="tests/components/UsageMeters.test.tsx" name="Component Test: UsageMeters &gt; renders token and storage meters" time="0.046385208">
         </testcase>
-        <testcase classname="tests/components/a11y.test.tsx" name="Component Test: Accessibility (a11y) &gt; Button should have proper semantic HTML" time="0.003244125">
+        <testcase classname="tests/components/UsageMeters.test.tsx" name="Component Test: UsageMeters &gt; displays usage percentages" time="0.014806416">
         </testcase>
-        <testcase classname="tests/components/a11y.test.tsx" name="Component Test: Accessibility (a11y) &gt; ErrorBoundary should have accessible error message" time="0.004117416">
+        <testcase classname="tests/components/UsageMeters.test.tsx" name="Component Test: UsageMeters &gt; renders compact version" time="0.035760208">
         </testcase>
-        <testcase classname="tests/components/a11y.test.tsx" name="Component Test: Accessibility (a11y) &gt; LoadingScreen should have accessible structure" time="0.009353041">
+        <testcase classname="tests/components/UsageMeters.test.tsx" name="Component Test: UsageMeters &gt; displays warning when usage is high" time="0.01905925">
         </testcase>
-        <testcase classname="tests/components/a11y.test.tsx" name="Component Test: Accessibility (a11y) &gt; components should have proper ARIA labels when needed" time="0.007377875">
+        <testcase classname="tests/components/UsageMeters.test.tsx" name="Component Test: UsageMeters &gt; displays critical warning when usage is very high" time="0.013162792">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/components/a11y.test.tsx" timestamp="2025-12-12T08:49:02.138Z" hostname="MacBook-Air-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.031381084">
+        <testcase classname="tests/components/a11y.test.tsx" name="Component Test: Accessibility (a11y) &gt; Button should be keyboard accessible" time="0.018684625">
+        </testcase>
+        <testcase classname="tests/components/a11y.test.tsx" name="Component Test: Accessibility (a11y) &gt; Button should have proper semantic HTML" time="0.001947541">
+        </testcase>
+        <testcase classname="tests/components/a11y.test.tsx" name="Component Test: Accessibility (a11y) &gt; ErrorBoundary should have accessible error message" time="0.001885708">
+        </testcase>
+        <testcase classname="tests/components/a11y.test.tsx" name="Component Test: Accessibility (a11y) &gt; LoadingScreen should have accessible structure" time="0.00416975">
+        </testcase>
+        <testcase classname="tests/components/a11y.test.tsx" name="Component Test: Accessibility (a11y) &gt; components should have proper ARIA labels when needed" time="0.00263725">
         </testcase>
     </testsuite>
 </testsuites>
