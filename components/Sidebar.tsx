@@ -242,6 +242,7 @@ export const Sidebar: React.FC = () => {
         });
       }, 0);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentView, currentUser?.role]); // Removed isSidebarCollapsed to avoid re-expanding when collapsing
 
   const renderMenuItem = (item: MenuItem, level: number = 0) => {

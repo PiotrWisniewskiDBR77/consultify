@@ -9,6 +9,7 @@ interface SidebarUsageProps {
 }
 
 export const SidebarUsage: React.FC<SidebarUsageProps> = ({ showFull }) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { freeSessionData } = useAppStore();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [usage, setUsage] = useState<any>(null);

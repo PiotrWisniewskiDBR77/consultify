@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, User, Target, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, Target, CheckCircle2 } from 'lucide-react';
 import { CompanyProfile, FreeSession, Language } from '../types';
 import { translations } from '../translations';
 
@@ -11,12 +11,14 @@ interface Step2WorkspaceProps {
 }
 
 export const Step2Workspace: React.FC<Step2WorkspaceProps> = ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   profile,
   sessionData,
   onNextStep,
   language
 }) => {
-  const t = translations.step1; // Reusing Profile translations
+  // const t = translations.step1; // Reusing Profile translations
+
 
   return (
     <div className="flex flex-col h-full bg-navy-900">
