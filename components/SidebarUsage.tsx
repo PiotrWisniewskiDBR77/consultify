@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Api } from '../services/api';
 import UsageMeters from './billing/UsageMeters';
 import { Loader2 } from 'lucide-react';
-import { useAppStore } from '../store/app'; // Assuming this import is needed for useAppStore
+import { useAppStore } from '../store/useAppStore';
 
 interface SidebarUsageProps {
     showFull: boolean;
@@ -11,7 +11,7 @@ interface SidebarUsageProps {
 export const SidebarUsage: React.FC<SidebarUsageProps> = ({ showFull }) => {
     const { freeSessionData } = useAppStore();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [stats, setStats] = useState<any>(null); // Corrected the malformed line
+    const [usage, setUsage] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {

@@ -77,7 +77,7 @@ export const RadarChart: React.FC<RadarChartProps> = ({ data, size }) => {
                 {data.map((d, i) => {
                     // Push labels out a bit further than maxVal
                     const angle = i * angleSlice - Math.PI / 2;
-                    const labelRadius = radius - 5; // fit inside or just on edge
+
 
 
 
