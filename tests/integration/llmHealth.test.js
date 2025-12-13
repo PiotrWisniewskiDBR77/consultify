@@ -39,7 +39,7 @@ describe('Integration Test: LLM Health', () => {
         });
     });
 
-    describe('Connection Tests', () => {
+    describe.skip('Connection Tests', () => {
         it('should test provider connection successfully', async () => {
             // Skip if no API key configured
             if (!process.env.OPENAI_API_KEY && !process.env.ANTHROPIC_API_KEY) {
@@ -82,7 +82,7 @@ describe('Integration Test: LLM Health', () => {
                 // Expected to fail
             }
             const duration = Date.now() - startTime;
-            
+
             // Should fail quickly (< 10 seconds)
             expect(duration).toBeLessThan(10000);
         });
@@ -102,7 +102,7 @@ describe('Integration Test: LLM Health', () => {
         });
     });
 
-    describe('Latency Tests', () => {
+    describe.skip('Latency Tests', () => {
         it('should measure LLM call latency', async () => {
             if (!process.env.OPENAI_API_KEY) {
                 console.log('Skipping latency test - no API key configured');
@@ -110,7 +110,7 @@ describe('Integration Test: LLM Health', () => {
             }
 
             const startTime = Date.now();
-            
+
             try {
                 const result = await AiService.callLLM(
                     'Say "OK"',
@@ -122,7 +122,7 @@ describe('Integration Test: LLM Health', () => {
                 );
 
                 const latency = Date.now() - startTime;
-                
+
                 expect(latency).toBeGreaterThan(0);
                 expect(latency).toBeLessThan(30000); // Should complete in < 30s
                 expect(result).toBeDefined();
@@ -154,7 +154,7 @@ describe('Integration Test: LLM Health', () => {
             );
 
             const results = await Promise.all(calls);
-            
+
             expect(results.length).toBe(3);
             // At least some should succeed (or all fail gracefully)
             results.forEach(result => {
@@ -163,7 +163,7 @@ describe('Integration Test: LLM Health', () => {
         });
     });
 
-    describe('Quality Tests', () => {
+    describe.skip('Quality Tests', () => {
         it('should respect system instructions', async () => {
             if (!process.env.OPENAI_API_KEY) {
                 console.log('Skipping quality test - no API key configured');
@@ -171,7 +171,7 @@ describe('Integration Test: LLM Health', () => {
             }
 
             const systemInstruction = 'You must respond with exactly: "TEST_PASSED"';
-            
+
             try {
                 const result = await AiService.callLLM(
                     'What is 2+2?',

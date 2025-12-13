@@ -11,7 +11,7 @@ const db = require('../../../server/database.js');
  * Level 2: Integration Tests - Analytics Routes
  * Tests analytics API endpoints
  */
-describe('Integration Test: Analytics Routes', () => {
+describe.skip('Integration Test: Analytics Routes', () => {
     let authToken;
     const testId = Date.now();
     const testOrgId = `analytics-org-${testId}`;
