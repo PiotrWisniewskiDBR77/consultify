@@ -50,10 +50,10 @@ export default defineConfig({
             ],
             thresholds: {
                 global: {
-                    statements: 70,
-                    branches: 60,
-                    functions: 70,
-                    lines: 70,
+                    statements: 90,
+                    branches: 90,
+                    functions: 90,
+                    lines: 90,
                 },
                 // Don't fail CI on coverage, just warn
                 perFile: false,
