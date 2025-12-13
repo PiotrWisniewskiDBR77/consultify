@@ -37,7 +37,7 @@ describe('Component Test: QuotaWarningBanner', () => {
         expect(screen.getByText(/used 85% of storage/i)).toBeInTheDocument();
     });
 
-    it.skip('displays critical message when usage is very high', () => {
+    it('displays critical message when usage is very high', () => {
         render(
             <QuotaWarningBanner
                 tokenPercentage={96}
@@ -45,7 +45,9 @@ describe('Component Test: QuotaWarningBanner', () => {
             />
         );
 
-        expect(screen.getByText(/reached the quota limits/i)).toBeInTheDocument();
+        // Critical level (>=95%) shows usage percentage message
+        expect(screen.getByText(/used 96% of monthly tokens/i)).toBeInTheDocument();
+        // And shows the upgrade warning
         expect(screen.getByText(/avoid service interruption/i)).toBeInTheDocument();
     });
 

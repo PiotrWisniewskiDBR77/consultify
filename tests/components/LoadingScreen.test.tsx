@@ -4,10 +4,11 @@ import { describe, it, expect } from 'vitest';
 import { LoadingScreen } from '../../components/LoadingScreen';
 
 describe('Component Test: LoadingScreen', () => {
-    it.skip('renders loading spinner', () => {
+    it('renders loading spinner', () => {
         render(<LoadingScreen />);
-        const spinner = screen.getByRole('status', { hidden: true }) || document.querySelector('.animate-spin');
+        const spinner = screen.getByRole('status');
         expect(spinner).toBeInTheDocument();
+        expect(spinner).toHaveAttribute('aria-label', 'Loading');
     });
 
     it('has correct styling classes', () => {

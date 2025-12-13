@@ -43,10 +43,11 @@ describe('Component Test: PlanCard', () => {
         expect(handleSelect).toHaveBeenCalledWith('plan-1');
     });
 
-    it.skip('disables select button when disabled is true', () => {
+    it('disables select button when disabled is true', () => {
         render(<PlanCard plan={mockPlan} onSelect={vi.fn()} disabled={true} />);
 
-        const selectButton = screen.getByText(/Select|Upgrade/i);
+        // When disabled, button shows 'Processing...'
+        const selectButton = screen.getByText('Processing...');
         expect(selectButton).toBeDisabled();
     });
 
