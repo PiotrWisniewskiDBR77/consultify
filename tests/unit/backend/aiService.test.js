@@ -13,6 +13,19 @@ const mockDb = {
     initPromise: Promise.resolve()
 };
 
+const mockAiQueue = {
+    add: vi.fn().mockResolvedValue({ id: 'job-123' }),
+    getJob: vi.fn()
+};
+
+// Mock the queue module
+vi.mock('../../../server/queues/aiQueue', () => ({
+    default: {
+        add: (...args) => mockAiQueue.add(...args),
+        getJob: (...args) => mockAiQueue.getJob(...args)
+    }
+}));
+
 const mockTokenBillingService = {
     hasSufficientBalance: vi.fn(),
     deductTokens: vi.fn()
@@ -344,4 +357,98 @@ describe('AIService Unit Tests', () => {
             });
         });
     });
+});
+
+
+describe('enhancePrompt', () => {
+    it('should return base system role when no extras found', async () => {
+        mockDb.get.mockImplementation((query, params, cb) => {
+            if (query.includes('FROM system_prompts')) {
+                cb(null, null); // No override
+            }
+        });
+        mockFeedbackService.getLearningExamples.mockResolvedValue('');
+        mockDb.all.mockImplementation((q, p, cb) => cb(null, [])); // No strategies
+
+        const prompt = await AIService.enhancePrompt('CONSULTANT', 'chat');
+        expect(prompt).toContain('You are a Senior Digital Transformation Consultant');
+    });
+
+    it('should inject global strategies', async () => {
+        mockDb.all.mockImplementation((query, params, cb) => {
+            if (query.includes('global_strategies')) {
+                cb(null, [{ title: 'Strat 1', description: 'Desc 1' }]);
+            } else {
+                cb(null, []);
+            }
+        });
+
+        const prompt = await AIService.enhancePrompt('CONSULTANT', 'chat');
+        expect(prompt).toContain('GLOBAL STRATEGIC PRIORITIES');
+        expect(prompt).toContain('Strat 1: Desc 1');
+    });
+
+    it('should inject client context when orgId provided', async () => {
+        mockDb.get.mockImplementation((query, params, cb) => {
+            if (query.includes('FROM organizations')) {
+                cb(null, { name: 'Test Org', industry: 'Tech' });
+            } else {
+                cb(null, null);
+            }
+        });
+
+        mockDb.all.mockImplementation((query, params, cb) => {
+            if (query.includes('client_context')) {
+                cb(null, [{ key: 'Culture', value: 'Agile' }]);
+            } else {
+                cb(null, []);
+            }
+        });
+
+        const prompt = await AIService.enhancePrompt('CONSULTANT', 'chat', 'org-1');
+        expect(prompt).toContain('CLIENT PROFILE');
+        expect(prompt).toContain('Name: Test Org');
+        expect(prompt).toContain('Industry: Tech');
+        expect(prompt).toContain('CLIENT SPECIFIC CONTEXT');
+        expect(prompt).toContain('Culture: Agile');
+    });
+});
+
+describe('Queue Operations', () => {
+    it('should enqueue task and return jobId', async () => {
+        const result = await AIService.queueTask('generate-report', { data: 1 }, 'user-1');
+        expect(mockAiQueue.add).toHaveBeenCalledWith('generate-report', {
+            taskType: 'generate-report',
+            payload: { data: 1 },
+            userId: 'user-1'
+        });
+        expect(result).toEqual({ jobId: 'job-123', status: 'queued' });
+    });
+
+    it('should get job status', async () => {
+        const mockJob = {
+            id: 'job-123',
+            getState: vi.fn().mockResolvedValue('completed'),
+            returnvalue: { result: 'ok' },
+            failedReason: null,
+            progress: 100
+        };
+        mockAiQueue.getJob.mockResolvedValue(mockJob);
+
+        const status = await AIService.getJobStatus('job-123');
+        expect(status).toEqual({
+            id: 'job-123',
+            state: 'completed',
+            result: { result: 'ok' },
+            error: null,
+            progress: 100
+        });
+    });
+
+    it('should return null for non-existent job', async () => {
+        mockAiQueue.getJob.mockResolvedValue(null);
+        const status = await AIService.getJobStatus('job-missing');
+        expect(status).toBeNull();
+    });
+});
 });
