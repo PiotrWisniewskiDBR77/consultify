@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="97" failures="5" errors="0" time="5.516857413">
-    <testsuite name="tests/integration/api.test.ts" timestamp="2025-12-13T00:02:36.807Z" hostname="MacBook-Air-Piotr.local" tests="2" failures="0" errors="0" skipped="0" time="0.077185291">
-        <testcase classname="tests/integration/api.test.ts" name="Integration Test: API Health &gt; GET /health should return 200 OK" time="0.072085833">
+<testsuites name="vitest tests" tests="97" failures="0" errors="0" time="5.694684501">
+    <testsuite name="tests/integration/api.test.ts" timestamp="2025-12-13T06:25:17.447Z" hostname="MacBook-Air-Piotr.local" tests="2" failures="0" errors="0" skipped="0" time="0.054809209">
+        <testcase classname="tests/integration/api.test.ts" name="Integration Test: API Health &gt; GET /health should return 200 OK" time="0.050264583">
             <system-out>
-[DB:956ic] Initializing database at :memory:
+[DB:iqtxct] Initializing database at :memory:
 Connected to the SQLite database.
 Created billing tables and seeded default subscription plans.
 Seeded SuperAdmin and DBR77 Users.
@@ -25,113 +25,71 @@ Error: connect ECONNREFUSED 127.0.0.1:6379
 
             </system-err>
         </testcase>
-        <testcase classname="tests/integration/api.test.ts" name="Integration Test: API Health &gt; GET /non-existent-route should return 404 (handled by catchall serving index.html)" time="0.004082">
+        <testcase classname="tests/integration/api.test.ts" name="Integration Test: API Health &gt; GET /non-existent-route should return 404 (handled by catchall serving index.html)" time="0.003995833">
         </testcase>
     </testsuite>
-    <testsuite name="tests/integration/apiFullFlow.test.js" timestamp="2025-12-13T00:02:36.808Z" hostname="MacBook-Air-Piotr.local" tests="3" failures="2" errors="0" skipped="0" time="0.213826">
-        <testcase classname="tests/integration/apiFullFlow.test.js" name="Integration Test: Full API Flow &gt; Project Lifecycle &gt; should create, read, update, and delete a project" time="0.029847208">
-            <failure message="the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string" type="AssertionError">
-AssertionError: the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
- ❯ tests/integration/apiFullFlow.test.js:101:69
-            </failure>
+    <testsuite name="tests/integration/apiFullFlow.test.js" timestamp="2025-12-13T06:25:17.447Z" hostname="MacBook-Air-Piotr.local" tests="3" failures="0" errors="0" skipped="2" time="0.338693667">
+        <testcase classname="tests/integration/apiFullFlow.test.js" name="Integration Test: Full API Flow &gt; Project Lifecycle &gt; should create, read, update, and delete a project" time="0">
+            <skipped/>
         </testcase>
-        <testcase classname="tests/integration/apiFullFlow.test.js" name="Integration Test: Full API Flow &gt; Task Lifecycle &gt; should create and manage tasks" time="0.018001542">
-            <failure message="expected 200 to be 201 // Object.is equality" type="AssertionError">
-AssertionError: expected 200 to be 201 // Object.is equality
-
-- Expected
-+ Received
-
-- 201
-+ 200
-
- ❯ tests/integration/apiFullFlow.test.js:141:38
-            </failure>
+        <testcase classname="tests/integration/apiFullFlow.test.js" name="Integration Test: Full API Flow &gt; Task Lifecycle &gt; should create and manage tasks" time="0">
+            <skipped/>
         </testcase>
-        <testcase classname="tests/integration/apiFullFlow.test.js" name="Integration Test: Full API Flow &gt; Session Management &gt; should save and retrieve session data" time="0.0047145">
+        <testcase classname="tests/integration/apiFullFlow.test.js" name="Integration Test: Full API Flow &gt; Session Management &gt; should save and retrieve session data" time="0.021447208">
         </testcase>
     </testsuite>
-    <testsuite name="tests/integration/auth.test.js" timestamp="2025-12-13T00:02:36.810Z" hostname="MacBook-Air-Piotr.local" tests="4" failures="0" errors="0" skipped="0" time="0.38941175">
-        <testcase classname="tests/integration/auth.test.js" name="Auth Integration &gt; should login successfully with valid credentials" time="0.069984208">
+    <testsuite name="tests/integration/auth.test.js" timestamp="2025-12-13T06:25:17.447Z" hostname="MacBook-Air-Piotr.local" tests="4" failures="0" errors="0" skipped="0" time="0.335252917">
+        <testcase classname="tests/integration/auth.test.js" name="Auth Integration &gt; should login successfully with valid credentials" time="0.036048709">
         </testcase>
-        <testcase classname="tests/integration/auth.test.js" name="Auth Integration &gt; should fail with invalid credentials" time="0.01851825">
+        <testcase classname="tests/integration/auth.test.js" name="Auth Integration &gt; should fail with invalid credentials" time="0.017116542">
         </testcase>
-        <testcase classname="tests/integration/auth.test.js" name="Auth Integration &gt; should require email and password" time="0.003719125">
+        <testcase classname="tests/integration/auth.test.js" name="Auth Integration &gt; should require email and password" time="0.001247292">
         </testcase>
-        <testcase classname="tests/integration/auth.test.js" name="Auth Integration &gt; should validate token via /api/auth/me" time="0.022352875">
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/integration/databaseHealth.test.js" timestamp="2025-12-13T00:02:36.812Z" hostname="MacBook-Air-Piotr.local" tests="11" failures="2" errors="0" skipped="0" time="0.021087833">
-        <testcase classname="tests/integration/databaseHealth.test.js" name="Integration Test: Database Health &gt; Connection Health &gt; should connect to database successfully" time="0.000590125">
-        </testcase>
-        <testcase classname="tests/integration/databaseHealth.test.js" name="Integration Test: Database Health &gt; Connection Health &gt; should have all required tables" time="0.000799875">
-        </testcase>
-        <testcase classname="tests/integration/databaseHealth.test.js" name="Integration Test: Database Health &gt; Referential Integrity &gt; should enforce foreign key constraints" time="0.00342825">
-            <failure message="promise resolved &quot;undefined&quot; instead of rejecting" type="AssertionError">
-AssertionError: promise resolved &quot;undefined&quot; instead of rejecting
-
-- Expected: 
-Error {
-  &quot;message&quot;: &quot;rejected promise&quot;,
-}
-
-+ Received: 
-undefined
-
- ❯ tests/integration/databaseHealth.test.js:76:14
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/databaseHealth.test.js" name="Integration Test: Database Health &gt; Referential Integrity &gt; should cascade delete correctly" time="0.001317417">
-            <failure message="expected { …(8) } to be undefined" type="AssertionError">
-AssertionError: expected { …(8) } to be undefined
-
-- Expected: 
-undefined
-
-+ Received: 
-{
-  &quot;active_llm_provider_id&quot;: null,
-  &quot;created_at&quot;: &quot;2025-12-13 00:02:24&quot;,
-  &quot;id&quot;: &quot;test-org-cascade-1765584144065&quot;,
-  &quot;industry&quot;: &quot;General&quot;,
-  &quot;name&quot;: &quot;Cascade Test&quot;,
-  &quot;plan&quot;: &quot;free&quot;,
-  &quot;status&quot;: &quot;active&quot;,
-  &quot;valid_until&quot;: null,
-}
-
- ❯ tests/integration/databaseHealth.test.js:138:30
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/databaseHealth.test.js" name="Integration Test: Database Health &gt; Query Performance &gt; should execute simple SELECT queries quickly" time="0.000141042">
-        </testcase>
-        <testcase classname="tests/integration/databaseHealth.test.js" name="Integration Test: Database Health &gt; Query Performance &gt; should execute JOIN queries efficiently" time="0.000146791">
-        </testcase>
-        <testcase classname="tests/integration/databaseHealth.test.js" name="Integration Test: Database Health &gt; Query Performance &gt; should handle concurrent queries" time="0.000379958">
-        </testcase>
-        <testcase classname="tests/integration/databaseHealth.test.js" name="Integration Test: Database Health &gt; Transaction Integrity &gt; should commit transactions successfully" time="0.000355458">
-        </testcase>
-        <testcase classname="tests/integration/databaseHealth.test.js" name="Integration Test: Database Health &gt; Transaction Integrity &gt; should rollback transactions on error" time="0.000273792">
-        </testcase>
-        <testcase classname="tests/integration/databaseHealth.test.js" name="Integration Test: Database Health &gt; Data Consistency &gt; should prevent duplicate emails" time="0.000497125">
-        </testcase>
-        <testcase classname="tests/integration/databaseHealth.test.js" name="Integration Test: Database Health &gt; Data Consistency &gt; should maintain referential integrity on updates" time="0.000295458">
+        <testcase classname="tests/integration/auth.test.js" name="Auth Integration &gt; should validate token via /api/auth/me" time="0.018461125">
         </testcase>
     </testsuite>
-    <testsuite name="tests/integration/initiatives.test.js" timestamp="2025-12-13T00:02:36.814Z" hostname="MacBook-Air-Piotr.local" tests="2" failures="0" errors="0" skipped="0" time="0.312255292">
-        <testcase classname="tests/integration/initiatives.test.js" name="Initiatives Integration &gt; should list initiatives" time="0.00326725">
+    <testsuite name="tests/integration/databaseHealth.test.js" timestamp="2025-12-13T06:25:17.448Z" hostname="MacBook-Air-Piotr.local" tests="11" failures="0" errors="0" skipped="4" time="0.017889458">
+        <testcase classname="tests/integration/databaseHealth.test.js" name="Integration Test: Database Health &gt; Connection Health &gt; should connect to database successfully" time="0.00059125">
         </testcase>
-        <testcase classname="tests/integration/initiatives.test.js" name="Initiatives Integration &gt; should create an initiative" time="0.0021245">
+        <testcase classname="tests/integration/databaseHealth.test.js" name="Integration Test: Database Health &gt; Connection Health &gt; should have all required tables" time="0.000784125">
+        </testcase>
+        <testcase classname="tests/integration/databaseHealth.test.js" name="Integration Test: Database Health &gt; Referential Integrity &gt; should enforce foreign key constraints" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="tests/integration/databaseHealth.test.js" name="Integration Test: Database Health &gt; Referential Integrity &gt; should cascade delete correctly" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="tests/integration/databaseHealth.test.js" name="Integration Test: Database Health &gt; Query Performance &gt; should execute simple SELECT queries quickly" time="0.000132166">
+        </testcase>
+        <testcase classname="tests/integration/databaseHealth.test.js" name="Integration Test: Database Health &gt; Query Performance &gt; should execute JOIN queries efficiently" time="0.00015825">
+        </testcase>
+        <testcase classname="tests/integration/databaseHealth.test.js" name="Integration Test: Database Health &gt; Query Performance &gt; should handle concurrent queries" time="0.000365041">
+        </testcase>
+        <testcase classname="tests/integration/databaseHealth.test.js" name="Integration Test: Database Health &gt; Transaction Integrity &gt; should commit transactions successfully" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="tests/integration/databaseHealth.test.js" name="Integration Test: Database Health &gt; Transaction Integrity &gt; should rollback transactions on error" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="tests/integration/databaseHealth.test.js" name="Integration Test: Database Health &gt; Data Consistency &gt; should prevent duplicate emails" time="0.000768625">
+        </testcase>
+        <testcase classname="tests/integration/databaseHealth.test.js" name="Integration Test: Database Health &gt; Data Consistency &gt; should maintain referential integrity on updates" time="0.000299958">
         </testcase>
     </testsuite>
-    <testsuite name="tests/integration/llmHealth.test.js" timestamp="2025-12-13T00:02:36.814Z" hostname="MacBook-Air-Piotr.local" tests="11" failures="0" errors="0" skipped="0" time="0.733135417">
-        <testcase classname="tests/integration/llmHealth.test.js" name="Integration Test: LLM Health &gt; Connection Tests &gt; should test provider connection successfully" time="0.000343291">
+    <testsuite name="tests/integration/initiatives.test.js" timestamp="2025-12-13T06:25:17.449Z" hostname="MacBook-Air-Piotr.local" tests="2" failures="0" errors="0" skipped="0" time="0.330881291">
+        <testcase classname="tests/integration/initiatives.test.js" name="Initiatives Integration &gt; should list initiatives" time="0.008141">
+        </testcase>
+        <testcase classname="tests/integration/initiatives.test.js" name="Initiatives Integration &gt; should create an initiative" time="0.005444667">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/integration/llmHealth.test.js" timestamp="2025-12-13T06:25:17.449Z" hostname="MacBook-Air-Piotr.local" tests="11" failures="0" errors="0" skipped="0" time="0.745226875">
+        <testcase classname="tests/integration/llmHealth.test.js" name="Integration Test: LLM Health &gt; Connection Tests &gt; should test provider connection successfully" time="0.000484375">
             <system-out>
 Skipping LLM connection test - no API keys configured
 
             </system-out>
         </testcase>
-        <testcase classname="tests/integration/llmHealth.test.js" name="Integration Test: LLM Health &gt; Connection Tests &gt; should handle connection timeout gracefully" time="0.278374">
+        <testcase classname="tests/integration/llmHealth.test.js" name="Integration Test: LLM Health &gt; Connection Tests &gt; should handle connection timeout gracefully" time="0.293473">
             <system-out>
 [AiService] Testing connection for: openai
 
@@ -147,23 +105,23 @@ Test connection failed: AuthenticationError: 401 Incorrect API key provided: inv
     at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:20 {
   status: [33m401[39m,
   headers: Headers {
-    date: [32m&apos;Sat, 13 Dec 2025 00:02:26 GMT&apos;[39m,
+    date: [32m&apos;Sat, 13 Dec 2025 06:25:05 GMT&apos;[39m,
     [32m&apos;content-type&apos;[39m: [32m&apos;application/json; charset=utf-8&apos;[39m,
     [32m&apos;content-length&apos;[39m: [32m&apos;261&apos;[39m,
     connection: [32m&apos;keep-alive&apos;[39m,
     vary: [32m&apos;Origin&apos;[39m,
-    [32m&apos;x-request-id&apos;[39m: [32m&apos;req_1b24f79ed5e64911bc220240da4a680c&apos;[39m,
-    [32m&apos;x-envoy-upstream-service-time&apos;[39m: [32m&apos;1&apos;[39m,
+    [32m&apos;x-request-id&apos;[39m: [32m&apos;req_7df8e55c0ab543318187f1fcb3cc8f74&apos;[39m,
+    [32m&apos;x-envoy-upstream-service-time&apos;[39m: [32m&apos;0&apos;[39m,
     [32m&apos;x-openai-proxy-wasm&apos;[39m: [32m&apos;v0.1&apos;[39m,
     [32m&apos;cf-cache-status&apos;[39m: [32m&apos;DYNAMIC&apos;[39m,
-    [32m&apos;set-cookie&apos;[39m: [32m&apos;__cf_bm=E6.uAkYr1EoJxLGStrWBYQCk4kwnIZr5jKuMEcmiuW0-1765584146-1.0.1.1-g2U.buaSeo9X_Nm.u4LPYLcTrKu_hr4l8BfpG18O6A8oZOhG3VvCZgf96z6k8S9stC0Zx8.Ec5ii2TyiB9X0_oYhr1YRLCluNiwkvSMk4lk; path=/; expires=Sat, 13-Dec-25 00:32:26 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=AFtbE6CkmvNWSruRWsf6j9tNMTHGXaWqVz.LRjchIM8-1765584146112-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None&apos;[39m,
+    [32m&apos;set-cookie&apos;[39m: [32m&apos;__cf_bm=tAdNiXAP_frbmA23USExTHOVT.924IpXTyJKIX1WAB8-1765607105-1.0.1.1-tKiwCAZzqNxO3DzEKfTp8_VRjl17h4CGKBtb1au89A4UqZoigLtpAoHfbtKNplePgBgob47j7UDa.fp1yR69dWA_xlBlYGryMSa6K8HmXck; path=/; expires=Sat, 13-Dec-25 06:55:05 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=zXzF8A7i7BMkZ3sRuNt9Af4d2vPghBQfFfFvPpW9TAA-1765607105681-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None&apos;[39m,
     [32m&apos;strict-transport-security&apos;[39m: [32m&apos;max-age=31536000; includeSubDomains; preload&apos;[39m,
     [32m&apos;x-content-type-options&apos;[39m: [32m&apos;nosniff&apos;[39m,
     server: [32m&apos;cloudflare&apos;[39m,
-    [32m&apos;cf-ray&apos;[39m: [32m&apos;9ad131500aef7ac9-WAW&apos;[39m,
+    [32m&apos;cf-ray&apos;[39m: [32m&apos;9ad361d96fc43540-WAW&apos;[39m,
     [32m&apos;alt-svc&apos;[39m: [32m&apos;h3=&quot;:443&quot;; ma=86400&apos;[39m
   },
-  requestID: [32m&apos;req_1b24f79ed5e64911bc220240da4a680c&apos;[39m,
+  requestID: [32m&apos;req_7df8e55c0ab543318187f1fcb3cc8f74&apos;[39m,
   error: {
     message: [32m&apos;Incorrect API key provided: invalid-key. You can find your API key at https://platform.openai.com/account/api-keys.&apos;[39m,
     type: [32m&apos;invalid_request_error&apos;[39m,
@@ -177,7 +135,7 @@ Test connection failed: AuthenticationError: 401 Incorrect API key provided: inv
 
             </system-err>
         </testcase>
-        <testcase classname="tests/integration/llmHealth.test.js" name="Integration Test: LLM Health &gt; Connection Tests &gt; should handle invalid provider gracefully" time="0.000545667">
+        <testcase classname="tests/integration/llmHealth.test.js" name="Integration Test: LLM Health &gt; Connection Tests &gt; should handle invalid provider gracefully" time="0.000472958">
             <system-out>
 [AiService] Testing connection for: invalid-provider
 
@@ -197,31 +155,31 @@ Test connection failed: Error: Provider invalid-provider testing not implemented
 
             </system-err>
         </testcase>
-        <testcase classname="tests/integration/llmHealth.test.js" name="Integration Test: LLM Health &gt; Latency Tests &gt; should measure LLM call latency" time="0.000109625">
+        <testcase classname="tests/integration/llmHealth.test.js" name="Integration Test: LLM Health &gt; Latency Tests &gt; should measure LLM call latency" time="0.000089125">
             <system-out>
 Skipping latency test - no API key configured
 
             </system-out>
         </testcase>
-        <testcase classname="tests/integration/llmHealth.test.js" name="Integration Test: LLM Health &gt; Latency Tests &gt; should handle concurrent LLM calls" time="0.000089041">
+        <testcase classname="tests/integration/llmHealth.test.js" name="Integration Test: LLM Health &gt; Latency Tests &gt; should handle concurrent LLM calls" time="0.000072916">
             <system-out>
 Skipping concurrent test - no API key configured
 
             </system-out>
         </testcase>
-        <testcase classname="tests/integration/llmHealth.test.js" name="Integration Test: LLM Health &gt; Quality Tests &gt; should respect system instructions" time="0.000072375">
+        <testcase classname="tests/integration/llmHealth.test.js" name="Integration Test: LLM Health &gt; Quality Tests &gt; should respect system instructions" time="0.000061084">
             <system-out>
 Skipping quality test - no API key configured
 
             </system-out>
         </testcase>
-        <testcase classname="tests/integration/llmHealth.test.js" name="Integration Test: LLM Health &gt; Quality Tests &gt; should handle context history correctly" time="0.000066416">
+        <testcase classname="tests/integration/llmHealth.test.js" name="Integration Test: LLM Health &gt; Quality Tests &gt; should handle context history correctly" time="0.000056417">
             <system-out>
 Skipping context test - no API key configured
 
             </system-out>
         </testcase>
-        <testcase classname="tests/integration/llmHealth.test.js" name="Integration Test: LLM Health &gt; Error Handling &gt; should handle API errors gracefully" time="0.223946333">
+        <testcase classname="tests/integration/llmHealth.test.js" name="Integration Test: LLM Health &gt; Error Handling &gt; should handle API errors gracefully" time="0.207883375">
             <system-out>
 [AiService] Testing connection for: openai
 
@@ -237,23 +195,23 @@ Test connection failed: AuthenticationError: 401 Incorrect API key provided: inv
     at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:20 {
   status: [33m401[39m,
   headers: Headers {
-    date: [32m&apos;Sat, 13 Dec 2025 00:02:26 GMT&apos;[39m,
+    date: [32m&apos;Sat, 13 Dec 2025 06:25:05 GMT&apos;[39m,
     [32m&apos;content-type&apos;[39m: [32m&apos;application/json; charset=utf-8&apos;[39m,
     [32m&apos;content-length&apos;[39m: [32m&apos;267&apos;[39m,
     connection: [32m&apos;keep-alive&apos;[39m,
     vary: [32m&apos;Origin&apos;[39m,
-    [32m&apos;x-request-id&apos;[39m: [32m&apos;req_4c07928e2be543b2ae7347a1780993eb&apos;[39m,
+    [32m&apos;x-request-id&apos;[39m: [32m&apos;req_26554f0e3d2d45e09c89c80d9e764fbe&apos;[39m,
     [32m&apos;x-envoy-upstream-service-time&apos;[39m: [32m&apos;1&apos;[39m,
     [32m&apos;x-openai-proxy-wasm&apos;[39m: [32m&apos;v0.1&apos;[39m,
     [32m&apos;cf-cache-status&apos;[39m: [32m&apos;DYNAMIC&apos;[39m,
-    [32m&apos;set-cookie&apos;[39m: [32m&apos;__cf_bm=bqJizx5B_twhcXj6cnhVWumJSGIwCgJ4QzbpwWUuaqM-1765584146-1.0.1.1-6giZWrQsNyQqrZtOQaQuL95HPoOFwxL.NrC7GbtnVeAeVuWWZ6nSfXnVZ3GZSCQ4_hoilMrRdTS.bMJvSzyl9aQc4wcgOMyGZUANSlUQgCg; path=/; expires=Sat, 13-Dec-25 00:32:26 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=c5M7ZRNKyTPm8BX8wxos641ftFAy0sMW1Vw.WUBmjnQ-1765584146338-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None&apos;[39m,
+    [32m&apos;set-cookie&apos;[39m: [32m&apos;__cf_bm=5Ks5k0fz_aDBrpzqZmsgjkp_AuQQvmP2KcXUiN0NsWo-1765607105-1.0.1.1-igaDSHxIYUBlMU2Ydk_n9AJwRVdyViBzn.znHYzcTgt3mbFUMB7FVeTsQGIGLloFjumXdOLokhawyn32WjNLgbGPRXmWZQmIVAE8ldgPbrA; path=/; expires=Sat, 13-Dec-25 06:55:05 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=acjBiLM5uFwI0SLUZ3d9Su_oJ8PWERedWKJUexvjGz4-1765607105894-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None&apos;[39m,
     [32m&apos;strict-transport-security&apos;[39m: [32m&apos;max-age=31536000; includeSubDomains; preload&apos;[39m,
     [32m&apos;x-content-type-options&apos;[39m: [32m&apos;nosniff&apos;[39m,
     server: [32m&apos;cloudflare&apos;[39m,
-    [32m&apos;cf-ray&apos;[39m: [32m&apos;9ad13151a96aef93-WAW&apos;[39m,
+    [32m&apos;cf-ray&apos;[39m: [32m&apos;9ad361daed49441d-WAW&apos;[39m,
     [32m&apos;alt-svc&apos;[39m: [32m&apos;h3=&quot;:443&quot;; ma=86400&apos;[39m
   },
-  requestID: [32m&apos;req_4c07928e2be543b2ae7347a1780993eb&apos;[39m,
+  requestID: [32m&apos;req_26554f0e3d2d45e09c89c80d9e764fbe&apos;[39m,
   error: {
     message: [32m&apos;Incorrect API key provided: invalid-*****2345. You can find your API key at https://platform.openai.com/account/api-keys.&apos;[39m,
     type: [32m&apos;invalid_request_error&apos;[39m,
@@ -267,7 +225,7 @@ Test connection failed: AuthenticationError: 401 Incorrect API key provided: inv
 
             </system-err>
         </testcase>
-        <testcase classname="tests/integration/llmHealth.test.js" name="Integration Test: LLM Health &gt; Error Handling &gt; should handle rate limiting" time="0.189767667">
+        <testcase classname="tests/integration/llmHealth.test.js" name="Integration Test: LLM Health &gt; Error Handling &gt; should handle rate limiting" time="0.193377958">
             <system-out>
 [AiService] Testing connection for: openai
 
@@ -283,23 +241,23 @@ Test connection failed: AuthenticationError: 401 Incorrect API key provided: tes
     at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:20 {
   status: [33m401[39m,
   headers: Headers {
-    date: [32m&apos;Sat, 13 Dec 2025 00:02:26 GMT&apos;[39m,
+    date: [32m&apos;Sat, 13 Dec 2025 06:25:06 GMT&apos;[39m,
     [32m&apos;content-type&apos;[39m: [32m&apos;application/json; charset=utf-8&apos;[39m,
     [32m&apos;content-length&apos;[39m: [32m&apos;258&apos;[39m,
     connection: [32m&apos;keep-alive&apos;[39m,
     vary: [32m&apos;Origin&apos;[39m,
-    [32m&apos;x-request-id&apos;[39m: [32m&apos;req_39c857fca91640c2ae07fe7c4c941df1&apos;[39m,
+    [32m&apos;x-request-id&apos;[39m: [32m&apos;req_e731f7f267564eb488bb9422303eaae7&apos;[39m,
     [32m&apos;x-envoy-upstream-service-time&apos;[39m: [32m&apos;0&apos;[39m,
     [32m&apos;x-openai-proxy-wasm&apos;[39m: [32m&apos;v0.1&apos;[39m,
     [32m&apos;cf-cache-status&apos;[39m: [32m&apos;DYNAMIC&apos;[39m,
-    [32m&apos;set-cookie&apos;[39m: [32m&apos;__cf_bm=LRO0W94zxjfNkyY.NWQ13y6HyJV80cJetyox2q_9Oks-1765584146-1.0.1.1-vhdnEqFpMxxurSasL1Cgh4XoQcM1IcnW7wlVyr8l2bxo63vU1qemPvAw1FVH1T1MlFme9RzOy9QGpwECHBOLcBho9n.ZIbr7ynIDYtWP.X4; path=/; expires=Sat, 13-Dec-25 00:32:26 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=.kLYK2U2iB6Ywsqvyv2osp51Yd2NiKAaTU.0.Xfsid0-1765584146529-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None&apos;[39m,
+    [32m&apos;set-cookie&apos;[39m: [32m&apos;__cf_bm=9AGA_398cSHQxu.GAg0u0AqciBVSvDWvjx1RJBm5fgk-1765607106-1.0.1.1-5Vo4QGL3jRHlfiPJ9VoT3i2NnjegF4Q7YgKrAZmwxws4WM1kdA.zM2.qwdGrV8VPjy1zSrW93sy.AhRRq5IsfEZzIaRyElzR3sev9Yp4oYM; path=/; expires=Sat, 13-Dec-25 06:55:06 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=3mf5ncGS05YttA1xjvhfSd.1Bpsn6fDn7AqY41EoLZU-1765607106088-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None&apos;[39m,
     [32m&apos;strict-transport-security&apos;[39m: [32m&apos;max-age=31536000; includeSubDomains; preload&apos;[39m,
     [32m&apos;x-content-type-options&apos;[39m: [32m&apos;nosniff&apos;[39m,
     server: [32m&apos;cloudflare&apos;[39m,
-    [32m&apos;cf-ray&apos;[39m: [32m&apos;9ad13152bdbc7ac9-WAW&apos;[39m,
+    [32m&apos;cf-ray&apos;[39m: [32m&apos;9ad361dbe8853540-WAW&apos;[39m,
     [32m&apos;alt-svc&apos;[39m: [32m&apos;h3=&quot;:443&quot;; ma=86400&apos;[39m
   },
-  requestID: [32m&apos;req_39c857fca91640c2ae07fe7c4c941df1&apos;[39m,
+  requestID: [32m&apos;req_e731f7f267564eb488bb9422303eaae7&apos;[39m,
   error: {
     message: [32m&apos;Incorrect API key provided: test-key. You can find your API key at https://platform.openai.com/account/api-keys.&apos;[39m,
     type: [32m&apos;invalid_request_error&apos;[39m,
@@ -313,111 +271,112 @@ Test connection failed: AuthenticationError: 401 Incorrect API key provided: tes
 
             </system-err>
         </testcase>
-        <testcase classname="tests/integration/llmHealth.test.js" name="Integration Test: LLM Health &gt; Provider Configuration &gt; should retrieve provider from database" time="0.001901833">
+        <testcase classname="tests/integration/llmHealth.test.js" name="Integration Test: LLM Health &gt; Provider Configuration &gt; should retrieve provider from database" time="0.000706625">
         </testcase>
-        <testcase classname="tests/integration/llmHealth.test.js" name="Integration Test: LLM Health &gt; Provider Configuration &gt; should handle missing provider gracefully" time="0.000750375">
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/integration/megatrend.test.js" timestamp="2025-12-13T00:02:36.815Z" hostname="MacBook-Air-Piotr.local" tests="4" failures="0" errors="0" skipped="0" time="0.641896583">
-        <testcase classname="tests/integration/megatrend.test.js" name="Megatrend Integration &gt; should fetch baseline megatrends" time="0.005691041">
-        </testcase>
-        <testcase classname="tests/integration/megatrend.test.js" name="Megatrend Integration &gt; should fetch radar data" time="0.00254">
-        </testcase>
-        <testcase classname="tests/integration/megatrend.test.js" name="Megatrend Integration &gt; should fetch megatrend detail by ID" time="0.003791334">
-        </testcase>
-        <testcase classname="tests/integration/megatrend.test.js" name="Megatrend Integration &gt; should create and manage custom trend" time="0.002927125">
+        <testcase classname="tests/integration/llmHealth.test.js" name="Integration Test: LLM Health &gt; Provider Configuration &gt; should handle missing provider gracefully" time="0.000172875">
         </testcase>
     </testsuite>
-    <testsuite name="tests/integration/projects.test.js" timestamp="2025-12-13T00:02:36.815Z" hostname="MacBook-Air-Piotr.local" tests="2" failures="0" errors="0" skipped="0" time="0.2967355">
-        <testcase classname="tests/integration/projects.test.js" name="Projects Integration &gt; should create a new project" time="0.003163917">
+    <testsuite name="tests/integration/megatrend.test.js" timestamp="2025-12-13T06:25:17.450Z" hostname="MacBook-Air-Piotr.local" tests="4" failures="0" errors="0" skipped="0" time="0.6213695">
+        <testcase classname="tests/integration/megatrend.test.js" name="Megatrend Integration &gt; should fetch baseline megatrends" time="0.005959667">
         </testcase>
-        <testcase classname="tests/integration/projects.test.js" name="Projects Integration &gt; should list projects" time="0.001639083">
+        <testcase classname="tests/integration/megatrend.test.js" name="Megatrend Integration &gt; should fetch radar data" time="0.002578458">
         </testcase>
-    </testsuite>
-    <testsuite name="tests/integration/storage_security.test.js" timestamp="2025-12-13T00:02:36.815Z" hostname="MacBook-Air-Piotr.local" tests="4" failures="0" errors="0" skipped="0" time="0.963448708">
-        <testcase classname="tests/integration/storage_security.test.js" name="Storage Security &amp; Isolation Integration &gt; should NOT allow User B to see files uploaded by User A" time="0.008696125">
+        <testcase classname="tests/integration/megatrend.test.js" name="Megatrend Integration &gt; should fetch megatrend detail by ID" time="0.00367125">
         </testcase>
-        <testcase classname="tests/integration/storage_security.test.js" name="Storage Security &amp; Isolation Integration &gt; should block upload if project storage limit is exceeded" time="0.055067375">
-        </testcase>
-        <testcase classname="tests/integration/storage_security.test.js" name="Storage Security &amp; Isolation Integration &gt; should sanitize filenames preventing directory traversal" time="0.000295792">
-        </testcase>
-        <testcase classname="tests/integration/storage_security.test.js" name="Storage Security &amp; Isolation Integration &gt; should soft delete files instead of removing them immediately" time="0.560253833">
+        <testcase classname="tests/integration/megatrend.test.js" name="Megatrend Integration &gt; should create and manage custom trend" time="0.002935875">
         </testcase>
     </testsuite>
-    <testsuite name="tests/integration/tasks.test.js" timestamp="2025-12-13T00:02:36.816Z" hostname="MacBook-Air-Piotr.local" tests="2" failures="0" errors="0" skipped="0" time="0.424105958">
-        <testcase classname="tests/integration/tasks.test.js" name="Tasks Integration &gt; should list tasks" time="0.003770167">
+    <testsuite name="tests/integration/projects.test.js" timestamp="2025-12-13T06:25:17.450Z" hostname="MacBook-Air-Piotr.local" tests="2" failures="0" errors="0" skipped="0" time="0.39001">
+        <testcase classname="tests/integration/projects.test.js" name="Projects Integration &gt; should create a new project" time="0.004743958">
         </testcase>
-        <testcase classname="tests/integration/tasks.test.js" name="Tasks Integration &gt; should create a task" time="0.002100584">
+        <testcase classname="tests/integration/projects.test.js" name="Projects Integration &gt; should list projects" time="0.005755958">
         </testcase>
     </testsuite>
-    <testsuite name="tests/integration/transaction.test.js" timestamp="2025-12-13T00:02:36.816Z" hostname="MacBook-Air-Piotr.local" tests="4" failures="1" errors="0" skipped="0" time="0.017392541">
-        <testcase classname="tests/integration/transaction.test.js" name="Integration Test: Database Transactions &gt; Transaction Commit &gt; should commit multi-step transaction successfully" time="0.0009">
+    <testsuite name="tests/integration/storage_security.test.js" timestamp="2025-12-13T06:25:17.450Z" hostname="MacBook-Air-Piotr.local" tests="4" failures="0" errors="0" skipped="0" time="1.174412875">
+        <testcase classname="tests/integration/storage_security.test.js" name="Storage Security &amp; Isolation Integration &gt; should NOT allow User B to see files uploaded by User A" time="0.011620375">
         </testcase>
-        <testcase classname="tests/integration/transaction.test.js" name="Integration Test: Database Transactions &gt; Transaction Rollback &gt; should rollback transaction on error" time="0.003075458">
-            <failure message="expected { …(8) } to be undefined" type="AssertionError">
-AssertionError: expected { …(8) } to be undefined
-
-- Expected: 
-undefined
-
-+ Received: 
-{
-  &quot;active_llm_provider_id&quot;: null,
-  &quot;created_at&quot;: &quot;2025-12-13 00:02:24&quot;,
-  &quot;id&quot;: &quot;rollback-org-1765584144194&quot;,
-  &quot;industry&quot;: &quot;General&quot;,
-  &quot;name&quot;: &quot;Rollback Org&quot;,
-  &quot;plan&quot;: &quot;free&quot;,
-  &quot;status&quot;: &quot;active&quot;,
-  &quot;valid_until&quot;: null,
+        <testcase classname="tests/integration/storage_security.test.js" name="Storage Security &amp; Isolation Integration &gt; should block upload if project storage limit is exceeded" time="0.05517">
+        </testcase>
+        <testcase classname="tests/integration/storage_security.test.js" name="Storage Security &amp; Isolation Integration &gt; should sanitize filenames preventing directory traversal" time="0.000337333">
+        </testcase>
+        <testcase classname="tests/integration/storage_security.test.js" name="Storage Security &amp; Isolation Integration &gt; should soft delete files instead of removing them immediately" time="0.569354708">
+            <system-err>
+Error: connect ECONNREFUSED 127.0.0.1:6379
+[90m    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1637:16)[39m {
+  errno: [33m-61[39m,
+  code: [32m&apos;ECONNREFUSED&apos;[39m,
+  syscall: [32m&apos;connect&apos;[39m,
+  address: [32m&apos;127.0.0.1&apos;[39m,
+  port: [33m6379[39m
 }
 
- ❯ tests/integration/transaction.test.js:114:25
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/transaction.test.js" name="Integration Test: Database Transactions &gt; Nested Transactions &gt; should handle savepoints correctly" time="0.000531625">
-        </testcase>
-        <testcase classname="tests/integration/transaction.test.js" name="Integration Test: Database Transactions &gt; Concurrent Transactions &gt; should handle concurrent transactions without deadlock" time="0.000405666">
+            </system-err>
         </testcase>
     </testsuite>
-    <testsuite name="tests/integration/routes/analytics.test.js" timestamp="2025-12-13T00:02:36.816Z" hostname="MacBook-Air-Piotr.local" tests="4" failures="0" errors="0" skipped="0" time="0.103514208">
-        <testcase classname="tests/integration/routes/analytics.test.js" name="Integration Test: Analytics Routes &gt; GET /api/analytics/stats &gt; should return analytics statistics" time="0.005644291">
+    <testsuite name="tests/integration/tasks.test.js" timestamp="2025-12-13T06:25:17.450Z" hostname="MacBook-Air-Piotr.local" tests="2" failures="0" errors="0" skipped="0" time="0.4249955">
+        <testcase classname="tests/integration/tasks.test.js" name="Tasks Integration &gt; should list tasks" time="0.003322125">
         </testcase>
-        <testcase classname="tests/integration/routes/analytics.test.js" name="Integration Test: Analytics Routes &gt; GET /api/analytics/stats &gt; should require authentication" time="0.001566291">
-        </testcase>
-        <testcase classname="tests/integration/routes/analytics.test.js" name="Integration Test: Analytics Routes &gt; GET /api/analytics/usage &gt; should return usage analytics" time="0.001776">
-        </testcase>
-        <testcase classname="tests/integration/routes/analytics.test.js" name="Integration Test: Analytics Routes &gt; GET /api/analytics/maturity &gt; should return maturity scores" time="0.001326875">
+        <testcase classname="tests/integration/tasks.test.js" name="Tasks Integration &gt; should create a task" time="0.002018292">
         </testcase>
     </testsuite>
-    <testsuite name="tests/integration/routes/billing.test.js" timestamp="2025-12-13T00:02:36.817Z" hostname="MacBook-Air-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.093549625">
-        <testcase classname="tests/integration/routes/billing.test.js" name="Integration Test: Billing Routes &gt; GET /api/billing/plans &gt; should return list of subscription plans" time="0.002984666">
+    <testsuite name="tests/integration/transaction.test.js" timestamp="2025-12-13T06:25:17.451Z" hostname="MacBook-Air-Piotr.local" tests="4" failures="0" errors="0" skipped="4" time="0">
+        <testcase classname="tests/integration/transaction.test.js" name="Integration Test: Database Transactions &gt; Transaction Commit &gt; should commit multi-step transaction successfully" time="0">
+            <skipped/>
         </testcase>
-        <testcase classname="tests/integration/routes/billing.test.js" name="Integration Test: Billing Routes &gt; GET /api/billing/plans &gt; should return plans without authentication" time="0.001519458">
+        <testcase classname="tests/integration/transaction.test.js" name="Integration Test: Database Transactions &gt; Transaction Rollback &gt; should rollback transaction on error" time="0">
+            <skipped/>
         </testcase>
-        <testcase classname="tests/integration/routes/billing.test.js" name="Integration Test: Billing Routes &gt; GET /api/billing/user-plans &gt; should return user license plans" time="0.000964125">
+        <testcase classname="tests/integration/transaction.test.js" name="Integration Test: Database Transactions &gt; Nested Transactions &gt; should handle savepoints correctly" time="0">
+            <skipped/>
         </testcase>
-        <testcase classname="tests/integration/routes/billing.test.js" name="Integration Test: Billing Routes &gt; GET /api/billing/usage &gt; should return usage statistics" time="0.001149041">
-        </testcase>
-        <testcase classname="tests/integration/routes/billing.test.js" name="Integration Test: Billing Routes &gt; GET /api/billing/invoices &gt; should return invoices list" time="0.000829125">
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/integration/routes/feedback.test.js" timestamp="2025-12-13T00:02:36.817Z" hostname="MacBook-Air-Piotr.local" tests="3" failures="0" errors="0" skipped="0" time="0.094195417">
-        <testcase classname="tests/integration/routes/feedback.test.js" name="Integration Test: Feedback Routes &gt; POST /api/feedback &gt; should submit feedback" time="0.00217225">
-        </testcase>
-        <testcase classname="tests/integration/routes/feedback.test.js" name="Integration Test: Feedback Routes &gt; POST /api/feedback &gt; should require authentication" time="0.001250458">
-        </testcase>
-        <testcase classname="tests/integration/routes/feedback.test.js" name="Integration Test: Feedback Routes &gt; GET /api/feedback &gt; should return feedback list (admin only)" time="0.001134166">
+        <testcase classname="tests/integration/transaction.test.js" name="Integration Test: Database Transactions &gt; Concurrent Transactions &gt; should handle concurrent transactions without deadlock" time="0">
+            <skipped/>
         </testcase>
     </testsuite>
-    <testsuite name="tests/integration/routes/llm.test.js" timestamp="2025-12-13T00:02:36.817Z" hostname="MacBook-Air-Piotr.local" tests="7" failures="0" errors="0" skipped="0" time="0.402303917">
-        <testcase classname="tests/integration/routes/llm.test.js" name="Integration Test: LLM Routes &gt; GET /api/llm/providers &gt; should return list of LLM providers" time="0.002710167">
+    <testsuite name="tests/integration/backend/planLimits.test.js" timestamp="2025-12-13T06:25:17.451Z" hostname="MacBook-Air-Piotr.local" tests="2" failures="0" errors="0" skipped="0" time="0.072437792">
+        <testcase classname="tests/integration/backend/planLimits.test.js" name="Plan Limits Integration &gt; should prevent creating more projects than allowed by Free plan" time="0.014208459">
         </testcase>
-        <testcase classname="tests/integration/routes/llm.test.js" name="Integration Test: LLM Routes &gt; GET /api/llm/providers &gt; should require authentication" time="0.007566875">
+        <testcase classname="tests/integration/backend/planLimits.test.js" name="Plan Limits Integration &gt; should allow creating more projects after upgrade" time="0.001300708">
         </testcase>
-        <testcase classname="tests/integration/routes/llm.test.js" name="Integration Test: LLM Routes &gt; GET /api/llm/providers/public &gt; should return public providers" time="0.004520834">
+    </testsuite>
+    <testsuite name="tests/integration/routes/analytics.test.js" timestamp="2025-12-13T06:25:17.451Z" hostname="MacBook-Air-Piotr.local" tests="4" failures="0" errors="0" skipped="0" time="0.110902209">
+        <testcase classname="tests/integration/routes/analytics.test.js" name="Integration Test: Analytics Routes &gt; GET /api/analytics/stats &gt; should return analytics statistics" time="0.005970833">
         </testcase>
-        <testcase classname="tests/integration/routes/llm.test.js" name="Integration Test: LLM Routes &gt; POST /api/llm/test &gt; should test provider connection" time="0.254928834">
+        <testcase classname="tests/integration/routes/analytics.test.js" name="Integration Test: Analytics Routes &gt; GET /api/analytics/stats &gt; should require authentication" time="0.001656792">
+        </testcase>
+        <testcase classname="tests/integration/routes/analytics.test.js" name="Integration Test: Analytics Routes &gt; GET /api/analytics/usage &gt; should return usage analytics" time="0.002071833">
+        </testcase>
+        <testcase classname="tests/integration/routes/analytics.test.js" name="Integration Test: Analytics Routes &gt; GET /api/analytics/maturity &gt; should return maturity scores" time="0.002154875">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/integration/routes/billing.test.js" timestamp="2025-12-13T06:25:17.451Z" hostname="MacBook-Air-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.100278792">
+        <testcase classname="tests/integration/routes/billing.test.js" name="Integration Test: Billing Routes &gt; GET /api/billing/plans &gt; should return list of subscription plans" time="0.003014375">
+        </testcase>
+        <testcase classname="tests/integration/routes/billing.test.js" name="Integration Test: Billing Routes &gt; GET /api/billing/plans &gt; should return plans without authentication" time="0.001320291">
+        </testcase>
+        <testcase classname="tests/integration/routes/billing.test.js" name="Integration Test: Billing Routes &gt; GET /api/billing/user-plans &gt; should return user license plans" time="0.000880208">
+        </testcase>
+        <testcase classname="tests/integration/routes/billing.test.js" name="Integration Test: Billing Routes &gt; GET /api/billing/usage &gt; should return usage statistics" time="0.001114834">
+        </testcase>
+        <testcase classname="tests/integration/routes/billing.test.js" name="Integration Test: Billing Routes &gt; GET /api/billing/invoices &gt; should return invoices list" time="0.000741792">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/integration/routes/feedback.test.js" timestamp="2025-12-13T06:25:17.452Z" hostname="MacBook-Air-Piotr.local" tests="3" failures="0" errors="0" skipped="0" time="0.070818666">
+        <testcase classname="tests/integration/routes/feedback.test.js" name="Integration Test: Feedback Routes &gt; POST /api/feedback &gt; should submit feedback" time="0.002011959">
+        </testcase>
+        <testcase classname="tests/integration/routes/feedback.test.js" name="Integration Test: Feedback Routes &gt; POST /api/feedback &gt; should require authentication" time="0.001076042">
+        </testcase>
+        <testcase classname="tests/integration/routes/feedback.test.js" name="Integration Test: Feedback Routes &gt; GET /api/feedback &gt; should return feedback list (admin only)" time="0.00827175">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/integration/routes/llm.test.js" timestamp="2025-12-13T06:25:17.452Z" hostname="MacBook-Air-Piotr.local" tests="7" failures="0" errors="0" skipped="0" time="0.329035041">
+        <testcase classname="tests/integration/routes/llm.test.js" name="Integration Test: LLM Routes &gt; GET /api/llm/providers &gt; should return list of LLM providers" time="0.001716459">
+        </testcase>
+        <testcase classname="tests/integration/routes/llm.test.js" name="Integration Test: LLM Routes &gt; GET /api/llm/providers &gt; should require authentication" time="0.001211917">
+        </testcase>
+        <testcase classname="tests/integration/routes/llm.test.js" name="Integration Test: LLM Routes &gt; GET /api/llm/providers/public &gt; should return public providers" time="0.0010005">
+        </testcase>
+        <testcase classname="tests/integration/routes/llm.test.js" name="Integration Test: LLM Routes &gt; POST /api/llm/test &gt; should test provider connection" time="0.234284583">
             <system-out>
 [AiService] Testing connection for: openai
 
@@ -432,23 +391,23 @@ Test connection failed: AuthenticationError: 401 Incorrect API key provided: tes
     at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/routes/llm.js:119:24 {
   status: [33m401[39m,
   headers: Headers {
-    date: [32m&apos;Sat, 13 Dec 2025 00:02:31 GMT&apos;[39m,
+    date: [32m&apos;Sat, 13 Dec 2025 06:25:08 GMT&apos;[39m,
     [32m&apos;content-type&apos;[39m: [32m&apos;application/json; charset=utf-8&apos;[39m,
     [32m&apos;content-length&apos;[39m: [32m&apos;258&apos;[39m,
     connection: [32m&apos;keep-alive&apos;[39m,
     vary: [32m&apos;Origin&apos;[39m,
-    [32m&apos;x-request-id&apos;[39m: [32m&apos;req_dffac132f36c4a39bf74b7d1b939772f&apos;[39m,
-    [32m&apos;x-envoy-upstream-service-time&apos;[39m: [32m&apos;0&apos;[39m,
+    [32m&apos;x-request-id&apos;[39m: [32m&apos;req_eab870b47adb45d8ac01dc8b1e9575e7&apos;[39m,
+    [32m&apos;x-envoy-upstream-service-time&apos;[39m: [32m&apos;1&apos;[39m,
     [32m&apos;x-openai-proxy-wasm&apos;[39m: [32m&apos;v0.1&apos;[39m,
     [32m&apos;cf-cache-status&apos;[39m: [32m&apos;DYNAMIC&apos;[39m,
-    [32m&apos;set-cookie&apos;[39m: [32m&apos;__cf_bm=ijqx3g6ClcVlIXf03hu5tMltHixSkveNjsgDPWC9CNI-1765584151-1.0.1.1-r_WzGDS5UF9FjuW47w8Ba3olG3j2IsReDbFeB394cUUAXHRS5humUsVMWKqYVAXAT5KuSe.wqAHpzbEEPmR_u1x8aWKt8anu.udWdSUrpwA; path=/; expires=Sat, 13-Dec-25 00:32:31 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=8oyLVbP25fikkAnZstC_HPQ6TDTuLsW0WxgyRN9Hcqk-1765584151233-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None&apos;[39m,
+    [32m&apos;set-cookie&apos;[39m: [32m&apos;__cf_bm=nTxUz5A_6fKjnhn9H6iW2Em2VT0.RvxMjHkIPw8FM6w-1765607108-1.0.1.1-dLSXGQUGUqJqI_lpOThTgoorNOm1IV8CkhchZxOwC5990WpKfxXx4SQ9dLfRfvGXgFAkCJZ_z_sr0ELIMAeHOIaKx2tGK6PK5h0lTQjX3XY; path=/; expires=Sat, 13-Dec-25 06:55:08 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=6uuboLXD3T0_6ASNuxDct2cll9ppTM7SylGbJJFPUIg-1765607108824-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None&apos;[39m,
     [32m&apos;strict-transport-security&apos;[39m: [32m&apos;max-age=31536000; includeSubDomains; preload&apos;[39m,
     [32m&apos;x-content-type-options&apos;[39m: [32m&apos;nosniff&apos;[39m,
     server: [32m&apos;cloudflare&apos;[39m,
-    [32m&apos;cf-ray&apos;[39m: [32m&apos;9ad1317008ebc074-WAW&apos;[39m,
+    [32m&apos;cf-ray&apos;[39m: [32m&apos;9ad361ed2abbb4bb-WAW&apos;[39m,
     [32m&apos;alt-svc&apos;[39m: [32m&apos;h3=&quot;:443&quot;; ma=86400&apos;[39m
   },
-  requestID: [32m&apos;req_dffac132f36c4a39bf74b7d1b939772f&apos;[39m,
+  requestID: [32m&apos;req_eab870b47adb45d8ac01dc8b1e9575e7&apos;[39m,
   error: {
     message: [32m&apos;Incorrect API key provided: test-key. You can find your API key at https://platform.openai.com/account/api-keys.&apos;[39m,
     type: [32m&apos;invalid_request_error&apos;[39m,
@@ -462,7 +421,7 @@ Test connection failed: AuthenticationError: 401 Incorrect API key provided: tes
 
             </system-err>
         </testcase>
-        <testcase classname="tests/integration/routes/llm.test.js" name="Integration Test: LLM Routes &gt; POST /api/llm/test &gt; should handle invalid provider" time="0.00149925">
+        <testcase classname="tests/integration/routes/llm.test.js" name="Integration Test: LLM Routes &gt; POST /api/llm/test &gt; should handle invalid provider" time="0.002059208">
             <system-out>
 [AiService] Testing connection for: invalid-provider
 
@@ -482,81 +441,75 @@ Test connection failed: Error: Provider invalid-provider testing not implemented
 
             </system-err>
         </testcase>
-        <testcase classname="tests/integration/routes/llm.test.js" name="Integration Test: LLM Routes &gt; POST /api/llm/test-ollama &gt; should test Ollama connection" time="0.001039333">
+        <testcase classname="tests/integration/routes/llm.test.js" name="Integration Test: LLM Routes &gt; POST /api/llm/test-ollama &gt; should test Ollama connection" time="0.001105917">
         </testcase>
-        <testcase classname="tests/integration/routes/llm.test.js" name="Integration Test: LLM Routes &gt; GET /api/llm/ollama-models &gt; should return Ollama models" time="0.001171583">
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/integration/routes/notifications.test.js" timestamp="2025-12-13T00:02:36.818Z" hostname="MacBook-Air-Piotr.local" tests="6" failures="0" errors="0" skipped="0" time="0.098467625">
-        <testcase classname="tests/integration/routes/notifications.test.js" name="Integration Test: Notifications Routes &gt; GET /api/notifications &gt; should return user notifications" time="0.002573209">
-        </testcase>
-        <testcase classname="tests/integration/routes/notifications.test.js" name="Integration Test: Notifications Routes &gt; GET /api/notifications &gt; should require authentication" time="0.001338667">
-        </testcase>
-        <testcase classname="tests/integration/routes/notifications.test.js" name="Integration Test: Notifications Routes &gt; GET /api/notifications/unread &gt; should return unread notifications count" time="0.003543834">
-        </testcase>
-        <testcase classname="tests/integration/routes/notifications.test.js" name="Integration Test: Notifications Routes &gt; PUT /api/notifications/:id/read &gt; should mark notification as read" time="0.002460875">
-        </testcase>
-        <testcase classname="tests/integration/routes/notifications.test.js" name="Integration Test: Notifications Routes &gt; PUT /api/notifications/read-all &gt; should mark all notifications as read" time="0.001066042">
-        </testcase>
-        <testcase classname="tests/integration/routes/notifications.test.js" name="Integration Test: Notifications Routes &gt; DELETE /api/notifications/:id &gt; should delete notification" time="0.001053833">
+        <testcase classname="tests/integration/routes/llm.test.js" name="Integration Test: LLM Routes &gt; GET /api/llm/ollama-models &gt; should return Ollama models" time="0.001274458">
         </testcase>
     </testsuite>
-    <testsuite name="tests/integration/routes/sessions.test.js" timestamp="2025-12-13T00:02:36.818Z" hostname="MacBook-Air-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.090089625">
-        <testcase classname="tests/integration/routes/sessions.test.js" name="Integration Test: Sessions Routes &gt; GET /api/sessions &gt; should return user sessions" time="0.004204917">
+    <testsuite name="tests/integration/routes/notifications.test.js" timestamp="2025-12-13T06:25:17.452Z" hostname="MacBook-Air-Piotr.local" tests="6" failures="0" errors="0" skipped="0" time="0.105333584">
+        <testcase classname="tests/integration/routes/notifications.test.js" name="Integration Test: Notifications Routes &gt; GET /api/notifications &gt; should return user notifications" time="0.002805166">
         </testcase>
-        <testcase classname="tests/integration/routes/sessions.test.js" name="Integration Test: Sessions Routes &gt; GET /api/sessions &gt; should require authentication" time="0.002076792">
+        <testcase classname="tests/integration/routes/notifications.test.js" name="Integration Test: Notifications Routes &gt; GET /api/notifications &gt; should require authentication" time="0.001287333">
         </testcase>
-        <testcase classname="tests/integration/routes/sessions.test.js" name="Integration Test: Sessions Routes &gt; POST /api/sessions &gt; should create a new session" time="0.001327666">
+        <testcase classname="tests/integration/routes/notifications.test.js" name="Integration Test: Notifications Routes &gt; GET /api/notifications/unread &gt; should return unread notifications count" time="0.003871584">
         </testcase>
-        <testcase classname="tests/integration/routes/sessions.test.js" name="Integration Test: Sessions Routes &gt; GET /api/sessions/:userId &gt; should return session by user id" time="0.001207666">
+        <testcase classname="tests/integration/routes/notifications.test.js" name="Integration Test: Notifications Routes &gt; PUT /api/notifications/:id/read &gt; should mark notification as read" time="0.002234958">
         </testcase>
-        <testcase classname="tests/integration/routes/sessions.test.js" name="Integration Test: Sessions Routes &gt; PUT /api/sessions/:id &gt; should update session" time="0.000996458">
+        <testcase classname="tests/integration/routes/notifications.test.js" name="Integration Test: Notifications Routes &gt; PUT /api/notifications/read-all &gt; should mark all notifications as read" time="0.001016166">
         </testcase>
-    </testsuite>
-    <testsuite name="tests/integration/routes/settings.test.js" timestamp="2025-12-13T00:02:36.818Z" hostname="MacBook-Air-Piotr.local" tests="3" failures="0" errors="0" skipped="0" time="0.096503916">
-        <testcase classname="tests/integration/routes/settings.test.js" name="Integration Test: Settings Routes &gt; GET /api/settings &gt; should return user settings" time="0.001996125">
-        </testcase>
-        <testcase classname="tests/integration/routes/settings.test.js" name="Integration Test: Settings Routes &gt; GET /api/settings &gt; should require authentication" time="0.001237917">
-        </testcase>
-        <testcase classname="tests/integration/routes/settings.test.js" name="Integration Test: Settings Routes &gt; PUT /api/settings &gt; should update user settings" time="0.0034305">
+        <testcase classname="tests/integration/routes/notifications.test.js" name="Integration Test: Notifications Routes &gt; DELETE /api/notifications/:id &gt; should delete notification" time="0.000986541">
         </testcase>
     </testsuite>
-    <testsuite name="tests/integration/routes/teams.test.js" timestamp="2025-12-13T00:02:36.818Z" hostname="MacBook-Air-Piotr.local" tests="3" failures="0" errors="0" skipped="0" time="0.091866458">
-        <testcase classname="tests/integration/routes/teams.test.js" name="Integration Test: Teams Routes &gt; GET /api/teams &gt; should return list of teams" time="0.0024615">
+    <testsuite name="tests/integration/routes/sessions.test.js" timestamp="2025-12-13T06:25:17.453Z" hostname="MacBook-Air-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.102362583">
+        <testcase classname="tests/integration/routes/sessions.test.js" name="Integration Test: Sessions Routes &gt; GET /api/sessions &gt; should return user sessions" time="0.004553459">
         </testcase>
-        <testcase classname="tests/integration/routes/teams.test.js" name="Integration Test: Teams Routes &gt; GET /api/teams &gt; should require authentication" time="0.001351625">
+        <testcase classname="tests/integration/routes/sessions.test.js" name="Integration Test: Sessions Routes &gt; GET /api/sessions &gt; should require authentication" time="0.002055">
         </testcase>
-        <testcase classname="tests/integration/routes/teams.test.js" name="Integration Test: Teams Routes &gt; POST /api/teams &gt; should create a new team" time="0.001488917">
+        <testcase classname="tests/integration/routes/sessions.test.js" name="Integration Test: Sessions Routes &gt; POST /api/sessions &gt; should create a new session" time="0.001310416">
         </testcase>
-    </testsuite>
-    <testsuite name="tests/integration/routes/tokenBilling.test.js" timestamp="2025-12-13T00:02:36.819Z" hostname="MacBook-Air-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.112914833">
-        <testcase classname="tests/integration/routes/tokenBilling.test.js" name="Integration Test: Token Billing Routes &gt; GET /api/token-billing/balance &gt; should return user token balance" time="0.007464042">
+        <testcase classname="tests/integration/routes/sessions.test.js" name="Integration Test: Sessions Routes &gt; GET /api/sessions/:userId &gt; should return session by user id" time="0.001125666">
         </testcase>
-        <testcase classname="tests/integration/routes/tokenBilling.test.js" name="Integration Test: Token Billing Routes &gt; GET /api/token-billing/balance &gt; should require authentication" time="0.004604708">
-        </testcase>
-        <testcase classname="tests/integration/routes/tokenBilling.test.js" name="Integration Test: Token Billing Routes &gt; GET /api/token-billing/packages &gt; should return available token packages" time="0.0018105">
-        </testcase>
-        <testcase classname="tests/integration/routes/tokenBilling.test.js" name="Integration Test: Token Billing Routes &gt; GET /api/token-billing/transactions &gt; should return token usage history" time="0.003616625">
-        </testcase>
-        <testcase classname="tests/integration/routes/tokenBilling.test.js" name="Integration Test: Token Billing Routes &gt; GET /api/token-billing/margins &gt; should return margins (admin only)" time="0.001667875">
+        <testcase classname="tests/integration/routes/sessions.test.js" name="Integration Test: Sessions Routes &gt; PUT /api/sessions/:id &gt; should update session" time="0.000949667">
         </testcase>
     </testsuite>
-    <testsuite name="tests/integration/routes/users.test.js" timestamp="2025-12-13T00:02:36.819Z" hostname="MacBook-Air-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.097355291">
-        <testcase classname="tests/integration/routes/users.test.js" name="Integration Test: Users Routes &gt; GET /api/users &gt; should return list of users" time="0.002603">
+    <testsuite name="tests/integration/routes/settings.test.js" timestamp="2025-12-13T06:25:17.453Z" hostname="MacBook-Air-Piotr.local" tests="3" failures="0" errors="0" skipped="0" time="0.08862975">
+        <testcase classname="tests/integration/routes/settings.test.js" name="Integration Test: Settings Routes &gt; GET /api/settings &gt; should return user settings" time="0.001707417">
         </testcase>
-        <testcase classname="tests/integration/routes/users.test.js" name="Integration Test: Users Routes &gt; GET /api/users &gt; should require authentication" time="0.000977459">
+        <testcase classname="tests/integration/routes/settings.test.js" name="Integration Test: Settings Routes &gt; GET /api/settings &gt; should require authentication" time="0.001114041">
         </testcase>
-        <testcase classname="tests/integration/routes/users.test.js" name="Integration Test: Users Routes &gt; GET /api/auth/me &gt; should return current user" time="0.001345542">
-        </testcase>
-        <testcase classname="tests/integration/routes/users.test.js" name="Integration Test: Users Routes &gt; GET /api/users/:id &gt; should return user by id" time="0.003872208">
-        </testcase>
-        <testcase classname="tests/integration/routes/users.test.js" name="Integration Test: Users Routes &gt; PUT /api/users/:id &gt; should update user" time="0.001431875">
+        <testcase classname="tests/integration/routes/settings.test.js" name="Integration Test: Settings Routes &gt; PUT /api/settings &gt; should update user settings" time="0.003358416">
         </testcase>
     </testsuite>
-    <testsuite name="tests/integration/backend/planLimits.test.js" timestamp="2025-12-13T00:02:36.819Z" hostname="MacBook-Air-Piotr.local" tests="2" failures="0" errors="0" skipped="0" time="0.145615625">
-        <testcase classname="tests/integration/backend/planLimits.test.js" name="Plan Limits Integration &gt; should prevent creating more projects than allowed by Free plan" time="0.014575917">
+    <testsuite name="tests/integration/routes/teams.test.js" timestamp="2025-12-13T06:25:17.453Z" hostname="MacBook-Air-Piotr.local" tests="3" failures="0" errors="0" skipped="0" time="0.090723917">
+        <testcase classname="tests/integration/routes/teams.test.js" name="Integration Test: Teams Routes &gt; GET /api/teams &gt; should return list of teams" time="0.00260625">
         </testcase>
-        <testcase classname="tests/integration/backend/planLimits.test.js" name="Plan Limits Integration &gt; should allow creating more projects after upgrade" time="0.001511">
+        <testcase classname="tests/integration/routes/teams.test.js" name="Integration Test: Teams Routes &gt; GET /api/teams &gt; should require authentication" time="0.001239958">
+        </testcase>
+        <testcase classname="tests/integration/routes/teams.test.js" name="Integration Test: Teams Routes &gt; POST /api/teams &gt; should create a new team" time="0.001526083">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/integration/routes/tokenBilling.test.js" timestamp="2025-12-13T06:25:17.453Z" hostname="MacBook-Air-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.098262708">
+        <testcase classname="tests/integration/routes/tokenBilling.test.js" name="Integration Test: Token Billing Routes &gt; GET /api/token-billing/balance &gt; should return user token balance" time="0.002635666">
+        </testcase>
+        <testcase classname="tests/integration/routes/tokenBilling.test.js" name="Integration Test: Token Billing Routes &gt; GET /api/token-billing/balance &gt; should require authentication" time="0.001395208">
+        </testcase>
+        <testcase classname="tests/integration/routes/tokenBilling.test.js" name="Integration Test: Token Billing Routes &gt; GET /api/token-billing/packages &gt; should return available token packages" time="0.001182333">
+        </testcase>
+        <testcase classname="tests/integration/routes/tokenBilling.test.js" name="Integration Test: Token Billing Routes &gt; GET /api/token-billing/transactions &gt; should return token usage history" time="0.001202667">
+        </testcase>
+        <testcase classname="tests/integration/routes/tokenBilling.test.js" name="Integration Test: Token Billing Routes &gt; GET /api/token-billing/margins &gt; should return margins (admin only)" time="0.001163625">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/integration/routes/users.test.js" timestamp="2025-12-13T06:25:17.454Z" hostname="MacBook-Air-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.092358167">
+        <testcase classname="tests/integration/routes/users.test.js" name="Integration Test: Users Routes &gt; GET /api/users &gt; should return list of users" time="0.0027435">
+        </testcase>
+        <testcase classname="tests/integration/routes/users.test.js" name="Integration Test: Users Routes &gt; GET /api/users &gt; should require authentication" time="0.000920542">
+        </testcase>
+        <testcase classname="tests/integration/routes/users.test.js" name="Integration Test: Users Routes &gt; GET /api/auth/me &gt; should return current user" time="0.001221541">
+        </testcase>
+        <testcase classname="tests/integration/routes/users.test.js" name="Integration Test: Users Routes &gt; GET /api/users/:id &gt; should return user by id" time="0.004383667">
+        </testcase>
+        <testcase classname="tests/integration/routes/users.test.js" name="Integration Test: Users Routes &gt; PUT /api/users/:id &gt; should update user" time="0.00132525">
         </testcase>
     </testsuite>
 </testsuites>

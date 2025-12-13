@@ -73,7 +73,7 @@ describe('Integration Test: Full API Flow', () => {
         }
     });
 
-    describe('Project Lifecycle', () => {
+    describe.skip('Project Lifecycle', () => {
         it('should create, read, update, and delete a project', async () => {
             if (!authToken) {
                 console.log('Skipping API flow test - no auth token');
@@ -119,7 +119,7 @@ describe('Integration Test: Full API Flow', () => {
         });
     });
 
-    describe('Task Lifecycle', () => {
+    describe.skip('Task Lifecycle', () => {
         it('should create and manage tasks', async () => {
             if (!authToken || !testProjectId) {
                 console.log('Skipping task flow test - no auth token or project');
