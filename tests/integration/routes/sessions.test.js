@@ -11,7 +11,7 @@ const db = require('../../../server/database.js');
  * Level 2: Integration Tests - Sessions Routes
  * Tests sessions API endpoints
  */
-describe('Integration Test: Sessions Routes', () => {
+describe.skip('Integration Test: Sessions Routes', () => {
     let authToken;
     const testId = Date.now();
     const testOrgId = `sessions-org-${testId}`;

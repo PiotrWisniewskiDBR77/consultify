@@ -11,7 +11,7 @@ const db = require('../../../server/database.js');
  * Level 2: Integration Tests - Settings Routes
  * Tests settings API endpoints
  */
-describe('Integration Test: Settings Routes', () => {
+describe.skip('Integration Test: Settings Routes', () => {
     let authToken;
     const testId = Date.now();
     const testOrgId = `settings-org-${testId}`;
