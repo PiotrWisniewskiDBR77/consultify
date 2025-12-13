@@ -66,6 +66,7 @@ export const FeedbackWidget: React.FC = () => {
                             Send Feedback
                         </div>
                         <button
+                            aria-label="Close Feedback"
                             onClick={() => setIsOpen(false)}
                             className="p-1 hover:bg-white/20 rounded-full transition-colors"
                         >
@@ -110,6 +111,7 @@ export const FeedbackWidget: React.FC = () => {
 
                         <button
                             type="submit"
+                            aria-label="Send Feedback Button"
                             disabled={isSubmitting || !message.trim()}
                             className="w-full py-2.5 bg-navy-900 dark:bg-white text-white dark:text-navy-900 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
