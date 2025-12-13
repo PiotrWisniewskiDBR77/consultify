@@ -131,6 +131,7 @@ export const LLMSelector: React.FC = () => {
                                 <span>Auto</span>
                             </div>
                             <button
+                                aria-label="Toggle Auto Mode"
                                 onClick={() => setAIConfig({ autoMode: !aiConfig.autoMode })}
                                 className={`w-9 h-5 rounded-full p-0.5 transition-colors ${aiConfig.autoMode ? 'bg-purple-600' : 'bg-slate-700'}`}
                             >

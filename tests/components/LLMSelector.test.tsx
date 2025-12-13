@@ -87,14 +87,16 @@ describe('Component Test: LLMSelector', () => {
         });
     });
 
-    it.skip('toggles auto mode', () => {
+    it('toggles auto mode', () => {
         render(<LLMSelector />);
 
-        const autoToggle = screen.getByText(/Auto/i);
-        if (autoToggle) {
-            fireEvent.click(autoToggle);
-            expect(mockSetAIConfig).toHaveBeenCalled();
-        }
+        // Need to open the dropdown first to see the toggle
+        const button = screen.getByText(/Select Model|Auto/i);
+        fireEvent.click(button);
+
+        const autoToggle = screen.getByLabelText('Toggle Auto Mode');
+        fireEvent.click(autoToggle);
+        expect(mockSetAIConfig).toHaveBeenCalled();
     });
 });
 

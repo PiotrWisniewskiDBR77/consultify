@@ -1,63 +1,145 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="171" failures="0" errors="0" time="6.994296708">
-    <testsuite name="tests/components/LoadingScreen.test.tsx" timestamp="2025-12-13T07:49:52.505Z" hostname="MacBook-Air-Piotr.local" tests="2" failures="0" errors="0" skipped="0" time="0.462520416">
-        <testcase classname="tests/components/LoadingScreen.test.tsx" name="Component Test: LoadingScreen &gt; renders loading spinner" time="0.45763875">
+<testsuites name="vitest tests" tests="174" failures="1" errors="0" time="10.258828752">
+    <testsuite name="tests/components/FeedbackWidget.test.tsx" timestamp="2025-12-13T08:10:49.586Z" hostname="MacBook-Air-Piotr.local" tests="8" failures="0" errors="0" skipped="0" time="0.141940583">
+        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; does not render when user is not logged in" time="0.019478333">
         </testcase>
-        <testcase classname="tests/components/LoadingScreen.test.tsx" name="Component Test: LoadingScreen &gt; has correct styling classes" time="0.00310425">
+        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; renders trigger button when user is logged in" time="0.012624459">
         </testcase>
-    </testsuite>
-    <testsuite name="tests/components/PlanCard.test.tsx" timestamp="2025-12-13T07:49:52.506Z" hostname="MacBook-Air-Piotr.local" tests="7" failures="0" errors="0" skipped="0" time="0.464595875">
-        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; renders plan name and price" time="0.18317525">
+        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; opens modal when trigger button is clicked" time="0.014519167">
         </testcase>
-        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; displays current plan badge when isCurrentPlan is true" time="0.188385125">
+        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; closes modal when X button is clicked" time="0.014940917">
         </testcase>
-        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; displays popular badge when isPopular is true" time="0.023168834">
+        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; allows selecting feedback type" time="0.012063125">
         </testcase>
-        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; calls onSelect when select button is clicked" time="0.024675125">
+        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; submits feedback successfully" time="0.023590125">
         </testcase>
-        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; disables select button when disabled is true" time="0.0115605">
+        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; handles submission error" time="0.037664167">
+            <system-err>
+Error: API Error
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/components/FeedbackWidget.test.tsx:101:53
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:145:11
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:26
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1240:20
+    at new Promise (&lt;anonymous&gt;)
+    at runWithTimeout [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1206:10[90m)[39m
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1650:37
+    at Traces.$ [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/traces.U4xDYhzZ.js:115:27[90m)[39m
+    at trace [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/test.BT8LKgU9.js:239:21[90m)[39m
+    at runTest [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1650:12[90m)[39m
+
+            </system-err>
         </testcase>
-        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; displays features list" time="0.007600459">
-        </testcase>
-        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; shows API access for premium plans" time="0.012152167">
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/components/QuotaWarningBanner.test.tsx" timestamp="2025-12-13T07:49:52.509Z" hostname="MacBook-Air-Piotr.local" tests="7" failures="0" errors="0" skipped="0" time="0.827242333">
-        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; does not render when usage is below threshold" time="0.020414">
-        </testcase>
-        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; renders warning when token usage is high" time="0.037617375">
-        </testcase>
-        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; renders warning when storage usage is high" time="0.005403542">
-        </testcase>
-        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; displays critical message when usage is very high" time="0.003626333">
-        </testcase>
-        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; calls onUpgrade when upgrade button is clicked" time="0.0141395">
-        </testcase>
-        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; calls onDismiss when dismiss button is clicked" time="0.722458417">
-        </testcase>
-        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; handles both token and storage warnings" time="0.018379584">
+        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; disables submit button when message is empty" time="0.004466208">
         </testcase>
     </testsuite>
-    <testsuite name="tests/unit/analytics.service.test.ts" timestamp="2025-12-13T07:49:52.511Z" hostname="MacBook-Air-Piotr.local" tests="8" failures="0" errors="0" skipped="0" time="0.004113125">
-        <testcase classname="tests/unit/analytics.service.test.ts" name="Service Test: Analytics &gt; calculateAnalytics &gt; calculates analytics for empty arrays" time="0.001261375">
+    <testsuite name="tests/components/LLMSelector.test.tsx" timestamp="2025-12-13T08:10:49.592Z" hostname="MacBook-Air-Piotr.local" tests="6" failures="0" errors="0" skipped="0" time="0.202667">
+        <testcase classname="tests/components/LLMSelector.test.tsx" name="Component Test: LLMSelector &gt; renders selector button" time="0.044902958">
         </testcase>
-        <testcase classname="tests/unit/analytics.service.test.ts" name="Service Test: Analytics &gt; calculateAnalytics &gt; calculates completion rate correctly" time="0.000298791">
+        <testcase classname="tests/components/LLMSelector.test.tsx" name="Component Test: LLMSelector &gt; opens dropdown when clicked" time="0.039636709">
         </testcase>
-        <testcase classname="tests/unit/analytics.service.test.ts" name="Service Test: Analytics &gt; calculateAnalytics &gt; calculates initiative statistics" time="0.000254458">
+        <testcase classname="tests/components/LLMSelector.test.tsx" name="Component Test: LLMSelector &gt; displays models in dropdown" time="0.0348895">
         </testcase>
-        <testcase classname="tests/unit/analytics.service.test.ts" name="Service Test: Analytics &gt; calculateAnalytics &gt; calculates total cost and benefit" time="0.000152417">
+        <testcase classname="tests/components/LLMSelector.test.tsx" name="Component Test: LLMSelector &gt; filters models by search query" time="0.048361333">
         </testcase>
-        <testcase classname="tests/unit/analytics.service.test.ts" name="Service Test: Analytics &gt; generateBurnDownData &gt; generates burn down data for date range" time="0.000389375">
+        <testcase classname="tests/components/LLMSelector.test.tsx" name="Component Test: LLMSelector &gt; selects model when clicked" time="0.022592042">
         </testcase>
-        <testcase classname="tests/unit/analytics.service.test.ts" name="Service Test: Analytics &gt; generateBurnDownData &gt; handles empty task list" time="0.000082583">
-        </testcase>
-        <testcase classname="tests/unit/analytics.service.test.ts" name="Service Test: Analytics &gt; generateVelocityData &gt; generates velocity data for specified weeks" time="0.000170834">
-        </testcase>
-        <testcase classname="tests/unit/analytics.service.test.ts" name="Service Test: Analytics &gt; generateVelocityData &gt; uses default 8 weeks when not specified" time="0.00006475">
+        <testcase classname="tests/components/LLMSelector.test.tsx" name="Component Test: LLMSelector &gt; toggles auto mode" time="0.010944666">
+            <system-err>
+An update to LLMSelector inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to LLMSelector inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+            </system-err>
         </testcase>
     </testsuite>
-    <testsuite name="tests/unit/api.service.test.ts" timestamp="2025-12-13T07:49:52.512Z" hostname="MacBook-Air-Piotr.local" tests="6" failures="0" errors="0" skipped="0" time="0.009916083">
-        <testcase classname="tests/unit/api.service.test.ts" name="Api Service Unit Tests &gt; login: should store token and return user on success" time="0.007041166">
+    <testsuite name="tests/components/SystemHealth.test.tsx" timestamp="2025-12-13T08:10:49.595Z" hostname="MacBook-Air-Piotr.local" tests="5" failures="1" errors="0" skipped="0" time="5.103245125">
+        <testcase classname="tests/components/SystemHealth.test.tsx" name="Component Test: SystemHealth &gt; does not render while loading" time="0.017474625">
+        </testcase>
+        <testcase classname="tests/components/SystemHealth.test.tsx" name="Component Test: SystemHealth &gt; displays online status when system is healthy" time="0.029749583">
+        </testcase>
+        <testcase classname="tests/components/SystemHealth.test.tsx" name="Component Test: SystemHealth &gt; displays latency when online" time="0.009596708">
+        </testcase>
+        <testcase classname="tests/components/SystemHealth.test.tsx" name="Component Test: SystemHealth &gt; displays offline status when system is down" time="0.0073685">
+        </testcase>
+        <testcase classname="tests/components/SystemHealth.test.tsx" name="Component Test: SystemHealth &gt; polls health status periodically" time="5.037484792">
+            <system-err>
+An update to SystemHealth inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to SystemHealth inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to SystemHealth inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+            </system-err>
+            <failure message="Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with &quot;testTimeout&quot;." type="Error">
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with &quot;testTimeout&quot;.
+ ❯ tests/components/SystemHealth.test.tsx:51:5
+            </failure>
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/analytics.service.test.ts" timestamp="2025-12-13T08:10:49.598Z" hostname="MacBook-Air-Piotr.local" tests="8" failures="0" errors="0" skipped="0" time="0.004775959">
+        <testcase classname="tests/unit/analytics.service.test.ts" name="Service Test: Analytics &gt; calculateAnalytics &gt; calculates analytics for empty arrays" time="0.001359792">
+        </testcase>
+        <testcase classname="tests/unit/analytics.service.test.ts" name="Service Test: Analytics &gt; calculateAnalytics &gt; calculates completion rate correctly" time="0.000284208">
+        </testcase>
+        <testcase classname="tests/unit/analytics.service.test.ts" name="Service Test: Analytics &gt; calculateAnalytics &gt; calculates initiative statistics" time="0.000252166">
+        </testcase>
+        <testcase classname="tests/unit/analytics.service.test.ts" name="Service Test: Analytics &gt; calculateAnalytics &gt; calculates total cost and benefit" time="0.000154291">
+        </testcase>
+        <testcase classname="tests/unit/analytics.service.test.ts" name="Service Test: Analytics &gt; generateBurnDownData &gt; generates burn down data for date range" time="0.000520042">
+        </testcase>
+        <testcase classname="tests/unit/analytics.service.test.ts" name="Service Test: Analytics &gt; generateBurnDownData &gt; handles empty task list" time="0.000108458">
+        </testcase>
+        <testcase classname="tests/unit/analytics.service.test.ts" name="Service Test: Analytics &gt; generateVelocityData &gt; generates velocity data for specified weeks" time="0.000243625">
+        </testcase>
+        <testcase classname="tests/unit/analytics.service.test.ts" name="Service Test: Analytics &gt; generateVelocityData &gt; uses default 8 weeks when not specified" time="0.000117584">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/api.service.test.ts" timestamp="2025-12-13T08:10:49.600Z" hostname="MacBook-Air-Piotr.local" tests="6" failures="0" errors="0" skipped="0" time="0.014278834">
+        <testcase classname="tests/unit/api.service.test.ts" name="Api Service Unit Tests &gt; login: should store token and return user on success" time="0.006795333">
             <system-out>
 Api.login called: { email: [32m&apos;test@test.com&apos;[39m, url: [32m&apos;http://127.0.0.1:3005/api/auth/login&apos;[39m }
 
@@ -67,7 +149,7 @@ Login response data: { token: [32m&apos;abc-123&apos;[39m, user: { id: [32m&apos
 
             </system-out>
         </testcase>
-        <testcase classname="tests/unit/api.service.test.ts" name="Api Service Unit Tests &gt; login: should throw error on failure" time="0.000866708">
+        <testcase classname="tests/unit/api.service.test.ts" name="Api Service Unit Tests &gt; login: should throw error on failure" time="0.003776292">
             <system-out>
 Api.login called: { email: [32m&apos;test@test.com&apos;[39m, url: [32m&apos;http://127.0.0.1:3005/api/auth/login&apos;[39m }
 
@@ -77,39 +159,39 @@ Login response data: { error: [32m&apos;Invalid credentials&apos;[39m }
 
             </system-out>
         </testcase>
-        <testcase classname="tests/unit/api.service.test.ts" name="Api Service Unit Tests &gt; getUsers: should send Authorization header" time="0.000371167">
+        <testcase classname="tests/unit/api.service.test.ts" name="Api Service Unit Tests &gt; getUsers: should send Authorization header" time="0.001267209">
         </testcase>
-        <testcase classname="tests/unit/api.service.test.ts" name="Api Service Unit Tests &gt; getLLMProviders: should return list" time="0.000118584">
+        <testcase classname="tests/unit/api.service.test.ts" name="Api Service Unit Tests &gt; getLLMProviders: should return list" time="0.000327167">
         </testcase>
-        <testcase classname="tests/unit/api.service.test.ts" name="Api Service Unit Tests &gt; indexKnowledgeFiles: should trigger indexing" time="0.000194708">
+        <testcase classname="tests/unit/api.service.test.ts" name="Api Service Unit Tests &gt; indexKnowledgeFiles: should trigger indexing" time="0.00052925">
         </testcase>
-        <testcase classname="tests/unit/api.service.test.ts" name="Api Service Unit Tests &gt; saveSession: should post data" time="0.000160709">
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/unit/drdStructure.test.ts" timestamp="2025-12-13T07:49:52.512Z" hostname="MacBook-Air-Piotr.local" tests="7" failures="0" errors="0" skipped="0" time="0.074847208">
-        <testcase classname="tests/unit/drdStructure.test.ts" name="Service Test: drdStructure &gt; exports DRD_STRUCTURE as array" time="0.056130834">
-        </testcase>
-        <testcase classname="tests/unit/drdStructure.test.ts" name="Service Test: drdStructure &gt; each axis has required properties" time="0.01152175">
-        </testcase>
-        <testcase classname="tests/unit/drdStructure.test.ts" name="Service Test: drdStructure &gt; each area has required properties" time="0.0011575">
-        </testcase>
-        <testcase classname="tests/unit/drdStructure.test.ts" name="Service Test: drdStructure &gt; each level has required properties" time="0.004080291">
-        </testcase>
-        <testcase classname="tests/unit/drdStructure.test.ts" name="Service Test: drdStructure &gt; getQuestionsForAxis &gt; returns areas for valid axis ID" time="0.000115">
-        </testcase>
-        <testcase classname="tests/unit/drdStructure.test.ts" name="Service Test: drdStructure &gt; getQuestionsForAxis &gt; returns empty array for invalid axis ID" time="0.000353875">
-        </testcase>
-        <testcase classname="tests/unit/drdStructure.test.ts" name="Service Test: drdStructure &gt; getQuestionsForAxis &gt; returns areas for different axis IDs" time="0.000096">
+        <testcase classname="tests/unit/api.service.test.ts" name="Api Service Unit Tests &gt; saveSession: should post data" time="0.000258417">
         </testcase>
     </testsuite>
-    <testsuite name="tests/unit/pdfExport.test.ts" timestamp="2025-12-13T07:49:52.513Z" hostname="MacBook-Air-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.269936833">
-        <testcase classname="tests/unit/pdfExport.test.ts" name="Service Test: pdfExport &gt; exportReportToPDF &gt; returns false when element is not found" time="0.031669">
+    <testsuite name="tests/unit/drdStructure.test.ts" timestamp="2025-12-13T08:10:49.602Z" hostname="MacBook-Air-Piotr.local" tests="7" failures="0" errors="0" skipped="0" time="0.013374875">
+        <testcase classname="tests/unit/drdStructure.test.ts" name="Service Test: drdStructure &gt; exports DRD_STRUCTURE as array" time="0.00109475">
+        </testcase>
+        <testcase classname="tests/unit/drdStructure.test.ts" name="Service Test: drdStructure &gt; each axis has required properties" time="0.000538041">
+        </testcase>
+        <testcase classname="tests/unit/drdStructure.test.ts" name="Service Test: drdStructure &gt; each area has required properties" time="0.001159084">
+        </testcase>
+        <testcase classname="tests/unit/drdStructure.test.ts" name="Service Test: drdStructure &gt; each level has required properties" time="0.008110208">
+        </testcase>
+        <testcase classname="tests/unit/drdStructure.test.ts" name="Service Test: drdStructure &gt; getQuestionsForAxis &gt; returns areas for valid axis ID" time="0.000221">
+        </testcase>
+        <testcase classname="tests/unit/drdStructure.test.ts" name="Service Test: drdStructure &gt; getQuestionsForAxis &gt; returns empty array for invalid axis ID" time="0.000841208">
+        </testcase>
+        <testcase classname="tests/unit/drdStructure.test.ts" name="Service Test: drdStructure &gt; getQuestionsForAxis &gt; returns areas for different axis IDs" time="0.000133666">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/pdfExport.test.ts" timestamp="2025-12-13T08:10:49.604Z" hostname="MacBook-Air-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.226080959">
+        <testcase classname="tests/unit/pdfExport.test.ts" name="Service Test: pdfExport &gt; exportReportToPDF &gt; returns false when element is not found" time="0.002539209">
             <system-err>
 Element with id non-existent not found
 
             </system-err>
         </testcase>
-        <testcase classname="tests/unit/pdfExport.test.ts" name="Service Test: pdfExport &gt; exportReportToPDF &gt; exports PDF successfully" time="0.233381292">
+        <testcase classname="tests/unit/pdfExport.test.ts" name="Service Test: pdfExport &gt; exportReportToPDF &gt; exports PDF successfully" time="0.209252042">
             <system-err>
 [vitest] The vi.fn() mock did not use &apos;function&apos; or &apos;class&apos; in its implementation, see https://vitest.dev/api/vi#vi-spyon for examples.
 PDF Export failed: TypeError: () =&gt; new MockJsPDF() is not a constructor
@@ -119,7 +201,7 @@ PDF Export failed: TypeError: () =&gt; new MockJsPDF() is not a constructor
 
             </system-err>
         </testcase>
-        <testcase classname="tests/unit/pdfExport.test.ts" name="Service Test: pdfExport &gt; exportReportToPDF &gt; handles errors gracefully" time="0.001583583">
+        <testcase classname="tests/unit/pdfExport.test.ts" name="Service Test: pdfExport &gt; exportReportToPDF &gt; handles errors gracefully" time="0.009539667">
             <system-err>
 PDF Export failed: Error: Canvas error
     at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/pdfExport.test.ts:79:52
@@ -135,7 +217,7 @@ PDF Export failed: Error: Canvas error
 
             </system-err>
         </testcase>
-        <testcase classname="tests/unit/pdfExport.test.ts" name="Service Test: pdfExport &gt; exportDashboardToPDF &gt; creates PDF with metadata" time="0.000826709">
+        <testcase classname="tests/unit/pdfExport.test.ts" name="Service Test: pdfExport &gt; exportDashboardToPDF &gt; creates PDF with metadata" time="0.001505667">
             <system-err>
 [vitest] The vi.fn() mock did not use &apos;function&apos; or &apos;class&apos; in its implementation, see https://vitest.dev/api/vi#vi-spyon for examples.
 Dashboard PDF Export failed: TypeError: () =&gt; new MockJsPDF() is not a constructor
@@ -152,7 +234,7 @@ Dashboard PDF Export failed: TypeError: () =&gt; new MockJsPDF() is not a constr
 
             </system-err>
         </testcase>
-        <testcase classname="tests/unit/pdfExport.test.ts" name="Service Test: pdfExport &gt; exportDashboardToPDF &gt; handles optional metadata" time="0.001183542">
+        <testcase classname="tests/unit/pdfExport.test.ts" name="Service Test: pdfExport &gt; exportDashboardToPDF &gt; handles optional metadata" time="0.000929125">
             <system-err>
 [vitest] The vi.fn() mock did not use &apos;function&apos; or &apos;class&apos; in its implementation, see https://vitest.dev/api/vi#vi-spyon for examples.
 Dashboard PDF Export failed: TypeError: () =&gt; new MockJsPDF() is not a constructor
@@ -170,100 +252,93 @@ Dashboard PDF Export failed: TypeError: () =&gt; new MockJsPDF() is not a constr
             </system-err>
         </testcase>
     </testsuite>
-    <testsuite name="tests/unit/roi.test.ts" timestamp="2025-12-13T07:49:52.514Z" hostname="MacBook-Air-Piotr.local" tests="3" failures="0" errors="0" skipped="0" time="0.001401959">
-        <testcase classname="tests/unit/roi.test.ts" name="Unit Test: ROI Calculation &gt; should calculate ROI correctly for positive values" time="0.000574666">
+    <testsuite name="tests/unit/roi.test.ts" timestamp="2025-12-13T08:10:49.607Z" hostname="MacBook-Air-Piotr.local" tests="3" failures="0" errors="0" skipped="0" time="0.003128208">
+        <testcase classname="tests/unit/roi.test.ts" name="Unit Test: ROI Calculation &gt; should calculate ROI correctly for positive values" time="0.001333834">
         </testcase>
-        <testcase classname="tests/unit/roi.test.ts" name="Unit Test: ROI Calculation &gt; should handle zero cost to avoid infinity" time="0.000074084">
+        <testcase classname="tests/unit/roi.test.ts" name="Unit Test: ROI Calculation &gt; should handle zero cost to avoid infinity" time="0.000154208">
         </testcase>
-        <testcase classname="tests/unit/roi.test.ts" name="Unit Test: ROI Calculation &gt; should return 0 for break-even" time="0.0000585">
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/unit/store.test.ts" timestamp="2025-12-13T07:49:52.514Z" hostname="MacBook-Air-Piotr.local" tests="20" failures="0" errors="0" skipped="0" time="0.017015833">
-        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; initializes with correct default values" time="0.002085833">
-        </testcase>
-        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; sets current view" time="0.000182167">
-        </testcase>
-        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; sets session mode" time="0.00012525">
-        </testcase>
-        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; sets current user" time="0.00035525">
-        </testcase>
-        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; sets language" time="0.000118917">
-        </testcase>
-        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; toggles sidebar open state" time="0.000114">
-        </testcase>
-        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; toggles sidebar collapse" time="0.000098917">
-        </testcase>
-        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; adds chat message" time="0.009252125">
-        </testcase>
-        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; sets chat messages" time="0.001478416">
-        </testcase>
-        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; clears chat" time="0.00039325">
-        </testcase>
-        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; sets bot typing state" time="0.000190125">
-        </testcase>
-        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; sets current stream content" time="0.000285166">
-        </testcase>
-        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; updates free session data" time="0.000160417">
-        </testcase>
-        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; updates free session data with function" time="0.00010525">
-        </testcase>
-        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; updates full session data" time="0.000085875">
-        </testcase>
-        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; sets AI config" time="0.000095333">
-        </testcase>
-        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; toggles theme" time="0.00009475">
-        </testcase>
-        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; updates last chat message" time="0.000128708">
-        </testcase>
-        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; logout resets state" time="0.000184458">
-        </testcase>
-        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; sets current project ID" time="0.00007175">
+        <testcase classname="tests/unit/roi.test.ts" name="Unit Test: ROI Calculation &gt; should return 0 for break-even" time="0.000120875">
         </testcase>
     </testsuite>
-    <testsuite name="tests/unit/transformationEngine.test.ts" timestamp="2025-12-13T07:49:52.517Z" hostname="MacBook-Air-Piotr.local" tests="6" failures="0" errors="0" skipped="0" time="0.010881709">
-        <testcase classname="tests/unit/transformationEngine.test.ts" name="Service Test: transformationEngine &gt; generates initiatives from session" time="0.002113084">
+    <testsuite name="tests/unit/store.test.ts" timestamp="2025-12-13T08:10:49.608Z" hostname="MacBook-Air-Piotr.local" tests="20" failures="0" errors="0" skipped="0" time="0.00985975">
+        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; initializes with correct default values" time="0.002262791">
         </testcase>
-        <testcase classname="tests/unit/transformationEngine.test.ts" name="Service Test: transformationEngine &gt; generates initiatives with required properties" time="0.00389825">
+        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; sets current view" time="0.000539375">
         </testcase>
-        <testcase classname="tests/unit/transformationEngine.test.ts" name="Service Test: transformationEngine &gt; generates initiatives only for levels above current" time="0.000545459">
+        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; sets session mode" time="0.00058275">
         </testcase>
-        <testcase classname="tests/unit/transformationEngine.test.ts" name="Service Test: transformationEngine &gt; handles session with no gaps" time="0.000188167">
+        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; sets current user" time="0.000793917">
         </testcase>
-        <testcase classname="tests/unit/transformationEngine.test.ts" name="Service Test: transformationEngine &gt; assigns priority based on current level" time="0.000146125">
+        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; sets language" time="0.000705042">
         </testcase>
-        <testcase classname="tests/unit/transformationEngine.test.ts" name="Service Test: transformationEngine &gt; assigns complexity based on target level" time="0.002555458">
+        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; toggles sidebar open state" time="0.000252959">
+        </testcase>
+        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; toggles sidebar collapse" time="0.000155209">
+        </testcase>
+        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; adds chat message" time="0.001465667">
+        </testcase>
+        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; sets chat messages" time="0.000178292">
+        </testcase>
+        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; clears chat" time="0.000206416">
+        </testcase>
+        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; sets bot typing state" time="0.000147083">
+        </testcase>
+        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; sets current stream content" time="0.000155541">
+        </testcase>
+        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; updates free session data" time="0.000138875">
+        </testcase>
+        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; updates free session data with function" time="0.00012325">
+        </testcase>
+        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; updates full session data" time="0.000106584">
+        </testcase>
+        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; sets AI config" time="0.000127292">
+        </testcase>
+        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; toggles theme" time="0.000094166">
+        </testcase>
+        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; updates last chat message" time="0.000132">
+        </testcase>
+        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; logout resets state" time="0.000210458">
+        </testcase>
+        <testcase classname="tests/unit/store.test.ts" name="Store Test: useAppStore &gt; sets current project ID" time="0.000094625">
         </testcase>
     </testsuite>
-    <testsuite name="tests/unit/utils.test.ts" timestamp="2025-12-13T07:49:52.518Z" hostname="MacBook-Air-Piotr.local" tests="1" failures="0" errors="0" skipped="0" time="0.002714583">
-        <testcase classname="tests/unit/utils.test.ts" name="Unit Test: Utilities &gt; should have utility functions available" time="0.001153333">
+    <testsuite name="tests/unit/transformationEngine.test.ts" timestamp="2025-12-13T08:10:49.612Z" hostname="MacBook-Air-Piotr.local" tests="6" failures="0" errors="0" skipped="0" time="0.0092015">
+        <testcase classname="tests/unit/transformationEngine.test.ts" name="Service Test: transformationEngine &gt; generates initiatives from session" time="0.001413083">
+        </testcase>
+        <testcase classname="tests/unit/transformationEngine.test.ts" name="Service Test: transformationEngine &gt; generates initiatives with required properties" time="0.003813084">
+        </testcase>
+        <testcase classname="tests/unit/transformationEngine.test.ts" name="Service Test: transformationEngine &gt; generates initiatives only for levels above current" time="0.001040125">
+        </testcase>
+        <testcase classname="tests/unit/transformationEngine.test.ts" name="Service Test: transformationEngine &gt; handles session with no gaps" time="0.000197666">
+        </testcase>
+        <testcase classname="tests/unit/transformationEngine.test.ts" name="Service Test: transformationEngine &gt; assigns priority based on current level" time="0.000129541">
+        </testcase>
+        <testcase classname="tests/unit/transformationEngine.test.ts" name="Service Test: transformationEngine &gt; assigns complexity based on target level" time="0.001314666">
         </testcase>
     </testsuite>
-    <testsuite name="tests/unit/backend/activityService.test.js" timestamp="2025-12-13T07:49:52.518Z" hostname="MacBook-Air-Piotr.local" tests="6" failures="0" errors="0" skipped="0" time="1.013058708">
-        <testcase classname="tests/unit/backend/activityService.test.js" name="Backend Service Test: ActivityService &gt; log &gt; logs activity with all parameters" time="0.187764334">
-        </testcase>
-        <testcase classname="tests/unit/backend/activityService.test.js" name="Backend Service Test: ActivityService &gt; log &gt; handles optional parameters" time="0.1021975">
-        </testcase>
-        <testcase classname="tests/unit/backend/activityService.test.js" name="Backend Service Test: ActivityService &gt; getRecent &gt; fetches recent activities with default limit" time="0.130742333">
-        </testcase>
-        <testcase classname="tests/unit/backend/activityService.test.js" name="Backend Service Test: ActivityService &gt; getRecent &gt; fetches recent activities with custom limit" time="0.102812791">
-        </testcase>
-        <testcase classname="tests/unit/backend/activityService.test.js" name="Backend Service Test: ActivityService &gt; getRecent &gt; handles database errors gracefully" time="0.002606292">
-        </testcase>
-        <testcase classname="tests/unit/backend/activityService.test.js" name="Backend Service Test: ActivityService &gt; getByOrganization &gt; fetches activities for organization" time="0.150567166">
+    <testsuite name="tests/unit/utils.test.ts" timestamp="2025-12-13T08:10:49.614Z" hostname="MacBook-Air-Piotr.local" tests="1" failures="0" errors="0" skipped="0" time="0.002707667">
+        <testcase classname="tests/unit/utils.test.ts" name="Unit Test: Utilities &gt; should have utility functions available" time="0.001320042">
         </testcase>
     </testsuite>
-    <testsuite name="tests/unit/backend/aiService.test.js" timestamp="2025-12-13T07:49:52.519Z" hostname="MacBook-Air-Piotr.local" tests="15" failures="0" errors="0" skipped="3" time="0.319174333">
+    <testsuite name="tests/unit/backend/activityService.test.js" timestamp="2025-12-13T08:10:49.614Z" hostname="MacBook-Air-Piotr.local" tests="6" failures="0" errors="0" skipped="0" time="0.922895542">
+        <testcase classname="tests/unit/backend/activityService.test.js" name="Backend Service Test: ActivityService &gt; log &gt; logs activity with all parameters" time="0.117458875">
+        </testcase>
+        <testcase classname="tests/unit/backend/activityService.test.js" name="Backend Service Test: ActivityService &gt; log &gt; handles optional parameters" time="0.102679">
+        </testcase>
+        <testcase classname="tests/unit/backend/activityService.test.js" name="Backend Service Test: ActivityService &gt; getRecent &gt; fetches recent activities with default limit" time="0.158435083">
+        </testcase>
+        <testcase classname="tests/unit/backend/activityService.test.js" name="Backend Service Test: ActivityService &gt; getRecent &gt; fetches recent activities with custom limit" time="0.133578459">
+        </testcase>
+        <testcase classname="tests/unit/backend/activityService.test.js" name="Backend Service Test: ActivityService &gt; getRecent &gt; handles database errors gracefully" time="0.001326584">
+        </testcase>
+        <testcase classname="tests/unit/backend/activityService.test.js" name="Backend Service Test: ActivityService &gt; getByOrganization &gt; fetches activities for organization" time="0.102738792">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/aiService.test.js" timestamp="2025-12-13T08:10:49.615Z" hostname="MacBook-Air-Piotr.local" tests="15" failures="0" errors="0" skipped="3" time="0.118342458">
         <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; callLLM &gt; should use Google Gemini by default if checks pass" time="0">
             <skipped/>
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; callLLM &gt; should block if balance is insufficient" time="0.199282">
-            <system-out>
-[DB:foymhj] Initializing database at :memory:
-Connected to the SQLite database.
-Created billing tables and seeded default subscription plans.
-Seeded SuperAdmin and DBR77 Users.
-
-            </system-out>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; callLLM &gt; should block if balance is insufficient" time="0.029298125">
             <system-err>
 AggregateError: 
 [90m    at internalConnectMultiple (node:net:1134:18)[39m
@@ -298,14 +373,14 @@ LLM Call Error Error: Insufficient token balance. Please top up.
 
             </system-err>
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; callLLM &gt; should call OpenAI via fetch when provider is openai" time="0.002164209">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; callLLM &gt; should call OpenAI via fetch when provider is openai" time="0.003579041">
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; callLLM &gt; should call Anthropic via fetch when provider is anthropic" time="0.000540334">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; callLLM &gt; should call Anthropic via fetch when provider is anthropic" time="0.000480708">
         </testcase>
         <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; generateInitiatives &gt; should parse JSON response correctly" time="0">
             <skipped/>
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; generateInitiatives &gt; should return empty array on JSON parse error" time="0.103075417">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; generateInitiatives &gt; should return empty array on JSON parse error" time="0.073481416">
             <system-out>
 Projects table created successfully (or already exists).
 
@@ -324,7 +399,7 @@ LLM Call Error Error: AI Provider not configured.
         <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; streamLLM &gt; should yield chunks from Gemini stream" time="0">
             <skipped/>
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; streamLLM &gt; should handle errors in stream" time="0.002717416">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; streamLLM &gt; should handle errors in stream" time="0.001653417">
             <system-err>
 Stream LLM Error Error: AI Provider not configured.
     at Object.streamLLM [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/aiService.js:381:41[90m)[39m
@@ -333,15 +408,15 @@ Stream LLM Error Error: AI Provider not configured.
 
             </system-err>
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; buildRoadmap &gt; should return roadmap object on success" time="0.001347375">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; buildRoadmap &gt; should return roadmap object on success" time="0.000963084">
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; buildRoadmap &gt; should return empty object on error" time="0.000430208">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; buildRoadmap &gt; should return empty object on error" time="0.000465041">
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; suggestTasks &gt; should return tasks array on success" time="0.000838875">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; suggestTasks &gt; should return tasks array on success" time="0.000826417">
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; deepDiagnose &gt; should execute chain of thought and return diagnosis" time="0.001785042">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; deepDiagnose &gt; should execute chain of thought and return diagnosis" time="0.001186292">
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; enrichInitiative &gt; should maintain structure and fallback to LLM" time="0.001279458">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; enrichInitiative &gt; should maintain structure and fallback to LLM" time="0.002110542">
             <system-err>
 Web Search failed, using LLM knowledge Error: Web Fail
     at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/aiService.test.js:295:59
@@ -357,20 +432,20 @@ Web Search failed, using LLM knowledge Error: Web Fail
 
             </system-err>
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; generateObservations &gt; should return observations from feedback" time="0.000760959">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; generateObservations &gt; should return observations from feedback" time="0.000860875">
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; testProviderConnection &gt; should test OpenAI connection" time="0.002454541">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; testProviderConnection &gt; should test OpenAI connection" time="0.000931792">
             <system-out>
 [AiService] Testing connection for: openai
 
             </system-out>
         </testcase>
     </testsuite>
-    <testsuite name="tests/unit/backend/aiService_additional.test.js" timestamp="2025-12-13T07:49:52.521Z" hostname="MacBook-Air-Piotr.local" tests="6" failures="0" errors="0" skipped="4" time="0.00816925">
+    <testsuite name="tests/unit/backend/aiService_additional.test.js" timestamp="2025-12-13T08:10:49.620Z" hostname="MacBook-Air-Piotr.local" tests="6" failures="0" errors="0" skipped="4" time="0.003762209">
         <testcase classname="tests/unit/backend/aiService_additional.test.js" name="AIService.testProviderConnection &gt; tests OpenAI connection via fetch" time="0">
             <skipped/>
         </testcase>
-        <testcase classname="tests/unit/backend/aiService_additional.test.js" name="AIService.testProviderConnection &gt; tests Anthropic connection via fetch" time="0.002253458">
+        <testcase classname="tests/unit/backend/aiService_additional.test.js" name="AIService.testProviderConnection &gt; tests Anthropic connection via fetch" time="0.001193333">
             <system-out>
 [AiService] Testing connection for: anthropic
 
@@ -385,114 +460,114 @@ Web Search failed, using LLM knowledge Error: Web Fail
         <testcase classname="tests/unit/backend/aiService_additional.test.js" name="AIService.streamLLM Gemini streaming &gt; yields chunks from Gemini stream" time="0">
             <skipped/>
         </testcase>
-        <testcase classname="tests/unit/backend/aiService_additional.test.js" name="AIService.generateObservations &gt; processes feedback and returns observations" time="0.004377042">
+        <testcase classname="tests/unit/backend/aiService_additional.test.js" name="AIService.generateObservations &gt; processes feedback and returns observations" time="0.0014535">
         </testcase>
     </testsuite>
-    <testsuite name="tests/unit/backend/analyticsService.test.js" timestamp="2025-12-13T07:49:52.522Z" hostname="MacBook-Air-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.427137709">
-        <testcase classname="tests/unit/backend/analyticsService.test.js" name="AnalyticsService - Integration &gt; logUsage &gt; should log AI usage to the database without errors" time="0.001437541">
+    <testsuite name="tests/unit/backend/analyticsService.test.js" timestamp="2025-12-13T08:10:49.626Z" hostname="MacBook-Air-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.279697916">
+        <testcase classname="tests/unit/backend/analyticsService.test.js" name="AnalyticsService - Integration &gt; logUsage &gt; should log AI usage to the database without errors" time="0.003233583">
         </testcase>
-        <testcase classname="tests/unit/backend/analyticsService.test.js" name="AnalyticsService - Integration &gt; getStats &gt; should retrieve aggregated stats from real database" time="0.001174667">
+        <testcase classname="tests/unit/backend/analyticsService.test.js" name="AnalyticsService - Integration &gt; getStats &gt; should retrieve aggregated stats from real database" time="0.025745">
         </testcase>
-        <testcase classname="tests/unit/backend/analyticsService.test.js" name="AnalyticsService - Integration &gt; getTopTopics &gt; should retrieve top topics from real database" time="0.000478708">
+        <testcase classname="tests/unit/backend/analyticsService.test.js" name="AnalyticsService - Integration &gt; getTopTopics &gt; should retrieve top topics from real database" time="0.001747792">
         </testcase>
-        <testcase classname="tests/unit/backend/analyticsService.test.js" name="AnalyticsService - Integration &gt; saveMaturityScore &gt; should save maturity score without errors" time="0.000331541">
+        <testcase classname="tests/unit/backend/analyticsService.test.js" name="AnalyticsService - Integration &gt; saveMaturityScore &gt; should save maturity score without errors" time="0.006592875">
         </testcase>
-        <testcase classname="tests/unit/backend/analyticsService.test.js" name="AnalyticsService - Integration &gt; getIndustryBenchmarks &gt; should retrieve industry benchmarks from real database" time="0.000619083">
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/unit/backend/billingService.test.js" timestamp="2025-12-13T07:49:52.523Z" hostname="MacBook-Air-Piotr.local" tests="4" failures="0" errors="0" skipped="0" time="0.107371792">
-        <testcase classname="tests/unit/backend/billingService.test.js" name="BillingService (Unit) &gt; getPlans &gt; should return all available plans from database" time="0.003747083">
-        </testcase>
-        <testcase classname="tests/unit/backend/billingService.test.js" name="BillingService (Unit) &gt; getPlans &gt; should handle database errors gracefully" time="0.000655584">
-        </testcase>
-        <testcase classname="tests/unit/backend/billingService.test.js" name="BillingService (Unit) &gt; createPlan &gt; should create a new plan successfully" time="0.001141875">
-        </testcase>
-        <testcase classname="tests/unit/backend/billingService.test.js" name="BillingService (Unit) &gt; getOrganizationBilling &gt; should return billing info from database" time="0.000779416">
+        <testcase classname="tests/unit/backend/analyticsService.test.js" name="AnalyticsService - Integration &gt; getIndustryBenchmarks &gt; should retrieve industry benchmarks from real database" time="0.000531958">
         </testcase>
     </testsuite>
-    <testsuite name="tests/unit/backend/emailService.test.js" timestamp="2025-12-13T07:49:52.523Z" hostname="MacBook-Air-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.108329167">
-        <testcase classname="tests/unit/backend/emailService.test.js" name="Backend Service Test: EmailService &gt; sendEmail &gt; sends email with default config" time="0.003131167">
+    <testsuite name="tests/unit/backend/billingService.test.js" timestamp="2025-12-13T08:10:49.628Z" hostname="MacBook-Air-Piotr.local" tests="4" failures="0" errors="0" skipped="0" time="0.057752666">
+        <testcase classname="tests/unit/backend/billingService.test.js" name="BillingService (Unit) &gt; getPlans &gt; should return all available plans from database" time="0.005852667">
         </testcase>
-        <testcase classname="tests/unit/backend/emailService.test.js" name="Backend Service Test: EmailService &gt; sendEmail &gt; uses SMTP settings from database" time="0.053405625">
+        <testcase classname="tests/unit/backend/billingService.test.js" name="BillingService (Unit) &gt; getPlans &gt; should handle database errors gracefully" time="0.00047425">
         </testcase>
-        <testcase classname="tests/unit/backend/emailService.test.js" name="Backend Service Test: EmailService &gt; sendEmail &gt; handles database errors gracefully" time="0.001237083">
+        <testcase classname="tests/unit/backend/billingService.test.js" name="BillingService (Unit) &gt; createPlan &gt; should create a new plan successfully" time="0.000537709">
         </testcase>
-        <testcase classname="tests/unit/backend/emailService.test.js" name="Backend Service Test: EmailService &gt; sendEmail &gt; logs email details" time="0.000801708">
-        </testcase>
-        <testcase classname="tests/unit/backend/emailService.test.js" name="Backend Service Test: EmailService &gt; sendEmail &gt; uses environment variables when database settings are missing" time="0.001897791">
+        <testcase classname="tests/unit/backend/billingService.test.js" name="BillingService (Unit) &gt; getOrganizationBilling &gt; should return billing info from database" time="0.000417125">
         </testcase>
     </testsuite>
-    <testsuite name="tests/unit/backend/feedbackService.test.js" timestamp="2025-12-13T07:49:52.524Z" hostname="MacBook-Air-Piotr.local" tests="6" failures="0" errors="0" skipped="0" time="0.858953917">
-        <testcase classname="tests/unit/backend/feedbackService.test.js" name="Backend Service Test: FeedbackService &gt; saveFeedback &gt; saves feedback with all parameters" time="0.206195541">
+    <testsuite name="tests/unit/backend/emailService.test.js" timestamp="2025-12-13T08:10:49.628Z" hostname="MacBook-Air-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.27138725">
+        <testcase classname="tests/unit/backend/emailService.test.js" name="Backend Service Test: EmailService &gt; sendEmail &gt; sends email with default config" time="0.005203">
         </testcase>
-        <testcase classname="tests/unit/backend/feedbackService.test.js" name="Backend Service Test: FeedbackService &gt; saveFeedback &gt; saves feedback without correction" time="0.102788542">
+        <testcase classname="tests/unit/backend/emailService.test.js" name="Backend Service Test: EmailService &gt; sendEmail &gt; uses SMTP settings from database" time="0.058361542">
         </testcase>
-        <testcase classname="tests/unit/backend/feedbackService.test.js" name="Backend Service Test: FeedbackService &gt; getLearningExamples &gt; retrieves learning examples for context" time="0.125693083">
+        <testcase classname="tests/unit/backend/emailService.test.js" name="Backend Service Test: EmailService &gt; sendEmail &gt; handles database errors gracefully" time="0.00089725">
         </testcase>
-        <testcase classname="tests/unit/backend/feedbackService.test.js" name="Backend Service Test: FeedbackService &gt; getLearningExamples &gt; handles empty results" time="0.007039542">
+        <testcase classname="tests/unit/backend/emailService.test.js" name="Backend Service Test: EmailService &gt; sendEmail &gt; logs email details" time="0.001351667">
         </testcase>
-        <testcase classname="tests/unit/backend/feedbackService.test.js" name="Backend Service Test: FeedbackService &gt; getLearningExamples &gt; handles database errors gracefully" time="0.000617">
-        </testcase>
-        <testcase classname="tests/unit/backend/feedbackService.test.js" name="Backend Service Test: FeedbackService &gt; getLearningExamples &gt; only returns examples with rating &gt;= 4" time="0.104574042">
+        <testcase classname="tests/unit/backend/emailService.test.js" name="Backend Service Test: EmailService &gt; sendEmail &gt; uses environment variables when database settings are missing" time="0.005734916">
         </testcase>
     </testsuite>
-    <testsuite name="tests/unit/backend/financialService.test.js" timestamp="2025-12-13T07:49:52.525Z" hostname="MacBook-Air-Piotr.local" tests="10" failures="0" errors="0" skipped="0" time="0.005984333">
-        <testcase classname="tests/unit/backend/financialService.test.js" name="Backend Service Test: FinancialService &gt; estimateCost &gt; returns correct cost for High complexity" time="0.001112208">
+    <testsuite name="tests/unit/backend/feedbackService.test.js" timestamp="2025-12-13T08:10:49.629Z" hostname="MacBook-Air-Piotr.local" tests="6" failures="0" errors="0" skipped="0" time="0.865672667">
+        <testcase classname="tests/unit/backend/feedbackService.test.js" name="Backend Service Test: FeedbackService &gt; saveFeedback &gt; saves feedback with all parameters" time="0.122849833">
         </testcase>
-        <testcase classname="tests/unit/backend/financialService.test.js" name="Backend Service Test: FinancialService &gt; estimateCost &gt; returns correct cost for Medium complexity" time="0.000169167">
+        <testcase classname="tests/unit/backend/feedbackService.test.js" name="Backend Service Test: FeedbackService &gt; saveFeedback &gt; saves feedback without correction" time="0.104240125">
         </testcase>
-        <testcase classname="tests/unit/backend/financialService.test.js" name="Backend Service Test: FinancialService &gt; estimateCost &gt; returns correct cost for Low complexity" time="0.0001195">
+        <testcase classname="tests/unit/backend/feedbackService.test.js" name="Backend Service Test: FeedbackService &gt; getLearningExamples &gt; retrieves learning examples for context" time="0.122593833">
         </testcase>
-        <testcase classname="tests/unit/backend/financialService.test.js" name="Backend Service Test: FinancialService &gt; estimateBenefit &gt; calculates benefit for High priority" time="0.00017975">
+        <testcase classname="tests/unit/backend/feedbackService.test.js" name="Backend Service Test: FeedbackService &gt; getLearningExamples &gt; handles empty results" time="0.001883166">
         </testcase>
-        <testcase classname="tests/unit/backend/financialService.test.js" name="Backend Service Test: FinancialService &gt; estimateBenefit &gt; calculates benefit for Medium priority" time="0.000141875">
+        <testcase classname="tests/unit/backend/feedbackService.test.js" name="Backend Service Test: FeedbackService &gt; getLearningExamples &gt; handles database errors gracefully" time="0.002323917">
         </testcase>
-        <testcase classname="tests/unit/backend/financialService.test.js" name="Backend Service Test: FinancialService &gt; estimateBenefit &gt; calculates benefit for Low priority" time="0.000104791">
-        </testcase>
-        <testcase classname="tests/unit/backend/financialService.test.js" name="Backend Service Test: FinancialService &gt; estimateBenefit &gt; returns High benefit range for large benefits" time="0.000094">
-        </testcase>
-        <testcase classname="tests/unit/backend/financialService.test.js" name="Backend Service Test: FinancialService &gt; simulatePortfolio &gt; calculates portfolio economics correctly" time="0.001198875">
-        </testcase>
-        <testcase classname="tests/unit/backend/financialService.test.js" name="Backend Service Test: FinancialService &gt; simulatePortfolio &gt; handles empty portfolio" time="0.000650709">
-        </testcase>
-        <testcase classname="tests/unit/backend/financialService.test.js" name="Backend Service Test: FinancialService &gt; simulatePortfolio &gt; uses custom revenue base" time="0.000214375">
+        <testcase classname="tests/unit/backend/feedbackService.test.js" name="Backend Service Test: FeedbackService &gt; getLearningExamples &gt; only returns examples with rating &gt;= 4" time="0.127489875">
         </testcase>
     </testsuite>
-    <testsuite name="tests/unit/backend/knowledgeService.test.js" timestamp="2025-12-13T07:49:52.525Z" hostname="MacBook-Air-Piotr.local" tests="11" failures="0" errors="0" skipped="0" time="0.416261084">
-        <testcase classname="tests/unit/backend/knowledgeService.test.js" name="KnowledgeService - Integration &gt; Candidate Management &gt; should add a candidate idea without throwing" time="0.001927625">
+    <testsuite name="tests/unit/backend/financialService.test.js" timestamp="2025-12-13T08:10:49.632Z" hostname="MacBook-Air-Piotr.local" tests="10" failures="0" errors="0" skipped="0" time="0.013475125">
+        <testcase classname="tests/unit/backend/financialService.test.js" name="Backend Service Test: FinancialService &gt; estimateCost &gt; returns correct cost for High complexity" time="0.0014535">
         </testcase>
-        <testcase classname="tests/unit/backend/knowledgeService.test.js" name="KnowledgeService - Integration &gt; Candidate Management &gt; should get candidates without throwing" time="0.000872875">
+        <testcase classname="tests/unit/backend/financialService.test.js" name="Backend Service Test: FinancialService &gt; estimateCost &gt; returns correct cost for Medium complexity" time="0.000295167">
         </testcase>
-        <testcase classname="tests/unit/backend/knowledgeService.test.js" name="KnowledgeService - Integration &gt; Strategies &gt; should add a global strategy without throwing" time="0.000380917">
+        <testcase classname="tests/unit/backend/financialService.test.js" name="Backend Service Test: FinancialService &gt; estimateCost &gt; returns correct cost for Low complexity" time="0.000456833">
         </testcase>
-        <testcase classname="tests/unit/backend/knowledgeService.test.js" name="KnowledgeService - Integration &gt; Strategies &gt; should get active strategies without throwing" time="0.000461667">
+        <testcase classname="tests/unit/backend/financialService.test.js" name="Backend Service Test: FinancialService &gt; estimateBenefit &gt; calculates benefit for High priority" time="0.000200333">
         </testcase>
-        <testcase classname="tests/unit/backend/knowledgeService.test.js" name="KnowledgeService - Integration &gt; Client Context &gt; should set and get client context" time="0.002052584">
+        <testcase classname="tests/unit/backend/financialService.test.js" name="Backend Service Test: FinancialService &gt; estimateBenefit &gt; calculates benefit for Medium priority" time="0.000149709">
         </testcase>
-        <testcase classname="tests/unit/backend/knowledgeService.test.js" name="KnowledgeService - Integration &gt; Client Context &gt; should update existing client context" time="0.001504209">
+        <testcase classname="tests/unit/backend/financialService.test.js" name="Backend Service Test: FinancialService &gt; estimateBenefit &gt; calculates benefit for Low priority" time="0.000108333">
         </testcase>
-        <testcase classname="tests/unit/backend/knowledgeService.test.js" name="KnowledgeService - Integration &gt; Candidate Status &gt; should update candidate status" time="0.001059334">
+        <testcase classname="tests/unit/backend/financialService.test.js" name="Backend Service Test: FinancialService &gt; estimateBenefit &gt; returns High benefit range for large benefits" time="0.000108375">
         </testcase>
-        <testcase classname="tests/unit/backend/knowledgeService.test.js" name="KnowledgeService - Integration &gt; Process Document (RAG) &gt; should process document chunks" time="0.145679125">
+        <testcase classname="tests/unit/backend/financialService.test.js" name="Backend Service Test: FinancialService &gt; simulatePortfolio &gt; calculates portfolio economics correctly" time="0.001156">
         </testcase>
-        <testcase classname="tests/unit/backend/knowledgeService.test.js" name="KnowledgeService - Integration &gt; Access Control &gt; should restrict user access to project docs" time="0.001999792">
+        <testcase classname="tests/unit/backend/financialService.test.js" name="Backend Service Test: FinancialService &gt; simulatePortfolio &gt; handles empty portfolio" time="0.00037175">
         </testcase>
-        <testcase classname="tests/unit/backend/knowledgeService.test.js" name="KnowledgeService - Integration &gt; Strategies Toggle &gt; should toggle strategy active status" time="0.000928125">
-        </testcase>
-        <testcase classname="tests/unit/backend/knowledgeService.test.js" name="KnowledgeService - Integration &gt; Document Lifecycle &gt; should soft delete document" time="0.003483833">
+        <testcase classname="tests/unit/backend/financialService.test.js" name="Backend Service Test: FinancialService &gt; simulatePortfolio &gt; uses custom revenue base" time="0.000125084">
         </testcase>
     </testsuite>
-    <testsuite name="tests/unit/backend/ragService.test.js" timestamp="2025-12-13T07:49:52.527Z" hostname="MacBook-Air-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.480593875">
-        <testcase classname="tests/unit/backend/ragService.test.js" name="RagService - Integration &gt; generateEmbedding &gt; should return null if no provider configured in database" time="0.185710667">
+    <testsuite name="tests/unit/backend/knowledgeService.test.js" timestamp="2025-12-13T08:10:49.635Z" hostname="MacBook-Air-Piotr.local" tests="11" failures="0" errors="0" skipped="0" time="0.352015667">
+        <testcase classname="tests/unit/backend/knowledgeService.test.js" name="KnowledgeService - Integration &gt; Candidate Management &gt; should add a candidate idea without throwing" time="0.00534825">
+        </testcase>
+        <testcase classname="tests/unit/backend/knowledgeService.test.js" name="KnowledgeService - Integration &gt; Candidate Management &gt; should get candidates without throwing" time="0.001721334">
+        </testcase>
+        <testcase classname="tests/unit/backend/knowledgeService.test.js" name="KnowledgeService - Integration &gt; Strategies &gt; should add a global strategy without throwing" time="0.000716667">
+        </testcase>
+        <testcase classname="tests/unit/backend/knowledgeService.test.js" name="KnowledgeService - Integration &gt; Strategies &gt; should get active strategies without throwing" time="0.000754709">
+        </testcase>
+        <testcase classname="tests/unit/backend/knowledgeService.test.js" name="KnowledgeService - Integration &gt; Client Context &gt; should set and get client context" time="0.005095417">
+        </testcase>
+        <testcase classname="tests/unit/backend/knowledgeService.test.js" name="KnowledgeService - Integration &gt; Client Context &gt; should update existing client context" time="0.0028">
+        </testcase>
+        <testcase classname="tests/unit/backend/knowledgeService.test.js" name="KnowledgeService - Integration &gt; Candidate Status &gt; should update candidate status" time="0.004604208">
+        </testcase>
+        <testcase classname="tests/unit/backend/knowledgeService.test.js" name="KnowledgeService - Integration &gt; Process Document (RAG) &gt; should process document chunks" time="0.067392583">
+        </testcase>
+        <testcase classname="tests/unit/backend/knowledgeService.test.js" name="KnowledgeService - Integration &gt; Access Control &gt; should restrict user access to project docs" time="0.008445666">
+        </testcase>
+        <testcase classname="tests/unit/backend/knowledgeService.test.js" name="KnowledgeService - Integration &gt; Strategies Toggle &gt; should toggle strategy active status" time="0.007393583">
+        </testcase>
+        <testcase classname="tests/unit/backend/knowledgeService.test.js" name="KnowledgeService - Integration &gt; Document Lifecycle &gt; should soft delete document" time="0.007991417">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/ragService.test.js" timestamp="2025-12-13T08:10:49.638Z" hostname="MacBook-Air-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.397929375">
+        <testcase classname="tests/unit/backend/ragService.test.js" name="RagService - Integration &gt; generateEmbedding &gt; should return null if no provider configured in database" time="0.209096458">
             <system-out>
-[DB:bmf1ti] Initializing database at :memory:
+[DB:pjelhi] Initializing database at :memory:
 Connected to the SQLite database.
 Created billing tables and seeded default subscription plans.
 Seeded SuperAdmin and DBR77 Users.
 
             </system-out>
         </testcase>
-        <testcase classname="tests/unit/backend/ragService.test.js" name="RagService - Integration &gt; getContext &gt; should return context string without throwing" time="0.046422375">
+        <testcase classname="tests/unit/backend/ragService.test.js" name="RagService - Integration &gt; getContext &gt; should return context string without throwing" time="0.083637375">
             <system-out>
 Projects table created successfully (or already exists).
 
@@ -500,64 +575,64 @@ Database initialization complete.
 
             </system-out>
         </testcase>
-        <testcase classname="tests/unit/backend/ragService.test.js" name="RagService - Integration &gt; getContext &gt; should accept limit parameter" time="0.000602208">
+        <testcase classname="tests/unit/backend/ragService.test.js" name="RagService - Integration &gt; getContext &gt; should accept limit parameter" time="0.00071425">
         </testcase>
-        <testcase classname="tests/unit/backend/ragService.test.js" name="RagService - Integration &gt; getContextKeyword &gt; should perform keyword search without throwing" time="0.005280125">
+        <testcase classname="tests/unit/backend/ragService.test.js" name="RagService - Integration &gt; getContextKeyword &gt; should perform keyword search without throwing" time="0.000469125">
         </testcase>
-        <testcase classname="tests/unit/backend/ragService.test.js" name="RagService - Integration &gt; getAxisDefinitions &gt; should retrieve axis definitions without throwing" time="0.001094125">
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/unit/backend/tokenBillingService.test.js" timestamp="2025-12-13T07:49:52.527Z" hostname="MacBook-Air-Piotr.local" tests="16" failures="0" errors="0" skipped="0" time="0.83570425">
-        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Margins &gt; should get margins without throwing" time="0.001111208">
-        </testcase>
-        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Margins &gt; should get specific margin by source type" time="0.000491">
-        </testcase>
-        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Packages &gt; should get packages without throwing" time="0.000295833">
-        </testcase>
-        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Packages &gt; should upsert package without throwing" time="0.001009708">
-        </testcase>
-        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Balance &gt; should get balance without throwing" time="0.000367916">
-        </testcase>
-        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Balance &gt; should ensure balance creates record" time="0.000316334">
-        </testcase>
-        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Balance &gt; should credit tokens to user" time="0.001241417">
-        </testcase>
-        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Balance Check &gt; should check sufficient balance" time="0.000497792">
-        </testcase>
-        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Margin Updates &gt; should update margin and persist changes" time="0.0006195">
-        </testcase>
-        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Token Deduction / Usage &gt; should deduct tokens correctly for platform usage" time="0.005941375">
-        </testcase>
-        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Token Deduction / Usage &gt; should handle markup multipliers" time="0.001500958">
-        </testcase>
-        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; User API Keys (BYOK) &gt; should add, get and delete user API keys" time="0.367946584">
-        </testcase>
-        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Source Determination &gt; should prefer BYOK if available and requested" time="0.19562425">
-        </testcase>
-        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Source Determination &gt; should fallback to platform if no BYOK key" time="0.000956584">
-        </testcase>
-        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Analytics &gt; should retrieve revenue analytics" time="0.001487458">
-        </testcase>
-        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Analytics &gt; should retrieve transactions for user" time="0.001098792">
+        <testcase classname="tests/unit/backend/ragService.test.js" name="RagService - Integration &gt; getAxisDefinitions &gt; should retrieve axis definitions without throwing" time="0.001011125">
         </testcase>
     </testsuite>
-    <testsuite name="tests/unit/backend/usageService.test.js" timestamp="2025-12-13T07:49:52.529Z" hostname="MacBook-Air-Piotr.local" tests="4" failures="0" errors="0" skipped="0" time="0.261932791">
-        <testcase classname="tests/unit/backend/usageService.test.js" name="UsageService - Integration &gt; Record Usage &gt; should record token usage without throwing" time="0.00156725">
+    <testsuite name="tests/unit/backend/tokenBillingService.test.js" timestamp="2025-12-13T08:10:49.639Z" hostname="MacBook-Air-Piotr.local" tests="16" failures="0" errors="0" skipped="0" time="0.882981375">
+        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Margins &gt; should get margins without throwing" time="0.002873417">
         </testcase>
-        <testcase classname="tests/unit/backend/usageService.test.js" name="UsageService - Integration &gt; Record Usage &gt; should record storage usage without throwing" time="0.001125167">
+        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Margins &gt; should get specific margin by source type" time="0.001173084">
         </testcase>
-        <testcase classname="tests/unit/backend/usageService.test.js" name="UsageService - Integration &gt; Get Usage &gt; should get current usage without throwing" time="0.001592917">
+        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Packages &gt; should get packages without throwing" time="0.000373583">
         </testcase>
-        <testcase classname="tests/unit/backend/usageService.test.js" name="UsageService - Integration &gt; Check Quota &gt; should check quota without throwing" time="0.000922959">
+        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Packages &gt; should upsert package without throwing" time="0.001166708">
+        </testcase>
+        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Balance &gt; should get balance without throwing" time="0.000738709">
+        </testcase>
+        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Balance &gt; should ensure balance creates record" time="0.000714">
+        </testcase>
+        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Balance &gt; should credit tokens to user" time="0.012351292">
+        </testcase>
+        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Balance Check &gt; should check sufficient balance" time="0.003111834">
+        </testcase>
+        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Margin Updates &gt; should update margin and persist changes" time="0.001105083">
+        </testcase>
+        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Token Deduction / Usage &gt; should deduct tokens correctly for platform usage" time="0.023158167">
+        </testcase>
+        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Token Deduction / Usage &gt; should handle markup multipliers" time="0.008499625">
+        </testcase>
+        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; User API Keys (BYOK) &gt; should add, get and delete user API keys" time="0.1640135">
+        </testcase>
+        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Source Determination &gt; should prefer BYOK if available and requested" time="0.275147542">
+        </testcase>
+        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Source Determination &gt; should fallback to platform if no BYOK key" time="0.006180167">
+        </testcase>
+        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Analytics &gt; should retrieve revenue analytics" time="0.001576">
+        </testcase>
+        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Analytics &gt; should retrieve transactions for user" time="0.00845175">
         </testcase>
     </testsuite>
-    <testsuite name="tests/unit/backend/middleware/authMiddleware.test.js" timestamp="2025-12-13T07:49:52.529Z" hostname="MacBook-Air-Piotr.local" tests="6" failures="0" errors="0" skipped="4" time="0.006439542">
-        <testcase classname="tests/unit/backend/middleware/authMiddleware.test.js" name="AuthMiddleware &gt; should return 403 if no token provided" time="0.004189959">
+    <testsuite name="tests/unit/backend/usageService.test.js" timestamp="2025-12-13T08:10:49.642Z" hostname="MacBook-Air-Piotr.local" tests="4" failures="0" errors="0" skipped="0" time="0.31756875">
+        <testcase classname="tests/unit/backend/usageService.test.js" name="UsageService - Integration &gt; Record Usage &gt; should record token usage without throwing" time="0.002539875">
+        </testcase>
+        <testcase classname="tests/unit/backend/usageService.test.js" name="UsageService - Integration &gt; Record Usage &gt; should record storage usage without throwing" time="0.002328291">
+        </testcase>
+        <testcase classname="tests/unit/backend/usageService.test.js" name="UsageService - Integration &gt; Get Usage &gt; should get current usage without throwing" time="0.00186725">
+        </testcase>
+        <testcase classname="tests/unit/backend/usageService.test.js" name="UsageService - Integration &gt; Check Quota &gt; should check quota without throwing" time="0.001047333">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/middleware/authMiddleware.test.js" timestamp="2025-12-13T08:10:49.643Z" hostname="MacBook-Air-Piotr.local" tests="6" failures="0" errors="0" skipped="4" time="0.044087292">
+        <testcase classname="tests/unit/backend/middleware/authMiddleware.test.js" name="AuthMiddleware &gt; should return 403 if no token provided" time="0.022348833">
         </testcase>
         <testcase classname="tests/unit/backend/middleware/authMiddleware.test.js" name="AuthMiddleware &gt; should return 401 if token expired" time="0">
             <skipped/>
         </testcase>
-        <testcase classname="tests/unit/backend/middleware/authMiddleware.test.js" name="AuthMiddleware &gt; should return 401 if token invalid" time="0.000971541">
+        <testcase classname="tests/unit/backend/middleware/authMiddleware.test.js" name="AuthMiddleware &gt; should return 401 if token invalid" time="0.020138542">
         </testcase>
         <testcase classname="tests/unit/backend/middleware/authMiddleware.test.js" name="AuthMiddleware &gt; should call next() if token valid and no revocation check needed (no jti)" time="0">
             <skipped/>
