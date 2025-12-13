@@ -12,6 +12,16 @@ async function initTestDb() {
     await db.initPromise;
     // Clear mock flag if set
     delete process.env.MOCK_DB;
+
+    // IMPORTANT: Enable foreign key constraints for proper testing
+    return new Promise((resolve, reject) => {
+        db.run('PRAGMA foreign_keys = ON', (err) => {
+            if (err) {
+                console.warn('Could not enable foreign keys:', err.message);
+            }
+            resolve();
+        });
+    });
 }
 
 /**
@@ -24,15 +34,15 @@ async function cleanTables(tables) {
             // Disable foreign keys temporarily for faster cleanup
             db.run('PRAGMA foreign_keys = OFF', (err) => {
                 if (err) return reject(err);
-                
+
                 let completed = 0;
                 const total = tables.length;
-                
+
                 if (total === 0) {
                     db.run('PRAGMA foreign_keys = ON', () => resolve());
                     return;
                 }
-                
+
                 tables.forEach(table => {
                     db.run(`DELETE FROM ${table}`, (err) => {
                         if (err && !err.message.includes('no such table')) {
@@ -66,7 +76,7 @@ async function cleanAllTestTables() {
         'sessions',
         'settings',
     ];
-    
+
     return cleanTables(testTables);
 }
 
@@ -104,10 +114,10 @@ async function createTestUser(userData) {
         lastName = 'User',
         role = 'USER',
     } = userData;
-    
+
     const bcrypt = require('bcryptjs');
     const hash = password ? bcrypt.hashSync(password, 8) : null;
-    
+
     return new Promise((resolve, reject) => {
         db.run(
             'INSERT INTO users (id, organization_id, email, password, first_name, last_name, role) VALUES (?, ?, ?, ?, ?, ?, ?)',
@@ -125,7 +135,7 @@ async function createTestUser(userData) {
  */
 function dbRun(sql, params = []) {
     return new Promise((resolve, reject) => {
-        db.run(sql, params, function(err) {
+        db.run(sql, params, function (err) {
             if (err) reject(err);
             else resolve({ lastID: this.lastID, changes: this.changes });
         });
