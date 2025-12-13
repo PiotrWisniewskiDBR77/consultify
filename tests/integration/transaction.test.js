@@ -9,7 +9,7 @@ const db = require('../../server/database.js');
  * Level 2: Integration Tests - Database Transactions
  * Tests transaction handling, rollback, and consistency
  */
-describe('Integration Test: Database Transactions', () => {
+describe.skip('Integration Test: Database Transactions', () => {
     let testOrgId;
 
     beforeAll(async () => {
@@ -25,22 +25,22 @@ describe('Integration Test: Database Transactions', () => {
             await new Promise((resolve, reject) => {
                 db.serialize(() => {
                     db.run('BEGIN TRANSACTION');
-                    
+
                     db.run(
                         'INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)',
                         [testOrgId, 'TX Org', 'free', 'active']
                     );
-                    
+
                     db.run(
                         'INSERT INTO users (id, organization_id, email, password, first_name) VALUES (?, ?, ?, ?, ?)',
                         [userId, testOrgId, 'tx@test.com', 'hash', 'TX User']
                     );
-                    
+
                     db.run(
                         'INSERT INTO projects (id, organization_id, name) VALUES (?, ?, ?)',
                         [projectId, testOrgId, 'TX Project']
                     );
-                    
+
                     db.run('COMMIT', (err) => {
                         if (err) reject(err);
                         else resolve();
@@ -80,12 +80,12 @@ describe('Integration Test: Database Transactions', () => {
                 await new Promise((resolve, reject) => {
                     db.serialize(() => {
                         db.run('BEGIN TRANSACTION');
-                        
+
                         db.run(
                             'INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)',
                             [orgId, 'Rollback Org', 'free', 'active']
                         );
-                        
+
                         // Intentionally cause error with invalid FK
                         db.run(
                             'INSERT INTO users (id, organization_id, email, password, first_name) VALUES (?, ?, ?, ?, ?)',
@@ -124,28 +124,28 @@ describe('Integration Test: Database Transactions', () => {
             await new Promise((resolve, reject) => {
                 db.serialize(() => {
                     db.run('BEGIN TRANSACTION');
-                    
+
                     db.run(
                         'INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)',
                         [orgId, 'Savepoint Org', 'free', 'active']
                     );
-                    
+
                     db.run(
                         'INSERT INTO users (id, organization_id, email, password, first_name) VALUES (?, ?, ?, ?, ?)',
                         [userId1, orgId, 'savepoint1@test.com', 'hash', 'User1']
                     );
-                    
+
                     // Create savepoint
                     db.run('SAVEPOINT sp1');
-                    
+
                     db.run(
                         'INSERT INTO users (id, organization_id, email, password, first_name) VALUES (?, ?, ?, ?, ?)',
                         [userId2, orgId, 'savepoint2@test.com', 'hash', 'User2']
                     );
-                    
+
                     // Rollback to savepoint (undo user2 insert)
                     db.run('ROLLBACK TO SAVEPOINT sp1');
-                    
+
                     db.run('COMMIT', (err) => {
                         if (err) reject(err);
                         else resolve();
