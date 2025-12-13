@@ -21,46 +21,41 @@ test.describe('Navigation Smoke Test', () => {
 
     for (const pageInfo of pages) {
         test(`should navigate to ${pageInfo.name}`, async ({ page }) => {
-            // Dictionary of special locations for items not in the main <nav>
-            const locationMap: Record<string, string> = {
-                'Admin Panel': 'text="Admin Panel"',
-                'Projects': 'text="Projects"',
-                'Settings': 'text="Settings"'
-            };
-
             // Hover sidebar to ensure it is expanded/visible
-            // Target the fixed sidebar container explicitly
             await page.hover('div.fixed.z-50');
-            await page.waitForTimeout(500); // Allow for expansion animation
+            await page.waitForTimeout(500);
 
-            // Wait for sidebar to expand (CONSULTIFY header text appears)
-            try {
-                await page.waitForSelector('text="CONSULTIFY"', { timeout: 2000 });
-            } catch (e) {
-                console.log('Sidebar failed to expand on hover, attempting fallback click if possible');
-            }
+            if (pageInfo.name === 'Settings') {
+                // Settings is a floating menu in bottom section
+                // Hover the Settings button/icon
+                // We use the text 'Settings' which appears when sidebar is expanded
+                await page.hover('text=Settings');
 
-            // Expand parent if needed and not already visible
-            if (pageInfo.parent) {
-                // If the parent section is collapsed, click to expand it
-                const linkSelector = locationMap[pageInfo.link] || `nav >> text="${pageInfo.link}"`;
-
-                // Check visibility with loose timeout to avoid immediate fail
-                if (!(await page.isVisible(linkSelector))) {
-                    const parentSelector = locationMap[pageInfo.parent] || `nav >> text="${pageInfo.parent}"`;
-                    await page.waitForSelector(parentSelector);
-                    await page.click(parentSelector);
-                    await page.waitForTimeout(300); // Wait for submenu animation
+                // Wait for floating menu and click 'My Profile'
+                await page.waitForSelector('text=My Profile', { state: 'visible' });
+                await page.click('text=My Profile');
+            } else {
+                // Standard Sidebar Navigation
+                if (pageInfo.parent) {
+                    // Check if parent is already expanded or visible
+                    const linkSelector = `nav >> text="${pageInfo.link}"`;
+                    if (!(await page.isVisible(linkSelector))) {
+                        // Expand parent
+                        // e.g. "3. Initiatives & Roadmap"
+                        const parentSelector = `nav >> text="${pageInfo.parent}"`;
+                        if (await page.isVisible(parentSelector)) {
+                            await page.click(parentSelector);
+                            await page.waitForTimeout(300);
+                        }
+                    }
                 }
+
+                // Click link
+                const linkSelector = `nav >> text="${pageInfo.link}"`;
+                await page.click(linkSelector);
             }
 
-            // Navigate
-            const linkSelector = locationMap[pageInfo.link] || `nav >> text="${pageInfo.link}"`;
-            await page.waitForSelector(linkSelector);
-            await page.click(linkSelector);
-
-            // Verify main header or content exists
-            // Check for both h1 and breadcrumbs/spans
+            // Verify
             await expect(page.locator(`text="${pageInfo.expectedText}"`).first()).toBeVisible();
         });
     }

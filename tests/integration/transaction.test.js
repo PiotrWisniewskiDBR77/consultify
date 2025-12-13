@@ -9,11 +9,13 @@ const db = require('../../server/database.js');
  * Level 2: Integration Tests - Database Transactions
  * Tests transaction handling, rollback, and consistency
  */
-describe.skip('Integration Test: Database Transactions', () => {
+describe('Integration Test: Database Transactions', () => {
     let testOrgId;
 
     beforeAll(async () => {
         await db.initPromise;
+        // Enable FKs for this test suite to ensure rollback works on constraint violation
+        await new Promise(resolve => db.run('PRAGMA foreign_keys = ON;', resolve));
         testOrgId = 'tx-org-' + Date.now();
     });
 

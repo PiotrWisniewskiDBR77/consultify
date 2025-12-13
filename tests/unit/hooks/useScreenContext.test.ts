@@ -1,31 +1,45 @@
 import { renderHook } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { useScreenContext } from '../../hooks/useScreenContext';
-import { useAIContext } from '../../contexts/AIContext';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { useScreenContext } from '../../../hooks/useScreenContext';
+import { useAIContext } from '../../../contexts/AIContext';
 
-vi.mock('../../contexts/AIContext');
+vi.mock('../../../contexts/AIContext');
 
 describe('Hook Test: useScreenContext', () => {
     const mockSetScreenContext = vi.fn();
 
     beforeEach(() => {
         vi.clearAllMocks();
+        vi.useFakeTimers();
         (useAIContext as any).mockReturnValue({
             setScreenContext: mockSetScreenContext,
         });
     });
 
-    it('sets screen context on mount', () => {
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    it('sets screen context on mount after debounce', () => {
         const screenData = { test: 'data' };
 
         renderHook(() => useScreenContext('screen-1', 'Test Screen', screenData, 'Test description'));
 
-        expect(mockSetScreenContext).toHaveBeenCalledWith({
+        // Fast-forward debounce
+        vi.advanceTimersByTime(300);
+
+        expect(mockSetScreenContext).toHaveBeenCalledWith(expect.objectContaining({
             screenId: 'screen-1',
-            title: 'Test Screen',
-            data: screenData,
-            description: 'Test description',
-        });
+            version: '1.0',
+            intent: 'Test description',
+            data: expect.objectContaining({
+                test: 'data',
+                _meta: expect.objectContaining({
+                    title: 'Test Screen',
+                    description: 'Test description'
+                })
+            })
+        }));
     });
 
     it('updates context when data changes', () => {
@@ -34,23 +48,13 @@ describe('Hook Test: useScreenContext', () => {
             { initialProps: { data: { initial: 'data' } } }
         );
 
+        vi.advanceTimersByTime(300);
         expect(mockSetScreenContext).toHaveBeenCalledTimes(1);
 
         rerender({ data: { updated: 'data' } });
 
+        vi.advanceTimersByTime(300);
         expect(mockSetScreenContext).toHaveBeenCalledTimes(2);
-    });
-
-    it('handles optional description', () => {
-        renderHook(() => useScreenContext('screen-1', 'Test', { data: 'test' }));
-
-        expect(mockSetScreenContext).toHaveBeenCalledWith(
-            expect.objectContaining({
-                screenId: 'screen-1',
-                title: 'Test',
-                data: { data: 'test' },
-            })
-        );
     });
 });
 

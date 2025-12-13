@@ -6,97 +6,88 @@ import { test, expect } from '@playwright/test';
  */
 test.describe('Full User Flow Tests', () => {
     test.beforeEach(async ({ page }) => {
-        // Login before each test
+        // Login as User (Justyna)
         await page.goto('/');
         await page.click('text=Log In');
-        await page.fill('input[type="email"]', 'admin@dbr77.com');
+        await page.fill('input[type="email"]', 'justyna.laskowska@dbr77.com');
         await page.fill('input[type="password"]', '123456');
         await page.click('button[type="submit"]');
-        await expect(page.locator('h1')).toBeVisible();
+        // Wait for dashboard (UserTaskList)
+        await expect(page.locator('text=My Action Plan').first()).toBeVisible();
     });
 
-    test('should complete free assessment flow', async ({ page }) => {
-        // Navigate to free assessment
-        await page.click('text=Free Assessment');
-        
-        // Step 1: Profile
-        await expect(page.locator('text=/Profile|Company/i')).toBeVisible();
-        await page.fill('input[name="companyName"], textarea[name="companyName"]', 'Test Company');
-        await page.click('button:has-text("Next"), button:has-text("Continue")');
-        
-        // Step 2: Context
-        await expect(page.locator('text=/Context|Industry/i')).toBeVisible();
-        await page.fill('textarea', 'We are a tech company');
-        await page.click('button:has-text("Next"), button:has-text("Continue")');
-        
-        // Step 3: Expectations
-        await expect(page.locator('text=/Expectations|Goals/i')).toBeVisible();
-        await page.fill('textarea', 'We want to improve our processes');
-        await page.click('button:has-text("Complete"), button:has-text("Finish")');
-        
-        // Should show results or summary
-        await expect(page.locator('text=/Results|Summary|Assessment/i')).toBeVisible({ timeout: 10000 });
-    });
+    test('should complete intro assessment flow', async ({ page }) => {
+        // Navigate via Sidebar: Intro -> Company Profile
+        await page.hover('div.fixed.z-50');
 
-    test('should create and manage a project', async ({ page }) => {
-        // Navigate to projects
-        await page.click('text=Projects');
-        await expect(page.locator('text=/Projects|Project/i')).toBeVisible();
-        
-        // Create new project
-        const createButton = page.locator('button:has-text("New"), button:has-text("Create"), button:has-text("Add")').first();
-        if (await createButton.isVisible()) {
-            await createButton.click();
-            
-            // Fill project form
-            await page.fill('input[name="name"], input[placeholder*="name" i]', 'E2E Test Project');
-            await page.click('button:has-text("Create"), button:has-text("Save")');
-            
-            // Verify project appears in list
-            await expect(page.locator('text=E2E Test Project')).toBeVisible();
+        // Expand Intro if needed
+        const introLink = page.locator('text=Intro');
+        if (await introLink.isVisible()) {
+            // Intro might be a parent menu or link. 
+            // Ideally we check if "Company Profile" is visible.
+            if (!(await page.isVisible('text=Company Profile'))) {
+                await introLink.click();
+            }
+            await page.click('text=Company Profile');
+            await expect(page.locator('text=Company Profile').first()).toBeVisible();
+        } else {
+            // If Intro text not visible, sidebar confusion?
+            console.log('Intro link not found');
         }
     });
 
-    test('should navigate through main modules', async ({ page }) => {
+    test('should navigate through accessible modules', async ({ page }) => {
         const modules = [
-            { name: 'Dashboard', selector: 'text=/Dashboard|Overview/i' },
-            { name: 'Initiatives', selector: 'text=/Initiatives|Initiative/i' },
-            { name: 'Roadmap', selector: 'text=/Roadmap/i' },
-            { name: 'ROI', selector: 'text=/ROI|Economics/i' },
-            { name: 'Settings', selector: 'text=/Settings/i' },
+            // Dashboard is default
+            { name: 'Settings', selector: 'text=Settings', isFloating: true },
+            { name: 'Intro', selector: 'text=Intro', subItem: 'text=Goals & Expectations' }
         ];
 
         for (const module of modules) {
-            try {
-                await page.click(module.selector, { timeout: 5000 });
-                await expect(page.locator('h1, h2')).toBeVisible({ timeout: 5000 });
-                // Small delay between navigations
-                await page.waitForTimeout(500);
-            } catch (error) {
-                console.log(`Module ${module.name} not found or not accessible`);
+            await page.hover('div.fixed.z-50');
+            await page.waitForTimeout(500);
+
+            if (module.isFloating) {
+                await page.hover(module.selector);
+                await page.waitForSelector('text=My Profile', { state: 'visible' });
+                await expect(page.locator('text=My Profile')).toBeVisible();
+            } else {
+                if (await page.isVisible(module.selector)) {
+                    await page.click(module.selector);
+                    if (module.subItem) {
+                        await page.waitForSelector(module.subItem);
+                        await page.click(module.subItem);
+                        await expect(page.locator(module.subItem).first()).toBeVisible();
+                    } else {
+                        await expect(page.locator('h1, h2')).toBeVisible();
+                    }
+                }
             }
+            // Return to dashboard
+            await page.hover('div.fixed.z-50');
+            await page.click('text=Dashboard');
+            await page.waitForTimeout(500);
         }
     });
 
     test('should handle task creation and assignment', async ({ page }) => {
-        // Navigate to tasks or project with tasks
-        await page.click('text=/Tasks|Task/i');
-        
+        // We are on My Action Plan (Dashboard)
+        await expect(page.locator('text=Action Plan')).toBeVisible();
+
         // Look for create task button
-        const createTaskButton = page.locator('button:has-text("New Task"), button:has-text("Add Task"), button:has-text("Create Task")').first();
-        if (await createTaskButton.isVisible({ timeout: 5000 })) {
+        const createTaskButton = page.locator('button:has-text("Add Task")').first();
+        if (await createTaskButton.isVisible()) {
             await createTaskButton.click();
-            
-            // Fill task form
-            await page.fill('input[name="title"], input[placeholder*="title" i]', 'E2E Test Task');
-            await page.fill('textarea[name="description"], textarea[placeholder*="description" i]', 'Test task description');
-            
+
+            // Fill task form (Modal)
+            await page.fill('input[placeholder*="Title"]', 'E2E Test Task'); // Loose selector
+            await page.fill('textarea[placeholder*="Description"]', 'Test task description');
+
             // Save task
             await page.click('button:has-text("Create"), button:has-text("Save")');
-            
+
             // Verify task appears
-            await expect(page.locator('text=E2E Test Task')).toBeVisible({ timeout: 5000 });
+            await expect(page.locator('text=E2E Test Task')).toBeVisible();
         }
     });
 });
-

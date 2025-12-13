@@ -1,11 +1,11 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { useAIStream } from '../../hooks/useAIStream';
-import { useAppStore } from '../../store/useAppStore';
-import { Api } from '../../services/api';
+import { useAIStream } from '../../../hooks/useAIStream';
+import { useAppStore } from '../../../store/useAppStore';
+import { Api } from '../../../services/api';
 
-vi.mock('../../store/useAppStore');
-vi.mock('../../services/api');
+vi.mock('../../../store/useAppStore');
+vi.mock('../../../services/api');
 
 describe('Hook Test: useAIStream', () => {
     const mockUpdateLastChatMessage = vi.fn();

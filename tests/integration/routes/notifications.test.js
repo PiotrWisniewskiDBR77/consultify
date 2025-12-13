@@ -12,7 +12,7 @@ const { initTestDb } = require('../../helpers/dbHelper.cjs');
  * Level 2: Integration Tests - Notifications Routes
  * Tests notifications API endpoints
  */
-describe.skip('Integration Test: Notifications Routes', () => {
+describe('Integration Test: Notifications Routes', () => {
     let authToken;
     const testId = Date.now();
     const testOrgId = `notifications-org-${testId}`;

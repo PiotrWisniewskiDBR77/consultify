@@ -4,7 +4,7 @@ const runLoadTest = () => {
     console.log('Running Level 5: Performance Load Test...');
 
     const instance = autocannon({
-        url: 'http://localhost:3001/api/health',
+        url: 'http://localhost:3005/api/health',
         connections: 10, // default
         pipelining: 1, // default
         duration: 10, // default

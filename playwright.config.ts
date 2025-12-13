@@ -6,7 +6,7 @@ export default defineConfig({
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 2 : 0,
     workers: process.env.CI ? 1 : undefined,
-    reporter: 'html',
+    reporter: [['list'], ['junit', { outputFile: 'e2e-results.xml' }]],
     use: {
         baseURL: 'http://localhost:3000',
         trace: 'retain-on-failure',
@@ -27,7 +27,7 @@ export default defineConfig({
         },
     ],
     webServer: {
-        command: 'npm run dev:backend & npm run dev',
+        command: 'npm run dev',
         url: 'http://localhost:3000',
         reuseExistingServer: !process.env.CI,
         timeout: 120000, // 2 minutes to start

@@ -25,7 +25,8 @@ const deps = {
     WebSearchService,
     FeedbackService,
     KnowledgeService,
-    ModelRouter, // Add Router to deps
+    ModelRouter,
+    aiQueue, // Add Queue to deps
     OpenAI: null // Allow injection of OpenAI for testing
 };
 
@@ -61,7 +62,7 @@ const AiService = {
     // --- ASYNC QUEUE SUPPORT ---
     queueTask: async (taskType, payload, userId) => {
         // Enqueue job to BullMQ
-        const job = await aiQueue.add(taskType, {
+        const job = await deps.aiQueue.add(taskType, {
             taskType,
             payload,
             userId
@@ -70,7 +71,7 @@ const AiService = {
     },
 
     getJobStatus: async (jobId) => {
-        const job = await aiQueue.getJob(jobId);
+        const job = await deps.aiQueue.getJob(jobId);
         if (!job) return null;
 
         const state = await job.getState();
@@ -535,10 +536,10 @@ const AiService = {
         if (organizationId) {
             // A. Hard Facts (Name, Facilities)
             const getOrgDetails = () => new Promise((resolve) => {
-                db.get("SELECT name, industry FROM organizations WHERE id = ?", [organizationId], (err, row) => resolve(row));
+                deps.db.get("SELECT name, industry FROM organizations WHERE id = ?", [organizationId], (err, row) => resolve(row));
             });
             const getFacilities = () => new Promise((resolve) => {
-                db.all("SELECT name, headcount, location, activity_profile FROM organization_facilities WHERE organization_id = ?", [organizationId], (err, rows) => resolve(rows || []));
+                deps.db.all("SELECT name, headcount, location, activity_profile FROM organization_facilities WHERE organization_id = ?", [organizationId], (err, rows) => resolve(rows || []));
             });
             const getContext = () => new Promise((resolve) => {
                 deps.db.all("SELECT key, value FROM client_context WHERE organization_id = ? AND confidence > 0.6", [organizationId], (err, rows) => resolve(rows || []));

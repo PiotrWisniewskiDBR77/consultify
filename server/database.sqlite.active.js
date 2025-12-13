@@ -97,12 +97,17 @@ function initDb() {
 
         // Knowledge Base: Documents
         db.run(`CREATE TABLE IF NOT EXISTS knowledge_docs(
-                                                        id TEXT PRIMARY KEY,
-                                                        filename TEXT,
-                                                        filepath TEXT,
-                                                        status TEXT DEFAULT 'pending', --pending, indexed, error
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                                                    )`);
+            id TEXT PRIMARY KEY,
+            organization_id TEXT,
+            filename TEXT,
+            file_type TEXT,
+            file_size INTEGER,
+            content TEXT,
+            filepath TEXT,
+            status TEXT DEFAULT 'pending', --pending, indexed, error
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
 
         // Knowledge Base: Chunks (Simple Text Search / Vector Store Placeholder)
         db.run(`CREATE TABLE IF NOT EXISTS knowledge_chunks(

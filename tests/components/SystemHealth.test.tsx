@@ -57,19 +57,15 @@ describe('Component Test: SystemHealth', () => {
         render(<SystemHealth />);
 
         // Initial call should happen immediately on mount
-        await waitFor(() => {
-            expect(checkSystemHealthMock).toHaveBeenCalledTimes(1);
-        });
+        expect(checkSystemHealthMock).toHaveBeenCalledTimes(1);
 
-        // Advance time by 30 seconds
+        // Advance time by 30 seconds to trigger interval
         await React.act(async () => {
             vi.advanceTimersByTime(30000);
         });
 
-        // Should have called again
-        await waitFor(() => {
-            expect(checkSystemHealthMock).toHaveBeenCalledTimes(2);
-        });
+        // Should have called again immediately
+        expect(checkSystemHealthMock).toHaveBeenCalledTimes(2);
 
         vi.useRealTimers();
     });

@@ -17,7 +17,7 @@ describe('Performance Test: Stress', () => {
     describe('High Volume Operations', () => {
         it('should handle 1000 sequential inserts', async () => {
             const orgId = 'stress-org-' + Date.now();
-            
+
             // Create org first
             await new Promise((resolve) => {
                 db.run(
@@ -39,16 +39,15 @@ describe('Performance Test: Stress', () => {
                         stmt.run(`stress-task-${i}-${Date.now()}`, orgId, `Stress Task ${i}`, 'todo');
                     }
 
-                    stmt.finalize();
-                    resolve();
+                    stmt.finalize(resolve);
                 });
             });
 
             const duration = Date.now() - startTime;
-            
+
             // Should complete in reasonable time (< 10 seconds)
             expect(duration).toBeLessThan(10000);
-            
+
             // Verify count
             const count = await new Promise((resolve) => {
                 db.get(
@@ -81,7 +80,7 @@ describe('Performance Test: Stress', () => {
     describe('Memory Leak Detection', () => {
         it('should not leak memory with repeated queries', async () => {
             const initialMemory = process.memoryUsage().heapUsed;
-            
+
             // Run many queries
             for (let i = 0; i < 100; i++) {
                 await new Promise((resolve) => {
@@ -96,7 +95,7 @@ describe('Performance Test: Stress', () => {
 
             const finalMemory = process.memoryUsage().heapUsed;
             const memoryIncrease = finalMemory - initialMemory;
-            
+
             // Memory increase should be reasonable (< 50MB)
             expect(memoryIncrease).toBeLessThan(50 * 1024 * 1024);
         });
@@ -113,7 +112,7 @@ describe('Performance Test: Stress', () => {
             );
 
             const results = await Promise.all(connections);
-            
+
             expect(results.length).toBe(100);
             results.forEach(result => {
                 expect(result).toBe(1);

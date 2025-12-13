@@ -1,8 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vitest';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-const AIService = require('../../../server/services/aiService.js');
+import AIService from '../../../server/services/aiService.js';
 
 // Mock dependencies
 const mockDb = {
@@ -69,7 +66,8 @@ describe('AIService Unit Tests', () => {
             TokenBillingService: mockTokenBillingService,
             AnalyticsService: mockAnalyticsService,
             FeedbackService: mockFeedbackService,
-            GoogleGenerativeAI: mockGoogleGenerativeAI
+            GoogleGenerativeAI: mockGoogleGenerativeAI,
+            aiQueue: mockAiQueue
         });
 
         // Mock Global Fetch
@@ -357,98 +355,231 @@ describe('AIService Unit Tests', () => {
             });
         });
     });
-});
 
 
-describe('enhancePrompt', () => {
-    it('should return base system role when no extras found', async () => {
-        mockDb.get.mockImplementation((query, params, cb) => {
-            if (query.includes('FROM system_prompts')) {
-                cb(null, null); // No override
+
+    describe('enhancePrompt', () => {
+        it('should return base system role when no extras found', async () => {
+            mockDb.get.mockImplementation((...args) => {
+                const cb = args[args.length - 1];
+                const query = args[0];
+                if (typeof cb === 'function') {
+                    if (query.includes('FROM system_prompts')) {
+                        cb(null, null); // No override
+                    }
+                }
+            });
+            mockFeedbackService.getLearningExamples.mockResolvedValue('');
+            mockDb.all.mockImplementation((...args) => {
+                const cb = args[args.length - 1];
+                if (typeof cb === 'function') cb(null, []);
+            });
+
+            const prompt = await AIService.enhancePrompt('CONSULTANT', 'chat');
+            expect(prompt).toContain('You are a Senior Digital Transformation Consultant');
+        });
+
+        it('should inject global strategies', async () => {
+            mockDb.all.mockImplementation((...args) => {
+                const query = args[0];
+                const cb = args[args.length - 1];
+
+                if (query.includes('global_strategies')) {
+                    cb(null, [{ title: 'Strat 1', description: 'Desc 1' }]);
+                } else {
+                    cb(null, []);
+                }
+            });
+
+            const prompt = await AIService.enhancePrompt('CONSULTANT', 'chat');
+            expect(prompt).toContain('GLOBAL STRATEGIC PRIORITIES');
+            expect(prompt).toContain('Strat 1: Desc 1');
+        });
+
+        it('should inject client context when orgId provided', async () => {
+            mockDb.get.mockImplementation((...args) => {
+                const query = args[0];
+                const cb = args[args.length - 1];
+
+                if (query.includes('FROM organizations')) {
+                    cb(null, { name: 'Test Org', industry: 'Tech' });
+                } else {
+                    cb(null, null);
+                }
+            });
+
+            mockDb.all.mockImplementation((...args) => {
+                const query = args[0];
+                const cb = args[args.length - 1];
+
+                if (query.includes('client_context')) {
+                    cb(null, [{ key: 'Culture', value: 'Agile' }]);
+                } else {
+                    cb(null, []);
+                }
+            });
+
+            const prompt = await AIService.enhancePrompt('CONSULTANT', 'chat', 'org-1');
+            expect(prompt).toContain('CLIENT PROFILE');
+            expect(prompt).toContain('Name: Test Org');
+            expect(prompt).toContain('Industry: Tech');
+            expect(prompt).toContain('CLIENT SPECIFIC CONTEXT');
+            expect(prompt).toContain('Culture: Agile');
+        });
+    });
+
+    describe('Queue Operations', () => {
+        it('should enqueue task and return jobId', async () => {
+            const result = await AIService.queueTask('generate-report', { data: 1 }, 'user-1');
+            expect(mockAiQueue.add).toHaveBeenCalledWith('generate-report', {
+                taskType: 'generate-report',
+                payload: { data: 1 },
+                userId: 'user-1'
+            });
+            expect(result).toEqual({ jobId: 'job-123', status: 'queued' });
+        });
+
+        it('should get job status', async () => {
+            const mockJob = {
+                id: 'job-123',
+                getState: vi.fn().mockResolvedValue('completed'),
+                returnvalue: { result: 'ok' },
+                failedReason: null,
+                progress: 100
+            };
+            mockAiQueue.getJob.mockResolvedValue(mockJob);
+
+            const status = await AIService.getJobStatus('job-123');
+            expect(status).toEqual({
+                id: 'job-123',
+                state: 'completed',
+                result: { result: 'ok' },
+                error: null,
+                progress: 100
+            });
+        });
+
+        it('should return null for non-existent job', async () => {
+            mockAiQueue.getJob.mockResolvedValue(null);
+            const status = await AIService.getJobStatus('job-missing');
+            expect(status).toBeNull();
+        });
+    });
+
+    describe('Vision Capabilities', () => {
+        it('should format payload correctly for OpenAI Vision', async () => {
+            mockDb.get.mockImplementation((...args) => {
+                const cb = args[args.length - 1];
+                cb(null, { provider: 'openai', api_key: 'sk-vis', model_id: 'gpt-4-vision' });
+            });
+
+            const fetchSpy = vi.fn().mockResolvedValue({
+                ok: true,
+                json: async () => ({ choices: [{ message: { content: 'Image analysis' } }] })
+            });
+            global.fetch = fetchSpy;
+
+            await AIService.callLLM('Analyze this', '', [], 'prov-1', 'user-1', 'chat', ['base64image...']);
+
+            const callArgs = fetchSpy.mock.calls[0];
+            const body = JSON.parse(callArgs[1].body);
+
+            expect(body.messages[0].content).toHaveLength(2); // Text + Image
+            expect(body.messages[0].content[1].type).toBe('image_url');
+            expect(body.messages[0].content[1].image_url.url).toContain('base64image...');
+        });
+
+        it('should use Gemini 1.5 Flash for vision fallback', async () => {
+            // Force fallback
+            mockDb.get.mockImplementation((...args) => args[args.length - 1](null, null));
+            process.env.GEMINI_API_KEY = 'test-key';
+
+            mockGenerativeModel.generateContent = vi.fn().mockResolvedValue({
+                response: { text: () => 'Gemini Vision Result' }
+            });
+
+            await AIService.callLLM('Look', '', [], null, 'user-1', 'chat', ['img']);
+
+            // Should get model gemini-1.5-flash
+            // We can't easily check the model string since it's inside the class instance usage
+            // But we can check generateContent was called
+            expect(mockGenerativeModel.generateContent).toHaveBeenCalled();
+        });
+    });
+
+    describe('Advanced Streaming', () => {
+        it('should parse OpenAI SSE stream correctly', async () => {
+            mockDb.get.mockImplementation((...args) => {
+                const cb = args[args.length - 1];
+                cb(null, { provider: 'openai', api_key: 'sk-stream', model_id: 'gpt-4' });
+            });
+
+            // Mock ReadableStream
+            const streamChunks = [
+                'data: {"choices":[{"delta":{"content":"Hello"}}]}\n\n',
+                'data: {"choices":[{"delta":{"content":" World"}}]}\n\n',
+                'data: [DONE]\n\n'
+            ];
+
+            const mockReader = {
+                read: vi.fn()
+                    .mockResolvedValueOnce({ value: new TextEncoder().encode(streamChunks[0]), done: false })
+                    .mockResolvedValueOnce({ value: new TextEncoder().encode(streamChunks[1]), done: false })
+                    .mockResolvedValueOnce({ value: undefined, done: true })
+            };
+
+            global.fetch = vi.fn().mockResolvedValue({
+                ok: true,
+                body: { getReader: () => mockReader }
+            });
+
+            const iterator = AIService.streamLLM('Hi', '', [], 'prov-1', 'user-1');
+            const chunks = [];
+            for await (const chunk of iterator) {
+                chunks.push(chunk);
             }
+
+            expect(chunks.join('')).toBe('Hello World');
         });
-        mockFeedbackService.getLearningExamples.mockResolvedValue('');
-        mockDb.all.mockImplementation((q, p, cb) => cb(null, [])); // No strategies
 
-        const prompt = await AIService.enhancePrompt('CONSULTANT', 'chat');
-        expect(prompt).toContain('You are a Senior Digital Transformation Consultant');
-    });
+        it('should handle OpenAI stream error', async () => {
+            global.fetch = vi.fn().mockResolvedValue({
+                ok: false,
+                statusText: 'Rate Limit'
+            });
 
-    it('should inject global strategies', async () => {
-        mockDb.all.mockImplementation((query, params, cb) => {
-            if (query.includes('global_strategies')) {
-                cb(null, [{ title: 'Strat 1', description: 'Desc 1' }]);
-            } else {
-                cb(null, []);
+            const iterator = AIService.streamLLM('Hi', '', [], 'prov-1', 'user-1');
+            const chunks = [];
+            for await (const chunk of iterator) {
+                chunks.push(chunk);
             }
-        });
 
-        const prompt = await AIService.enhancePrompt('CONSULTANT', 'chat');
-        expect(prompt).toContain('GLOBAL STRATEGIC PRIORITIES');
-        expect(prompt).toContain('Strat 1: Desc 1');
-    });
-
-    it('should inject client context when orgId provided', async () => {
-        mockDb.get.mockImplementation((query, params, cb) => {
-            if (query.includes('FROM organizations')) {
-                cb(null, { name: 'Test Org', industry: 'Tech' });
-            } else {
-                cb(null, null);
-            }
-        });
-
-        mockDb.all.mockImplementation((query, params, cb) => {
-            if (query.includes('client_context')) {
-                cb(null, [{ key: 'Culture', value: 'Agile' }]);
-            } else {
-                cb(null, []);
-            }
-        });
-
-        const prompt = await AIService.enhancePrompt('CONSULTANT', 'chat', 'org-1');
-        expect(prompt).toContain('CLIENT PROFILE');
-        expect(prompt).toContain('Name: Test Org');
-        expect(prompt).toContain('Industry: Tech');
-        expect(prompt).toContain('CLIENT SPECIFIC CONTEXT');
-        expect(prompt).toContain('Culture: Agile');
-    });
-});
-
-describe('Queue Operations', () => {
-    it('should enqueue task and return jobId', async () => {
-        const result = await AIService.queueTask('generate-report', { data: 1 }, 'user-1');
-        expect(mockAiQueue.add).toHaveBeenCalledWith('generate-report', {
-            taskType: 'generate-report',
-            payload: { data: 1 },
-            userId: 'user-1'
-        });
-        expect(result).toEqual({ jobId: 'job-123', status: 'queued' });
-    });
-
-    it('should get job status', async () => {
-        const mockJob = {
-            id: 'job-123',
-            getState: vi.fn().mockResolvedValue('completed'),
-            returnvalue: { result: 'ok' },
-            failedReason: null,
-            progress: 100
-        };
-        mockAiQueue.getJob.mockResolvedValue(mockJob);
-
-        const status = await AIService.getJobStatus('job-123');
-        expect(status).toEqual({
-            id: 'job-123',
-            state: 'completed',
-            result: { result: 'ok' },
-            error: null,
-            progress: 100
+            expect(chunks[0]).toContain('[Error generating response]');
         });
     });
 
-    it('should return null for non-existent job', async () => {
-        mockAiQueue.getJob.mockResolvedValue(null);
-        const status = await AIService.getJobStatus('job-missing');
-        expect(status).toBeNull();
+    describe('Provider Integrations', () => {
+        it('should generate JWT for Zhipu AI provider', async () => {
+            mockDb.get.mockImplementation((...args) => {
+                args[args.length - 1](null, { provider: 'z_ai', api_key: 'id.secret', model_id: 'glm-4' });
+            });
+
+            const fetchSpy = vi.fn().mockResolvedValue({
+                ok: true,
+                json: async () => ({ choices: [{ message: { content: 'Zhipu Response' } }] })
+            });
+            global.fetch = fetchSpy;
+
+            await AIService.callLLM('Test', '', [], 'zhipu-1', 'user-1');
+
+            const callArgs = fetchSpy.mock.calls[0];
+            const headers = callArgs[1].headers;
+            expect(headers['Authorization']).not.toBe('Bearer id.secret');
+            // JWT usually does not start with Bearer if just signed, code says: 
+            // authHeader = jwt.sign(...) -> NOT Bearer ...
+            // Wait, code: authHeader = jwt.sign(...)
+            // headers: { ... 'Authorization': authHeader }
+            expect(headers['Authorization']).toMatch(/^ey/);
+        });
     });
-});
 });

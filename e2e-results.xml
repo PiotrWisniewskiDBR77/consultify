@@ -1,0 +1,491 @@
+<testsuites id="" name="" tests="36" failures="9" skipped="0" errors="0" time="98.120745">
+<testsuite name="auth.spec.ts" timestamp="2025-12-13T09:25:37.083Z" hostname="chromium" tests="3" failures="0" skipped="0" time="9.249" errors="0">
+<testcase name="Authentication Flow › should login successfully with valid credentials" classname="auth.spec.ts" time="3.052">
+</testcase>
+<testcase name="Authentication Flow › should show error with invalid credentials" classname="auth.spec.ts" time="3.161">
+</testcase>
+<testcase name="Authentication Flow › should logout successfully" classname="auth.spec.ts" time="3.036">
+</testcase>
+</testsuite>
+<testsuite name="basic.spec.ts" timestamp="2025-12-13T09:25:37.083Z" hostname="chromium" tests="1" failures="0" skipped="0" time="2.151" errors="0">
+<testcase name="Level 4: E2E - App Loads" classname="basic.spec.ts" time="2.151">
+</testcase>
+</testsuite>
+<testsuite name="fullFlow.spec.ts" timestamp="2025-12-13T09:25:37.083Z" hostname="chromium" tests="3" failures="3" skipped="0" time="90.361" errors="0">
+<testcase name="Full User Flow Tests › should complete intro assessment flow" classname="fullFlow.spec.ts" time="30.075">
+<failure message="fullFlow.spec.ts:19:5 should complete intro assessment flow" type="FAILURE">
+<![CDATA[  [chromium] › fullFlow.spec.ts:19:5 › Full User Flow Tests › should complete intro assessment flow 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.hover: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('div.fixed.z-50')
+
+
+      19 |     test('should complete intro assessment flow', async ({ page }) => {
+      20 |         // Navigate via Sidebar: Intro -> Company Profile
+    > 21 |         await page.hover('div.fixed.z-50');
+         |                    ^
+      22 |
+      23 |         // Expand Intro if needed
+      24 |         const introLink = page.locator('text=Intro');
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/fullFlow.spec.ts:21:20
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/fullFlow-Full-User-Flow-Te-f0d87-plete-intro-assessment-flow-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/fullFlow-Full-User-Flow-Te-f0d87-plete-intro-assessment-flow-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/fullFlow-Full-User-Flow-Te-f0d87-plete-intro-assessment-flow-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/fullFlow-Full-User-Flow-Te-f0d87-plete-intro-assessment-flow-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/fullFlow-Full-User-Flow-Te-f0d87-plete-intro-assessment-flow-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|test-results/fullFlow-Full-User-Flow-Te-f0d87-plete-intro-assessment-flow-chromium/error-context.md]]
+
+[[ATTACHMENT|test-results/fullFlow-Full-User-Flow-Te-f0d87-plete-intro-assessment-flow-chromium/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Full User Flow Tests › should navigate through accessible modules" classname="fullFlow.spec.ts" time="30.092">
+<failure message="fullFlow.spec.ts:39:5 should navigate through accessible modules" type="FAILURE">
+<![CDATA[  [chromium] › fullFlow.spec.ts:39:5 › Full User Flow Tests › should navigate through accessible modules 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.hover: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('div.fixed.z-50')
+
+
+      45 |
+      46 |         for (const module of modules) {
+    > 47 |             await page.hover('div.fixed.z-50');
+         |                        ^
+      48 |             await page.waitForTimeout(500);
+      49 |
+      50 |             if (module.isFloating) {
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/fullFlow.spec.ts:47:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/fullFlow-Full-User-Flow-Te-54dfb--through-accessible-modules-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/fullFlow-Full-User-Flow-Te-54dfb--through-accessible-modules-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/fullFlow-Full-User-Flow-Te-54dfb--through-accessible-modules-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/fullFlow-Full-User-Flow-Te-54dfb--through-accessible-modules-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/fullFlow-Full-User-Flow-Te-54dfb--through-accessible-modules-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|test-results/fullFlow-Full-User-Flow-Te-54dfb--through-accessible-modules-chromium/error-context.md]]
+
+[[ATTACHMENT|test-results/fullFlow-Full-User-Flow-Te-54dfb--through-accessible-modules-chromium/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Full User Flow Tests › should handle task creation and assignment" classname="fullFlow.spec.ts" time="30.194">
+<failure message="fullFlow.spec.ts:73:5 should handle task creation and assignment" type="FAILURE">
+<![CDATA[  [chromium] › fullFlow.spec.ts:73:5 › Full User Flow Tests › should handle task creation and assignment 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.fill: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('textarea[placeholder*="Description"]')
+
+
+      82 |             // Fill task form (Modal)
+      83 |             await page.fill('input[placeholder*="Title"]', 'E2E Test Task'); // Loose selector
+    > 84 |             await page.fill('textarea[placeholder*="Description"]', 'Test task description');
+         |                        ^
+      85 |
+      86 |             // Save task
+      87 |             await page.click('button:has-text("Create"), button:has-text("Save")');
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/fullFlow.spec.ts:84:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/fullFlow-Full-User-Flow-Te-f7698-ask-creation-and-assignment-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/fullFlow-Full-User-Flow-Te-f7698-ask-creation-and-assignment-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/fullFlow-Full-User-Flow-Te-f7698-ask-creation-and-assignment-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/fullFlow-Full-User-Flow-Te-f7698-ask-creation-and-assignment-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/fullFlow-Full-User-Flow-Te-f7698-ask-creation-and-assignment-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|test-results/fullFlow-Full-User-Flow-Te-f7698-ask-creation-and-assignment-chromium/error-context.md]]
+
+[[ATTACHMENT|test-results/fullFlow-Full-User-Flow-Te-f7698-ask-creation-and-assignment-chromium/trace.zip]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="navigation.spec.ts" timestamp="2025-12-13T09:25:37.083Z" hostname="chromium" tests="4" failures="0" skipped="0" time="7.781" errors="0">
+<testcase name="Navigation Smoke Test › should navigate to Roadmap" classname="navigation.spec.ts" time="2.738">
+</testcase>
+<testcase name="Navigation Smoke Test › should navigate to Initiatives" classname="navigation.spec.ts" time="1.754">
+</testcase>
+<testcase name="Navigation Smoke Test › should navigate to Projects" classname="navigation.spec.ts" time="1.467">
+</testcase>
+<testcase name="Navigation Smoke Test › should navigate to Settings" classname="navigation.spec.ts" time="1.822">
+</testcase>
+</testsuite>
+<testsuite name="projects.spec.ts" timestamp="2025-12-13T09:25:37.083Z" hostname="chromium" tests="1" failures="0" skipped="0" time="3.419" errors="0">
+<testcase name="Project Management › should create a new project" classname="projects.spec.ts" time="3.419">
+</testcase>
+</testsuite>
+<testsuite name="auth.spec.ts" timestamp="2025-12-13T09:25:37.083Z" hostname="firefox" tests="3" failures="0" skipped="0" time="3.053" errors="0">
+<testcase name="Authentication Flow › should login successfully with valid credentials" classname="auth.spec.ts" time="1.337">
+</testcase>
+<testcase name="Authentication Flow › should show error with invalid credentials" classname="auth.spec.ts" time="0.76">
+</testcase>
+<testcase name="Authentication Flow › should logout successfully" classname="auth.spec.ts" time="0.956">
+</testcase>
+</testsuite>
+<testsuite name="basic.spec.ts" timestamp="2025-12-13T09:25:37.083Z" hostname="firefox" tests="1" failures="0" skipped="0" time="0.585" errors="0">
+<testcase name="Level 4: E2E - App Loads" classname="basic.spec.ts" time="0.585">
+</testcase>
+</testsuite>
+<testsuite name="fullFlow.spec.ts" timestamp="2025-12-13T09:25:37.083Z" hostname="firefox" tests="3" failures="3" skipped="0" time="90.848" errors="0">
+<testcase name="Full User Flow Tests › should complete intro assessment flow" classname="fullFlow.spec.ts" time="30.276">
+<failure message="fullFlow.spec.ts:19:5 should complete intro assessment flow" type="FAILURE">
+<![CDATA[  [firefox] › fullFlow.spec.ts:19:5 › Full User Flow Tests › should complete intro assessment flow ─
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.hover: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('div.fixed.z-50')
+
+
+      19 |     test('should complete intro assessment flow', async ({ page }) => {
+      20 |         // Navigate via Sidebar: Intro -> Company Profile
+    > 21 |         await page.hover('div.fixed.z-50');
+         |                    ^
+      22 |
+      23 |         // Expand Intro if needed
+      24 |         const introLink = page.locator('text=Intro');
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/fullFlow.spec.ts:21:20
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/fullFlow-Full-User-Flow-Te-f0d87-plete-intro-assessment-flow-firefox/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/fullFlow-Full-User-Flow-Te-f0d87-plete-intro-assessment-flow-firefox/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/fullFlow-Full-User-Flow-Te-f0d87-plete-intro-assessment-flow-firefox/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/fullFlow-Full-User-Flow-Te-f0d87-plete-intro-assessment-flow-firefox/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/fullFlow-Full-User-Flow-Te-f0d87-plete-intro-assessment-flow-firefox/test-failed-1.png]]
+
+[[ATTACHMENT|test-results/fullFlow-Full-User-Flow-Te-f0d87-plete-intro-assessment-flow-firefox/error-context.md]]
+
+[[ATTACHMENT|test-results/fullFlow-Full-User-Flow-Te-f0d87-plete-intro-assessment-flow-firefox/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Full User Flow Tests › should navigate through accessible modules" classname="fullFlow.spec.ts" time="30.19">
+<failure message="fullFlow.spec.ts:39:5 should navigate through accessible modules" type="FAILURE">
+<![CDATA[  [firefox] › fullFlow.spec.ts:39:5 › Full User Flow Tests › should navigate through accessible modules 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.hover: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('div.fixed.z-50')
+
+
+      45 |
+      46 |         for (const module of modules) {
+    > 47 |             await page.hover('div.fixed.z-50');
+         |                        ^
+      48 |             await page.waitForTimeout(500);
+      49 |
+      50 |             if (module.isFloating) {
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/fullFlow.spec.ts:47:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/fullFlow-Full-User-Flow-Te-54dfb--through-accessible-modules-firefox/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/fullFlow-Full-User-Flow-Te-54dfb--through-accessible-modules-firefox/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/fullFlow-Full-User-Flow-Te-54dfb--through-accessible-modules-firefox/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/fullFlow-Full-User-Flow-Te-54dfb--through-accessible-modules-firefox/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/fullFlow-Full-User-Flow-Te-54dfb--through-accessible-modules-firefox/test-failed-1.png]]
+
+[[ATTACHMENT|test-results/fullFlow-Full-User-Flow-Te-54dfb--through-accessible-modules-firefox/error-context.md]]
+
+[[ATTACHMENT|test-results/fullFlow-Full-User-Flow-Te-54dfb--through-accessible-modules-firefox/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Full User Flow Tests › should handle task creation and assignment" classname="fullFlow.spec.ts" time="30.382">
+<failure message="fullFlow.spec.ts:73:5 should handle task creation and assignment" type="FAILURE">
+<![CDATA[  [firefox] › fullFlow.spec.ts:73:5 › Full User Flow Tests › should handle task creation and assignment 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.fill: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('textarea[placeholder*="Description"]')
+
+
+      82 |             // Fill task form (Modal)
+      83 |             await page.fill('input[placeholder*="Title"]', 'E2E Test Task'); // Loose selector
+    > 84 |             await page.fill('textarea[placeholder*="Description"]', 'Test task description');
+         |                        ^
+      85 |
+      86 |             // Save task
+      87 |             await page.click('button:has-text("Create"), button:has-text("Save")');
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/fullFlow.spec.ts:84:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/fullFlow-Full-User-Flow-Te-f7698-ask-creation-and-assignment-firefox/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/fullFlow-Full-User-Flow-Te-f7698-ask-creation-and-assignment-firefox/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/fullFlow-Full-User-Flow-Te-f7698-ask-creation-and-assignment-firefox/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/fullFlow-Full-User-Flow-Te-f7698-ask-creation-and-assignment-firefox/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/fullFlow-Full-User-Flow-Te-f7698-ask-creation-and-assignment-firefox/test-failed-1.png]]
+
+[[ATTACHMENT|test-results/fullFlow-Full-User-Flow-Te-f7698-ask-creation-and-assignment-firefox/error-context.md]]
+
+[[ATTACHMENT|test-results/fullFlow-Full-User-Flow-Te-f7698-ask-creation-and-assignment-firefox/trace.zip]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="navigation.spec.ts" timestamp="2025-12-13T09:25:37.083Z" hostname="firefox" tests="4" failures="0" skipped="0" time="8.129" errors="0">
+<testcase name="Navigation Smoke Test › should navigate to Roadmap" classname="navigation.spec.ts" time="3.227">
+</testcase>
+<testcase name="Navigation Smoke Test › should navigate to Initiatives" classname="navigation.spec.ts" time="1.943">
+</testcase>
+<testcase name="Navigation Smoke Test › should navigate to Projects" classname="navigation.spec.ts" time="1.473">
+</testcase>
+<testcase name="Navigation Smoke Test › should navigate to Settings" classname="navigation.spec.ts" time="1.486">
+</testcase>
+</testsuite>
+<testsuite name="projects.spec.ts" timestamp="2025-12-13T09:25:37.083Z" hostname="firefox" tests="1" failures="0" skipped="0" time="3.766" errors="0">
+<testcase name="Project Management › should create a new project" classname="projects.spec.ts" time="3.766">
+</testcase>
+</testsuite>
+<testsuite name="auth.spec.ts" timestamp="2025-12-13T09:25:37.083Z" hostname="webkit" tests="3" failures="0" skipped="0" time="3.677" errors="0">
+<testcase name="Authentication Flow › should login successfully with valid credentials" classname="auth.spec.ts" time="1.266">
+</testcase>
+<testcase name="Authentication Flow › should show error with invalid credentials" classname="auth.spec.ts" time="0.988">
+</testcase>
+<testcase name="Authentication Flow › should logout successfully" classname="auth.spec.ts" time="1.423">
+</testcase>
+</testsuite>
+<testsuite name="basic.spec.ts" timestamp="2025-12-13T09:25:37.083Z" hostname="webkit" tests="1" failures="0" skipped="0" time="1.309" errors="0">
+<testcase name="Level 4: E2E - App Loads" classname="basic.spec.ts" time="1.309">
+</testcase>
+</testsuite>
+<testsuite name="fullFlow.spec.ts" timestamp="2025-12-13T09:25:37.083Z" hostname="webkit" tests="3" failures="3" skipped="0" time="92.238" errors="0">
+<testcase name="Full User Flow Tests › should complete intro assessment flow" classname="fullFlow.spec.ts" time="30.654">
+<failure message="fullFlow.spec.ts:19:5 should complete intro assessment flow" type="FAILURE">
+<![CDATA[  [webkit] › fullFlow.spec.ts:19:5 › Full User Flow Tests › should complete intro assessment flow ──
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.hover: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('div.fixed.z-50')
+
+
+      19 |     test('should complete intro assessment flow', async ({ page }) => {
+      20 |         // Navigate via Sidebar: Intro -> Company Profile
+    > 21 |         await page.hover('div.fixed.z-50');
+         |                    ^
+      22 |
+      23 |         // Expand Intro if needed
+      24 |         const introLink = page.locator('text=Intro');
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/fullFlow.spec.ts:21:20
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/fullFlow-Full-User-Flow-Te-f0d87-plete-intro-assessment-flow-webkit/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/fullFlow-Full-User-Flow-Te-f0d87-plete-intro-assessment-flow-webkit/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/fullFlow-Full-User-Flow-Te-f0d87-plete-intro-assessment-flow-webkit/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/fullFlow-Full-User-Flow-Te-f0d87-plete-intro-assessment-flow-webkit/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/fullFlow-Full-User-Flow-Te-f0d87-plete-intro-assessment-flow-webkit/test-failed-1.png]]
+
+[[ATTACHMENT|test-results/fullFlow-Full-User-Flow-Te-f0d87-plete-intro-assessment-flow-webkit/error-context.md]]
+
+[[ATTACHMENT|test-results/fullFlow-Full-User-Flow-Te-f0d87-plete-intro-assessment-flow-webkit/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Full User Flow Tests › should navigate through accessible modules" classname="fullFlow.spec.ts" time="30.828">
+<failure message="fullFlow.spec.ts:39:5 should navigate through accessible modules" type="FAILURE">
+<![CDATA[  [webkit] › fullFlow.spec.ts:39:5 › Full User Flow Tests › should navigate through accessible modules 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.hover: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('div.fixed.z-50')
+
+
+      45 |
+      46 |         for (const module of modules) {
+    > 47 |             await page.hover('div.fixed.z-50');
+         |                        ^
+      48 |             await page.waitForTimeout(500);
+      49 |
+      50 |             if (module.isFloating) {
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/fullFlow.spec.ts:47:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/fullFlow-Full-User-Flow-Te-54dfb--through-accessible-modules-webkit/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/fullFlow-Full-User-Flow-Te-54dfb--through-accessible-modules-webkit/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/fullFlow-Full-User-Flow-Te-54dfb--through-accessible-modules-webkit/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/fullFlow-Full-User-Flow-Te-54dfb--through-accessible-modules-webkit/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/fullFlow-Full-User-Flow-Te-54dfb--through-accessible-modules-webkit/test-failed-1.png]]
+
+[[ATTACHMENT|test-results/fullFlow-Full-User-Flow-Te-54dfb--through-accessible-modules-webkit/error-context.md]]
+
+[[ATTACHMENT|test-results/fullFlow-Full-User-Flow-Te-54dfb--through-accessible-modules-webkit/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Full User Flow Tests › should handle task creation and assignment" classname="fullFlow.spec.ts" time="30.756">
+<failure message="fullFlow.spec.ts:73:5 should handle task creation and assignment" type="FAILURE">
+<![CDATA[  [webkit] › fullFlow.spec.ts:73:5 › Full User Flow Tests › should handle task creation and assignment 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.fill: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('textarea[placeholder*="Description"]')
+
+
+      82 |             // Fill task form (Modal)
+      83 |             await page.fill('input[placeholder*="Title"]', 'E2E Test Task'); // Loose selector
+    > 84 |             await page.fill('textarea[placeholder*="Description"]', 'Test task description');
+         |                        ^
+      85 |
+      86 |             // Save task
+      87 |             await page.click('button:has-text("Create"), button:has-text("Save")');
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/fullFlow.spec.ts:84:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/fullFlow-Full-User-Flow-Te-f7698-ask-creation-and-assignment-webkit/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/fullFlow-Full-User-Flow-Te-f7698-ask-creation-and-assignment-webkit/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/fullFlow-Full-User-Flow-Te-f7698-ask-creation-and-assignment-webkit/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/fullFlow-Full-User-Flow-Te-f7698-ask-creation-and-assignment-webkit/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/fullFlow-Full-User-Flow-Te-f7698-ask-creation-and-assignment-webkit/test-failed-1.png]]
+
+[[ATTACHMENT|test-results/fullFlow-Full-User-Flow-Te-f7698-ask-creation-and-assignment-webkit/error-context.md]]
+
+[[ATTACHMENT|test-results/fullFlow-Full-User-Flow-Te-f7698-ask-creation-and-assignment-webkit/trace.zip]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="navigation.spec.ts" timestamp="2025-12-13T09:25:37.083Z" hostname="webkit" tests="4" failures="0" skipped="0" time="8.088" errors="0">
+<testcase name="Navigation Smoke Test › should navigate to Roadmap" classname="navigation.spec.ts" time="2.064">
+</testcase>
+<testcase name="Navigation Smoke Test › should navigate to Initiatives" classname="navigation.spec.ts" time="2.758">
+</testcase>
+<testcase name="Navigation Smoke Test › should navigate to Projects" classname="navigation.spec.ts" time="1.62">
+</testcase>
+<testcase name="Navigation Smoke Test › should navigate to Settings" classname="navigation.spec.ts" time="1.646">
+</testcase>
+</testsuite>
+<testsuite name="projects.spec.ts" timestamp="2025-12-13T09:25:37.083Z" hostname="webkit" tests="1" failures="0" skipped="0" time="3.845" errors="0">
+<testcase name="Project Management › should create a new project" classname="projects.spec.ts" time="3.845">
+</testcase>
+</testsuite>
+</testsuites>
