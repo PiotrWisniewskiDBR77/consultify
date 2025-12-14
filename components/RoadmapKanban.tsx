@@ -50,6 +50,8 @@ const SortableItem: React.FC<{ id: string, initiative: FullInitiative, onClick: 
         opacity: isDragging ? 0.5 : 1
     };
 
+    const isHighChange = (initiative.effortProfile?.change || 0) >= 4;
+
     return (
         <div
             ref={setNodeRef}
@@ -85,15 +87,43 @@ const SortableItem: React.FC<{ id: string, initiative: FullInitiative, onClick: 
                             }`}>
                             {initiative.priority}
                         </span>
+
+                        {/* New Strategic Role Badge */}
+                        {initiative.strategicRole && (
+                            <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded bg-slate-700 text-slate-300">
+                                {initiative.strategicRole.substring(0, 3)}
+                            </span>
+                        )}
+
                         {initiative.status === 'step5' && <span className="w-2 h-2 rounded-full bg-blue-500 block animate-pulse" title="In Execution"></span>}
+
+                        {/* High Change Indicator */}
+                        {isHighChange && (
+                            <span className="text-rose-500" title="High Change Effort">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="animate-spin-slow">
+                                    <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                                    <path d="M3 3v5h5"></path>
+                                    <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path>
+                                    <path d="M16 16l5 5"></path><path d="M21 21v-5h-5"></path>
+                                </svg>
+                            </span>
+                        )}
                     </div>
 
                     <h4 className="text-sm font-semibold text-white leading-tight mb-1 truncate">{initiative.name}</h4>
 
                     <div className="flex items-center justify-between mt-2">
-                        <span className="text-[10px] text-slate-500 truncate max-w-[100px]">{initiative.axis}</span>
+                        {/* Effort Bar Mini */}
+                        {initiative.effortProfile && (
+                            <div className="flex items-end gap-0.5 h-2 w-12 opacity-50">
+                                <div className="bg-blue-500 w-1/3 rounded-sm" style={{ height: `${(initiative.effortProfile.analytical / 5) * 100}%` }}></div>
+                                <div className="bg-emerald-500 w-1/3 rounded-sm" style={{ height: `${(initiative.effortProfile.operational / 5) * 100}%` }}></div>
+                                <div className="bg-rose-500 w-1/3 rounded-sm" style={{ height: `${(initiative.effortProfile.change / 5) * 100}%` }}></div>
+                            </div>
+                        )}
+
                         {initiative.endDate && (
-                            <span className="flex items-center gap-1 text-[10px] text-slate-500">
+                            <span className="flex items-center gap-1 text-[10px] text-slate-500 ml-auto">
                                 <Clock size={10} /> {new Date(initiative.endDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                             </span>
                         )}

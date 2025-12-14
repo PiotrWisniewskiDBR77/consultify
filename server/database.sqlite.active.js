@@ -203,11 +203,55 @@ function initDb() {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             completed_at DATETIME,
+            
+            -- DRD Strategic Execution Fields
+            task_type TEXT DEFAULT 'execution', -- ANALYSIS, DESIGN, BUILD...
+            budget_allocated REAL DEFAULT 0,
+            budget_spent REAL DEFAULT 0,
+            risk_rating TEXT DEFAULT 'low',
+            acceptance_criteria TEXT DEFAULT '',
+            blocking_issues TEXT DEFAULT '',
+            step_phase TEXT DEFAULT 'design',
+            initiative_id TEXT,
+            why TEXT DEFAULT '',
+            expected_outcome TEXT DEFAULT '',
+            decision_impact TEXT DEFAULT '{}',
+            evidence_required TEXT DEFAULT '[]',
+            evidence_items TEXT DEFAULT '[]',
+            strategic_contribution TEXT DEFAULT '[]',
+            ai_insight TEXT DEFAULT '{}',
+            change_log TEXT DEFAULT '[]',
+
             FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
             FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
             FOREIGN KEY(assignee_id) REFERENCES users(id) ON DELETE SET NULL,
             FOREIGN KEY(reporter_id) REFERENCES users(id) ON DELETE SET NULL,
             FOREIGN KEY(custom_status_id) REFERENCES custom_statuses(id) ON DELETE SET NULL
+        )`);
+
+        // Migration Check: Add new columns if missing (Safe Migration)
+        const migrationColumns = [
+            'expected_outcome', 'decision_impact', 'evidence_required',
+            'evidence_items', 'strategic_contribution', 'ai_insight', 'change_log'
+        ];
+
+        migrationColumns.forEach(col => {
+            db.run(`ALTER TABLE tasks ADD COLUMN ${col} TEXT DEFAULT ''`, (err) => {
+                // Ignore errors (column likely exists)
+            });
+        });
+
+        // Task History (New Table)
+        db.run(`CREATE TABLE IF NOT EXISTS task_history (
+            id TEXT PRIMARY KEY,
+            task_id TEXT NOT NULL,
+            field TEXT NOT NULL,
+            old_value TEXT,
+            new_value TEXT,
+            changed_by TEXT,
+            changed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(task_id) REFERENCES tasks(id) ON DELETE CASCADE,
+            FOREIGN KEY(changed_by) REFERENCES users(id) ON DELETE SET NULL
         )`);
 
         // Task Comments
@@ -615,6 +659,51 @@ function initDb() {
         ];
 
         initiativeColumns.forEach(col => {
+            db.run(`ALTER TABLE initiatives ADD COLUMN ${col.name} ${col.type} DEFAULT ${col.default}`, (err) => {
+                // Ignore error if column already exists
+            });
+        });
+
+        // New Value & Finance Fields
+        const valueColumns = [
+            { name: 'value_driver', type: 'TEXT', default: 'NULL' },
+            { name: 'confidence_level', type: 'TEXT', default: 'NULL' },
+            { name: 'value_timing', type: 'TEXT', default: 'NULL' }
+        ];
+
+        valueColumns.forEach(col => {
+            db.run(`ALTER TABLE initiatives ADD COLUMN ${col.name} ${col.type} DEFAULT ${col.default}`, (err) => {
+                // Ignore error if column already exists
+            });
+        });
+
+        // Task 8: Decision & Overview Fields
+        const decisionColumns = [
+            { name: 'strategic_fit', type: 'TEXT', default: "'{}'" }, // JSON
+            { name: 'attachments', type: 'TEXT', default: "'[]'" }, // JSON
+            { name: 'change_log', type: 'TEXT', default: "'[]'" }, // JSON
+            { name: 'target_state', type: 'TEXT', default: "'{}'" }, // JSON
+            { name: 'decision_readiness_breakdown', type: 'TEXT', default: "'{}'" }, // JSON
+            { name: 'applicant_one_liner', type: 'TEXT', default: "''" },
+            { name: 'strategic_intent', type: 'TEXT', default: "''" },
+            { name: 'decision_to_make', type: 'TEXT', default: "''" },
+            { name: 'decision_owner_id', type: 'TEXT', default: "NULL" }
+        ];
+
+        decisionColumns.forEach(col => {
+            db.run(`ALTER TABLE initiatives ADD COLUMN ${col.name} ${col.type} DEFAULT ${col.default}`, (err) => {
+                // Ignore error if column already exists
+            });
+        });
+
+        // Roadmap Enhancements (Task 3)
+        const roadmapColumns = [
+            { name: 'strategic_role', type: 'TEXT', default: 'NULL' },
+            { name: 'placement_reason', type: 'TEXT', default: "''" },
+            { name: 'effort_profile', type: 'TEXT', default: "'{}'" } // JSON { analytical, operational, change }
+        ];
+
+        roadmapColumns.forEach(col => {
             db.run(`ALTER TABLE initiatives ADD COLUMN ${col.name} ${col.type} DEFAULT ${col.default}`, (err) => {
                 // Ignore error if column already exists
             });

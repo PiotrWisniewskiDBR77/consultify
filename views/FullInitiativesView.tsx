@@ -24,11 +24,29 @@ export const FullInitiativesView: React.FC = () => {
     currentProjectId
   } = useAppStore();
 
+  const [users, setUsers] = React.useState<any[]>([]);
+
   const { startStream } = useAIStream();
 
   const language = currentUser?.preferredLanguage || 'EN';
   const { t: translate } = useTranslation();
   const t = translate('fullInitiatives', { returnObjects: true }) as any;
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const data = await Api.getUsers();
+        setUsers(data);
+      } catch (e) {
+        console.error("Failed to fetch users", e);
+        // Fallback to current user if fetch fails
+        if (currentUser) {
+          setUsers([currentUser]);
+        }
+      }
+    };
+    fetchUsers();
+  }, [currentUser]);
 
   const addAiMessage = useCallback((content: string, delay = 600) => {
     setTyping(true);
@@ -182,6 +200,9 @@ export const FullInitiativesView: React.FC = () => {
           fullSession={fullSession}
           onUpdateInitiative={handleUpdateInitiative}
           onCreateInitiative={handleCreateInitiative}
+          users={users} // Pass users
+          currentUser={currentUser} // Pass currentUser
+          strategicGoals={useAppStore.getState().freeSessionData.strategicGoals}
           onEnrichInitiative={async (id) => {
             try {
               const initToEnrich = fullSession.initiatives.find(i => i.id === id);
@@ -230,3 +251,4 @@ export const FullInitiativesView: React.FC = () => {
     </SplitLayout>
   );
 };
+

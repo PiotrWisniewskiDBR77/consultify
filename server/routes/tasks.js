@@ -200,245 +200,211 @@ router.get('/:id', (req, res) => {
 // ==========================================
 // CREATE TASK
 // ==========================================
-router.post('/', (req, res) => {
-    const orgId = req.user.organizationId;
-    const userId = req.user.id;
-    const {
-        projectId,
-        title,
-        description,
-        status = 'todo',
-        priority = 'medium',
-        assigneeId,
-        dueDate,
-        estimatedHours,
-        checklist,
-        tags,
-        // Extended Fields
-        taskType = 'execution',
-        budgetAllocated = 0,
-        riskRating = 'low',
-        acceptanceCriteria,
-        stepPhase = 'step3',
-        why,
-        initiativeId
-    } = req.body;
+router.post('/', async (req, res) => {
+    try {
+        const orgId = req.user.organizationId;
+        const userId = req.user.id;
+        const {
+            projectId, title, description,
+            status, priority, assigneeId,
+            dueDate, estimatedHours, tags,
+            taskType, initiativeId, why,
+            // New Strategic Fields
+            expectedOutcome, decisionImpact,
+            evidenceRequired, strategicContribution
+        } = req.body;
 
-    if (!title) { // Project ID is now optional if Initiative ID is present, but let's keep it required for now or check initiative
-        if (!projectId && !initiativeId) {
-            return res.status(400).json({ error: 'Title and either ProjectId or InitiativeId are required' });
-        }
+        const id = uuidv4();
+        const now = new Date().toISOString();
+
+        // Default values for new fields
+        const finalStatus = status || 'todo';
+        const finalPriority = priority || 'medium';
+        const finalTaskType = taskType || 'execution';
+        const finalExpectedOutcome = expectedOutcome || '';
+        const finalDecisionImpact = decisionImpact ? JSON.stringify(decisionImpact) : '{}';
+        const finalEvidenceRequired = evidenceRequired ? JSON.stringify(evidenceRequired) : '[]';
+        const finalStrategicContribution = strategicContribution ? JSON.stringify(strategicContribution) : '[]';
+
+        const stmt = db.prepare(`
+            INSERT INTO tasks (
+                id, project_id, organization_id, title, description,
+                status, priority, assignee_id, reporter_id,
+                due_date, estimated_hours, tags,
+                task_type, initiative_id, why,
+                expected_outcome, decision_impact, evidence_required, strategic_contribution,
+                created_at, updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        stmt.run(
+            id, projectId, orgId, title, description,
+            finalStatus, finalPriority, assigneeId, userId,
+            dueDate, estimatedHours, tags ? JSON.stringify(tags) : '[]',
+            finalTaskType, initiativeId, why,
+            finalExpectedOutcome, finalDecisionImpact, finalEvidenceRequired, finalStrategicContribution,
+            now, now,
+            function (err) {
+                if (err) {
+                    console.error("Error creating task:", err.message);
+                    return res.status(500).json({ error: err.message });
+                }
+
+                // Notifications
+                if (assigneeId && assigneeId !== userId) {
+                    notificationsRouter.createNotification(
+                        assigneeId,
+                        'task_assigned',
+                        `New Task Assignment`,
+                        `You have been assigned to task "${title}"`,
+                        { entityType: 'task', entityId: id }
+                    );
+                }
+
+                // Log Activity
+                ActivityService.log({
+                    organizationId: orgId,
+                    userId: userId,
+                    action: 'created',
+                    entityType: 'task',
+                    entityId: id,
+                    entityName: title,
+                    newValue: req.body
+                });
+
+                // Fetch created task
+                db.get(`SELECT * FROM tasks WHERE id = ?`, [id], (err, row) => {
+                    if (err) return res.status(500).json({ error: err.message });
+                    res.status(201).json(row); // Use raw row or parse function if available
+                });
+            }
+        );
+        stmt.finalize();
+
+    } catch (e) {
+        console.error("Server error creating task:", e);
+        res.status(500).json({ error: e.message });
     }
-
-    // Fallback: if no project_id, maybe we should allow it?
-    // Constraints say project_id NOT NULL in schema, so we must provide something or update schema.
-    // For now, let's assume UI provides a placeholder project or we update schema (which we didn't).
-    // Actually, we didn't touch project_id constraint in `tasks` table, so it remains NOT NULL.
-    // We should ensure the frontend sends a projectId or we default it.
-
-    const id = uuidv4();
-    const now = new Date().toISOString();
-
-    const sql = `
-        INSERT INTO tasks (
-            id, project_id, organization_id, title, description, status, priority,
-            assignee_id, reporter_id, due_date, estimated_hours, checklist, tags,
-            task_type, budget_allocated, risk_rating, acceptance_criteria, step_phase, initiative_id, why,
-            created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-
-    db.run(sql, [
-        id, projectId, orgId, title, description, status, priority,
-        assigneeId || null, userId, dueDate || null, estimatedHours || null,
-        checklist ? JSON.stringify(checklist) : null,
-        tags ? JSON.stringify(tags) : null,
-        taskType, budgetAllocated, riskRating, acceptanceCriteria || '', stepPhase, initiativeId || null, why || '',
-        now, now
-    ], function (err) {
-        if (err) return res.status(500).json({ error: err.message });
-
-        // Notifications
-        if (assigneeId && assigneeId !== userId) {
-            notificationsRouter.createNotification(
-                assigneeId,
-                'task_assigned',
-                `New Task Assignment`,
-                `You have been assigned to task "${title}"`,
-                { entityType: 'task', entityId: id }
-            );
-        }
-
-        // Log Activity
-        ActivityService.log({
-            organizationId: orgId,
-            userId: userId,
-            action: 'created',
-            entityType: 'task',
-            entityId: id,
-            entityName: title,
-            newValue: { status, priority, assigneeId }
-        });
-
-        res.json({
-            id,
-            projectId,
-            organizationId: orgId,
-            title,
-            description,
-            status,
-            priority,
-            assigneeId,
-            reporterId: userId,
-            dueDate,
-            estimatedHours,
-            checklist: checklist || [],
-            tags: tags || [],
-            taskType,
-            budgetAllocated,
-            riskRating,
-            stepPhase,
-            why,
-            createdAt: now,
-            updatedAt: now
-        });
-    });
 });
 
 // ==========================================
 // UPDATE TASK
 // ==========================================
-router.put('/:id', (req, res) => {
+router.put('/:id', async (req, res) => {
     const { id } = req.params;
-    const orgId = req.user.organizationId;
-    const {
-        title,
-        description,
-        status,
-        priority,
-        assigneeId,
-        dueDate,
-        estimatedHours,
-        checklist,
-        tags,
-        customStatusId,
-        // Extended Fields
-        taskType,
-        budgetAllocated,
-        budgetSpent,
-        riskRating,
-        acceptanceCriteria,
-        blockingIssues,
-        stepPhase,
-        why
-    } = req.body;
+    const updates = req.body;
+    const userId = req.user.id;
 
-    // First check if task exists and user has permission
-    db.get('SELECT * FROM tasks WHERE id = ? AND organization_id = ?', [id, orgId], (err, task) => {
+    // Allowed fields to update
+    const allowedFields = [
+        'title', 'description', 'status', 'priority',
+        'assignee_id', 'due_date', 'estimated_hours',
+        'checklist', 'attachments', 'tags', 'custom_status_id',
+        'task_type', 'initiative_id', 'why',
+        'expected_outcome', 'decision_impact', 'evidence_required',
+        'evidence_items', 'strategic_contribution', 'ai_insight'
+    ];
+
+    // Helper to map generic names to DB column names if mixed
+    const fieldMap = {
+        assigneeId: 'assignee_id',
+        projectId: 'project_id',
+        dueDate: 'due_date',
+        estimatedHours: 'estimated_hours',
+        customStatusId: 'custom_status_id',
+        taskType: 'task_type',
+        initiativeId: 'initiative_id',
+        expectedOutcome: 'expected_outcome',
+        decisionImpact: 'decision_impact',
+        evidenceRequired: 'evidence_required',
+        evidenceItems: 'evidence_items',
+        strategicContribution: 'strategic_contribution',
+        aiInsight: 'ai_insight'
+    };
+
+    db.get(`SELECT * FROM tasks WHERE id = ? AND organization_id = ?`, [id, req.user.organizationId], (err, currentTask) => {
         if (err) return res.status(500).json({ error: err.message });
-        if (!task) return res.status(404).json({ error: 'Task not found' });
+        if (!currentTask) return res.status(404).json({ error: 'Task not found' });
 
-        // Regular users can only update their own tasks (unless Admin)
-        if (req.user.role === 'USER' && task.assignee_id !== req.user.id && task.reporter_id !== req.user.id) {
-            return res.status(403).json({ error: 'You can only update your own tasks' });
-        }
+        const sqlUpdates = [];
+        const params = [];
+        const historyEntries = [];
 
-        // --- DRD LOGIC: PHASE GATING ---
-        // If status is changing to 'in_progress' (starting work), check previous phase
-        if (status === 'in_progress' && task.status !== 'in_progress') {
-            const currentPhase = task.step_phase;
-            let requiredPhase = null;
-            if (currentPhase === 'pilot') requiredPhase = 'design';
-            if (currentPhase === 'rollout') requiredPhase = 'pilot';
+        Object.keys(updates).forEach(key => {
+            const dbKey = fieldMap[key] || key;
+            if (allowedFields.includes(dbKey)) {
+                let value = updates[key];
 
-            if (requiredPhase && task.initiative_id) {
-                const checkSql = `
-                    SELECT COUNT(*) as count 
-                    FROM tasks 
-                    WHERE initiative_id = ? 
-                    AND step_phase = ? 
-                    AND status != 'completed'
-                `;
-                db.get(checkSql, [task.initiative_id, requiredPhase], (gateErr, gateRow) => {
-                    if (gateErr) return res.status(500).json({ error: gateErr.message });
+                // Serialize JSON fields
+                if (['checklist', 'attachments', 'tags', 'decision_impact', 'evidence_required', 'evidence_items', 'strategic_contribution', 'ai_insight'].includes(dbKey)) {
+                    if (typeof value === 'object') value = JSON.stringify(value);
+                }
 
-                    if (gateRow.count > 0) {
-                        return res.status(400).json({
-                            error: `Cannot start ${currentPhase.toUpperCase()} phase. ${gateRow.count} tasks in ${requiredPhase.toUpperCase()} are not completed.`
-                        });
-                    }
+                // Check for change to log
+                const oldValue = currentTask[dbKey];
+                // Simple equality check (loose for numbers/strings)
+                if (value != oldValue) {
+                    sqlUpdates.push(`${dbKey} = ?`);
+                    params.push(value);
 
-                    // Proceed with update
-                    performUpdate();
-                });
-                return; // Wait for callback
+                    // Add to history log
+                    historyEntries.push({
+                        taskId: id,
+                        field: dbKey,
+                        oldValue: oldValue ? String(oldValue) : '',
+                        newValue: value ? String(value) : '',
+                        changedBy: userId
+                    });
+                }
             }
+        });
+
+        if (sqlUpdates.length === 0) {
+            return res.json(currentTask);
         }
 
-        // --- DRD LOGIC: STATUS TRANSITIONS ---
-        // TODO: Enforce strict transitions if needed (e.g. can't go straight from Not Started to Completed)
+        // Special handling for completion
+        if (updates.status === 'done' && currentTask.status !== 'done') {
+            sqlUpdates.push(`completed_at = ?`);
+            params.push(new Date().toISOString());
+        }
 
-        performUpdate();
+        sqlUpdates.push(`updated_at = ?`);
+        params.push(new Date().toISOString());
 
-        function performUpdate() {
-            const now = new Date().toISOString();
-            const completedAt = status === 'completed' && task.status !== 'completed' ? now : task.completed_at;
+        const sql = `UPDATE tasks SET ${sqlUpdates.join(', ')} WHERE id = ?`;
+        params.push(id);
 
-            const sql = `
-                UPDATE tasks SET
-                    title = COALESCE(?, title),
-                    description = COALESCE(?, description),
-                    status = COALESCE(?, status),
-                    priority = COALESCE(?, priority),
-                    assignee_id = COALESCE(?, assignee_id),
-                    due_date = COALESCE(?, due_date),
-                    estimated_hours = COALESCE(?, estimated_hours),
-                    checklist = COALESCE(?, checklist),
-                    tags = COALESCE(?, tags),
-                    custom_status_id = COALESCE(?, custom_status_id),
-                    
-                    task_type = COALESCE(?, task_type),
-                    budget_allocated = COALESCE(?, budget_allocated),
-                    budget_spent = COALESCE(?, budget_spent),
-                    risk_rating = COALESCE(?, risk_rating),
-                    acceptance_criteria = COALESCE(?, acceptance_criteria),
-                    blocking_issues = COALESCE(?, blocking_issues),
-                    step_phase = COALESCE(?, step_phase),
-                    why = COALESCE(?, why),
+        db.run(sql, params, function (err) {
+            if (err) return res.status(500).json({ error: err.message });
 
-                    updated_at = ?,
-                    completed_at = ?
-                WHERE id = ? AND organization_id = ?
-            `;
-
-            db.run(sql, [
-                title, description, status, priority, assigneeId,
-                dueDate, estimatedHours,
-                checklist ? JSON.stringify(checklist) : null,
-                tags ? JSON.stringify(tags) : null,
-                customStatusId,
-
-                taskType, budgetAllocated, budgetSpent, riskRating, acceptanceCriteria, blockingIssues, stepPhase, why,
-
-                now, completedAt, id, orgId
-            ], function (err) {
-                if (err) return res.status(500).json({ error: err.message });
-                if (this.changes === 0) return res.status(404).json({ error: 'Task not found' });
-
-                // Log Activity
-                ActivityService.log({
-                    organizationId: orgId,
-                    userId: req.user.id,
-                    action: 'updated',
-                    entityType: 'task',
-                    entityId: id,
-                    entityName: title || 'Task', // Use new title if provided, else fallback (ideal would be old title but we don't have it easily here without another query)
-                    newValue: req.body // Log the changes
+            // Insert history logs asynchronously
+            if (historyEntries.length > 0) {
+                const historyStmt = db.prepare(`INSERT INTO task_history (id, task_id, field, old_value, new_value, changed_by) VALUES (?, ?, ?, ?, ?, ?)`);
+                historyEntries.forEach(entry => {
+                    historyStmt.run(uuidv4(), entry.taskId, entry.field, entry.oldValue, entry.newValue, entry.changedBy);
                 });
+                historyStmt.finalize();
+            }
 
-                res.json({ message: 'Task updated', id, updatedAt: now });
+            // Log Activity
+            ActivityService.log({
+                organizationId: req.user.organizationId,
+                userId: userId,
+                action: 'updated',
+                entityType: 'task',
+                entityId: id,
+                entityName: currentTask.title, // Use old title
+                newValue: updates
             });
-        }
+
+            // Return updated task
+            db.get(`SELECT * FROM tasks WHERE id = ?`, [id], (err, row) => {
+                if (err) return res.status(500).json({ error: err.message });
+                res.json(row);
+            });
+        });
     });
 });
 

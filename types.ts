@@ -249,15 +249,103 @@ export interface AssessmentAxis {
   status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
 }
 
+export type StrategicIntent = 'Grow' | 'Fix' | 'Stabilize' | 'De-risk' | 'Build capability';
+
+export interface StakeholderImpact {
+  role: string; // e.g. "Sales Team"
+  impact: 'Wins' | 'Loses' | 'Must Change';
+  description: string;
+}
+
 export type Quarter = 'Q1' | 'Q2' | 'Q3' | 'Q4' | 'Q5' | 'Q6' | 'Q7' | 'Q8';
 export type Wave = 'Wave 1' | 'Wave 2' | 'Wave 3';
 export type InitiativeStatus = 'step3' | 'step4' | 'step5' | 'completed' | 'on_hold' | 'Draft' | 'Ready' | 'To Do' | 'In Progress' | 'Blocked' | 'Done' | 'Archived';
-export type TaskType = 'analytical' | 'design' | 'execution' | 'validation';
+// Updated TaskType for Strategic Execution
+export type TaskType = 'ANALYSIS' | 'DESIGN' | 'BUILD' | 'PILOT' | 'VALIDATION' | 'DECISION' | 'CHANGE_MGMT';
+
+export interface DecisionImpact {
+  decisionType: 'CONTINUE' | 'MOVE_TO_PILOT' | 'MOVE_TO_SCALE' | 'STOP' | 'APPROVE_INVESTMENT' | 'CHANGE_SCOPE';
+  decisionStatement: string;
+}
+
+export interface TaskChangeLog {
+  id: string;
+  type: string;
+  field: string;
+  oldValue: any;
+  newValue: any;
+  changedBy: string;
+  changedAt: string;
+}
+
+export interface AIInsight {
+  strategicRelevance: 'HIGH' | 'MEDIUM' | 'LOW';
+  executionRisk: 'HIGH' | 'MEDIUM' | 'LOW';
+  clarityScore: number;
+  summary: string;
+  lastComputedAt: string;
+}
+
 export type RiskRating = 'low' | 'medium' | 'high' | 'critical';
 export type DependencyType = 'hard' | 'soft';
 
 export type CostRange = 'Low (<$10k)' | 'Medium ($10k-$50k)' | 'High (>$50k)';
 export type BenefitRange = 'Low (<$20k/yr)' | 'Medium ($20k-$100k/yr)' | 'High (>$100k/yr)';
+
+export interface Milestone {
+  name: string;
+  date: string;
+  status: 'pending' | 'completed';
+  isDecisionGate?: boolean;
+  decision?: 'continue' | 'adjust' | 'stop';
+  decisionRationale?: string;
+}
+
+export interface TargetState {
+  process: string[];
+  behavior: string[];
+  capability: string[];
+}
+
+export interface StrategicChangeLog {
+  id: string;
+  date: string;
+  user: string;
+  change: string;
+  reason: string;
+  impact?: string;
+}
+
+export interface InitiativeAttachment {
+  id: string;
+  name: string;
+  url: string;
+  type: 'audit' | 'data' | 'strategy' | 'external';
+  size?: number;
+  uploadedAt: string;
+  uploadedBy?: string;
+}
+
+export interface StrategicFit {
+  axisAlign: boolean;
+  goalAlign: boolean;
+  painPointAlign: boolean;
+  reasoning: string;
+}
+
+export interface DecisionReadinessBreakdown {
+  strategic: boolean;
+  problem: boolean;
+  target: boolean;
+  execution: boolean;
+  value: boolean;
+}
+
+export interface ProblemStructured {
+  symptom: string;
+  rootCause: string;
+  costOfInaction: string;
+}
 
 export interface FullInitiative {
   id: string;
@@ -270,19 +358,50 @@ export interface FullInitiative {
 
   // DRD New Fields
   summary?: string;
+  applicantOneLiner?: string; // Executive One-Liner
+  strategicIntent?: StrategicIntent;
+  decisionReadiness?: number; // 0-100
+  decisionReadinessBreakdown?: DecisionReadinessBreakdown; // New Task 8
+  stakeholders?: StakeholderImpact[];
   hypothesis?: string;
   businessValue?: 'High' | 'Medium' | 'Low';
+  valueDriver?: 'Cost' | 'Revenue' | 'Capital' | 'Risk' | 'Capability';
+  confidenceLevel?: 'High' | 'Medium' | 'Low';
+  valueTiming?: 'Immediate' | 'Short term' | 'Long term';
   competenciesRequired?: string[];
-  milestones?: { name: string; date: string; status: 'pending' | 'completed' }[];
+  milestones?: Milestone[];
+  killCriteria?: string;
 
   // Professional Card Fields
   problemStatement?: string;
+  problemStructured?: ProblemStructured; // New Task 8
+
+  targetState?: TargetState; // New Task 8
+  decisionToMake?: string; // New Task 8
+  decisionOwnerId?: string; // New Task 8
+  strategicFit?: StrategicFit; // New Task 8
+  attachments?: InitiativeAttachment[]; // New Task 8
+  changeLog?: StrategicChangeLog[]; // New Task 8
+
   deliverables?: string[];
+
   successCriteria?: string[];
   scopeIn?: string[];
   scopeOut?: string[];
   keyRisks?: { risk: string; mitigation: string; metric: 'Low' | 'Medium' | 'High' }[];
   relatedGap?: string; // Links this initiative to a specific DRD Gap
+
+  // Task 4: Scope Enhancements
+  assumptions?: {
+    org?: string;
+    data?: string;
+    budget?: string;
+    people?: string;
+  };
+  structuredSuccessCriteria?: {
+    type: 'Behavior' | 'Process' | 'Capability' | 'Metric';
+    value: string;
+  }[];
 
   // Economics (financial fields for analytics)
   capex?: number;
@@ -322,6 +441,28 @@ export interface FullInitiative {
 
   createdAt?: string;
   updatedAt?: string;
+
+  // Strategic Portfolio Fields (New)
+  aiConfidence?: 'High' | 'Medium' | 'Low'; // Green, Yellow, Red
+  strategicGoalId?: string; // Link to StrategicGoal
+  completenessScore?: number; // 0-100%
+  valueStatement?: string; // Concise "Value" for preview
+
+  // Initiative Intelligence (Task 7)
+  lessonsLearned?: string; // What we learned
+  strategicSurprises?: string; // What surprised us
+  nextTimeAvoid?: string; // What we would do differently (avoid)
+  patternTags?: string[]; // Cross-initiative patterns
+
+  // DRD New Fields (Task 7 - Roadmap Enhancements)
+  strategicRole?: 'Foundation' | 'Enabler' | 'Accelerator' | 'Scaling';
+  effortProfile?: {
+    analytical: number;
+    operational: number;
+    change: number;
+    [key: string]: number; // index signature
+  };
+  placementReason?: string; // Why is this scheduled here?
 }
 
 // Alias Initiative to FullInitiative for backend compatibility
@@ -602,7 +743,7 @@ export interface TaskAttachment {
 
 export interface Task {
   id: string;
-  projectId: string;
+  projectId: string; // Keep for legacy, but might be empty if initiativeId is used
   organizationId: string;
   title: string;
   description?: string;
@@ -622,8 +763,27 @@ export interface Task {
   updatedAt: string;
   completedAt?: string;
 
-  // DRD Fields
-  taskType?: TaskType;
+  // Strategic Execution Fields (Upgrade)
+  taskType: TaskType;
+  expectedOutcome?: string;
+  decisionImpact?: DecisionImpact;
+  evidenceRequired?: ('DOCUMENT' | 'DATA' | 'DEMO' | 'APPROVAL')[];
+  evidenceItems?: { id: string; type: string; title: string; urlOrFileId: string; createdBy: string; createdAt: string }[];
+  strategicContribution?: ('PROCESS_CHANGE' | 'BEHAVIOR_CHANGE' | 'CAPABILITY_CHANGE')[];
+
+  // Dependencies
+  dependencies?: {
+    dependsOnTaskIds: string[];
+    blocksTaskIds: string[];
+  };
+
+  // AI Insight
+  aiInsight?: AIInsight;
+
+  // Change Log
+  changeLog?: TaskChangeLog[];
+
+  // Legacy / Optional Mappings
   budgetAllocated?: number;
   budgetSpent?: number;
   riskRating?: RiskRating;
@@ -631,9 +791,7 @@ export interface Task {
   blockingIssues?: string;
   stepPhase?: 'design' | 'pilot' | 'rollout';
   initiativeId?: string;
-  steps?: string[]; // Or checklist items?
   why?: string;
-  scope?: string;
 }
 
 export interface TaskComment {

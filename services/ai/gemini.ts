@@ -10,14 +10,15 @@ export interface AIMessageHistory {
 export const sendMessageToAI = async (
     history: AIMessageHistory[],
     message: string,
-    systemInstruction?: string
+    systemInstruction?: string,
+    roleName?: string
 ) => {
     // Get current configuration from store
     const state = useAppStore.getState();
     const config = state.currentUser?.aiConfig;
 
     try {
-        return await UnifiedAI.sendMessage(config, history, message, systemInstruction);
+        return await UnifiedAI.sendMessage(config, history, message, systemInstruction, roleName);
     } catch (error) {
         console.error("Error sending message to AI:", error);
         return "I encountered an error while processing your request. Please check your AI settings.";
@@ -29,13 +30,14 @@ export const sendMessageToAIStream = async (
     message: string,
     onChunk: (text: string) => void,
     onDone: () => void,
-    systemInstruction?: string
+    systemInstruction?: string,
+    roleName?: string
 ) => {
     const state = useAppStore.getState();
     const config = state.currentUser?.aiConfig;
 
     try {
-        await UnifiedAI.sendMessageStream(config, history, message, onChunk, onDone, systemInstruction);
+        await UnifiedAI.sendMessageStream(config, history, message, onChunk, onDone, systemInstruction, roleName);
     } catch (error) {
         console.error("Error sending message to AI (stream):", error);
         onChunk("I encountered an error while processing your request.");

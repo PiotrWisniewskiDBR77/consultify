@@ -46,7 +46,11 @@ router.get('/', (req, res) => {
             costCapex: i.cost_capex,
             costOpex: i.cost_opex,
             expectedRoi: i.expected_roi,
+            expectedRoi: i.expected_roi,
             socialImpact: i.social_impact,
+            valueDriver: i.value_driver,
+            confidenceLevel: i.confidence_level,
+            valueTiming: i.value_timing,
             startDate: i.start_date,
             pilotEndDate: i.pilot_end_date,
             startDate: i.start_date,
@@ -116,6 +120,7 @@ router.post('/', (req, res) => {
         name, axis, area, summary, hypothesis,
         businessValue, competenciesRequired,
         costCapex, costOpex, expectedRoi, socialImpact,
+        valueDriver, confidenceLevel, valueTiming,
         ownerBusinessId, ownerExecutionId, sponsorId,
 
         startDate, pilotEndDate, endDate,
@@ -133,16 +138,23 @@ router.post('/', (req, res) => {
             id, organization_id, name, axis, area, summary, hypothesis,
             business_value, competencies_required,
             cost_capex, cost_opex, expected_roi, social_impact,
+            value_driver, confidence_level, value_timing,
             owner_business_id, owner_execution_id, sponsor_id,
             start_date, pilot_end_date, end_date,
+            problem_statement, deliverables, success_criteria, scope_in, scope_out, key_risks,
             created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     db.run(sql, [
         id, orgId, name, axis, area, summary, hypothesis,
         businessValue, JSON.stringify(competenciesRequired || []),
         costCapex, costOpex, expectedRoi, socialImpact,
+        ownerBusinessId, ownerExecutionId, sponsorId,
+        startDate, pilotEndDate, endDate,
+        businessValue, JSON.stringify(competenciesRequired || []),
+        costCapex, costOpex, expectedRoi, socialImpact,
+        valueDriver, confidenceLevel, valueTiming,
         ownerBusinessId, ownerExecutionId, sponsorId,
         startDate, pilotEndDate, endDate,
         now, now
@@ -170,13 +182,18 @@ router.put('/:id', (req, res) => {
     const allowedFields = [
         'name', 'axis', 'area', 'summary', 'hypothesis',
         'status', 'current_stage', 'business_value', 'competencies_required',
+        'status', 'current_stage', 'business_value', 'competencies_required',
         'cost_capex', 'cost_opex', 'expected_roi', 'social_impact',
+        'value_driver', 'confidence_level', 'value_timing',
         'start_date', 'pilot_end_date', 'end_date',
         'owner_business_id', 'owner_execution_id', 'sponsor_id',
         'start_date', 'pilot_end_date', 'end_date',
         'owner_business_id', 'owner_execution_id', 'sponsor_id',
         'market_context',
-        'problem_statement', 'deliverables', 'success_criteria', 'scope_in', 'scope_out', 'key_risks'
+        'problem_statement', 'deliverables', 'success_criteria', 'scope_in', 'scope_out', 'key_risks',
+        // Task 8
+        'strategic_fit', 'attachments', 'change_log', 'target_state', 'decision_readiness_breakdown',
+        'applicant_one_liner', 'strategic_intent', 'decision_to_make', 'decision_owner_id'
     ];
 
     const updates = [];
@@ -188,7 +205,8 @@ router.put('/:id', (req, res) => {
 
         if (body[bodyKey] !== undefined) {
             // Handle JSON fields
-            if (['competencies_required', 'deliverables', 'success_criteria', 'scope_in', 'scope_out', 'key_risks'].includes(field)) {
+            if (['competencies_required', 'deliverables', 'success_criteria', 'scope_in', 'scope_out', 'key_risks',
+                'strategic_fit', 'attachments', 'change_log', 'target_state', 'decision_readiness_breakdown'].includes(field)) {
                 updates.push(`${field} = ?`);
                 params.push(JSON.stringify(body[bodyKey]));
             } else {

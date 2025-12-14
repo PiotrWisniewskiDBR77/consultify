@@ -12,7 +12,7 @@ const verifyToken = require('../middleware/authMiddleware');
 router.use(verifyToken);
 
 // Apply token quota enforcement to all AI POST endpoints
-const quotaProtectedRoutes = ['/chat', '/chat/stream', '/diagnose', '/recommend', '/roadmap', '/simulate', '/validate', '/suggest-tasks', '/verify', '/extract-insight'];
+const quotaProtectedRoutes = ['/chat', '/chat/stream', '/diagnose', '/recommend', '/roadmap', '/simulate', '/validate', '/suggest-tasks', '/verify', '/extract-insight', '/task-insight'];
 quotaProtectedRoutes.forEach(route => {
     router.use(route, enforceTokenQuota);
 });
@@ -147,12 +147,161 @@ router.post('/validate', async (req, res) => {
     }
 });
 
+// --- ROADMAP EXTENSIONS ---
+
+router.post('/roadmap-workload', async (req, res) => {
+    try {
+        const { quarterLoad, initiatives } = req.body;
+        const userId = req.body.userId || req.user?.id;
+        const result = await AiService.generateWorkloadAnalysis(quarterLoad, initiatives, userId);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/roadmap-summary', async (req, res) => {
+    try {
+        const { initiatives } = req.body;
+        const userId = req.body.userId || req.user?.id;
+        const result = await AiService.generateRoadmapSummary(initiatives, userId);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/placement-reason', async (req, res) => {
+    try {
+        const { initiative, quarter, otherInitiatives } = req.body;
+        const userId = req.body.userId || req.user?.id;
+        const result = await AiService.generatePlacementReason(initiative, quarter, otherInitiatives, userId);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/rebalance-roadmap', async (req, res) => {
+    try {
+        const { initiatives } = req.body;
+        const userId = req.body.userId || req.user?.id;
+        const result = await AiService.rebalanceRoadmap(initiatives, userId);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// --- EXECUTION STRATEGY ---
+router.post('/execution-strategy', async (req, res) => {
+    try {
+        const { initiative } = req.body;
+        const userId = req.body.userId || req.user?.id;
+        const result = await AiService.generateExecutionStrategy(initiative, userId);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// --- AI CONSULTANT ACTIONS ---
+
+router.post('/roadmap-validate', async (req, res) => {
+    try {
+        const { initiatives, quarters } = req.body;
+        const userId = req.body.userId || req.user?.id;
+        const result = await AiService.validateRoadmap(initiatives, quarters);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/roadmap-explain', async (req, res) => {
+    try {
+        const { initiatives } = req.body;
+        const userId = req.body.userId || req.user?.id;
+        const result = await AiService.explainRoadmap(initiatives);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/roadmap-optimize', async (req, res) => {
+    try {
+        const { initiatives, strategy } = req.body;
+        const userId = req.body.userId || req.user?.id;
+        const result = await AiService.optimizeRoadmap(initiatives, strategy);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/quarter-review', async (req, res) => {
+    try {
+        const { quarter, initiatives } = req.body;
+        const userId = req.body.userId || req.user?.id;
+        const result = await AiService.reviewQuarter(quarter, initiatives);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/suggest-placement', async (req, res) => {
+    try {
+        const { initiative, allInitiatives } = req.body;
+        const userId = req.body.userId || req.user?.id;
+        const result = await AiService.suggestPlacement(initiative, allInitiatives);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/insights', async (req, res) => {
+    try {
+        const { initiative } = req.body;
+        const userId = req.body.userId || req.user?.id;
+        const result = await AiService.generateInsights(initiative, userId);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/strategic-fit', async (req, res) => {
+    try {
+        const { initiative, strategicGoals } = req.body;
+        const userId = req.body.userId || req.user?.id;
+        const result = await AiService.generateStrategicFit(initiative, strategicGoals, userId);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // --- SUGGEST TASKS ---
 router.post('/suggest-tasks', async (req, res) => {
     try {
         const { initiative } = req.body;
         const userId = req.body.userId || req.user?.id;
         const result = await AiService.suggestTasks(initiative, userId);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// --- TASK INSIGHT ---
+router.post('/task-insight', async (req, res) => {
+    try {
+        const { task, initiative } = req.body;
+        const userId = req.body.userId || req.user?.id;
+        const result = await AiService.generateTaskInsight(task, initiative, userId);
         res.json(result);
     } catch (error) {
         res.status(500).json({ error: error.message });

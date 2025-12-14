@@ -13,15 +13,20 @@ interface ChatPanelProps {
   subtitle?: string;
 }
 
+import { useTranslation } from 'react-i18next';
+
 export const ChatPanel: React.FC<ChatPanelProps> = ({
   messages,
   onSendMessage,
   onOptionSelect,
   onMultiSelectSubmit,
   isTyping,
-  title = 'Transformation Assistant',
-  subtitle = 'Step 1: Profiling'
+  title,
+  subtitle
 }) => {
+  const { t } = useTranslation();
+  const displayTitle = title || t('chat.header');
+  const displaySubtitle = subtitle || t('chat.subHeader');
   const [inputValue, setInputValue] = useState('');
   const [selectedMultiOptions, setSelectedMultiOptions] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -64,8 +69,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       {/* Chat Header */}
       <div className="px-4 py-3 border-b border-navy-800 flex justify-between items-center bg-navy-950/50 backdrop-blur-sm sticky top-0 z-10">
         <div>
-          <h2 className="text-xs font-bold text-white tracking-wide uppercase">{title}</h2>
-          <p className="text-[10px] text-slate-400">{subtitle}</p>
+          <h2 className="text-xs font-bold text-white tracking-wide uppercase">{displayTitle}</h2>
+          <p className="text-[10px] text-slate-400">{displaySubtitle}</p>
         </div>
       </div>
 

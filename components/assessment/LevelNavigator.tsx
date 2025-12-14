@@ -1,6 +1,7 @@
 import React from 'react';
-import { Check, Circle } from 'lucide-react';
+import { Check, Circle } from 'lucide-react'; // Removing legacy MaturityLevel import if unused or keeping it
 import { MaturityLevel } from '../../types';
+import { useTranslation } from 'react-i18next';
 
 interface LevelNavigatorProps {
     levels: Record<string, string>;
@@ -17,14 +18,17 @@ export const LevelNavigator: React.FC<LevelNavigatorProps> = ({
     actualScore,
     targetScore
 }) => {
+    const { t } = useTranslation();
+    const ts = t('assessment.workspace', { returnObjects: true }) as any;
+
     // Ensure we have levels 1-7
     const levelKeys = ['1', '2', '3', '4', '5', '6', '7'];
 
     return (
         <div className="w-80 bg-navy-950 border-r border-white/5 flex flex-col shrink-0">
             <div className="p-6 border-b border-white/5">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Maturity Levels</h3>
-                <p className="text-[10px] text-slate-500">Select a level to view details</p>
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{t('assessment.workspace.maturityLevels')}</h3>
+                <p className="text-[10px] text-slate-500">{t('assessment.workspace.levelDetailsHint')}</p>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
@@ -45,9 +49,9 @@ export const LevelNavigator: React.FC<LevelNavigatorProps> = ({
 
                     // Label helper
                     let statusLabel = null;
-                    if (isActual && isTarget) statusLabel = <span className="text-[10px] font-bold text-white bg-gradient-to-r from-blue-500 to-purple-500 px-2 py-0.5 rounded-full">OBECNY + DOCELOWY</span>;
-                    else if (isActual) statusLabel = <span className="text-[10px] font-bold text-white bg-blue-600 px-2 py-0.5 rounded-full">OBECNY</span>;
-                    else if (isTarget) statusLabel = <span className="text-[10px] font-bold text-white bg-purple-600 px-2 py-0.5 rounded-full">DOCELOWY</span>;
+                    if (isActual && isTarget) statusLabel = <span className="text-[10px] font-bold text-white bg-gradient-to-r from-blue-500 to-purple-500 px-2 py-0.5 rounded-full">{t('assessment.workspace.actual_target')}</span>;
+                    else if (isActual) statusLabel = <span className="text-[10px] font-bold text-white bg-blue-600 px-2 py-0.5 rounded-full">{t('assessment.workspace.actual_only')}</span>;
+                    else if (isTarget) statusLabel = <span className="text-[10px] font-bold text-white bg-purple-600 px-2 py-0.5 rounded-full">{t('assessment.workspace.target_only')}</span>;
 
                     return (
                         <button
@@ -64,7 +68,7 @@ export const LevelNavigator: React.FC<LevelNavigatorProps> = ({
                                         }`}>
                                         {key}
                                     </span>
-                                    Poziom {key}
+                                    {t('common.level')} {key}
                                 </span>
                                 {statusLabel}
                             </div>

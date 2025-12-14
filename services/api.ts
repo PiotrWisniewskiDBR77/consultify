@@ -131,21 +131,25 @@ export const Api = {
 
     saveSession: async (userId: string, type: SessionMode, data: any, projectId?: string): Promise<void> => {
         if (!userId) return;
-        await fetch(`${API_URL}/sessions`, {
+        const res = await fetch(`${API_URL}/sessions`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ userId, type, data, projectId })
         });
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `Failed to save session: ${res.status}`);
+        }
     },
 
     // --- AI ---
     // --- AI ---
-    chatWithAI: async (message: string, history: any[], systemInstruction?: string) => {
+    chatWithAI: async (message: string, history: any[], systemInstruction?: string, roleName?: string) => {
         try {
             const response = await fetch(`${API_URL}/ai/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message, history, systemInstruction })
+                body: JSON.stringify({ message, history, systemInstruction, roleName })
             });
             const data = await response.json();
             return data.text;
@@ -161,18 +165,19 @@ export const Api = {
         onChunk: (text: string) => void,
         onDone: () => void,
         systemInstruction?: string,
-        context?: any
+        context?: any,
+        roleName?: string
     ) => {
         // #region agent log
         const token = localStorage.getItem('token');
-        console.log('[DEBUG-A] chatWithAIStream entry:', { hasToken: !!token, tokenLength: token?.length || 0, historyLength: history?.length || 0 });
-        fetch('http://127.0.0.1:7242/ingest/690b8f02-96fa-4527-ae57-5d2b028e8181', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'api.ts:chatWithAIStream:entry', message: 'Stream request started', data: { hasToken: !!token, tokenLength: token?.length || 0, historyLength: history?.length || 0, hasContext: !!context }, timestamp: Date.now(), sessionId: 'debug-session', hypothesisId: 'A' }) }).catch(() => { });
+        console.log('[DEBUG-A] chatWithAIStream entry:', { hasToken: !!token, tokenLength: token?.length || 0, historyLength: history?.length || 0, roleName });
+        fetch('http://127.0.0.1:7242/ingest/690b8f02-96fa-4527-ae57-5d2b028e8181', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'api.ts:chatWithAIStream:entry', message: 'Stream request started', data: { hasToken: !!token, tokenLength: token?.length || 0, historyLength: history?.length || 0, hasContext: !!context, roleName }, timestamp: Date.now(), sessionId: 'debug-session', hypothesisId: 'A' }) }).catch(() => { });
         // #endregion
         try {
             const response = await fetch(`${API_URL}/ai/chat/stream`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message, history, systemInstruction, context })
+                body: JSON.stringify({ message, history, systemInstruction, context, roleName })
             });
 
             // #region agent log
@@ -568,7 +573,7 @@ export const Api = {
     // ==========================================
     // PHASE 1: TASKS API
     // ==========================================
-    getTasks: async (filters?: { projectId?: string; status?: string; assigneeId?: string; priority?: string }): Promise<any[]> => {
+    getTasks: async (filters?: { projectId?: string; status?: string; assigneeId?: string; priority?: string; initiativeId?: string }): Promise<any[]> => {
         let url = `${API_URL}/tasks`;
         if (filters) {
             const params = new URLSearchParams();
@@ -576,6 +581,7 @@ export const Api = {
             if (filters.status) params.append('status', filters.status);
             if (filters.assigneeId) params.append('assigneeId', filters.assigneeId);
             if (filters.priority) params.append('priority', filters.priority);
+            if (filters.initiativeId) params.append('initiativeId', filters.initiativeId);
             if (params.toString()) url += `? ${params.toString()}`;
         }
         const res = await fetch(url, { headers: getHeaders() });
@@ -1405,6 +1411,27 @@ export const Api = {
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to fetch invoices');
         return json;
+    },
+
+    // --- AI TASK GEN ---
+    suggestTasks: async (initiative: any): Promise<any[]> => {
+        const res = await fetch(`${API_URL}/ai/suggest-tasks`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ initiative })
+        });
+        if (!res.ok) throw new Error('Failed to suggest tasks');
+        return res.json();
+    },
+
+    generateTaskInsight: async (task: any, initiative: any): Promise<any> => {
+        const res = await fetch(`${API_URL}/ai/task-insight`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ task, initiative })
+        });
+        if (!res.ok) throw new Error('Failed to generate task insight');
+        return res.json();
     },
 
     // --- TOKEN BILLING ---

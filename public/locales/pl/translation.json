@@ -172,7 +172,17 @@
       "rationalePlaceholder": "Dlaczego ten cel jest krytyczny dla strategii biznesowej?",
       "proMode": "Tryb PRO Aktywny: Walidacja Logiki Włączona",
       "confirmNext": "Potwierdź i Dalej",
-      "validated": "Ocena Zatwierdzona"
+      "validated": "Ocena Zatwierdzona",
+      "levelDetailsHint": "Wybierz poziom, aby zobaczyć szczegóły",
+      "actual_target": "OBECNY + DOCELOWY",
+      "actual_only": "OBECNY",
+      "target_only": "DOCELOWY",
+      "dashboardHeader": "Pulpit Oceny",
+      "tabs": {
+        "summary": "Ocena i Luki",
+        "audits": "Dodatkowe Audyty"
+      },
+      "generateInitiatives": "Generuj Inicjatywy"
     },
     "wizard": {
       "startTitle": "Rozpocznij Ocenę",
@@ -2044,7 +2054,11 @@
     }
   },
   "common": {
-    "underConstruction": "Komponent w Budowie"
+    "backToDashboard": "Powrót do Pulpitu",
+    "level": "Poziom",
+    "status": {
+      "underConstruction": "Komponent w Budowie"
+    }
   },
   "settings": {
     "menu": {

@@ -3,33 +3,30 @@ import { Task, User } from '../types';
 import { Button } from './Button';
 import { Plus, CheckCircle, Clock } from 'lucide-react';
 import { TaskDetailModal } from './TaskDetailModal';
+import { FullInitiative } from '../types'; // Assuming FullInitiative is defined here or needs to be imported
 
 interface Props {
     initiativeId: string;
     users: User[];
     currentUser: User;
+    initiative?: FullInitiative; // Added initiative context
 }
 
-export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, currentUser }) => {
+import { Api } from '../services/api';
+
+export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, currentUser, initiative }) => {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
     const [filterStatus, setFilterStatus] = useState<string>('all');
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-
-
+    const [isGenerating, setIsGenerating] = useState(false);
 
     const fetchTasks = useCallback(async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem('token');
-            const res = await fetch(`http://localhost:3001/api/tasks?initiativeId=${initiativeId}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setTasks(data);
-            }
+            const data = await Api.getTasks({ initiativeId });
+            setTasks(data);
         } catch (error) {
             console.error("Failed to fetch tasks", error);
         } finally {
@@ -43,20 +40,19 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
 
     const handleCreateTask = async (newTask: Task) => {
         try {
-            const token = localStorage.getItem('token');
-            const res = await fetch('http://localhost:3001/api/tasks', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ ...newTask, initiativeId })
-            });
+            // Ensure initiativeId is set
+            const taskPayload = {
+                ...newTask,
+                projectId: '', // Backend handles empty projectId if initiativeId is present
+                initiativeId,
+                title: newTask.title,
+                status: newTask.status,
+                priority: newTask.priority,
+            };
 
-            if (res.ok) {
-                fetchTasks(); // Reload
-                setIsCreateModalOpen(false);
-            }
+            await Api.createTask(taskPayload);
+            fetchTasks(); // Reload
+            setIsCreateModalOpen(false);
         } catch (error) {
             console.error("Failed to create task", error);
         }
@@ -64,20 +60,9 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
 
     const handleUpdateTask = async (updatedTask: Task) => {
         try {
-            const token = localStorage.getItem('token');
-            const res = await fetch(`http://localhost:3001/api/tasks/${updatedTask.id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(updatedTask)
-            });
-
-            if (res.ok) {
-                fetchTasks(); // Reload
-                setSelectedTask(null);
-            }
+            await Api.updateTask(updatedTask.id, updatedTask);
+            fetchTasks(); // Reload
+            setSelectedTask(null);
         } catch (error) {
             console.error("Failed to update task", error);
         }
@@ -99,8 +84,40 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
         title: '',
         status: 'todo',
         priority: 'medium',
-        taskType: 'execution',
+        taskType: 'ANALYSIS', // Default to Analysis
         initiativeId: initiativeId
+    };
+
+    const handleGenerateTasks = async () => {
+        if (!initiative) return;
+        setIsGenerating(true);
+        try {
+            const suggestedTasks = await Api.suggestTasks(initiative);
+            if (Array.isArray(suggestedTasks) && suggestedTasks.length > 0) {
+                for (const t of suggestedTasks) {
+                    await Api.createTask({
+                        title: t.title,
+                        description: t.description,
+                        status: 'todo',
+                        priority: t.priority || 'medium',
+                        projectId: '',
+                        initiativeId: initiative.id,
+                        taskType: t.taskType || 'ANALYSIS',
+                        expectedOutcome: t.expectedOutcome || '',
+                        why: t.why,
+                        stepPhase: t.stepPhase
+                    });
+                }
+                fetchTasks();
+            } else {
+                alert("No tasks generated");
+            }
+        } catch (error) {
+            console.error("Failed to generate tasks", error);
+            alert("AI Generation failed");
+        } finally {
+            setIsGenerating(false);
+        }
     };
 
     return (
@@ -108,12 +125,24 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
             {/* Toolbar */}
             <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-3">
-                    <h3 className="text-white font-bold text-lg">Implementation Tasks</h3>
+                    <h3 className="text-white font-bold text-lg">Strategic Execution</h3>
                     <span className="bg-navy-800 text-slate-400 text-xs px-2 py-0.5 rounded-full border border-white/5">
                         {tasks.length}
                     </span>
                 </div>
                 <div className="flex gap-3">
+                    <button
+                        onClick={handleGenerateTasks}
+                        disabled={isGenerating || !initiative}
+                        className={`px-3 py-1.5 bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 rounded text-xs font-medium flex items-center gap-2 transition-colors ${isGenerating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                        {isGenerating ? (
+                            <div className="w-4 h-4 rounded-full border-2 border-t-transparent border-purple-400 animate-spin" />
+                        ) : (
+                            <span className="text-lg">✨</span>
+                        )}
+                        {isGenerating ? 'Generating Plan...' : 'Generate with AI'}
+                    </button>
                     <div className="flex bg-navy-950 rounded border border-white/10 p-1">
                         {['all', 'todo', 'in_progress', 'completed'].map(s => (
                             <button
@@ -196,10 +225,13 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
                 <TaskDetailModal
                     task={emptyTask as Task}
                     isOpen={isCreateModalOpen}
-                    onClose={() => setIsCreateModalOpen(false)}
-                    onSave={handleCreateTask}
+                    onClose={() => {
+                        setIsCreateModalOpen(false);
+                        fetchTasks();
+                    }}
                     currentUser={currentUser}
                     users={users}
+                    initiative={initiative} // Pass context
                 />
             )}
         </div>

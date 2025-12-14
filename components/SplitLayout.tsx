@@ -16,9 +16,9 @@ interface SplitLayoutProps {
 
 export const SplitLayout: React.FC<SplitLayoutProps> = ({
     children,
-     
+
     title,
-     
+
     subtitle,
     isFullScreen = false,
     onSendMessage,
@@ -162,6 +162,8 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
                         onSendMessage={handleSendMessage}
                         onOptionSelect={handleOptionSelect}
                         isTyping={isBotTyping}
+                        title={title}
+                        subtitle={subtitle}
                     />
                 </div>
             )}

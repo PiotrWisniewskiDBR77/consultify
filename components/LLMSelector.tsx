@@ -107,9 +107,9 @@ export const LLMSelector: React.FC = () => {
             </button>
 
             {isOpen && (
-                <div className="absolute top-full mt-2 right-0 w-72 bg-navy-900 border border-white/10 rounded-xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute top-full mt-2 right-0 w-72 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in slide-in-from-top-2 duration-200">
                     {/* Header / Search */}
-                    <div className="p-3 border-b border-white/5 space-y-3">
+                    <div className="p-3 border-b border-slate-200 dark:border-white/5 space-y-3">
                         <div className="relative">
                             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                             <input
@@ -117,49 +117,49 @@ export const LLMSelector: React.FC = () => {
                                 placeholder="Search models..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full bg-navy-950 border border-white/10 rounded-lg pl-9 pr-3 py-1.5 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors placeholder:text-slate-500"
+                                className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg pl-9 pr-3 py-1.5 text-sm text-navy-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-500"
                                 autoFocus
                             />
                         </div>
                     </div>
 
                     {/* Toggles */}
-                    <div className="p-2 space-y-1 border-b border-white/5 bg-navy-950/30">
-                        <div className="flex items-center justify-between px-3 py-2 hover:bg-white/5 rounded-lg group">
-                            <div className="flex items-center gap-2 text-sm text-slate-300">
-                                <Sparkles size={14} className="text-purple-400" />
+                    <div className="p-2 space-y-1 border-b border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-navy-950/30">
+                        <div className="flex items-center justify-between px-3 py-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg group transition-colors">
+                            <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                                <Sparkles size={14} className="text-purple-500 dark:text-purple-400" />
                                 <span>Auto</span>
                             </div>
                             <button
                                 aria-label="Toggle Auto Mode"
                                 onClick={() => setAIConfig({ autoMode: !aiConfig.autoMode })}
-                                className={`w-9 h-5 rounded-full p-0.5 transition-colors ${aiConfig.autoMode ? 'bg-purple-600' : 'bg-slate-700'}`}
+                                className={`w-9 h-5 rounded-full p-0.5 transition-colors ${aiConfig.autoMode ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'}`}
                             >
                                 <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${aiConfig.autoMode ? 'translate-x-4' : 'translate-x-0'}`} />
                             </button>
                         </div>
 
-                        <div className="flex items-center justify-between px-3 py-2 hover:bg-white/5 rounded-lg group">
-                            <div className="flex items-center gap-2 text-sm text-slate-300">
-                                <Zap size={14} className="text-amber-400" />
+                        <div className="flex items-center justify-between px-3 py-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg group transition-colors">
+                            <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                                <Zap size={14} className="text-amber-500 dark:text-amber-400" />
                                 <span>MAX Mode</span>
                             </div>
                             <button
                                 onClick={() => setAIConfig({ maxMode: !aiConfig.maxMode })}
-                                className={`w-9 h-5 rounded-full p-0.5 transition-colors ${aiConfig.maxMode ? 'bg-purple-600' : 'bg-slate-700'}`}
+                                className={`w-9 h-5 rounded-full p-0.5 transition-colors ${aiConfig.maxMode ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'}`}
                             >
                                 <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${aiConfig.maxMode ? 'translate-x-4' : 'translate-x-0'}`} />
                             </button>
                         </div>
 
-                        <div className="flex items-center justify-between px-3 py-2 hover:bg-white/5 rounded-lg group">
-                            <div className="flex items-center gap-2 text-sm text-slate-300">
-                                <Layers size={14} className="text-blue-400" />
+                        <div className="flex items-center justify-between px-3 py-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg group transition-colors">
+                            <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                                <Layers size={14} className="text-blue-500 dark:text-blue-400" />
                                 <span>Use Multiple Models</span>
                             </div>
                             <button
                                 onClick={() => setAIConfig({ multiModel: !aiConfig.multiModel })}
-                                className={`w-9 h-5 rounded-full p-0.5 transition-colors ${aiConfig.multiModel ? 'bg-purple-600' : 'bg-slate-700'}`}
+                                className={`w-9 h-5 rounded-full p-0.5 transition-colors ${aiConfig.multiModel ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'}`}
                             >
                                 <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${aiConfig.multiModel ? 'translate-x-4' : 'translate-x-0'}`} />
                             </button>
@@ -178,19 +178,19 @@ export const LLMSelector: React.FC = () => {
                             <button
                                 key={model.id}
                                 onClick={() => handleModelSelect(model.id)}
-                                className="w-full text-left px-4 py-2 flex items-center justify-between hover:bg-white/5 transition-colors group"
+                                className="w-full text-left px-4 py-2 flex items-center justify-between hover:bg-slate-100 dark:hover:bg-white/5 transition-colors group"
                             >
                                 <div className="flex items-center gap-3">
-                                    <div className="w-2 h-2 rounded-full bg-slate-500 group-hover:bg-purple-400 transition-colors" />
+                                    <div className="w-2 h-2 rounded-full bg-slate-400 dark:bg-slate-500 group-hover:bg-purple-500 dark:group-hover:bg-purple-400 transition-colors" />
                                     <div>
-                                        <div className={`text-sm font-medium ${aiConfig.selectedModelId === model.id && !aiConfig.autoMode ? 'text-purple-400' : 'text-slate-300'}`}>
+                                        <div className={`text-sm font-medium ${aiConfig.selectedModelId === model.id && !aiConfig.autoMode ? 'text-purple-600 dark:text-purple-400' : 'text-slate-600 dark:text-slate-300'}`}>
                                             {model.name}
                                         </div>
                                         <div className="text-[10px] text-slate-500 uppercase">{model.provider}</div>
                                     </div>
                                 </div>
                                 {aiConfig.selectedModelId === model.id && !aiConfig.autoMode && (
-                                    <Check size={14} className="text-purple-500" />
+                                    <Check size={14} className="text-purple-600 dark:text-purple-500" />
                                 )}
                             </button>
                         ))}

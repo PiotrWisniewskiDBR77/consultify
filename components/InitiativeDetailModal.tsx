@@ -1,13 +1,16 @@
+
 import React, { useState } from 'react';
-import { FullInitiative, User } from '../types';
+import { FullInitiative, User, StrategicIntent, StakeholderImpact, StrategicGoal } from '../types';
 
 import {
     X, Save, Target, TrendingUp, DollarSign,
     Calendar, Users, CheckCircle,
-    AlertTriangle, FileText, Globe
+    AlertTriangle, FileText, Globe, Sparkles, Brain, AlertOctagon
 } from 'lucide-react';
 import { Button } from './Button';
+import { Select } from './Select';
 import { InitiativeTasksTab } from './InitiativeTasksTab';
+import { InitiativeIntelligenceTab } from './InitiativeIntelligenceTab';
 
 interface InitiativeDetailModalProps {
     initiative: FullInitiative;
@@ -16,6 +19,7 @@ interface InitiativeDetailModalProps {
     onSave: (initiative: FullInitiative) => void;
     users?: User[];
     currentUser?: User | null; // Added currentUser
+    strategicGoals?: StrategicGoal[];
 }
 
 export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
@@ -24,14 +28,133 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
     onClose,
     onSave,
     users = [],
-    currentUser
+    currentUser,
+    strategicGoals = []
 }) => {
     const [initiative, setInitiative] = useState<FullInitiative>({ ...initialInitiative });
-    const [activeTab, setActiveTab] = useState<'overview' | 'definition' | 'execution' | 'tasks' | 'economics'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'definition' | 'execution' | 'tasks' | 'economics' | 'intelligence'>('overview');
+    const [isGenerating, setIsGenerating] = useState(false);
+
+    // Calculations
+    const calculateReadiness = () => {
+        // 1. Strategic (20%)
+        let strategic = 0;
+        if (initiative.name && initiative.name.length > 5) strategic += 5;
+        if (initiative.strategicIntent) strategic += 5;
+        if (initiative.axis) strategic += 5;
+        if (initiative.applicantOneLiner && initiative.applicantOneLiner.length > 10) strategic += 5;
+
+        // 2. Problem (20%)
+        let problem = 0;
+        if (initiative.problemStructured?.symptom) problem += 5;
+        if (initiative.problemStructured?.rootCause) problem += 5;
+        if (initiative.stakeholders && initiative.stakeholders.length > 0) problem += 5;
+        if (initiative.hypothesis) problem += 5;
+
+        // 3. Target (20%)
+        let target = 0;
+        if (initiative.targetState?.process?.length) target += 6;
+        if (initiative.targetState?.behavior?.length) target += 7;
+        if (initiative.targetState?.capability?.length) target += 7;
+
+        // 4. Execution (20%)
+        let execution = 0;
+        if (initiative.killCriteria) execution += 10;
+        if (initiative.keyRisks && initiative.keyRisks.length > 2) execution += 10;
+
+        // 5. Value (20%) - Placeholder until Task 6
+        let value = 0;
+        if (initiative.businessValue) value += 20;
+
+        const total = strategic + problem + target + execution + value;
+        return { total, details: { strategic, problem, target, execution, value } };
+    };
+
+    const readinessData = calculateReadiness();
+    const readiness = readinessData.total;
+    const isReady = readiness >= 80;
+
+    const generateSummary = () => {
+        // Mock generation
+        setInitiative(prev => ({
+            ...prev,
+            summary: `** Executive Summary(AI Generated) **\n\nThis initiative aims to ${prev.strategicIntent?.toLowerCase() || 'improve'} the organization by addressing ${prev.problemStatement?.slice(0, 30)}...\n\nIt is aligned with our goal to ${prev.applicantOneLiner || 'drive value'}.`
+        }));
+    };
+
+    const generateExecutionStrategy = async () => {
+        setIsGenerating(true);
+        try {
+            const res = await fetch('/api/ai/execution-strategy', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ initiative, userId: currentUser?.id })
+            });
+            if (!res.ok) throw new Error("AI Generation Failed");
+
+            const data = await res.json();
+
+            setInitiative(prev => ({
+                ...prev,
+                killCriteria: data.killCriteria,
+                keyRisks: data.keyRisks?.map((r: any) => ({ ...r, metric: r.metric as any })) || [],
+                milestones: data.milestones?.map((m: any) => ({ ...m, isDecisionGate: !!m.isDecisionGate, decision: m.decision || 'continue' })) || []
+            }));
+        } catch (error) {
+            console.error(error);
+            alert("Failed to generate strategy via AI. Please try again.");
+        } finally {
+            setIsGenerating(false);
+        }
+    };
 
     if (!isOpen) return null;
 
+    const handleCheckStrategicFit = async () => {
+        setIsGenerating(true);
+        try {
+            const res = await fetch('/api/ai/strategic-fit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ initiative, strategicGoals, userId: currentUser?.id })
+            });
+            if (!res.ok) throw new Error("AI Generation Failed");
+
+            const data = await res.json();
+            setInitiative(prev => ({
+                ...prev,
+                strategicFit: data
+            }));
+        } catch (error) {
+            console.error(error);
+            alert("Failed to check Strategic Fit via AI.");
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
     const handleSave = () => {
+        // Validation
+        if (!initiative.strategicIntent) {
+            alert("Strategic Intent is mandatory.");
+            return;
+        }
+        if (!initiative.applicantOneLiner || initiative.applicantOneLiner.length < 10) {
+            alert("Executive One-Liner is mandatory and must be meaningful.");
+            return;
+        }
+        // AI Behavior: Block generic descriptions
+        const isGeneric = (text?: string) => !text || text.includes("Brief overview") || text.length < 50;
+        if (isGeneric(initiative.summary)) {
+            alert("Executive Summary is too generic or short. Please elaborate.");
+            return;
+        }
+
+        if (!initiative.killCriteria || initiative.killCriteria.length < 10) {
+            alert("Kill Criteria is mandatory. Please define under what conditions this initiative should be stopped.");
+            return;
+        }
+
         onSave(initiative);
         onClose();
     };
@@ -65,9 +188,14 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                         <div>
                             <h2 className="text-lg font-bold text-white">Initiative Charter</h2>
                             <div className="flex items-center gap-2 text-xs text-slate-400">
-                                <span className="uppercase">{initiative.id ? `ID: ${initiative.id.slice(0, 8)}` : 'New Initiative'}</span>
+                                <span className="uppercase">{initiative.id ? `ID: ${initiative.id.slice(0, 8)} ` : 'New Initiative'}</span>
                                 <span className="w-1 h-1 bg-slate-600 rounded-full"></span>
                                 <span className="uppercase text-blue-400">{initiative.status?.replace('_', ' ') || 'DRAFT'}</span>
+                                <span className="w-1 h-1 bg-slate-600 rounded-full"></span>
+                                <div className={`flex items-center gap-1 ${isReady ? 'text-green-400' : 'text-orange-400'} `}>
+                                    <Brain size={12} />
+                                    <span>Readiness: {readiness}%</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -84,6 +212,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                         { id: 'definition', label: 'Definition & Scope', icon: Target },
                         { id: 'execution', label: 'Execution & Risks', icon: Calendar },
                         { id: 'economics', label: 'Value & Finance', icon: DollarSign },
+                        { id: 'intelligence', label: 'Intelligence', icon: Brain },
                     ].map(tab => (
                         <button
                             key={tab.id}
@@ -91,7 +220,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                             className={`flex items-center gap-2 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.id
                                 ? 'text-blue-400 border-blue-500'
                                 : 'text-slate-400 border-transparent hover:text-white'
-                                }`}
+                                } `}
                         >
                             <tab.icon size={16} />
                             {tab.label}
@@ -108,112 +237,276 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                             initiativeId={initiative.id}
                             users={users}
                             currentUser={currentUser!}
+                            initiative={initiative}
                         />
                     )}
 
                     {/* OVERVIEW TAB */}
                     {activeTab === 'overview' && (
-                        <div className="grid grid-cols-3 gap-6">
-                            <div className="col-span-2 space-y-6">
-                                <InputGroup label="Initiative Name">
+                        <div className="space-y-8 pb-10">
+                            {/* 1. Decision Framing */}
+                            <div className="bg-navy-950 p-5 rounded-xl border border-blue-500/30 shadow-lg shadow-blue-900/10 flex items-start gap-6">
+                                <div className="flex-1 space-y-2">
+                                    <label className="text-xs font-bold text-blue-400 uppercase tracking-wider flex items-center gap-2">
+                                        <AlertOctagon size={14} /> Decision to be made
+                                    </label>
                                     <input
-                                        className="w-full bg-navy-950 border border-white/10 rounded-lg p-3 text-lg font-semibold text-white focus:border-blue-500 outline-none"
-                                        value={initiative.name}
-                                        onChange={e => setInitiative({ ...initiative, name: e.target.value })}
-                                        placeholder="e.g., Global AI Customer Service Rollout"
+                                        className="w-full bg-navy-900 border-b-2 border-blue-500/50 text-xl font-bold text-white focus:outline-none focus:border-blue-400 py-2 placeholder:text-blue-900/50"
+                                        placeholder="e.g. Approve Pilot Budget of $50k"
+                                        value={initiative.decisionToMake || ''}
+                                        onChange={e => setInitiative({ ...initiative, decisionToMake: e.target.value })}
                                     />
-                                </InputGroup>
-
-                                <InputGroup label="Executive Summary">
-                                    <textarea
-                                        className="w-full bg-navy-950 border border-white/10 rounded-lg p-3 text-slate-300 focus:border-blue-500 outline-none h-24 resize-none"
-                                        value={initiative.summary || ''}
-                                        onChange={e => setInitiative({ ...initiative, summary: e.target.value })}
-                                        placeholder="Brief overview of the initiative..."
+                                    <p className="text-xs text-slate-500">Define the specific decision executives need to make today.</p>
+                                </div>
+                                <div className="w-64 space-y-2">
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Decision Owner</label>
+                                    <Select
+                                        value={initiative.decisionOwnerId || ''}
+                                        onChange={(val) => setInitiative({ ...initiative, decisionOwnerId: val })}
+                                        placeholder="Select Owner..."
+                                        options={users.map(u => ({ value: u.id, label: `${u.firstName} ${u.lastName}` }))}
                                     />
-                                </InputGroup>
-
-                                <InputGroup label="Problem Statement (The Why)">
-                                    <textarea
-                                        className="w-full bg-navy-950 border border-white/10 rounded-lg p-3 text-slate-300 focus:border-blue-500 outline-none h-24 resize-none"
-                                        value={initiative.problemStatement || ''}
-                                        onChange={e => setInitiative({ ...initiative, problemStatement: e.target.value })}
-                                        placeholder="What problem are we solving? Why now?"
-                                    />
-                                </InputGroup>
-
-                                <InputGroup label="Hypothesis">
-                                    <div className="bg-blue-900/10 border border-blue-500/20 rounded-lg p-3">
-                                        <p className="text-xs text-blue-400 mb-2 font-mono">IF we implement [User Solution] THEN we will achieve [Result] BECAUSE [Reasoning]</p>
-                                        <textarea
-                                            className="w-full bg-transparent border-none p-0 text-white focus:ring-0 placeholder:text-slate-600"
-                                            value={initiative.hypothesis || ''}
-                                            onChange={e => setInitiative({ ...initiative, hypothesis: e.target.value })}
-                                            placeholder="Enter hypothesis..."
-                                        />
-                                    </div>
-                                </InputGroup>
+                                </div>
                             </div>
 
-                            {/* Sidebar Info */}
-                            <div className="space-y-6">
-                                <div className="bg-navy-950 rounded-xl p-4 border border-white/5">
-                                    <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-                                        <Users size={16} className="text-purple-400" /> Key Roles
-                                    </h3>
+                            {/* 2. Executive Definition */}
+                            <div className="grid grid-cols-12 gap-6">
+                                <div className="col-span-8 space-y-6">
+                                    <div className="bg-navy-950 rounded-xl p-5 border border-white/5 space-y-4">
+                                        <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                                            <Sparkles size={16} className="text-purple-400" /> Executive One-Liner
+                                        </h3>
+                                        <div className="bg-navy-900 p-4 rounded-lg border border-white/5 space-y-3">
+                                            <p className="text-xs text-slate-500 font-mono mb-2">Structure: Achieve [X] by changing [Y] so that [Z improves]</p>
+                                            <textarea
+                                                className="w-full bg-transparent text-lg font-medium text-white placeholder:text-slate-600 focus:outline-none resize-none h-20"
+                                                placeholder="This initiative exists to..."
+                                                value={initiative.applicantOneLiner || ''}
+                                                onChange={e => setInitiative({ ...initiative, applicantOneLiner: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
 
-                                    <div className="space-y-4">
-                                        <InputGroup label="Business Owner">
-                                            <select
-                                                className="w-full bg-navy-900 border border-white/10 rounded p-2 text-sm text-white"
-                                                value={initiative.ownerBusinessId || ''}
-                                                onChange={e => setInitiative({ ...initiative, ownerBusinessId: e.target.value })}
-                                            >
-                                                <option value="">Select Owner...</option>
-                                                {users.map(u => (
-                                                    <option key={u.id} value={u.id}>{u.firstName} {u.lastName}</option>
-                                                ))}
-                                            </select>
+                                    <div className="bg-navy-950 rounded-xl p-5 border border-white/5 space-y-4">
+                                        <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                                            <AlertTriangle size={16} className="text-orange-400" /> Problem Statement (The Why)
+                                        </h3>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="col-span-2">
+                                                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Symptom</label>
+                                                <input
+                                                    className="w-full bg-navy-900 border border-white/10 rounded p-2 text-white text-sm"
+                                                    placeholder="What is visible?"
+                                                    value={initiative.problemStructured?.symptom || ''}
+                                                    onChange={e => setInitiative({ ...initiative, problemStructured: { ...initiative.problemStructured || { symptom: '', rootCause: '', costOfInaction: '' }, symptom: e.target.value } })}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Root Cause</label>
+                                                <input
+                                                    className="w-full bg-navy-900 border border-white/10 rounded p-2 text-white text-sm"
+                                                    placeholder="Why is it happening?"
+                                                    value={initiative.problemStructured?.rootCause || ''}
+                                                    onChange={e => setInitiative({ ...initiative, problemStructured: { ...initiative.problemStructured || { symptom: '', rootCause: '', costOfInaction: '' }, rootCause: e.target.value } })}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Cost of Inaction</label>
+                                                <input
+                                                    className="w-full bg-navy-900 border border-white/10 rounded p-2 text-white text-sm"
+                                                    placeholder="What if we do nothing?"
+                                                    value={initiative.problemStructured?.costOfInaction || ''}
+                                                    onChange={e => setInitiative({ ...initiative, problemStructured: { ...initiative.problemStructured || { symptom: '', rootCause: '', costOfInaction: '' }, costOfInaction: e.target.value } })}
+                                                />
+                                            </div>
+
+                                            {/* Legacy Textarea Fallback (if user wants to write generic text) */}
+                                            <div className="col-span-2 mt-2">
+                                                <p className="text-xs text-slate-600 mb-1">Full Description (Legacy)</p>
+                                                <textarea
+                                                    className="w-full bg-navy-900 border border-white/10 rounded p-2 text-slate-400 text-xs h-16 resize-none"
+                                                    value={initiative.problemStatement || ''}
+                                                    onChange={e => setInitiative({ ...initiative, problemStatement: e.target.value })}
+                                                    placeholder="Additional context..."
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Basic Fields */}
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <InputGroup label="Initiative Name">
+                                            <input
+                                                className="w-full bg-navy-950 border border-white/10 rounded-lg p-3 text-white focus:border-blue-500 outline-none"
+                                                value={initiative.name}
+                                                onChange={e => setInitiative({ ...initiative, name: e.target.value })}
+                                            />
                                         </InputGroup>
-
-                                        <InputGroup label="Execution Lead">
-                                            <select
-                                                className="w-full bg-navy-900 border border-white/10 rounded p-2 text-sm text-white"
-                                                value={initiative.ownerExecutionId || ''}
-                                                onChange={e => setInitiative({ ...initiative, ownerExecutionId: e.target.value })}
-                                            >
-                                                <option value="">Select Lead...</option>
-                                                {users.map(u => (
-                                                    <option key={u.id} value={u.id}>{u.firstName} {u.lastName}</option>
-                                                ))}
-                                            </select>
-                                        </InputGroup>
-
-                                        <InputGroup label="Sponsor">
-                                            <select
-                                                className="w-full bg-navy-900 border border-white/10 rounded p-2 text-sm text-white"
-                                                value={initiative.sponsorId || ''}
-                                                onChange={e => setInitiative({ ...initiative, sponsorId: e.target.value })}
-                                            >
-                                                <option value="">Select Sponsor...</option>
-                                                {users.map(u => (
-                                                    <option key={u.id} value={u.id}>{u.firstName} {u.lastName}</option>
-                                                ))}
-                                            </select>
+                                        <InputGroup label="Strategic Intent">
+                                            <Select
+                                                value={initiative.strategicIntent || ''}
+                                                onChange={(val) => setInitiative({ ...initiative, strategicIntent: val as StrategicIntent })}
+                                                placeholder="Select Intent..."
+                                                options={[
+                                                    { value: 'Grow', label: 'Grow' },
+                                                    { value: 'Fix', label: 'Fix' },
+                                                    { value: 'Stabilize', label: 'Stabilize' },
+                                                    { value: 'De-risk', label: 'De-risk' },
+                                                    { value: 'Build capability', label: 'Build capability' }
+                                                ]}
+                                            />
                                         </InputGroup>
                                     </div>
                                 </div>
 
-                                <div className="bg-navy-950 rounded-xl p-4 border border-white/5">
+                                <div className="col-span-4 space-y-6">
+                                    {/* Strategic Fit Panel */}
+                                    <div className="bg-navy-950 rounded-xl p-5 border border-white/5 h-full">
+                                        <div className="flex justify-between items-center mb-4">
+                                            <h3 className="text-sm font-bold text-white">Strategic Fit</h3>
+                                            <button onClick={handleCheckStrategicFit} disabled={isGenerating} className="text-blue-400 hover:text-white">
+                                                {isGenerating ? <div className="w-4 h-4 rounded-full border-2 border-t-transparent border-blue-500 animate-spin" /> : <Sparkles size={14} />}
+                                            </button>
+                                        </div>
+                                        <div className="space-y-3">
+                                            <div className="flex items-center justify-between p-2 bg-navy-900 rounded">
+                                                <span className="text-xs text-slate-400">Alignment with Axis</span>
+                                                {initiative.strategicFit?.axisAlign ? <CheckCircle size={14} className="text-green-500" /> : <X size={14} className="text-slate-600" />}
+                                            </div>
+                                            <div className="flex items-center justify-between p-2 bg-navy-900 rounded">
+                                                <span className="text-xs text-slate-400">Corporate Goal</span>
+                                                {initiative.strategicFit?.goalAlign ? <CheckCircle size={14} className="text-green-500" /> : <X size={14} className="text-slate-600" />}
+                                            </div>
+                                            <div className="flex items-center justify-between p-2 bg-navy-900 rounded">
+                                                <span className="text-xs text-slate-400">Pain Point</span>
+                                                {initiative.strategicFit?.painPointAlign ? <CheckCircle size={14} className="text-green-500" /> : <X size={14} className="text-slate-600" />}
+                                            </div>
+                                            <div className="mt-4 p-3 bg-blue-500/10 rounded border border-blue-500/20">
+                                                <p className="text-xs text-blue-300 italic h-24 overflow-y-auto">
+                                                    {initiative.strategicFit?.reasoning || "Click Sparkles to analyze..."}
+                                                </p>
+                                            </div>
+
+                                            {/* Readiness Breakdown */}
+                                            <div className="mt-6 pt-6 border-t border-white/5">
+                                                <h4 className="text-xs font-bold text-white mb-2">Readiness Score: {readiness}%</h4>
+                                                <div className="space-y-1">
+                                                    {Object.entries(readinessData.details).map(([key, score]) => (
+                                                        <div key={key} className="flex justify-between text-xs text-slate-400 capitalize">
+                                                            <span>{key} ({20}pts)</span>
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="w-16 h-1 bg-slate-800 rounded overflow-hidden">
+                                                                    <div className={`h-full ${score >= 20 ? 'bg-green-500' : 'bg-blue-500'}`} style={{ width: `${(score / 20) * 100}%` }}></div>
+                                                                </div>
+                                                                <span className={score >= 20 ? 'text-green-500 font-bold' : 'text-slate-500'}>{score}</span>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 3. Target State Snapshot */}
+                            <div className="bg-navy-950 rounded-xl p-5 border border-white/5">
+                                <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2"><Target size={16} className="text-blue-400" /> Target State Snapshot (After Initiative)</h3>
+                                <div className="grid grid-cols-3 gap-4">
+                                    {['Process', 'Behavior', 'Capability'].map(type => (
+                                        <div key={type} className="bg-navy-900 p-3 rounded-lg border border-white/5">
+                                            <h4 className="text-xs font-bold text-slate-400 uppercase mb-2 border-b border-white/5 pb-1">{type} Changes</h4>
+                                            <div className="space-y-2">
+                                                {(initiative.targetState?.[type.toLowerCase() as keyof typeof initiative.targetState] || []).map((item: string, idx: number) => (
+                                                    <div key={idx} className="flex gap-1 group">
+                                                        <span className="text-blue-500">•</span>
+                                                        <input
+                                                            className="w-full bg-transparent text-xs text-slate-300 focus:outline-none border-none p-0"
+                                                            value={item}
+                                                            onChange={e => {
+                                                                const newState = { ...(initiative.targetState || { process: [], behavior: [], capability: [] }) };
+                                                                const key = type.toLowerCase() as keyof typeof newState;
+                                                                const arr = [...(newState[key] || [])];
+                                                                arr[idx] = e.target.value;
+                                                                newState[key] = arr;
+                                                                setInitiative({ ...initiative, targetState: newState });
+                                                            }}
+                                                        />
+                                                        <button onClick={() => {
+                                                            const newState = { ...(initiative.targetState || { process: [], behavior: [], capability: [] }) };
+                                                            const key = type.toLowerCase() as keyof typeof newState;
+                                                            const arr = [...(newState[key] || [])];
+                                                            arr.splice(idx, 1);
+                                                            newState[key] = arr;
+                                                            setInitiative({ ...initiative, targetState: newState });
+                                                        }} className="opacity-0 group-hover:opacity-100 text-slate-600 hover:text-red-500"><X size={12} /></button>
+                                                    </div>
+                                                ))}
+                                                <button onClick={() => {
+                                                    const newState = { ...(initiative.targetState || { process: [], behavior: [], capability: [] }) };
+                                                    const key = type.toLowerCase() as keyof typeof newState;
+                                                    (newState[key] as string[]).push("New item...");
+                                                    setInitiative({ ...initiative, targetState: newState });
+                                                }} className="text-xs text-blue-500 hover:text-blue-400">+ Add bullet</button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* 4. Governance & Evidence */}
+                            <div className="grid grid-cols-2 gap-6">
+                                {/* Attachments */}
+                                <div className="bg-navy-950 rounded-xl p-5 border border-white/5">
                                     <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-                                        <Globe size={16} className="text-blue-400" /> Context
+                                        <FileText size={16} className="text-blue-400" /> Evidence & Attachments
                                     </h3>
-                                    <div className="text-xs text-slate-400 italic">
-                                        {initiative.marketContext ? (
-                                            <p className="line-clamp-6">{initiative.marketContext}</p>
-                                        ) : (
-                                            <p>No market context data available. Use "Enrich" to fetch.</p>
-                                        )}
+                                    <div className="space-y-2">
+                                        {(initiative.attachments || []).map((att, idx) => (
+                                            <div key={idx} className="flex items-center justify-between bg-navy-900 p-2 rounded border border-white/5">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="p-1 bg-blue-500/20 rounded"><FileText size={12} className="text-blue-400" /></div>
+                                                    <div>
+                                                        <p className="text-xs text-white font-medium">{att.name}</p>
+                                                        <span className="text-[10px] text-slate-500 uppercase">{att.type}</span>
+                                                    </div>
+                                                </div>
+                                                <button onClick={() => {
+                                                    const list = [...(initiative.attachments || [])];
+                                                    list.splice(idx, 1);
+                                                    setInitiative({ ...initiative, attachments: list });
+                                                }} className="text-slate-600 hover:text-red-500"><X size={12} /></button>
+                                            </div>
+                                        ))}
+                                        <button onClick={() => {
+                                            const list = [...(initiative.attachments || [])];
+                                            list.push({ id: Date.now().toString(), name: "New Evidence.pdf", type: 'strategy', url: '', uploadedAt: new Date().toISOString() });
+                                            setInitiative({ ...initiative, attachments: list });
+                                        }} className="text-xs text-blue-500 hover:text-blue-400">+ Add Attachment (Mock)</button>
+                                    </div>
+                                </div>
+
+                                {/* Change Log */}
+                                <div className="bg-navy-950 rounded-xl p-5 border border-white/5">
+                                    <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                                        <TrendingUp size={16} className="text-purple-400" /> Strategic Change Log
+                                    </h3>
+                                    <div className="space-y-3">
+                                        {(initiative.changeLog || []).map((log, idx) => (
+                                            <div key={idx} className="bg-navy-900 p-2 rounded border border-white/5">
+                                                <div className="flex justify-between mb-1">
+                                                    <span className="text-xs font-bold text-slate-300">{log.date}</span>
+                                                    <span className="text-[10px] bg-slate-800 text-slate-400 px-1 rounded">{log.user}</span>
+                                                </div>
+                                                <p className="text-xs text-white mb-1">{log.change}</p>
+                                                <p className="text-[10px] text-slate-500 italic">Why: {log.reason}</p>
+                                            </div>
+                                        ))}
+                                        <button onClick={() => {
+                                            const list = [...(initiative.changeLog || [])];
+                                            list.push({ id: Date.now().toString(), date: new Date().toISOString().split('T')[0], user: currentUser?.firstName || 'User', change: "Updated strategy", reason: "Market shift", impact: "High" });
+                                            setInitiative({ ...initiative, changeLog: list });
+                                        }} className="text-xs text-purple-500 hover:text-purple-400">+ Add Log Entry</button>
                                     </div>
                                 </div>
                             </div>
@@ -222,8 +515,199 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
 
                     {/* DEFINITION & SCOPE TAB */}
                     {activeTab === 'definition' && (
-                        <div className="grid grid-cols-2 gap-8">
-                            {/* Deliverables */}
+                        <div className="grid grid-cols-2 gap-8 h-full">
+                            <div className="space-y-8 overflow-y-auto pr-2">
+
+                                {/* Strategic Roadmap Attributes (New) */}
+                                <div className="bg-navy-950 rounded-xl p-5 border border-white/5 space-y-4">
+                                    <h3 className="text-white font-bold flex items-center gap-2 border-b border-white/10 pb-2">
+                                        <Globe size={18} className="text-blue-500" /> Strategic Roadmap Attributes
+                                    </h3>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="col-span-2 md:col-span-1">
+                                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Strategic Role</label>
+                                            <Select
+                                                value={initiative.strategicRole || ''}
+                                                onChange={(val) => setInitiative({ ...initiative, strategicRole: val })}
+                                                placeholder="Select Role..."
+                                                options={[
+                                                    { value: 'Platform', label: 'Platform (Enabler)' },
+                                                    { value: 'Engine', label: 'Engine (Core Business)' },
+                                                    { value: 'Pilot', label: 'Pilot (Experiment)' },
+                                                    { value: 'Scale', label: 'Scale (Growth)' },
+                                                    { value: 'Transformation', label: 'Transformation' }
+                                                ]}
+                                            />
+                                        </div>
+                                        <div className="col-span-2 md:col-span-1">
+                                            {/* Placeholder for future field or spacing */}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div className="flex justify-between items-center mb-1">
+                                            <label className="text-xs font-bold text-slate-500 uppercase">Placement Reason</label>
+                                            <button
+                                                onClick={async () => {
+                                                    setIsGenerating(true);
+                                                    try {
+                                                        const res = await fetch('/api/ai/placement-reason', {
+                                                            method: 'POST',
+                                                            headers: { 'Content-Type': 'application/json' },
+                                                            body: JSON.stringify({ initiative })
+                                                        });
+                                                        const data = await res.json();
+                                                        setInitiative(prev => ({ ...prev, placementReason: data.reason }));
+                                                    } catch (e) { console.error(e); }
+                                                    setIsGenerating(false);
+                                                }}
+                                                disabled={isGenerating}
+                                                className="text-[10px] text-blue-400 hover:text-white flex items-center gap-1"
+                                            >
+                                                <Sparkles size={10} /> {isGenerating ? 'Generating...' : 'Auto-fill with AI'}
+                                            </button>
+                                        </div>
+                                        <textarea
+                                            className="w-full bg-navy-900 border border-white/10 rounded p-2 text-sm text-slate-300 h-20 focus:outline-none focus:border-blue-500/50"
+                                            placeholder="Why is this initiative placed here? (e.g. key dependency for X...)"
+                                            value={initiative.placementReason || ''}
+                                            onChange={e => setInitiative({ ...initiative, placementReason: e.target.value })}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="text-xs font-bold text-slate-500 uppercase mb-3 block">Effort Profile (1-5)</label>
+                                        <div className="space-y-3">
+                                            {[
+                                                { label: 'Analytical', key: 'analytical', color: 'bg-blue-500' },
+                                                { label: 'Operational', key: 'operational', color: 'bg-emerald-500' },
+                                                { label: 'Change Mgmt', key: 'change', color: 'bg-rose-500' }
+                                            ].map(metric => (
+                                                <div key={metric.key} className="flex items-center gap-3">
+                                                    <span className="text-xs text-slate-400 w-20">{metric.label}</span>
+                                                    <div className="flex-1 flex items-center gap-3">
+                                                        <input
+                                                            type="range" min="1" max="5" step="1"
+                                                            className="w-full accent-blue-500 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                                                            value={initiative.effortProfile?.[metric.key as keyof typeof initiative.effortProfile] || 1}
+                                                            onChange={e => {
+                                                                const val = parseInt(e.target.value);
+                                                                setInitiative({
+                                                                    ...initiative,
+                                                                    effortProfile: {
+                                                                        analytical: initiative.effortProfile?.analytical || 1,
+                                                                        operational: initiative.effortProfile?.operational || 1,
+                                                                        change: initiative.effortProfile?.change || 1,
+                                                                        [metric.key]: val
+                                                                    }
+                                                                });
+                                                            }}
+                                                        />
+                                                        <span className={`text-xs font-bold w-4 text-center ${initiative.effortProfile?.[metric.key as keyof typeof initiative.effortProfile] === 5 ? 'text-red-400' : 'text-slate-300'}`}>
+                                                            {initiative.effortProfile?.[metric.key as keyof typeof initiative.effortProfile] || 1}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                                {/* Success Criteria (Enhanced) */}
+                                <div className="space-y-4">
+                                    <h3 className="text-white font-bold flex items-center gap-2 border-b border-white/10 pb-2">
+                                        <TrendingUp size={18} className="text-blue-500" /> Success Criteria (Typed)
+                                    </h3>
+
+                                    {(initiative.structuredSuccessCriteria || initiative.successCriteria?.map(s => ({ type: 'Metric', value: s })) || []).map((item: any, idx: number) => (
+                                        <div key={idx} className="flex gap-2 bg-navy-950 p-2 rounded border border-white/5">
+                                            <select
+                                                className="bg-navy-900 text-xs text-blue-400 font-bold border-none outline-none rounded p-1 w-24"
+                                                value={item.type}
+                                                onChange={e => {
+                                                    const list = [...(initiative.structuredSuccessCriteria || initiative.successCriteria?.map(s => ({ type: 'Metric', value: s })) || [])];
+                                                    list[idx] = { ...item, type: e.target.value };
+                                                    setInitiative({ ...initiative, structuredSuccessCriteria: list });
+                                                }}
+                                            >
+                                                <option value="Metric">Metric</option>
+                                                <option value="Behavior">Behavior</option>
+                                                <option value="Process">Process</option>
+                                                <option value="Capability">Capability</option>
+                                            </select>
+                                            <input
+                                                className="flex-1 bg-transparent border-none p-1 text-sm text-white focus:ring-0"
+                                                value={item.value}
+                                                onChange={e => {
+                                                    const list = [...(initiative.structuredSuccessCriteria || initiative.successCriteria?.map(s => ({ type: 'Metric', value: s })) || [])];
+                                                    list[idx] = { ...item, value: e.target.value };
+                                                    setInitiative({ ...initiative, structuredSuccessCriteria: list });
+                                                }}
+                                                placeholder="Criteria description..."
+                                            />
+                                            <button onClick={() => {
+                                                const list = [...(initiative.structuredSuccessCriteria || initiative.successCriteria?.map(s => ({ type: 'Metric', value: s })) || [])];
+                                                list.splice(idx, 1);
+                                                setInitiative({ ...initiative, structuredSuccessCriteria: list });
+                                            }} className="text-slate-500 hover:text-red-500"><X size={16} /></button>
+                                        </div>
+                                    ))}
+                                    <button onClick={() => {
+                                        const list = [...(initiative.structuredSuccessCriteria || initiative.successCriteria?.map(s => ({ type: 'Metric', value: s })) || [])];
+                                        list.push({ type: 'Metric', value: '' });
+                                        setInitiative({ ...initiative, structuredSuccessCriteria: list });
+                                    }} className="text-sm text-blue-400 hover:text-blue-300 font-medium">+ Add Criteria</button>
+                                </div>
+
+                                {/* EXPLICIT ASSUMPTIONS (NEW) */}
+                                <div className="space-y-4">
+                                    <h3 className="text-white font-bold flex items-center gap-2 border-b border-white/10 pb-2">
+                                        <AlertOctagon size={18} className="text-purple-500" /> Explicit Assumptions
+                                    </h3>
+
+                                    <div className="grid grid-cols-1 gap-4">
+                                        <div className="bg-navy-950 p-3 rounded border border-white/5">
+                                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Organizational</label>
+                                            <input
+                                                className="w-full bg-transparent text-sm text-slate-300 focus:outline-none"
+                                                placeholder="e.g. Structure remains stable..."
+                                                value={initiative.assumptions?.org || ''}
+                                                onChange={e => setInitiative({ ...initiative, assumptions: { ...initiative.assumptions, org: e.target.value } })}
+                                            />
+                                        </div>
+                                        <div className="bg-navy-950 p-3 rounded border border-white/5">
+                                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Data / Tech</label>
+                                            <input
+                                                className="w-full bg-transparent text-sm text-slate-300 focus:outline-none"
+                                                placeholder="e.g. ERP data is available by Q2..."
+                                                value={initiative.assumptions?.data || ''}
+                                                onChange={e => setInitiative({ ...initiative, assumptions: { ...initiative.assumptions, data: e.target.value } })}
+                                            />
+                                        </div>
+                                        <div className="bg-navy-950 p-3 rounded border border-white/5">
+                                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Budget / Resources</label>
+                                            <input
+                                                className="w-full bg-transparent text-sm text-slate-300 focus:outline-none"
+                                                placeholder="e.g. Budget approval 1st Jan..."
+                                                value={initiative.assumptions?.budget || ''}
+                                                onChange={e => setInitiative({ ...initiative, assumptions: { ...initiative.assumptions, budget: e.target.value } })}
+                                            />
+                                        </div>
+                                        <div className="bg-navy-950 p-3 rounded border border-white/5">
+                                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">People / Skills</label>
+                                            <input
+                                                className="w-full bg-transparent text-sm text-slate-300 focus:outline-none"
+                                                placeholder="e.g. Key Stakeholders are available..."
+                                                value={initiative.assumptions?.people || ''}
+                                                onChange={e => setInitiative({ ...initiative, assumptions: { ...initiative.assumptions, people: e.target.value } })}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div className="space-y-4">
                                 <h3 className="text-white font-bold flex items-center gap-2 border-b border-white/10 pb-2">
                                     <CheckCircle size={18} className="text-green-500" /> Key Deliverables
@@ -240,63 +724,37 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                                     </div>
                                 ))}
                                 <button onClick={() => addArrayItem('deliverables')} className="text-sm text-blue-400 hover:text-blue-300 font-medium">+ Add Deliverable</button>
-                            </div>
 
-                            {/* Success Criteria */}
-                            <div className="space-y-4">
-                                <h3 className="text-white font-bold flex items-center gap-2 border-b border-white/10 pb-2">
-                                    <TrendingUp size={18} className="text-blue-500" /> Success Criteria
-                                </h3>
-                                {initiative.successCriteria?.map((item, idx) => (
-                                    <div key={idx} className="flex gap-2">
-                                        <input
-                                            className="flex-1 bg-navy-950 border border-white/10 rounded p-2 text-sm text-white"
-                                            value={item}
-                                            onChange={e => handleArrayChange('successCriteria', idx, e.target.value)}
-                                            placeholder="KPI or Success Metric..."
-                                        />
-                                        <button onClick={() => removeArrayItem('successCriteria', idx)} className="text-slate-500 hover:text-red-500"><X size={16} /></button>
+                                <div className="mt-8">
+                                    <h3 className="text-white font-bold flex items-center gap-2 border-b border-white/10 pb-2">
+                                        <Target size={18} className="text-orange-500" /> Scope Guard (Target)
+                                    </h3>
+                                    <div className="bg-orange-500/5 p-4 rounded border border-orange-500/10 mt-2">
+                                        <p className="text-xs text-orange-200 mb-2">Scope In / Out definition determines the boundary of AI monitoring.</p>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <h4 className="text-xs font-bold text-green-400 uppercase mb-2">In Scope</h4>
+                                                {initiative.scopeIn?.map((s, idx) => (
+                                                    <div key={idx} className="flex gap-1 mb-1">
+                                                        <input className="w-full bg-navy-900 text-xs p-1 rounded border border-white/10" value={s} onChange={e => handleArrayChange('scopeIn', idx, e.target.value)} />
+                                                        <button onClick={() => removeArrayItem('scopeIn', idx)}><X size={12} className="text-slate-500" /></button>
+                                                    </div>
+                                                ))}
+                                                <button onClick={() => addArrayItem('scopeIn')} className="text-xs text-green-400">+ Add</button>
+                                            </div>
+                                            <div>
+                                                <h4 className="text-xs font-bold text-red-400 uppercase mb-2">Out of Scope</h4>
+                                                {initiative.scopeOut?.map((s, idx) => (
+                                                    <div key={idx} className="flex gap-1 mb-1">
+                                                        <input className="w-full bg-navy-900 text-xs p-1 rounded border border-white/10" value={s} onChange={e => handleArrayChange('scopeOut', idx, e.target.value)} />
+                                                        <button onClick={() => removeArrayItem('scopeOut', idx)}><X size={12} className="text-slate-500" /></button>
+                                                    </div>
+                                                ))}
+                                                <button onClick={() => addArrayItem('scopeOut')} className="text-xs text-red-400">+ Add</button>
+                                            </div>
+                                        </div>
                                     </div>
-                                ))}
-                                <button onClick={() => addArrayItem('successCriteria')} className="text-sm text-blue-400 hover:text-blue-300 font-medium">+ Add Criteria</button>
-                            </div>
-
-                            {/* In Scope */}
-                            <div className="space-y-4 bg-green-500/5 p-4 rounded-xl border border-green-500/10">
-                                <h3 className="text-green-400 font-bold flex items-center gap-2 border-b border-green-500/10 pb-2">
-                                    In Scope
-                                </h3>
-                                {initiative.scopeIn?.map((item, idx) => (
-                                    <div key={idx} className="flex gap-2">
-                                        <input
-                                            className="flex-1 bg-navy-900 border border-white/10 rounded p-2 text-sm text-white"
-                                            value={item}
-                                            onChange={e => handleArrayChange('scopeIn', idx, e.target.value)}
-                                            placeholder="Included item..."
-                                        />
-                                        <button onClick={() => removeArrayItem('scopeIn', idx)} className="text-slate-500 hover:text-red-500"><X size={16} /></button>
-                                    </div>
-                                ))}
-                                <button onClick={() => addArrayItem('scopeIn')} className="text-sm text-green-400 hover:text-green-300 font-medium">+ Add Item</button>
-                            </div>
-
-                            {/* Out Scope */}
-                            <div className="space-y-4 bg-red-500/5 p-4 rounded-xl border border-red-500/10">
-                                <h3 className="text-red-400 font-bold flex items-center gap-2 border-b border-red-500/10 pb-2">
-                                    Out Scope
-                                </h3>
-                                {initiative.scopeOut?.map((item, idx) => (
-                                    <div key={idx} className="flex gap-2">
-                                        <input
-                                            className="flex-1 bg-navy-900 border border-white/10 rounded p-2 text-sm text-white"
-                                            value={item}
-                                            onChange={e => handleArrayChange('scopeOut', idx, e.target.value)}
-                                            placeholder="Excluded item..."
-                                        />
-                                        <button onClick={() => removeArrayItem('scopeOut', idx)} className="text-slate-500 hover:text-red-500"><X size={16} /></button>
-                                    </div>
-                                ))}
-                                <button onClick={() => addArrayItem('scopeOut')} className="text-sm text-red-400 hover:text-red-300 font-medium">+ Add Item</button>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -305,7 +763,36 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                     {activeTab === 'execution' && (
                         <div className="grid grid-cols-2 gap-8">
                             <div className="space-y-6">
-                                <h3 className="text-white font-bold mb-4">Timeline & Milestones</h3>
+                                <h3 className="text-white font-bold mb-4 flex items-center justify-between">
+                                    <span>Timeline & Milestones</span>
+                                    <button
+                                        onClick={generateExecutionStrategy}
+                                        disabled={isGenerating}
+                                        className={`text-xs flex items-center gap-1 border rounded px-2 py-1 transition-colors ${isGenerating
+                                            ? 'text-slate-500 border-slate-700 bg-transparent cursor-not-allowed'
+                                            : 'text-purple-400 hover:text-purple-300 border-purple-500/30 bg-purple-500/10'
+                                            }`}
+                                    >
+                                        <Sparkles size={12} className={isGenerating ? "animate-spin" : ""} />
+                                        {isGenerating ? "Generating..." : "Auto-fill Execution"}
+                                    </button>
+                                </h3>
+
+                                <InputGroup label="Kill Criteria (Mandatory) *">
+                                    <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-3">
+                                        <div className="flex items-center gap-2 mb-2 text-red-400 text-xs font-bold uppercase">
+                                            <AlertTriangle size={12} />
+                                            <span>Stop Conditions</span>
+                                        </div>
+                                        <textarea
+                                            className="w-full bg-transparent border-none p-0 text-slate-300 focus:ring-0 placeholder:text-slate-600 h-24 resize-none text-sm"
+                                            value={initiative.killCriteria || ''}
+                                            onChange={e => setInitiative({ ...initiative, killCriteria: e.target.value })}
+                                            placeholder="Define specific conditions under which this initiative MUST be stopped (e.g., Budget overrun > 15%, Technical failure in Pilot)..."
+                                        />
+                                    </div>
+                                </InputGroup>
+
                                 <div className="grid grid-cols-2 gap-4">
                                     <InputGroup label="Start Date">
                                         <input type="date"
@@ -333,46 +820,81 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                                 {/* Milestones UI */}
                                 <div className="bg-navy-950 rounded-xl p-4 border border-white/5">
                                     <h4 className="text-sm font-bold text-white mb-2 flex justify-between items-center">
-                                        <span>Key Milestones</span>
+                                        <span>Key Milestones & Gates</span>
                                         <button onClick={() => {
                                             const newMilestones = [...(initiative.milestones || []), { name: '', date: '', status: 'pending' as const }];
-                                            // TODO: Fix type definitions
                                             setInitiative({ ...initiative, milestones: newMilestones });
                                         }} className="text-xs text-blue-400 hover:text-white">+ Add</button>
                                     </h4>
-                                    <div className="space-y-2">
+                                    <div className="space-y-3">
                                         {initiative.milestones?.map((m, idx: number) => (
-                                            <div key={idx} className="flex gap-2">
-                                                <input
-                                                    type="date"
-                                                    className="w-24 bg-navy-900 border border-white/10 rounded p-1 text-xs text-white"
-                                                    value={m.date}
-                                                    onChange={e => {
+                                            <div key={idx} className={`p-3 rounded border transition-colors ${m.isDecisionGate ? 'bg-blue-900/10 border-blue-500/30' : 'bg-navy-900 border-white/5'} `}>
+                                                <div className="flex gap-2 mb-2">
+                                                    <input
+                                                        type="date"
+                                                        className="w-24 bg-navy-950 border border-white/10 rounded p-1 text-xs text-white"
+                                                        value={m.date}
+                                                        onChange={e => {
+                                                            const list = [...(initiative.milestones || [])];
+                                                            list[idx] = { ...m, date: e.target.value };
+                                                            setInitiative({ ...initiative, milestones: list });
+                                                        }}
+                                                    />
+                                                    <input
+                                                        className="flex-1 bg-navy-950 border border-white/10 rounded p-1 text-xs text-white"
+                                                        placeholder="Milestone name..."
+                                                        value={m.name}
+                                                        onChange={e => {
+                                                            const list = [...(initiative.milestones || [])];
+                                                            list[idx] = { ...m, name: e.target.value };
+                                                            setInitiative({ ...initiative, milestones: list });
+                                                        }}
+                                                    />
+                                                    <button onClick={() => {
                                                         const list = [...(initiative.milestones || [])];
-
-                                                        list[idx] = { ...m, date: e.target.value };
-
+                                                        list.splice(idx, 1);
                                                         setInitiative({ ...initiative, milestones: list });
-                                                    }}
-                                                />
-                                                <input
-                                                    className="flex-1 bg-navy-900 border border-white/10 rounded p-1 text-xs text-white"
-                                                    placeholder="Milestone name..."
-                                                    value={m.name}
-                                                    onChange={e => {
-                                                        const list = [...(initiative.milestones || [])];
+                                                    }} className="text-slate-500 hover:text-red-500"><X size={14} /></button>
+                                                </div>
 
-                                                        list[idx] = { ...m, name: e.target.value };
+                                                <div className="flex items-center gap-4 pl-1">
+                                                    <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={m.isDecisionGate || false}
+                                                            onChange={e => {
+                                                                const list = [...(initiative.milestones || [])];
+                                                                list[idx] = { ...m, isDecisionGate: e.target.checked };
+                                                                setInitiative({ ...initiative, milestones: list });
+                                                            }}
+                                                            className="rounded bg-navy-950 border-white/20 text-blue-500 focus:ring-offset-navy-900"
+                                                        />
+                                                        Decision Gate
+                                                    </label>
 
-                                                        setInitiative({ ...initiative, milestones: list });
-                                                    }}
-                                                />
-                                                <button onClick={() => {
-                                                    const list = [...(initiative.milestones || [])];
-                                                    list.splice(idx, 1);
-                                                    // TODO: Fix type definitions
-                                                    setInitiative({ ...initiative, milestones: list });
-                                                }} className="text-slate-500 hover:text-red-500"><X size={14} /></button>
+                                                    {m.isDecisionGate && (
+                                                        <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-200">
+                                                            <span className="text-xs text-slate-500">Decision:</span>
+                                                            <select
+                                                                className={`text - xs border rounded px - 2 py - 0.5 outline - none ${m.decision === 'stop' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
+                                                                    m.decision === 'adjust' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
+                                                                        'bg-green-500/20 text-green-400 border-green-500/30'
+                                                                    } `}
+                                                                value={m.decision || 'continue'}
+                                                                onChange={e => {
+                                                                    const list = [...(initiative.milestones || [])];
+                                                                    // @ts-ignore
+                                                                    list[idx] = { ...m, decision: e.target.value };
+                                                                    setInitiative({ ...initiative, milestones: list });
+                                                                }}
+                                                            >
+                                                                <option value="continue">Continue</option>
+                                                                <option value="adjust">Adjust</option>
+                                                                <option value="stop">Stop</option>
+                                                            </select>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
@@ -428,11 +950,16 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                                             }} className="text-xs text-red-500 mt-2">Remove</button>
                                         </div>
                                     ))}
-                                    <Button size="sm" variant="outline" onClick={() => {
-                                        const newRisks = [...(initiative.keyRisks || [])];
-                                        newRisks.push({ risk: '', mitigation: '', metric: 'Medium' });
-                                        setInitiative({ ...initiative, keyRisks: newRisks });
-                                    }}>+ Add Risk</Button>
+                                    <Button size="sm" variant="outline"
+                                        disabled={(initiative.keyRisks?.length || 0) >= 5}
+                                        onClick={() => {
+                                            const newRisks = [...(initiative.keyRisks || [])];
+                                            if (newRisks.length >= 5) return;
+                                            newRisks.push({ risk: '', mitigation: '', metric: 'Medium' });
+                                            setInitiative({ ...initiative, keyRisks: newRisks });
+                                        }}>
+                                        {(initiative.keyRisks?.length || 0) >= 5 ? 'Max 5 Risks Reached' : '+ Add Risk'}
+                                    </Button>
                                 </div>
                             </div>
                         </div>
@@ -443,57 +970,120 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                         <div className="grid grid-cols-2 gap-8">
                             <div className="space-y-6">
                                 <InputGroup label="Business Value">
-                                    <select
-                                        className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white"
-                                        value={initiative.businessValue}
-                                        onChange={e => setInitiative({ ...initiative, businessValue: e.target.value as 'High' | 'Medium' | 'Low' })}
-                                    >
-                                        <option value="High">High</option>
-                                        <option value="Medium">Medium</option>
-                                        <option value="Low">Low</option>
-                                    </select>
+                                    <Select
+                                        value={initiative.businessValue || ''}
+                                        onChange={(val) => setInitiative({ ...initiative, businessValue: val as 'High' | 'Medium' | 'Low' })}
+                                        options={[
+                                            { value: 'High', label: 'High' },
+                                            { value: 'Medium', label: 'Medium' },
+                                            { value: 'Low', label: 'Low' }
+                                        ]}
+                                    />
                                 </InputGroup>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <InputGroup label="Value Driver">
+                                        <Select
+                                            value={initiative.valueDriver || ''}
+                                            onChange={(val) => setInitiative({ ...initiative, valueDriver: val as any })}
+                                            placeholder="Select Driver..."
+                                            options={[
+                                                { value: 'Cost', label: 'Cost Optimization' },
+                                                { value: 'Revenue', label: 'Revenue Growth' },
+                                                { value: 'Capital', label: 'Capital Efficiency' },
+                                                { value: 'Risk', label: 'Risk Reduction' },
+                                                { value: 'Capability', label: 'Strategic Capability' }
+                                            ]}
+                                        />
+                                    </InputGroup>
+                                    <InputGroup label="Confidence Level">
+                                        <Select
+                                            value={initiative.confidenceLevel || ''}
+                                            onChange={(val) => setInitiative({ ...initiative, confidenceLevel: val as any })}
+                                            placeholder="Confidence..."
+                                            options={[
+                                                { value: 'High', label: 'High' },
+                                                { value: 'Medium', label: 'Medium' },
+                                                { value: 'Low', label: 'Low' }
+                                            ]}
+                                        />
+                                    </InputGroup>
+                                </div>
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <InputGroup label="CAPEX Est. ($)">
                                         <input type="number"
-                                            className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white"
+                                            className="w-full bg-navy-950 border border-white/10 rounded-lg p-3 text-white focus:border-blue-500 outline-none"
                                             value={initiative.costCapex || 0}
                                             onChange={e => setInitiative({ ...initiative, costCapex: parseInt(e.target.value) })}
                                         />
                                     </InputGroup>
                                     <InputGroup label="OPEX Est. ($)">
                                         <input type="number"
-                                            className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white"
+                                            className="w-full bg-navy-950 border border-white/10 rounded-lg p-3 text-white focus:border-blue-500 outline-none"
                                             value={initiative.costOpex || 0}
                                             onChange={e => setInitiative({ ...initiative, costOpex: parseInt(e.target.value) })}
                                         />
                                     </InputGroup>
                                 </div>
 
-                                <InputGroup label="Expected ROI (x)">
-                                    <input type="number" step="0.1"
-                                        className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white font-bold text-green-400"
-                                        value={initiative.expectedRoi || 0}
-                                        onChange={e => setInitiative({ ...initiative, expectedRoi: parseFloat(e.target.value) })}
+                                <InputGroup label="Value Timing">
+                                    <Select
+                                        value={initiative.valueTiming || ''}
+                                        onChange={(val) => setInitiative({ ...initiative, valueTiming: val as any })}
+                                        placeholder="Expected Realization..."
+                                        options={[
+                                            { value: 'Immediate', label: 'Immediate (<3mo)' },
+                                            { value: 'Short term', label: 'Short term (3-12mo)' },
+                                            { value: 'Long term', label: 'Long term (>12mo)' }
+                                        ]}
                                     />
                                 </InputGroup>
                             </div>
 
-                            <div className="bg-navy-950 rounded-xl p-6 border border-white/5 flex flex-col items-center justify-center text-center">
-                                <TrendingUp size={48} className="text-green-500 mb-4 opacity-50" />
+                            <div className="bg-navy-950 rounded-xl p-6 border border-white/5 flex flex-col items-center justify-center text-center relative">
+                                <TrendingUp size={48} className={`mb-4 opacity-50 ${initiative.valueDriver === 'Capability' ? 'text-purple-500' : 'text-green-500'} `} />
                                 <h3 className="text-xl font-bold text-white mb-2">Financial Summary</h3>
+
+                                <div className="mb-4">
+                                    {initiative.valueDriver === 'Capability' ? (
+                                        <span className="px-3 py-1 rounded-full bg-purple-500/20 text-purple-400 text-xs font-bold border border-purple-500/30">
+                                            CAPABILITY PLAY
+                                        </span>
+                                    ) : initiative.valueDriver ? (
+                                        <span className="px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-bold border border-green-500/30">
+                                            CASH PLAY
+                                        </span>
+                                    ) : null}
+                                </div>
+
                                 <p className="text-slate-400 text-sm mb-6">
                                     Total Investment: <span className="text-white font-mono">${((initiative.costCapex || 0) + (initiative.costOpex || 0)).toLocaleString()}</span>
                                 </p>
-                                <div className="w-full bg-navy-900 rounded-lg p-4 border border-white/5">
+
+                                {/* Sanity Check Logic Display */}
+                                {initiative.costCapex && initiative.costCapex > 0 && !initiative.valueDriver && (
+                                    <div className="flex items-center gap-2 text-orange-400 text-xs bg-orange-500/10 p-2 rounded w-full justify-center mb-4">
+                                        <AlertTriangle size={12} />
+                                        <span>Missing Value Driver for Investment</span>
+                                    </div>
+                                )}
+
+                                <div className="w-full bg-navy-900 rounded-lg p-4 border border-white/5 text-left">
                                     <span className="text-xs uppercase text-slate-500">Social Impact</span>
-                                    <p className="text-white mt-1">{initiative.socialImpact || 'Not defined'}</p>
+                                    <p className="text-white mt-1 text-sm">{initiative.socialImpact || 'Not defined'}</p>
                                 </div>
                             </div>
                         </div>
                     )}
 
+                    {/* INTELLIGENCE TAB */}
+                    {activeTab === 'intelligence' && (
+                        <InitiativeIntelligenceTab
+                            initiative={initiative}
+                            onChange={(updates) => setInitiative({ ...initiative, ...updates })}
+                        />
+                    )}
                 </div>
 
                 {/* Footer */}

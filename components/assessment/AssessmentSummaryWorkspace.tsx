@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { DRDAxis, AxisAssessment } from '../../types';
-import { ArrowRight, BarChart2, TrendingUp, Sparkles, Edit2, Save, MessageSquare, Plus, Loader2, X, Settings, Smartphone, Briefcase, Database, Users, Lock, BrainCircuit } from 'lucide-react';
+import { ArrowRight, BarChart2, TrendingUp, Sparkles, Edit2, Save, MessageSquare, Plus, Loader2, X, Settings, Smartphone, Briefcase, Database, Users, Lock, BrainCircuit, Download } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { AssessmentMatrixCard } from './AssessmentMatrixCard';
 import { sendMessageToAIStream, AIMessageHistory } from '../../services/ai/gemini';
 import { getQuestionsForAxis, DRD_STRUCTURE } from '../../services/drdStructure';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 interface AssessmentSummaryWorkspaceProps {
     assessment: Partial<Record<DRDAxis, AxisAssessment>>;
@@ -24,6 +26,7 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
 }) => {
     const { t: translate } = useTranslation();
     const tSidebar = translate('sidebar', { returnObjects: true }) as any;
+    const componentRef = useRef<HTMLDivElement>(null);
 
     const [summary, setSummary] = useState<string>('');
     const [isGenerating, setIsGenerating] = useState(false);
@@ -58,20 +61,30 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
         setIsGenerating(true);
         setSummary(''); // Clear previous summary
 
-        // Construct prompt context
+        // Construct prompt context with detailed scores
         const context = axes.map(axis => {
             const data = assessment[axis];
-            return `${labels[axis]}: Actual ${data?.actual || 0} / Target ${data?.target || 0}`;
+            return `- ${labels[axis]}: Actual Level ${data?.actual || 0} -> Target Level ${data?.target || 0}`;
         }).join('\n');
 
         const prompt = `
-            Analyze the following Digital Readiness Assessment results:
+            Act as a Senior Digital Transformation Consultant specialized in the DRD 2.0 (Digital Readiness Dashboard) methodology.
+            
+            Analyze the following Digital Readiness Assessment results for a client:
             ${context}
+            
+            Total Gap Points: ${totalGap}
+            Average Maturity Level: ${avgMaturity}
 
-            Provide a concise, executive summary of the digital maturity state.
-            Focus on the biggest gaps and critical recommendations.
-            Keep it professional, strategic, and under 150 words.
-            Format with bold text for emphasis where appropriate using markdown.
+            Based on the DRD 2.0 methodology, providing a strategic executive summary that covers:
+            1. **Overall Assessment**: A high-level view of the organization's digital maturity.
+            2. **Critical Gaps**: Identify the axes with the largest gaps between Actual and Target states. These are the primary bottlenecks.
+            3. **Strategic Coherence**: Comment on the balance between different axes. Are they developing evenly? (e.g., Is 'Culture' lagging behind 'Technology'? Is 'Cybersecurity' neglected?)
+            4. **Recommendations**: Suggest 2-3 high-impact focus areas to prioritize innovation and stability.
+
+            Tone: Professional, insightful, and action-oriented.
+            Format: Use clear Markdown with headings, bullet points, and bold text for emphasis.
+            Length: Approximately 200-250 words.
         `;
 
         const history: AIMessageHistory[] = [];
@@ -82,6 +95,47 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
             (chunk) => setSummary(prev => prev + chunk),
             () => setIsGenerating(false)
         );
+    };
+
+    const handleDownloadPDF = async () => {
+        if (!componentRef.current) return;
+
+        try {
+            const canvas = await html2canvas(componentRef.current, {
+                scale: 2, // Higher quality
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#0f172a' // Match navy-900
+            });
+
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF({
+                orientation: 'p',
+                unit: 'mm',
+                format: 'a4'
+            });
+
+            const imgWidth = 210;
+            const pageHeight = 297;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            let heightLeft = imgHeight;
+            let position = 0;
+
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+
+            while (heightLeft >= 0) {
+                position = heightLeft - imgHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+
+            pdf.save(`DRD_Assessment_Summary_${new Date().toISOString().split('T')[0]}.pdf`);
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+            // In a real app, show a toast notification here
+        }
     };
 
     const handleAddComment = () => {
@@ -99,7 +153,7 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
     };
 
     return (
-        <div className="flex flex-col h-full bg-navy-900 text-white p-8 overflow-y-auto">
+        <div className="flex flex-col h-full bg-navy-900 text-white p-8 overflow-y-auto" ref={componentRef}>
 
             {/* Header */}
             <div className="flex justify-between items-start mb-8">
@@ -113,6 +167,14 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
                     </p>
                 </div>
                 <div className="flex gap-4">
+                    <button
+                        onClick={handleDownloadPDF}
+                        className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-sm font-semibold transition-colors border border-white/10"
+                        title="Download Report as PDF"
+                    >
+                        <Download size={16} />
+                        Export PDF
+                    </button>
                     <div className="bg-navy-950/50 p-3 rounded-xl border border-white/5 text-center min-w-[100px]">
                         <div className="text-2xl font-bold text-blue-400">{avgMaturity}</div>
                         <div className="text-[10px] uppercase text-slate-500 font-bold">Avg Actual</div>
@@ -261,7 +323,7 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
                             <p className="text-xs text-purple-400/60">Powered by Gemini AI</p>
                         </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2" data-html2canvas-ignore>
                         {!summary && !isGenerating && (
                             <button
                                 onClick={handleGenerateSummary}

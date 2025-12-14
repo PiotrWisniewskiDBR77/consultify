@@ -120,7 +120,7 @@ export const AssessmentMatrixCard: React.FC<AssessmentMatrixCardProps> = ({
                                             ${isActual
                                                 ? 'bg-blue-600 border-blue-400 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)] z-10 scale-105'
                                                 : isTarget
-                                                    ? 'bg-purple-900/20 border-purple-400 text-purple-200 border-dashed'
+                                                    ? 'bg-purple-600/40 border-purple-400 text-white border-dashed'
                                                     : 'bg-navy-900/40 border-slate-800 text-slate-500 hover:bg-navy-800/40 hover:border-slate-700'
                                             }
                                         `}

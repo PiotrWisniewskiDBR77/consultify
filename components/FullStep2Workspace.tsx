@@ -1,11 +1,12 @@
 
 import React, { useState, useMemo } from 'react';
-import { FullSession, FullInitiative, AxisId } from '../types';
+import { FullSession, FullInitiative, AxisId, StrategicGoal } from '../types';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight, Plus, Search, Layers } from 'lucide-react';
 import { InitiativeCard } from './InitiativeCard';
 import { InitiativeDetailModal } from './InitiativeDetailModal';
 import { useAppStore } from '../store/useAppStore';
+import { Select } from './Select';
 
 interface FullStep2WorkspaceProps {
   fullSession: FullSession;
@@ -13,6 +14,9 @@ interface FullStep2WorkspaceProps {
   onCreateInitiative: (initiative: FullInitiative) => void;
   onEnrichInitiative?: (id: string) => Promise<void>;
   onNextStep: () => void;
+  users?: any[]; // Added
+  currentUser?: any; // Added
+  strategicGoals?: StrategicGoal[]; // Added
 }
 
 export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
@@ -20,16 +24,20 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
   onUpdateInitiative,
   onCreateInitiative,
   onEnrichInitiative,
-  onNextStep
+  onNextStep,
+  users = [], // Default to empty array
+  currentUser,
+  strategicGoals = []
 }) => {
   const { t: translate } = useTranslation();
   const t = translate('fullInitiatives', { returnObjects: true }) as any;
   const ts = translate('sidebar', { returnObjects: true }) as any;
   const initiatives = useMemo(() => fullSession.initiatives || [], [fullSession.initiatives]);
-  const { currentUser } = useAppStore();
-
-  // Temporary: use currentUser as the only available user for assignment
-  const users = currentUser ? [currentUser] : [];
+  const { currentUser: storeUser } = useAppStore();
+  // Use passed currentUser or storeUser
+  // const effectiveUser = currentUser || storeUser;
+  // Actually we passed currentUser from props so use that
+  // const users = currentUser ? [currentUser] : []; // REMOVED THIS LINE
 
   const [modalData, setModalData] = useState<FullInitiative | null>(null);
 
@@ -37,7 +45,7 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [filterAxis, setFilterAxis] = useState<AxisId | 'ALL'>('ALL');
   const [filterPriority, setFilterPriority] = useState<'ALL' | 'High' | 'Medium' | 'Low'>('ALL');
-  const [groupBy, setGroupBy] = useState<'none' | 'axis' | 'priority' | 'status'>('none');
+  const [groupBy, setGroupBy] = useState<'none' | 'axis' | 'priority' | 'status' | 'strategicGoal'>('none');
 
   const handleEditClick = (init: FullInitiative) => {
     setModalData({ ...init });
@@ -90,6 +98,10 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
       if (groupBy === 'axis') key = getAxisLabel(init.axis);
       else if (groupBy === 'priority') key = init.priority;
       else if (groupBy === 'status') key = init.status?.replace('_', ' ') || 'Unknown';
+      else if (groupBy === 'strategicGoal') {
+        const goal = strategicGoals.find(g => g.id === init.strategicGoalId);
+        key = goal ? `${goal.title} (${goal.priority})` : 'Unlinked';
+      }
 
       if (!groups[key]) groups[key] = [];
       groups[key].push(init);
@@ -128,33 +140,38 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
           <div className="h-6 w-px bg-slate-200 dark:bg-white/10 hidden md:block"></div>
 
           {/* Filters */}
-          <select
-            className="bg-slate-100 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-md px-2 py-1.5 text-xs text-navy-900 dark:text-slate-300 outline-none focus:border-blue-500"
-            value={filterAxis}
+          {/* Filters */}
+          <div className="w-40">
+            <Select
+              value={filterAxis}
+              onChange={(value) => setFilterAxis(value as any)}
+              options={[
+                { value: 'ALL', label: 'All Axes' },
+                { value: 'processes', label: 'Processes' },
+                { value: 'digitalProducts', label: 'Product' },
+                { value: 'businessModels', label: 'Business Model' },
+                { value: 'dataManagement', label: 'Data' },
+                { value: 'culture', label: 'Culture' },
+                { value: 'cybersecurity', label: 'Security' },
+                { value: 'aiMaturity', label: 'AI' }
+              ]}
+              className="w-full"
+            />
+          </div>
 
-            onChange={(e) => setFilterAxis(e.target.value as any)}
-          >
-            <option value="ALL">All Axes</option>
-            <option value="processes">Processes</option>
-            <option value="digitalProducts">Product</option>
-            <option value="businessModels">Business Model</option>
-            <option value="dataManagement">Data</option>
-            <option value="culture">Culture</option>
-            <option value="cybersecurity">Security</option>
-            <option value="aiMaturity">AI</option>
-          </select>
-
-          <select
-            className="bg-slate-100 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-md px-2 py-1.5 text-xs text-navy-900 dark:text-slate-300 outline-none focus:border-blue-500"
-            value={filterPriority}
-
-            onChange={(e) => setFilterPriority(e.target.value as any)}
-          >
-            <option value="ALL">All Priorities</option>
-            <option value="High">High Priority</option>
-            <option value="Medium">Medium Priority</option>
-            <option value="Low">Low Priority</option>
-          </select>
+          <div className="w-40">
+            <Select
+              value={filterPriority}
+              onChange={(value) => setFilterPriority(value as any)}
+              options={[
+                { value: 'ALL', label: 'All Priorities' },
+                { value: 'High', label: 'High Priority' },
+                { value: 'Medium', label: 'Medium Priority' },
+                { value: 'Low', label: 'Low Priority' }
+              ]}
+              className="w-full"
+            />
+          </div>
 
           <div className="flex-1"></div>
 
@@ -162,14 +179,13 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
           <div className="flex items-center gap-2">
             <span className="text-[10px] uppercase text-slate-500 font-bold">Group By:</span>
             <div className="flex bg-slate-100 dark:bg-navy-900 p-0.5 rounded-md border border-slate-200 dark:border-white/10">
-              {['none', 'axis', 'priority', 'status'].map((g) => (
+              {['none', 'axis', 'priority', 'status', 'strategicGoal'].map((g) => (
                 <button
                   key={g}
-
                   onClick={() => setGroupBy(g as any)}
-                  className={`px-2 py-1 round text-[10px] font-medium transition-colors ${groupBy === g ? 'bg-white dark:bg-navy-800 text-blue-600 dark:text-blue-400 get-shadow-sm' : 'text-slate-400 hover:text-navy-900 dark:hover:text-white'}`}
+                  className={`px-2 py-1 round text-[10px] font-medium transition-colors ${groupBy === g ? 'bg-white dark:bg-navy-800 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-400 hover:text-navy-900 dark:hover:text-white'}`}
                 >
-                  {g === 'none' ? 'None' : g.charAt(0).toUpperCase() + g.slice(1)}
+                  {g === 'none' ? 'None' : g === 'strategicGoal' ? 'Goal' : g.charAt(0).toUpperCase() + g.slice(1)}
                 </button>
               ))}
             </div>
@@ -226,22 +242,25 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
       </div>
 
       {/* Modal */}
-      {modalData && (
-        <InitiativeDetailModal
-          initiative={modalData}
-          isOpen={true}
-          onClose={() => setModalData(null)}
-          onSave={(updated) => {
-            if (!updated.id || updated.id === '') {
-              onCreateInitiative(updated);
-            } else {
-              onUpdateInitiative(updated);
-            }
-            setModalData(null);
-          }}
-          users={users}
-        />
-      )}
+      {
+        modalData && (
+          <InitiativeDetailModal
+            initiative={modalData}
+            isOpen={true}
+            onClose={() => setModalData(null)}
+            onSave={(updated) => {
+              if (!updated.id || updated.id === '') {
+                onCreateInitiative(updated);
+              } else {
+                onUpdateInitiative(updated);
+              }
+              setModalData(null);
+            }}
+            users={users}
+            currentUser={currentUser}
+            strategicGoals={strategicGoals}
+          />
+        )}
     </div>
   );
 };

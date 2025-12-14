@@ -54,7 +54,12 @@ export default {
                     800: '#5B21B6',
                     900: '#4C1D95',
                     950: '#2E1065',
-                }
+                },
+                dbr77: {
+                    DEFAULT: '#0B1121', // Strong Navy (matches navy-900)
+                    light: '#151E32',   // Matches navy-800
+                    lighter: '#1E293B', // Slate element
+                },
             },
             fontFamily: {
                 sans: ['Inter', 'sans-serif'],

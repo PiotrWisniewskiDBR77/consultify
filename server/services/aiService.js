@@ -34,7 +34,9 @@ const deps = {
 
 // Role Definitions (Fallback)
 const FALLBACK_ROLES = {
-    ANALYST: "You are an Expert Digital Analyst. Your tone is objective, data-driven, and analytical. You focus on interpreting facts, KPIs, and current state assessments without fluff.",
+    ANALYST: "You are an Expert Digital Analyst. Your mode is 'GENERATOR & BENCHMARKER'. You deal in facts, data, and calculations. You DO NOT fluff. You DO NOT suggest strategy yet. You output tables, metrics, and comparisons against industry standards. If data is missing, you state it clearly.",
+    PARTNER: "You are a Strategic Partner. Your mode is 'SUGGESTER & SIMPLIFIER'. You take complex data and make it simple. You serve as a sounding board. You proactively suggest 80/20 solutions. You warn about risks but propose mitigations. Your tone is collaborative and solution-oriented.",
+    GATEKEEPER: "You are a Strict Gatekeeper. Your mode is 'BLOCKER & DECISION FORCER'. You have zero tolerance for corporate fluff or buzzwords. If an initiative is vague, you REJECT it. You force the user to make a binary decision (Go/No-Go). You demand clear 'Definition of Done'. You are professional but uncompromising.",
     CONSULTANT: "You are a Senior Digital Transformation Consultant. Your tone is professional, solution-oriented, and convincing. You bridge the gap between analysis and strategy, recommending concrete initiatives.",
     STRATEGIST: "You are a Strategic Advisor to the CEO. You think in 3-5 year horizons. You focus on competitive advantage, business models, and high-level roadmap architecture. You prioritize culture and leadership.",
     FINANCE: "You are a Financial Expert / CFO Advisor. You speak in terms of ROI, CAPEX, OPEX, payback periods, and net present value. You justify every initiative with economic logic.",
@@ -648,8 +650,20 @@ const AiService = {
         - priority: 'low', 'medium', 'high', 'urgent'
         - acceptanceCriteria: A definition of done string
         - estimatedHours: number
+        - taskType: 'ANALYSIS' | 'DESIGN' | 'BUILD' | 'PILOT' | 'VALIDATION' | 'DECISION' | 'CHANGE_MGMT'
+        - expectedOutcome: Specific business result expected
 
-        Return JSON List: [{ "title": "...", "description": "...", "why": "...", "stepPhase": "...", "priority": "...", "acceptanceCriteria": "...", "estimatedHours": 0 }]`;
+        Return JSON List: [{ 
+            "title": "...", 
+            "description": "...", 
+            "why": "...", 
+            "stepPhase": "...", 
+            "priority": "...", 
+            "acceptanceCriteria": "...", 
+            "estimatedHours": 0,
+            "taskType": "...",
+            "expectedOutcome": "..."
+        }]`;
 
         try {
             const jsonStr = await AiService.callLLM("Generate DRD Implementation Plan", systemPrompt, [], null, userId, 'suggest_tasks');
@@ -662,43 +676,273 @@ const AiService = {
         }
     },
 
-    // --- VALIDATION ---
-    validateInitiative: async (initiativeContext, userId) => {
-        const baseRole = await AiService.enhancePrompt('ANALYST', 'validation');
+    // --- TASK INSIGHT (NEW) ---
+    generateTaskInsight: async (task, initiativeContext, userId) => {
+        const baseRole = await AiService.enhancePrompt('ANALYST', 'task_insight');
         const systemPrompt = baseRole + `
+        Analyze this Task for Strategic Relevance and Execution Risk.
+        
+        Task: "${task.title}"
+        Description: "${task.description}"
+        Initiative Context: "${initiativeContext?.summary || 'General Strategic Initiative'}"
+        
+        Evaluate:
+        1. Strategic Relevance: How critical is this to the overall success?
+        2. Execution Risk: Complexity, potential for blockers.
+        3. Clarity Score: Is the description and outcome clear? (0-100)
+
+        Return JSON: {
+            "strategicRelevance": "HIGH" | "MEDIUM" | "LOW",
+            "executionRisk": "HIGH" | "MEDIUM" | "LOW",
+                strategicRelevance: "LOW",
+                executionRisk: "LOW",
+                clarityScore: 0,
+                summary: "AI Analysis failed."
+            };
+        }
+    },
+
+    // --- DECISION SYSTEM ---
+    generateExecutionStrategy: async (initiativeContext, userId) => {
+        const baseRole = await AiService.enhancePrompt('IMPLEMENTER', 'execution_strategy');
+        const systemPrompt = baseRole + `
+        Act as a Transformation Director.Define the Execution Strategy for this initiative.
+        Focus on Risk Management and Decision Gates.
+
+            Initiative: "${initiativeContext.name}"
+        Summary: "${initiativeContext.summary}"
+        Summary: "${initiativeContext.summary}"
+        CAPEX: ${ initiativeContext.costCapex || 'N/A' }
+        Assumptions: ${ JSON.stringify(initiativeContext.assumptions || {}) }
+        Success Criteria: ${ JSON.stringify(initiativeContext.structuredSuccessCriteria || initiativeContext.successCriteria || []) }
+        
+        Outputs Required:
+        1. Kill Criteria: A short paragraph or list defining clear "Red Lines" - when to stop.
+        2. Key Risks: Top 3 - 5 critical risks.
+        3. Milestones: 4 - 6 major milestones.Mark key review points as "Decision Gates".
+
+        Return JSON: {
+        "killCriteria": "string (markdown allowed)",
+        "keyRisks": [{ "risk": "...", "mitigation": "...", "metric": "High" | "Medium" | "Low" }],
+        "milestones": [{ "name": "...", "date": "YYYY-MM-DD"(approximate), "isDecisionGate": boolean, "decision": "continue" }]
+    }`;
+
+        try {
+            const jsonStr = await AiService.callLLM("Generate Execution Strategy", systemPrompt, [], null, userId, 'execution_strategy');
+            return JSON.parse(jsonStr.replace(/```json/ g, '').replace(/```/g, ''));
+        } catch (e) {
+    console.error("Execution Gen Error", e);
+    return { killCriteria: "", keyRisks: [], milestones: [] };
+}
+    },
+
+generateInsights: async (initiativeContext, userId) => {
+    const baseRole = await AiService.enhancePrompt('ANALYST', 'insights');
+    const systemPrompt = baseRole + `
+        Act as a Strategy Consultant performing a Pre-Mortem or Retrospective.
+        Analyze this initiative and predict/generate learning points.
+        
+        Initiative: "${initiativeContext.name}"
+        Context: "${initiativeContext.summary}"
+        Assumptions: ${JSON.stringify(initiativeContext.assumptions || {})}
+        Success Criteria: ${JSON.stringify(initiativeContext.structuredSuccessCriteria || initiativeContext.successCriteria || [])}
+        
+        Return JSON: {
+            "lessonsLearned": "Success factors to replicate...",
+            "strategicSurprises": "Potential unexpected outcomes...",
+            "nextTimeAvoid": "Pitfalls to avoid...",
+            "patternTags": ["Tag 1", "Tag 2", "Tag 3"]
+        }`;
+
+    try {
+        const jsonStr = await AiService.callLLM("Generate Insights", systemPrompt, [], null, userId, 'insights');
+        return JSON.parse(jsonStr.replace(/```json/g, '').replace(/```/g, ''));
+    } catch (e) {
+        console.error("Insights Gen Error", e);
+        return {
+            lessonsLearned: "AI generation failed.",
+            strategicSurprises: "Consult manual review.",
+            nextTimeAvoid: "Check similar projects.",
+            patternTags: ["Error"]
+        };
+    }
+},
+    generateStrategicFit: async (initiativeContext, goalsContext, userId) => {
+        const baseRole = await AiService.enhancePrompt('ANALYST', 'strategic_fit');
+        const systemPrompt = baseRole + `
+        Act as a Senior Strategy Consultant. Evaluate the Strategic Fit of this initiative.
+        
+        Initiative: "${initiativeContext.name}"
+        One-Liner: "${initiativeContext.applicantOneLiner}"
+        Problem: "${initiativeContext.problemStructured?.symptom} / ${initiativeContext.problemStructured?.rootCause}"
+        Target Axis: "${initiativeContext.axis}"
+        
+        Strategic Goals Context:
+        ${JSON.stringify(goalsContext || [])}
+
+        Determine if this initiative explicitly aligns with the Axis, at least one Corporate Goal, and addresses a known Pain Point (inferred).
+
+        Return JSON: {
+            "axisAlign": boolean,
+            "goalAlign": boolean,
+            "painPointAlign": boolean,
+            "reasoning": "Very short strategic justification (max 2 sentences)."
+        }`;
+
+        try {
+            const jsonStr = await AiService.callLLM("Check Strategic Fit", systemPrompt, [], null, userId, 'strategic_fit');
+            return JSON.parse(jsonStr.replace(/```json/g, '').replace(/```/g, ''));
+        } catch (e) {
+            console.error("Fit Check Error", e);
+            return { axisAlign: false, goalAlign: false, painPointAlign: false, reasoning: "AI Analysis unavailable." };
+        }
+    },
+
+        // --- ROADMAP ENHANCEMENTS (NEW) ---
+
+        // 1. Workload Analysis & Tooltip
+        generateWorkloadAnalysis: async (quarterLoad, initiatives, userId) => {
+            const baseRole = await AiService.enhancePrompt('ANALYST', 'workload_analysis');
+            const systemPrompt = baseRole + `
+        Analyze the Workload for a specific Quarter in the roadmap.
+        
+        Quarter Stats: ${JSON.stringify(quarterLoad)}
+        Initiatives Scheduled: ${JSON.stringify(initiatives.map(i => ({ name: i.name, role: i.strategicRole, change: i.effortProfile?.change })))}
+
+        Determine:
+        1. Status: 'OK' | 'High load' | 'Change overload'
+        2. Tooltip: A 1-sentence explanation of the status.
+
+        Rules:
+        - "Change overload" if Change effort is disproportionately high (>50% of total) or too many "High Change" initiatives.
+        - "High load" if total effort is very high.
+        
+        Return JSON: { "status": "...", "tooltip": "..." }`;
+
+            try {
+                const jsonStr = await AiService.callLLM("Analyze Quarter Workload", systemPrompt, [], null, userId, 'workload_analysis');
+                return JSON.parse(jsonStr.replace(/```json/g, '').replace(/```/g, ''));
+            } catch (e) {
+                return { status: "OK", tooltip: "Manual review recommended." };
+            }
+        },
+
+            // 2. Roadmap Summary
+            generateRoadmapSummary: async (initiatives, userId) => {
+                const baseRole = await AiService.enhancePrompt('STRATEGIST', 'roadmap_summary');
+                const systemPrompt = baseRole + `
+        Generate a Strategic Summary for the entire Roadmap.
+        
+        Initiatives: ${JSON.stringify(initiatives.map(i => ({ name: i.name, quarter: i.quarter, role: i.strategicRole })))}
+
+        Output (5-6 sentences total):
+        1. Sequence Logic: Why are things ordered this way? (e.g. "Foundation first...")
+        2. Main Risk: What is the biggest structural risk? (e.g. "Change saturation in Q2")
+        3. Recommendation: 1 final advice sentence.
+
+        Return JSON: { 
+            "summaryText": "The roadmap prioritizes...", 
+            "riskText": "The main risk is...", 
+            "recommendation": "Consider..."
+        }`;
+
+                try {
+                    const jsonStr = await AiService.callLLM("Generate Roadmap Summary", systemPrompt, [], null, userId, 'roadmap_summary');
+                    return JSON.parse(jsonStr.replace(/```json/g, '').replace(/```/g, ''));
+                } catch (e) {
+                    return { summaryText: "Summary unavailable.", riskText: "", recommendation: "" };
+                }
+            },
+
+                // 3. Placement Reason (Quick Edit)
+                generatePlacementReason: async (initiative, quarter, otherInitiativesInQuarter, userId) => {
+                    const baseRole = await AiService.enhancePrompt('STRATEGIST', 'placement_reason');
+                    const systemPrompt = baseRole + `
+        Explain why this initiative is placed in ${quarter}.
+        
+        Initiative: "${initiative.name}" (${initiative.strategicRole})
+        Quarter Context: ${otherInitiativesInQuarter.length} other initiatives scheduled.
+        
+        Return JSON: { "reason": "1-2 sentences explaining why this timing makes sense (e.g. dependencies, resource availability, or quick win)." }`;
+
+                    try {
+                        const jsonStr = await AiService.callLLM("Generate Placement Reason", systemPrompt, [], null, userId, 'placement_reason');
+                        return JSON.parse(jsonStr.replace(/```json/g, '').replace(/```/g, ''));
+                    } catch (e) {
+                        return { reason: "Strategic alignment." };
+                    }
+                },
+
+                    // 4. Rebalance Roadmap
+                    rebalanceRoadmap: async (initiatives, userId) => {
+                        const baseRole = await AiService.enhancePrompt('STRATEGIST', 'rebalance_roadmap');
+                        const systemPrompt = baseRole + `
+        The user wants to REBALANCE the roadmap. Provide 3 options.
+        
+        Initiatives: ${JSON.stringify(initiatives.map(i => ({ id: i.id, name: i.name, priority: i.priority, complexity: i.complexity, role: i.strategicRole })))}
+
+        Options to generate:
+        1. Balanced (Recommended): Optimizes for smooth workload.
+        2. Conservative: Slower, de-risked, longer timeline.
+        3. Aggressive: Front-loaded, high risk, fast results.
+
+        For EACH option, provide:
+        - description: 2 sentences (pros/cons).
+        - schedule: A map of "InitiativeID" -> "Quarter" (e.g. "Q1", "Q2"...)
+
+        Return JSON: {
+            "options": [
+                { "type": "Balanced", "description": "...", "schedule": { "id1": "Q1", ... } },
+                { "type": "Conservative", "description": "...", "schedule": { ... } },
+                { "type": "Aggressive", "description": "...", "schedule": { ... } }
+            ]
+        }`;
+
+                        try {
+                            const jsonStr = await AiService.callLLM("Rebalance Roadmap", systemPrompt, [], null, userId, 'rebalance_roadmap');
+                            return JSON.parse(jsonStr.replace(/```json/g, '').replace(/```/g, ''));
+                        } catch (e) {
+                            return { options: [] };
+                        }
+                    },
+
+                        // --- VALIDATION ---
+                        validateInitiative: async (initiativeContext, userId) => {
+                            const baseRole = await AiService.enhancePrompt('ANALYST', 'validation');
+                            const systemPrompt = baseRole + `
         Validate initiative ${initiativeContext.name} ($${initiativeContext.costCapex}).
         Return JSON: { "confidenceScore": number, "risks": [], "recommendations": [] }`;
 
-        try {
-            const jsonStr = await AiService.callLLM("Validate", systemPrompt, [], null, userId, 'validate');
-            return JSON.parse(jsonStr.replace(/```json/g, '').replace(/```/g, ''));
-        } catch (e) {
-            return { confidenceScore: 0, risks: [], recommendations: [] };
-        }
-    },
-    // --- AI OBSERVATIONS (Global Brain) ---
-    generateObservations: async (userId) => {
-        // 1. Fetch recent feedback/interactions for analysis
-        const getFeedback = () => new Promise((resolve) => {
-            deps.db.all(`
+                            try {
+                                const jsonStr = await AiService.callLLM("Validate", systemPrompt, [], null, userId, 'validate');
+                                return JSON.parse(jsonStr.replace(/```json/g, '').replace(/```/g, ''));
+                            } catch (e) {
+                                return { confidenceScore: 0, risks: [], recommendations: [] };
+                            }
+                        },
+                            // --- AI OBSERVATIONS (Global Brain) ---
+                            generateObservations: async (userId) => {
+                                // 1. Fetch recent feedback/interactions for analysis
+                                const getFeedback = () => new Promise((resolve) => {
+                                    deps.db.all(`
                 SELECT context, prompt, response, rating, comment, correction, created_at 
                 FROM ai_feedback 
                 ORDER BY created_at DESC 
                 LIMIT 50
             `, [], (err, rows) => resolve(rows || []));
-        });
+                                });
 
-        const feedback = await getFeedback();
+                                const feedback = await getFeedback();
 
-        if (feedback.length === 0) {
-            return {
-                app_improvements: [],
-                content_gaps: []
-            };
-        }
+                                if (feedback.length === 0) {
+                                    return {
+                                        app_improvements: [],
+                                        content_gaps: []
+                                    };
+                                }
 
-        // 2. prompt for the Analyst
-        const systemPrompt = `
+                                // 2. prompt for the Analyst
+                                const systemPrompt = `
         You are the "Global Brain" of the system. Your job is to analyze user interactions and feedback to improve the platform.
         
         Analyze the provided USER FEEDBACK LOGS and generate a summary report in JSON format with two specific categories:
@@ -714,232 +958,232 @@ const AiService = {
         Return JSON: { "app_improvements": [ ... ], "content_gaps": [ ... ] }
         `;
 
-        const feedbackText = feedback.map(f => `[${f.context}] Rate:${f.rating}/5 Comment:${f.comment || 'None'} Prompt:${f.prompt.substring(0, 50)}...`).join('\n');
+                                const feedbackText = feedback.map(f => `[${f.context}] Rate:${f.rating}/5 Comment:${f.comment || 'None'} Prompt:${f.prompt.substring(0, 50)}...`).join('\n');
 
-        try {
-            const jsonStr = await AiService.callLLM(`ANALYZE THESE LOGS:\n${feedbackText}`, systemPrompt, [], null, userId, 'observations');
-            const result = JSON.parse(jsonStr.replace(/```json/g, '').replace(/```/g, ''));
-            return {
-                app_improvements: result.app_improvements || [],
-                content_gaps: result.content_gaps || []
-            };
-        } catch (e) {
-            console.error("Observation Gen Error", e);
-            return { app_improvements: [], content_gaps: [] };
-        }
-    },
+                                try {
+                                    const jsonStr = await AiService.callLLM(`ANALYZE THESE LOGS:\n${feedbackText}`, systemPrompt, [], null, userId, 'observations');
+                                    const result = JSON.parse(jsonStr.replace(/```json/g, '').replace(/```/g, ''));
+                                    return {
+                                        app_improvements: result.app_improvements || [],
+                                        content_gaps: result.content_gaps || []
+                                    };
+                                } catch (e) {
+                                    console.error("Observation Gen Error", e);
+                                    return { app_improvements: [], content_gaps: [] };
+                                }
+                            },
 
-    // --- VERIFICATION (Web) ---
-    verifyWithWeb: async (query, userId) => {
-        const result = await deps.WebSearchService.verifyFact(query);
-        // AnalyticsService.logUsage(userId, 'verify', 'web-search', 0, 0, 800, query).catch(e => { });
-        return result;
-    },
+                                // --- VERIFICATION (Web) ---
+                                verifyWithWeb: async (query, userId) => {
+                                    const result = await deps.WebSearchService.verifyFact(query);
+                                    // AnalyticsService.logUsage(userId, 'verify', 'web-search', 0, 0, 800, query).catch(e => { });
+                                    return result;
+                                },
 
-    testProviderConnection: async (config) => {
-        try {
-            const { provider, api_key, model_id, endpoint } = config;
+                                    testProviderConnection: async (config) => {
+                                        try {
+                                            const { provider, api_key, model_id, endpoint } = config;
 
-            if (!provider || (!api_key && provider !== 'ollama')) throw new Error("Missing provider or API key");
-            console.log('[AiService] Testing connection for:', provider);
+                                            if (!provider || (!api_key && provider !== 'ollama')) throw new Error("Missing provider or API key");
+                                            console.log('[AiService] Testing connection for:', provider);
 
-            let result = '';
+                                            let result = '';
 
-            // 1. ANTHROPIC
-            if (provider === 'anthropic') {
-                const response = await fetch(endpoint || 'https://api.anthropic.com/v1/messages', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'x-api-key': api_key, 'anthropic-version': '2023-06-01' },
-                    body: JSON.stringify({
-                        model: model_id || 'claude-3-sonnet-20240229',
-                        max_tokens: 10,
-                        messages: [{ role: 'user', content: 'Say OK' }]
-                    })
-                });
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`Anthropic Error: ${response.status} ${errorText}`);
-                }
-                const data = await response.json();
-                result = data.content[0]?.text || 'OK';
-            }
-            // 2. OPENAI
-            else if (provider === 'openai') {
-                const OpenAIClass = deps.OpenAI || require('openai');
-                const openai = new OpenAIClass({ apiKey: api_key });
-                const completion = await openai.chat.completions.create({
-                    messages: [{ role: "user", content: "Say OK" }],
-                    model: model_id || "gpt-3.5-turbo",
-                    max_tokens: 5
-                });
-                result = completion.choices[0].message.content;
-            }
-            // 3. GOOGLE GEMINI
-            else if (provider === 'google' || provider === 'gemini') {
-                const GoogleGenerativeAI = deps.GoogleGenerativeAI;
-                const genAI = new GoogleGenerativeAI(api_key);
-                const model = genAI.getGenerativeModel({ model: model_id || "gemini-pro" });
-                const resultGen = await model.generateContent("Say OK");
-                result = resultGen.response.text();
-            }
-            // 4. OPENAI COMPATIBLE (DeepSeek, Mistral, etc.)
-            else if (['deepseek', 'mistral', 'groq', 'together', 'nvidia_nim', 'qwen', 'ernie', 'zhipu', 'z_ai'].includes(provider)) {
-                // Define Endpoints
-                let baseURL = endpoint;
-                if (!baseURL) {
-                    if (provider === 'deepseek') baseURL = 'https://api.deepseek.com';
-                    else if (provider === 'mistral') baseURL = 'https://api.mistral.ai/v1';
-                    else if (provider === 'groq') baseURL = 'https://api.groq.com/openai/v1';
-                    else if (provider === 'nvidia_nim') baseURL = 'https://integrate.api.nvidia.com/v1';
-                    else if (provider === 'z_ai') baseURL = 'https://api.z.ai/api/paas/v4';
-                }
+                                            // 1. ANTHROPIC
+                                            if (provider === 'anthropic') {
+                                                const response = await fetch(endpoint || 'https://api.anthropic.com/v1/messages', {
+                                                    method: 'POST',
+                                                    headers: { 'Content-Type': 'application/json', 'x-api-key': api_key, 'anthropic-version': '2023-06-01' },
+                                                    body: JSON.stringify({
+                                                        model: model_id || 'claude-3-sonnet-20240229',
+                                                        max_tokens: 10,
+                                                        messages: [{ role: 'user', content: 'Say OK' }]
+                                                    })
+                                                });
+                                                if (!response.ok) {
+                                                    const errorText = await response.text();
+                                                    throw new Error(`Anthropic Error: ${response.status} ${errorText}`);
+                                                }
+                                                const data = await response.json();
+                                                result = data.content[0]?.text || 'OK';
+                                            }
+                                            // 2. OPENAI
+                                            else if (provider === 'openai') {
+                                                const OpenAIClass = deps.OpenAI || require('openai');
+                                                const openai = new OpenAIClass({ apiKey: api_key });
+                                                const completion = await openai.chat.completions.create({
+                                                    messages: [{ role: "user", content: "Say OK" }],
+                                                    model: model_id || "gpt-3.5-turbo",
+                                                    max_tokens: 5
+                                                });
+                                                result = completion.choices[0].message.content;
+                                            }
+                                            // 3. GOOGLE GEMINI
+                                            else if (provider === 'google' || provider === 'gemini') {
+                                                const GoogleGenerativeAI = deps.GoogleGenerativeAI;
+                                                const genAI = new GoogleGenerativeAI(api_key);
+                                                const model = genAI.getGenerativeModel({ model: model_id || "gemini-pro" });
+                                                const resultGen = await model.generateContent("Say OK");
+                                                result = resultGen.response.text();
+                                            }
+                                            // 4. OPENAI COMPATIBLE (DeepSeek, Mistral, etc.)
+                                            else if (['deepseek', 'mistral', 'groq', 'together', 'nvidia_nim', 'qwen', 'ernie', 'zhipu', 'z_ai'].includes(provider)) {
+                                                // Define Endpoints
+                                                let baseURL = endpoint;
+                                                if (!baseURL) {
+                                                    if (provider === 'deepseek') baseURL = 'https://api.deepseek.com';
+                                                    else if (provider === 'mistral') baseURL = 'https://api.mistral.ai/v1';
+                                                    else if (provider === 'groq') baseURL = 'https://api.groq.com/openai/v1';
+                                                    else if (provider === 'nvidia_nim') baseURL = 'https://integrate.api.nvidia.com/v1';
+                                                    else if (provider === 'z_ai') baseURL = 'https://api.z.ai/api/paas/v4';
+                                                }
 
-                // Use fetch for manual control if OpenAI SDK fails or for simplicity with various endpoints
-                const response = await fetch(`${baseURL}/chat/completions`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${api_key}` },
-                    body: JSON.stringify({
-                        model: model_id || 'gpt-3.5-turbo', // Fallback model name if needed
-                        messages: [{ role: "user", content: "Say OK" }],
-                        max_tokens: 5
-                    })
-                });
+                                                // Use fetch for manual control if OpenAI SDK fails or for simplicity with various endpoints
+                                                const response = await fetch(`${baseURL}/chat/completions`, {
+                                                    method: 'POST',
+                                                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${api_key}` },
+                                                    body: JSON.stringify({
+                                                        model: model_id || 'gpt-3.5-turbo', // Fallback model name if needed
+                                                        messages: [{ role: "user", content: "Say OK" }],
+                                                        max_tokens: 5
+                                                    })
+                                                });
 
-                if (!response.ok) {
-                    const errText = await response.text();
-                    throw new Error(`${provider} Error: ${response.status} ${errText}`);
-                }
-                const data = await response.json();
-                result = data.choices[0]?.message?.content || 'OK';
-            }
-            // 5. OLLAMA
-            else if (provider === 'ollama') {
-                const res = await fetch(`${endpoint || 'http://localhost:11434'}/api/chat`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        model: model_id || 'llama2',
-                        messages: [{ role: 'user', content: 'Say OK' }],
-                        stream: false
-                    })
-                });
-                if (!res.ok) throw new Error(`Ollama Error: ${res.statusText}`);
-                const data = await res.json();
-                result = data.message.content;
-            }
-            else {
-                // Try Generic Fallback?
-                throw new Error(`Provider ${provider} testing not implemented yet.`);
-            }
+                                                if (!response.ok) {
+                                                    const errText = await response.text();
+                                                    throw new Error(`${provider} Error: ${response.status} ${errText}`);
+                                                }
+                                                const data = await response.json();
+                                                result = data.choices[0]?.message?.content || 'OK';
+                                            }
+                                            // 5. OLLAMA
+                                            else if (provider === 'ollama') {
+                                                const res = await fetch(`${endpoint || 'http://localhost:11434'}/api/chat`, {
+                                                    method: 'POST',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({
+                                                        model: model_id || 'llama2',
+                                                        messages: [{ role: 'user', content: 'Say OK' }],
+                                                        stream: false
+                                                    })
+                                                });
+                                                if (!res.ok) throw new Error(`Ollama Error: ${res.statusText}`);
+                                                const data = await res.json();
+                                                result = data.message.content;
+                                            }
+                                            else {
+                                                // Try Generic Fallback?
+                                                throw new Error(`Provider ${provider} testing not implemented yet.`);
+                                            }
 
-            return { success: true, message: "Connection successful!", response: result };
+                                            return { success: true, message: "Connection successful!", response: result };
 
-        } catch (error) {
-            console.error("Test connection failed:", error);
-            // Return error in a way the frontend expects
-            return { success: false, message: error.message };
-        }
-    },
+                                        } catch (error) {
+                                            console.error("Test connection failed:", error);
+                                            // Return error in a way the frontend expects
+                                            return { success: false, message: error.message };
+                                        }
+                                    },
 
-    // --- ENRICHMENT (Legacy/Web) ---
-    enrichInitiative: async (initiativeContext) => {
-        const query = `Market trends and case studies for: ${initiativeContext.name} - ${initiativeContext.summary}`;
-        try {
-            // Try Web Search first
-            const searchResult = await deps.WebSearchService.verifyFact(query);
-            return searchResult;
-        } catch (e) {
-            console.error("Web Search failed, using LLM knowledge", e);
-            // Fallback to LLM knowledge
-            const prompt = `Provide market context and 2 real-world examples for this initiative:
+                                        // --- ENRICHMENT (Legacy/Web) ---
+                                        enrichInitiative: async (initiativeContext) => {
+                                            const query = `Market trends and case studies for: ${initiativeContext.name} - ${initiativeContext.summary}`;
+                                            try {
+                                                // Try Web Search first
+                                                const searchResult = await deps.WebSearchService.verifyFact(query);
+                                                return searchResult;
+                                            } catch (e) {
+                                                console.error("Web Search failed, using LLM knowledge", e);
+                                                // Fallback to LLM knowledge
+                                                const prompt = `Provide market context and 2 real-world examples for this initiative:
             Name: ${initiativeContext.name}
             Summary: ${initiativeContext.summary}
             `;
-            return await AiService.callLLM(prompt, "You are a Market Researcher.");
-        }
-    },
+                                                return await AiService.callLLM(prompt, "You are a Market Researcher.");
+                                            }
+                                        },
 
-    chat: async (message, history, roleName = 'CONSULTANT', userId, organizationId = null) => {
-        const context = await deps.RagService.getContext(message);
-        // Pass organizationId to enhancePrompt if available
-        const baseRole = await AiService.enhancePrompt(roleName.toUpperCase(), 'chat', organizationId);
-        let systemInstruction = baseRole;
-        if (context) systemInstruction += `\n\nCONTEXT:\n${context}`;
+                                            chat: async (message, history, roleName = 'CONSULTANT', userId, organizationId = null) => {
+                                                const context = await deps.RagService.getContext(message);
+                                                // Pass organizationId to enhancePrompt if available
+                                                const baseRole = await AiService.enhancePrompt(roleName.toUpperCase(), 'chat', organizationId);
+                                                let systemInstruction = baseRole;
+                                                if (context) systemInstruction += `\n\nCONTEXT:\n${context}`;
 
-        // Save the chat response
-        return AiService.callLLM(message, systemInstruction, history, null, userId, 'chat');
-    },
+                                                // Save the chat response
+                                                return AiService.callLLM(message, systemInstruction, history, null, userId, 'chat');
+                                            },
 
-    chatStream: async function* (message, history, roleName = 'CONSULTANT', userId, organizationId = null, extraContext = null) {
-        // #region agent log
-        const fs = require('fs');
-        const logPath = '/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/.cursor/debug.log';
-        fs.appendFileSync(logPath, JSON.stringify({ location: 'aiService.js:chatStream:entry', message: 'ChatStream started', data: { userId, organizationId, roleName, hasExtraContext: !!extraContext, extraContextScreenId: extraContext?.screenId, messageLength: message?.length || 0 }, timestamp: Date.now(), sessionId: 'debug-session', hypothesisId: 'B,E' }) + '\n');
-        // #endregion
-        // 1. Resolve Org/User if needed
-        let user;
-        let orgId = organizationId;
+                                                chatStream: async function* (message, history, roleName = 'CONSULTANT', userId, organizationId = null, extraContext = null) {
+                                                    // #region agent log
+                                                    const fs = require('fs');
+                                                    const logPath = '/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/.cursor/debug.log';
+                                                    fs.appendFileSync(logPath, JSON.stringify({ location: 'aiService.js:chatStream:entry', message: 'ChatStream started', data: { userId, organizationId, roleName, hasExtraContext: !!extraContext, extraContextScreenId: extraContext?.screenId, messageLength: message?.length || 0 }, timestamp: Date.now(), sessionId: 'debug-session', hypothesisId: 'B,E' }) + '\n');
+                                                    // #endregion
+                                                    // 1. Resolve Org/User if needed
+                                                    let user;
+                                                    let orgId = organizationId;
 
-        if (userId && !user) {
-            user = await new Promise(resolve => deps.db.get("SELECT * FROM users WHERE id = ?", [userId], (err, row) => resolve(row)));
-            if (user && !orgId) orgId = user.organization_id;
-        }
-        // #region agent log
-        fs.appendFileSync(logPath, JSON.stringify({ location: 'aiService.js:chatStream:userResolved', message: 'User and org resolved', data: { hasUser: !!user, orgId, userOrgId: user?.organization_id }, timestamp: Date.now(), sessionId: 'debug-session', hypothesisId: 'B,E' }) + '\n');
-        // #endregion
+                                                    if (userId && !user) {
+                                                        user = await new Promise(resolve => deps.db.get("SELECT * FROM users WHERE id = ?", [userId], (err, row) => resolve(row)));
+                                                        if (user && !orgId) orgId = user.organization_id;
+                                                    }
+                                                    // #region agent log
+                                                    fs.appendFileSync(logPath, JSON.stringify({ location: 'aiService.js:chatStream:userResolved', message: 'User and org resolved', data: { hasUser: !!user, orgId, userOrgId: user?.organization_id }, timestamp: Date.now(), sessionId: 'debug-session', hypothesisId: 'B,E' }) + '\n');
+                                                    // #endregion
 
-        // 2. Fetch Knowledge Base (RAG) - Always useful
-        const ragContext = await deps.RagService.getContext(message);
+                                                    // 2. Fetch Knowledge Base (RAG) - Always useful
+                                                    const ragContext = await deps.RagService.getContext(message);
 
-        // 3. Determine System Instruction
-        let systemInstruction = "";
+                                                    // 3. Determine System Instruction
+                                                    let systemInstruction = "";
 
-        // If we have screen context (OR just generally want rich context), use PromptService
-        // Ideally we transition to PromptService for ALL chats, but let's do it if screen is present for now to be safe.
-        // Actually, user requested "AI chat in whole app". 
-        // Let's use PromptService if extraContext is passed, or if we just want consistent behavior.
-        // But extraContext comes from frontend.
+                                                    // If we have screen context (OR just generally want rich context), use PromptService
+                                                    // Ideally we transition to PromptService for ALL chats, but let's do it if screen is present for now to be safe.
+                                                    // Actually, user requested "AI chat in whole app". 
+                                                    // Let's use PromptService if extraContext is passed, or if we just want consistent behavior.
+                                                    // But extraContext comes from frontend.
 
-        if (extraContext && (extraContext.screenId || extraContext.title)) {
-            // Fetch Company & Strategies
-            const company = await new Promise(resolve => {
-                if (!orgId) return resolve({});
-                deps.db.get("SELECT * FROM organizations WHERE id = ?", [orgId], (err, row) => resolve(row || {}));
-            });
+                                                    if (extraContext && (extraContext.screenId || extraContext.title)) {
+                                                        // Fetch Company & Strategies
+                                                        const company = await new Promise(resolve => {
+                                                            if (!orgId) return resolve({});
+                                                            deps.db.get("SELECT * FROM organizations WHERE id = ?", [orgId], (err, row) => resolve(row || {}));
+                                                        });
 
-            const strategies = await new Promise(resolve => {
-                deps.db.all("SELECT title, description FROM global_strategies WHERE is_active = 1", [], (err, rows) => resolve(rows || []));
-            });
+                                                        const strategies = await new Promise(resolve => {
+                                                            deps.db.all("SELECT title, description FROM global_strategies WHERE is_active = 1", [], (err, rows) => resolve(rows || []));
+                                                        });
 
-            systemInstruction = PromptService.buildSystemPrompt({
-                user,
-                company,
-                screen: extraContext,
-                strategies,
-                knowledge: ragContext,
-                baseInstruction: roleName // Pass the incoming roleName/instruction as base
-            });
-        } else {
-            // Fallback / Legacy (but inject RAG)
-            const baseRole = await AiService.enhancePrompt(roleName.toUpperCase(), 'chat', orgId);
-            systemInstruction = baseRole;
-            if (ragContext) systemInstruction += `\n\nCONTEXT:\n${ragContext}`;
-        }
+                                                        systemInstruction = PromptService.buildSystemPrompt({
+                                                            user,
+                                                            company,
+                                                            screen: extraContext,
+                                                            strategies,
+                                                            knowledge: ragContext,
+                                                            baseInstruction: roleName // Pass the incoming roleName/instruction as base
+                                                        });
+                                                    } else {
+                                                        // Fallback / Legacy (but inject RAG)
+                                                        const baseRole = await AiService.enhancePrompt(roleName.toUpperCase(), 'chat', orgId);
+                                                        systemInstruction = baseRole;
+                                                        if (ragContext) systemInstruction += `\n\nCONTEXT:\n${ragContext}`;
+                                                    }
 
-        const generator = AiService.streamLLM(message, systemInstruction, history, null, userId, 'chat');
-        for await (const chunk of generator) {
-            yield chunk;
-        }
-    },
+                                                    const generator = AiService.streamLLM(message, systemInstruction, history, null, userId, 'chat');
+                                                    for await (const chunk of generator) {
+                                                        yield chunk;
+                                                    }
+                                                },
 
-    // --- DEEP REASONING ENGINE (Chain of Thought) ---
-    // Executes a multi-step conceptual pipeline
-    runChainOfThought: async (task, steps, context = '', userId, organizationId) => {
-        let currentContext = context;
-        let finalOutput = '';
+// --- DEEP REASONING ENGINE (Chain of Thought) ---
+// Executes a multi-step conceptual pipeline
+runChainOfThought: async (task, steps, context = '', userId, organizationId) => {
+    let currentContext = context;
+    let finalOutput = '';
 
-        for (const step of steps) {
-            const stepPrompt = `
+    for (const step of steps) {
+        const stepPrompt = `
                 ${currentContext}
                 
                 CURRENT STEP: ${step.name}
@@ -948,15 +1192,15 @@ const AiService = {
                 Perform this step and provide the output.
                 `;
 
-            // Call LLM with a specific persona if needed, or generic 'Reasoning Engine'
-            const response = await AiService.callLLM(stepPrompt, "You are a Deep Reasoning engine. Think step-by-step.", [], null, userId, `CoT_${step.name}`);
+        // Call LLM with a specific persona if needed, or generic 'Reasoning Engine'
+        const response = await AiService.callLLM(stepPrompt, "You are a Deep Reasoning engine. Think step-by-step.", [], null, userId, `CoT_${step.name}`);
 
-            // Accumulate context for next steps
-            currentContext += `\n\n[Output of ${step.name}]:\n${response}`;
-            finalOutput = response; // The last step is usually the result, or we can look for specific marker
-        }
-        return finalOutput;
-    },
+        // Accumulate context for next steps
+        currentContext += `\n\n[Output of ${step.name}]:\n${response}`;
+        finalOutput = response; // The last step is usually the result, or we can look for specific marker
+    }
+    return finalOutput;
+},
 
     // --- UPGRADED DIAGNOSIS (Deep) ---
     deepDiagnose: async (axis, input, userId, organizationId = null) => {
@@ -1017,9 +1261,9 @@ const AiService = {
         }
     },
 
-    // --- LEARNING LOOP: INSIGHT & CONTEXT EXTRACTION ---
-    extractInsights: async (text, source = 'chat', userId, organizationId = null) => {
-        const prompt = `
+        // --- LEARNING LOOP: INSIGHT & CONTEXT EXTRACTION ---
+        extractInsights: async (text, source = 'chat', userId, organizationId = null) => {
+            const prompt = `
         Analyze the following consulting interaction/text for TWO things:
         1. NOVEL IDEAS (General): Reusable methodologies or patterns.
         2. CLIENT CONTEXT (Specific): Facts about this specific client (e.g., industry, revenue, specific pain points, risk appetite).
@@ -1034,110 +1278,197 @@ const AiService = {
         }
         `;
 
-        try {
-            const raw = await AiService.callLLM(prompt, "You are a Knowledge Manager.", [], null, userId, 'extract_insight');
-            const json = JSON.parse(raw.replace(/```json/g, '').replace(/```/g, ''));
+            try {
+                const raw = await AiService.callLLM(prompt, "You are a Knowledge Manager.", [], null, userId, 'extract_insight');
+                const json = JSON.parse(raw.replace(/```json/g, '').replace(/```/g, ''));
 
-            if (json.idea && json.idea.found) {
-                await deps.KnowledgeService.addCandidate(json.idea.content, json.idea.reasoning, source, json.idea.topic, text.substring(0, 200));
+                if (json.idea && json.idea.found) {
+                    await deps.KnowledgeService.addCandidate(json.idea.content, json.idea.reasoning, source, json.idea.topic, text.substring(0, 200));
+                }
+
+                if (json.context && json.context.found && organizationId) {
+                    await deps.KnowledgeService.setClientContext(organizationId, json.context.key, json.context.value, 'inferred', json.context.confidence);
+                }
+                return json;
+            } catch (e) {
+                console.error("Insight Extraction Failed", e);
+                return null;
             }
+        },
 
-            if (json.context && json.context.found && organizationId) {
-                await deps.KnowledgeService.setClientContext(organizationId, json.context.key, json.context.value, 'inferred', json.context.confidence);
+            // --- STRATEGIC IDEAS BOARD ---
+
+            // --- CONSULTANT ACTIONS (New) ---
+
+            validateRoadmap: async (initiatives, quarters) => {
+                const prompt = `
+            Validate this roadmap structure as a Strategic Consultant.
+            Focus on overload, sequencing logic, and change fatigue risk.
+
+            Initiatives: ${JSON.stringify(initiatives.map(i => ({ id: i.id, name: i.name, quarter: i.quarter, effort: i.effortProfile })))}
+
+            Return JSON:
+            {
+                "status": "OK" | "Risky" | "Not executable",
+                "observations": ["observation 1", "observation 2", "observation 3"],
+                "fatigueScore": 1-10 (10 is max fatigue)
             }
-            return json;
-        } catch (e) {
-            console.error("Insight Extraction Failed", e);
-            return null;
-        }
-    },
+        `;
+                return await AiService.callLLM(prompt, "You are a Strategic Roadmap Auditor. Be critical.", [], null, null, 'validate_roadmap');
+            },
 
-    // --- STRATEGIC IDEAS BOARD ---
-    getStrategicIdeas: async () => {
-        return new Promise((resolve, reject) => {
-            deps.db.all("SELECT * FROM ai_ideas ORDER BY created_at DESC", [], (err, rows) => {
-                if (err) reject(err);
-                else resolve(rows || []);
-            });
-        });
-    },
+                explainRoadmap: async (initiatives) => {
+                    const prompt = `
+            Explain the logic of this roadmap to a Board of Directors.
+            Why this sequence? What are the main risks?
 
-    addStrategicIdea: async (idea) => {
-        const id = crypto.randomUUID();
-        return new Promise((resolve, reject) => {
-            deps.db.run(
-                "INSERT INTO ai_ideas (id, title, description, status, priority) VALUES (?, ?, ?, ?, ?)",
-                [id, idea.title, idea.description, idea.status || 'new', idea.priority || 'medium'],
-                (err) => {
-                    if (err) reject(err);
-                    else resolve({ id, ...idea });
-                }
-            );
-        });
-    },
+            Initiatives: ${JSON.stringify(initiatives.map(i => ({ id: i.id, name: i.name, quarter: i.quarter, role: i.strategicRole })))}
 
-    updateStrategicIdea: async (id, updates) => {
-        return new Promise((resolve, reject) => {
-            deps.db.run(
-                "UPDATE ai_ideas SET title = COALESCE(?, title), description = COALESCE(?, description), status = COALESCE(?, status), priority = COALESCE(?, priority) WHERE id = ?",
-                [updates.title, updates.description, updates.status, updates.priority, id],
-                (err) => {
-                    if (err) reject(err);
-                    else resolve({ id, ...updates });
-                }
-            );
-        });
-    },
+            Return JSON:
+            {
+                "narrative": "Markdown text explaining the strategy...",
+                "keyRisks": ["risk 1", "risk 2"],
+                "logic": "Explanation of waves/sequencing"
+            }
+        `;
+                    return await AiService.callLLM(prompt, "You are a Strategy Director preparing for a Board Meeting.", [], null, null, 'explain_roadmap');
+                },
 
-    deleteStrategicIdea: async (id) => {
-        return new Promise((resolve, reject) => {
-            deps.db.run("DELETE FROM ai_ideas WHERE id = ?", [id], (err) => {
-                if (err) reject(err);
-                else resolve({ success: true });
-            });
-        });
-    },
+                    // A2/B2/B3 Optimization
+                    optimizeRoadmap: async (initiatives, strategy = 'balance') => { // strategy: 'balance' | 'value'
+                        const prompt = `
+            Rebalance this roadmap.
+            Goal: ${strategy === 'value' ? 'Maximize speed to value (Quick Wins first)' : 'Minimize Change Fatigue (Spread out high change items)'}.
 
-    // --- OBSERVATIONS ---
-    getObservations: async () => {
-        return new Promise((resolve, reject) => {
-            deps.db.all("SELECT * FROM ai_observations ORDER BY created_at DESC LIMIT 50", [], (err, rows) => {
-                if (err) reject(err);
-                else resolve(rows || []);
-            });
-        });
-    },
+            Initiatives: ${JSON.stringify(initiatives.map(i => ({ id: i.id, name: i.name, quarter: i.quarter, value: i.businessValue, effort: i.effortProfile })))}
 
-    addObservation: async (observation) => {
-        const id = crypto.randomUUID();
-        return new Promise((resolve, reject) => {
-            deps.db.run(
-                "INSERT INTO ai_observations (id, content, category, confidence_score) VALUES (?, ?, ?, ?)",
-                [id, observation.content, observation.category || 'system', observation.confidence_score || 1.0],
-                (err) => {
-                    if (err) reject(err);
-                    else resolve({ id, ...observation });
-                }
-            );
-        });
-    },
+            Return JSON:
+            {
+                "schedule": { "initiativeId": "Q1", "initiativeId2": "Q2" },
+                "reasoning": "Why this change made sense based on the goal."
+            }
+        `;
+                        return await AiService.callLLM(prompt, "You are a Portfolio Manager optimizing resources.", [], null, null, 'optimize_roadmap');
+                    },
 
-    // --- DEEP REPORTING ---
-    getDeepPerformanceReport: async () => {
-        // combine standard stats with more deep analysis
-        const stats = await deps.AnalyticsService.getStats();
-        // In a real implementation, we would run complex SQL to find failure clusters
-        // For now, we mock the "Deep" part with simulated data or simple extensions
-        return {
-            ...stats,
-            successRate: 0.92, // Mocked for now
-            topFailureModes: [
-                { reason: "Context Length Exceeded", count: 12 },
-                { reason: "API Timeout", count: 5 }
-            ],
-            sentimentScore: 4.2 // Mocked average sentiment
-        };
-    }
+                        reviewQuarter: async (quarter, initiatives) => {
+                            const quarterInits = initiatives.filter(i => i.quarter === quarter);
+                            const prompt = `
+            Review the workload for ${quarter}.
+            Is it realistic? What is risky?
+
+            Initiatives in ${quarter}: ${JSON.stringify(quarterInits.map(i => ({ name: i.name, effort: i.effortProfile })))}
+
+            Return JSON:
+            {
+                "status": "OK" | "Overloaded" | "Risky",
+                "analysis": "Short text analysis",
+                "suggestions": ["suggestion 1", "suggestion 2"]
+            }
+        `;
+                            return await AiService.callLLM(prompt, "You are a pragmatic Project Manager.", [], null, null, 'review_quarter');
+                        },
+
+                            suggestPlacement: async (initiative, allInitiatives) => {
+                                const prompt = `
+            Suggest the best quarter for this initiative.
+            Initiative: ${initiative.name} (${initiative.strategicRole})
+            Current Context: ${JSON.stringify(allInitiatives.map(i => ({ name: i.name, quarter: i.quarter })))}
+
+            Return JSON:
+            {
+                "suggestedQuarter": "Q1" | "Q2" | ...,
+                "reason": "Why this makes sense (dependencies, load balancing, etc.)"
+            }
+        `;
+                                return await AiService.callLLM(prompt, "You are a Roadmap Planner.", [], null, null, 'suggest_placement');
+                            },
+
+                                getStrategicIdeas: async () => {
+                                    return new Promise((resolve, reject) => {
+                                        deps.db.all("SELECT * FROM ai_ideas ORDER BY created_at DESC", [], (err, rows) => {
+                                            if (err) reject(err);
+                                            else resolve(rows || []);
+                                        });
+                                    });
+                                },
+
+                                    addStrategicIdea: async (idea) => {
+                                        const id = crypto.randomUUID();
+                                        return new Promise((resolve, reject) => {
+                                            deps.db.run(
+                                                "INSERT INTO ai_ideas (id, title, description, status, priority) VALUES (?, ?, ?, ?, ?)",
+                                                [id, idea.title, idea.description, idea.status || 'new', idea.priority || 'medium'],
+                                                (err) => {
+                                                    if (err) reject(err);
+                                                    else resolve({ id, ...idea });
+                                                }
+                                            );
+                                        });
+                                    },
+
+                                        updateStrategicIdea: async (id, updates) => {
+                                            return new Promise((resolve, reject) => {
+                                                deps.db.run(
+                                                    "UPDATE ai_ideas SET title = COALESCE(?, title), description = COALESCE(?, description), status = COALESCE(?, status), priority = COALESCE(?, priority) WHERE id = ?",
+                                                    [updates.title, updates.description, updates.status, updates.priority, id],
+                                                    (err) => {
+                                                        if (err) reject(err);
+                                                        else resolve({ id, ...updates });
+                                                    }
+                                                );
+                                            });
+                                        },
+
+                                            deleteStrategicIdea: async (id) => {
+                                                return new Promise((resolve, reject) => {
+                                                    deps.db.run("DELETE FROM ai_ideas WHERE id = ?", [id], (err) => {
+                                                        if (err) reject(err);
+                                                        else resolve({ success: true });
+                                                    });
+                                                });
+                                            },
+
+                                                // --- OBSERVATIONS ---
+                                                getObservations: async () => {
+                                                    return new Promise((resolve, reject) => {
+                                                        deps.db.all("SELECT * FROM ai_observations ORDER BY created_at DESC LIMIT 50", [], (err, rows) => {
+                                                            if (err) reject(err);
+                                                            else resolve(rows || []);
+                                                        });
+                                                    });
+                                                },
+
+                                                    addObservation: async (observation) => {
+                                                        const id = crypto.randomUUID();
+                                                        return new Promise((resolve, reject) => {
+                                                            deps.db.run(
+                                                                "INSERT INTO ai_observations (id, content, category, confidence_score) VALUES (?, ?, ?, ?)",
+                                                                [id, observation.content, observation.category || 'system', observation.confidence_score || 1.0],
+                                                                (err) => {
+                                                                    if (err) reject(err);
+                                                                    else resolve({ id, ...observation });
+                                                                }
+                                                            );
+                                                        });
+                                                    },
+
+                                                        // --- DEEP REPORTING ---
+                                                        getDeepPerformanceReport: async () => {
+                                                            // combine standard stats with more deep analysis
+                                                            const stats = await deps.AnalyticsService.getStats();
+                                                            // In a real implementation, we would run complex SQL to find failure clusters
+                                                            // For now, we mock the "Deep" part with simulated data or simple extensions
+                                                            return {
+                                                                ...stats,
+                                                                successRate: 0.92, // Mocked for now
+                                                                topFailureModes: [
+                                                                    { reason: "Context Length Exceeded", count: 12 },
+                                                                    { reason: "API Timeout", count: 5 }
+                                                                ],
+                                                                sentimentScore: 4.2 // Mocked average sentiment
+                                                            };
+                                                        }
 };
 
 module.exports = AiService;

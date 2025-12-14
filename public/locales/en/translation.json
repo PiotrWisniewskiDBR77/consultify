@@ -424,6 +424,8 @@
     }
   },
   "common": {
+    "backToDashboard": "Back to Dashboard",
+    "level": "Level",
     "status": {
       "saved": "Auto-saved",
       "saving": "Saving...",
@@ -456,7 +458,16 @@
       "proMode": "PRO Mode Active: Logic Validation Enabled",
       "confirmNext": "Confirm & Next",
       "validated": "Assessment Validated",
-      "consultantWarning": "Consultant Warning"
+      "levelDetailsHint": "Select a level to view details",
+      "actual_target": "ACTUAL + TARGET",
+      "actual_only": "ACTUAL",
+      "target_only": "TARGET",
+      "dashboardHeader": "Assessment Dashboard",
+      "tabs": {
+        "summary": "Assessment & Gaps",
+        "audits": "Additional Audits"
+      },
+      "generateInitiatives": "Generate Initiatives"
     },
     "wizard": {
       "startTitle": "Start Assessment",

@@ -12,6 +12,7 @@ import { AssessmentSummaryWorkspace } from '../components/assessment/AssessmentS
 import { AssessmentAuditsWorkspace } from '../components/assessment/AssessmentAuditsWorkspace';
 import { useTranslation } from 'react-i18next';
 import { Settings, Smartphone, Briefcase, Database, Users, Lock, BrainCircuit, ArrowRight } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 type AxisId = DRDAxis;
 
@@ -68,6 +69,8 @@ export const FullAssessmentView: React.FC = () => {
   const { t: translate } = useTranslation();
   const t = translate('fullAssessment', { returnObjects: true }) as any;
   const ts = translate('sidebar', { returnObjects: true }) as any;
+  const ta = translate('assessment.workspace', { returnObjects: true }) as any;
+  const tc = translate('common', { returnObjects: true }) as any;
   const [interviewAxis, setInterviewAxis] = useState<{ id: AxisId; label: string } | null>(null);
 
   const axes: { id: AxisId; label: string; icon: React.ReactNode; desc: string }[] = [
@@ -94,7 +97,12 @@ export const FullAssessmentView: React.FC = () => {
     updateFullSession(newSession);
 
     // Auto-save
-    await Api.saveSession(currentUser!.id, SessionMode.FULL, newSession, currentProjectId || undefined);
+    try {
+      await Api.saveSession(currentUser!.id, SessionMode.FULL, newSession, currentProjectId || undefined);
+    } catch (err: any) {
+      console.error('Failed to save assessment', err);
+      toast.error('Failed to save changes. Please try again.');
+    }
   };
 
   const handleWizardComplete = (recommendedLevel: MaturityLevel, justification: string, areaScores: Record<string, number[]>) => {
@@ -128,14 +136,26 @@ export const FullAssessmentView: React.FC = () => {
     const newAudits = [...(fullSession.audits || []), audit];
     const newSession = { ...fullSession, audits: newAudits };
     updateFullSession(newSession);
-    await Api.saveSession(currentUser!.id, SessionMode.FULL, newSession, currentProjectId || undefined);
+    try {
+      await Api.saveSession(currentUser!.id, SessionMode.FULL, newSession, currentProjectId || undefined);
+      toast.success('Audit added');
+    } catch (err) {
+      console.error('Failed to save audit', err);
+      toast.error('Failed to save audit.');
+    }
   };
 
   const handleAuditRemove = async (id: string) => {
     const newAudits = (fullSession.audits || []).filter(a => a.id !== id);
     const newSession = { ...fullSession, audits: newAudits };
     updateFullSession(newSession);
-    await Api.saveSession(currentUser!.id, SessionMode.FULL, newSession, currentProjectId || undefined);
+    try {
+      await Api.saveSession(currentUser!.id, SessionMode.FULL, newSession, currentProjectId || undefined);
+      toast.success('Audit removed');
+    } catch (err) {
+      console.error('Failed to remove audit', err);
+      toast.error('Failed to save changes.');
+    }
   };
 
   const handleGenerateInitiatives = async () => {
@@ -171,12 +191,11 @@ export const FullAssessmentView: React.FC = () => {
 
   // --- RENDER ---
 
-  // 1. Specific Axis View
+  // Render 1. Specific Axis View
   if (currentAxisId) {
-    const axisData = fullSession.assessment?.[currentAxisId] || { actual: undefined, target: undefined, justification: '' };
-
+    const axisData = fullSession.assessment?.[currentAxisId];
     return (
-      <SplitLayout title="DRD Assessment" onSendMessage={handleAiChat}>
+      <SplitLayout title={ta.header} onSendMessage={handleAiChat}>
         <div className="flex flex-col h-full bg-navy-900 border-l border-white/5 w-full">
           {/* Back Navigation Bar - Wizard Toggle Removed */}
           <div className="h-12 border-b border-white/5 flex items-center justify-between px-4 bg-navy-950/30">
@@ -184,14 +203,13 @@ export const FullAssessmentView: React.FC = () => {
               onClick={() => onNavigate(AppView.FULL_STEP1_ASSESSMENT)}
               className="text-xs text-slate-400 hover:text-white flex items-center gap-1"
             >
-              ← Back to Dashboard
+              ← {tc.backToDashboard}
             </button>
           </div>
-
           <div className="flex-1 overflow-hidden">
             <AssessmentAxisWorkspace
               axis={currentAxisId}
-              data={axisData}
+              data={axisData || { actual: 1, target: 1, justification: '' }}
               onChange={(d) => handleAxisUpdate(currentAxisId, d)}
               onNext={() => handleNextAxis(currentAxisId)}
               // PRO Features Props
@@ -207,9 +225,9 @@ export const FullAssessmentView: React.FC = () => {
     );
   }
 
-  // 2. Dashboard View (Summary + Audits)
+  // Render 2. Dashboard View
   return (
-    <SplitLayout title="Assessment Dashboard" onSendMessage={handleAiChat}>
+    <SplitLayout title={ta.dashboardHeader} onSendMessage={handleAiChat}>
       <div className="flex flex-col h-full bg-navy-900 border-l border-white/5 w-full">
         {/* Tabs */}
         <div className="h-16 border-b border-white/5 flex items-center px-8 bg-navy-900 shrink-0 justify-between">
@@ -218,13 +236,13 @@ export const FullAssessmentView: React.FC = () => {
               onClick={() => setDashboardTab('summary')}
               className={`h-full border-b-2 text-sm font-semibold transition-colors ${dashboardTab === 'summary' ? 'border-purple-500 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
             >
-              Assessment & Gaps
+              {ta.tabs.summary}
             </button>
             <button
               onClick={() => setDashboardTab('audits')}
               className={`h-full border-b-2 text-sm font-semibold transition-colors ${dashboardTab === 'audits' ? 'border-purple-500 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
             >
-              Additional Audits
+              {ta.tabs.audits}
             </button>
           </div>
 
@@ -232,7 +250,7 @@ export const FullAssessmentView: React.FC = () => {
             onClick={handleGenerateInitiatives}
             className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white rounded-lg text-sm font-bold shadow-lg shadow-green-900/20 transition-all"
           >
-            <span>Generuj Inicjatywy</span>
+            <span>{ta.generateInitiatives}</span>
             <ArrowRight size={16} />
           </button>
         </div>

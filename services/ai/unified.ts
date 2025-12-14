@@ -7,7 +7,8 @@ export const UnifiedAI = {
         config: AIProviderConfig | undefined,
         history: AIMessageHistory[],
         message: string,
-        systemInstruction?: string
+        systemInstruction?: string,
+        roleName?: string
     ): Promise<string> => {
         const provider = config?.provider || 'system';
 
@@ -19,7 +20,7 @@ export const UnifiedAI = {
             // Existing endpoint seems to be managed via server/routes/ai.js -> POST /chat or similar
             // Looking at api.ts might be needed, but assuming standard POST structure for now.
             // We'll use a generic endpoint that the backend handles.
-            return Api.chatWithAI(message, history, systemInstruction);
+            return Api.chatWithAI(message, history, systemInstruction, roleName);
         }
 
         // --- 2. GOOGLE GEMINI (Client Side) ---
@@ -107,12 +108,13 @@ export const UnifiedAI = {
         message: string,
         onChunk: (text: string) => void,
         onDone: () => void,
-        systemInstruction?: string
+        systemInstruction?: string,
+        roleName?: string
     ): Promise<void> => {
         const provider = config?.provider || 'system';
 
         if (provider === 'system') {
-            return Api.chatWithAIStream(message, history, onChunk, onDone, systemInstruction);
+            return Api.chatWithAIStream(message, history, onChunk, onDone, systemInstruction, undefined, roleName);
         }
 
         // For CLIENT-SIDE providers (Gemini/OpenAI), we can implement streaming here too if needed.
