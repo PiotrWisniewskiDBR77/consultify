@@ -144,20 +144,20 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({ trendId, trend
                         {/* What is it */}
                         <section className="bg-slate-50 dark:bg-navy-800/50 p-6 rounded-lg">
                             <SectionHeader icon={<span>📄</span>} title="What is it" />
-                            <p className="mt-2 text-gray-600 dark:text-gray-200 leading-relaxed text-lg">{shortDescription}</p>
+                            <p className="mt-2 text-gray-600 dark:text-gray-200 leading-relaxed text-lg text-justify">{shortDescription}</p>
                         </section>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* Why it matters for the industry */}
                             <section>
                                 <SectionHeader icon={<span>🏭</span>} title="Industry Impact" />
-                                <p className="mt-2 text-gray-600 dark:text-gray-300">{industryImpact}</p>
+                                <p className="mt-2 text-gray-600 dark:text-gray-300 text-justify">{industryImpact}</p>
                             </section>
 
                             {/* Why it matters for YOUR company */}
                             <section>
                                 <SectionHeader icon={<span>👤</span>} title="Company Impact" />
-                                <p className="mt-2 text-gray-600 dark:text-gray-300">{companyImpact}</p>
+                                <p className="mt-2 text-gray-600 dark:text-gray-300 text-justify">{companyImpact}</p>
                             </section>
                         </div>
 

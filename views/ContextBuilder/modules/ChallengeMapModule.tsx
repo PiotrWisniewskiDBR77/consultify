@@ -3,18 +3,23 @@ import { AlertOctagon, Activity, Lock, Search, Cpu, Check, X, AlertTriangle, Plu
 import { DynamicList, DynamicListItem } from '../shared/DynamicList';
 import { AITextArea } from '../shared/AITextArea';
 import { ContextDocUploader } from '../shared/ContextDocUploader';
+import { useContextBuilderStore } from '../../../store/useContextBuilderStore';
 
 export const ChallengeMapModule: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'challenges' | 'rootcause' | 'blockers' | 'evidence'>('challenges');
 
-    // MOCK DATA
-    const [challenges, setChallenges] = useState<DynamicListItem[]>([
-        { id: '1', challenge: 'High Scrap Rate on Line 3', area: 'Production Quality', severity: 'High', notes: 'Happens mostly during changeovers.' },
-        { id: '2', challenge: 'Delayed Order Fulfillment', area: 'Logistics', severity: 'Medium', notes: 'Warehouse picking is slow.' }
-    ]);
+    // Store State
+    const {
+        challenges,
+        setChallenges,
+        updateChallengesList
+    } = useContextBuilderStore();
 
-    // Root Cause Answers State
-    const [rootCauseAnswers, setRootCauseAnswers] = useState<Record<number, string>>({});
+    // Derived State Shortcuts
+    const declaredChallenges = challenges.declaredChallenges;
+    const rootCauseAnswers = challenges.rootCauseAnswers;
+    const evidence = challenges.evidence;
+    const activeBlockers = challenges.activeBlockers;
 
     const ROOT_CAUSE_QUESTIONS = [
         { q: "Where do decisions get stuck?", h: "e.g. Middle management fear, Lack of data..." },
@@ -22,16 +27,6 @@ export const ChallengeMapModule: React.FC = () => {
         { q: "What initiatives failed in the past and why?", h: "e.g. Lean impl failed due to no follow-up..." },
         { q: "Is there a gap between management view and reality?", h: "e.g. CEO thinks ERP works, users use Excel..." }
     ];
-
-    const [evidence, setEvidence] = useState<DynamicListItem[]>([
-        { id: '1', metric: 'OEE < 55%', symptom: 'Frequent unplanned stops', source: 'Production Logs (Sept-Nov)', link: 'View Log' }
-    ]);
-
-    // AI Blockers State
-    const [aiBlockers, setAiBlockers] = useState([
-        { id: '1', type: 'Culture', title: 'Siloed Decision Making', desc: 'Marketing and Production do not share forecast data.', status: 'detected', confidence: 'High' },
-        { id: '2', type: 'Technology', title: 'Legacy ERP', desc: 'System crashes during high load, preventing real-time tracking.', status: 'confirmed' }
-    ]);
 
     // Common Blockers Library
     const commonBlockers = [
@@ -42,37 +37,52 @@ export const ChallengeMapModule: React.FC = () => {
     ];
 
     const addBlocker = (blocker: any) => {
-        setAiBlockers(prev => [...prev, { ...blocker, id: Math.random().toString(), status: 'confirmed', confidence: 'Manual' }]);
+        const newBlocker = { ...blocker, id: Math.random().toString(), status: 'confirmed', confidence: 'Manual' };
+        setChallenges({ activeBlockers: [...activeBlockers, newBlocker] });
     };
 
     const addCustomBlocker = () => {
-        setAiBlockers(prev => [...prev, {
+        const newBlocker = {
             id: Math.random().toString(),
             type: 'Process',
             title: 'New Obstacle',
             desc: '',
             status: 'confirmed',
             confidence: 'Manual'
-        }]);
+        };
+        setChallenges({ activeBlockers: [...activeBlockers, newBlocker] as any });
     };
 
     const removeBlocker = (id: string) => {
-        setAiBlockers(prev => prev.filter(b => b.id !== id));
+        setChallenges({ activeBlockers: activeBlockers.filter(b => b.id !== id) });
     };
 
     const updateBlocker = (id: string, field: string, value: string) => {
-        setAiBlockers(prev => prev.map(b => b.id === id ? { ...b, [field]: value } : b));
+        const updated = activeBlockers.map(b => b.id === id ? { ...b, [field]: value } : b);
+        setChallenges({ activeBlockers: updated });
     };
 
     // Handlers
-    const createHandler = (setter: React.Dispatch<React.SetStateAction<DynamicListItem[]>>) => ({
-        onAdd: (item: Omit<DynamicListItem, 'id'>) => setter(prev => [...prev, { ...item, id: Math.random().toString(36).substr(2, 9) }]),
-        onUpdate: (id: string, updates: Partial<DynamicListItem>) => setter(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p)),
-        onDelete: (id: string) => setter(prev => prev.filter(p => p.id !== id))
+    const createHandler = (
+        listName: 'declaredChallenges' | 'evidence',
+        currentItems: DynamicListItem[]
+    ) => ({
+        onAdd: (item: Omit<DynamicListItem, 'id'>) => {
+            const newItem = { ...item, id: Math.random().toString(36).substr(2, 9) };
+            updateChallengesList(listName, [...currentItems, newItem]);
+        },
+        onUpdate: (id: string, updates: Partial<DynamicListItem>) => {
+            const newItems = currentItems.map(p => p.id === id ? { ...p, ...updates } : p);
+            updateChallengesList(listName, newItems);
+        },
+        onDelete: (id: string) => {
+            const newItems = currentItems.filter(p => p.id !== id);
+            updateChallengesList(listName, newItems);
+        }
     });
 
-    const challengeHandlers = createHandler(setChallenges);
-    const evidenceHandlers = createHandler(setEvidence);
+    const challengeHandlers = createHandler('declaredChallenges', declaredChallenges);
+    const evidenceHandlers = createHandler('evidence', evidence);
 
     // TABS CONFIG
     const tabs = [
@@ -114,7 +124,7 @@ export const ChallengeMapModule: React.FC = () => {
                         <DynamicList
                             title="Declared Challenges"
                             description="Official problems reported by the client (symptoms)."
-                            items={challenges}
+                            items={declaredChallenges}
                             columns={[
                                 { key: 'challenge', label: 'Challenge / Symptom', width: 'w-1/3', placeholder: 'e.g. High Scrap Rate' },
                                 { key: 'area', label: 'Functional Area', width: 'w-1/6', placeholder: 'e.g. Quality' },
@@ -144,7 +154,7 @@ export const ChallengeMapModule: React.FC = () => {
                                 <label className="block text-sm font-bold text-navy-900 dark:text-white">{item.q}</label>
                                 <AITextArea
                                     value={rootCauseAnswers[index] || ''}
-                                    onChange={(e) => setRootCauseAnswers(prev => ({ ...prev, [index]: e.target.value }))}
+                                    onChange={(e) => setChallenges({ rootCauseAnswers: { ...rootCauseAnswers, [index]: e.target.value } })}
                                     placeholder={item.h}
                                     className="min-h-[120px]"
                                     aiContext="blocker"
@@ -182,7 +192,7 @@ export const ChallengeMapModule: React.FC = () => {
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                                 {commonBlockers.map(cb => {
-                                    const isAdded = aiBlockers.some(b => b.title === cb.title);
+                                    const isAdded = activeBlockers.some(b => b.title === cb.title);
                                     return (
                                         <button
                                             key={cb.id}
@@ -211,16 +221,16 @@ export const ChallengeMapModule: React.FC = () => {
                             <h4 className="text-sm font-bold text-navy-900 dark:text-white flex items-center gap-2">
                                 <Lock size={16} className="text-slate-400" />
                                 Active Blockers
-                                <span className="bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full text-xs font-normal">{aiBlockers.length}</span>
+                                <span className="bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full text-xs font-normal">{activeBlockers.length}</span>
                             </h4>
 
-                            {aiBlockers.length === 0 ? (
+                            {activeBlockers.length === 0 ? (
                                 <div className="text-center py-10 border-2 border-dashed border-slate-200 dark:border-white/5 rounded-2xl">
                                     <p className="text-sm text-slate-400">No blockers identified yet. Add from suggestions or create a custom one.</p>
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 gap-4">
-                                    {aiBlockers.map((blocker, index) => (
+                                    {activeBlockers.map((blocker, index) => (
                                         <div
                                             key={blocker.id}
                                             className="group relative bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-md hover:border-purple-200 dark:hover:border-purple-500/30 transition-all p-4"

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Api } from '../../services/api';
-import { translations } from '../../translations';
+// import { translations } from '../../translations';
 import { CheckCircle, XCircle, Clock, Search, Key, RefreshCw, UserCheck, Shield, Plus, Copy } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
@@ -150,8 +150,8 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
                                         </td>
                                         <td className="p-4">
                                             <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${req.status === 'approved' ? 'bg-green-500/20 text-green-400' :
-                                                    req.status === 'rejected' ? 'bg-red-500/20 text-red-400' :
-                                                        'bg-yellow-500/20 text-yellow-400'
+                                                req.status === 'rejected' ? 'bg-red-500/20 text-red-400' :
+                                                    'bg-yellow-500/20 text-yellow-400'
                                                 }`}>
                                                 {req.status}
                                             </span>

@@ -1,19 +1,18 @@
+
 import React, { useState } from 'react';
-import { AdditionalAudit, Language } from '../../types';
+import { AdditionalAudit } from '../../types';
 import { Plus, Trash2, FileText, Link as LinkIcon, UploadCloud } from 'lucide-react';
 
 interface AssessmentAuditsWorkspaceProps {
     audits: AdditionalAudit[];
     onAddAudit: (audit: AdditionalAudit) => void;
     onRemoveAudit: (id: string) => void;
-    language: Language;
 }
 
 export const AssessmentAuditsWorkspace: React.FC<AssessmentAuditsWorkspaceProps> = ({
     audits,
     onAddAudit,
-    onRemoveAudit,
-    language
+    onRemoveAudit
 }) => {
     const [isAdding, setIsAdding] = useState(false);
     const [newAudit, setNewAudit] = useState<Partial<AdditionalAudit>>({});
@@ -37,13 +36,11 @@ export const AssessmentAuditsWorkspace: React.FC<AssessmentAuditsWorkspaceProps>
         <div className="flex flex-col h-full bg-navy-900 text-white p-8">
             <div className="mb-8">
                 <h2 className="text-xl font-bold mb-2 flex items-center gap-2">
-                    {language === 'PL' ? 'Dodatkowe Audyty' : 'Additional Audits'}
+                    Additional Audits
                     <span className="text-xs font-normal text-slate-500 border border-white/10 px-2 py-0.5 rounded ml-2">ADMA, SIRI, ISO, Lean</span>
                 </h2>
                 <p className="text-slate-400 text-sm">
-                    {language === 'PL'
-                        ? 'Wgraj wyniki innych audytów, aby AI mogło je zmapować na model DRD.'
-                        : 'Upload results from other frameworks so AI can map them to the DRD model.'}
+                    Upload results from other frameworks so AI can map them to the DRD model.
                 </p>
             </div>
 

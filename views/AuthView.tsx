@@ -1,8 +1,8 @@
 
 import React, { useState, useRef } from 'react';
 import { ArrowRight, Lock, AlertCircle, X, ChevronLeft } from 'lucide-react';
-import { AuthStep, SessionMode, Language, UserRole } from '../types';
-import { translations } from '../translations';
+import { AuthStep, SessionMode, UserRole } from '../types';
+import { useTranslation } from 'react-i18next';
 import { Api } from '../services/api';
 
 interface AuthViewProps {
@@ -10,14 +10,14 @@ interface AuthViewProps {
   targetMode: SessionMode;
   onAuthSuccess: (user: any) => void;
   onBack: () => void;
-  language: Language;
 }
 
-export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onAuthSuccess, onBack, language }) => {
+export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onAuthSuccess, onBack }) => {
   const [step, setStep] = useState<AuthStep>(initialStep);
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
-  const t = translations.auth;
+  const { t: translate } = useTranslation();
+  const t = translate('auth', { returnObjects: true }) as any;
 
   // --- CODE ENTRY STATE ---
   const [code, setCode] = useState(['', '', '', '', '', '']);
@@ -155,8 +155,8 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
         <div className="w-12 h-12 bg-blue-100 dark:bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-200 dark:border-blue-500/20 shadow-[0_0_15px_-3px_rgba(59,130,246,0.3)]">
           <Lock className="text-blue-600 dark:text-blue-400" size={24} />
         </div>
-        <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">{t.unlockFull[language]}</h2>
-        <p className="text-slate-500 dark:text-slate-400 text-sm max-w-xs mx-auto">{t.enterCode[language]}</p>
+        <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">{t.unlockFull}</h2>
+        <p className="text-slate-500 dark:text-slate-400 text-sm max-w-xs mx-auto">{t.enterCode}</p>
       </div>
 
       <div className="flex justify-center gap-3 mb-8" dir="ltr">
@@ -185,7 +185,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
         onClick={verifyCode}
         className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-all shadow-lg shadow-blue-500/20 dark:shadow-blue-900/20 text-sm"
       >
-        {t.verifyCode[language]}
+        {t.verifyCode}
       </button>
     </div>
   );
@@ -194,17 +194,17 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">
-          {targetMode === SessionMode.FREE ? t.startQuick[language] : t.setupFull[language]}
+          {targetMode === SessionMode.FREE ? t.startQuick : t.setupFull}
         </h2>
         <p className="text-slate-500 dark:text-slate-400 text-sm">
-          {t.personalize[language]}
+          {t.personalize}
         </p>
       </div>
 
       <form onSubmit={handleRegister} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t.firstName[language]} <span className="text-purple-500 dark:text-purple-400">*</span></label>
+            <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t.firstName} <span className="text-purple-500 dark:text-purple-400">*</span></label>
             <input
               required
               value={formData.firstName}
@@ -213,7 +213,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t.lastName[language]} <span className="text-purple-500 dark:text-purple-400">*</span></label>
+            <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t.lastName} <span className="text-purple-500 dark:text-purple-400">*</span></label>
             <input
               required
               value={formData.lastName}
@@ -224,7 +224,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t.email[language]} <span className="text-purple-500 dark:text-purple-400">*</span></label>
+          <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t.email} <span className="text-purple-500 dark:text-purple-400">*</span></label>
           <input
             type="email"
             required
@@ -235,7 +235,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t.phone[language]}</label>
+          <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t.phone}</label>
           <input
             type="tel"
             value={formData.phone}
@@ -245,7 +245,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t.company[language]} <span className="text-purple-500 dark:text-purple-400">*</span></label>
+          <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t.company} <span className="text-purple-500 dark:text-purple-400">*</span></label>
           <input
             required
             value={formData.companyName}
@@ -265,7 +265,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t.password[language]} <span className="text-purple-500 dark:text-purple-400">*</span></label>
+          <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t.password} <span className="text-purple-500 dark:text-purple-400">*</span></label>
           <input
             type="password"
             required
@@ -284,15 +284,15 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
         )}
 
         <button className="w-full py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg transition-all flex items-center justify-center gap-2 mt-4 shadow-lg shadow-purple-500/20 dark:shadow-purple-900/20 group text-sm">
-          {t.createStart[language]}
-          <ArrowRight size={16} className={`group-hover:translate-x-1 transition-transform ${language === 'AR' ? 'rotate-180' : ''}`} />
+          {t.createStart}
+          <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
         </button>
       </form>
 
       <div className="text-center pt-2 space-y-3">
         <div className="text-sm text-slate-500 dark:text-slate-400">
-          {t.haveAccount[language]}{' '}
-          <button onClick={() => setStep(AuthStep.LOGIN)} className="text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300 font-medium hover:underline">{t.logIn[language]}</button>
+          {t.haveAccount}{' '}
+          <button onClick={() => setStep(AuthStep.LOGIN)} className="text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300 font-medium hover:underline">{t.logIn}</button>
         </div>
 
         <div className="pt-2 border-t border-slate-200 dark:border-white/5">
@@ -308,13 +308,13 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
   const renderLogin = () => (
     <div className="space-y-8">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">{t.welcomeBack[language]}</h2>
-        <p className="text-slate-500 dark:text-slate-400 text-sm">{t.signInText[language]}</p>
+        <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">{t.welcomeBack}</h2>
+        <p className="text-slate-500 dark:text-slate-400 text-sm">{t.signInText}</p>
       </div>
 
       <form onSubmit={handleLogin} className="space-y-5">
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t.email[language]}</label>
+          <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t.email}</label>
           <input
             type="email"
             required
@@ -326,7 +326,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
 
         <div className="space-y-1.5">
           <div className="flex justify-between">
-            <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t.password[language]}</label>
+            <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t.password}</label>
           </div>
           <input
             type="password"
@@ -345,13 +345,13 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
         )}
 
         <button type="submit" className="w-full py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg transition-all shadow-lg shadow-purple-500/20 dark:shadow-purple-900/20 mt-2 text-sm">
-          {t.logIn[language]}
+          {t.logIn}
         </button>
       </form>
 
       <div className="text-center pt-2 text-sm text-slate-500 dark:text-slate-400">
-        {t.noAccount[language]}{' '}
-        <button onClick={() => setStep(AuthStep.REGISTER)} className="text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300 font-medium hover:underline">{t.createOne[language]}</button>
+        {t.noAccount}{' '}
+        <button onClick={() => setStep(AuthStep.REGISTER)} className="text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300 font-medium hover:underline">{t.createOne}</button>
       </div>
     </div>
   );
@@ -381,7 +381,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
         {/* Close/Back Button */}
         <button
           onClick={onBack}
-          className={`absolute top-4 ${language === 'AR' ? 'left-4' : 'right-4'} text-slate-400 hover:text-navy-900 dark:text-slate-500 dark:hover:text-white transition-colors p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/5`}
+          className="absolute top-4 right-4 text-slate-400 hover:text-navy-900 dark:text-slate-500 dark:hover:text-white transition-colors p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/5"
         >
           <X size={20} />
         </button>
@@ -399,8 +399,8 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
           onClick={onBack}
           className="flex items-center gap-2 text-slate-500 hover:text-navy-900 dark:hover:text-slate-300 text-sm transition-colors group"
         >
-          <ChevronLeft size={16} className={`transition-transform ${language === 'AR' ? 'rotate-180' : 'group-hover:-translate-x-1'}`} />
-          {t.backToStart[language]}
+          <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+          {t.backToStart}
         </button>
       </div>
     </div>

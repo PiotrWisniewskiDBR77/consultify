@@ -9,23 +9,19 @@ i18n
     .use(initReactI18next)
     .init({
         fallbackLng: 'en',
-        debug: false,
+        supportedLngs: ['en', 'pl', 'de', 'ar', 'ja'],
+        debug: false, // Set to true for debugging
 
-        // Standard react-i18next structure
         interpolation: {
-            escapeValue: false, // React escapes by default
+            escapeValue: false, // not needed for react as it escapes by default
         },
 
-        // Path to load resources
         backend: {
-            loadPath: '/locales/{{lng}}/translation.json?v=' + new Date().getTime(),
+            loadPath: '/locales/{{lng}}/translation.json',
         },
 
-        // Detection options
-        detection: {
-            order: ['localStorage', 'navigator'],
-            lookupLocalStorage: 'app-language', // Align with app store if possible
-            caches: ['localStorage'],
+        react: {
+            useSuspense: true,
         }
     });
 

@@ -2,7 +2,7 @@ import React, { useEffect, useCallback } from 'react';
 import { SplitLayout } from '../components/SplitLayout';
 import { FullStep2Workspace } from '../components/FullStep2Workspace';
 import { FullInitiative, AppView, SessionMode } from '../types';
-import { translations } from '../translations';
+import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../store/useAppStore';
 import { sendMessageToAI, AIMessageHistory } from '../services/ai/gemini';
 import { Agent } from '../services/ai/agent';
@@ -27,7 +27,8 @@ export const FullInitiativesView: React.FC = () => {
   const { startStream } = useAIStream();
 
   const language = currentUser?.preferredLanguage || 'EN';
-  const t = translations.fullInitiatives;
+  const { t: translate } = useTranslation();
+  const t = translate('fullInitiatives', { returnObjects: true }) as any;
 
   const addAiMessage = useCallback((content: string, delay = 600) => {
     setTyping(true);
@@ -224,7 +225,6 @@ export const FullInitiativesView: React.FC = () => {
             updateFullSession({ step2Completed: true });
             onNavigate(AppView.FULL_STEP3_ROADMAP);
           }}
-          language={language}
         />
       </div>
     </SplitLayout>

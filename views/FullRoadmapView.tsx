@@ -1,12 +1,11 @@
+
 import React, { useEffect, useCallback } from 'react';
 import { SplitLayout } from '../components/SplitLayout';
 import { FullStep3Workspace } from '../components/FullStep3Workspace';
-import { FullInitiative, Quarter, Wave, AppView } from '../types';
-import { translations } from '../translations';
+import { FullInitiative, Quarter, Wave, AppView, SessionMode } from '../types';
+import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../store/useAppStore';
-
-import { Api } from '../services/api'; // Added import
-import { SessionMode } from '../types'; // Added import
+import { Api } from '../services/api';
 import { AIFeedbackButton } from '../components/AIFeedbackButton';
 
 export const FullRoadmapView: React.FC = () => {
@@ -27,8 +26,8 @@ export const FullRoadmapView: React.FC = () => {
     // TODO: Implement actual AI chat for Roadmap context equivalent to Initiatives
   };
 
-  const language = currentUser?.preferredLanguage || 'EN';
-  const t = translations.fullRoadmap;
+  const { t: translate } = useTranslation();
+  const t = translate('fullRoadmap', { returnObjects: true }) as any;
 
   const addAiMessage = useCallback((content: string, delay = 600) => {
     setTyping(true);
@@ -99,7 +98,7 @@ export const FullRoadmapView: React.FC = () => {
 
       updateFullSession({ initiatives: scheduledInitiatives });
       await Api.saveSession(currentUser!.id, SessionMode.FULL, { ...fullSession, initiatives: scheduledInitiatives }, currentProjectId || undefined);
-      addAiMessage(t.intro[language]);
+      addAiMessage(t.intro);
 
     } catch (e) {
       console.error("Roadmap Gen Error", e);
@@ -120,7 +119,7 @@ export const FullRoadmapView: React.FC = () => {
       updateFullSession({ initiatives: scheduledInitiatives });
       await Api.saveSession(currentUser!.id, SessionMode.FULL, { ...fullSession, initiatives: scheduledInitiatives }, currentProjectId || undefined);
     }
-  }, [fullSession, updateFullSession, addAiMessage, language, t, currentUser, currentProjectId]);
+  }, [fullSession, updateFullSession, addAiMessage, t, currentUser, currentProjectId]);
 
   useEffect(() => {
     const needsGeneration = fullSession.initiatives?.length > 0 && !fullSession.initiatives[0].quarter;
@@ -130,9 +129,6 @@ export const FullRoadmapView: React.FC = () => {
       generateRoadmap();
     }
   }, [fullSession.initiatives, generateRoadmap]);
-
-  // Chat handler removed
-
 
   const handleUpdateInitiative = (updated: FullInitiative) => {
     const newInits = fullSession.initiatives.map(i => i.id === updated.id ? updated : i);
@@ -193,7 +189,6 @@ export const FullRoadmapView: React.FC = () => {
           fullSession={fullSession}
           onUpdateInitiative={handleUpdateInitiative}
           onNextStep={handleNext}
-          language={language}
           users={users} // Pass users
           currentUser={currentUser} // Pass currentUser
         />

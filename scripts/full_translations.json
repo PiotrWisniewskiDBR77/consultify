@@ -4,253 +4,355 @@
       "EN": "Dashboard",
       "PL": "Pulpit",
       "DE": "Armaturenbrett",
-      "AR": "لوحة القيادة"
+      "AR": "لوحة القيادة",
+      "JA": "ダッシュボード"
     },
     "quickAssessment": {
       "EN": "Quick Assessment",
       "PL": "Szybka Ocena",
       "DE": "Schnellbewertung",
-      "AR": "التقييم السريع"
+      "AR": "التقييم السريع",
+      "JA": "クイック診断"
     },
     "fullProject": {
       "EN": "Full Transformation",
       "PL": "Pełna Transformacja",
       "DE": "Volle Transformation",
-      "AR": "التحول الكامل"
+      "AR": "التحول الكامل",
+      "JA": "完全な変革 (Full Transition)"
     },
     "masterclass": {
       "EN": "Masterclass",
       "PL": "Masterclass",
       "DE": "Meisterklasse",
-      "AR": "فئة رئيسية"
+      "AR": "فئة رئيسية",
+      "JA": "マスタークラス"
     },
     "resources": {
       "EN": "Resources",
       "PL": "Zasoby",
       "DE": "Ressourcen",
-      "AR": "موارد"
+      "AR": "موارد",
+      "JA": "リソース"
     },
     "module1": {
       "EN": "1. Expectations & Challenges",
       "PL": "1. Oczekiwania & Wyzwania",
       "DE": "1. Erwartungen & Herausforderungen",
-      "AR": "1. التوقعات والتحديات"
+      "AR": "1. التوقعات والتحديات",
+      "JA": "1. 期待と課題"
     },
     "module1_1": {
       "EN": "Company Profile",
       "PL": "Profil Firmy",
       "DE": "Unternehmensprofil",
-      "AR": "ملف الشركة"
+      "AR": "ملف الشركة",
+      "JA": "会社概要"
     },
     "module1_2": {
       "EN": "Goals & Expectations",
       "PL": "Cele Strategiczne",
       "DE": "Ziele & Erwartungen",
-      "AR": "الأهداف والتوقعات"
+      "AR": "الأهداف والتوقعات",
+      "JA": "目標と期待"
     },
     "module1_3": {
       "EN": "Challenges Map",
       "PL": "Mapa Wyzwań",
       "DE": "Herausforderungskarte",
-      "AR": "خريطة التحديات"
+      "AR": "خريطة التحديات",
+      "JA": "課題マップ"
     },
     "module2": {
       "EN": "2. Assessment (DRD)",
       "PL": "2. Ocena DrD & Audyty",
       "DE": "2. Bewertung (DRD)",
-      "AR": "2. تقييم (DRD)"
+      "AR": "2. تقييم (DRD)",
+      "JA": "2. アセスメント (DRD)"
     },
     "module3": {
       "EN": "3. Initiatives & Roadmap",
       "PL": "3. Inicjatywy & Roadmapa",
       "DE": "3. Initiativen & Roadmap",
-      "AR": "3. المبادرات وخارطة الطريق"
+      "AR": "3. المبادرات وخارطة الطريق",
+      "JA": "3. イニシアチブとロードマップ"
     },
     "module3_1": {
       "EN": "Initiatives List",
       "PL": "Generator & Lista",
       "DE": "Initiativenliste",
-      "AR": "قائمة المبادرات"
+      "AR": "قائمة المبادرات",
+      "JA": "イニシアチブ一覧"
     },
     "module3_2": {
       "EN": "Roadmap Builder",
       "PL": "Roadmapa",
       "DE": "Roadmap-Ersteller",
-      "AR": "منشئ خارطة الطريق"
+      "AR": "منشئ خارطة الطريق",
+      "JA": "ロードマップビルダー"
     },
     "module4": {
       "EN": "4. Pilot Execution",
       "PL": "4. Pilot Execution",
       "DE": "4. Pilotdurchführung",
-      "AR": "4. تنفيذ تجريبي"
+      "AR": "4. تنفيذ تجريبي",
+      "JA": "4. パイロット実行"
     },
     "module5": {
       "EN": "5. Full Rollout",
       "PL": "5. Full Rollout",
       "DE": "5. Volle Einführung",
-      "AR": "5. طرح كامل"
+      "AR": "5. طرح كامل",
+      "JA": "5. 本格展開"
     },
     "module6": {
       "EN": "6. Economics & ROI",
       "PL": "6. Ekonomia & ROI",
       "DE": "6. Wirtschaft & ROI",
-      "AR": "6. الاقتصاد وعائد الاستثمار"
+      "AR": "6. الاقتصاد وعائد الاستثمار",
+      "JA": "6. 経済性とROI"
     },
     "module7": {
       "EN": "7. Execution Reports",
       "PL": "7. Raporty",
       "DE": "7. Ausführungsberichte",
-      "AR": "7. تقارير التنفيذ"
+      "AR": "7. تقارير التنفيذ",
+      "JA": "7. 実行レポート"
     },
     "adminPanel": {
       "EN": "Admin Panel",
       "PL": "Panel Administratora",
       "DE": "Admin-Bereich",
-      "AR": "لوحة الإدارة"
+      "AR": "لوحة الإدارة",
+      "JA": "管理パネル"
     },
     "adminUsers": {
       "EN": "Users",
       "PL": "Użytkownicy",
       "DE": "Benutzer",
-      "AR": "المستخدمون"
+      "AR": "المستخدمون",
+      "JA": "ユーザー"
     },
     "adminProjects": {
       "EN": "Projects",
       "PL": "Projekty",
       "DE": "Projekte",
-      "AR": "المشاريع"
+      "AR": "المشاريع",
+      "JA": "プロジェクト"
     },
     "adminLLM": {
       "EN": "LLM Management",
       "PL": "Zarządzanie LLM",
       "DE": "LLM-Verwaltung",
-      "AR": "إدارة LLM"
+      "AR": "إدارة LLM",
+      "JA": "LLM管理"
     },
     "adminKnowledge": {
       "EN": "Knowledge Base",
       "PL": "Baza Wiedzy",
       "DE": "Wissensdatenbank",
-      "AR": "قاعدة المعرفة"
+      "AR": "قاعدة المعرفة",
+      "JA": "ナレッジベース"
     },
     "adminFeedback": {
       "EN": "User Feedback",
       "PL": "Feedback",
       "DE": "Benutzerfeedback",
-      "AR": "تعليقات المستخدمين"
+      "AR": "تعليقات المستخدمين",
+      "JA": "ユーザーフィードバック"
     },
     "quickStep1": {
       "EN": "Company & Expectations",
       "PL": "Firma i Oczekiwania",
       "DE": "Firma & Erwartungen",
-      "AR": "الشركة والتوقعات"
+      "AR": "الشركة والتوقعات",
+      "JA": "会社と期待"
     },
     "quickStep2": {
       "EN": "Challenges & Profile Questions",
       "PL": "Wyzwania i Pytania Profilowe",
       "DE": "Herausforderungen & Profilfragen",
-      "AR": "التحديات وأسئلة الملف الشخصي"
+      "AR": "التحديات وأسئلة الملف الشخصي",
+      "JA": "課題とプロファイル質問"
     },
     "quickStep3": {
       "EN": "Recommendations",
       "PL": "Rekomendacje",
       "DE": "Empfehlungen",
-      "AR": "توصيات"
+      "AR": "توصيات",
+      "JA": "推奨事項"
     },
     "fullStep1": {
       "EN": "Assessment (DRD)",
       "PL": "Ocena (DRD)",
       "DE": "Bewertung (DRD)",
-      "AR": "تقييم (DRD)"
+      "AR": "تقييم (DRD)",
+      "JA": "アセスメント (DRD)"
     },
     "fullStep1_proc": {
       "EN": "Processes",
       "PL": "Procesy",
       "DE": "Prozesse",
-      "AR": "العمليات"
+      "AR": "العمليات",
+      "JA": "プロセス"
     },
     "fullStep1_prod": {
       "EN": "Digital Products",
       "PL": "Produkty Cyfrowe",
       "DE": "Digitale Produkte",
-      "AR": "المنتجات الرقمية"
+      "AR": "المنتجات الرقمية",
+      "JA": "デジタル製品"
     },
     "fullStep1_model": {
       "EN": "Business Models",
       "PL": "Modele Biznesowe",
       "DE": "Geschäftsmodelle",
-      "AR": "نطاقات الأعمال"
+      "AR": "نطاقات الأعمال",
+      "JA": "ビジネスモデル"
     },
     "fullStep1_data": {
       "EN": "Data Management",
       "PL": "Zarządzanie Danymi",
       "DE": "Datenmanagement",
-      "AR": "إدارة البيانات"
+      "AR": "إدارة البيانات",
+      "JA": "データ管理"
     },
     "fullStep1_cult": {
       "EN": "Culture",
       "PL": "Kultura",
       "DE": "Kultur",
-      "AR": "ثقافة"
+      "AR": "ثقافة",
+      "JA": "文化"
     },
     "fullStep1_ai": {
       "EN": "AI Maturity",
       "PL": "Dojrzałość AI",
       "DE": "KI-Reife",
-      "AR": "نضج الذكاء الاصطناعي"
+      "AR": "نضج الذكاء الاصطناعي",
+      "JA": "AI成熟度"
     },
     "fullStep2": {
       "EN": "Initiatives Generator",
       "PL": "Generator Inicjatyw",
       "DE": "Initiativen-Generator",
-      "AR": "مولد المبادرات"
+      "AR": "مولد المبادرات",
+      "JA": "イニシアチブ生成"
     },
     "fullStep3": {
       "EN": "Transformation Roadmap",
       "PL": "Mapa Drogowa",
       "DE": "Transformations-Roadmap",
-      "AR": "خارطة طريق التحول"
+      "AR": "خارطة طريق التحول",
+      "JA": "変革ロードマップ"
     },
     "fullStep4": {
       "EN": "Economics & ROI",
       "PL": "Ekonomia i ROI",
       "DE": "Wirtschaft & ROI",
-      "AR": "الاقتصاد وعائد الاستثمار"
+      "AR": "الاقتصاد وعائد الاستثمار",
+      "JA": "経済性とROI"
     },
     "fullStep5": {
       "EN": "Execution Dashboard",
       "PL": "Pulpit Wykonawczy",
       "DE": "Ausführungs-Dashboard",
-      "AR": "لوحة القيادة للتنفيذ"
+      "AR": "لوحة القيادة للتنفيذ",
+      "JA": "実行ダッシュボード"
     },
     "fullStep6": {
       "EN": "Reports",
       "PL": "Raporty",
       "DE": "Berichte",
-      "AR": "التقارير"
+      "AR": "التقارير",
+      "JA": "レポート"
     },
     "newConversation": {
       "EN": "New Conversation",
       "PL": "Nowa Rozmowa",
       "DE": "Neues Gespräch",
-      "AR": "محادثة جديدة"
+      "AR": "محادثة جديدة",
+      "JA": "新しい会話"
     },
     "settings": {
       "EN": "Settings",
       "PL": "Ustawienia",
       "DE": "Einstellungen",
-      "AR": "الإعدادات"
+      "AR": "الإعدادات",
+      "JA": "設定"
     },
     "mobileApp": {
       "EN": "Mobile App",
       "PL": "Aplikacja Mobilna",
       "DE": "Mobile App",
-      "AR": "تطبيق الهاتف"
+      "AR": "تطبيق الهاتف",
+      "JA": "モバイルアプリ"
     },
     "logOut": {
       "EN": "Log Out",
       "PL": "Wyloguj",
       "DE": "Abmelden",
-      "AR": "تسجيل خروج"
+      "AR": "تسجيل خروج",
+      "JA": "ログアウト"
+    },
+    "intro": {
+      "EN": "Intro",
+      "PL": "Wstęp",
+      "DE": "Einführung",
+      "AR": "مقدمة",
+      "JA": "はじめに"
+    },
+    "context": {
+      "profile": {
+        "EN": "Company Profile",
+        "PL": "Profil Firmy",
+        "DE": "Unternehmensprofil",
+        "AR": "ملف الشركة",
+        "JA": "会社概要"
+      },
+      "goals": {
+        "EN": "Goals & Expectations",
+        "PL": "Cele i Oczekiwania",
+        "DE": "Ziele und Erwartungen",
+        "AR": "الأهداف والتوقعات",
+        "JA": "目標と期待"
+      },
+      "challenges": {
+        "EN": "Challenge Map",
+        "PL": "Mapa Wyzwań",
+        "DE": "Herausforderungskarte",
+        "AR": "خريطة التحديات",
+        "JA": "課題マップ"
+      },
+      "megatrends": {
+        "EN": "Megatrend Scanner",
+        "PL": "Skaner Megatrendów",
+        "DE": "Megatrend-Scanner",
+        "AR": "ماسح الاتجاهات الكبرى",
+        "JA": "メガトレンドスキャナー"
+      },
+      "strategy": {
+        "EN": "Strategic Synthesis",
+        "PL": "Synteza Strategiczna",
+        "DE": "Strategische Synthese",
+        "AR": "توليف استراتيجي",
+        "JA": "戦略的統合"
+      }
+    },
+    "dashboardSub": {
+      "overview": {
+        "EN": "Overview",
+        "PL": "Przegląd",
+        "DE": "Überblick",
+        "AR": "نظرة عامة",
+        "JA": "概要"
+      },
+      "snapshot": {
+        "EN": "Execution Snapshot",
+        "PL": "Migawka Egzekucji",
+        "DE": "Ausführungsmomentaufnahme",
+        "AR": "لمحة عن التنفيذ",
+        "JA": "実行スナップショット"
+      }
     }
   },
   "auth": {
@@ -258,121 +360,141 @@
       "EN": "Start Your Quick Assessment",
       "PL": "Rozpocznij Szybką Ocenę",
       "DE": "Starten Sie Ihre Schnellbewertung",
-      "AR": "ابدأ التقييم السريع"
+      "AR": "ابدأ التقييم السريع",
+      "JA": "クイック診断を開始"
     },
     "setupFull": {
       "EN": "Setup Your Full Account",
       "PL": "Załóż Pełne Konto",
       "DE": "Vollständiges Konto einrichten",
-      "AR": "إعداد حسابك الكامل"
+      "AR": "إعداد حسابك الكامل",
+      "JA": "完全なアカウントを設定"
     },
     "unlockFull": {
       "EN": "Unlock Full Transformation",
       "PL": "Odblokuj Pełną Transformację",
       "DE": "Vollständige Transformation freischalten",
-      "AR": "فتح التحول الكامل"
+      "AR": "فتح التحول الكامل",
+      "JA": "完全な変革をアンロック"
     },
     "enterCode": {
       "EN": "Enter the 6-digit access code provided by DBR77.",
       "PL": "Wprowadź 6-cyfrowy kod dostępu od DBR77.",
       "DE": "Geben Sie den 6-stelligen Zugangscode ein.",
-      "AR": "أدخل رمز الوصول المكون من 6 أرقام."
+      "AR": "أدخل رمز الوصول المكون من 6 أرقام.",
+      "JA": "DBR77から提供された6桁のアクセスコードを入力してください。"
     },
     "verifyCode": {
       "EN": "Verify Code",
       "PL": "Zweryfikuj Kod",
       "DE": "Code überprüfen",
-      "AR": "تحقق من الرمز"
+      "AR": "تحقق من الرمز",
+      "JA": "コードを確認"
     },
     "personalize": {
       "EN": "We need a few details to personalize your roadmap.",
       "PL": "Potrzebujemy kilku szczegółów, aby spersonalizować mapę drogową.",
       "DE": "Wir benötigen einige Details, um Ihre Roadmap zu personalisieren.",
-      "AR": "نحتاج إلى بعض التفاصيل لتخصيص خارطة الطريق الخاصة بك."
+      "AR": "نحتاج إلى بعض التفاصيل لتخصيص خارطة الطريق الخاصة بك.",
+      "JA": "ロードマップをパーソナライズするために詳細が必要です。"
     },
     "firstName": {
       "EN": "First Name",
       "PL": "Imię",
       "DE": "Vorname",
-      "AR": "الاسم الأول"
+      "AR": "الاسم الأول",
+      "JA": "名"
     },
     "lastName": {
       "EN": "Last Name",
       "PL": "Nazwisko",
       "DE": "Nachname",
-      "AR": "اسم العائلة"
+      "AR": "اسم العائلة",
+      "JA": "姓"
     },
     "email": {
       "EN": "Work Email",
       "PL": "Email służbowy",
       "DE": "Arbeits-E-Mail",
-      "AR": "البريد الإلكتروني للعمل"
+      "AR": "البريد الإلكتروني للعمل",
+      "JA": "職場のメールアドレス"
     },
     "phone": {
       "EN": "Phone Number",
       "PL": "Numer telefonu",
       "DE": "Telefonnummer",
-      "AR": "رقم الهاتف"
+      "AR": "رقم الهاتف",
+      "JA": "電話番号"
     },
     "company": {
       "EN": "Company Name",
       "PL": "Nazwa Firmy",
       "DE": "Firmenname",
-      "AR": "اسم الشركة"
+      "AR": "اسم الشركة",
+      "JA": "会社名"
     },
     "password": {
       "EN": "Password (min. 8 chars)",
       "PL": "Hasło (min. 8 znaków)",
       "DE": "Passwort (min. 8 Zeichen)",
-      "AR": "كلمة المرور (8 أحرف كحد أدنى)"
+      "AR": "كلمة المرور (8 أحرف كحد أدنى)",
+      "JA": "パスワード (8文字以上)"
     },
     "createStart": {
       "EN": "Create Account & Start",
       "PL": "Utwórz Konto i Start",
       "DE": "Konto erstellen & Starten",
-      "AR": "إنشاء حساب وابدأ"
+      "AR": "إنشاء حساب وابدأ",
+      "JA": "アカウントを作成して開始"
     },
     "haveAccount": {
       "EN": "Already have an account?",
       "PL": "Masz już konto?",
       "DE": "Haben Sie bereits ein Konto?",
-      "AR": "هل لديك حساب بالفعل؟"
+      "AR": "هل لديك حساب بالفعل؟",
+      "JA": "すでにアカウントをお持ちですか？"
     },
     "noAccount": {
       "EN": "Don't have an account?",
       "PL": "Nie masz konta?",
       "DE": "Haben Sie kein Konto?",
-      "AR": "ليس لديك حساب؟"
+      "AR": "ليس لديك حساب؟",
+      "JA": "アカウントをお持ちでないですか？"
     },
     "logIn": {
       "EN": "Log In",
       "PL": "Zaloguj się",
       "DE": "Einloggen",
-      "AR": "تسجيل الدخول"
+      "AR": "تسجيل الدخول",
+      "JA": "ログイン"
     },
     "createOne": {
       "EN": "Create one",
       "PL": "Załóż je",
       "DE": "Erstellen",
-      "AR": "أنشئ حساباً"
+      "AR": "أنشئ حساباً",
+      "JA": "作成する"
     },
     "welcomeBack": {
       "EN": "Welcome Back!",
       "PL": "Witaj ponownie!",
       "DE": "Willkommen zurück!",
-      "AR": "مرحبًا بعودتك!"
+      "AR": "مرحبًا بعودتك!",
+      "JA": "お帰りなさい！"
     },
     "signInText": {
       "EN": "Sign in to continue your transformation journey.",
       "PL": "Zaloguj się, aby kontynuować transformację.",
       "DE": "Melden Sie sich an, um Ihre Transformationsreise fortzusetzen.",
-      "AR": "سجل الدخول لمتابعة رحلة التحول الخاصة بك."
+      "AR": "سجل الدخول لمتابعة رحلة التحول الخاصة بك.",
+      "JA": "変革の旅を続けるにはサインインしてください。"
     },
     "backToStart": {
       "EN": "Back to Start Screen",
       "PL": "Wróć do ekranu startowego",
       "DE": "Zurück zum Startbildschirm",
-      "AR": "العودة إلى شاشة البدء"
+      "AR": "العودة إلى شاشة البدء",
+      "JA": "スタート画面に戻る"
     }
   },
   "step1": {
@@ -380,91 +502,106 @@
       "EN": "Step 1 of 3 — Company & Expectations",
       "PL": "Krok 1 z 3 — Firma i Oczekiwania",
       "DE": "Schritt 1 von 3 — Unternehmen & Erwartungen",
-      "AR": "الخطوة 1 من 3 — الشركة والتوقعات"
+      "AR": "الخطوة 1 من 3 — الشركة والتوقعات",
+      "JA": "ステップ 1 / 3 — 会社と期待"
     },
     "subtitle": {
       "EN": "Quick Assessment",
       "PL": "Szybka Ocena",
       "DE": "Schnellbewertung",
-      "AR": "التقييم السريع"
+      "AR": "التقييم السريع",
+      "JA": "クイック診断"
     },
     "profile": {
       "EN": "Company Profile",
       "PL": "Profil Firmy",
       "DE": "Unternehmensprofil",
-      "AR": "ملف الشركة"
+      "AR": "ملف الشركة",
+      "JA": "会社概要"
     },
     "role": {
       "EN": "Role",
       "PL": "Rola",
       "DE": "Rolle",
-      "AR": "الدور"
+      "AR": "الدور",
+      "JA": "役職"
     },
     "industry": {
       "EN": "Industry",
       "PL": "Branża",
       "DE": "Branche",
-      "AR": "الصناعة"
+      "AR": "الصناعة",
+      "JA": "業界"
     },
     "size": {
       "EN": "Size",
       "PL": "Wielkość",
       "DE": "Größe",
-      "AR": "الحجم"
+      "AR": "الحجم",
+      "JA": "規模"
     },
     "country": {
       "EN": "Country",
       "PL": "Kraj",
       "DE": "Land",
-      "AR": "البلد"
+      "AR": "البلد",
+      "JA": "国"
     },
     "expectations": {
       "EN": "Challenges & Goals",
       "PL": "Wyzwania i Cele",
       "DE": "Herausforderungen & Ziele",
-      "AR": "التحديات والأهداف"
+      "AR": "التحديات والأهداف",
+      "JA": "課題と目標"
     },
     "mainChallenges": {
       "EN": "Main Challenges",
       "PL": "Główne Wyzwania",
       "DE": "Hauptherausforderungen",
-      "AR": "التحديات الرئيسية"
+      "AR": "التحديات الرئيسية",
+      "JA": "主な課題"
     },
     "mainGoal": {
       "EN": "Main Transformation Goal",
       "PL": "Główny Cel Transformacji",
       "DE": "Hauptziel der Transformation",
-      "AR": "هدف التحول الرئيسي"
+      "AR": "هدف التحول الرئيسي",
+      "JA": "主な変革の目標"
     },
     "horizon": {
       "EN": "Time Horizon",
       "PL": "Horyzont Czasowy",
       "DE": "Zeithorizont",
-      "AR": "الأفق الزمني"
+      "AR": "الأفق الزمني",
+      "JA": "時間枠"
     },
     "nextStep": {
       "EN": "Go to Action Proposals (Step 2)",
       "PL": "Przejdź do Propozycji Działań (Krok 2)",
       "DE": "Zu den Aktionsvorschlägen (Schritt 2)",
-      "AR": "الذهاب إلى مقترحات العمل (الخطوة 2)"
+      "AR": "الذهاب إلى مقترحات العمل (الخطوة 2)",
+      "JA": "アクション提案へ進む (ステップ 2)"
     },
     "notSelected": {
       "EN": "Not selected yet...",
       "PL": "Jeszcze nie wybrano...",
       "DE": "Noch nicht ausgewählt...",
-      "AR": "لم يتم التحديد بعد..."
+      "AR": "لم يتم التحديد بعد...",
+      "JA": "まだ選択されていません..."
     },
     "toBeDefined": {
       "EN": "To be defined...",
       "PL": "Do zdefiniowania...",
       "DE": "Zu definieren...",
-      "AR": "يجب تحديده..."
+      "AR": "يجب تحديده...",
+      "JA": "定義予定..."
     },
     "months": {
       "EN": "months",
       "PL": "miesięcy",
       "DE": "Monate",
-      "AR": "أشهر"
+      "AR": "أشهر",
+      "JA": "ヶ月"
     }
   },
   "step3": {
@@ -472,49 +609,57 @@
       "EN": "Step 3 of 3 — Recommendations",
       "PL": "Krok 3 z 3 — Rekomendacje",
       "DE": "Schritt 3 von 3 — Empfehlungen",
-      "AR": "الخطوة 3 من 3 — توصيات"
+      "AR": "الخطوة 3 من 3 — توصيات",
+      "JA": "ステップ 3 / 3 — 推奨事項"
     },
     "snapshot": {
       "EN": "Company Snapshot",
       "PL": "Przegląd Firmy",
       "DE": "Unternehmensüberblick",
-      "AR": "لمحة عن الشركة"
+      "AR": "لمحة عن الشركة",
+      "JA": "会社スナップショット"
     },
     "focusAreas": {
       "EN": "Recommended Focus Areas",
       "PL": "Rekomendowane Obszary",
       "DE": "Empfohlene Schwerpunkte",
-      "AR": "مجالات التركيز الموصى بها"
+      "AR": "مجالات التركيز الموصى بها",
+      "JA": "推奨される重点分野"
     },
     "quickWins": {
       "EN": "Actionable Quick Wins",
       "PL": "Szybkie Wygrane",
       "DE": "Umsetzbare Quick Wins",
-      "AR": "مكاسب سريعة قابلة للتنفيذ"
+      "AR": "مكاسب سريعة قابلة للتنفيذ",
+      "JA": "実行可能なクイックウィン"
     },
     "startFull": {
       "EN": "Start Full Transformation Project",
       "PL": "Rozpocznij Pełny Projekt",
       "DE": "Starten Sie das volle Projekt",
-      "AR": "بدء مشروع التحول الكامل"
+      "AR": "بدء مشروع التحول الكامل",
+      "JA": "完全な変革プロジェクトを開始"
     },
     "download": {
       "EN": "Download Summary",
       "PL": "Pobierz Podsumowanie",
       "DE": "Zusammenfassung herunterladen",
-      "AR": "تحميل الملخص"
+      "AR": "تحميل الملخص",
+      "JA": "要約をダウンロード"
     },
     "revenue": {
       "EN": "Revenue",
       "PL": "Przychody",
       "DE": "Einnahmen",
-      "AR": "إيرادات"
+      "AR": "إيرادات",
+      "JA": "収益"
     },
     "maturity": {
       "EN": "Digital Maturity",
       "PL": "Dojrzałość Cyfrowa",
       "DE": "Digitale Reife",
-      "AR": "النضج الرقمي"
+      "AR": "النضج الرقمي",
+      "JA": "デジタル成熟度"
     }
   },
   "chat": {
@@ -522,116 +667,135 @@
       "EN": "Transformation Assistant",
       "PL": "Asystent Transformacji",
       "DE": "Transformationsassistent",
-      "AR": "مساعد التحول"
+      "AR": "مساعد التحول",
+      "JA": "変革アシスタント"
     },
     "subHeader": {
       "EN": "Step 1: Profiling",
       "PL": "Krok 1: Profilowanie",
       "DE": "Schritt 1: Profiling",
-      "AR": "الخطوة 1: الملف الشخصي"
+      "AR": "الخطوة 1: الملف الشخصي",
+      "JA": "ステップ 1: プロファイリング"
     },
     "placeholder": {
       "EN": "Type your answer...",
       "PL": "Wpisz odpowiedź...",
       "DE": "Geben Sie Ihre Antwort ein...",
-      "AR": "اكتب إجابتك..."
+      "AR": "اكتب إجابتك...",
+      "JA": "回答を入力..."
     },
     "scripts": {
       "intro": {
         "EN": "Hello {name}. I am your Transformation Assistant.\n\nIn this Quick Assessment (Free), we will go through 3 steps:\n1. Company & expectations\n2. Challenges & profile questions\n3. Recommendations & quick wins.\n\nShall we start?",
         "PL": "Cześć {name}. Jestem Twoim Asystentem Transformacji.\n\nW tej Szybkiej Ocenie (Free) przejdziemy przez 3 kroki:\n1. Firma i oczekiwania\n2. Wyzwania i profil\n3. Rekomendacje i szybkie wygrane.\n\nZaczynamy?",
         "DE": "Hallo {name}. Ich bin Ihr Transformationsassistent.\n\nIn dieser Schnellbewertung gehen wir durch 3 Schritte:\n1. Unternehmen & Erwartungen\n2. Herausforderungen & Profil\n3. Empfehlungen & Quick Wins.\n\nSollen wir anfangen?",
-        "AR": "مرحبًا {name}. أنا مساعد التحول الخاص بك.\n\nفي هذا التقييم السريع (المجاني)، سنمر بـ 3 خطوات:\n1. الشركة والتوقعات\n2. التحديات والملف الشخصي\n3. التوصيات والمكاسب السريعة.\n\nهل نبدأ؟"
+        "AR": "مرحبًا {name}. أنا مساعد التحول الخاص بك.\n\nفي هذا التقييم السريع (المجاني)، سنمر بـ 3 خطوات:\n1. الشركة والتوقعات\n2. التحديات والملف الشخصي\n3. التوصيات والمكاسب السريعة.\n\nهل نبدأ؟",
+        "JA": "こんにちは、{name}さん。私はあなたの変革アシスタントです。\n\nこのクイック診断（無料）では、次の3つのステップを進めます：\n1. 会社と期待\n2. 課題とプロファイル質問\n3. 推奨事項とクイックウィン\n\n始めましょうか？"
       },
       "role": {
         "EN": "Great. Let's start with the basics.\n\nWhat is your role in the company?",
         "PL": "Świetnie. Zacznijmy od podstaw.\n\nJaka jest Twoja rola w firmie?",
         "DE": "Super. Fangen wir mit den Grundlagen an.\n\nWas ist Ihre Rolle im Unternehmen?",
-        "AR": "عظيم. لنبدأ بالأساسيات.\n\nما هو دورك في الشركة؟"
+        "AR": "عظيم. لنبدأ بالأساسيات.\n\nما هو دورك في الشركة؟",
+        "JA": "素晴らしい。基本から始めましょう。\n\n会社でのあなたの役割は何ですか？"
       },
       "industry": {
         "EN": "Nice to meet you, {role}. Perspective matters.\n\nWhat industry do you operate in?",
         "PL": "Miło Cię poznać, {role}. Perspektywa ma znaczenie.\n\nW jakiej branży działacie?",
         "DE": "Freut mich, {role}. Die Perspektive zählt.\n\nIn welcher Branche sind Sie tätig?",
-        "AR": "تشرفت بمقابلتك، {role}. المنظور مهم.\n\nفي أي صناعة تعمل؟"
+        "AR": "تشرفت بمقابلتك، {role}. المنظور مهم.\n\nفي أي صناعة تعمل؟",
+        "JA": "はじめまして、{role}さん。視点は重要ですね。\n\nどの業界で事業を行っていますか？"
       },
       "industrySub": {
         "EN": "Production. Got it. What kind specifically?",
         "PL": "Produkcja. Rozumiem. Jaka konkretnie?",
         "DE": "Produktion. Verstanden. Welche Art genau?",
-        "AR": "الإنتاج. فهمت. أي نوع بالتحديد؟"
+        "AR": "الإنتاج. فهمت. أي نوع بالتحديد؟",
+        "JA": "生産ですね。了解しました。具体的にはどのような種類ですか？"
       },
       "size": {
         "EN": "How many employees do you have roughly?",
         "PL": "Ilu mniej więcej macie pracowników?",
         "DE": "Wie viele Mitarbeiter haben Sie ungefähr?",
-        "AR": "كم عدد الموظفين لديك تقريبًا؟"
+        "AR": "كم عدد الموظفين لديك تقريبًا؟",
+        "JA": "従業員はおおよそ何名ですか？"
       },
       "country": {
         "EN": "Understood. Scale changes the available solutions.\n\nWhich country is your main operation in?",
         "PL": "Zrozumiałem. Skala zmienia dostępne rozwiązania.\n\nW jakim kraju głównie działacie?",
         "DE": "Verstanden. Die Größe ändert die verfügbaren Lösungen.\n\nIn welchem Land sind Sie hauptsächlich tätig?",
-        "AR": "فهمت. الحجم يغير الحلول المتاحة.\n\nفي أي بلد تعمل بشكل رئيسي؟"
+        "AR": "فهمت. الحجم يغير الحلول المتاحة.\n\nفي أي بلد تعمل بشكل رئيسي؟",
+        "JA": "承知しました。規模によって利用可能なソリューションが変わります。\n\n主な事業拠点はどの国ですか？"
       },
       "challenges": {
         "EN": "Great, let's explore your current challenges to build meaningful recommendations.\n\nWhat is your main operational pain point? (Select one or type)",
         "PL": "Świetnie, przeanalizujmy Twoje wyzwania, aby zbudować sensowne rekomendacje.\n\nJaki jest Twój główny problem operacyjny?",
         "DE": "Großartig, lassen Sie uns Ihre aktuellen Herausforderungen untersuchen.\n\nWas ist Ihr größtes operatives Problem?",
-        "AR": "عظيم، دعنا نستكشف تحدياتك الحالية.\n\nما هي نقطة الألم التشغيلية الرئيسية لديك؟"
+        "AR": "عظيم، دعنا نستكشف تحدياتك الحالية.\n\nما هي نقطة الألم التشغيلية الرئيسية لديك؟",
+        "JA": "では、有意義な推奨事項を作成するために、現在の課題を探っていきましょう。\n\n主な業務上の課題は何ですか？（選択または入力）"
       },
       "goal": {
         "EN": "Understood. Dealing with key challenges.\n\nNow, if we talk in 12 months, what would be the MAIN success statement you'd like to make?",
         "PL": "Rozumiem. Zajmiemy się tymi wyzwaniami.\n\nGdybyśmy rozmawiali za 12 miesięcy, co byłoby GŁÓWNYM sukcesem?",
         "DE": "Verstanden. Wir gehen die Herausforderungen an.\n\nWenn wir in 12 Monaten sprechen, was wäre die HAUPTAUSSAGE zum Erfolg?",
-        "AR": "فهمت. التعامل مع التحديات الرئيسية.\n\nالآن، إذا تحدثنا في غضون 12 شهرًا، ما هو بيان النجاح الرئيسي الذي تود الإدلاء به؟"
+        "AR": "فهمت. التعامل مع التحديات الرئيسية.\n\nالآن، إذا تحدثنا في غضون 12 شهرًا، ما هو بيان النجاح الرئيسي الذي تود الإدلاء به؟",
+        "JA": "承知しました。主要な課題に取り組むのですね。\n\nさて、12ヶ月後に話をするとして、あなたが言いたい「主な成功の言葉」は何でしょうか？"
       },
       "horizon": {
         "EN": "Clear goal.\n\nWhen do you need to see the first tangible results?",
         "PL": "Jasny cel.\n\nKiedy musisz zobaczyć pierwsze wymierne efekty?",
         "DE": "Klares Ziel.\n\nWann müssen Sie die ersten greifbaren Ergebnisse sehen?",
-        "AR": "هدف واضح.\n\nمتى تحتاج إلى رؤية أول نتائج ملموسة؟"
+        "AR": "هدف واضح.\n\nمتى تحتاج إلى رؤية أول نتائج ملموسة؟",
+        "JA": "明確な目標ですね。\n\n最初の具体的な成果はいつ頃確認したいですか？"
       },
       "summary": {
         "EN": "Perfect. We have the profile.\n\nSummary:\n- Role: {role}\n- Sector: {industry}\n- Goal: {goal}\n\nI will now generate specific ideas for you.",
         "PL": "Idealnie. Mamy profil.\n\nPodsumowanie:\n- Rola: {role}\n- Sektor: {industry}\n- Cel: {goal}\n\nTeraz wygeneruję dla Ciebie konkretne pomysły.",
         "DE": "Perfekt. Wir haben das Profil.\n\nZusammenfassung:\n- Rolle: {role}\n- Sektor: {industry}\n- Ziel: {goal}\n\nIch werde jetzt spezifische Ideen für Sie generieren.",
-        "AR": "مثالي. لدينا الملف الشخصي.\n\nملخص:\n- الدور: {role}\n- القطاع: {industry}\n- الهدف: {goal}\n\nسأقوم الآن بتوليد أفكار محددة لك."
+        "AR": "مثالي. لدينا الملف الشخصي.\n\nملخص:\n- الدور: {role}\n- القطاع: {industry}\n- الهدف: {goal}\n\nسأقوم الآن بتوليد أفكار محددة لك.",
+        "JA": "完璧です。プロファイルができました。\n\n要約：\n- 役割: {role}\n- セクター: {industry}\n- 目標: {goal}\n\nこれより具体的なアイデアを生成します。"
       },
       "done": {
         "EN": "Great! Please click the button on the right to view your Action Proposals.",
         "PL": "Świetnie! Kliknij przycisk po prawej, aby zobaczyć Propozycje Działań.",
         "DE": "Großartig! Bitte klicken Sie auf die Schaltfläche rechts, um Ihre Aktionsvorschläge anzuzeigen.",
-        "AR": "عظيم! يرجى النقر على الزر الموجود على اليمين لعرض مقترحات العمل الخاصة بك."
+        "AR": "عظيم! يرجى النقر على الزر الموجود على اليمين لعرض مقترحات العمل الخاصة بك.",
+        "JA": "素晴らしい！右側のボタンをクリックして、アクション提案を表示してください。"
       },
       "step3Intro": {
         "EN": "Based on your answers, here is a quick snapshot of your situation and my recommendations.",
         "PL": "Na podstawie Twoich odpowiedzi, oto szybki przegląd Twojej sytuacji i moje rekomendacje.",
         "DE": "Basierend auf Ihren Antworten ist hier ein kurzer Überblick über Ihre Situation und meine Empfehlungen.",
-        "AR": "بناءً على إجاباتك، إليك لمحة سريعة عن وضعك وتوصياتي."
+        "AR": "بناءً على إجاباتك، إليك لمحة سريعة عن وضعك وتوصياتي.",
+        "JA": "あなたの回答に基づき、現在の状況のスナップショットと推奨事項を提示します。"
       },
       "step3Summary": {
         "EN": "Your company is in the {industry} sector with a clear goal to {goal}. The main challenge is {painPoint}.",
         "PL": "Twoja firma działa w sektorze {industry} z jasnym celem {goal}. Głównym wyzwaniem jest {painPoint}.",
         "DE": "Ihr Unternehmen ist im Sektor {industry} mit dem klaren Ziel {goal}. Die Hauptherausforderung ist {painPoint}.",
-        "AR": "شركتك في قطاع {industry} بهدف واضح وهو {goal}. التحدي الرئيسي هو {painPoint}."
+        "AR": "شركتك في قطاع {industry} بهدف واضح وهو {goal}. التحدي الرئيسي هو {painPoint}.",
+        "JA": "あなたの会社は{industry}セクターに属し、{goal}という明確な目標を持っています。主な課題は{painPoint}です。"
       },
       "step3Focus": {
         "EN": "I recommend focusing immediately on these areas:",
         "PL": "Rekomenduję natychmiastowe skupienie się na tych obszarach:",
         "DE": "Ich empfehle, sich sofort auf diese Bereiche zu konzentrieren:",
-        "AR": "أوصي بالتركيز فوراً على هذه المجالات:"
+        "AR": "أوصي بالتركيز فوراً على هذه المجالات:",
+        "JA": "以下の分野に直ちに注力することをお勧めします："
       },
       "step3Wins": {
         "EN": "Here are some Quick Wins you can start next Monday:",
         "PL": "Oto kilka Szybkich Wygranych, które możesz zacząć w najbliższy poniedziałek:",
         "DE": "Hier sind einige Quick Wins, mit denen Sie nächsten Montag beginnen können:",
-        "AR": "إليك بعض المكاسب السريعة التي يمكنك البدء بها يوم الاثنين القادم:"
+        "AR": "إليك بعض المكاسب السريعة التي يمكنك البدء بها يوم الاثنين القادم:",
+        "JA": "来週の月曜日から始められるクイックウィンは以下の通りです："
       },
       "step3Upsell": {
         "EN": "Would you like to move to the Full Transformation Project and build a full roadmap?",
         "PL": "Czy chciałbyś przejść do Pełnego Projektu Transformacji i zbudować pełną mapę drogową?",
         "DE": "Möchten Sie zum vollen Transformationsprojekt übergehen und eine vollständige Roadmap erstellen?",
-        "AR": "هل ترغب في الانتقال إلى مشروع التحول الكامل وبناء خارطة طريق كاملة؟"
+        "AR": "هل ترغب في الانتقال إلى مشروع التحول الكامل وبناء خارطة طريق كاملة؟",
+        "JA": "完全な変革プロジェクトに移行し、完全なロードマップを作成しますか？"
       }
     },
     "options": {
@@ -639,139 +803,162 @@
         "EN": "OK, let's start",
         "PL": "OK, zaczynajmy",
         "DE": "OK, lass uns anfangen",
-        "AR": "حسنا لنبدأ"
+        "AR": "حسنا لنبدأ",
+        "JA": "OK、始めましょう"
       },
       "explain": {
         "EN": "Explain process",
         "PL": "Wyjaśnij proces",
         "DE": "Prozess erklären",
-        "AR": "اشرح العملية"
+        "AR": "اشرح العملية",
+        "JA": "プロセスを説明"
       },
       "ceo": {
         "EN": "Owner / CEO",
         "PL": "Właściciel / Prezes",
         "DE": "Inhaber / CEO",
-        "AR": "المالك / الرئيس التنفيذي"
+        "AR": "المالك / الرئيس التنفيذي",
+        "JA": "オーナー / CEO"
       },
       "plant": {
         "EN": "Plant Manager",
         "PL": "Dyrektor Zakładu",
         "DE": "Werksleiter",
-        "AR": "مدير المصنع"
+        "AR": "مدير المصنع",
+        "JA": "工場長"
       },
       "coo": {
         "EN": "COO",
         "PL": "Dyrektor Operacyjny",
         "DE": "COO",
-        "AR": "مدير العمليات"
+        "AR": "مدير العمليات",
+        "JA": "COO"
       },
       "mfg": {
         "EN": "Production",
         "PL": "Produkcja",
         "DE": "Produktion",
-        "AR": "إنتاج"
+        "AR": "إنتاج",
+        "JA": "生産"
       },
       "log": {
         "EN": "Logistics",
         "PL": "Logistyka",
         "DE": "Logistik",
-        "AR": "الخدمات اللوجستية"
+        "AR": "الخدمات اللوجستية",
+        "JA": "物流"
       },
       "inefficient": {
         "EN": "Inefficient production processes",
         "PL": "Nieefektywne procesy",
         "DE": "Ineffiziente Prozesse",
-        "AR": "عمليات إنتاج غير فعالة"
+        "AR": "عمليات إنتاج غير فعالة",
+        "JA": "非効率な生産プロセス"
       },
       "lackData": {
         "EN": "Lack of data / visibility",
         "PL": "Brak danych / widoczności",
         "DE": "Mangel an Daten",
-        "AR": "نقص البيانات / الرؤية"
+        "AR": "نقص البيانات / الرؤية",
+        "JA": "データ/可視性の欠如"
       },
       "manual": {
         "EN": "Too many manual tasks",
         "PL": "Zbyt wiele zadań ręcznych",
         "DE": "Zu viele manuelle Aufgaben",
-        "AR": "الكثير من المهام اليدوية"
+        "AR": "الكثير من المهام اليدوية",
+        "JA": "手作業が多すぎる"
       },
       "quality": {
         "EN": "Problems with quality",
         "PL": "Problemy z jakością",
         "DE": "Qualitätsprobleme",
-        "AR": "مشاكل في الجودة"
+        "AR": "مشاكل في الجودة",
+        "JA": "品質の問題"
       },
       "automation": {
         "EN": "Low automation level",
         "PL": "Niski poziom automatyzacji",
         "DE": "Geringe Automatisierung",
-        "AR": "مستوى أتمتة منخفض"
+        "AR": "مستوى أتمتة منخفض",
+        "JA": "自動化レベルが低い"
       },
       "proc": {
         "EN": "Processes",
         "PL": "Procesy",
         "DE": "Prozesse",
-        "AR": "العمليات"
+        "AR": "العمليات",
+        "JA": "プロセス"
       },
       "data": {
         "EN": "Data",
         "PL": "Dane",
         "DE": "Daten",
-        "AR": "البيانات"
+        "AR": "البيانات",
+        "JA": "データ"
       },
       "auto": {
         "EN": "Automation",
         "PL": "Automatyzacja",
         "DE": "Automatisierung",
-        "AR": "الأتمتة"
+        "AR": "الأتمتة",
+        "JA": "自動化"
       },
       "culture": {
         "EN": "Culture",
         "PL": "Kultura",
         "DE": "Kultur",
-        "AR": "الثقافة"
+        "AR": "الثقافة",
+        "JA": "文化"
       },
       "m3": {
         "EN": "3 months",
         "PL": "3 miesiące",
         "DE": "3 Monate",
-        "AR": "3 أشهر"
+        "AR": "3 أشهر",
+        "JA": "3ヶ月"
       },
       "m6": {
         "EN": "6 months",
         "PL": "6 miesięcy",
         "DE": "6 Monate",
-        "AR": "6 أشهر"
+        "AR": "6 أشهر",
+        "JA": "6ヶ月"
       },
       "m12": {
         "EN": "12 months",
         "PL": "12 miesięcy",
         "DE": "12 Monate",
-        "AR": "12 شهر"
+        "AR": "12 شهر",
+        "JA": "12ヶ月"
       },
       "confirm": {
         "EN": "Looks correct",
         "PL": "Zgadza się",
         "DE": "Sieht korrekt aus",
-        "AR": "يبدو صحيحا"
+        "AR": "يبدو صحيحا",
+        "JA": "正しそうです"
       },
       "edit": {
         "EN": "Change something",
         "PL": "Zmień coś",
         "DE": "Etwas ändern",
-        "AR": "تغيير شيء ما"
+        "AR": "تغيير شيء ما",
+        "JA": "変更する"
       },
       "yesFull": {
         "EN": "Yes, start Full Project",
         "PL": "Tak, startuj Pełny Projekt",
         "DE": "Ja, volles Projekt starten",
-        "AR": "نعم، ابدأ المشروع الكامل"
+        "AR": "نعم، ابدأ المشروع الكامل",
+        "JA": "はい、完全なプロジェクトを開始します"
       },
       "notNow": {
         "EN": "Not now",
         "PL": "Nie teraz",
         "DE": "Nicht jetzt",
-        "AR": "ليس الآن"
+        "AR": "ليس الآن",
+        "JA": "今はしない"
       }
     }
   },
@@ -780,189 +967,224 @@
       "EN": "Welcome to the Full Digital Readiness Diagnosis (DRD). We will assess 6 key axes of your business on a scale of 1-7. This will generate your Maturity Heatmap.",
       "PL": "Witaj w Pełnej Diagnozie Gotowości Cyfrowej (DRD). Ocenimy 6 kluczowych osi Twojej firmy w skali 1-7. To wygeneruje Twoją Mapę Dojrzałości.",
       "DE": "Willkommen zur vollständigen Digital Readiness Diagnosis (DRD). Wir bewerten 6 Schlüsselachsen Ihres Unternehmens auf einer Skala von 1-7.",
-      "AR": "مرحبًا بك في تشخيص الجاهزية الرقمية الكامل (DRD). سنقوم بتقييم 6 محاور رئيسية لعملك على مقياس من 1-7."
+      "AR": "مرحبًا بك في تشخيص الجاهزية الرقمية الكامل (DRD). سنقوم بتقييم 6 محاور رئيسية لعملك على مقياس من 1-7.",
+      "JA": "完全なデジタル準備状況診断 (DRD) へようこそ。ビジネスの6つの主要な軸を1〜7の尺度で評価し、成熟度ヒートマップを作成します。"
     },
     "axisIntro": {
       "EN": "Let's assess your {axis}. How mature are you in this area?",
       "PL": "Oceńmy Twój obszar: {axis}. Jak dojrzały jesteś w tym aspekcie?",
       "DE": "Lassen Sie uns Ihre {axis} bewerten. Wie reif sind Sie in diesem Bereich?",
-      "AR": "دعنا نقيم {axis}. ما مدى نضجك في هذا المجال؟"
+      "AR": "دعنا نقيم {axis}. ما مدى نضجك في هذا المجال؟",
+      "JA": "{axis}を評価しましょう。この分野での成熟度はどの程度ですか？"
     },
     "startAxis": {
       "EN": "Start Axis",
       "PL": "Rozpocznij Oś",
       "DE": "Achse starten",
-      "AR": "ابدأ المحور"
+      "AR": "ابدأ المحور",
+      "JA": "軸を開始"
     },
     "currentAxis": {
       "EN": "Current Axis",
       "PL": "Bieżąca Oś",
       "DE": "Aktuelle Achse",
-      "AR": "المحور الحالي"
+      "AR": "المحور الحالي",
+      "JA": "現在の軸"
     },
     "continue": {
       "EN": "Continue",
       "PL": "Kontynuuj",
       "DE": "Weiter",
-      "AR": "متابعة"
+      "AR": "متابعة",
+      "JA": "次へ"
     },
     "completed": {
       "EN": "Completed",
       "PL": "Ukończono",
       "DE": "Abgeschlossen",
-      "AR": "مكتمل"
+      "AR": "مكتمل",
+      "JA": "完了"
     },
     "score": {
       "EN": "Score",
       "PL": "Wynik",
       "DE": "Punktzahl",
-      "AR": "النتيجة"
+      "AR": "النتيجة",
+      "JA": "スコア"
     },
     "maturityOverview": {
       "EN": "Maturity Overview",
       "PL": "Przegląd Dojrzałości",
       "DE": "Reifegradübersicht",
-      "AR": "نظرة عامة على النضج"
+      "AR": "نظرة عامة على النضج",
+      "JA": "成熟度の概要"
     },
     "nextStep": {
       "EN": "Go to Initiatives Generator (Step 2)",
       "PL": "Przejdź do Generatora Inicjatyw (Krok 2)",
       "DE": "Zum Initiativen-Generator (Schritt 2)",
-      "AR": "الذهاب إلى مولد المبادرات (الخطوة 2)"
+      "AR": "الذهاب إلى مولد المبادرات (الخطوة 2)",
+      "JA": "イニシアチブ生成へ進む (ステップ 2)"
     },
     "summary": {
       "EN": "Here is your digital maturity profile across 6 axes. Based on the scores, we should prioritize {weakest}.",
       "PL": "Oto Twój profil dojrzałości cyfrowej w 6 osiach. Na podstawie wyników powinniśmy nadać priorytet: {weakest}.",
       "DE": "Hier ist Ihr digitales Reifegradprofil über 6 Achsen. Basierend auf den Punktzahlen sollten wir {weakest} priorisieren.",
-      "AR": "إليك ملف تعريف النضج الرقمي الخاص بك عبر 6 محاور. بناءً على الدرجات، يجب أن نعطي الأولوية لـ {weakest}."
+      "AR": "إليك ملف تعريف النضج الرقمي الخاص بك عبر 6 محاور. بناءً على الدرجات، يجب أن نعطي الأولوية لـ {weakest}.",
+      "JA": "6つの軸にわたるデジタル成熟度プロファイルはこちらです。スコアに基づき、{weakest}を優先すべきです。"
     },
     "introMicrocopy": {
       "EN": "This assessment evaluates your organization across 6 dimensions of the Digital Readiness Diagnosis (DRD) model. Scores range from 1 (Novice) to 7 (Leader).",
       "PL": "Ta ocena ewaluuje Twoją organizację w 6 wymiarach modelu Digital Readiness Diagnosis (DRD). Wyniki wahają się od 1 (Nowicjusz) do 7 (Lider).",
       "DE": "Diese Bewertung bewertet Ihr Unternehmen in 6 Dimensionen des Digital Readiness Diagnosis (DRD) -Modells. Die Werte reichen von 1 (Anfänger) bis 7 (Führer).",
-      "AR": "يقيم هذا التقييم مؤسستك عبر 6 أبعاد لنموذج تشخيص الجاهزية الرقمية (DRD). تتراوح الدرجات من 1 (مبتدئ) إلى 7 (قائد)."
+      "AR": "يقيم هذا التقييم مؤسستك عبر 6 أبعاد لنموذج تشخيص الجاهزية الرقمية (DRD). تتراوح الدرجات من 1 (مبتدئ) إلى 7 (قائد).",
+      "JA": "This assessment evaluates your organization across 6 dimensions of the Digital Readiness Diagnosis (DRD) model. Scores range from 1 (Novice) to 7 (Leader). (JA)"
     },
     "descriptions": {
       "processes": {
         "EN": "Standardization & Efficiency",
         "PL": "Standaryzacja i Efektywność",
         "DE": "Standardisierung & Effizienz",
-        "AR": "التوحيد والكفاءة"
+        "AR": "التوحيد والكفاءة",
+        "JA": "標準化と効率"
       },
       "digitalProducts": {
         "EN": "Connectivity & UX",
         "PL": "Łączność i UX",
         "DE": "Konnektivität & UX",
-        "AR": "الاتصال وتجربة المستخدم"
+        "AR": "الاتصال وتجربة المستخدم",
+        "JA": "接続性とUX"
       },
       "businessModels": {
         "EN": "Scalability & Revenue",
         "PL": "Skalowalność i Przychody",
         "DE": "Skalierbarkeit & Umsatz",
-        "AR": "قابلية التوسع والإيرادات"
+        "AR": "قابلية التوسع والإيرادات",
+        "JA": "拡張性と収益"
       },
       "dataManagement": {
         "EN": "Quality & Governance",
         "PL": "Jakość i Zarządzanie",
         "DE": "Qualität & Governance",
-        "AR": "الجودة والحوكمة"
+        "AR": "الجودة والحوكمة",
+        "JA": "品質とガバナンス"
       },
       "culture": {
         "EN": "Skills & Mindset",
         "PL": "Umiejętności i Nastawienie",
         "DE": "Fähigkeiten & Denkweise",
-        "AR": "المهارات والعقلية"
+        "AR": "المهارات والعقلية",
+        "JA": "スキルとマインドセット"
       },
       "aiMaturity": {
         "EN": "Adoption & Strategy",
         "PL": "Adopcja i Strategia",
         "DE": "Adoption & Strategie",
-        "AR": "التبني والاستراتيجية"
+        "AR": "التبني والاستراتيجية",
+        "JA": "採用と戦略"
       }
     },
     "questions": {
       "processes": [
         {
           "EN": "How standardized are your core production processes?",
-          "PL": "Jak ustandaryzowane są Twoje główne procesy produkcji?"
+          "PL": "Jak ustandaryzowane są Twoje główne procesy produkcji?",
+          "JA": "中核となる生産プロセスはどの程度標準化されていますか？"
         },
         {
           "EN": "How well are your processes measured and monitored?",
-          "PL": "Jak dobrze mierzone i monitorowane są procesy?"
+          "PL": "Jak dobrze mierzone i monitorowane są procesy?",
+          "JA": "プロセスはどの程度測定・監視されていますか？"
         },
         {
           "EN": "To what extent are your processes digitally supported?",
-          "PL": "W jakim stopniu procesy są wspierane cyfrowo?"
+          "PL": "W jakim stopniu procesy są wspierane cyfrowo?",
+          "JA": "プロセスはどの程度デジタルでサポートされていますか？"
         }
       ],
       "digitalProducts": [
         {
           "EN": "Does your product portfolio include digital services?",
-          "PL": "Czy Twoje portfolio zawiera usługi cyfrowe?"
+          "PL": "Czy Twoje portfolio zawiera usługi cyfrowe?",
+          "JA": "製品ポートフォリオにデジタルサービスは含まれていますか？"
         },
         {
           "EN": "How integrated are your products with IoT?",
-          "PL": "Jak zintegrowane są produkty z IoT?"
+          "PL": "Jak zintegrowane są produkty z IoT?",
+          "JA": "製品はIoTとどの程度統合されていますか？"
         },
         {
           "EN": "Do you use customer usage data to improve products?",
-          "PL": "Czy używasz danych o użyciu do ulepszania produktów?"
+          "PL": "Czy używasz danych o użyciu do ulepszania produktów?",
+          "JA": "顧客の使用データを使用して製品を改善していますか？"
         }
       ],
       "businessModels": [
         {
           "EN": "Are you shifting from CAPEX to OPEX models?",
-          "PL": "Czy przechodzisz z modeli CAPEX na OPEX?"
+          "PL": "Czy przechodzisz z modeli CAPEX na OPEX?",
+          "JA": "CAPEXからOPEXモデルに移行していますか？"
         },
         {
           "EN": "Do you have digital ecosystem partnerships?",
-          "PL": "Czy masz partnerstwa w ekosystemie cyfrowym?"
+          "PL": "Czy masz partnerstwa w ekosystemie cyfrowym?",
+          "JA": "デジタルエコシステムパートナーシップを結んでいますか？"
         },
         {
           "EN": "How scalable is your current business model?",
-          "PL": "Jak skalowalny jest obecny model biznesowy?"
+          "PL": "Jak skalowalny jest obecny model biznesowy?",
+          "JA": "現在のビジネスモデルはどの程度拡張可能ですか？"
         }
       ],
       "dataManagement": [
         {
           "EN": "Is there a single source of truth for key data?",
-          "PL": "Czy istnieje jedno źródło prawdy dla kluczowych danych?"
+          "PL": "Czy istnieje jedno źródło prawdy dla kluczowych danych?",
+          "JA": "主要データの「信頼できる唯一の情報源」はありますか？"
         },
         {
           "EN": "How automated is data collection?",
-          "PL": "Jak zautomatyzowane jest zbieranie danych?"
+          "PL": "Jak zautomatyzowane jest zbieranie danych?",
+          "JA": "データ収集はどの程度自動化されていますか？"
         },
         {
           "EN": "Do you use predictive analytics?",
-          "PL": "Czy używasz analityki predykcyjnej?"
+          "PL": "Czy używasz analityki predykcyjnej?",
+          "JA": "予測分析を使用していますか？"
         }
       ],
       "culture": [
         {
           "EN": "How open is the leadership to digital change?",
-          "PL": "Jak otwarte jest kierownictwo na zmiany cyfrowe?"
+          "PL": "Jak otwarte jest kierownictwo na zmiany cyfrowe?",
+          "JA": "リーダーシップはデジタル変革に対してどの程度オープンですか？"
         },
         {
           "EN": "Do employees have digital skills training?",
-          "PL": "Czy pracownicy mają szkolenia z umiejętności cyfrowych?"
+          "PL": "Czy pracownicy mają szkolenia z umiejętności cyfrowych?",
+          "JA": "従業員はデジタルスキルのトレーニングを受けていますか？"
         },
         {
           "EN": "Is innovation rewarded in the company?",
-          "PL": "Czy innowacyjność jest nagradzana w firmie?"
+          "PL": "Czy innowacyjność jest nagradzana w firmie?",
+          "JA": "会社ではイノベーションが報われていますか？"
         }
       ],
       "aiMaturity": [
         {
           "EN": "Are you piloting any AI solutions currently?",
-          "PL": "Czy pilotujesz obecnie jakieś rozwiązania AI?"
+          "PL": "Czy pilotujesz obecnie jakieś rozwiązania AI?",
+          "JA": "現在AIソリューションをパイロット運用していますか？"
         },
         {
           "EN": "Do you have data ready for AI training?",
-          "PL": "Czy masz dane gotowe do trenowania AI?"
+          "PL": "Czy masz dane gotowe do trenowania AI?",
+          "JA": "AIトレーニング用のデータは準備できていますか？"
         },
         {
           "EN": "Is there an AI strategy in place?",
-          "PL": "Czy istnieje strategia AI?"
+          "PL": "Czy istnieje strategia AI?",
+          "JA": "AI戦略は策定されていますか？"
         }
       ]
     }
@@ -972,50 +1194,58 @@
       "EN": "Based on your maturity scores, I've generated a set of transformation initiatives. You can review and edit them in the table on the right.",
       "PL": "Na podstawie Twoich wyników dojrzałości wygenerowałem zestaw inicjatyw transformacyjnych. Możesz je przejrzeć i edytować w tabeli po prawej.",
       "DE": "Basierend auf Ihren Reifegradbewertungen habe ich eine Reihe von Transformationsinitiativen erstellt. Sie können diese in der Tabelle rechts überprüfen und bearbeiten.",
-      "AR": "بناءً على درجات نضجك، قمت بإنشاء مجموعة من مبادرات التحول. يمكنك مراجعتها وتعديلها في الجدول الموجود على اليمين."
+      "AR": "بناءً على درجات نضجك، قمت بإنشاء مجموعة من مبادرات التحول. يمكنك مراجعتها وتعديلها في الجدول الموجود على اليمين.",
+      "JA": "成熟度スコアに基づき、変革イニシアチブのセットを生成しました。右側の表で確認・編集できます。"
     },
     "tableHeader": {
       "initiative": {
         "EN": "Initiative Name",
         "PL": "Nazwa Inicjatywy",
         "DE": "Initiativenname",
-        "AR": "اسم المبادرة"
+        "AR": "اسم المبادرة",
+        "JA": "イニシアチブ名"
       },
       "axis": {
         "EN": "Axis",
         "PL": "Oś",
         "DE": "Achse",
-        "AR": "محور"
+        "AR": "محور",
+        "JA": "軸"
       },
       "priority": {
         "EN": "Priority",
         "PL": "Priorytet",
         "DE": "Priorität",
-        "AR": "أولوية"
+        "AR": "أولوية",
+        "JA": "優先度"
       },
       "complexity": {
         "EN": "Complexity",
         "PL": "Złożoność",
         "DE": "Komplexität",
-        "AR": "تعقيد"
+        "AR": "تعقيد",
+        "JA": "複雑さ"
       },
       "status": {
         "EN": "Status",
         "PL": "Status",
         "DE": "Status",
-        "AR": "حالة"
+        "AR": "حالة",
+        "JA": "ステータス"
       },
       "notes": {
         "EN": "Notes",
         "PL": "Notatki",
         "DE": "Notizen",
-        "AR": "ملاحظات"
+        "AR": "ملاحظات",
+        "JA": "メモ"
       },
       "actions": {
         "EN": "Actions",
         "PL": "Akcje",
         "DE": "Aktionen",
-        "AR": "أجراءات"
+        "AR": "أجراءات",
+        "JA": "アクション"
       }
     },
     "priorities": {
@@ -1023,19 +1253,22 @@
         "EN": "High",
         "PL": "Wysoki",
         "DE": "Hoch",
-        "AR": "مرتفع"
+        "AR": "مرتفع",
+        "JA": "高"
       },
       "Medium": {
         "EN": "Medium",
         "PL": "Średni",
         "DE": "Mittel",
-        "AR": "متوسط"
+        "AR": "متوسط",
+        "JA": "中"
       },
       "Low": {
         "EN": "Low",
         "PL": "Niski",
         "DE": "Niedrig",
-        "AR": "منخفض"
+        "AR": "منخفض",
+        "JA": "低"
       }
     },
     "complexities": {
@@ -1043,19 +1276,22 @@
         "EN": "High",
         "PL": "Wysoka",
         "DE": "Hoch",
-        "AR": "مرتفع"
+        "AR": "مرتفع",
+        "JA": "高"
       },
       "Medium": {
         "EN": "Medium",
         "PL": "Średnia",
         "DE": "Mittel",
-        "AR": "متوسط"
+        "AR": "متوسط",
+        "JA": "中"
       },
       "Low": {
         "EN": "Low",
         "PL": "Niska",
         "DE": "Niedrig",
-        "AR": "منخفض"
+        "AR": "منخفض",
+        "JA": "低"
       }
     },
     "statuses": {
@@ -1063,26 +1299,30 @@
         "EN": "Draft",
         "PL": "Szkic",
         "DE": "Entwurf",
-        "AR": "مسودة"
+        "AR": "مسودة",
+        "JA": "下書き"
       },
       "Ready": {
         "EN": "Ready",
         "PL": "Gotowe",
         "DE": "Bereit",
-        "AR": "جاهز"
+        "AR": "جاهز",
+        "JA": "準備完了"
       },
       "Archived": {
         "EN": "Archived",
         "PL": "Zarchiwizowane",
         "DE": "Archiviert",
-        "AR": "مؤرشف"
+        "AR": "مؤرشف",
+        "JA": "アーカイブ済み"
       }
     },
     "nextStep": {
       "EN": "Go to Transformation Roadmap (Step 3)",
       "PL": "Przejdź do Mapy Drogowej (Krok 3)",
       "DE": "Zur Transformations-Roadmap (Schritt 3)",
-      "AR": "انتقل إلى خارطة طريق التحول (الخطوة 3)"
+      "AR": "انتقل إلى خارطة طريق التحول (الخطوة 3)",
+      "JA": "変革ロードマップへ進む (ステップ 3)"
     }
   },
   "fullRoadmap": {
@@ -1090,20 +1330,23 @@
       "EN": "I have drafted a roadmap for you based on the priority and complexity of your initiatives. Foundational tasks (Data/Process) are scheduled earlier.",
       "PL": "Przygotowałem dla Ciebie wstępną mapę drogową na podstawie priorytetu i złożoności inicjatyw. Zadania fundamentalne (Dane/Procesy) są zaplanowane wcześniej.",
       "DE": "Ich habe basierend auf Priorität und Komplexität Ihrer Initiativen einen Roadmap-Entwurf erstellt. Grundlegende Aufgaben (Daten/Prozess) sind früher geplant.",
-      "AR": "لقد قمت بصياغة خارطة طريق لك بناءً على أولوية وتعقيد مبادراتك. المهام الأساسية (البيانات/العمليات) مجدولة في وقت مبكر."
+      "AR": "لقد قمت بصياغة خارطة طريق لك بناءً على أولوية وتعقيد مبادراتك. المهام الأساسية (البيانات/العمليات) مجدولة في وقت مبكر.",
+      "JA": "イニシアチブの優先度と複雑さに基づいてロードマップの下書きを作成しました。基礎的なタスク（データ/プロセス）は早めに予定されています。"
     },
     "tableHeader": {
       "quarter": {
         "EN": "Quarter",
         "PL": "Kwartał",
         "DE": "Quartal",
-        "AR": "ربع السنة"
+        "AR": "ربع السنة",
+        "JA": "四半期"
       },
       "wave": {
         "EN": "Wave",
         "PL": "Fala",
         "DE": "Welle",
-        "AR": "موجة"
+        "AR": "موجة",
+        "JA": "ウェーブ"
       }
     },
     "workload": {
@@ -1111,26 +1354,30 @@
         "EN": "Workload Distribution",
         "PL": "Rozkład Pracy",
         "DE": "Arbeitslastverteilung",
-        "AR": "توزيع عبء العمل"
+        "AR": "توزيع عبء العمل",
+        "JA": "ワークロード分布"
       },
       "initiatives": {
         "EN": "initiatives",
         "PL": "inicjatyw",
         "DE": "Initiativen",
-        "AR": "مبادرات"
+        "AR": "مبادرات",
+        "JA": "イニシアチブ"
       },
       "overloaded": {
         "EN": "Overloaded",
         "PL": "Przeciążenie",
         "DE": "Überlastet",
-        "AR": "مثقل"
+        "AR": "مثقل",
+        "JA": "過負荷"
       }
     },
     "nextStep": {
       "EN": "Go to Economics & ROI (Step 4)",
       "PL": "Przejdź do Ekonomii i ROI (Krok 4)",
       "DE": "Zu Wirtschaft & ROI (Schritt 4)",
-      "AR": "انتقل إلى الاقتصاد وعائد الاستثمار (الخطوة 4)"
+      "AR": "انتقل إلى الاقتصاد وعائد الاستثمار (الخطوة 4)",
+      "JA": "経済性とROIへ進む (ステップ 4)"
     }
   },
   "fullROI": {
@@ -1138,20 +1385,23 @@
       "EN": "Now let's estimate the costs and benefits. You don't need to be precise – ranges and best guesses are ok for now.",
       "PL": "Teraz oszacujmy koszty i korzyści. Nie musisz być precyzyjny – wystarczą rzędy wielkości.",
       "DE": "Lassen Sie uns nun die Kosten und den Nutzen abschätzen. Sie müssen nicht genau sein – Größenordnungen reichen vorerst aus.",
-      "AR": "الآن دعونا نقدر التكاليف والفوائد. لا تحتاج إلى أن تكون دقيقًا - النطاقات والتخمينات جيدة في الوقت الحالي."
+      "AR": "الآن دعونا نقدر التكاليف والفوائد. لا تحتاج إلى أن تكون دقيقًا - النطاقات والتخمينات جيدة في الوقت الحالي.",
+      "JA": "コストと利益を見積もりましょう。正確である必要はありません。現時点では範囲と最善の推測で十分です。"
     },
     "tableHeader": {
       "cost": {
         "EN": "Est. Cost (k$)",
         "PL": "Szac. Koszt (tys.$)",
         "DE": "Gesch. Kosten (k$)",
-        "AR": "التكلفة التقديرية (ألف دولار)"
+        "AR": "التكلفة التقديرية (ألف دولار)",
+        "JA": "推定コスト (千ドル)"
       },
       "benefit": {
         "EN": "Est. Benefit (k$/yr)",
         "PL": "Szac. Korzyść (tys.$/rok)",
         "DE": "Gesch. Nutzen (k$/Jahr)",
-        "AR": "الفائدة التقديرية (ألف دولار/سنة)"
+        "AR": "الفائدة التقديرية (ألف دولار/سنة)",
+        "JA": "推定利益 (千ドル/年)"
       }
     },
     "summary": {
@@ -1159,38 +1409,44 @@
         "EN": "Total Cost",
         "PL": "Koszt Całkowity",
         "DE": "Gesamtkosten",
-        "AR": "التكلفة الإجمالية"
+        "AR": "التكلفة الإجمالية",
+        "JA": "総コスト"
       },
       "totalBenefit": {
         "EN": "Total Annual Benefit",
         "PL": "Całkowita Korzyść Roczna",
         "DE": "Jährlicher Gesamtnutzen",
-        "AR": "إجمالي الفائدة السنوية"
+        "AR": "إجمالي الفائدة السنوية",
+        "JA": "年間総利益"
       },
       "roi": {
         "EN": "Overall ROI",
         "PL": "Całkowite ROI",
         "DE": "Gesamt-ROI",
-        "AR": "عائد الاستثمار الإجمالي"
+        "AR": "عائد الاستثمار الإجمالي",
+        "JA": "全体ROI"
       },
       "payback": {
         "EN": "Payback Period",
         "PL": "Okres Zwrotu",
         "DE": "Amortisationsdauer",
-        "AR": "فترة الاسترداد"
+        "AR": "فترة الاسترداد",
+        "JA": "回収期間"
       },
       "years": {
         "EN": "years",
         "PL": "lat",
         "DE": "Jahre",
-        "AR": "سنوات"
+        "AR": "سنوات",
+        "JA": "年"
       }
     },
     "nextStep": {
       "EN": "Go to Execution Dashboard (Step 5)",
       "PL": "Przejdź do Pulpitu Wykonawczego (Krok 5)",
       "DE": "Zum Ausführungs-Dashboard (Schritt 5)",
-      "AR": "انتقل إلى لوحة القيادة للتنفيذ (الخطوة 5)"
+      "AR": "انتقل إلى لوحة القيادة للتنفيذ (الخطوة 5)",
+      "JA": "実行ダッシュボードへ進む (ステップ 5)"
     }
   },
   "fullExecution": {
@@ -1198,32 +1454,37 @@
       "EN": "Welcome to Execution Mode. Here you can track progress, assign owners, and manage blockers. Drag or update statuses to move initiatives forward.",
       "PL": "Witaj w Trybie Wykonawczym. Tutaj możesz śledzić postępy, przypisywać właścicieli i zarządzać blokadami.",
       "DE": "Willkommen im Ausführungsmodus. Hier können Sie den Fortschritt verfolgen, Besitzer zuweisen und Blockaden verwalten.",
-      "AR": "مرحبًا بك في وضع التنفيذ. هنا يمكنك تتبع التقدم وتعيين المالكين وإدارة الحواجز."
+      "AR": "مرحبًا بك في وضع التنفيذ. هنا يمكنك تتبع التقدم وتعيين المالكين وإدارة الحواجز.",
+      "JA": "実行モードへようこそ。ここでは進捗の追跡、所有者の割り当て、ブロッキング要素の管理ができます。ドラッグまたはステータス更新でイニシアチブを進めてください。"
     },
     "columns": {
       "todo": {
         "EN": "To Do",
         "PL": "Do Zrobienia",
         "DE": "Zu Erledigen",
-        "AR": "للقيام به"
+        "AR": "للقيام به",
+        "JA": "未着手"
       },
       "inProgress": {
         "EN": "In Progress",
         "PL": "W Toku",
         "DE": "In Bearbeitung",
-        "AR": "في تَقَدم"
+        "AR": "في تَقَدم",
+        "JA": "進行中"
       },
       "blocked": {
         "EN": "Blocked",
         "PL": "Zablokowane",
         "DE": "Blockiert",
-        "AR": "مسدود"
+        "AR": "مسدود",
+        "JA": "ブロック中"
       },
       "done": {
         "EN": "Done",
         "PL": "Zrobione",
         "DE": "Erledigt",
-        "AR": "منجز"
+        "AR": "منجز",
+        "JA": "完了"
       }
     },
     "kpi": {
@@ -1231,13 +1492,15 @@
         "EN": "Total Initiatives",
         "PL": "Wszystkie Inicjatywy",
         "DE": "Gesamtinitiativen",
-        "AR": "إجمالي المبادرات"
+        "AR": "إجمالي المبادرات",
+        "JA": "総イニシアチブ"
       },
       "completion": {
         "EN": "Completion Rate",
         "PL": "Wskaźnik Ukończenia",
         "DE": "Abschlussquote",
-        "AR": "معدل الإنجاز"
+        "AR": "معدل الإنجاز",
+        "JA": "完了率"
       }
     },
     "fields": {
@@ -1245,26 +1508,30 @@
         "EN": "Owner",
         "PL": "Właściciel",
         "DE": "Eigentümer",
-        "AR": "المالك"
+        "AR": "المالك",
+        "JA": "所有者"
       },
       "dueDate": {
         "EN": "Due Date",
         "PL": "Termin",
         "DE": "Fälligkeitsdatum",
-        "AR": "تاريخ الاستحقاق"
+        "AR": "تاريخ الاستحقاق",
+        "JA": "期限"
       },
       "progress": {
         "EN": "Progress",
         "PL": "Postęp",
         "DE": "Fortschritt",
-        "AR": "تقدم"
+        "AR": "تقدم",
+        "JA": "進捗"
       }
     },
     "nextStep": {
       "EN": "Go to Final Report (Step 6)",
       "PL": "Przejdź do Raportu Końcowego (Krok 6)",
       "DE": "Zum Abschlussbericht (Schritt 6)",
-      "AR": "اذهب إلى التقرير النهائي (الخطوة 6)"
+      "AR": "اذهب إلى التقرير النهائي (الخطوة 6)",
+      "JA": "最終レポートへ進む (ステップ 6)"
     }
   },
   "fullReports": {
@@ -1272,44 +1539,51 @@
       "EN": "Transformation Report",
       "PL": "Raport Transformacji",
       "DE": "Transformationsbericht",
-      "AR": "تقرير التحول"
+      "AR": "تقرير التحول",
+      "JA": "変革レポート"
     },
     "sections": {
       "exec": {
         "EN": "Executive Summary",
         "PL": "Podsumowanie Zarządcze",
         "DE": "Zusammenfassung",
-        "AR": "ملخص تنفيذي"
+        "AR": "ملخص تنفيذي",
+        "JA": "エグゼクティブサマリー"
       },
       "maturity": {
         "EN": "Digital Maturity Profile",
         "PL": "Profil Dojrzałości Cyfrowej",
         "DE": "Digitales Reifegradprofil",
-        "AR": "ملف النضج الرقمي"
+        "AR": "ملف النضج الرقمي",
+        "JA": "デジタル成熟度プロファイル"
       },
       "initiatives": {
         "EN": "Key Initiatives",
         "PL": "Kluczowe Inicjatywy",
         "DE": "Schlüsselinitiativen",
-        "AR": "المبادرات الرئيسية"
+        "AR": "المبادرات الرئيسية",
+        "JA": "主要イニシアチブ"
       },
       "roadmap": {
         "EN": "Transformation Roadmap",
         "PL": "Mapa Drogowa Transformacji",
         "DE": "Transformations-Roadmap",
-        "AR": "خارطة طريق التحول"
+        "AR": "خارطة طريق التحول",
+        "JA": "変革ロードマップ"
       },
       "economics": {
         "EN": "Economics & ROI",
         "PL": "Ekonomia i ROI",
         "DE": "Wirtschaft & ROI",
-        "AR": "الاقتصاد وعائد الاستثمار"
+        "AR": "الاقتصاد وعائد الاستثمار",
+        "JA": "経済性とROI"
       },
       "execution": {
         "EN": "Execution Status",
         "PL": "Status Wykonania",
         "DE": "Ausführungsstatus",
-        "AR": "حالة التنفيذ"
+        "AR": "حالة التنفيذ",
+        "JA": "実行ステータス"
       }
     },
     "cards": {
@@ -1317,19 +1591,22 @@
         "EN": "Maturity & Focus",
         "PL": "Dojrzałość i Skupienie",
         "DE": "Reife & Fokus",
-        "AR": "النضج والتركيز"
+        "AR": "النضج والتركيز",
+        "JA": "成熟度と焦点"
       },
       "economics": {
         "EN": "Project Economics",
         "PL": "Ekonomia Projektu",
         "DE": "Projektwirtschaft",
-        "AR": "اقتصاديات المشروع"
+        "AR": "اقتصاديات المشروع",
+        "JA": "プロジェクトの経済性"
       },
       "execution": {
         "EN": "Execution Snapshot",
         "PL": "Migawka Wykonania",
         "DE": "Ausführungs-Momentaufnahme",
-        "AR": "لمحة سريعة عن التنفيذ"
+        "AR": "لمحة سريعة عن التنفيذ",
+        "JA": "実行スナップショット"
       }
     },
     "buttons": {
@@ -1337,13 +1614,15 @@
         "EN": "Export Report",
         "PL": "Eksportuj Raport",
         "DE": "Bericht exportieren",
-        "AR": "تصدير التقرير"
+        "AR": "تصدير التقرير",
+        "JA": "レポートをエクスポート"
       },
       "copy": {
         "EN": "Copy Text",
         "PL": "Kopiuj Tekst",
         "DE": "Text kopieren",
-        "AR": "نسخ النص"
+        "AR": "نسخ النص",
+        "JA": "テキストをコピー"
       }
     },
     "labels": {
@@ -1351,67 +1630,78 @@
         "EN": "Strongest Asset",
         "PL": "Najsilniejszy Atut",
         "DE": "Stärkster Vermögenswert",
-        "AR": "أقوى الأصول"
+        "AR": "أقوى الأصول",
+        "JA": "最強の資産"
       },
       "weakest": {
         "EN": "Critical Gap",
         "PL": "Krytyczna Luka",
         "DE": "Kritische Lücke",
-        "AR": "الفجوة الحرجة"
+        "AR": "الفجوة الحرجة",
+        "JA": "重要なギャップ"
       },
       "totalCost": {
         "EN": "Total Cost",
         "PL": "Koszt Całkowity",
         "DE": "Gesamtkosten",
-        "AR": "التكلفة الإجمالية"
+        "AR": "التكلفة الإجمالية",
+        "JA": "総コスト"
       },
       "annualBenefit": {
         "EN": "Annual Benefit",
         "PL": "Roczna Korzyść",
         "DE": "Jährlicher Nutzen",
-        "AR": "المنفعة السنوية"
+        "AR": "المنفعة السنوية",
+        "JA": "年間利益"
       },
       "roi": {
         "EN": "ROI",
         "PL": "ROI",
         "DE": "ROI",
-        "AR": "العائد على الاستثمار"
+        "AR": "العائد على الاستثمار",
+        "JA": "ROI"
       },
       "payback": {
         "EN": "Payback Period",
         "PL": "Okres Zwrotu",
         "DE": "Amortisationszeit",
-        "AR": "فترة الاسترداد"
+        "AR": "فترة الاسترداد",
+        "JA": "回収期間"
       },
       "completionRate": {
         "EN": "Completion Rate",
         "PL": "Wskaźnik Ukończenia",
         "DE": "Abschlussquote",
-        "AR": "معدل الإنجاز"
+        "AR": "معدل الإنجاز",
+        "JA": "完了率"
       },
       "initiatives": {
         "EN": "Initiatives",
         "PL": "Inicjatywy",
         "DE": "Initiativen",
-        "AR": "مبادرات"
+        "AR": "مبادرات",
+        "JA": "Initiatives (JA)"
       },
       "done": {
         "EN": "Done",
         "PL": "Gotowe",
         "DE": "Erledigt",
-        "AR": "منجز"
+        "AR": "منجز",
+        "JA": "完了"
       },
       "inProg": {
         "EN": "In Prog",
         "PL": "W Toku",
         "DE": "In Bearb.",
-        "AR": "في تَقَدم"
+        "AR": "في تَقَدم",
+        "JA": "進行中"
       },
       "blocked": {
         "EN": "Blocked",
         "PL": "Zablok.",
         "DE": "Blockiert",
-        "AR": "مسدود"
+        "AR": "مسدود",
+        "JA": "ブロック中"
       }
     },
     "reportTemplates": {
@@ -1419,37 +1709,43 @@
         "EN": "{companyName} has embarked on a strategic digital transformation journey. Based on the comprehensive DRD assessment, the organization demonstrates strong maturity in {strongest} ({strongestScore}/7), while facing significant challenges in {weakest} ({weakestScore}/7).\n\nTo address these gaps, a tailored roadmap consisting of {initCount} strategic initiatives has been developed. The plan focuses on building foundational capabilities in the first 12 months before scaling advanced digital solutions.\n\nFrom an economic perspective, the transformation is projected to generate an annual benefit of ${benefit}k against a total investment of ${cost}k. This yields an attractive ROI of {roi}% with a payback period of {payback} years.",
         "PL": "{companyName} rozpoczęła strategiczną podróż transformacji cyfrowej. Na podstawie kompleksowej oceny DRD organizacja wykazuje silną dojrzałość w obszarze {strongest} ({strongestScore}/7), jednocześnie napotykając znaczące wyzwania w obszarze {weakest} ({weakestScore}/7).\n\nAby zaradzić tym lukom, opracowano mapę drogową składającą się z {initCount} inicjatyw strategicznych. Plan koncentruje się na budowaniu fundamentalnych zdolności w ciągu pierwszych 12 miesięcy przed skalowaniem zaawansowanych rozwiązań cyfrowych.\n\nZ perspektywy ekonomicznej przewiduje się, że transformacja przyniesie roczne korzyści w wysokości ${benefit}k przy całkowitej inwestycji ${cost}k. Daje to atrakcyjne ROI na poziomie {roi}% z okresem zwrotu wynoszącym {payback} lat.",
         "DE": "{companyName} hat eine strategische digitale Transformationsreise begonnen. Basierend auf der umfassenden DRD-Bewertung zeigt die Organisation eine starke Reife in {strongest} ({strongestScore}/7), steht jedoch vor erheblichen Herausforderungen in {weakest} ({weakestScore}/7).\n\nUm diese Lücken zu schließen, wurde eine maßgeschneiderte Roadmap bestehend aus {initCount} strategischen Initiativen entwickelt. Der Plan konzentriert sich auf den Aufbau grundlegender Fähigkeiten in den ersten 12 Monaten, bevor fortgeschrittene digitale Lösungen skaliert werden.\n\nAus wirtschaftlicher Sicht wird prognostiziert, dass die Transformation einen jährlichen Nutzen von ${benefit}k bei einer Gesamtinvestition von ${cost}k generieren wird. Dies ergibt einen attraktiven ROI von {roi}% bei einer Amortisationszeit von {payback} Jahren.",
-        "AR": "شرعت {companyName} في رحلة تحول رقمي استراتيجي. استنادًا إلى تقييم DRD الشامل، تظهر المنظمة نضجًا قويًا في {strongest} ({strongestScore}/7)، بينما تواجه تحديات كبيرة في {weakest} ({weakestScore}/7).\n\nولمعالجة هذه الفجوات، تم وضع خارطة طريق مخصصة تتكون من {initCount} مبادرة استراتيجية. تركز الخطة على بناء القدرات الأساسية في الأشهر الـ 12 الأولى قبل توسيع نطاق الحلول الرقمية المتقدمة.\n\nمن منظور اقتصادي، من المتوقع أن يولد التحول فائدة سنوية قدرها ${benefit} ألف مقابل استثمار إجمالي قدره ${cost} ألف. هذا يحقق عائدًا جذابًا على الاستثمار بنسبة {roi}% مع فترة استرداد تبلغ {payback} سنوات."
+        "AR": "شرعت {companyName} في رحلة تحول رقمي استراتيجي. استنادًا إلى تقييم DRD الشامل، تظهر المنظمة نضجًا قويًا في {strongest} ({strongestScore}/7)، بينما تواجه تحديات كبيرة في {weakest} ({weakestScore}/7).\n\nولمعالجة هذه الفجوات، تم وضع خارطة طريق مخصصة تتكون من {initCount} مبادرة استراتيجية. تركز الخطة على بناء القدرات الأساسية في الأشهر الـ 12 الأولى قبل توسيع نطاق الحلول الرقمية المتقدمة.\n\nمن منظور اقتصادي، من المتوقع أن يولد التحول فائدة سنوية قدرها ${benefit} ألف مقابل استثمار إجمالي قدره ${cost} ألف. هذا يحقق عائدًا جذابًا على الاستثمار بنسبة {roi}% مع فترة استرداد تبلغ {payback} سنوات.",
+        "JA": "{companyName}は戦略的なデジタル変革の旅に乗り出しました。包括的なDRD評価に基づき、組織は{strongest} ({strongestScore}/7)で高い成熟度を示していますが、{weakest} ({weakestScore}/7)では重大な課題に直面しています。\n\nこれらのギャップに対処するため、{initCount}の戦略的イニシアチブからなるカスタマイズされたロードマップが策定されました。計画は、高度なデジタルソリューションを拡大する前の最初の12ヶ月間で、基礎的な能力を構築することに焦点を当てています。\n\n経済的な観点から見ると、変革は総投資額${cost}kに対して、年間${benefit}kの利益を生み出すと予測されています。これにより、回収期間{payback}年で{roi}%という魅力的なROIが得られます。"
       },
       "finding1": {
         "EN": "{strongest} is your strongest asset, acting as a pillar for future growth.",
         "PL": "{strongest} to Twój najsilniejszy atut, stanowiący filar przyszłego wzrostu.",
         "DE": "{strongest} ist Ihr stärkstes Kapital und dient als Pfeiler für zukünftiges Wachstum.",
-        "AR": "{strongest} هو أقوى أصولك، ويعمل كركيزة للنمو المستقبلي."
+        "AR": "{strongest} هو أقوى أصولك، ويعمل كركيزة للنمو المستقبلي.",
+        "JA": "{strongest}はあなたの最強の資産であり、将来の成長の柱となります。"
       },
       "finding2": {
         "EN": "{weakest} requires immediate attention to prevent bottlenecks in scaling.",
         "PL": "{weakest} wymaga natychmiastowej uwagi, aby zapobiec wąskim gardłom w skalowaniu.",
         "DE": "{weakest} erfordert sofortige Aufmerksamkeit, um Engpässe bei der Skalierung zu vermeiden.",
-        "AR": "{weakest} يتطلب اهتمامًا فوريًا لمنع الاختناقات في التوسع."
+        "AR": "{weakest} يتطلب اهتمامًا فوريًا لمنع الاختناقات في التوسع.",
+        "JA": "{weakest}はスケーリングのボトルネックを防ぐために、直ちに対処する必要があります。"
       },
       "finding3": {
         "EN": "The organization is ready for {type} transformation.",
         "PL": "Organizacja jest gotowa na {type} transformację.",
         "DE": "Die Organisation ist bereit für eine {type} Transformation.",
-        "AR": "المنظمة جاهزة للتحول {type}."
+        "AR": "المنظمة جاهزة للتحول {type}.",
+        "JA": "組織は{type}変革の準備ができています。"
       },
       "aggressive": {
         "EN": "aggressive",
         "PL": "agresywną",
         "DE": "aggressive",
-        "AR": "عدواني"
+        "AR": "عدواني",
+        "JA": "積極的な"
       },
       "focused": {
         "EN": "focused",
         "PL": "skoncentrowaną",
         "DE": "fokussierte",
-        "AR": "مركز"
+        "AR": "مركز",
+        "JA": "集中した"
       }
     }
   },
@@ -1459,43 +1755,50 @@
         "EN": "Settings",
         "PL": "Ustawienia",
         "DE": "Einstellungen",
-        "AR": "الإعدادات"
+        "AR": "الإعدادات",
+        "JA": "設定"
       },
       "myProfile": {
         "EN": "My Profile",
         "PL": "Mój Profil",
         "DE": "Mein Profil",
-        "AR": "ملفي الشخصي"
+        "AR": "ملفي الشخصي",
+        "JA": "マイプロフィール"
       },
       "billing": {
         "EN": "Billing & Plans",
         "PL": "Płatności i Plany",
         "DE": "Abrechnung & Pläne",
-        "AR": "الفواتير والخطط"
+        "AR": "الفواتير والخطط",
+        "JA": "請求とプラン"
       },
       "aiConfig": {
         "EN": "AI Configuration",
         "PL": "Konfiguracja AI",
         "DE": "KI-Konfiguration",
-        "AR": "تكوين الذكاء الاصطناعي"
+        "AR": "تكوين الذكاء الاصطناعي",
+        "JA": "AI設定"
       },
       "notifications": {
         "EN": "Notifications",
         "PL": "Powiadomienia",
         "DE": "Benachrichtigungen",
-        "AR": "إشعارات"
+        "AR": "إشعارات",
+        "JA": "通知"
       },
       "integrations": {
         "EN": "Integrations",
         "PL": "Integracje",
         "DE": "Integrationen",
-        "AR": "عمليات التكامل"
+        "AR": "عمليات التكامل",
+        "JA": "統合"
       },
       "regionalization": {
         "EN": "Regionalization",
         "PL": "Regionalizacja",
         "DE": "Regionalisierung",
-        "AR": "الإقليمية"
+        "AR": "الإقليمية",
+        "JA": "地域化"
       }
     },
     "profile": {
@@ -1503,91 +1806,813 @@
         "EN": "Personal Information",
         "PL": "Dane Osobowe",
         "DE": "Persönliche Informationen",
-        "AR": "معلومات شخصية"
+        "AR": "معلومات شخصية",
+        "JA": "個人情報"
       },
       "photo": {
         "EN": "Profile Photo",
         "PL": "Zdjęcie Profilowe",
         "DE": "Profilbild",
-        "AR": "صورة الملف الشخصي"
+        "AR": "صورة الملف الشخصي",
+        "JA": "プロフィール写真"
       },
       "change": {
         "EN": "Change",
         "PL": "Zmień",
         "DE": "Ändern",
-        "AR": "تغيير"
+        "AR": "تغيير",
+        "JA": "変更"
       },
       "photoHint": {
         "EN": "Accepts JPG, PNG (Auto-optimized)",
         "PL": "Akceptuje JPG, PNG (Auto-optymalizacja)",
         "DE": "Akzeptiert JPG, PNG (Auto-optimiert)",
-        "AR": "يقبل JPG, PNG (تحسين تلقائي)"
+        "AR": "يقبل JPG, PNG (تحسين تلقائي)",
+        "JA": "JPG, PNG (自動最適化)"
       },
       "firstName": {
         "EN": "First Name",
         "PL": "Imię",
         "DE": "Vorname",
-        "AR": "الاسم الأول"
+        "AR": "الاسم الأول",
+        "JA": "名"
       },
       "lastName": {
         "EN": "Last Name",
         "PL": "Nazwisko",
         "DE": "Nachname",
-        "AR": "اسم العائلة"
+        "AR": "اسم العائلة",
+        "JA": "姓"
       },
       "role": {
         "EN": "Role / Job Title",
         "PL": "Rola / Stanowisko",
         "DE": "Rolle / Berufsbezeichnung",
-        "AR": "المسمى الوظيفي"
+        "AR": "المسمى الوظيفي",
+        "JA": "役職 / 肩書き"
       },
       "email": {
         "EN": "Email Address (Managed by Admin)",
         "PL": "Adres Email (Zarządzany przez Admina)",
         "DE": "E-Mail-Adresse (Vom Admin verwaltet)",
-        "AR": "عنوان البريد الإلكتروني (يديره المسؤول)"
+        "AR": "عنوان البريد الإلكتروني (يديره المسؤول)",
+        "JA": "メールアドレス (管理者が管理)"
       },
       "preferences": {
         "EN": "Preferences",
         "PL": "Preferencje",
         "DE": "Einstellungen",
-        "AR": "التفضيلات"
+        "AR": "التفضيلات",
+        "JA": "設定"
       },
       "theme": {
         "EN": "Interface Theme",
         "PL": "Motyw Interfejsu",
         "DE": "Oberflächendesign",
-        "AR": "موضوع الواجهة"
+        "AR": "موضوع الواجهة",
+        "JA": "インターフェーステーマ"
       },
       "light": {
         "EN": "Light",
         "PL": "Jasny",
         "DE": "Hell",
-        "AR": "فاتح"
+        "AR": "فاتح",
+        "JA": "ライト"
       },
       "dark": {
         "EN": "Dark",
         "PL": "Ciemny",
         "DE": "Dunkel",
-        "AR": "داكن"
+        "AR": "داكن",
+        "JA": "ダーク"
       },
       "language": {
         "EN": "Language",
         "PL": "Język",
         "DE": "Sprache",
-        "AR": "لغة"
+        "AR": "لغة",
+        "JA": "言語"
       },
       "save": {
         "EN": "Save Changes",
         "PL": "Zapisz Zmiany",
         "DE": "Änderungen speichern",
-        "AR": "حفظ التغييرات"
+        "AR": "حفظ التغييرات",
+        "JA": "変更を保存"
       },
       "saved": {
         "EN": "Saved!",
         "PL": "Zapisano!",
         "DE": "Gespeichert!",
-        "AR": "تم الحفظ!"
+        "AR": "تم الحفظ!",
+        "JA": "保存しました！"
+      }
+    }
+  },
+  "common": {
+    "status": {
+      "saved": {
+        "EN": "Auto-saved",
+        "PL": "Zapisano automatycznie",
+        "DE": "Automatisch gespeichert",
+        "AR": "تم الحفظ تلقائياً",
+        "JA": "自動保存されました"
+      },
+      "saving": {
+        "EN": "Saving...",
+        "PL": "Zapisywanie...",
+        "DE": "Speichern...",
+        "AR": "جارٍ الحفظ...",
+        "JA": "保存中..."
+      },
+      "unsaved": {
+        "EN": "Unsaved changes",
+        "PL": "Niezapisane zmiany",
+        "DE": "Ungespeicherte Änderungen",
+        "AR": "تغييرات غير محفوظة",
+        "JA": "保存されていない変更"
+      },
+      "error": {
+        "EN": "Save failed",
+        "PL": "Zapis nie powiódł się",
+        "DE": "Speichern fehlgeschlagen",
+        "AR": "فشل الحفظ",
+        "JA": "保存に失敗しました"
+      }
+    },
+    "impersonation": {
+      "banner": {
+        "EN": "IMPERSONATING: {{email}}",
+        "PL": "Odszywanie się pod: {{email}}",
+        "DE": "IMPERSONATION: {{email}}",
+        "AR": "تنتحل صفة: {{email}}",
+        "JA": "なりすまし中: {{email}}"
+      },
+      "stop": {
+        "EN": "Stop Impersonating",
+        "PL": "Zatrzymaj Odszywanie",
+        "DE": "Impersonation stoppen",
+        "AR": "إيقاف الانتحال",
+        "JA": "なりすましを停止"
+      }
+    },
+    "underConstruction": {
+      "EN": "Component Under Construction",
+      "PL": "Komponent w Budowie",
+      "DE": "Komponente im Aufbau",
+      "AR": "المكون قيد الإنشاء",
+      "JA": "コンポーネント作成中"
+    }
+  },
+  "assessment": {
+    "workspace": {
+      "header": {
+        "EN": "DRD Assessment",
+        "PL": "Ocena DRD",
+        "DE": "DRD-Bewertung",
+        "AR": "تقييم DRD",
+        "JA": "DRDアセスメント"
+      },
+      "senseCheck": {
+        "EN": "AI Sense Check",
+        "PL": "Weryfikacja AI",
+        "DE": "KI-Sinnprüfung",
+        "AR": "فحص الذكاء الاصطناعي",
+        "JA": "AIセンスチェック"
+      },
+      "analyzing": {
+        "EN": "Analyzing...",
+        "PL": "Analizowanie...",
+        "DE": "Analysieren...",
+        "AR": "تحليل...",
+        "JA": "分析中..."
+      },
+      "logicVerified": {
+        "EN": "Logic Verified",
+        "PL": "Logika Zweryfikowana",
+        "DE": "Logik Verifiziert",
+        "AR": "تم التحقق من المنطق",
+        "JA": "ロジック検証済み"
+      },
+      "logicWarning": {
+        "EN": "Logic Warning",
+        "PL": "Ostrzeżenie Logiczne",
+        "DE": "Logik-Warnung",
+        "AR": "تحذير منطقي",
+        "JA": "ロジック警告"
+      },
+      "actual": {
+        "EN": "Actual",
+        "PL": "Obecny",
+        "DE": "Aktuell",
+        "AR": "الفعلي",
+        "JA": "現状"
+      },
+      "target": {
+        "EN": "Target",
+        "PL": "Docelowy",
+        "DE": "Ziel",
+        "AR": "المستهدف",
+        "JA": "目標"
+      },
+      "maturityLevels": {
+        "EN": "Maturity Levels",
+        "PL": "Poziomy Dojrzałości",
+        "DE": "Reifegradstufen",
+        "AR": "مستويات النضج",
+        "JA": "成熟度レベル"
+      },
+      "transformationPathway": {
+        "EN": "Transformation Pathway",
+        "PL": "Ścieżka Transformacji",
+        "DE": "Transformationspfad",
+        "AR": "مسار التحول",
+        "JA": "変革パス"
+      },
+      "pathwayIntro": {
+        "EN": "To move from Level {{actual}} to Level {{target}}, the following key shifts are required:",
+        "PL": "Aby przejść z Poziomu {{actual}} na Poziom {{target}}, wymagane są następujące kluczowe zmiany:",
+        "DE": "Um von Stufe {{actual}} auf Stufe {{target}} zu gelangen, sind folgende wichtige Änderungen erforderlich:",
+        "AR": "للانتقال من المستوى {{actual}} إلى المستوى {{target}}، يلزم إجراء التحولات الرئيسية التالية:",
+        "JA": "レベル {{actual}} からレベル {{target}} に移行するには、以下の主要なシフトが必要です。"
+      },
+      "transitionPhase": {
+        "EN": "Transition Phase {{phase}}",
+        "PL": "Faza Przejściowa {{phase}}",
+        "DE": "Übergangsphase {{phase}}",
+        "AR": "مرحلة الانتقال {{phase}}",
+        "JA": "移行フェーズ {{phase}}"
+      },
+      "impliedStep": {
+        "EN": "implied step from {{from}} to {{to}}",
+        "PL": "krok pośredni od {{from}} do {{to}}",
+        "DE": "impliziter Schritt von {{from}} nach {{to}}",
+        "AR": "خطوة ضمنية من {{from}} إلى {{to}}",
+        "JA": "{{from}} から {{to}} への暗黙のステップ"
+      },
+      "selectLevelsHint": {
+        "EN": "Select Actual and Target levels to visualize the pathway.",
+        "PL": "Wybierz poziomy Obecny i Docelowy, aby zwizualizować ścieżkę.",
+        "DE": "Wählen Sie Aktuell und Ziel, um den Pfad zu visualisieren.",
+        "AR": "حدد المستويات الفعلية والمستهدفة لتصور المسار.",
+        "JA": "現状と目標のレベルを選択してパスを視覚化してください。"
+      },
+      "strategicRationale": {
+        "EN": "Strategic Rationale",
+        "PL": "Uzasadnienie Strategiczne",
+        "DE": "Strategische Begründung",
+        "AR": "الأساس الاستراتيجي",
+        "JA": "戦略的根拠"
+      },
+      "rationalePlaceholder": {
+        "EN": "Why is this target critical for your business strategy?",
+        "PL": "Dlaczego ten cel jest krytyczny dla strategii biznesowej?",
+        "DE": "Warum ist dieses Ziel für Ihre Geschäftsstrategie entscheidend?",
+        "AR": "لماذا هذا الهدف حاسم لاستراتيجية عملك؟",
+        "JA": "なぜこの目標がビジネス戦略にとって重要ですか？"
+      },
+      "proMode": {
+        "EN": "PRO Mode Active: Logic Validation Enabled",
+        "PL": "Tryb PRO Aktywny: Walidacja Logiki Włączona",
+        "DE": "PRO-Modus Aktiv: Logikprüfung Aktiviert",
+        "AR": "الوضع الاحترافي نشط: التحقق من المنطق مفعل",
+        "JA": "PROモード有効: ロジック検証が有効です"
+      },
+      "confirmNext": {
+        "EN": "Confirm & Next",
+        "PL": "Zatwierdź i Dalej",
+        "DE": "Bestätigen & Weiter",
+        "AR": "تأكيد والتالي",
+        "JA": "確認して次へ"
+      },
+      "validated": {
+        "EN": "Assessment Validated",
+        "PL": "Ocena Zweryfikowana",
+        "DE": "Bewertung Validiert",
+        "AR": "تم التحقق من التقييم",
+        "JA": "アセスメント検証済み"
+      },
+      "consultantWarning": {
+        "EN": "Consultant Warning",
+        "PL": "Ostrzeżenie Konsultanta",
+        "DE": "Beraterwarnung",
+        "AR": "تحذير استشاري",
+        "JA": "コンサルタント警告"
+      }
+    },
+    "wizard": {
+      "startTitle": {
+        "EN": "Start Assessment",
+        "PL": "Rozpocznij Ocenę",
+        "DE": "Bewertung Starten",
+        "AR": "بدء التقييم",
+        "JA": "アセスメント開始"
+      },
+      "startDesc": {
+        "EN": "Answer a few questions so our algorithm can recommend your digital maturity level in this area.",
+        "PL": "Odpowiedz na kilka pytań, aby nasz algorytm mógł zarekomendować Twój poziom dojrzałości cyfrowej w tym obszarze.",
+        "DE": "Beantworten Sie einige Fragen, damit unser Algorithmus Ihren digitalen Reifegrad in diesem Bereich empfehlen kann.",
+        "AR": "أجب على بعض الأسئلة ليتمكن خوارزميتنا من التوصية بمستوى نضجك الرقمي في هذا المجال.",
+        "JA": "いくつかの質問に答えて、この分野のデジタル成熟度レベルを推奨してもらいましょう。"
+      },
+      "startBtn": {
+        "EN": "Start",
+        "PL": "Start",
+        "DE": "Start",
+        "AR": "بدء",
+        "JA": "開始"
+      },
+      "questionProgress": {
+        "EN": "Question {{current}} / {{total}}",
+        "PL": "Pytanie {{current}} / {{total}}",
+        "DE": "Frage {{current}} / {{total}}",
+        "AR": "سؤال {{current}} / {{total}}",
+        "JA": "質問 {{current}} / {{total}}"
+      },
+      "yes": {
+        "EN": "Yes, fully",
+        "PL": "Tak, w pełni",
+        "DE": "Ja, vollständig",
+        "AR": "نعم، بالكامل",
+        "JA": "はい、完全に"
+      },
+      "partial": {
+        "EN": "Partially / In Progress",
+        "PL": "Częściowo / W toku",
+        "DE": "Teilweise / In Bearbeitung",
+        "AR": "جزئيًا / قيد التقدم",
+        "JA": "部分的 / 進行中"
+      },
+      "no": {
+        "EN": "No",
+        "PL": "Nie",
+        "DE": "Nein",
+        "AR": "لا",
+        "JA": "いいえ"
+      },
+      "skip": {
+        "EN": "Skip (Not applicable)",
+        "PL": "Pomiń (Nie dotyczy)",
+        "DE": "Überspringen (Nicht zutreffend)",
+        "AR": "تخطي (لا ينطبق)",
+        "JA": "スキップ (該当なし)"
+      },
+      "recommendedLevel": {
+        "EN": "Recommended Level",
+        "PL": "Rekomendowany Poziom",
+        "DE": "Empfohlenes Niveau",
+        "AR": "المستوى الموصى به",
+        "JA": "推奨レベル"
+      },
+      "suggestedLevelDesc": {
+        "EN": "Based on your answers, we suggest this maturity level.",
+        "PL": "Na podstawie Twoich odpowiedzi sugerujemy ten poziom dojrzałości.",
+        "DE": "Basierend auf Ihren Antworten schlagen wir dieses Reifegradniveau vor.",
+        "AR": "بناءً على إجاباتك، نقترح هذا المستوى من النضج.",
+        "JA": "あなたの回答に基づき、この成熟度レベルを提案します。"
+      },
+      "acceptResult": {
+        "EN": "Accept Result",
+        "PL": "Akceptuj Wynik",
+        "DE": "Ergebnis Akzeptieren",
+        "AR": "قبول النتيجة",
+        "JA": "結果を受け入れる"
+      },
+      "adjustManually": {
+        "EN": "Adjust Manually",
+        "PL": "Dostosuj Ręcznie",
+        "DE": "Manuell Anpassen",
+        "AR": "تعديل يدوياً",
+        "JA": "手動で調整"
+      },
+      "cancel": {
+        "EN": "Cancel",
+        "PL": "Anuluj",
+        "DE": "Abbrechen",
+        "AR": "إلغاء",
+        "JA": "キャンセル"
+      }
+    },
+    "axisContent": {
+      "processes": {
+        "title": {
+          "EN": "Digital Processes",
+          "PL": "Procesy Cyfrowe",
+          "DE": "Digitale Prozesse",
+          "AR": "العمليات الرقمية",
+          "JA": "デジタルプロセス"
+        },
+        "levels": {
+          "1": {
+            "EN": "Basic Data Registration",
+            "PL": "Podstawowa Rejestracja Danych",
+            "DE": "Grundlegende Datenerfassung",
+            "AR": "تسجيل البيانات الأساسية",
+            "JA": "基本データ登録"
+          },
+          "2": {
+            "EN": "Workstation Control",
+            "PL": "Kontrola Stanowiska Pracy",
+            "DE": "Arbeitsplatzsteuerung",
+            "AR": "التحكم في محطة العمل",
+            "JA": "ワークステーション制御"
+          },
+          "3": {
+            "EN": "Process Control",
+            "PL": "Kontrola Procesu",
+            "DE": "Prozesssteuerung",
+            "AR": "التحكم في العمليات",
+            "JA": "プロセス制御"
+          },
+          "4": {
+            "EN": "Automation",
+            "PL": "Automatyzacja",
+            "DE": "Automatisierung",
+            "AR": "الأتمتة",
+            "JA": "自動化"
+          },
+          "5": {
+            "EN": "MES (Manufacturing Execution Systems)",
+            "PL": "MES (Systemy Realizacji Produkcji)",
+            "DE": "MES (Fertigungsmanagementsysteme)",
+            "AR": "MES (أنظمة تنفيذ التصنيع)",
+            "JA": "MES (製造実行システム)"
+          },
+          "6": {
+            "EN": "ERP (Enterprise Resource Planning)",
+            "PL": "ERP (Planowanie Zasobów Przedsiębiorstwa)",
+            "DE": "ERP (Unternehmensressourcenplanung)",
+            "AR": "ERP (تخطيط موارد المؤسسة)",
+            "JA": "ERP (エンタープライズリソースプランニング)"
+          },
+          "7": {
+            "EN": "AI Support Algorithms",
+            "PL": "Algorytmy Wspierające AI",
+            "DE": "KI-Unterstützungsalgorithmen",
+            "AR": "خوارزميات دعم الذكاء الاصطناعي",
+            "JA": "AIサポートアルゴリズム"
+          }
+        }
+      },
+      "digitalProducts": {
+        "title": {
+          "EN": "Digital Products",
+          "PL": "Produkty Cyfrowe",
+          "DE": "Digitale Produkte",
+          "AR": "المنتجات الرقمية",
+          "JA": "デジタル製品"
+        },
+        "levels": {
+          "1": {
+            "EN": "Physical Only",
+            "PL": "Tylko Fizyczne",
+            "DE": "Nur Physisch",
+            "AR": "مادي فقط",
+            "JA": "物理のみ"
+          },
+          "2": {
+            "EN": "Digital Extension",
+            "PL": "Rozszerzenie Cyfrowe",
+            "DE": "Digitale Erweiterung",
+            "AR": "تمديد رقمي",
+            "JA": "デジタル拡張"
+          },
+          "3": {
+            "EN": "Connected Product",
+            "PL": "Produkt Połączony",
+            "DE": "Vernetztes Produkt",
+            "AR": "منتج متصل",
+            "JA": "接続された製品"
+          },
+          "4": {
+            "EN": "Smart Product",
+            "PL": "Inteligentny Produkt",
+            "DE": "Intelligentes Produkt",
+            "AR": "منتج ذكي",
+            "JA": "スマート製品"
+          },
+          "5": {
+            "EN": "Product as a Service",
+            "PL": "Produkt jako Usługa",
+            "DE": "Produkt als Service",
+            "AR": "المنتج كخدمة",
+            "JA": "サービスとしての製品"
+          },
+          "6": {
+            "EN": "Platform",
+            "PL": "Platforma",
+            "DE": "Plattform",
+            "AR": "منصة",
+            "JA": "プラットフォーム"
+          },
+          "7": {
+            "EN": "Ecosystem",
+            "PL": "Ekosystem",
+            "DE": "Ökosystem",
+            "AR": "نظام بيئي",
+            "JA": "エコシステム"
+          }
+        }
+      },
+      "businessModels": {
+        "title": {
+          "EN": "Business Models",
+          "PL": "Modele Biznesowe",
+          "DE": "Geschäftsmodelle",
+          "AR": "نطاقات الأعمال",
+          "JA": "ビジネスモデル"
+        },
+        "levels": {
+          "1": {
+            "EN": "Traditional Sales",
+            "PL": "Tradycyjna Sprzedaż",
+            "DE": "Traditioneller Verkauf",
+            "AR": "المبيعات التقليدية",
+            "JA": "伝統的な販売"
+          },
+          "2": {
+            "EN": "E-commerce",
+            "PL": "E-commerce",
+            "DE": "E-Commerce",
+            "AR": "التجارة الإلكترونية",
+            "JA": "Eコマース"
+          },
+          "3": {
+            "EN": "Service-based",
+            "PL": "Oparte na Usługach",
+            "DE": "Service-basiert",
+            "AR": "قائم على الخدمات",
+            "JA": "サービスベース"
+          },
+          "4": {
+            "EN": "Subscription",
+            "PL": "Subskrypcja",
+            "DE": "Abonnement",
+            "AR": "اشتراك",
+            "JA": "サブスクリプション"
+          },
+          "5": {
+            "EN": "Usage-based",
+            "PL": "Oparte na Użyciu",
+            "DE": "Nutzungsbasiert",
+            "AR": "قائم على الاستخدام",
+            "JA": "使用量ベース"
+          },
+          "6": {
+            "EN": "Outcome-based",
+            "PL": "Oparte na Wynikach",
+            "DE": "Ergebnisorientiert",
+            "AR": "قائم على النتائج",
+            "JA": "成果ベース"
+          },
+          "7": {
+            "EN": "Ecosystem orchestrator",
+            "PL": "Orkiestrator Ekosystemu",
+            "DE": "Ökosystem-Orchestrator",
+            "AR": "منسق النظام البيئي",
+            "JA": "エコシステムオーケストレーター"
+          }
+        }
+      },
+      "dataManagement": {
+        "title": {
+          "EN": "Data Management",
+          "PL": "Zarządzanie Danymi",
+          "DE": "Datenmanagement",
+          "AR": "إدارة البيانات",
+          "JA": "データ管理"
+        },
+        "levels": {
+          "1": {
+            "EN": "No Data",
+            "PL": "Brak Danych",
+            "DE": "Keine Daten",
+            "AR": "لا توجد بيانات",
+            "JA": "データなし"
+          },
+          "2": {
+            "EN": "Descriptive (What happened)",
+            "PL": "Opisowe (Co się stało)",
+            "DE": "Deskriptiv (Was passierte)",
+            "AR": "وصفي (ماذا حدث)",
+            "JA": "記述的（何が起こったか）"
+          },
+          "3": {
+            "EN": "Diagnostic (Why)",
+            "PL": "Diagnostyczne (Dlaczego)",
+            "DE": "Diagnostisch (Warum)",
+            "AR": "تشخيصي (لماذا)",
+            "JA": "診断的（なぜ）"
+          },
+          "4": {
+            "EN": "Predictive (What will happen)",
+            "PL": "Predykcyjne (Co się stanie)",
+            "DE": "Prädiktiv (Was wird passieren)",
+            "AR": "تنبؤي (ماذا سيحدث)",
+            "JA": "予測的（何が起こるか）"
+          },
+          "5": {
+            "EN": "Prescriptive (What to do)",
+            "PL": "Preskryptywne (Co robić)",
+            "DE": "Präskriptiv (Was zu tun ist)",
+            "AR": "توجيهي (ماذا تفعل)",
+            "JA": "処方的（何をすべきか）"
+          },
+          "6": {
+            "EN": "Cognitive (AI)",
+            "PL": "Kognitywne (AI)",
+            "DE": "Kognitiv (KI)",
+            "AR": "معرفي (AI)",
+            "JA": "認知的 (AI)"
+          },
+          "7": {
+            "EN": "Generative",
+            "PL": "Generatywne",
+            "DE": "Generativ",
+            "AR": "توليدي",
+            "JA": "生成的"
+          }
+        }
+      },
+      "culture": {
+        "title": {
+          "EN": "Culture",
+          "PL": "Kultura",
+          "DE": "Kultur",
+          "AR": "ثقافة",
+          "JA": "文化"
+        },
+        "levels": {
+          "1": {
+            "EN": "Resistant",
+            "PL": "Opór",
+            "DE": "Widerständig",
+            "AR": "مقاوم",
+            "JA": "抵抗"
+          },
+          "2": {
+            "EN": "Aware",
+            "PL": "Świadomość",
+            "DE": "Bewusst",
+            "AR": "مدرك",
+            "JA": "認識"
+          },
+          "3": {
+            "EN": "Curious",
+            "PL": "Cciekawość",
+            "DE": "Neugierig",
+            "AR": "فضولي",
+            "JA": "好奇心"
+          },
+          "4": {
+            "EN": "Agile",
+            "PL": "Zwinność",
+            "DE": "Agil",
+            "AR": "رشيق",
+            "JA": "アジャイル"
+          },
+          "5": {
+            "EN": "Data-driven",
+            "PL": "Oparte na Danych",
+            "DE": "Datengetrieben",
+            "AR": "قائم على البيانات",
+            "JA": "データ駆動"
+          },
+          "6": {
+            "EN": "Innovator",
+            "PL": "Innowator",
+            "DE": "Innovator",
+            "AR": "مبتكر",
+            "JA": "イノベーター"
+          },
+          "7": {
+            "EN": "Digital Native",
+            "PL": "Cyfrowy Tubylec",
+            "DE": "Digital Native",
+            "AR": "رقمي أصلي",
+            "JA": "デジタルネイティブ"
+          }
+        }
+      },
+      "cybersecurity": {
+        "title": {
+          "EN": "Cybersecurity",
+          "PL": "Cyberbezpieczeństwo",
+          "DE": "Cybersicherheit",
+          "AR": "الأمن السيبراني",
+          "JA": "サイバーセキュリティ"
+        },
+        "levels": {
+          "1": {
+            "EN": "None",
+            "PL": "Brak",
+            "DE": "Keine",
+            "AR": "لا شيء",
+            "JA": "なし"
+          },
+          "2": {
+            "EN": "Basic (Firewall)",
+            "PL": "Podstawowe (Firewall)",
+            "DE": "Grundlegend (Firewall)",
+            "AR": "أساسي (جدار حماية)",
+            "JA": "基本 (ファイアウォール)"
+          },
+          "3": {
+            "EN": "Compliance-based",
+            "PL": "Zgodność z przepisami",
+            "DE": "Compliance-basiert",
+            "AR": "قائم على الامتثال",
+            "JA": "コンプライアンスベース"
+          },
+          "4": {
+            "EN": "Proactive",
+            "PL": "Proaktywne",
+            "DE": "Proaktiv",
+            "AR": "استباقي",
+            "JA": "プロアクティブ"
+          },
+          "5": {
+            "EN": "Resilient",
+            "PL": "Odporne",
+            "DE": "Widerstandsfähig",
+            "AR": "مرن",
+            "JA": "レジリエント"
+          },
+          "6": {
+            "EN": "Zero Trust",
+            "PL": "Zero Trust",
+            "DE": "Zero Trust",
+            "AR": "صفر ثقة",
+            "JA": "ゼロトラスト"
+          },
+          "7": {
+            "EN": "Immune",
+            "PL": "Odpornościowe",
+            "DE": "Immun",
+            "AR": "محصن",
+            "JA": "免疫"
+          }
+        }
+      },
+      "aiMaturity": {
+        "title": {
+          "EN": "AI Maturity",
+          "PL": "Dojrzałość AI",
+          "DE": "KI-Reife",
+          "AR": "نضج الذكاء الاصطناعي",
+          "JA": "AI成熟度"
+        },
+        "levels": {
+          "1": {
+            "EN": "None",
+            "PL": "Brak",
+            "DE": "Keine",
+            "AR": "لا شيء",
+            "JA": "なし"
+          },
+          "2": {
+            "EN": "Experiments",
+            "PL": "Eksperymenty",
+            "DE": "Experimente",
+            "AR": "تجارب",
+            "JA": "実験"
+          },
+          "3": {
+            "EN": "Point Solutions",
+            "PL": "Rozwiązania Punktowe",
+            "DE": "Punktlösungen",
+            "AR": "حلول نقطية",
+            "JA": "ポイントソリューション"
+          },
+          "4": {
+            "EN": "Integrated AI",
+            "PL": "Zintegrowane AI",
+            "DE": "Integrierte KI",
+            "AR": "ذكاء اصطناعي مدمج",
+            "JA": "統合AI"
+          },
+          "5": {
+            "EN": "AI-First Strategy",
+            "PL": "Strategia AI-First",
+            "DE": "AI-First-Strategie",
+            "AR": "استراتيجية الذكاء الاصطناعي أولاً",
+            "JA": "AIファースト戦略"
+          },
+          "6": {
+            "EN": "Autonomous Agents",
+            "PL": "Autonomiczne Agenty",
+            "DE": "Autonome Agenten",
+            "AR": "وكلاء مستقلون",
+            "JA": "自律エージェント"
+          },
+          "7": {
+            "EN": "Superintelligence",
+            "PL": "Superinteligencja",
+            "DE": "Superintelligenz",
+            "AR": "ذكاء خارق",
+            "JA": "スーパーインテリジェンス"
+          }
+        }
       }
     }
   }

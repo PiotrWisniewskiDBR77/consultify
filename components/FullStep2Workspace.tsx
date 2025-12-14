@@ -1,6 +1,7 @@
+
 import React, { useState, useMemo } from 'react';
-import { FullSession, FullInitiative, Language, AxisId } from '../types';
-import { translations } from '../translations';
+import { FullSession, FullInitiative, AxisId } from '../types';
+import { useTranslation } from 'react-i18next';
 import { ArrowRight, Plus, Search, Layers } from 'lucide-react';
 import { InitiativeCard } from './InitiativeCard';
 import { InitiativeDetailModal } from './InitiativeDetailModal';
@@ -12,7 +13,6 @@ interface FullStep2WorkspaceProps {
   onCreateInitiative: (initiative: FullInitiative) => void;
   onEnrichInitiative?: (id: string) => Promise<void>;
   onNextStep: () => void;
-  language: Language;
 }
 
 export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
@@ -20,11 +20,11 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
   onUpdateInitiative,
   onCreateInitiative,
   onEnrichInitiative,
-  onNextStep,
-  language
+  onNextStep
 }) => {
-  const t = translations.fullInitiatives;
-  const ts = translations.sidebar;
+  const { t: translate } = useTranslation();
+  const t = translate('fullInitiatives', { returnObjects: true }) as any;
+  const ts = translate('sidebar', { returnObjects: true }) as any;
   const initiatives = useMemo(() => fullSession.initiatives || [], [fullSession.initiatives]);
   const { currentUser } = useAppStore();
 
@@ -61,11 +61,9 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
   };
 
   const getAxisLabel = React.useCallback((id: string) => {
-     
-    const key = `fullStep1_${id === 'digitalProducts' ? 'prod' : id.substring(0, 4)}` as any;
-     
-    return (ts as any)[key]?.[language] || id;
-  }, [language, ts]);
+    const key = `fullStep1_${id === 'digitalProducts' ? 'prod' : id.substring(0, 4)}` as keyof typeof ts;
+    return ts[key] || id;
+  }, [ts]);
 
   // Filter Logic
   const filteredInitiatives = useMemo(() => {
@@ -133,7 +131,7 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
           <select
             className="bg-slate-100 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-md px-2 py-1.5 text-xs text-navy-900 dark:text-slate-300 outline-none focus:border-blue-500"
             value={filterAxis}
-             
+
             onChange={(e) => setFilterAxis(e.target.value as any)}
           >
             <option value="ALL">All Axes</option>
@@ -149,7 +147,7 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
           <select
             className="bg-slate-100 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-md px-2 py-1.5 text-xs text-navy-900 dark:text-slate-300 outline-none focus:border-blue-500"
             value={filterPriority}
-             
+
             onChange={(e) => setFilterPriority(e.target.value as any)}
           >
             <option value="ALL">All Priorities</option>
@@ -167,7 +165,7 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
               {['none', 'axis', 'priority', 'status'].map((g) => (
                 <button
                   key={g}
-                   
+
                   onClick={() => setGroupBy(g as any)}
                   className={`px-2 py-1 round text-[10px] font-medium transition-colors ${groupBy === g ? 'bg-white dark:bg-navy-800 text-blue-600 dark:text-blue-400 get-shadow-sm' : 'text-slate-400 hover:text-navy-900 dark:hover:text-white'}`}
                 >
@@ -222,8 +220,8 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
           onClick={onNextStep}
           className="flex items-center gap-2 px-6 py-2.5 rounded-lg font-semibold text-sm transition-all shadow-lg bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/30"
         >
-          {t.nextStep[language]}
-          <ArrowRight size={16} className={language === 'AR' ? 'rotate-180' : ''} />
+          {t.nextStep}
+          <ArrowRight size={16} />
         </button>
       </div>
 
@@ -247,5 +245,3 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
     </div>
   );
 };
-
-

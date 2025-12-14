@@ -11,6 +11,7 @@ const PORT = process.env.PORT || 3005;
 const isProduction = process.env.NODE_ENV === 'production';
 const isTest = process.env.NODE_ENV === 'test';
 
+// Init Scheduler
 const Scheduler = require('./cron/scheduler');
 
 // Init Scheduler
@@ -132,6 +133,8 @@ app.use('/api/token-billing', tokenBillingRoutes);
 app.use('/api/token-billing', tokenBillingRoutes);
 app.use('/api/megatrends', megatrendRoutes);
 app.use('/api/webhooks', stripeWebhookRoutes);
+const reportRoutes = require('./routes/reports');
+app.use('/api/reports', reportRoutes);
 const ssoRoutes = require('./routes/sso');
 app.use('/api/sso', ssoRoutes);
 

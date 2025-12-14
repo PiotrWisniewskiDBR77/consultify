@@ -2,8 +2,8 @@
 import json
 import os
 
-langs = ['EN', 'PL', 'DE', 'AR']
-lc_map = {'EN': 'en', 'PL': 'pl', 'DE': 'de', 'AR': 'ar'}
+langs = ['EN', 'PL', 'DE', 'AR', 'JA']
+lc_map = {'EN': 'en', 'PL': 'pl', 'DE': 'de', 'AR': 'ar', 'JA': 'ja'}
 
 with open('scripts/full_translations.json', 'r') as f:
     full = json.load(f)

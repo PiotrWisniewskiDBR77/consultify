@@ -3,7 +3,7 @@ import { useScreenContext } from '../hooks/useScreenContext';
 import { SplitLayout } from '../components/SplitLayout';
 import { FullStep5Workspace } from '../components/FullStep5Workspace';
 import { FullInitiative, AppView, AIMessageHistory } from '../types';
-import { translations } from '../translations';
+import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../store/useAppStore';
 import { sendMessageToAI } from '../services/ai/gemini';
 import { AIFeedbackButton } from '../components/AIFeedbackButton';
@@ -20,8 +20,9 @@ export const FullExecutionView: React.FC = () => {
   } = useAppStore();
 
   const language = currentUser?.preferredLanguage || 'EN';
-   
-  const t = translations.fullExecution; // Use t?
+
+  const { t: translate } = useTranslation();
+  const t = translate('fullExecution', { returnObjects: true }) as any;
 
   // --- AI CONTEXT INJECTION ---
   const todoCount = fullSession.initiatives.filter(i => i.status === 'To Do' || i.status === 'Draft' || i.status === 'Ready').length;
@@ -123,7 +124,6 @@ export const FullExecutionView: React.FC = () => {
             updateFullSession({ step5Completed: true });
             onNavigate(AppView.FULL_STEP6_REPORTS);
           }}
-          language={language}
         />
       </div>
     </SplitLayout>

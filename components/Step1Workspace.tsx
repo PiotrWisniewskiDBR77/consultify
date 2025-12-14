@@ -1,48 +1,32 @@
+
+import React from 'react';
 import { ArrowRight, Box, Layers, Server } from 'lucide-react';
-import { CompanyProfile, FreeSession, Language } from '../types';
-import { translations } from '../translations';
+import { CompanyProfile, FreeSession } from '../types';
+import { useTranslation } from 'react-i18next';
 
 interface Step1WorkspaceProps {
   profile: Partial<CompanyProfile>;
   sessionData: Partial<FreeSession>;
   isStepComplete: boolean;
   onNextStep: () => void;
-  language: Language;
 }
 
 export const Step1Workspace: React.FC<Step1WorkspaceProps> = ({
   profile,
-   
   sessionData,
   isStepComplete,
-  onNextStep,
-  language
+  onNextStep
 }) => {
-  const t = translations.step1;
-
-  // Local helper to update profile from parent (passed via props, but we need a setter from props? 
-  // Wait, profile is just data. We need a way to UPDATE it. 
-  // The FreeAssessmentView holds the state. We need to expose an update method or internalize simple state?
-  // Current pattern in FreeAssessmentView: `setProfileData` is used in AI loop. 
-  // We need to allow manual edits here if we want "Pencil" to work or just display properly.
-  // For this tasks scope, let's assume we read from props, and updates happen via AI unless we add a callback.
-  // Actually, requirement says "User inputs in right panel". So we need an onChange.
-  // But the interface didn't have onChange. I will assume for now we display what AI gathered, 
-  // or I add an onChange prop if I can. 
-  // Let's stick to display for now to match interface, but improve layout. 
-  // PROPER FIX: I need to add onProfileUpdate to props.
-  // Since I can't change the parent in this single file edit, I will stick to layout updates 
-  // and assume data comes from the AI/State in parent. 
-  // WAIT - I can modify the interface here, but parent won't pass it. 
-  // I will check if I can modify parent later. For now, layout.
+  const { t: translate } = useTranslation();
+  const t = translate('step1', { returnObjects: true }) as any;
 
   return (
     <div className="flex flex-col h-full bg-navy-900">
       {/* Header / Progress */}
       <div className="h-20 border-b border-white/5 flex flex-col justify-center px-8 bg-navy-900 shrink-0">
         <div className="flex justify-between items-center mb-1">
-          <span className="text-sm font-semibold text-white tracking-wide">{t.title[language]}</span>
-          <span className="text-xs text-slate-500">{t.subtitle[language]}</span>
+          <span className="text-sm font-semibold text-white tracking-wide">{t.title}</span>
+          <span className="text-xs text-slate-500">{t.subtitle}</span>
         </div>
         <div className="w-full h-1 bg-navy-800 rounded-full overflow-hidden">
           <div className="h-full bg-purple-500 w-1/3 shadow-[0_0_10px_rgba(168,85,247,0.5)]"></div>
@@ -56,19 +40,19 @@ export const Step1Workspace: React.FC<Step1WorkspaceProps> = ({
         <div className="bg-gradient-to-br from-navy-950/80 to-navy-900/80 border border-white/10 rounded-xl p-6 relative group hover:border-purple-500/30 transition-colors backdrop-blur-sm shadow-xl">
           <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
             <span className="w-1 h-6 bg-purple-500 rounded-full"></span>
-            {t.profile[language]}
+            {t.profile}
           </h3>
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-1">
-              <label className="text-xs text-slate-500 uppercase tracking-wider font-medium">{t.industry[language]}</label>
+              <label className="text-xs text-slate-500 uppercase tracking-wider font-medium">{t.industry}</label>
               <p className="text-slate-200">{profile.industry || '---'}</p>
             </div>
             <div className="space-y-1">
-              <label className="text-xs text-slate-500 uppercase tracking-wider font-medium">{t.size[language]}</label>
+              <label className="text-xs text-slate-500 uppercase tracking-wider font-medium">{t.size}</label>
               <p className="text-slate-200">{profile.size || '---'}</p>
             </div>
             <div className="space-y-1 col-span-2">
-              <label className="text-xs text-slate-500 uppercase tracking-wider font-medium">{t.country[language]}</label>
+              <label className="text-xs text-slate-500 uppercase tracking-wider font-medium">{t.country}</label>
               <p className="text-slate-200">{profile.country || '---'}</p>
             </div>
           </div>
@@ -78,12 +62,12 @@ export const Step1Workspace: React.FC<Step1WorkspaceProps> = ({
         <div className="bg-navy-950/50 border border-white/10 rounded-xl p-6">
           <h3 className="text-lg font-semibold text-purple-200 mb-4 flex items-center gap-2">
             <Box size={20} />
-            {language === 'PL' ? 'Model Biznesowy' : 'Business Model'}
+            Business Model
           </h3>
           <div className="space-y-4">
             <div className="p-3 bg-white/5 rounded-lg border border-white/5">
               <p className="text-sm text-slate-300">
-                {profile.businessModel?.description || (language === 'PL' ? 'Brak opisu modelu.' : 'No model description.')}
+                {profile.businessModel?.description || 'No model description.'}
               </p>
               <div className="flex gap-2 mt-2">
                 {profile.businessModel?.type?.map(tag => (
@@ -100,7 +84,7 @@ export const Step1Workspace: React.FC<Step1WorkspaceProps> = ({
         <div className="bg-navy-950/50 border border-white/10 rounded-xl p-6">
           <h3 className="text-lg font-semibold text-blue-200 mb-4 flex items-center gap-2">
             <Layers size={20} />
-            {language === 'PL' ? 'Kluczowe Procesy' : 'Core Processes'}
+            Core Processes
           </h3>
           <div className="flex flex-wrap gap-2">
             {profile.coreProcesses && profile.coreProcesses.length > 0 ? (
@@ -110,7 +94,7 @@ export const Step1Workspace: React.FC<Step1WorkspaceProps> = ({
                 </span>
               ))
             ) : (
-              <span className="text-slate-500 text-sm italic">{language === 'PL' ? 'Nie zdefiniowano procesów.' : 'No processes defined.'}</span>
+              <span className="text-slate-500 text-sm italic">No processes defined.</span>
             )}
           </div>
         </div>
@@ -119,7 +103,7 @@ export const Step1Workspace: React.FC<Step1WorkspaceProps> = ({
         <div className="bg-navy-950/50 border border-white/10 rounded-xl p-6">
           <h3 className="text-lg font-semibold text-green-200 mb-4 flex items-center gap-2">
             <Server size={20} />
-            {language === 'PL' ? 'Krajobraz IT' : 'IT Landscape'}
+            IT Landscape
           </h3>
           <div className="grid grid-cols-2 gap-4">
             <div className="p-3 bg-white/5 rounded-lg">
@@ -157,8 +141,8 @@ export const Step1Workspace: React.FC<Step1WorkspaceProps> = ({
             : 'bg-navy-800 text-slate-500 cursor-not-allowed'
             } `}
         >
-          {t.nextStep[language]}
-          <ArrowRight size={18} className={language === 'AR' ? 'rotate-180' : ''} />
+          {t.nextStep}
+          <ArrowRight size={18} />
         </button>
       </div>
     </div>

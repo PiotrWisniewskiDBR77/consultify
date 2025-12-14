@@ -122,7 +122,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                       {isLastMessage && selectedMultiOptions.length > 0 && (
                         <button
                           onClick={handleMultiSelectConfirm}
-                          className="self-start px-4 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-medium rounded-md transition-colors"
+                          className="self-start btn-primary px-4 py-1.5 text-xs font-medium rounded-md"
                         >
                           Confirm Selection
                         </button>

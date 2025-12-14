@@ -231,7 +231,7 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
                         )}
                         {/* View All Actions Button */}
                         <div className="mt-4 text-center">
-                            <button onClick={() => onNavigate(AppView.FULL_STEP2_INITIATIVES)} className="text-sm font-bold text-purple-600 hover:text-purple-700 flex items-center justify-center gap-2 dark:text-purple-400">
+                            <button onClick={() => onNavigate(AppView.FULL_STEP2_INITIATIVES)} className="btn-ghost text-sm font-bold text-brand hover:text-brand-hover flex items-center justify-center gap-2 dark:text-brand-400">
                                 <LayoutDashboard size={14} />
                                 Manage All Initiatives
                             </button>

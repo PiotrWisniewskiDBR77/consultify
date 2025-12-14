@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { Api } from '../services/api';
@@ -19,7 +20,7 @@ const PROVIDER_ICONS: Record<string, React.ReactNode> = {
 };
 
 export const ModelSelector: React.FC = () => {
-    const { currentUser, language, setCurrentView } = useAppStore();
+    const { currentUser, setCurrentView } = useAppStore();
     const [options, setOptions] = useState<ModelOption[]>([]);
     const [isOpen, setIsOpen] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -64,7 +65,7 @@ export const ModelSelector: React.FC = () => {
             });
 
             if (currentUser?.aiConfig?.privateModels) {
-                 
+
                 currentUser.aiConfig.privateModels.forEach((pm: any) => {
                     newOptions.push({
                         id: pm.id, // e.g. private-123
@@ -112,7 +113,7 @@ export const ModelSelector: React.FC = () => {
         // If it's a Private Model, we must inject its credentials into active config
         // (This is how the rest of the app "knows" what key to use for the current session)
         if ((option as unknown as { sourceData?: unknown }).sourceData) {
-             
+
             const pm: any = (option as unknown as { sourceData: any }).sourceData;
             newConfig.apiKey = pm.apiKey;
             newConfig.endpoint = pm.endpoint;
@@ -199,10 +200,10 @@ export const ModelSelector: React.FC = () => {
                 <div className="absolute top-full right-0 mt-2 w-64 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg shadow-xl overflow-hidden z-50">
                     <div className="p-2 border-b border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-navy-950 flex justify-between items-center">
                         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2">
-                            {language === 'PL' ? 'Wybierz Dostawcę' : 'Active Provider'}
+                            Active Provider
                         </div>
                         <button
-                             
+
                             onClick={() => { setIsOpen(false); setCurrentView('SETTINGS_PROFILE' as any); }}
                             className="p-1 hover:bg-slate-200 dark:hover:bg-white/10 rounded text-slate-400"
                             title="Configure Keys"

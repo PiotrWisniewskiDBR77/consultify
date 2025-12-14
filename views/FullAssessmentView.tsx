@@ -1,13 +1,19 @@
+
 import React, { useEffect, useState } from 'react';
 import { SplitLayout } from '../components/SplitLayout';
-import { AppView, DRDAxis, AxisAssessment, AdditionalAudit, SessionMode } from '../types';
+import { AppView, DRDAxis, AxisAssessment, AdditionalAudit, SessionMode, MaturityLevel } from '../types';
 import { useAppStore } from '../store/useAppStore';
 import { Api } from '../services/api';
 import { AIMessageHistory } from '../services/ai/gemini';
 import { useAIStream } from '../hooks/useAIStream';
 import { AssessmentAxisWorkspace } from '../components/assessment/AssessmentAxisWorkspace';
+import { AssessmentWizard } from '../components/assessment/AssessmentWizard';
 import { AssessmentSummaryWorkspace } from '../components/assessment/AssessmentSummaryWorkspace';
 import { AssessmentAuditsWorkspace } from '../components/assessment/AssessmentAuditsWorkspace';
+import { useTranslation } from 'react-i18next';
+import { Settings, Smartphone, Briefcase, Database, Users, Lock, BrainCircuit, ArrowRight } from 'lucide-react';
+
+type AxisId = DRDAxis;
 
 export const FullAssessmentView: React.FC = () => {
   const {
@@ -24,7 +30,6 @@ export const FullAssessmentView: React.FC = () => {
 
   const { startStream } = useAIStream();
 
-  const language = currentUser?.preferredLanguage || 'EN';
   const [dashboardTab, setDashboardTab] = useState<'summary' | 'audits'>('summary');
 
   // Load Session Data
@@ -60,6 +65,25 @@ export const FullAssessmentView: React.FC = () => {
   const currentAxisId = getAxisFromView(currentAppView);
 
   // --- HANDLERS ---
+  const { t: translate } = useTranslation();
+  const t = translate('fullAssessment', { returnObjects: true }) as any;
+  const ts = translate('sidebar', { returnObjects: true }) as any;
+  const [interviewAxis, setInterviewAxis] = useState<{ id: AxisId; label: string } | null>(null);
+
+  const axes: { id: AxisId; label: string; icon: React.ReactNode; desc: string }[] = [
+    { id: 'processes', label: ts.fullStep1_proc, icon: <Settings size={22} />, desc: t.descriptions.processes },
+    { id: 'digitalProducts', label: ts.fullStep1_prod, icon: <Smartphone size={22} />, desc: t.descriptions.digitalProducts },
+    { id: 'businessModels', label: ts.fullStep1_model, icon: <Briefcase size={22} />, desc: t.descriptions.businessModels },
+    { id: 'culture', label: ts.fullStep1_cult, icon: <Users size={22} />, desc: t.descriptions.culture },
+    { id: 'dataManagement', label: ts.fullStep1_data, icon: <Database size={22} />, desc: t.descriptions.dataManagement },
+    { id: 'cybersecurity', label: ts.fullStep1_cyber, icon: <Lock size={22} />, desc: t.descriptions.cybersecurity },
+    { id: 'aiMaturity', label: ts.fullStep1_ai, icon: <BrainCircuit size={22} />, desc: t.descriptions.aiMaturity },
+  ];
+
+  // Wizard State - Disabled as per user request
+  const [isWizardActive, setIsWizardActive] = useState(false);
+
+  // Auto-start wizard removed.
 
   const handleAxisUpdate = async (axis: DRDAxis, data: Partial<AxisAssessment>) => {
     const updatedAssessment = { ...fullSession.assessment };
@@ -73,8 +97,12 @@ export const FullAssessmentView: React.FC = () => {
     await Api.saveSession(currentUser!.id, SessionMode.FULL, newSession, currentProjectId || undefined);
   };
 
+  const handleWizardComplete = (recommendedLevel: MaturityLevel, justification: string, areaScores: Record<string, number[]>) => {
+    // Wizard disabled
+  };
+
   const handleNextAxis = (current: DRDAxis) => {
-    const order: DRDAxis[] = ['processes', 'digitalProducts', 'businessModels', 'dataManagement', 'culture', 'cybersecurity', 'aiMaturity'];
+    const order: DRDAxis[] = ['processes', 'digitalProducts', 'businessModels', 'culture', 'dataManagement', 'cybersecurity', 'aiMaturity'];
     const idx = order.indexOf(current);
     if (idx < order.length - 1) {
       const next = order[idx + 1];
@@ -137,14 +165,6 @@ export const FullAssessmentView: React.FC = () => {
     }
     context += `\nUser asks: ${text}`;
 
-    // Placeholder message
-    // Placeholder message (The hook handles streaming updates to store, but SplitLayout handles visual merging)
-    // Actually, SplitLayout uses the GLOBAL streaming content to display.
-    // So we just need to start the stream.
-
-    // However, SplitLayout expects `activeChatMessages` + `streamingContent`.
-    // We already added the user message.
-
     // Start Stream
     startStream(text, history, context);
   };
@@ -158,8 +178,8 @@ export const FullAssessmentView: React.FC = () => {
     return (
       <SplitLayout title="DRD Assessment" onSendMessage={handleAiChat}>
         <div className="flex flex-col h-full bg-navy-900 border-l border-white/5 w-full">
-          {/* Back Navigation Bar */}
-          <div className="h-12 border-b border-white/5 flex items-center px-4 bg-navy-950/30">
+          {/* Back Navigation Bar - Wizard Toggle Removed */}
+          <div className="h-12 border-b border-white/5 flex items-center justify-between px-4 bg-navy-950/30">
             <button
               onClick={() => onNavigate(AppView.FULL_STEP1_ASSESSMENT)}
               className="text-xs text-slate-400 hover:text-white flex items-center gap-1"
@@ -174,7 +194,6 @@ export const FullAssessmentView: React.FC = () => {
               data={axisData}
               onChange={(d) => handleAxisUpdate(currentAxisId, d)}
               onNext={() => handleNextAxis(currentAxisId)}
-              language={language}
               // PRO Features Props
               context={{
                 goals: fullSession.contextSufficiency?.gaps ? [] : ['Growth', 'Efficiency'], // Mock or real if available
@@ -193,18 +212,28 @@ export const FullAssessmentView: React.FC = () => {
     <SplitLayout title="Assessment Dashboard" onSendMessage={handleAiChat}>
       <div className="flex flex-col h-full bg-navy-900 border-l border-white/5 w-full">
         {/* Tabs */}
-        <div className="h-16 border-b border-white/5 flex items-center px-8 gap-8 bg-navy-900 shrink-0">
+        <div className="h-16 border-b border-white/5 flex items-center px-8 bg-navy-900 shrink-0 justify-between">
+          <div className="flex items-center gap-8 h-full">
+            <button
+              onClick={() => setDashboardTab('summary')}
+              className={`h-full border-b-2 text-sm font-semibold transition-colors ${dashboardTab === 'summary' ? 'border-purple-500 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+            >
+              Assessment & Gaps
+            </button>
+            <button
+              onClick={() => setDashboardTab('audits')}
+              className={`h-full border-b-2 text-sm font-semibold transition-colors ${dashboardTab === 'audits' ? 'border-purple-500 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+            >
+              Additional Audits
+            </button>
+          </div>
+
           <button
-            onClick={() => setDashboardTab('summary')}
-            className={`h-full border-b-2 text-sm font-semibold transition-colors ${dashboardTab === 'summary' ? 'border-purple-500 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+            onClick={handleGenerateInitiatives}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white rounded-lg text-sm font-bold shadow-lg shadow-green-900/20 transition-all"
           >
-            Assessment & Gaps
-          </button>
-          <button
-            onClick={() => setDashboardTab('audits')}
-            className={`h-full border-b-2 text-sm font-semibold transition-colors ${dashboardTab === 'audits' ? 'border-purple-500 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
-          >
-            Additional Audits
+            <span>Generuj Inicjatywy</span>
+            <ArrowRight size={16} />
           </button>
         </div>
 
@@ -244,8 +273,18 @@ export const FullAssessmentView: React.FC = () => {
               </div>
               <AssessmentSummaryWorkspace
                 assessment={fullSession.assessment || {}}
-                onGenerateInitiatives={handleGenerateInitiatives}
-                language={language}
+                onNavigate={(axis) => {
+                  const viewMap: Record<DRDAxis, AppView> = {
+                    processes: AppView.FULL_STEP1_PROCESSES,
+                    digitalProducts: AppView.FULL_STEP1_DIGITAL,
+                    businessModels: AppView.FULL_STEP1_MODELS,
+                    dataManagement: AppView.FULL_STEP1_DATA,
+                    culture: AppView.FULL_STEP1_CULTURE,
+                    cybersecurity: AppView.FULL_STEP1_CYBERSECURITY,
+                    aiMaturity: AppView.FULL_STEP1_AI
+                  };
+                  onNavigate(viewMap[axis]);
+                }}
               />
             </>
           ) : (
@@ -254,7 +293,6 @@ export const FullAssessmentView: React.FC = () => {
               audits={fullSession.audits || []}
               onAddAudit={handleAuditAdd}
               onRemoveAudit={handleAuditRemove}
-              language={language}
             />
           )}
         </div>

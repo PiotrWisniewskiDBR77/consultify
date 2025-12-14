@@ -5,43 +5,56 @@
     "fullProject": "Full Transformation",
     "masterclass": "Masterclass",
     "resources": "Resources",
-    "module1": "1. Expectations & Challenges",
+    "module1": "Expectations & Challenges",
     "module1_1": "Company Profile",
-    "module1_2": "Goals & Expectations",
-    "module1_3": "Challenges Map",
-    "module2": "2. Assessment (DRD)",
-    "module3": "3. Initiatives & Roadmap",
-    "module3_1": "Initiatives List",
-    "module3_2": "Roadmap Builder",
-    "module4": "4. Pilot Execution",
-    "module5": "5. Full Rollout",
-    "module6": "6. Economics & ROI",
-    "module7": "7. Execution Reports",
+    "module1_2": "Strategic Goals",
+    "module1_3": "Challenge Map",
+    "module2": "DRD Assessment",
+    "module3": "Initiatives & Roadmap",
+    "module3_1": "Generator & List",
+    "module3_2": "Roadmap",
+    "module4": "Pilot Execution",
+    "module5": "Full Rollout",
+    "module6": "Economics & ROI",
+    "module7": "Reports",
     "adminPanel": "Admin Panel",
     "adminUsers": "Users",
     "adminProjects": "Projects",
     "adminLLM": "LLM Management",
     "adminKnowledge": "Knowledge Base",
-    "adminFeedback": "User Feedback",
+    "adminFeedback": "Feedback",
     "quickStep1": "Company & Expectations",
-    "quickStep2": "Challenges & Profile Questions",
+    "quickStep2": "Challenges & Profile",
     "quickStep3": "Recommendations",
     "fullStep1": "Assessment (DRD)",
-    "fullStep1_proc": "Processes",
+    "fullStep1_proc": "Digital Processes",
     "fullStep1_prod": "Digital Products",
     "fullStep1_model": "Business Models",
     "fullStep1_data": "Data Management",
     "fullStep1_cult": "Culture",
+    "fullStep1_cyber": "Cybersecurity",
     "fullStep1_ai": "AI Maturity",
-    "fullStep2": "Initiatives Generator",
-    "fullStep3": "Transformation Roadmap",
+    "fullStep2": "Initiative Generator",
+    "fullStep3": "Roadmap",
     "fullStep4": "Economics & ROI",
     "fullStep5": "Execution Dashboard",
     "fullStep6": "Reports",
     "newConversation": "New Conversation",
     "settings": "Settings",
     "mobileApp": "Mobile App",
-    "logOut": "Log Out"
+    "logOut": "Log Out",
+    "intro": "Intro",
+    "context": {
+      "profile": "Company Profile",
+      "goals": "Goals & Expectations",
+      "challenges": "Challenge Map",
+      "megatrends": "Megatrend Scanner",
+      "strategy": "Strategic Synthesis"
+    },
+    "dashboardSub": {
+      "overview": "Overview",
+      "snapshot": "Execution Snapshot"
+    }
   },
   "auth": {
     "startQuick": "Start Your Quick Assessment",
@@ -103,7 +116,7 @@
       "industrySub": "Production. Got it. What kind specifically?",
       "size": "How many employees do you have roughly?",
       "country": "Understood. Scale changes the available solutions.\n\nWhich country is your main operation in?",
-      "challenges": "Great, let's explore your current challenges to build meaningful recommendations.\n\nWhat is your main operational pain point? (Select one or type)",
+      "challenges": "Great, let's explore your current challenges to build meaningful recommendations.\n\nWhat is your main operational pain point (Select one or type)",
       "goal": "Understood. Dealing with key challenges.\n\nNow, if we talk in 12 months, what would be the MAIN success statement you'd like to make?",
       "horizon": "Clear goal.\n\nWhen do you need to see the first tangible results?",
       "summary": "Perfect. We have the profile.\n\nSummary:\n- Role: {role}\n- Sector: {industry}\n- Goal: {goal}\n\nI will now generate specific ideas for you.",
@@ -158,91 +171,110 @@
       "businessModels": "Scalability & Revenue",
       "dataManagement": "Quality & Governance",
       "culture": "Skills & Mindset",
+      "cybersecurity": "Security & Risk",
       "aiMaturity": "Adoption & Strategy"
     },
     "questions": {
       "processes": [
         {
           "EN": "How standardized are your core production processes?",
-          "PL": "Jak ustandaryzowane są Twoje główne procesy produkcji?"
+          "PL": "Jak ustandaryzowane są Twoje główne procesy produkcji?",
+          "JA": "中核となる生産プロセスはどの程度標準化されていますか？"
         },
         {
           "EN": "How well are your processes measured and monitored?",
-          "PL": "Jak dobrze mierzone i monitorowane są procesy?"
+          "PL": "Jak dobrze mierzone i monitorowane są procesy?",
+          "JA": "プロセスはどの程度測定・監視されていますか？"
         },
         {
           "EN": "To what extent are your processes digitally supported?",
-          "PL": "W jakim stopniu procesy są wspierane cyfrowo?"
+          "PL": "W jakim stopniu procesy są wspierane cyfrowo?",
+          "JA": "プロセスはどの程度デジタルでサポートされていますか？"
         }
       ],
       "digitalProducts": [
         {
           "EN": "Does your product portfolio include digital services?",
-          "PL": "Czy Twoje portfolio zawiera usługi cyfrowe?"
+          "PL": "Czy Twoje portfolio zawiera usługi cyfrowe?",
+          "JA": "製品ポートフォリオにデジタルサービスは含まれていますか？"
         },
         {
           "EN": "How integrated are your products with IoT?",
-          "PL": "Jak zintegrowane są produkty z IoT?"
+          "PL": "Jak zintegrowane są produkty z IoT?",
+          "JA": "製品はIoTとどの程度統合されていますか？"
         },
         {
           "EN": "Do you use customer usage data to improve products?",
-          "PL": "Czy używasz danych o użyciu do ulepszania produktów?"
+          "PL": "Czy używasz danych o użyciu do ulepszania produktów?",
+          "JA": "顧客の使用データを使用して製品を改善していますか？"
         }
       ],
       "businessModels": [
         {
           "EN": "Are you shifting from CAPEX to OPEX models?",
-          "PL": "Czy przechodzisz z modeli CAPEX na OPEX?"
+          "PL": "Czy przechodzisz z modeli CAPEX na OPEX?",
+          "JA": "CAPEXからOPEXモデルに移行していますか？"
         },
         {
           "EN": "Do you have digital ecosystem partnerships?",
-          "PL": "Czy masz partnerstwa w ekosystemie cyfrowym?"
+          "PL": "Czy masz partnerstwa w ekosystemie cyfrowym?",
+          "JA": "デジタルエコシステムパートナーシップを結んでいますか？"
         },
         {
           "EN": "How scalable is your current business model?",
-          "PL": "Jak skalowalny jest obecny model biznesowy?"
+          "PL": "Jak skalowalny jest obecny model biznesowy?",
+          "JA": "現在のビジネスモデルはどの程度拡張可能ですか？"
         }
       ],
       "dataManagement": [
         {
           "EN": "Is there a single source of truth for key data?",
-          "PL": "Czy istnieje jedno źródło prawdy dla kluczowych danych?"
+          "PL": "Czy istnieje jedno źródło prawdy dla kluczowych danych?",
+          "JA": "主要データの「信頼できる唯一の情報源」はありますか？"
         },
         {
           "EN": "How automated is data collection?",
-          "PL": "Jak zautomatyzowane jest zbieranie danych?"
+          "PL": "Jak zautomatyzowane jest zbieranie danych?",
+          "JA": "データ収集はどの程度自動化されていますか？"
         },
         {
           "EN": "Do you use predictive analytics?",
-          "PL": "Czy używasz analityki predykcyjnej?"
+          "PL": "Czy używasz analityki predykcyjnej?",
+          "JA": "予測分析を使用していますか？"
         }
       ],
       "culture": [
         {
           "EN": "How open is the leadership to digital change?",
-          "PL": "Jak otwarte jest kierownictwo na zmiany cyfrowe?"
+          "PL": "Jak otwarte jest kierownictwo na zmiany cyfrowe?",
+          "JA": "リーダーシップはデジタル変革に対してどの程度オープンですか？"
         },
         {
           "EN": "Do employees have digital skills training?",
-          "PL": "Czy pracownicy mają szkolenia z umiejętności cyfrowych?"
+          "PL": "Czy pracownicy mają szkolenia z umiejętności cyfrowych?",
+          "JA": "従業員はデジタルスキルのトレーニングを受けていますか？"
         },
         {
           "EN": "Is innovation rewarded in the company?",
-          "PL": "Czy innowacyjność jest nagradzana w firmie?"
+          "PL": "Czy innowacyjność jest nagradzana w firmie?",
+          "JA": "会社ではイノベーションが報われていますか？"
         }
       ],
       "aiMaturity": [
         {
           "EN": "Are you piloting any AI solutions currently?",
-          "PL": "Czy pilotujesz obecnie jakieś rozwiązania AI?"
+          "PL": "Czy pilotujesz obecnie jakieś rozwiązania AI?",
+          "JA": "現在AIソリューションをパイロット運用していますか？"
         },
         {
           "EN": "Do you have data ready for AI training?",
-          "PL": "Czy masz dane gotowe do trenowania AI?"
+          "PL": "Czy masz dane gotowe do trenowania AI?",
+          "JA": "AIトレーニング用のデータは準備できていますか？"
         },
         {
           "EN": "Is there an AI strategy in place?",
-          "PL": "Czy istnieje strategia AI?"
+          "PL": "Czy istnieje strategia AI?",
+          "JA": "AI戦略は策定されていますか？"
         }
       ]
     }
@@ -389,6 +421,569 @@
       "language": "Language",
       "save": "Save Changes",
       "saved": "Saved!"
+    }
+  },
+  "common": {
+    "status": {
+      "saved": "Auto-saved",
+      "saving": "Saving...",
+      "unsaved": "Unsaved changes",
+      "error": "Save failed"
+    },
+    "impersonation": {
+      "banner": "IMPERSONATING: {{email}}",
+      "stop": "Stop Impersonating"
+    },
+    "underConstruction": "Component Under Construction"
+  },
+  "assessment": {
+    "workspace": {
+      "header": "DRD Assessment",
+      "senseCheck": "AI Sense Check",
+      "analyzing": "Analyzing...",
+      "logicVerified": "Logic Verified",
+      "logicWarning": "Logic Warning",
+      "actual": "Actual",
+      "target": "Target",
+      "maturityLevels": "Maturity Levels",
+      "transformationPathway": "Transformation Pathway",
+      "pathwayIntro": "To move from Level {{actual}} to Level {{target}}, the following key shifts are required:",
+      "transitionPhase": "Transition Phase {{phase}}",
+      "impliedStep": "implied step from {{from}} to {{to}}",
+      "selectLevelsHint": "Select Actual and Target levels to visualize the pathway.",
+      "strategicRationale": "Strategic Rationale",
+      "rationalePlaceholder": "Why is this target critical for your business strategy?",
+      "proMode": "PRO Mode Active: Logic Validation Enabled",
+      "confirmNext": "Confirm & Next",
+      "validated": "Assessment Validated",
+      "consultantWarning": "Consultant Warning"
+    },
+    "wizard": {
+      "startTitle": "Start Assessment",
+      "startDesc": "Answer a few questions so our algorithm can recommend your digital maturity level in this area.",
+      "startBtn": "Start",
+      "questionProgress": "Question {{current}} / {{total}}",
+      "yes": "Yes, fully",
+      "partial": "Partially / In Progress",
+      "no": "No",
+      "skip": "Skip (Not applicable)",
+      "recommendedLevel": "Recommended Level",
+      "suggestedLevelDesc": "Based on your answers, we suggest this maturity level.",
+      "acceptResult": "Accept Result",
+      "adjustManually": "Adjust Manually",
+      "cancel": "Cancel"
+    },
+    "axisContent": {
+      "processes": {
+        "title": "Digital Processes",
+        "intro": "Assessment of 9 key business process areas.",
+        "areas": {
+          "sales": {
+            "title": "Sales",
+            "levels": {
+              "1": "Basic Data Registration",
+              "2": "CRM Implementation",
+              "3": "Integration with ERP/Marketing",
+              "4": "Sales Automation",
+              "5": "Omnichannel Integration",
+              "6": "AI-Driven Sales Forecasting",
+              "7": "Autonomous Sales Agents"
+            }
+          },
+          "marketing": {
+            "title": "Marketing",
+            "levels": {
+              "1": "Basic Promotion",
+              "2": "Digital Presence",
+              "3": "Marketing Automation Tools",
+              "4": "Personalization & Segmentation",
+              "5": "Data-Driven Campaigns",
+              "6": "Predictive Marketing (AI)",
+              "7": "Real-time Hyper-personalization"
+            }
+          },
+          "technology": {
+            "title": "Technology (R&D)",
+            "levels": {
+              "1": "Manual Design",
+              "2": "CAD/CAM Tools",
+              "3": "Simulation Tools",
+              "4": "Rapid Prototyping (3D Print)",
+              "5": "Digital Twin",
+              "6": "AI-Driven Design",
+              "7": "Autonomous R&D"
+            }
+          },
+          "purchasing": {
+            "title": "Purchasing",
+            "levels": {
+              "1": "Ad-hoc Purchasing",
+              "2": "Digital Orders",
+              "3": "Procurement System",
+              "4": "Automated Replenishment",
+              "5": "Supplier Integration",
+              "6": "AI-Driven Procurement",
+              "7": "Autonomous Sourcing"
+            }
+          },
+          "logistics": {
+            "title": "Logistics",
+            "levels": {
+              "1": "Manual Tracking",
+              "2": "WMS Implementation",
+              "3": "Integrated Logistics",
+              "4": "Real-time Tracking",
+              "5": "Automated Warehousing",
+              "6": "Predictive Supply Chain",
+              "7": "Autonomous Logistics Network"
+            }
+          },
+          "production": {
+            "title": "Production",
+            "levels": {
+              "1": "Manual Operations",
+              "2": "Machine Monitoring",
+              "3": "Process Control Systems",
+              "4": "Automated Production Lines",
+              "5": "MES Implementation",
+              "6": "Digital Twin of Production",
+              "7": "Autonomous Factory"
+            }
+          },
+          "quality": {
+            "title": "Quality Control",
+            "levels": {
+              "1": "Manual Inspection",
+              "2": "Digital Records",
+              "3": "Statistical Process Control",
+              "4": "Automated Inspection",
+              "5": "Integrated Quality Management",
+              "6": "Predictive Quality (AI)",
+              "7": "Zero-Defect Autonomous Systems"
+            }
+          },
+          "finance": {
+            "title": "Finance",
+            "levels": {
+              "1": "Spreadsheets",
+              "2": "Accounting Software",
+              "3": "ERP Financial Modules",
+              "4": "Automated Invoicing",
+              "5": "Real-time Financial Controlling",
+              "6": "Predictive Financial Modeling",
+              "7": "Autonomous Finance Operations"
+            }
+          },
+          "hr": {
+            "title": "HR & Admin",
+            "levels": {
+              "1": "Paper Records",
+              "2": "Basic HR Software",
+              "3": "HRM System",
+              "4": "Talent Management System",
+              "5": "People Analytics",
+              "6": "AI Recruitment & Retention",
+              "7": "Autonomous Workforce Management"
+            }
+          }
+        }
+      },
+      "digitalProducts": {
+        "title": "Digital Products",
+        "intro": "Assessment of product digitization and fit.",
+        "areas": {
+          "electronic": {
+            "title": "Electronic Form",
+            "levels": {
+              "1": "Basic Digital Format",
+              "2": "Multimedia Content",
+              "3": "Interactive Applications",
+              "4": "Cloud-Based Services",
+              "5": "API-First Products",
+              "6": "AI-Enhanced Products",
+              "7": "Autonomous Digital Services"
+            }
+          },
+          "community": {
+            "title": "Community Based",
+            "levels": {
+              "1": "No Community",
+              "2": "Basic User Forum",
+              "3": "Active User Community",
+              "4": "Community Support",
+              "5": "Co-Creation with Community",
+              "6": "Community-Led Development",
+              "7": "Self-Governing Ecosystem"
+            }
+          },
+          "ict": {
+            "title": "ICT Based",
+            "levels": {
+              "1": "Non-ICT Product",
+              "2": "Basic ICT Features",
+              "3": "Connected Product (IoT)",
+              "4": "Remote Control/Monitoring",
+              "5": "Data-Generating Product",
+              "6": "Smart Product",
+              "7": "Autonomous Product"
+            }
+          },
+          "fit": {
+            "title": "Market Fit & Customization",
+            "levels": {
+              "1": "Standard Product",
+              "2": "Basic Options",
+              "3": "Configurable Product",
+              "4": "Mass Customization",
+              "5": "Personalized Product",
+              "6": "Hyper-Personalization",
+              "7": "Liquid Product (Real-time Adaptation)"
+            }
+          },
+          "scalability": {
+            "title": "Scalability",
+            "levels": {
+              "1": "Local Only",
+              "2": "Regional Replication",
+              "3": "National Scale",
+              "4": "International Export",
+              "5": "Global Platform",
+              "6": "Infinite Scalability (Cloud-Native)",
+              "7": "Universal Availability"
+            }
+          }
+        }
+      },
+      "businessModels": {
+        "title": "Digital Business Models",
+        "intro": "Assessment of new revenue streams and models.",
+        "areas": {
+          "ecommerce": {
+            "title": "E-commerce",
+            "levels": {
+              "1": "No Online Sales",
+              "2": "Basic Web Shop",
+              "3": "Integrated Web Store",
+              "4": "Marketplace Presence",
+              "5": "Omnichannel Commerce",
+              "6": "AI-Driven Commerce",
+              "7": "Autonomous Commerce"
+            }
+          },
+          "platform": {
+            "title": "Platform Models",
+            "levels": {
+              "1": "Linear Business",
+              "2": "Basic Partner Portal",
+              "3": "Two-Sided Platform",
+              "4": "Multi-Sided Platform",
+              "5": "Ecosystem Orchestrator",
+              "6": "AI-Driven Ecosystem",
+              "7": "Autonomous Ecosystem"
+            }
+          },
+          "aas": {
+            "title": "As-a-Service",
+            "levels": {
+              "1": "Product Sales Only",
+              "2": "Maintenance Contracts",
+              "3": "Leasing/Rental",
+              "4": "Pay-per-Use",
+              "5": "Value-Based Pricing",
+              "6": "Outcome-Based Model",
+              "7": "Everything-as-a-Service"
+            }
+          },
+          "sharing": {
+            "title": "Asset Sharing",
+            "levels": {
+              "1": "Exclusive Ownership",
+              "2": "Internal Sharing",
+              "3": "Partner Sharing",
+              "4": "Public Sharing Economy",
+              "5": "P2P Asset Sharing",
+              "6": "AI-Optimized Sharing",
+              "7": "Autonomous Asset Pooling"
+            }
+          },
+          "monetization": {
+            "title": "Data Monetization",
+            "levels": {
+              "1": "No Data Use",
+              "2": "Internal Reporting",
+              "3": "Process Optimization",
+              "4": "Data-Enhanced Products",
+              "5": "Data Sales / Insights",
+              "6": "Data-Driven Revenue Models",
+              "7": "Data as Primary Asset"
+            }
+          }
+        }
+      },
+      "culture": {
+        "title": "Transformation Culture",
+        "intro": "Assessment of organizational mindset and readiness.",
+        "areas": {
+          "leadership": {
+            "title": "Leadership Styles",
+            "levels": {
+              "1": "Traditional Hierarchy",
+              "2": "Transactional Leadership",
+              "3": "Participative Leadership",
+              "4": "Transformational Leadership",
+              "5": "Servant Leadership",
+              "6": "Distributed Leadership",
+              "7": "Networked Leadership"
+            }
+          },
+          "readiness": {
+            "title": "Readiness for Change",
+            "levels": {
+              "1": "Resistance to Change",
+              "2": "Awareness of Need",
+              "3": "Pilot Projects",
+              "4": "Strategic Alignment",
+              "5": "Organization-wide Buy-in",
+              "6": "Agile Adaptation",
+              "7": "Continuous Reinvention"
+            }
+          },
+          "improvement": {
+            "title": "Continuous Improvement",
+            "levels": {
+              "1": "Ad-hoc Fixes",
+              "2": "Basic Reviews",
+              "3": "Structured Improvement Process",
+              "4": "Kaizen / Lean Culture",
+              "5": "Data-Driven Improvement",
+              "6": "Predictive Optimization",
+              "7": "Self-Optimizing Organization"
+            }
+          },
+          "innovation": {
+            "title": "Innovation Culture",
+            "levels": {
+              "1": "No Innovation Focus",
+              "2": "R&D Department Only",
+              "3": "Innovation Projects",
+              "4": "Open Innovation",
+              "5": "Innovation Ecosystem",
+              "6": "Disruptive Innovation",
+              "7": "Innovation DNA"
+            }
+          },
+          "resources": {
+            "title": "Resource Availability",
+            "levels": {
+              "1": "Scarcity Mindset",
+              "2": "Basic Budgeting",
+              "3": "Strategic Allocation",
+              "4": "Flexible Resourcing",
+              "5": "On-Demand Resourcing",
+              "6": "Crowdsourced Resources",
+              "7": "Abundant Ecosystem Resources"
+            }
+          }
+        }
+      },
+      "dataManagement": {
+        "title": "Data Management",
+        "intro": "Assessment of data governance and utilization.",
+        "areas": {
+          "collection": {
+            "title": "Data Collection",
+            "levels": {
+              "1": "Manual Entry",
+              "2": "Batch Processing",
+              "3": "Automated Collection",
+              "4": "Real-time Streaming",
+              "5": "IoT / Sensor Networks",
+              "6": "AI-Enhanced Collection",
+              "7": "Autonomous Data Sensing"
+            }
+          },
+          "storage": {
+            "title": "Data Storage",
+            "levels": {
+              "1": "Local Files",
+              "2": "Central Server",
+              "3": "Data Warehouse",
+              "4": "Cloud Storage",
+              "5": "Data Lake",
+              "6": "Distributed Ledger",
+              "7": "Decentralized Mesh"
+            }
+          },
+          "communication": {
+            "title": "Data Communication",
+            "levels": {
+              "1": "Sneakernet (USB/Print)",
+              "2": "Local Network (LAN)",
+              "3": "Connected Systems (API)",
+              "4": "Enterprise Bus (ESB)",
+              "5": "Event-Driven Architecture",
+              "6": "Real-time Mesh",
+              "7": "Neural Network Communication"
+            }
+          },
+          "analysis": {
+            "title": "Big Data Analysis",
+            "levels": {
+              "1": "Spreadsheets",
+              "2": "Basic Reporting",
+              "3": "BI Dashboards",
+              "4": "Advanced Analytics",
+              "5": "Big Data Platforms",
+              "6": "Predictive Analytics",
+              "7": "Prescriptive AI"
+            }
+          },
+          "computing": {
+            "title": "Computing",
+            "levels": {
+              "1": "Desktop PCs",
+              "2": "On-Premise Servers",
+              "3": "Virtualization",
+              "4": "Cloud Computing",
+              "5": "Edge Computing",
+              "6": "Quantum-Ready",
+              "7": "Ubiquitous Computing"
+            }
+          }
+        }
+      },
+      "cybersecurity": {
+        "title": "Cybersecurity",
+        "intro": "Assessment of security posture.",
+        "areas": {
+          "strategy": {
+            "title": "Strategy & Risk",
+            "levels": {
+              "1": "No Strategy",
+              "2": "Basic Policy",
+              "3": "Risk Assessment",
+              "4": "Compliance Framework",
+              "5": "Integrated Risk Management",
+              "6": "Predictive Risk AI",
+              "7": "Autonomous Immunosystem"
+            }
+          },
+          "network": {
+            "title": "Network & Systems",
+            "levels": {
+              "1": "Firewall Only",
+              "2": "Antivirus/Malware",
+              "3": "Network Segmentation",
+              "4": "IDPS",
+              "5": "Zero Trust Architecture",
+              "6": "AI-Driven Defense",
+              "7": "Self-Healing Networks"
+            }
+          },
+          "dataProtection": {
+            "title": "Data Protection",
+            "levels": {
+              "1": "No Encryption",
+              "2": "Disk Encryption",
+              "3": "Transit Encryption",
+              "4": "DLP (Data Loss Prevention)",
+              "5": "End-to-End Encryption",
+              "6": "Privacy-Enhancing Tech",
+              "7": "Quantum-Safe Encryption"
+            }
+          },
+          "education": {
+            "title": "Education & Quality",
+            "levels": {
+              "1": "No Training",
+              "2": "Ad-hoc Awareness",
+              "3": "Regular Training",
+              "4": "Phishing Simulations",
+              "5": "Security Culture",
+              "6": "Adaptive Learning",
+              "7": "Security-First Mindset"
+            }
+          },
+          "contingency": {
+            "title": "Contingency Plan",
+            "levels": {
+              "1": "No Plan",
+              "2": "Backup Only",
+              "3": "Disaster Recovery Plan",
+              "4": "Business Continuity Plan",
+              "5": "Resilience Testing",
+              "6": "Automated Recovery",
+              "7": "Anti-Fragile Operations"
+            }
+          }
+        }
+      },
+      "aiMaturity": {
+        "title": "AI Maturity",
+        "intro": "Assessment of Artificial Intelligence adoption.",
+        "areas": {
+          "strategy": {
+            "title": "AI Strategy",
+            "levels": {
+              "1": "No Strategy",
+              "2": "Interest/Exploration",
+              "3": "Pilot Projects",
+              "4": "Departmental Strategy",
+              "5": "Enterprise Strategy",
+              "6": "AI-First Strategy",
+              "7": "AI-Native Organization"
+            }
+          },
+          "data_readiness": {
+            "title": "Data Readiness for AI",
+            "levels": {
+              "1": "Unstructured Data",
+              "2": "Siloed Data",
+              "3": "Cleaned Datasets",
+              "4": "Data Pipeline",
+              "5": "Feature Engineering",
+              "6": "Real-time Training Data",
+              "7": "Self-Labeling Data"
+            }
+          },
+          "talent": {
+            "title": "AI Talent & Skills",
+            "levels": {
+              "1": "No Skills",
+              "2": "Outsourced Only",
+              "3": "Internal DS Team",
+              "4": "Cross-functional AI Teams",
+              "5": "AI Literacy Company-wide",
+              "6": "Top-tier AI Research",
+              "7": "Democratized AI Creation"
+            }
+          },
+          "governance": {
+            "title": "AI Governance & Ethics",
+            "levels": {
+              "1": "No Governance",
+              "2": "Basic Guidelines",
+              "3": "Ethics Committee",
+              "4": "Responsible AI Framework",
+              "5": "Auditable AI",
+              "6": "Explainable AI (XAI)",
+              "7": "Ethical AI by Design"
+            }
+          },
+          "deployment": {
+            "title": "Deployment & MLOps",
+            "levels": {
+              "1": "Manual Deployment",
+              "2": "Scripted Deployment",
+              "3": "Basic MLOps",
+              "4": "CI/CD for ML",
+              "5": "Automated Retraining",
+              "6": "Continuous Learning",
+              "7": "Autonomous Lifecycle"
+            }
+          }
+        }
+      }
     }
   }
 }

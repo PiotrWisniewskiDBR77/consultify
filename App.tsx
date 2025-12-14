@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
-import { translations } from './translations';
+import { useTranslation } from 'react-i18next';
 import { WelcomeView } from './views/WelcomeView';
 import { AuthView } from './views/AuthView';
 import { FreeAssessmentView } from './views/FreeAssessmentView';
@@ -31,6 +31,7 @@ import { NotificationDropdown } from './components/NotificationDropdown';
 import { AutoSaveProvider, useAutoSave } from './src/context/AutoSaveContext';
 import { SystemHealth } from './components/SystemHealth';
 import { ChatOverlay } from './components/AIChat/ChatOverlay';
+import { AIProvider } from './contexts/AIContext';
 
 const AppContent = () => {
     const {
@@ -38,16 +39,21 @@ const AppContent = () => {
         sessionMode, setSessionMode,
         currentUser, setCurrentUser,
         authInitialStep, setAuthInitialStep,
-        language, setLanguage,
         setIsSidebarOpen,
-        isSidebarCollapsed, // Added for layout adjustment
+        isSidebarCollapsed,
         // setFreeSessionData,
         fullSessionData, setFullSessionData,
         logout,
         theme, toggleTheme
     } = useAppStore();
 
+    const { t, i18n } = useTranslation();
     const { status } = useAutoSave();
+
+    // Handle RTL
+    useEffect(() => {
+        document.dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
+    }, [i18n.language]);
 
     useEffect(() => {
         if (theme === 'dark') {
@@ -101,7 +107,7 @@ const AppContent = () => {
     };
 
     const handleAuthSuccess = (user: User) => {
-        setCurrentUser({ ...user, preferredLanguage: language });
+        setCurrentUser({ ...user });
 
         // Redirect logic
         if (user.role === 'SUPERADMIN') {
@@ -128,57 +134,50 @@ const AppContent = () => {
         }
     };
 
-    // const startChat = (mode: SessionMode) => {
-    //     if (mode === SessionMode.FREE) {
-    //         setCurrentView(AppView.QUICK_STEP1_PROFILE);
-    //     } else {
-    //         setCurrentView(AppView.FULL_STEP1_ASSESSMENT);
-    //     }
-    // };
-
     const isSessionView = currentView !== AppView.WELCOME &&
         currentView !== AppView.AUTH &&
         currentView !== AppView.USER_DASHBOARD &&
         currentUser?.role !== 'SUPERADMIN';
 
     const getBreadcrumbs = () => {
-        const t = translations.sidebar;
-        const lang = language;
+        const sidebarT = t('sidebar', { returnObjects: true }) as any;
+        const step1T = t('step1', { returnObjects: true }) as any;
+        const dashboardSubT = t('sidebar.dashboardSub', { returnObjects: true }) as any;
 
         const viewParts = currentView.split('_');
 
-        let section = 'Dashboard';
+        let section = sidebarT.dashboard || 'Dashboard';
         let sub = '';
 
         if (viewParts.includes('QUICK')) {
-            section = t.quickAssessment[lang];
+            section = sidebarT.quickAssessment;
             const stepNum = viewParts[1]?.replace('STEP', '') || '1';
-            sub = `${translations.step1.subtitle[lang]} ${stepNum}`;
+            sub = `${step1T.subtitle} ${stepNum}`;
         } else if (viewParts.includes('FULL')) {
-            section = t.fullProject[lang];
+            section = sidebarT.fullProject;
             const stepNum = viewParts[1]?.replace('STEP', '') || '1';
             // Maybe map step names?
-            if (viewParts.includes('STEP1')) sub = t.fullStep1[lang];
-            else if (viewParts.includes('STEP2')) sub = t.fullStep2[lang];
-            else if (viewParts.includes('STEP3')) sub = t.fullStep3[lang];
-            else if (viewParts.includes('STEP4')) sub = t.fullStep4[lang];
-            else if (viewParts.includes('STEP5')) sub = t.fullStep5[lang];
-            else if (viewParts.includes('STEP6')) sub = t.fullStep6[lang];
-            else sub = `${t.fullProject[lang]} ${stepNum}`;
+            if (viewParts.includes('STEP1')) sub = sidebarT.fullStep1;
+            else if (viewParts.includes('STEP2')) sub = sidebarT.module3_1; // Initiatives List match
+            else if (viewParts.includes('STEP3')) sub = sidebarT.module3_2; // Roadmap Builder match
+            else if (viewParts.includes('STEP4')) sub = sidebarT.module6;
+            else if (viewParts.includes('STEP5')) sub = sidebarT.module5; // Adjust as needed
+            else if (viewParts.includes('STEP6')) sub = sidebarT.module7;
+            else sub = `${sidebarT.fullProject} ${stepNum}`;
         } else if (viewParts.includes('ADMIN')) {
-            section = 'Admin Panel';
+            section = sidebarT.adminPanel;
             sub = viewParts[1] || 'Dashboard';
         } else if (viewParts.includes('SETTINGS')) {
-            section = t.settings[lang];
+            section = sidebarT.settings;
             sub = viewParts[1] || 'Profile';
         } else if (currentView === AppView.USER_DASHBOARD) {
-            section = t.dashboard[lang];
+            section = sidebarT.dashboard;
         } else if (currentView === AppView.DASHBOARD_OVERVIEW) {
-            section = t.dashboard[lang];
-            sub = 'Overview';
+            section = sidebarT.dashboard;
+            sub = dashboardSubT.overview || 'Overview';
         } else if (currentView === AppView.DASHBOARD_SNAPSHOT) {
-            section = t.dashboard[lang];
-            sub = 'Execution Snapshot';
+            section = sidebarT.dashboard;
+            sub = dashboardSubT.snapshot || 'Execution Snapshot';
         }
 
         return [section, sub];
@@ -227,10 +226,6 @@ const AppContent = () => {
                 <FreeAssessmentView />
             );
         }
-
-        // ... (Removing misplaced import)
-
-        // ... existing code
 
         // Full Transformation Views
         if (currentView === AppView.FULL_STEP1_CONTEXT) {
@@ -282,7 +277,7 @@ const AppContent = () => {
 
         // Admin Views
         if (currentView.startsWith('ADMIN')) {
-            return <AdminView currentUser={currentUser} onNavigate={setCurrentView} language={language} />;
+            return <AdminView currentUser={currentUser} onNavigate={setCurrentView} />;
         }
 
         // Settings Views
@@ -290,11 +285,9 @@ const AppContent = () => {
             return (
                 <SettingsView
                     currentUser={currentUser}
-                    language={language}
                     onUpdateUser={(updates) => setCurrentUser(currentUser ? { ...currentUser, ...updates } : null)}
                     theme={theme}
                     toggleTheme={toggleTheme}
-                    setLanguage={setLanguage}
                 />
             );
         }
@@ -302,14 +295,14 @@ const AppContent = () => {
         return (
             <div className="w-full p-8 flex items-center justify-center text-slate-500 flex-col gap-4">
                 <div className="text-2xl font-bold text-navy-900 dark:text-white mb-2">{currentView}</div>
-                <div>Component Under Construction</div>
+                <div>{t('common.underConstruction', 'Component Under Construction')}</div>
             </div>
         );
     };
 
     return (
         <ErrorBoundary>
-            <div className="flex h-screen w-full bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white font-sans overflow-hidden" dir={language === 'AR' ? 'rtl' : 'ltr'}>
+            <div className="flex h-screen w-full bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white font-sans overflow-hidden">
                 <Toaster position="bottom-right" />
                 <ChatOverlay />
 
@@ -318,13 +311,13 @@ const AppContent = () => {
                     <div className="fixed top-0 left-0 right-0 h-10 bg-red-600 text-white z-50 flex items-center justify-center gap-4 text-sm font-medium shadow-md">
                         <span className="flex items-center gap-2">
                             <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
-                            IMPERSONATING: {currentUser.email}
+                            {t('common.impersonation.banner', { email: currentUser.email, defaultValue: `IMPERSONATING: ${currentUser.email}` })}
                         </span>
                         <button
                             onClick={handleStopImpersonation}
                             className="bg-white text-red-600 px-3 py-0.5 rounded text-xs font-bold hover:bg-red-50 transition-colors uppercase"
                         >
-                            Stop Impersonating
+                            {t('common.impersonation.stop', 'Stop Impersonating')}
                         </button>
                     </div>
                 )}
@@ -343,19 +336,19 @@ const AppContent = () => {
                 <main
                     className={`
                         flex-1 flex flex-col overflow-hidden relative w-full h-full transition-all duration-300
-                        ${isSessionView ? (isSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64') : ''}
+                        ${isSessionView ? (isSidebarCollapsed ? 'lg:ltr:pl-16 lg:rtl:pr-16' : 'lg:ltr:pl-64 lg:rtl:pr-64') : ''}
                     `}
                 >
                     {/* Top Bar for Session Views */}
                     {isSessionView && (
-                        <div className="h-12 border-b border-slate-200 dark:border-white/5 bg-white dark:bg-navy-950 flex items-center justify-between px-3 shrink-0 z-20 transition-colors duration-300">
+                        <div className="h-12 border-b border-slate-200 dark:border-white/5 bg-white dark:bg-navy-950 flex items-center justify-between px-3 shrink-0 z-50 transition-colors duration-300">
                             <div className="flex items-center gap-3">
                                 <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden text-navy-700 dark:text-white mr-2">
                                     <Menu />
                                 </button>
                                 <div className="flex items-center text-sm font-medium text-slate-400">
                                     <span className="hover:text-navy-900 dark:hover:text-white cursor-pointer transition-colors">{breadcrumbs[0]}</span>
-                                    <ChevronRight size={14} className="mx-2" />
+                                    <ChevronRight size={14} className="mx-2 rtl:rotate-180" />
                                     <span className="text-navy-900 dark:text-white">{breadcrumbs[1]}</span>
                                 </div>
                             </div>
@@ -365,25 +358,25 @@ const AppContent = () => {
                                     {status === 'saved' && (
                                         <>
                                             <CheckCircle size={12} className="text-green-500" />
-                                            <span className="hidden sm:inline text-green-600 dark:text-green-400">Auto-saved</span>
+                                            <span className="hidden sm:inline text-green-600 dark:text-green-400">{t('common.status.saved', 'Auto-saved')}</span>
                                         </>
                                     )}
                                     {status === 'saving' && (
                                         <>
                                             <Loader2 size={12} className="text-purple-500 animate-spin" />
-                                            <span className="hidden sm:inline text-purple-500">Saving...</span>
+                                            <span className="hidden sm:inline text-purple-500">{t('common.status.saving', 'Saving...')}</span>
                                         </>
                                     )}
                                     {status === 'unsaved' && (
                                         <>
                                             <AlertCircle size={12} className="text-amber-500" />
-                                            <span className="hidden sm:inline text-amber-500">Unsaved changes</span>
+                                            <span className="hidden sm:inline text-amber-500">{t('common.status.unsaved', 'Unsaved changes')}</span>
                                         </>
                                     )}
                                     {status === 'error' && (
                                         <>
                                             <AlertCircle size={12} className="text-red-500" />
-                                            <span className="hidden sm:inline text-red-500">Save failed</span>
+                                            <span className="hidden sm:inline text-red-500">{t('common.status.error', 'Save failed')}</span>
                                         </>
                                     )}
                                 </div>
@@ -428,8 +421,6 @@ const AppContent = () => {
                                 <WelcomeView
                                     onStartSession={handleStartSession}
                                     onLoginClick={handleLoginRequest}
-                                    language={language}
-                                    onLanguageChange={setLanguage}
                                 />
                             )}
 
@@ -439,7 +430,6 @@ const AppContent = () => {
                                     targetMode={sessionMode}
                                     onAuthSuccess={handleAuthSuccess}
                                     onBack={() => setCurrentView(AppView.WELCOME)}
-                                    language={language}
                                 />
                             )}
 
@@ -452,8 +442,6 @@ const AppContent = () => {
     );
 };
 
-import { AIProvider } from './contexts/AIContext';
-
 export const App = () => (
     <AutoSaveProvider>
         <AIProvider>
@@ -461,4 +449,3 @@ export const App = () => (
         </AIProvider>
     </AutoSaveProvider>
 );
-

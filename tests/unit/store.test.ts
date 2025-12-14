@@ -1,6 +1,7 @@
+
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useAppStore } from '../../store/useAppStore';
-import { AppView, SessionMode, AuthStep, Language } from '../../types';
+import { AppView, SessionMode, AuthStep } from '../../types';
 
 describe('Store Test: useAppStore', () => {
     beforeEach(() => {
@@ -10,7 +11,6 @@ describe('Store Test: useAppStore', () => {
         store.setSessionMode(SessionMode.FREE);
         store.setCurrentUser(null);
         store.setAuthInitialStep(AuthStep.REGISTER);
-        store.setLanguage('EN');
         store.setIsSidebarOpen(false);
         store.clearChat();
         store.logout();
@@ -22,7 +22,6 @@ describe('Store Test: useAppStore', () => {
         expect(state.currentView).toBe(AppView.WELCOME);
         expect(state.sessionMode).toBe(SessionMode.FREE);
         expect(state.currentUser).toBeNull();
-        expect(state.language).toBe('EN');
         expect(state.isSidebarOpen).toBe(false);
     });
 
@@ -46,13 +45,6 @@ describe('Store Test: useAppStore', () => {
         store.setCurrentUser(user);
 
         expect(useAppStore.getState().currentUser).toEqual(user);
-    });
-
-    it('sets language', () => {
-        const store = useAppStore.getState();
-        store.setLanguage('PL' as Language);
-
-        expect(useAppStore.getState().language).toBe('PL');
     });
 
     it('toggles sidebar open state', () => {
@@ -189,4 +181,3 @@ describe('Store Test: useAppStore', () => {
         expect(useAppStore.getState().currentProjectId).toBe('project-1');
     });
 });
-

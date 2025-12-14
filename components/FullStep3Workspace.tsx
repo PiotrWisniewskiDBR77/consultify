@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
-import { FullSession, FullInitiative, Language, Quarter, Wave, User } from '../types';
-import { translations } from '../translations';
+import { FullSession, FullInitiative, Quarter, Wave, User } from '../types';
+import { useTranslation } from 'react-i18next';
 import { ArrowRight, AlertTriangle, Calendar, LayoutGrid, List, Clock } from 'lucide-react';
 import { RoadmapKanban } from './RoadmapKanban';
 import { RoadmapGantt } from './RoadmapGantt';
@@ -10,7 +11,6 @@ interface FullStep3WorkspaceProps {
   fullSession: FullSession;
   onUpdateInitiative: (initiative: FullInitiative) => void;
   onNextStep: () => void;
-  language: Language;
   users?: User[]; // Added
   currentUser?: User | null; // Added
 }
@@ -19,21 +19,20 @@ export const FullStep3Workspace: React.FC<FullStep3WorkspaceProps> = ({
   fullSession,
   onUpdateInitiative,
   onNextStep,
-  language,
   users, // Destructure
   currentUser // Destructure
 }) => {
   const [subStep, setSubStep] = useState<'roadmap' | 'pilot'>('roadmap');
   const [viewMode, setViewMode] = useState<'gantt' | 'board' | 'table'>('gantt');
 
-  const t = translations.fullRoadmap;
-  const ti = translations.fullInitiatives;
-  const ts = translations.sidebar;
+  const { t: translate } = useTranslation();
+  const t = translate('fullRoadmap', { returnObjects: true }) as any;
+  const ti = translate('fullInitiatives', { returnObjects: true }) as any;
+  const ts = translate('sidebar', { returnObjects: true }) as any;
   const initiatives = fullSession.initiatives || [];
 
   const quarters: Quarter[] = ['Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7', 'Q8'];
   const waves: Wave[] = ['Wave 1', 'Wave 2', 'Wave 3'];
-  // ... (rest of code logic remains same until return)
 
   // Workload Calc
   const workload = quarters.reduce((acc, q) => {
@@ -42,10 +41,8 @@ export const FullStep3Workspace: React.FC<FullStep3WorkspaceProps> = ({
   }, {} as Record<string, number>);
 
   const getAxisLabel = (id: string) => {
-     
-    const key = `fullStep1_${id === 'digitalProducts' ? 'prod' : id.substring(0, 4)}` as any;
-     
-    return (ts as any)[key]?.[language] || id;
+    const key = `fullStep1_${id === 'digitalProducts' ? 'prod' : id.substring(0, 4)}` as keyof typeof ts;
+    return ts[key] || id;
   };
 
   const handleNext = () => {
@@ -114,7 +111,7 @@ export const FullStep3Workspace: React.FC<FullStep3WorkspaceProps> = ({
         <div className="bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-white/5 rounded-xl p-4 shadow-sm dark:shadow-none">
           <h4 className="text-xs font-semibold text-navy-900 dark:text-white mb-3 flex items-center gap-2">
             <Calendar size={14} className="text-blue-400" />
-            {t.workload.title[language]}
+            {t.workload.title}
           </h4>
           <div className="grid grid-cols-4 lg:grid-cols-8 gap-2">
             {quarters.map(q => {
@@ -160,10 +157,10 @@ export const FullStep3Workspace: React.FC<FullStep3WorkspaceProps> = ({
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 dark:bg-navy-900 border-b border-slate-200 dark:border-white/10 text-[10px] uppercase tracking-wider text-slate-500">
-                  <th className="p-3">{ti.tableHeader.initiative[language]}</th>
-                  <th className="p-3">{ti.tableHeader.axis[language]}</th>
-                  <th className="p-3">{t.tableHeader.quarter[language]}</th>
-                  <th className="p-3">{t.tableHeader.wave[language]}</th>
+                  <th className="p-3">{ti.tableHeader.initiative}</th>
+                  <th className="p-3">{ti.tableHeader.axis}</th>
+                  <th className="p-3">{t.tableHeader.quarter}</th>
+                  <th className="p-3">{t.tableHeader.wave}</th>
                 </tr>
               </thead>
               <tbody>
@@ -217,7 +214,7 @@ export const FullStep3Workspace: React.FC<FullStep3WorkspaceProps> = ({
           className="flex items-center gap-2 px-6 py-2.5 rounded-lg font-semibold text-sm transition-all shadow-lg bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/30"
         >
           {subStep === 'roadmap' ? 'Proceed to Pilot Selection' : 'Finish Module 3'}
-          <ArrowRight size={16} className={language === 'AR' ? 'rotate-180' : ''} />
+          <ArrowRight size={16} />
         </button>
       </div>
     </div>

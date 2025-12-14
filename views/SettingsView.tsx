@@ -11,14 +11,12 @@ import { RegionalSettings } from '../components/settings/RegionalSettings';
 
 interface SettingsViewProps {
     currentUser: User;
-    language: Language;
     onUpdateUser: (updates: Partial<User>) => void;
     theme: 'light' | 'dark';
     toggleTheme: () => void;
-    setLanguage: (lang: Language) => void;
 }
 
-export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, language, onUpdateUser, theme, toggleTheme, setLanguage }) => {
+export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdateUser, theme, toggleTheme }) => {
     const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState<'PROFILE' | 'BILLING' | 'AI' | 'NOTIFICATIONS' | 'INTEGRATIONS' | 'REGIONAL'>('PROFILE');
 
@@ -84,8 +82,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, languag
                         onUpdateUser={onUpdateUser}
                         theme={theme}
                         toggleTheme={toggleTheme}
-                        language={language}
-                        setLanguage={setLanguage}
                     />
                 )}
                 {activeTab === 'BILLING' && <BillingSettings currentUser={currentUser} />}

@@ -953,6 +953,41 @@ function initDb() {
             FOREIGN KEY(company_id) REFERENCES organizations(id) ON DELETE CASCADE
         )`);
 
+        // ==========================================
+        // PHASE 6: REPORT BUILDER (Added Fix)
+        // ==========================================
+
+        db.run(`CREATE TABLE IF NOT EXISTS reports (
+            id TEXT PRIMARY KEY,
+            project_id TEXT,
+            organization_id TEXT,
+            title TEXT,
+            status TEXT DEFAULT 'draft',
+            version INTEGER DEFAULT 1,
+            block_order TEXT DEFAULT '[]', -- JSON array of block IDs
+            sources TEXT DEFAULT '[]', -- JSON array of sources used
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS report_blocks (
+            id TEXT PRIMARY KEY,
+            report_id TEXT NOT NULL,
+            type TEXT NOT NULL, -- text, table, chart, etc.
+            title TEXT,
+            module TEXT, -- Origin module
+            content TEXT, -- JSON content
+            meta TEXT, -- JSON metadata (layout, chart config)
+            position INTEGER DEFAULT 0,
+            locked INTEGER DEFAULT 0, -- boolean
+            ai_regeneratable INTEGER DEFAULT 1, -- boolean
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(report_id) REFERENCES reports(id) ON DELETE CASCADE
+        )`);
+
         // Seed Super Admin & Default Organization
         const superAdminOrgId = 'org-dbr77-system';
         const superAdminId = 'admin-001';

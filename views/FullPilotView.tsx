@@ -2,7 +2,7 @@ import React, { useEffect, useCallback, useState } from 'react';
 import { SplitLayout } from '../components/SplitLayout';
 import { FullPilotWorkspace } from '../components/FullPilotWorkspace'; // New Component
 import { FullInitiative, AppView, AIMessageHistory } from '../types';
-import { translations } from '../translations';
+// import { translations } from '../translations';
 import { useAppStore } from '../store/useAppStore';
 import { sendMessageToAI } from '../services/ai/gemini';
 import { AIFeedbackButton } from '../components/AIFeedbackButton';

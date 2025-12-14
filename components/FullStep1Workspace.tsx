@@ -1,6 +1,7 @@
+
 import React from 'react';
-import { FullSession, Language, AxisId } from '../types';
-import { translations } from '../translations';
+import { FullSession, AxisId } from '../types';
+import { useTranslation } from 'react-i18next';
 import {
   ArrowRight,
   CheckCircle2,
@@ -22,28 +23,27 @@ interface FullStep1WorkspaceProps {
   currentAxisId?: AxisId;
   onStartAxis: (axisId: AxisId) => void;
   onNextStep: () => void;
-  language: Language;
 }
 
 export const FullStep1Workspace: React.FC<FullStep1WorkspaceProps> = ({
   fullSession,
   currentAxisId: _currentAxisId,
   onStartAxis,
-  onNextStep,
-  language
+  onNextStep
 }) => {
-  const t = translations.fullAssessment;
-  const ts = translations.sidebar;
+  const { t: translate } = useTranslation();
+  const t = translate('fullAssessment', { returnObjects: true }) as any;
+  const ts = translate('sidebar', { returnObjects: true }) as any;
   const [interviewAxis, setInterviewAxis] = useState<{ id: AxisId; label: string } | null>(null);
 
   const axes: { id: AxisId; label: string; icon: React.ReactNode; desc: string }[] = [
-    { id: 'processes', label: ts.fullStep1_proc[language], icon: <Settings size={22} />, desc: t.descriptions.processes[language] },
-    { id: 'digitalProducts', label: ts.fullStep1_prod[language], icon: <Smartphone size={22} />, desc: t.descriptions.digitalProducts[language] },
-    { id: 'businessModels', label: ts.fullStep1_model[language], icon: <Briefcase size={22} />, desc: t.descriptions.businessModels[language] },
-    { id: 'dataManagement', label: ts.fullStep1_data[language], icon: <Database size={22} />, desc: t.descriptions.dataManagement[language] },
-    { id: 'culture', label: ts.fullStep1_cult[language], icon: <Users size={22} />, desc: t.descriptions.culture[language] },
-    { id: 'cybersecurity', label: "Cybersecurity" /* Add translation later if needed */, icon: <Lock size={22} />, desc: "Security and Risk Management" },
-    { id: 'aiMaturity', label: ts.fullStep1_ai[language], icon: <BrainCircuit size={22} />, desc: t.descriptions.aiMaturity[language] },
+    { id: 'processes', label: ts.fullStep1_proc, icon: <Settings size={22} />, desc: t.descriptions.processes },
+    { id: 'digitalProducts', label: ts.fullStep1_prod, icon: <Smartphone size={22} />, desc: t.descriptions.digitalProducts },
+    { id: 'businessModels', label: ts.fullStep1_model, icon: <Briefcase size={22} />, desc: t.descriptions.businessModels },
+    { id: 'dataManagement', label: ts.fullStep1_data, icon: <Database size={22} />, desc: t.descriptions.dataManagement },
+    { id: 'culture', label: ts.fullStep1_cult, icon: <Users size={22} />, desc: t.descriptions.culture },
+    { id: 'cybersecurity', label: "Cybersecurity", icon: <Lock size={22} />, desc: "Security and Risk Management" },
+    { id: 'aiMaturity', label: ts.fullStep1_ai, icon: <BrainCircuit size={22} />, desc: t.descriptions.aiMaturity },
   ];
 
   // Helper to get granular score color
@@ -198,7 +198,7 @@ export const FullStep1Workspace: React.FC<FullStep1WorkspaceProps> = ({
                   }
                             `}
               >
-                {allCompleted ? t.nextStep[language] : (
+                {allCompleted ? t.nextStep : (
                   <>
                     <Lock size={14} /> Complete All Axes
                   </>
@@ -218,17 +218,8 @@ export const FullStep1Workspace: React.FC<FullStep1WorkspaceProps> = ({
           axisId={interviewAxis.id}
           axisLabel={interviewAxis.label}
           onComplete={(score, reasoning) => {
-            // Here we would typically save the score to the session state
-            // Since this component uses onStartAxis to go to a detail view, we might need a way to save directly.
-            // For now, we'll assume we can pass this up or update fullSession directly if we had the setter.
-            // Given the props, we can't update session directly here easily without a new prop.
-            // So we will just close and log for now, or assume onStartAxis handles it.
-            // WAIT: The prompt said "implement AI Interview Mode".
-            // I should probably mock the update or add a callback if possible.
-            // I'll log it and close, as full implementation of state update requires refactoring parent.
             console.log("AI Interview Completed", { axis: interviewAxis.id, score, reasoning });
             setInterviewAxis(null);
-            // Ideally: onUpdateScore(interviewAxis.id, score);
           }}
         />
       )}

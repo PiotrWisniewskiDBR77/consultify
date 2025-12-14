@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Button } from './Button';
 import { Api } from '../services/api';
 import { ThumbsUp, ThumbsDown, MessageSquare, X, Send } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -94,13 +95,17 @@ export const AIFeedbackButton: React.FC<AIFeedbackButtonProps> = ({ context, dat
                             className="w-full bg-navy-950 border border-white/10 rounded-lg p-3 text-sm text-white focus:border-purple-500 outline-none h-24 mb-4 resize-none"
                         />
 
-                        <button
-                            onClick={handleSubmit}
-                            disabled={submitting || (!rating && !comment)}
-                            className="w-full py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2"
-                        >
-                            {submitting ? 'Sending...' : <><Send size={14} /> Send Feedback</>}
-                        </button>
+                        <div className="flex justify-end">
+                            <Button
+                                onClick={handleSubmit}
+                                disabled={submitting || (!rating && !comment)}
+                                variant="primary"
+                                fullWidth
+                                icon={!submitting && <Send size={14} />}
+                            >
+                                {submitting ? 'Sending...' : 'Send Feedback'}
+                            </Button>
+                        </div>
                     </div>
                 </div>
             )}

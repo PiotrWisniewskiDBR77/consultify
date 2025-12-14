@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { CompanyProfile, FreeSession, Language } from '../types';
+import { CompanyProfile, FreeSession } from '../types';
 
 import { ArrowRight, AlertTriangle, Lock, FileText, CheckCircle } from 'lucide-react';
 
@@ -7,19 +8,14 @@ interface Step3WorkspaceProps {
   profile: Partial<CompanyProfile>;
   sessionData: Partial<FreeSession>;
   onStartFullProject: () => void;
-  language: Language;
   onUpdateQuickWin?: (index: number, updatedWin: { title: string; desc: string }) => void;
 }
 
 export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({
-   
   profile,
   sessionData,
-  onStartFullProject,
-  language
+  onStartFullProject
 }) => {
-  // const t = translations.step1;
-
 
   return (
     <div className="flex flex-col h-full bg-navy-900">
@@ -27,7 +23,7 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({
       <div className="h-20 border-b border-white/5 flex flex-col justify-center px-8 bg-navy-900 shrink-0">
         <div className="flex justify-between items-center mb-1">
           <span className="text-sm font-semibold text-white tracking-wide">
-            {language === 'PL' ? 'Krok 3 z 3 — Mapa Wyzwań & Ryzyka' : 'Step 3 of 3 — Challenges & Risks'}
+            Step 3 of 3 — Challenges & Risks
           </span>
           <span className="text-xs text-slate-500 uppercase tracking-widest">Phase 3/3</span>
         </div>
@@ -47,7 +43,7 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({
 
           <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
             <span className="w-1 h-6 bg-red-500 rounded-full"></span>
-            {language === 'PL' ? 'Mapa Wyzwań' : 'Challenges Map'}
+            Challenges Map
           </h3>
 
           <div className="space-y-3">
@@ -67,7 +63,7 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({
               ))
             ) : (
               <div className="text-center py-6 text-slate-500 italic border border-dashed border-white/10 rounded-lg">
-                {language === 'PL' ? 'Nie zidentyfikowano jeszcze wyzwań.' : 'No challenges identified yet.'}
+                No challenges identified yet.
               </div>
             )}
           </div>
@@ -79,7 +75,7 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({
           <div className="bg-navy-950/50 border border-white/10 rounded-xl p-6 relative">
             <h3 className="text-md font-semibold text-slate-200 mb-4 flex items-center gap-2">
               <Lock size={16} />
-              {language === 'PL' ? 'Ograniczenia' : 'Constraints'}
+              Constraints
             </h3>
             <div className="space-y-2">
               {sessionData.constraints && sessionData.constraints.length > 0 ? (
@@ -99,10 +95,10 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({
           <div className="bg-navy-950/50 border border-white/10 rounded-xl p-6 relative">
             <h3 className="text-md font-semibold text-slate-200 mb-4 flex items-center gap-2">
               <FileText size={16} />
-              {language === 'PL' ? 'Dokumenty' : 'Documents'}
+              Documents
             </h3>
             <div className="border border-dashed border-white/10 rounded bg-white/5 h-24 flex items-center justify-center text-xs text-slate-500 hover:bg-white/10 cursor-pointer transition-colors">
-              {language === 'PL' ? 'Przeciągnij pliki strategii tutaj' : 'Drag strategy files here'}
+              Drag strategy files here
             </div>
           </div>
         </div>
@@ -116,12 +112,10 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({
             </div>
             <div>
               <h4 className="text-green-400 font-medium mb-1">
-                {language === 'PL' ? 'Kontekst Strategiczny Gotowy' : 'Strategic Context Ready'}
+                Strategic Context Ready
               </h4>
               <p className="text-green-400/70 text-sm">
-                {language === 'PL'
-                  ? 'AI zbudowało model kontekstu. Możemy przejść do Assessmentu.'
-                  : 'AI has built the context model. We can proceed to Assessment.'}
+                AI has built the context model. We can proceed to Assessment.
               </p>
             </div>
           </div>
@@ -139,8 +133,8 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({
             : 'bg-navy-800 text-slate-500 cursor-not-allowed'
             }`}
         >
-          {language === 'PL' ? 'Przejdź do Assessmentu (Moduł 2)' : 'Go to Assessment (Module 2)'}
-          <ArrowRight size={18} className={`group-hover:translate-x-1 transition-transform ${language === 'AR' ? 'rotate-180' : ''}`} />
+          Go to Assessment (Module 2)
+          <ArrowRight size={18} className={`group-hover:translate-x-1 transition-transform`} />
         </button>
       </div>
     </div>

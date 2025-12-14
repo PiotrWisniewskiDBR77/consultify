@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { FullSession, FullInitiative, Language, CostRange, BenefitRange } from '../types';
-import { translations } from '../translations';
+import { FullSession, FullInitiative, CostRange, BenefitRange } from '../types';
+import { useTranslation } from 'react-i18next';
 import { ArrowRight, DollarSign, TrendingUp, Clock, Activity, Sliders, Hash } from 'lucide-react';
 import { ROIPaybackChart } from './ROIPaybackChart';
 
@@ -9,17 +9,16 @@ interface FullStep4WorkspaceProps {
   fullSession: FullSession;
   onUpdateInitiative: (initiative: FullInitiative) => void;
   onNextStep: () => void;
-  language: Language;
 }
 
 export const FullStep4Workspace: React.FC<FullStep4WorkspaceProps> = ({
   fullSession,
   onUpdateInitiative,
-  onNextStep,
-  language
+  onNextStep
 }) => {
-  const t = translations.fullROI;
-  const ti = translations.fullInitiatives;
+  const { t: translate } = useTranslation();
+  const t = translate('fullROI', { returnObjects: true }) as any;
+  const ti = translate('fullInitiatives', { returnObjects: true }) as any;
   const initiatives = fullSession.initiatives || [];
   const economics = fullSession.economics || { totalCost: 0, totalAnnualBenefit: 0, overallROI: 0, paybackPeriodYears: 0 };
 
@@ -52,7 +51,7 @@ export const FullStep4Workspace: React.FC<FullStep4WorkspaceProps> = ({
       {/* Header */}
       <div className="h-14 border-b border-white/5 flex flex-col justify-center px-5 bg-navy-900 shrink-0">
         <div className="flex justify-between items-center mb-1">
-          <span className="text-xs font-semibold text-white tracking-wide">{t.intro[language].substring(0, 30)}...</span>
+          <span className="text-xs font-semibold text-white tracking-wide">{t.intro.substring(0, 30)}...</span>
           <span className="text-[10px] text-slate-500">STEP 4</span>
         </div>
         <div className="w-full h-1 bg-navy-800 rounded-full overflow-hidden">
@@ -69,7 +68,7 @@ export const FullStep4Workspace: React.FC<FullStep4WorkspaceProps> = ({
           <div className="bg-navy-950/50 border border-white/5 p-3 rounded-xl">
             <div className="flex items-center gap-2 text-slate-400 mb-1">
               <DollarSign size={14} />
-              <span className="text-[10px] font-bold uppercase tracking-wider">{t.summary.totalCost[language]}</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider">{t.summary.totalCost}</span>
             </div>
             <div className="text-xl font-bold text-white">
               ${economics.totalCost.toLocaleString()}k
@@ -80,7 +79,7 @@ export const FullStep4Workspace: React.FC<FullStep4WorkspaceProps> = ({
           <div className="bg-navy-950/50 border border-white/5 p-3 rounded-xl">
             <div className="flex items-center gap-2 text-slate-400 mb-1">
               <TrendingUp size={14} />
-              <span className="text-[10px] font-bold uppercase tracking-wider">{t.summary.totalBenefit[language]}</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider">{t.summary.totalBenefit}</span>
             </div>
             <div className="text-xl font-bold text-green-400">
               ${economics.totalAnnualBenefit.toLocaleString()}k
@@ -91,7 +90,7 @@ export const FullStep4Workspace: React.FC<FullStep4WorkspaceProps> = ({
           <div className="bg-navy-950/50 border border-white/5 p-3 rounded-xl">
             <div className="flex items-center gap-2 text-slate-400 mb-1">
               <Activity size={14} />
-              <span className="text-[10px] font-bold uppercase tracking-wider">{t.summary.roi[language]}</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider">{t.summary.roi}</span>
             </div>
             <div className={`text-xl font-bold ${economics.overallROI > 100 ? 'text-purple-400' : 'text-white'}`}>
               {economics.overallROI.toFixed(0)}%
@@ -102,10 +101,10 @@ export const FullStep4Workspace: React.FC<FullStep4WorkspaceProps> = ({
           <div className="bg-navy-950/50 border border-white/5 p-3 rounded-xl">
             <div className="flex items-center gap-2 text-slate-400 mb-1">
               <Clock size={14} />
-              <span className="text-[10px] font-bold uppercase tracking-wider">{t.summary.payback[language]}</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider">{t.summary.payback}</span>
             </div>
             <div className="text-xl font-bold text-blue-400">
-              {economics.paybackPeriodYears.toFixed(1)} <span className="text-xs text-slate-500">{t.summary.years[language]}</span>
+              {economics.paybackPeriodYears.toFixed(1)} <span className="text-xs text-slate-500">{t.summary.years}</span>
             </div>
           </div>
         </div>
@@ -138,9 +137,9 @@ export const FullStep4Workspace: React.FC<FullStep4WorkspaceProps> = ({
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-navy-900 border-b border-white/10 text-[10px] uppercase tracking-wider text-slate-500">
-                <th className="p-3">{ti.tableHeader.initiative[language]}</th>
-                <th className="p-3 w-40">{t.tableHeader.cost[language]}</th>
-                <th className="p-3 w-40">{t.tableHeader.benefit[language]}</th>
+                <th className="p-3">{ti.tableHeader.initiative}</th>
+                <th className="p-3 w-40">{t.tableHeader.cost}</th>
+                <th className="p-3 w-40">{t.tableHeader.benefit}</th>
               </tr>
             </thead>
             <tbody>
@@ -213,8 +212,8 @@ export const FullStep4Workspace: React.FC<FullStep4WorkspaceProps> = ({
           onClick={onNextStep}
           className="flex items-center gap-2 px-6 py-2.5 rounded-lg font-semibold text-xs transition-all shadow-lg bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/30"
         >
-          {t.nextStep[language]}
-          <ArrowRight size={18} className={language === 'AR' ? 'rotate-180' : ''} />
+          {t.nextStep}
+          <ArrowRight size={18} />
         </button>
       </div>
     </div>

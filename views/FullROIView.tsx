@@ -2,7 +2,7 @@ import React, { useEffect, useCallback } from 'react';
 import { SplitLayout } from '../components/SplitLayout';
 import { FullROIWorkspace } from '../components/FullROIWorkspace';
 import { FullInitiative, CostRange, BenefitRange, AppView, EconomicsSummary } from '../types';
-import { translations } from '../translations';
+import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../store/useAppStore';
 
 // FIX: Added missing imports
@@ -26,7 +26,8 @@ export const FullROIView: React.FC = () => {
   };
 
   const language = currentUser?.preferredLanguage || 'EN';
-  const t = translations.fullROI;
+  const { t: translate } = useTranslation();
+  const t = translate('fullROI', { returnObjects: true }) as any;
 
   const addAiMessage = useCallback((content: string, delay = 600) => {
     setTyping(true);

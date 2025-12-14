@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { ChatPanel } from '../components/ChatPanel';
 import { Step1Workspace } from '../components/Step1Workspace';
@@ -9,18 +10,20 @@ import {
   ChatMessage,
   ChatOption,
   CompanyProfile,
-  FreeSession,
   StrategicGoal,
   Challenge,
   Constraint
 } from '../types';
-import { translations } from '../translations';
+import { useTranslation } from 'react-i18next';
 import { Check } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
-import { sendMessageToAI, SYSTEM_PROMPTS, AIMessageHistory } from '../services/ai/gemini';
+import { SYSTEM_PROMPTS, AIMessageHistory } from '../services/ai/gemini';
 import { useAIStream } from '../hooks/useAIStream';
 
-const StepIndicator = ({ activeIdx, language }: { activeIdx: number; language: string }) => {
+import { useScreenContext } from '../hooks/useScreenContext';
+import { useAIContext } from '../contexts/AIContext';
+
+const StepIndicator = ({ activeIdx }: { activeIdx: number }) => {
   return (
     <div className="flex items-center justify-center py-3 border-b border-white/5 bg-navy-950">
       {[1, 2, 3].map((step) => {
@@ -32,7 +35,7 @@ const StepIndicator = ({ activeIdx, language }: { activeIdx: number; language: s
               {isCompleted ? <Check size={12} /> : <span className="text-[10px] font-bold">{step}</span>}
             </div>
             <span className={`ml-2 text-[10px] font-medium hidden lg:block ${isActive ? 'text-white' : 'text-slate-500'}`}>
-              {step === 1 ? (language === 'PL' ? 'Firma & IT' : 'Profile & IT') : step === 2 ? (language === 'PL' ? 'Cele' : 'Goals') : (language === 'PL' ? 'Wyzwania' : 'Challenges')}
+              {step === 1 ? 'Profile & IT' : step === 2 ? 'Goals' : 'Challenges'}
             </span>
             {step < 3 && <div className={`w-8 h-px mx-2 ${isCompleted ? 'bg-green-500/30' : 'bg-white/10'}`}></div>}
           </div>
@@ -41,11 +44,6 @@ const StepIndicator = ({ activeIdx, language }: { activeIdx: number; language: s
     </div>
   );
 };
-
-import { useScreenContext } from '../hooks/useScreenContext';
-import { useAIContext } from '../contexts/AIContext';
-
-// ... (imports)
 
 export const FreeAssessmentView: React.FC = () => {
   const {
@@ -63,9 +61,10 @@ export const FreeAssessmentView: React.FC = () => {
   const { isStreaming, streamedContent, startStream } = useAIStream();
 
   const [currentStep, setCurrentStep] = useState<AssessmentStep>(AssessmentStep.INTRO);
-  const language = currentUser?.preferredLanguage || 'EN';
-  const t = translations.chat.scripts;
-  const opts = translations.chat.options;
+  const { t: translate } = useTranslation();
+  const chat = translate('chat', { returnObjects: true }) as any;
+  const t = chat?.scripts || {};
+  const opts = chat?.options || {};
 
   const [profileData, setProfileData] = useState<Partial<CompanyProfile>>({
     name: currentUser?.companyName || 'My Company',
@@ -99,20 +98,20 @@ export const FreeAssessmentView: React.FC = () => {
   useEffect(() => {
     if (!initializedRef.current && messages.length === 0 && currentAppView === AppView.QUICK_STEP1_PROFILE && currentUser) {
       initializedRef.current = true;
-      const greeting = t.intro[language].replace('{name}', currentUser.firstName);
+      const greeting = t.intro.replace('{name}', currentUser.firstName);
       const initialMsg: ChatMessage = {
         id: '1',
         role: 'ai',
         content: greeting,
         timestamp: new Date(),
         options: [
-          { id: 'start', label: opts.start[language], value: 'start' },
-          { id: 'explain', label: opts.explain[language], value: 'explain' }
+          { id: 'start', label: opts.start, value: 'start' },
+          { id: 'explain', label: opts.explain, value: 'explain' }
         ]
       };
       addChatMessage(initialMsg);
     }
-  }, [currentUser, currentAppView, messages.length, t.intro, language, opts.start, opts.explain, addChatMessage]);
+  }, [currentUser, currentAppView, messages.length, t.intro, opts.start, opts.explain, addChatMessage]);
 
   const addAiMessage = (content: string, options?: ChatOption[], multiSelect?: boolean, delay = 600) => {
     setIsTyping(true);
@@ -206,9 +205,9 @@ export const FreeAssessmentView: React.FC = () => {
       case AssessmentStep.INTRO:
         if (value === 'start') {
           setCurrentStep(AssessmentStep.INDUSTRY);
-          addAiMessage(t.industry[language].replace('{role}', ''), [
-            { id: 'mfg', label: opts.mfg[language], value: 'Production' },
-            { id: 'log', label: opts.log[language], value: 'Logistics' }
+          addAiMessage(t.industry.replace('{role}', ''), [
+            { id: 'mfg', label: opts.mfg, value: 'Production' },
+            { id: 'log', label: opts.log, value: 'Logistics' }
           ]);
         }
         break;
@@ -216,7 +215,7 @@ export const FreeAssessmentView: React.FC = () => {
       case AssessmentStep.INDUSTRY:
         setProfileData(prev => ({ ...prev, industry: value }));
         setCurrentStep(AssessmentStep.SIZE);
-        addAiMessage(t.size[language], [
+        addAiMessage(t.size, [
           { id: 's', label: '< 50', value: '< 50' },
           { id: 'm', label: '51 - 250', value: '51-250' },
           { id: 'l', label: '> 250', value: '> 250' }
@@ -226,7 +225,7 @@ export const FreeAssessmentView: React.FC = () => {
       case AssessmentStep.SIZE:
         setProfileData(prev => ({ ...prev, size: value }));
         setCurrentStep(AssessmentStep.COUNTRY);
-        addAiMessage(t.country[language], [
+        addAiMessage(t.country, [
           { id: 'pl', label: 'Poland', value: 'Poland' },
           { id: 'de', label: 'Germany', value: 'Germany' },
           { id: 'us', label: 'USA', value: 'USA' },
@@ -264,7 +263,7 @@ export const FreeAssessmentView: React.FC = () => {
         // Trigger Summary Step
         setCurrentStep(AssessmentStep.SUMMARY);
         addAiMessage(`Profile Complete.\n- Industry: ${profileData.industry}\n- Size: ${profileData.size}\n- Model: ${profileData.businessModel?.type?.[0]}\n- ERP: ${value}\n\nReady for Strategic Goals?`, [
-          { id: 'confirm', label: opts.confirm[language], value: 'confirm' }
+          { id: 'confirm', label: opts.confirm, value: 'confirm' }
         ]);
         break;
 
@@ -397,12 +396,10 @@ export const FreeAssessmentView: React.FC = () => {
     return 1;
   };
 
-
-
   return (
-    <div className="flex w-full h-full" dir={language === 'AR' ? 'rtl' : 'ltr'}>
-      <div className={`flex-1 flex flex-col h-full min-w-[600px] ${language === 'AR' ? 'border-l' : 'border-r'} border-elegant`}>
-        <StepIndicator activeIdx={getActiveStepIndex()} language={language} />
+    <div className="flex w-full h-full">
+      <div className="flex-1 flex flex-col h-full min-w-[600px] border-r border-elegant">
+        <StepIndicator activeIdx={getActiveStepIndex()} />
         <ChatPanel
           messages={
             isStreaming
@@ -426,14 +423,12 @@ export const FreeAssessmentView: React.FC = () => {
             profile={profileData}
             sessionData={sessionData}
             onStartFullProject={() => onNavigate(AppView.FULL_STEP1_ASSESSMENT)}
-            language={language}
           />
         ) : currentAppView === AppView.QUICK_STEP2_USER_CONTEXT ? (
           <Step2Workspace
             profile={profileData}
             sessionData={sessionData}
             onNextStep={() => onNavigate(AppView.QUICK_STEP3_EXPECTATIONS)}
-            language={language}
           />
         ) : (
           <Step1Workspace
@@ -441,11 +436,9 @@ export const FreeAssessmentView: React.FC = () => {
             sessionData={sessionData}
             isStepComplete={!!sessionData.step1Completed}
             onNextStep={() => onNavigate(AppView.QUICK_STEP2_USER_CONTEXT)}
-            language={language}
           />
         )}
       </div>
     </div>
   );
 };
-

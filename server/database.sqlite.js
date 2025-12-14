@@ -436,7 +436,7 @@ function initDb() {
             FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE CASCADE
         )`);
 
-        // Access Code Usage Tracking
+        // Usage Tracking for Access Codes
         db.run(`CREATE TABLE IF NOT EXISTS access_code_usage (
             id TEXT PRIMARY KEY,
             code_id TEXT NOT NULL,
@@ -444,6 +444,55 @@ function initDb() {
             used_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(code_id) REFERENCES access_codes(id) ON DELETE CASCADE,
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+
+        // ==========================================
+        // PHASE 4: COMPOSABLE REPORTS SYSTEM
+        // ==========================================
+
+        // 1. REPORTS TABLE (Container)
+        db.run(`CREATE TABLE IF NOT EXISTS reports (
+            id TEXT PRIMARY KEY,
+            project_id TEXT,
+            organization_id TEXT NOT NULL,
+            title TEXT NOT NULL,
+            status TEXT DEFAULT 'draft', -- draft, final, archived
+            version INTEGER DEFAULT 1,
+            block_order TEXT, -- JSON array of blockIds ["block_1", "block_2"]
+            sources TEXT, -- JSON metadata about input sources
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+
+        // 2. REPORT BLOCKS TABLE (Content)
+        db.run(`CREATE TABLE IF NOT EXISTS report_blocks (
+            id TEXT PRIMARY KEY,
+            report_id TEXT NOT NULL,
+            type TEXT NOT NULL, -- text, table, cards, matrix, evidence_list, recommendation, image
+            title TEXT,
+            module TEXT, -- Origin module (e.g. "ChallengeMap")
+            anchor TEXT, -- Anchor link
+            editable INTEGER DEFAULT 1,
+            ai_regeneratable INTEGER DEFAULT 1,
+            locked INTEGER DEFAULT 0,
+            content TEXT, -- JSON content specific to block type
+            meta TEXT, -- JSON metadata (confidence, tags, etc.)
+            position INTEGER DEFAULT 0, -- Sort order (redundant with block_order but good for recovery)
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(report_id) REFERENCES reports(id) ON DELETE CASCADE
+        )`);
+
+        // 3. REPORT SNAPSHOTS (Versioning)
+        db.run(`CREATE TABLE IF NOT EXISTS report_snapshots (
+            id TEXT PRIMARY KEY,
+            report_id TEXT NOT NULL,
+            version INTEGER NOT NULL,
+            snapshot_data TEXT, -- Full JSON dump of report + blocks at this version
+            created_by TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(report_id) REFERENCES reports(id) ON DELETE CASCADE
         )`);
 
         // ==========================================

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { SplitLayout } from '../components/SplitLayout';
 import { useAppStore } from '../store/useAppStore';
 import { Task, Initiative, TaskStatus } from '../types';
-import { translations } from '../translations';
+// import { translations } from '../translations';
 import { InitiativeCard } from '../components/InitiativeCard';
 import { TaskDetailModal } from '../components/TaskDetailModal';
 import { Api } from '../services/api';
@@ -17,7 +17,7 @@ export const PilotExecutionView: React.FC = () => {
     } = useAppStore();
 
     const language = currentUser?.preferredLanguage || 'EN';
-    const t = translations.fullExecution; // Assuming we have or will create this
+    // const t = translations.fullExecution;
 
     const [selectedInitiative, setSelectedInitiative] = useState<Initiative | null>(null);
     const [tasks, setTasks] = useState<Task[]>([]);

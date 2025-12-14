@@ -1,336 +1,383 @@
-import React, { useState } from 'react';
-import { Radiation, ShieldCheck, GitMerge, FileText, Sparkles, AlertTriangle, Check, X, Trophy, EyeOff, Target, Lock, TrendingUp } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { AlertTriangle, TrendingUp, GitMerge, FileText, Check, AlertOctagon, Download, ArrowRight, BrainCircuit, Zap, RefreshCw } from 'lucide-react';
 import { DynamicList, DynamicListItem } from '../shared/DynamicList';
+import { useContextBuilderStore } from '../../../store/useContextBuilderStore';
+import { useAppStore } from '../../../store/useAppStore';
+import { TransformationScenarios } from './TransformationScenarios';
+import { ReportContainer } from '../../../components/ReportBuilder/ReportContainer';
 
 export const StrategicSynthesisModule: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<'risks' | 'enablers' | 'scenarios' | 'summary'>('risks');
-    const [selectedScenario, setSelectedScenario] = useState<string>('balanced');
+    const [activeTab, setActiveTab] = useState<'risks' | 'strengths' | 'scenarios' | 'summary'>('risks');
 
-    // MOCK DATA
-    const [risks, setRisks] = useState<DynamicListItem[]>([
-        { id: '1', risk: 'Middle Management Resistance', why: 'Fear of automation redundancy', severity: 'High', mitigation: 'Change Mgmt Program' }
-    ]);
+    // Store Access
+    const {
+        companyProfile,
+        challenges,
+        goals,
+        synthesis,
+        setSynthesis,
+        updateSynthesisList
+    } = useContextBuilderStore();
 
-    const [enablers, setEnablers] = useState<DynamicListItem[]>([
-        { id: '1', enabler: 'Strong Technical Engineering', seen: 'R&D Department Performance', leverage: 'Use as pilot champions' }
-    ]);
+    const { fullSessionData, currentUser } = useAppStore();
 
-    // AI Suggestions Mock (Blind Spots)
-    const [aiRiskSuggestions, setAiRiskSuggestions] = useState([
-        { id: 'img1', risk: 'Compliance Data Gap', why: 'Audit 2023 showed missing logs', source: 'Internal Audit.pdf' }
-    ]);
+    // Derived State
+    const { risks, strengths = [], selectedScenarioId } = synthesis;
+    const [selectedRisk, setSelectedRisk] = useState<DynamicListItem | null>(null);
+    const [selectedStrength, setSelectedStrength] = useState<DynamicListItem | null>(null);
 
-    const createHandler = (setter: React.Dispatch<React.SetStateAction<DynamicListItem[]>>) => ({
-        onAdd: (item: Omit<DynamicListItem, 'id'>) => setter(prev => [...prev, { ...item, id: Math.random().toString(36).substr(2, 9) }]),
-        onUpdate: (id: string, updates: Partial<DynamicListItem>) => setter(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p)),
-        onDelete: (id: string) => setter(prev => prev.filter(p => p.id !== id))
+    // Handlers
+    const createHandler = (
+        listName: 'risks' | 'strengths',
+        currentItems: DynamicListItem[]
+    ) => ({
+        onAdd: (item: Omit<DynamicListItem, 'id'>) => {
+            const newItem = { ...item, id: Math.random().toString(36).substr(2, 9) };
+            updateSynthesisList(listName, [...currentItems, newItem]);
+        },
+        onUpdate: (id: string, updates: Partial<DynamicListItem>) => {
+            const newItems = currentItems.map(p => p.id === id ? { ...p, ...updates } : p);
+            updateSynthesisList(listName, newItems);
+        },
+        onDelete: (id: string) => {
+            const newItems = currentItems.filter(p => p.id !== id);
+            updateSynthesisList(listName, newItems);
+        }
     });
 
-    const riskHandlers = createHandler(setRisks);
-    const enablerHandlers = createHandler(setEnablers);
+    const riskHandlers = createHandler('risks', risks);
+    const strengthHandlers = createHandler('strengths', strengths);
 
     // TABS CONFIG
     const tabs = [
-        { id: 'risks', label: 'Hidden Risks', icon: EyeOff },
-        { id: 'enablers', label: 'Enablers & Strengths', icon: ShieldCheck },
+        { id: 'risks', label: 'Hidden Risks', icon: AlertTriangle },
+        { id: 'strengths', label: 'Strengths & Opportunities', icon: TrendingUp },
         { id: 'scenarios', label: 'Transformation Scenarios', icon: GitMerge },
         { id: 'summary', label: 'Executive Report', icon: FileText },
     ];
 
     return (
-        <div className="space-y-6">
-            <div className="flex border-b border-slate-200 dark:border-white/10 space-x-6 overflow-x-auto">
-                {tabs.map(tab => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id as any)}
-                        className={`
-                            flex items-center gap-2 pb-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap
-                            ${activeTab === tab.id
-                                ? 'border-purple-600 text-purple-600 dark:text-purple-400'
-                                : 'border-transparent text-slate-500 hover:text-navy-900 dark:hover:text-white'}
-                        `}
-                    >
-                        <tab.icon size={16} />
-                        {tab.label}
-                    </button>
-                ))}
+        <div className="space-y-6 h-full flex flex-col">
+            <div className="flex justify-between items-end border-b border-slate-200 dark:border-white/10 shrink-0">
+                <div className="flex space-x-6 overflow-x-auto">
+                    {tabs.map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id as any)}
+                            className={`
+                                flex items-center gap-2 pb-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap
+                                ${activeTab === tab.id
+                                    ? 'border-purple-600 text-purple-600 dark:text-purple-400'
+                                    : 'border-transparent text-slate-500 hover:text-navy-900 dark:hover:text-white'}
+                            `}
+                        >
+                            <tab.icon size={16} />
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
             </div>
 
-            <div className="min-h-[400px]">
+            <div className="flex-1 overflow-visible min-h-[500px]">
 
-                {/* TAB 1: HIDDEN RISKS */}
+                {/* TAB 1: RISKS */}
                 {activeTab === 'risks' && (
-                    <div className="space-y-6">
-                        <div className="bg-slate-50 dark:bg-navy-900/50 p-4 rounded-lg text-sm text-slate-600 dark:text-slate-300">
-                            <strong>Why this matters:</strong> Clients often miss these risks because they are embedded in daily operations or cultural habits. Identifying them early prevents project stall.
+                    <div className="space-y-6 relative">
+                        <div className="bg-red-50 dark:bg-red-900/10 p-4 rounded-xl border border-red-100 dark:border-red-900/30 flex gap-3 text-red-800 dark:text-red-300">
+                            <AlertOctagon size={20} className="shrink-0 mt-0.5" />
+                            <div className="text-sm">
+                                <p className="font-bold mb-1">Risk Assessment Logic</p>
+                                <p className="opacity-90">Based on your <strong>{challenges.declaredChallenges.length} declared challenges</strong> and <strong>{companyProfile.activeConstraints.length} active constraints</strong>, we have identified the following risks.</p>
+                            </div>
                         </div>
 
-                        {/* AI Blind Spot Suggestion */}
-                        {aiRiskSuggestions.map(s => (
-                            <div key={s.id} className="bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800 rounded-lg p-4 flex items-center justify-between shadow-sm">
-                                <div className="flex items-center gap-4">
-                                    <div className="bg-orange-100 dark:bg-orange-900/30 p-2.5 rounded-full text-orange-600">
-                                        <EyeOff size={20} />
-                                    </div>
-                                    <div>
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <h5 className="text-sm font-bold text-navy-900 dark:text-white">Detected Blind Spot: {s.risk}</h5>
-                                            <span className="px-1.5 py-0.5 bg-orange-200/50 text-orange-700 dark:text-orange-400 text-[10px] uppercase font-bold tracking-wider rounded">High Probability</span>
-                                        </div>
-                                        <p className="text-xs text-slate-500">
-                                            <span className="font-semibold">Why you missed it:</span> Usually buried in audit logs ({s.source}).
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="flex gap-2">
-                                    <button className="flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 text-xs font-bold text-green-600 rounded hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
-                                        <Check size={14} /> Confirm
-                                    </button>
-                                    <button className="flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 text-xs font-bold text-slate-500 rounded hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                                        <X size={14} /> Dismiss
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-
                         <DynamicList
-                            title="Validated Risks & Obstacles"
-                            description="Risks that have been confirmed and need mitigation strategies."
+                            title="Hidden Risks & Threats"
+                            description="What could derail this transformation? (Generated from Constraints + Challenges)"
                             items={risks}
+                            onRowClick={(item) => setSelectedRisk(item)}
                             columns={[
-                                { key: 'risk', label: 'Risk Name', width: 'w-1/4', placeholder: 'e.g. Data Leakage' },
-                                { key: 'why', label: 'Root Cause / Why?', width: 'w-1/4', placeholder: 'e.g. No DLP policy' },
-                                { key: 'severity', label: 'Severity', type: 'select', options: [{ label: 'High', value: 'High' }, { label: 'Medium', value: 'Medium' }, { label: 'Low', value: 'Low' }], width: 'w-1/6' },
-                                { key: 'mitigation', label: 'Mitigation Idea', width: 'w-1/3', placeholder: 'e.g. Implement DLP tools' },
+                                {
+                                    key: 'risk',
+                                    label: 'Risk / Threat',
+                                    width: 'w-1/3',
+                                    placeholder: 'e.g. Middle Management Resistance',
+                                    render: (item) => (
+                                        <div className="flex items-center gap-2">
+                                            {item.isAiSuggested && (
+                                                <div className="p-1 bg-purple-100 dark:bg-purple-900/30 rounded-md text-purple-600" title="AI Suggested Risk">
+                                                    <BrainCircuit size={14} />
+                                                </div>
+                                            )}
+                                            <span className="font-medium">{item.risk}</span>
+                                        </div>
+                                    )
+                                },
+                                { key: 'why', label: 'Why (Root Cause)', width: 'w-1/4', placeholder: 'e.g. Fear of redundancy' },
+                                {
+                                    key: 'severity',
+                                    label: 'Severity',
+                                    type: 'select',
+                                    options: [{ label: 'Critical', value: 'Critical' }, { label: 'High', value: 'High' }, { label: 'Medium', value: 'Medium' }, { label: 'Low', value: 'Low' }],
+                                    width: 'w-1/6',
+                                    render: (item) => {
+                                        const colorMap: Record<string, string> = {
+                                            'Critical': 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+                                            'High': 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
+                                            'Medium': 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
+                                            'Low': 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                                        };
+                                        const colorClass = colorMap[item.severity] || 'bg-slate-100 text-slate-700';
+                                        return (
+                                            <span className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-wider ${colorClass}`}>
+                                                {item.severity}
+                                            </span>
+                                        );
+                                    }
+                                },
+                                { key: 'mitigation', label: 'Mitigation Strategy', width: 'w-1/4', placeholder: 'e.g. Change Mgmt Program' },
                             ]}
                             {...riskHandlers}
                         />
+
+                        {/* Risk Detail Modal / Overlay */}
+                        {selectedRisk && (
+                            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-900/80 backdrop-blur-sm" onClick={() => setSelectedRisk(null)}>
+                                <div
+                                    className="bg-white dark:bg-navy-900 w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+                                    onClick={e => e.stopPropagation()}
+                                >
+                                    {/* Header */}
+                                    <div className="bg-slate-50 dark:bg-navy-800 p-6 border-b border-slate-200 dark:border-white/5 flex justify-between items-start">
+                                        <div className="flex gap-4">
+                                            <div className={`mt-1 p-3 rounded-xl ${selectedRisk.isAiSuggested ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30' : 'bg-red-100 text-red-600 dark:bg-red-900/30'}`}>
+                                                {selectedRisk.isAiSuggested ? <BrainCircuit size={24} /> : <AlertTriangle size={24} />}
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <h3 className="text-xl font-bold text-navy-900 dark:text-white">{selectedRisk.risk}</h3>
+                                                    {selectedRisk.isAiSuggested && (
+                                                        <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 text-[10px] font-bold uppercase rounded-full tracking-wide">
+                                                            AI Insight
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-slate-500 text-sm">Identified during synthesis phase</p>
+                                            </div>
+                                        </div>
+                                        <button onClick={() => setSelectedRisk(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                                            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                        </button>
+                                    </div>
+
+                                    {/* Content */}
+                                    <div className="p-6 space-y-6">
+                                        <div className="grid grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Severity Level</label>
+                                                <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg font-bold text-sm ${selectedRisk.severity === 'Critical' ? 'bg-red-100 text-red-700' :
+                                                    selectedRisk.severity === 'High' ? 'bg-orange-100 text-orange-700' :
+                                                        'bg-blue-100 text-blue-700'
+                                                    }`}>
+                                                    <div className={`w-2 h-2 rounded-full ${selectedRisk.severity === 'Critical' ? 'bg-red-500' :
+                                                        selectedRisk.severity === 'High' ? 'bg-orange-500' :
+                                                            'bg-blue-500'
+                                                        }`} />
+                                                    {selectedRisk.severity} Priority
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Source / Context</label>
+                                                <div className="text-sm text-navy-900 dark:text-white font-medium">
+                                                    {selectedRisk.isAiSuggested ? 'Pattern Recognition Engine' : 'User Constraints'}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-xl border border-slate-100 dark:border-white/5 space-y-4">
+                                            <div>
+                                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Root Cause Analysis</label>
+                                                <p className="text-navy-900 dark:text-slate-200">{selectedRisk.why}</p>
+                                            </div>
+                                            <div className="h-px bg-slate-200 dark:bg-white/5" />
+                                            <div>
+                                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Recommended Mitigation</label>
+                                                <p className="text-navy-900 dark:text-slate-200">{selectedRisk.mitigation}</p>
+                                            </div>
+                                        </div>
+
+                                        {selectedRisk.isAiSuggested && (
+                                            <div className="flex gap-3 text-sm text-slate-500 bg-purple-50 dark:bg-purple-900/10 p-4 rounded-lg border border-purple-100 dark:border-purple-900/20">
+                                                <BrainCircuit size={16} className="text-purple-500 shrink-0 mt-0.5" />
+                                                <p>This risk was suggested because similar organizations in <strong>Automotive</strong> typically struggle with this compliance gap during digital transformations.</p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Footer */}
+                                    <div className="bg-slate-50 dark:bg-navy-800 p-4 border-t border-slate-200 dark:border-white/5 flex justify-end gap-3">
+                                        <button
+                                            onClick={() => setSelectedRisk(null)}
+                                            className="px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/5 rounded-lg text-sm font-medium transition-colors"
+                                        >
+                                            Close
+                                        </button>
+                                        <button
+                                            className="px-4 py-2 bg-navy-900 dark:bg-purple-600 text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+                                        >
+                                            Update Risk Strategy
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
-                {/* TAB 2: ENABLERS & STRENGTHS */}
-                {activeTab === 'enablers' && (
+                {/* TAB 2: STRENGTHS & OPPORTUNITIES */}
+                {activeTab === 'strengths' && (
                     <div className="space-y-6">
+                        <div className="bg-green-50 dark:bg-green-900/10 p-4 rounded-xl border border-green-100 dark:border-green-900/30 flex gap-3 text-green-800 dark:text-green-300">
+                            <TrendingUp size={20} className="shrink-0 mt-0.5" />
+                            <div className="text-sm">
+                                <p className="font-bold mb-1">Strategic Advantages</p>
+                                <p className="opacity-90">Based on your <strong>Company Profile</strong> and <strong>Goals</strong>, we have identified these key strengths and market opportunities.</p>
+                            </div>
+                        </div>
+
                         <DynamicList
-                            title="Enablers & Strengths"
-                            description="Assets and capabilities we can leverage for successful transformation."
-                            items={enablers}
+                            title="Strengths & Opportunities"
+                            description="What strengths can you leverage? (Generated from Profile & Opportunities)"
+                            items={strengths}
                             columns={[
-                                { key: 'enabler', label: 'Strength / Enabler', width: 'w-1/3', placeholder: 'e.g. Agile Culture' },
-                                { key: 'seen', label: 'Where Seen / Evidence', width: 'w-1/3', placeholder: 'e.g. IT Team sprints' },
-                                { key: 'leverage', label: 'How to Leverage', width: 'w-1/3', placeholder: 'e.g. Expand to other depts' },
+                                {
+                                    key: 'enabler',
+                                    label: 'Strength / Opportunity',
+                                    width: 'w-1/3',
+                                    placeholder: 'e.g. Strong Engineering Team',
+                                    render: (item) => (
+                                        <div className="flex items-center gap-2">
+                                            {item.isAiSuggested && (
+                                                <div className="p-1 bg-purple-100 dark:bg-purple-900/30 rounded-md text-purple-600" title="AI Suggested Opportunity">
+                                                    <BrainCircuit size={14} />
+                                                </div>
+                                            )}
+                                            <span className="font-medium">{item.enabler}</span>
+                                        </div>
+                                    )
+                                },
+                                { key: 'seen', label: 'Evidence / Where Seen', width: 'w-1/3', placeholder: 'e.g. R&D Performance' },
+                                { key: 'leverage', label: 'How to Leverage', width: 'w-1/3', placeholder: 'e.g. Use as Pilot Champions' },
                             ]}
-                            {...enablerHandlers}
+                            onRowClick={(item) => setSelectedStrength(item)}
+                            {...strengthHandlers}
                         />
+
+                        {/* Strength Detail Modal */}
+                        {selectedStrength && (
+                            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-900/80 backdrop-blur-sm" onClick={() => setSelectedStrength(null)}>
+                                <div
+                                    className="bg-white dark:bg-navy-900 w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+                                    onClick={e => e.stopPropagation()}
+                                >
+                                    {/* Header */}
+                                    <div className="bg-slate-50 dark:bg-navy-800 p-6 border-b border-slate-200 dark:border-white/5 flex justify-between items-start">
+                                        <div className="flex gap-4">
+                                            <div className={`mt-1 p-3 rounded-xl ${selectedStrength.isAiSuggested ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30' : 'bg-green-100 text-green-600 dark:bg-green-900/30'}`}>
+                                                {selectedStrength.isAiSuggested ? <BrainCircuit size={24} /> : <TrendingUp size={24} />}
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <h3 className="text-xl font-bold text-navy-900 dark:text-white">{selectedStrength.enabler}</h3>
+                                                    {selectedStrength.isAiSuggested && (
+                                                        <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 text-[10px] font-bold uppercase rounded-full tracking-wide">
+                                                            AI Opportunity
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-slate-500 text-sm">Identified Strength / Opportunity</p>
+                                            </div>
+                                        </div>
+                                        <button onClick={() => setSelectedStrength(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                                            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                        </button>
+                                    </div>
+
+                                    {/* Content */}
+                                    <div className="p-6 space-y-6">
+                                        <div className="grid grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Impact Potential</label>
+                                                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg font-bold text-sm bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                                                    <TrendingUp size={14} />
+                                                    High Strategic Value
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Source / Context</label>
+                                                <div className="text-sm text-navy-900 dark:text-white font-medium">
+                                                    {selectedStrength.isAiSuggested ? 'Market Analysis Engine' : 'Internal Profile'}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-xl border border-slate-100 dark:border-white/5 space-y-4">
+                                            <div>
+                                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Evidence / Observed In</label>
+                                                <p className="text-navy-900 dark:text-slate-200">{selectedStrength.seen}</p>
+                                            </div>
+                                            <div className="h-px bg-slate-200 dark:bg-white/5" />
+                                            <div>
+                                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">How to Leverage</label>
+                                                <p className="text-navy-900 dark:text-slate-200">{selectedStrength.leverage}</p>
+                                            </div>
+                                        </div>
+
+                                        {selectedStrength.isAiSuggested && (
+                                            <div className="flex gap-3 text-sm text-slate-500 bg-purple-50 dark:bg-purple-900/10 p-4 rounded-lg border border-purple-100 dark:border-purple-900/20">
+                                                <BrainCircuit size={16} className="text-purple-500 shrink-0 mt-0.5" />
+                                                <p>AI Analysis: Leveraging this opportunity typically yields <strong>15-20% faster time-to-market</strong> for companies in your sector.</p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Footer */}
+                                    <div className="bg-slate-50 dark:bg-navy-800 p-4 border-t border-slate-200 dark:border-white/5 flex justify-end gap-3">
+                                        <button
+                                            onClick={() => setSelectedStrength(null)}
+                                            className="px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/5 rounded-lg text-sm font-medium transition-colors"
+                                        >
+                                            Close
+                                        </button>
+                                        <button
+                                            className="px-4 py-2 bg-navy-900 dark:bg-green-600 text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+                                        >
+                                            Add to Roadmap
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
                 {/* TAB 3: SCENARIOS */}
                 {activeTab === 'scenarios' && (
-                    <div className="space-y-6">
-                        <div className="text-center mb-8">
-                            <h3 className="text-lg font-bold text-navy-900 dark:text-white">Transformation Paths</h3>
-                            <p className="text-sm text-slate-500">AI analysis of your Ambition vs. Constraints suggests the following paths.</p>
-                        </div>
+                    <TransformationScenarios
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            {[
-                                {
-                                    id: 'conservative',
-                                    title: 'Quick Wins First',
-                                    icon: ShieldCheck,
-                                    color: 'text-blue-600',
-                                    bg: 'bg-blue-50 dark:bg-blue-900/10',
-                                    border: 'border-blue-200 dark:border-blue-800',
-                                    logic: 'Focus on low-hanging fruit to build confidence.',
-                                    matchReason: 'Good fit for low CAPEX, but misses your "High Growth" goal.',
-                                    matchScore: 65,
-                                    early: 'Process mapping, 5S implementation.'
-                                },
-                                {
-                                    id: 'balanced',
-                                    title: 'Balanced Hybrid',
-                                    icon: GitMerge,
-                                    color: 'text-purple-600',
-                                    bg: 'bg-purple-50 dark:bg-purple-900/10',
-                                    border: 'border-purple-200 dark:border-purple-800',
-                                    logic: 'Parallel tracks: Quick wins + 1 major pilot.',
-                                    matchReason: 'Matches your "Efficiency" priority and mitigates "Mgmt Resistance".',
-                                    matchScore: 92,
-                                    recommended: true,
-                                    early: 'Pilot Line A Digitalization + Training.'
-                                },
-                                {
-                                    id: 'ambitious',
-                                    title: 'Full Transformation',
-                                    icon: Trophy,
-                                    color: 'text-orange-600',
-                                    bg: 'bg-orange-50 dark:bg-orange-900/10',
-                                    border: 'border-orange-200 dark:border-orange-800',
-                                    logic: 'Rip and replace legacy. All-in digitalization.',
-                                    matchReason: 'Too risky given "Legacy IT" constraints.',
-                                    matchScore: 40,
-                                    early: 'New ERP, Factory-wide Sensors.'
-                                }
-                            ].map(s => (
-                                <div
-                                    key={s.id}
-                                    onClick={() => setSelectedScenario(s.id)}
-                                    className={`
-                                        relative cursor-pointer rounded-xl border-2 p-6 transition-all hover:shadow-lg flex flex-col h-full
-                                        ${selectedScenario === s.id ? `${s.border} ring-2 ring-offset-2 ring-purple-500` : 'border-slate-100 dark:border-white/5'}
-                                        ${s.bg}
-                                    `}
-                                >
-                                    {s.recommended && (
-                                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-purple-600 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
-                                            AI Recommended
-                                        </div>
-                                    )}
 
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div className={`${s.color} p-2 bg-white dark:bg-white/10 rounded-lg`}>
-                                            <s.icon size={24} />
-                                        </div>
-                                        <div className="text-right">
-                                            <div className="text-2xl font-bold text-navy-900 dark:text-white">{s.matchScore}%</div>
-                                            <div className="text-[10px] font-bold text-slate-400 uppercase">Fit Score</div>
-                                        </div>
-                                    </div>
-
-                                    <h4 className="font-bold text-lg text-navy-900 dark:text-white mb-2">{s.title}</h4>
-                                    <p className="text-xs text-slate-600 dark:text-slate-300 font-semibold mb-4 leading-relaxed">{s.logic}</p>
-
-                                    <div className="mt-auto space-y-4 pt-4 border-t border-black/5 dark:border-white/5">
-                                        <div>
-                                            <span className="font-bold text-xs text-slate-500 block mb-1">Why this match?</span>
-                                            <p className="text-xs text-slate-700 dark:text-slate-200 italic">"{s.matchReason}"</p>
-                                        </div>
-                                        <div>
-                                            <span className="font-bold text-xs text-purple-600 block mb-1">Early Win:</span>
-                                            <span className="text-xs text-slate-700 dark:text-slate-200">{s.early}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                        currentScenarioId={selectedScenarioId}
+                        onSelectScenario={(id) => setSynthesis({ selectedScenarioId: id })}
+                    />
                 )}
 
                 {/* TAB 4: EXECUTIVE REPORT */}
                 {activeTab === 'summary' && (
-                    <div className="max-w-4xl mx-auto bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl shadow-sm overflow-hidden print:border-none print:shadow-none">
-                        {/* Header */}
-                        <div className="bg-slate-50 dark:bg-navy-950/50 p-8 border-b border-slate-100 dark:border-white/5">
-                            <div className="flex items-center justify-between mb-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="bg-navy-900 text-white p-2.5 rounded-lg">
-                                        <FileText size={24} />
-                                    </div>
-                                    <div>
-                                        <h2 className="text-2xl font-bold text-navy-900 dark:text-white">Executive Context Report</h2>
-                                        <p className="text-sm text-slate-500">Consolidated Strategic Baseline • {new Date().toLocaleDateString()}</p>
-                                    </div>
-                                </div>
-                                <div className="text-right">
-                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold uppercase tracking-wider">
-                                        <Check size={12} /> Ready for Strategy
-                                    </span>
-                                </div>
-                            </div>
-
-                            <p className="text-sm text-slate-600 dark:text-slate-300 max-w-2xl leading-relaxed">
-                                This document synthesizes all initial findings (Profile, Goals, Challenges, External Trends). It serves as the <strong>foundational truth</strong> for the upcoming Strategic Roadmap.
-                            </p>
-                        </div>
-
-                        {/* Report Content */}
-                        <div className="p-8 space-y-8">
-
-                            {/* 1. Context & Identity */}
-                            <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div className="col-span-1">
-                                    <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                                        <Target size={14} /> Identity
-                                    </h5>
-                                    <div className="text-sm text-navy-900 dark:text-white font-medium">
-                                        Automotive Manufacturer<br />
-                                        Mid-Sized (Scaling)<br />
-                                        Make-to-Order (MTO)
-                                    </div>
-                                </div>
-                                <div className="col-span-2">
-                                    <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                                        <TrendingUp size={14} /> Core Ambition
-                                    </h5>
-                                    <p className="text-sm text-navy-900 dark:text-white leading-relaxed">
-                                        To achieve a <strong>50% reduction in lead times</strong> while maintaining top-tier quality.
-                                        The organization prioritizes <strong>Efficiency</strong> and <strong>Growth</strong> over pure cost-cutting.
-                                    </p>
-                                </div>
-                            </section>
-
-                            <hr className="border-slate-100 dark:border-white/5" />
-
-                            {/* 2. Critical Blockers & Blind Spots */}
-                            <section>
-                                <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                                    <Lock size={14} /> The Reality Check (Blockers)
-                                </h5>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="bg-red-50 dark:bg-red-900/10 p-4 rounded-lg border border-red-100 dark:border-red-900/20">
-                                        <span className="text-red-600 text-xs font-bold uppercase mb-1 block">Critical Bottleneck</span>
-                                        <p className="text-sm font-medium text-navy-900 dark:text-white">High Scrap Rate on Line 3</p>
-                                        <p className="text-xs text-slate-500 mt-1">Directly impacts the 50% lead time goal.</p>
-                                    </div>
-                                    <div className="bg-orange-50 dark:bg-orange-900/10 p-4 rounded-lg border border-orange-100 dark:border-orange-900/20">
-                                        <span className="text-orange-600 text-xs font-bold uppercase mb-1 block">Detected Blind Spot</span>
-                                        <p className="text-sm font-medium text-navy-900 dark:text-white">Compliance Data Gap (Audit Logs)</p>
-                                        <p className="text-xs text-slate-500 mt-1">Often overlooked, posing legal risk.</p>
-                                    </div>
-                                </div>
-                            </section>
-
-                            {/* 3. Strategic Pressures */}
-                            <section>
-                                <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                                    <Radiation size={14} /> External Pressure (Why Now?)
-                                </h5>
-                                <ul className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
-                                    <li className="flex items-start gap-2">
-                                        <span className="text-slate-400 mt-1">•</span>
-                                        <span><strong>Carbon Neutrality 2030:</strong> Regulatory deadline requires immediate tracking updates.</span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <span className="text-slate-400 mt-1">•</span>
-                                        <span><strong>AI Automation Wave:</strong> Competitors are automating design workflows, threatening market share.</span>
-                                    </li>
-                                </ul>
-                            </section>
-
-                            {/* 4. Scenario Selection */}
-                            <div className="bg-purple-50 dark:bg-purple-900/10 p-6 rounded-xl border border-purple-100 dark:border-purple-800/50 mt-4">
-                                <h3 className="text-sm font-bold text-purple-600 uppercase tracking-wider mb-3 flex items-center gap-2">
-                                    <GitMerge size={14} /> Selected Path Forward
-                                </h3>
-                                <div className="flex items-start justify-between">
-                                    <div>
-                                        <p className="text-lg font-bold text-navy-900 dark:text-white mb-2">
-                                            Balanced Hybrid Scenario
-                                        </p>
-                                        <p className="text-sm text-slate-700 dark:text-slate-300 max-w-xl">
-                                            We will pursue a parallel track approach: implementing <strong>Quick Wins</strong> (Line 3 Pilot) to fix immediate bleeding, while slowly introducing a <strong>Change Management</strong> layer to prepare for broader automation.
-                                        </p>
-                                    </div>
-                                    <div className="text-right">
-                                        <div className="text-3xl font-bold text-purple-600">92%</div>
-                                        <div className="text-[10px] font-bold text-purple-400 uppercase">Fit Score</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
+                    <div className="h-full -mx-6 -my-6">
+                        <ReportContainer
+                            projectId={fullSessionData.id}
+                            organizationId={currentUser?.organizationId || ''}
+                        />
                     </div>
                 )}
             </div>

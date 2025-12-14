@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'glass';
   size?: 'sm' | 'md' | 'lg';
   fullWidth?: boolean;
   icon?: React.ReactNode;
@@ -16,26 +16,29 @@ export const Button: React.FC<ButtonProps> = ({
   className = '',
   ...props
 }) => {
-  const baseStyles = "inline-flex items-center justify-center rounded-md font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed";
+  // Base styles are now handled by the CSS classes (btn-base), but we keep className for overrides
+  // We can leave this empty or add specific React-only resilience
 
   const variants = {
     primary: "btn-primary",
-    secondary: "bg-navy-800 hover:bg-navy-700 text-white border border-white/10 shadow-lg hover:shadow-xl active:scale-[0.98]",
-    outline: "btn-glass bg-transparent border-slate-200 dark:border-white/10 hover:border-brand/50 text-slate-600 dark:text-slate-200 hover:text-brand dark:hover:text-white",
-    ghost: "bg-transparent hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white active:scale-[0.98]"
+    secondary: "btn-secondary",
+    outline: "btn-outline",
+    ghost: "btn-ghost",
+    danger: "btn-danger",
+    glass: "btn-glass"
   };
 
   const sizes = {
-    sm: "px-3 py-1.5 text-xs",
-    md: "px-4 py-2 text-sm",
-    lg: "px-6 py-3 text-base"
+    sm: "px-3 py-1.5 text-xs shadow-sm",
+    md: "px-4 py-2 text-sm shadow-sm",
+    lg: "px-6 py-3 text-base shadow-md"
   };
 
   const widthClass = fullWidth ? "w-full" : "";
 
   return (
     <button
-      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${widthClass} ${className}`}
+      className={`${variants[variant]} ${sizes[size]} ${widthClass} ${className}`}
       {...props}
     >
       {icon && <span className="mr-2">{icon}</span>}

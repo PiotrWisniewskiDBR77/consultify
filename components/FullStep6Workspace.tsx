@@ -1,27 +1,26 @@
 
 import React from 'react';
-import { FullSession, Language } from '../types';
-import { translations } from '../translations';
+import { FullSession } from '../types';
+import { useTranslation } from 'react-i18next';
 import { Download, Copy, BarChart3, TrendingUp, CheckSquare } from 'lucide-react';
 
 interface FullStep6WorkspaceProps {
    fullSession: FullSession;
-   language: Language;
 }
 
 export const FullStep6Workspace: React.FC<FullStep6WorkspaceProps> = ({
-   fullSession,
-   language
+   fullSession
 }) => {
-   const t = translations.fullReports;
-   const ts = translations.sidebar;
+   const { t: translate } = useTranslation();
+   const t = translate('fullReports', { returnObjects: true }) as any;
+   const ts = translate('sidebar', { returnObjects: true }) as any;
    const report = fullSession.report;
 
    // 1. Maturity Calculations
    const scores = Object.entries(fullSession.assessment)
       .filter(([key]) => key !== 'completedAxes')
       .map(([key, val]) => {
-          
+
          const axis = val as any;
          return { id: key, score: axis.actual || axis.score || 0 };
       });
@@ -32,7 +31,7 @@ export const FullStep6Workspace: React.FC<FullStep6WorkspaceProps> = ({
 
    const getAxisLabel = (id: string) => {
       const key = `fullStep1_${id === 'digitalProducts' ? 'prod' : id.substring(0, 4)}` as keyof typeof ts;
-      return ts[key]?.[language] || id;
+      return ts[key] || id;
    };
 
    // 2. Economics
@@ -88,7 +87,9 @@ Weakest Axis: ${getAxisLabel(lowest.id)} (${lowest.score.toFixed(1)}/7)
    const handleCopy = () => {
       if (!report) return;
       navigator.clipboard.writeText(report.executiveSummary).then(() => {
-         alert("Executive Summary copied to clipboard!");
+         // Optionally use a toast here
+         // alert("Executive Summary copied to clipboard!"); 
+         // Removed alert specifically to be less intrusive, or could assume notification system
       });
    };
 
@@ -97,7 +98,7 @@ Weakest Axis: ${getAxisLabel(lowest.id)} (${lowest.score.toFixed(1)}/7)
          {/* Header */}
          <div className="h-14 border-b border-slate-200 dark:border-white/5 flex flex-col justify-center px-6 bg-white dark:bg-navy-900 shrink-0">
             <div className="flex justify-between items-center mb-0.5">
-               <span className="text-sm font-semibold text-navy-900 dark:text-white tracking-wide">{t.header[language]}</span>
+               <span className="text-sm font-semibold text-navy-900 dark:text-white tracking-wide">{t.header}</span>
                <span className="text-[10px] text-slate-500 font-bold tracking-wider">FINAL STEP</span>
             </div>
             <div className="w-full h-0.5 bg-navy-800 rounded-full overflow-hidden mt-1">
@@ -115,7 +116,7 @@ Weakest Axis: ${getAxisLabel(lowest.id)} (${lowest.score.toFixed(1)}/7)
                </div>
                <h4 className="text-xs font-semibold text-navy-900 dark:text-white mb-3 flex items-center gap-2 relative z-10">
                   <BarChart3 size={14} className="text-blue-400" />
-                  {t.cards.maturity[language]}
+                  {t.cards.maturity}
                </h4>
 
                <div className="grid grid-cols-2 gap-3 relative z-10">
@@ -139,7 +140,7 @@ Weakest Axis: ${getAxisLabel(lowest.id)} (${lowest.score.toFixed(1)}/7)
                </div>
                <h4 className="text-xs font-semibold text-navy-900 dark:text-white mb-3 flex items-center gap-2 relative z-10">
                   <TrendingUp size={14} className="text-green-400" />
-                  {t.cards.economics[language]}
+                  {t.cards.economics}
                </h4>
 
                <div className="space-y-2 relative z-10">
@@ -165,7 +166,7 @@ Weakest Axis: ${getAxisLabel(lowest.id)} (${lowest.score.toFixed(1)}/7)
                </div>
                <h4 className="text-xs font-semibold text-navy-900 dark:text-white mb-3 flex items-center gap-2 relative z-10">
                   <CheckSquare size={14} className="text-purple-400" />
-                  {t.cards.execution[language]}
+                  {t.cards.execution}
                </h4>
 
                <div className="flex items-center gap-4 mb-3 relative z-10">
@@ -199,13 +200,13 @@ Weakest Axis: ${getAxisLabel(lowest.id)} (${lowest.score.toFixed(1)}/7)
                onClick={handleCopy}
                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-300 hover:text-navy-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-all text-xs font-medium uppercase tracking-wide"
             >
-               <Copy size={14} /> {t.buttons.copy[language]}
+               <Copy size={14} /> {t.buttons.copy}
             </button>
             <button
                onClick={handleExport}
                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-900/20 transition-all text-xs font-bold uppercase tracking-wide"
             >
-               <Download size={14} /> {t.buttons.export[language]}
+               <Download size={14} /> {t.buttons.export}
             </button>
          </div>
       </div>

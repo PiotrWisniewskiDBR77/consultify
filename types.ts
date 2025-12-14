@@ -352,6 +352,60 @@ export interface FullReport {
   cultureAssessment?: string;
 }
 
+// --- COMPOSABLE REPORTS (NEW) ---
+
+export type BlockType = 'text' | 'table' | 'cards' | 'matrix' | 'evidence_list' | 'recommendation' | 'image' | 'callout';
+
+export interface ReportSource {
+  module: string;         // e.g. "ChallengeMap"
+  entityId?: string;      // e.g. challengeId
+  snapshotHash?: string;
+}
+
+export interface ReportBlockMeta {
+  confidence?: number;
+  tags?: string[];
+  lastGeneratedBy?: string;
+  lastEditedBy?: string;
+  [key: string]: any;
+}
+
+export interface ReportBlock {
+  id: string;
+  reportId: string;
+  type: BlockType;
+  title?: string;
+  module: string;
+  anchor?: string;
+
+  editable: boolean;
+  aiRegeneratable: boolean;
+  locked: boolean;
+
+  content: any; // Type-specific content structure
+  meta?: ReportBlockMeta;
+  position: number;
+
+  message?: string; // For callout
+  level?: string;   // For callout
+}
+
+export interface Report {
+  id: string;
+  projectId?: string;
+  organizationId: string;
+  title: string;
+  status: 'draft' | 'final' | 'archived';
+  version: number;
+
+  blockOrder: string[]; // List of block IDs
+  blocks: Record<string, ReportBlock>; // Map for O(1) access
+
+  sources?: ReportSource[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 // --- MODULE 2 TYPES ---
 
 // Align DRDAxis with AxisId
@@ -363,6 +417,8 @@ export interface AxisAssessment {
   target: MaturityLevel;
   justification: string;
   notes?: string;
+  areaScores?: Record<string, number[]>; // [actual, target] for each sub-area
+  areaNotes?: Record<string, string>; // Notes justification for each sub-area
 }
 
 export interface AdditionalAudit {

@@ -41,7 +41,19 @@
     "newConversation": "محادثة جديدة",
     "settings": "الإعدادات",
     "mobileApp": "تطبيق الهاتف",
-    "logOut": "تسجيل خروج"
+    "logOut": "تسجيل خروج",
+    "intro": "مقدمة",
+    "context": {
+      "profile": "ملف الشركة",
+      "goals": "الأهداف والتوقعات",
+      "challenges": "خريطة التحديات",
+      "megatrends": "ماسح الاتجاهات الكبرى",
+      "strategy": "توليف استراتيجي"
+    },
+    "dashboardSub": {
+      "overview": "نظرة عامة",
+      "snapshot": "لمحة عن التنفيذ"
+    }
   },
   "auth": {
     "startQuick": "ابدأ التقييم السريع",
@@ -164,85 +176,103 @@
       "processes": [
         {
           "EN": "How standardized are your core production processes?",
-          "PL": "Jak ustandaryzowane są Twoje główne procesy produkcji?"
+          "PL": "Jak ustandaryzowane są Twoje główne procesy produkcji?",
+          "JA": "中核となる生産プロセスはどの程度標準化されていますか？"
         },
         {
           "EN": "How well are your processes measured and monitored?",
-          "PL": "Jak dobrze mierzone i monitorowane są procesy?"
+          "PL": "Jak dobrze mierzone i monitorowane są procesy?",
+          "JA": "プロセスはどの程度測定・監視されていますか？"
         },
         {
           "EN": "To what extent are your processes digitally supported?",
-          "PL": "W jakim stopniu procesy są wspierane cyfrowo?"
+          "PL": "W jakim stopniu procesy są wspierane cyfrowo?",
+          "JA": "プロセスはどの程度デジタルでサポートされていますか？"
         }
       ],
       "digitalProducts": [
         {
           "EN": "Does your product portfolio include digital services?",
-          "PL": "Czy Twoje portfolio zawiera usługi cyfrowe?"
+          "PL": "Czy Twoje portfolio zawiera usługi cyfrowe?",
+          "JA": "製品ポートフォリオにデジタルサービスは含まれていますか？"
         },
         {
           "EN": "How integrated are your products with IoT?",
-          "PL": "Jak zintegrowane są produkty z IoT?"
+          "PL": "Jak zintegrowane są produkty z IoT?",
+          "JA": "製品はIoTとどの程度統合されていますか？"
         },
         {
           "EN": "Do you use customer usage data to improve products?",
-          "PL": "Czy używasz danych o użyciu do ulepszania produktów?"
+          "PL": "Czy używasz danych o użyciu do ulepszania produktów?",
+          "JA": "顧客の使用データを使用して製品を改善していますか？"
         }
       ],
       "businessModels": [
         {
           "EN": "Are you shifting from CAPEX to OPEX models?",
-          "PL": "Czy przechodzisz z modeli CAPEX na OPEX?"
+          "PL": "Czy przechodzisz z modeli CAPEX na OPEX?",
+          "JA": "CAPEXからOPEXモデルに移行していますか？"
         },
         {
           "EN": "Do you have digital ecosystem partnerships?",
-          "PL": "Czy masz partnerstwa w ekosystemie cyfrowym?"
+          "PL": "Czy masz partnerstwa w ekosystemie cyfrowym?",
+          "JA": "デジタルエコシステムパートナーシップを結んでいますか？"
         },
         {
           "EN": "How scalable is your current business model?",
-          "PL": "Jak skalowalny jest obecny model biznesowy?"
+          "PL": "Jak skalowalny jest obecny model biznesowy?",
+          "JA": "現在のビジネスモデルはどの程度拡張可能ですか？"
         }
       ],
       "dataManagement": [
         {
           "EN": "Is there a single source of truth for key data?",
-          "PL": "Czy istnieje jedno źródło prawdy dla kluczowych danych?"
+          "PL": "Czy istnieje jedno źródło prawdy dla kluczowych danych?",
+          "JA": "主要データの「信頼できる唯一の情報源」はありますか？"
         },
         {
           "EN": "How automated is data collection?",
-          "PL": "Jak zautomatyzowane jest zbieranie danych?"
+          "PL": "Jak zautomatyzowane jest zbieranie danych?",
+          "JA": "データ収集はどの程度自動化されていますか？"
         },
         {
           "EN": "Do you use predictive analytics?",
-          "PL": "Czy używasz analityki predykcyjnej?"
+          "PL": "Czy używasz analityki predykcyjnej?",
+          "JA": "予測分析を使用していますか？"
         }
       ],
       "culture": [
         {
           "EN": "How open is the leadership to digital change?",
-          "PL": "Jak otwarte jest kierownictwo na zmiany cyfrowe?"
+          "PL": "Jak otwarte jest kierownictwo na zmiany cyfrowe?",
+          "JA": "リーダーシップはデジタル変革に対してどの程度オープンですか？"
         },
         {
           "EN": "Do employees have digital skills training?",
-          "PL": "Czy pracownicy mają szkolenia z umiejętności cyfrowych?"
+          "PL": "Czy pracownicy mają szkolenia z umiejętności cyfrowych?",
+          "JA": "従業員はデジタルスキルのトレーニングを受けていますか？"
         },
         {
           "EN": "Is innovation rewarded in the company?",
-          "PL": "Czy innowacyjność jest nagradzana w firmie?"
+          "PL": "Czy innowacyjność jest nagradzana w firmie?",
+          "JA": "会社ではイノベーションが報われていますか？"
         }
       ],
       "aiMaturity": [
         {
           "EN": "Are you piloting any AI solutions currently?",
-          "PL": "Czy pilotujesz obecnie jakieś rozwiązania AI?"
+          "PL": "Czy pilotujesz obecnie jakieś rozwiązania AI?",
+          "JA": "現在AIソリューションをパイロット運用していますか？"
         },
         {
           "EN": "Do you have data ready for AI training?",
-          "PL": "Czy masz dane gotowe do trenowania AI?"
+          "PL": "Czy masz dane gotowe do trenowania AI?",
+          "JA": "AIトレーニング用のデータは準備できていますか？"
         },
         {
           "EN": "Is there an AI strategy in place?",
-          "PL": "Czy istnieje strategia AI?"
+          "PL": "Czy istnieje strategia AI?",
+          "JA": "AI戦略は策定されていますか？"
         }
       ]
     }
@@ -389,6 +419,143 @@
       "language": "لغة",
       "save": "حفظ التغييرات",
       "saved": "تم الحفظ!"
+    }
+  },
+  "common": {
+    "status": {
+      "saved": "تم الحفظ تلقائياً",
+      "saving": "جارٍ الحفظ...",
+      "unsaved": "تغييرات غير محفوظة",
+      "error": "فشل الحفظ"
+    },
+    "impersonation": {
+      "banner": "تنتحل صفة: {{email}}",
+      "stop": "إيقاف الانتحال"
+    },
+    "underConstruction": "المكون قيد الإنشاء"
+  },
+  "assessment": {
+    "workspace": {
+      "header": "تقييم DRD",
+      "senseCheck": "فحص الذكاء الاصطناعي",
+      "analyzing": "تحليل...",
+      "logicVerified": "تم التحقق من المنطق",
+      "logicWarning": "تحذير منطقي",
+      "actual": "الفعلي",
+      "target": "المستهدف",
+      "maturityLevels": "مستويات النضج",
+      "transformationPathway": "مسار التحول",
+      "pathwayIntro": "للانتقال من المستوى {{actual}} إلى المستوى {{target}}، يلزم إجراء التحولات الرئيسية التالية:",
+      "transitionPhase": "مرحلة الانتقال {{phase}}",
+      "impliedStep": "خطوة ضمنية من {{from}} إلى {{to}}",
+      "selectLevelsHint": "حدد المستويات الفعلية والمستهدفة لتصور المسار.",
+      "strategicRationale": "الأساس الاستراتيجي",
+      "rationalePlaceholder": "لماذا هذا الهدف حاسم لاستراتيجية عملك؟",
+      "proMode": "الوضع الاحترافي نشط: التحقق من المنطق مفعل",
+      "confirmNext": "تأكيد والتالي",
+      "validated": "تم التحقق من التقييم",
+      "consultantWarning": "تحذير استشاري"
+    },
+    "wizard": {
+      "startTitle": "بدء التقييم",
+      "startDesc": "أجب على بعض الأسئلة ليتمكن خوارزميتنا من التوصية بمستوى نضجك الرقمي في هذا المجال.",
+      "startBtn": "بدء",
+      "questionProgress": "سؤال {{current}} / {{total}}",
+      "yes": "نعم، بالكامل",
+      "partial": "جزئيًا / قيد التقدم",
+      "no": "لا",
+      "skip": "تخطي (لا ينطبق)",
+      "recommendedLevel": "المستوى الموصى به",
+      "suggestedLevelDesc": "بناءً على إجاباتك، نقترح هذا المستوى من النضج.",
+      "acceptResult": "قبول النتيجة",
+      "adjustManually": "تعديل يدوياً",
+      "cancel": "إلغاء"
+    },
+    "axisContent": {
+      "processes": {
+        "title": "العمليات الرقمية",
+        "levels": {
+          "1": "تسجيل البيانات الأساسية",
+          "2": "التحكم في محطة العمل",
+          "3": "التحكم في العمليات",
+          "4": "الأتمتة",
+          "5": "MES (أنظمة تنفيذ التصنيع)",
+          "6": "ERP (تخطيط موارد المؤسسة)",
+          "7": "خوارزميات دعم الذكاء الاصطناعي"
+        }
+      },
+      "digitalProducts": {
+        "title": "المنتجات الرقمية",
+        "levels": {
+          "1": "مادي فقط",
+          "2": "تمديد رقمي",
+          "3": "منتج متصل",
+          "4": "منتج ذكي",
+          "5": "المنتج كخدمة",
+          "6": "منصة",
+          "7": "نظام بيئي"
+        }
+      },
+      "businessModels": {
+        "title": "نطاقات الأعمال",
+        "levels": {
+          "1": "المبيعات التقليدية",
+          "2": "التجارة الإلكترونية",
+          "3": "قائم على الخدمات",
+          "4": "اشتراك",
+          "5": "قائم على الاستخدام",
+          "6": "قائم على النتائج",
+          "7": "منسق النظام البيئي"
+        }
+      },
+      "dataManagement": {
+        "title": "إدارة البيانات",
+        "levels": {
+          "1": "لا توجد بيانات",
+          "2": "وصفي (ماذا حدث)",
+          "3": "تشخيصي (لماذا)",
+          "4": "تنبؤي (ماذا سيحدث)",
+          "5": "توجيهي (ماذا تفعل)",
+          "6": "معرفي (AI)",
+          "7": "توليدي"
+        }
+      },
+      "culture": {
+        "title": "ثقافة",
+        "levels": {
+          "1": "مقاوم",
+          "2": "مدرك",
+          "3": "فضولي",
+          "4": "رشيق",
+          "5": "قائم على البيانات",
+          "6": "مبتكر",
+          "7": "رقمي أصلي"
+        }
+      },
+      "cybersecurity": {
+        "title": "الأمن السيبراني",
+        "levels": {
+          "1": "لا شيء",
+          "2": "أساسي (جدار حماية)",
+          "3": "قائم على الامتثال",
+          "4": "استباقي",
+          "5": "مرن",
+          "6": "صفر ثقة",
+          "7": "محصن"
+        }
+      },
+      "aiMaturity": {
+        "title": "نضج الذكاء الاصطناعي",
+        "levels": {
+          "1": "لا شيء",
+          "2": "تجارب",
+          "3": "حلول نقطية",
+          "4": "ذكاء اصطناعي مدمج",
+          "5": "استراتيجية الذكاء الاصطناعي أولاً",
+          "6": "وكلاء مستقلون",
+          "7": "ذكاء خارق"
+        }
+      }
     }
   }
 }

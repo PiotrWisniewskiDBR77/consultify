@@ -41,7 +41,19 @@
     "newConversation": "Neues Gespräch",
     "settings": "Einstellungen",
     "mobileApp": "Mobile App",
-    "logOut": "Abmelden"
+    "logOut": "Abmelden",
+    "intro": "Einführung",
+    "context": {
+      "profile": "Unternehmensprofil",
+      "goals": "Ziele und Erwartungen",
+      "challenges": "Herausforderungskarte",
+      "megatrends": "Megatrend-Scanner",
+      "strategy": "Strategische Synthese"
+    },
+    "dashboardSub": {
+      "overview": "Überblick",
+      "snapshot": "Ausführungsmomentaufnahme"
+    }
   },
   "auth": {
     "startQuick": "Starten Sie Ihre Schnellbewertung",
@@ -164,85 +176,103 @@
       "processes": [
         {
           "EN": "How standardized are your core production processes?",
-          "PL": "Jak ustandaryzowane są Twoje główne procesy produkcji?"
+          "PL": "Jak ustandaryzowane są Twoje główne procesy produkcji?",
+          "JA": "中核となる生産プロセスはどの程度標準化されていますか？"
         },
         {
           "EN": "How well are your processes measured and monitored?",
-          "PL": "Jak dobrze mierzone i monitorowane są procesy?"
+          "PL": "Jak dobrze mierzone i monitorowane są procesy?",
+          "JA": "プロセスはどの程度測定・監視されていますか？"
         },
         {
           "EN": "To what extent are your processes digitally supported?",
-          "PL": "W jakim stopniu procesy są wspierane cyfrowo?"
+          "PL": "W jakim stopniu procesy są wspierane cyfrowo?",
+          "JA": "プロセスはどの程度デジタルでサポートされていますか？"
         }
       ],
       "digitalProducts": [
         {
           "EN": "Does your product portfolio include digital services?",
-          "PL": "Czy Twoje portfolio zawiera usługi cyfrowe?"
+          "PL": "Czy Twoje portfolio zawiera usługi cyfrowe?",
+          "JA": "製品ポートフォリオにデジタルサービスは含まれていますか？"
         },
         {
           "EN": "How integrated are your products with IoT?",
-          "PL": "Jak zintegrowane są produkty z IoT?"
+          "PL": "Jak zintegrowane są produkty z IoT?",
+          "JA": "製品はIoTとどの程度統合されていますか？"
         },
         {
           "EN": "Do you use customer usage data to improve products?",
-          "PL": "Czy używasz danych o użyciu do ulepszania produktów?"
+          "PL": "Czy używasz danych o użyciu do ulepszania produktów?",
+          "JA": "顧客の使用データを使用して製品を改善していますか？"
         }
       ],
       "businessModels": [
         {
           "EN": "Are you shifting from CAPEX to OPEX models?",
-          "PL": "Czy przechodzisz z modeli CAPEX na OPEX?"
+          "PL": "Czy przechodzisz z modeli CAPEX na OPEX?",
+          "JA": "CAPEXからOPEXモデルに移行していますか？"
         },
         {
           "EN": "Do you have digital ecosystem partnerships?",
-          "PL": "Czy masz partnerstwa w ekosystemie cyfrowym?"
+          "PL": "Czy masz partnerstwa w ekosystemie cyfrowym?",
+          "JA": "デジタルエコシステムパートナーシップを結んでいますか？"
         },
         {
           "EN": "How scalable is your current business model?",
-          "PL": "Jak skalowalny jest obecny model biznesowy?"
+          "PL": "Jak skalowalny jest obecny model biznesowy?",
+          "JA": "現在のビジネスモデルはどの程度拡張可能ですか？"
         }
       ],
       "dataManagement": [
         {
           "EN": "Is there a single source of truth for key data?",
-          "PL": "Czy istnieje jedno źródło prawdy dla kluczowych danych?"
+          "PL": "Czy istnieje jedno źródło prawdy dla kluczowych danych?",
+          "JA": "主要データの「信頼できる唯一の情報源」はありますか？"
         },
         {
           "EN": "How automated is data collection?",
-          "PL": "Jak zautomatyzowane jest zbieranie danych?"
+          "PL": "Jak zautomatyzowane jest zbieranie danych?",
+          "JA": "データ収集はどの程度自動化されていますか？"
         },
         {
           "EN": "Do you use predictive analytics?",
-          "PL": "Czy używasz analityki predykcyjnej?"
+          "PL": "Czy używasz analityki predykcyjnej?",
+          "JA": "予測分析を使用していますか？"
         }
       ],
       "culture": [
         {
           "EN": "How open is the leadership to digital change?",
-          "PL": "Jak otwarte jest kierownictwo na zmiany cyfrowe?"
+          "PL": "Jak otwarte jest kierownictwo na zmiany cyfrowe?",
+          "JA": "リーダーシップはデジタル変革に対してどの程度オープンですか？"
         },
         {
           "EN": "Do employees have digital skills training?",
-          "PL": "Czy pracownicy mają szkolenia z umiejętności cyfrowych?"
+          "PL": "Czy pracownicy mają szkolenia z umiejętności cyfrowych?",
+          "JA": "従業員はデジタルスキルのトレーニングを受けていますか？"
         },
         {
           "EN": "Is innovation rewarded in the company?",
-          "PL": "Czy innowacyjność jest nagradzana w firmie?"
+          "PL": "Czy innowacyjność jest nagradzana w firmie?",
+          "JA": "会社ではイノベーションが報われていますか？"
         }
       ],
       "aiMaturity": [
         {
           "EN": "Are you piloting any AI solutions currently?",
-          "PL": "Czy pilotujesz obecnie jakieś rozwiązania AI?"
+          "PL": "Czy pilotujesz obecnie jakieś rozwiązania AI?",
+          "JA": "現在AIソリューションをパイロット運用していますか？"
         },
         {
           "EN": "Do you have data ready for AI training?",
-          "PL": "Czy masz dane gotowe do trenowania AI?"
+          "PL": "Czy masz dane gotowe do trenowania AI?",
+          "JA": "AIトレーニング用のデータは準備できていますか？"
         },
         {
           "EN": "Is there an AI strategy in place?",
-          "PL": "Czy istnieje strategia AI?"
+          "PL": "Czy istnieje strategia AI?",
+          "JA": "AI戦略は策定されていますか？"
         }
       ]
     }
@@ -389,6 +419,143 @@
       "language": "Sprache",
       "save": "Änderungen speichern",
       "saved": "Gespeichert!"
+    }
+  },
+  "common": {
+    "status": {
+      "saved": "Automatisch gespeichert",
+      "saving": "Speichern...",
+      "unsaved": "Ungespeicherte Änderungen",
+      "error": "Speichern fehlgeschlagen"
+    },
+    "impersonation": {
+      "banner": "IMPERSONATION: {{email}}",
+      "stop": "Impersonation stoppen"
+    },
+    "underConstruction": "Komponente im Aufbau"
+  },
+  "assessment": {
+    "workspace": {
+      "header": "DRD-Bewertung",
+      "senseCheck": "KI-Sinnprüfung",
+      "analyzing": "Analysieren...",
+      "logicVerified": "Logik Verifiziert",
+      "logicWarning": "Logik-Warnung",
+      "actual": "Aktuell",
+      "target": "Ziel",
+      "maturityLevels": "Reifegradstufen",
+      "transformationPathway": "Transformationspfad",
+      "pathwayIntro": "Um von Stufe {{actual}} auf Stufe {{target}} zu gelangen, sind folgende wichtige Änderungen erforderlich:",
+      "transitionPhase": "Übergangsphase {{phase}}",
+      "impliedStep": "impliziter Schritt von {{from}} nach {{to}}",
+      "selectLevelsHint": "Wählen Sie Aktuell und Ziel, um den Pfad zu visualisieren.",
+      "strategicRationale": "Strategische Begründung",
+      "rationalePlaceholder": "Warum ist dieses Ziel für Ihre Geschäftsstrategie entscheidend?",
+      "proMode": "PRO-Modus Aktiv: Logikprüfung Aktiviert",
+      "confirmNext": "Bestätigen & Weiter",
+      "validated": "Bewertung Validiert",
+      "consultantWarning": "Beraterwarnung"
+    },
+    "wizard": {
+      "startTitle": "Bewertung Starten",
+      "startDesc": "Beantworten Sie einige Fragen, damit unser Algorithmus Ihren digitalen Reifegrad in diesem Bereich empfehlen kann.",
+      "startBtn": "Start",
+      "questionProgress": "Frage {{current}} / {{total}}",
+      "yes": "Ja, vollständig",
+      "partial": "Teilweise / In Bearbeitung",
+      "no": "Nein",
+      "skip": "Überspringen (Nicht zutreffend)",
+      "recommendedLevel": "Empfohlenes Niveau",
+      "suggestedLevelDesc": "Basierend auf Ihren Antworten schlagen wir dieses Reifegradniveau vor.",
+      "acceptResult": "Ergebnis Akzeptieren",
+      "adjustManually": "Manuell Anpassen",
+      "cancel": "Abbrechen"
+    },
+    "axisContent": {
+      "processes": {
+        "title": "Digitale Prozesse",
+        "levels": {
+          "1": "Grundlegende Datenerfassung",
+          "2": "Arbeitsplatzsteuerung",
+          "3": "Prozesssteuerung",
+          "4": "Automatisierung",
+          "5": "MES (Fertigungsmanagementsysteme)",
+          "6": "ERP (Unternehmensressourcenplanung)",
+          "7": "KI-Unterstützungsalgorithmen"
+        }
+      },
+      "digitalProducts": {
+        "title": "Digitale Produkte",
+        "levels": {
+          "1": "Nur Physisch",
+          "2": "Digitale Erweiterung",
+          "3": "Vernetztes Produkt",
+          "4": "Intelligentes Produkt",
+          "5": "Produkt als Service",
+          "6": "Plattform",
+          "7": "Ökosystem"
+        }
+      },
+      "businessModels": {
+        "title": "Geschäftsmodelle",
+        "levels": {
+          "1": "Traditioneller Verkauf",
+          "2": "E-Commerce",
+          "3": "Service-basiert",
+          "4": "Abonnement",
+          "5": "Nutzungsbasiert",
+          "6": "Ergebnisorientiert",
+          "7": "Ökosystem-Orchestrator"
+        }
+      },
+      "dataManagement": {
+        "title": "Datenmanagement",
+        "levels": {
+          "1": "Keine Daten",
+          "2": "Deskriptiv (Was passierte)",
+          "3": "Diagnostisch (Warum)",
+          "4": "Prädiktiv (Was wird passieren)",
+          "5": "Präskriptiv (Was zu tun ist)",
+          "6": "Kognitiv (KI)",
+          "7": "Generativ"
+        }
+      },
+      "culture": {
+        "title": "Kultur",
+        "levels": {
+          "1": "Widerständig",
+          "2": "Bewusst",
+          "3": "Neugierig",
+          "4": "Agil",
+          "5": "Datengetrieben",
+          "6": "Innovator",
+          "7": "Digital Native"
+        }
+      },
+      "cybersecurity": {
+        "title": "Cybersicherheit",
+        "levels": {
+          "1": "Keine",
+          "2": "Grundlegend (Firewall)",
+          "3": "Compliance-basiert",
+          "4": "Proaktiv",
+          "5": "Widerstandsfähig",
+          "6": "Zero Trust",
+          "7": "Immun"
+        }
+      },
+      "aiMaturity": {
+        "title": "KI-Reife",
+        "levels": {
+          "1": "Keine",
+          "2": "Experimente",
+          "3": "Punktlösungen",
+          "4": "Integrierte KI",
+          "5": "AI-First-Strategie",
+          "6": "Autonome Agenten",
+          "7": "Superintelligenz"
+        }
+      }
     }
   }
 }

@@ -42,7 +42,7 @@ export const Sidebar: React.FC = () => {
     currentView,
     setCurrentView,
     logout,
-    language,
+    // language, // Removed
     isSidebarOpen,
     setIsSidebarOpen,
     currentUser,
@@ -53,14 +53,9 @@ export const Sidebar: React.FC = () => {
     toggleSidebarCollapse
   } = useAppStore();
 
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
 
-  // Sync language with i18n
-  useEffect(() => {
-    if (i18n.language !== language.toLowerCase()) {
-      i18n.changeLanguage(language.toLowerCase());
-    }
-  }, [language, i18n]);
+  // Removed i18n sync effect
 
   // Local state for sidebar hover interaction
   const [isHovered, setIsHovered] = useState(false);
@@ -106,21 +101,21 @@ export const Sidebar: React.FC = () => {
       label: t('sidebar.dashboard'), // Module 0
       icon: <LayoutDashboard size={20} />,
       subItems: [
-        { id: 'DASHBOARD_OVERVIEW', label: 'Overview', viewId: AppView.DASHBOARD_OVERVIEW, icon: <Map size={16} /> },
-        { id: 'DASHBOARD_SNAPSHOT', label: 'Execution Snapshot', viewId: AppView.DASHBOARD_SNAPSHOT, icon: <Activity size={16} /> }
+        { id: 'DASHBOARD_OVERVIEW', label: t('sidebar.dashboardSub.overview'), viewId: AppView.DASHBOARD_OVERVIEW, icon: <Map size={16} /> },
+        { id: 'DASHBOARD_SNAPSHOT', label: t('sidebar.dashboardSub.snapshot'), viewId: AppView.DASHBOARD_SNAPSHOT, icon: <Activity size={16} /> }
       ]
     },
     {
       id: 'INTRO_CONTEXT',
-      label: 'Intro',
+      label: t('sidebar.intro'),
       icon: <BookOpen size={20} />,
       isFloating: false,
       subItems: [
-        { id: 'CTX_1', label: 'Company Profile', viewId: AppView.CONTEXT_BUILDER_PROFILE },
-        { id: 'CTX_2', label: 'Goals & Expectations', viewId: AppView.CONTEXT_BUILDER_GOALS },
-        { id: 'CTX_3', label: 'Challenge Map', viewId: AppView.CONTEXT_BUILDER_CHALLENGES },
-        { id: 'CTX_4', label: 'Megatrend Scanner', viewId: AppView.CONTEXT_BUILDER_MEGATRENDS },
-        { id: 'CTX_5', label: 'Strategic Synthesis', viewId: AppView.CONTEXT_BUILDER_STRATEGY },
+        { id: 'CTX_1', label: t('sidebar.context.profile'), viewId: AppView.CONTEXT_BUILDER_PROFILE },
+        { id: 'CTX_2', label: t('sidebar.context.goals'), viewId: AppView.CONTEXT_BUILDER_GOALS },
+        { id: 'CTX_3', label: t('sidebar.context.challenges'), viewId: AppView.CONTEXT_BUILDER_CHALLENGES },
+        { id: 'CTX_4', label: t('sidebar.context.megatrends'), viewId: AppView.CONTEXT_BUILDER_MEGATRENDS },
+        { id: 'CTX_5', label: t('sidebar.context.strategy'), viewId: AppView.CONTEXT_BUILDER_STRATEGY },
       ]
     },
     // Removed legacy MODULE_1 as requested ("Usun caly ten obecny 1.")
@@ -134,6 +129,7 @@ export const Sidebar: React.FC = () => {
         { id: 'M2_3', label: t('sidebar.fullStep1_model'), viewId: AppView.FULL_STEP1_MODELS },
         { id: 'M2_4', label: t('sidebar.fullStep1_data'), viewId: AppView.FULL_STEP1_DATA },
         { id: 'M2_5', label: t('sidebar.fullStep1_cult'), viewId: AppView.FULL_STEP1_CULTURE },
+        { id: 'M2_CYBER', label: t('sidebar.fullStep1_cyber'), viewId: AppView.FULL_STEP1_CYBERSECURITY },
         { id: 'M2_6', label: t('sidebar.fullStep1_ai'), viewId: AppView.FULL_STEP1_AI },
       ]
     },
@@ -176,18 +172,12 @@ export const Sidebar: React.FC = () => {
     }
   ];
 
-  // Settings Menu Structure (Floating)
+  // Settings Menu Structure (Direct Link)
   const settingsMenuItem: MenuItem = {
     id: 'SETTINGS',
     label: t('sidebar.settings'),
     icon: <Settings size={20} />,
-    isFloating: true,
-    subItems: [
-      { id: 'SET_PROFILE', label: t('settings.menu.myProfile'), viewId: AppView.SETTINGS_PROFILE, icon: <UserCircle size={16} /> },
-      { id: 'SET_BILLING', label: t('settings.menu.billing'), viewId: AppView.SETTINGS_BILLING, icon: <CreditCard size={16} /> },
-      { id: 'SET_AI', label: t('settings.menu.aiConfig'), viewId: AppView.ADMIN_LLM, icon: <Cpu size={16} /> }, // Using ADMIN_LLM or appropriate view
-      { id: 'SET_NOTIFICATIONS', label: t('settings.menu.notifications'), viewId: AppView.SETTINGS_PROFILE /* Fallback to profile tab logic? SettingsView handles activeTab internal state, but here we navigate to View. AppView.SETTINGS_* are needed */, icon: <Bell size={16} /> },
-    ]
+    viewId: AppView.SETTINGS_PROFILE, // Direct navigation
   };
 
   const adminMenuItem: MenuItem = {
@@ -229,7 +219,7 @@ export const Sidebar: React.FC = () => {
     };
 
     const parentsToExpand = findParentIds(allItems, currentView);
-     
+
     if (parentsToExpand && parentsToExpand.length > 0) {
 
       setTimeout(() => {
@@ -242,7 +232,7 @@ export const Sidebar: React.FC = () => {
         });
       }, 0);
     }
-     
+
   }, [currentView, currentUser?.role]); // Removed isSidebarCollapsed to avoid re-expanding when collapsing
 
   const renderMenuItem = (item: MenuItem, level: number = 0) => {
@@ -279,10 +269,18 @@ export const Sidebar: React.FC = () => {
         <button
           onClick={() => {
             if (isLocked) return;
+            // Allow navigation for floating items with viewId (e.g. Settings -> Settings Profile)
+            if (item.isFloating && item.viewId) {
+              setCurrentView(item.viewId);
+              // We do NOT close the sidebar here to allow the floating menu to be usable if needed, 
+              // but usually user just wants to go there.
+              setIsSidebarOpen(false);
+              return;
+            }
+
             if (hasSubItems) {
               if (item.isFloating) {
-                // Do nothing on click for floating parent, hover handles it, or maybe toggle generic logic?
-                // User behavior typically expects hover. Click might toggle expansion in responsive.
+                // Do nothing on click for floating parent if no viewId (or handled above)
               } else {
                 if (showFull) toggleExpand(item.id);
               }
@@ -467,7 +465,7 @@ export const Sidebar: React.FC = () => {
                 toggleSidebarCollapse();
                 setIsHovered(false);
               }}
-              className="p-1.5 rounded-md text-slate-400 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-colors"
+              className="p-1.5 rounded-md text-slate-400 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-colors btn-base"
               title={isSidebarCollapsed ? "Pin Sidebar (Keep Open)" : "Unpin Sidebar (Collapse)"}
             >
               {isSidebarCollapsed ? (
@@ -491,13 +489,6 @@ export const Sidebar: React.FC = () => {
             {menuStructure.map(item => renderMenuItem(item))}
           </div>
 
-          {/* Admin Section Separator */}
-          {currentUser?.role === UserRole.ADMIN && (
-            <div className="mt-4 pt-4 border-t border-slate-200 dark:border-white/5 mx-3">
-              {showFull && <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 px-3">Admin</div>}
-              {renderMenuItem(adminMenuItem)}
-            </div>
-          )}
         </nav>
 
         {/* Usage Stats */}
@@ -508,12 +499,15 @@ export const Sidebar: React.FC = () => {
         {/* Bottom Actions */}
         <div className="p-3 border-t border-slate-200 dark:border-white/5 shrink-0">
           <div className="space-y-1">
+            {/* Admin Panel (Moved here) */}
+            {currentUser?.role === UserRole.ADMIN && renderMenuItem(adminMenuItem)}
+
             {/* Render Settings as Floating Menu Item */}
             {renderMenuItem(settingsMenuItem)}
 
             <button
               onClick={logout}
-              className={`w-full flex items-center gap-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
+              className={`w-full flex items-center gap-3 py-2.5 rounded-xl text-sm font-medium btn-base transition-all duration-200
 text-slate-500 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400
                 ${!showFull ? 'justify-center px-0' : 'px-3'} `}
               title="Log Out"

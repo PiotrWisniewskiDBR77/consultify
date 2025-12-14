@@ -1,73 +1,86 @@
 {
   "sidebar": {
     "dashboard": "Pulpit",
-    "quickAssessment": "Szybka Ocena",
+    "quickAssessment": "Szybka Diagnoza",
     "fullProject": "Pełna Transformacja",
     "masterclass": "Masterclass",
     "resources": "Zasoby",
-    "module1": "1. Oczekiwania & Wyzwania",
+    "module1": "Oczekiwania i Wyzwania",
     "module1_1": "Profil Firmy",
     "module1_2": "Cele Strategiczne",
     "module1_3": "Mapa Wyzwań",
-    "module2": "2. Ocena DrD & Audyty",
-    "module3": "3. Inicjatywy & Roadmapa",
-    "module3_1": "Generator & Lista",
-    "module3_2": "Roadmapa",
-    "module4": "4. Pilot Execution",
-    "module5": "5. Full Rollout",
-    "module6": "6. Ekonomia & ROI",
-    "module7": "7. Raporty",
+    "module2": "Ocena DRD",
+    "module3": "Inicjatywy i Mapa Drogowa",
+    "module3_1": "Generator i Lista",
+    "module3_2": "Mapa Drogowa",
+    "module4": "Realizacja Pilotażu",
+    "module5": "Pełne Wdrożenie",
+    "module6": "Ekonomia i ROI",
+    "module7": "Raporty",
     "adminPanel": "Panel Administratora",
     "adminUsers": "Użytkownicy",
     "adminProjects": "Projekty",
     "adminLLM": "Zarządzanie LLM",
     "adminKnowledge": "Baza Wiedzy",
-    "adminFeedback": "Feedback",
+    "adminFeedback": "Opinie",
     "quickStep1": "Firma i Oczekiwania",
-    "quickStep2": "Wyzwania i Pytania Profilowe",
+    "quickStep2": "Wyzwania i Profil",
     "quickStep3": "Rekomendacje",
     "fullStep1": "Ocena (DRD)",
-    "fullStep1_proc": "Procesy",
+    "fullStep1_proc": "Procesy Cyfrowe",
     "fullStep1_prod": "Produkty Cyfrowe",
     "fullStep1_model": "Modele Biznesowe",
     "fullStep1_data": "Zarządzanie Danymi",
-    "fullStep1_cult": "Kultura",
+    "fullStep1_cult": "Kultura Organizacyjna",
+    "fullStep1_cyber": "Cyberbezpieczeństwo",
     "fullStep1_ai": "Dojrzałość AI",
     "fullStep2": "Generator Inicjatyw",
     "fullStep3": "Mapa Drogowa",
     "fullStep4": "Ekonomia i ROI",
-    "fullStep5": "Pulpit Wykonawczy",
+    "fullStep5": "Dashboard Realizacji",
     "fullStep6": "Raporty",
-    "newConversation": "Nowa Rozmowa",
+    "newConversation": "Nowa Konwersacja",
     "settings": "Ustawienia",
     "mobileApp": "Aplikacja Mobilna",
-    "logOut": "Wyloguj"
+    "logOut": "Wyloguj",
+    "intro": "Wstęp",
+    "context": {
+      "profile": "Profil Firmy",
+      "goals": "Cele i Oczekiwania",
+      "challenges": "Mapa Wyzwań",
+      "megatrends": "Skaner Megatrendów",
+      "strategy": "Synteza Strategiczna"
+    },
+    "dashboardSub": {
+      "overview": "Przegląd",
+      "snapshot": "Migawka Realizacji"
+    }
   },
   "auth": {
-    "startQuick": "Rozpocznij Szybką Ocenę",
-    "setupFull": "Załóż Pełne Konto",
+    "startQuick": "Rozpocznij Szybką Diagnozę",
+    "setupFull": "Skonfiguruj Pełne Konto",
     "unlockFull": "Odblokuj Pełną Transformację",
     "enterCode": "Wprowadź 6-cyfrowy kod dostępu od DBR77.",
     "verifyCode": "Zweryfikuj Kod",
-    "personalize": "Potrzebujemy kilku szczegółów, aby spersonalizować mapę drogową.",
+    "personalize": "Potrzebujemy kilku szczegółów, aby spersonalizować Twoją mapę drogową.",
     "firstName": "Imię",
     "lastName": "Nazwisko",
-    "email": "Email służbowy",
-    "phone": "Numer telefonu",
+    "email": "Służbowy Adres Email",
+    "phone": "Numer Telefonu",
     "company": "Nazwa Firmy",
     "password": "Hasło (min. 8 znaków)",
-    "createStart": "Utwórz Konto i Start",
+    "createStart": "Utwórz Konto i Rozpocznij",
     "haveAccount": "Masz już konto?",
     "noAccount": "Nie masz konta?",
     "logIn": "Zaloguj się",
-    "createOne": "Załóż je",
+    "createOne": "Utwórz je",
     "welcomeBack": "Witaj ponownie!",
-    "signInText": "Zaloguj się, aby kontynuować transformację.",
-    "backToStart": "Wróć do ekranu startowego"
+    "signInText": "Zaloguj się, aby kontynuować podróż transformacji.",
+    "backToStart": "Powrót do Ekranu Startowego"
   },
   "step1": {
     "title": "Krok 1 z 3 — Firma i Oczekiwania",
-    "subtitle": "Szybka Ocena",
+    "subtitle": "Szybka Diagnoza",
     "profile": "Profil Firmy",
     "role": "Rola",
     "industry": "Branża",
@@ -84,10 +97,10 @@
   },
   "step3": {
     "title": "Krok 3 z 3 — Rekomendacje",
-    "snapshot": "Przegląd Firmy",
-    "focusAreas": "Rekomendowane Obszary",
-    "quickWins": "Szybkie Wygrane",
-    "startFull": "Rozpocznij Pełny Projekt",
+    "snapshot": "Migawka Firmy",
+    "focusAreas": "Rekomendowane Obszary Skupienia",
+    "quickWins": "Szybkie Zwycięstwa (Quick Wins)",
+    "startFull": "Rozpocznij Pełny Projekt Transformacji",
     "download": "Pobierz Podsumowanie",
     "revenue": "Przychody",
     "maturity": "Dojrzałość Cyfrowa"
@@ -95,36 +108,36 @@
   "chat": {
     "header": "Asystent Transformacji",
     "subHeader": "Krok 1: Profilowanie",
-    "placeholder": "Wpisz odpowiedź...",
+    "placeholder": "Wpisz swoją odpowiedź...",
     "scripts": {
-      "intro": "Cześć {name}. Jestem Twoim Asystentem Transformacji.\n\nW tej Szybkiej Ocenie (Free) przejdziemy przez 3 kroki:\n1. Firma i oczekiwania\n2. Wyzwania i profil\n3. Rekomendacje i szybkie wygrane.\n\nZaczynamy?",
+      "intro": "Cześć {name}. Jestem Twoim Asystentem Transformacji.\n\nW tej Szybkiej Diagnozie (Darmowej) przejdziemy przez 3 kroki:\n1. Firma i oczekiwania\n2. Wyzwania i pytania profilowe\n3. Rekomendacje i szybkie zwycięstwa.\n\nZaczynamy?",
       "role": "Świetnie. Zacznijmy od podstaw.\n\nJaka jest Twoja rola w firmie?",
       "industry": "Miło Cię poznać, {role}. Perspektywa ma znaczenie.\n\nW jakiej branży działacie?",
-      "industrySub": "Produkcja. Rozumiem. Jaka konkretnie?",
+      "industrySub": "Produkcja. Rozumiem. Jakiego rodzaju konkretnie?",
       "size": "Ilu mniej więcej macie pracowników?",
-      "country": "Zrozumiałem. Skala zmienia dostępne rozwiązania.\n\nW jakim kraju głównie działacie?",
-      "challenges": "Świetnie, przeanalizujmy Twoje wyzwania, aby zbudować sensowne rekomendacje.\n\nJaki jest Twój główny problem operacyjny?",
-      "goal": "Rozumiem. Zajmiemy się tymi wyzwaniami.\n\nGdybyśmy rozmawiali za 12 miesięcy, co byłoby GŁÓWNYM sukcesem?",
-      "horizon": "Jasny cel.\n\nKiedy musisz zobaczyć pierwsze wymierne efekty?",
-      "summary": "Idealnie. Mamy profil.\n\nPodsumowanie:\n- Rola: {role}\n- Sektor: {industry}\n- Cel: {goal}\n\nTeraz wygeneruję dla Ciebie konkretne pomysły.",
-      "done": "Świetnie! Kliknij przycisk po prawej, aby zobaczyć Propozycje Działań.",
-      "step3Intro": "Na podstawie Twoich odpowiedzi, oto szybki przegląd Twojej sytuacji i moje rekomendacje.",
-      "step3Summary": "Twoja firma działa w sektorze {industry} z jasnym celem {goal}. Głównym wyzwaniem jest {painPoint}.",
+      "country": "Zrozumiałem. Skala zmienia dostępne rozwiązania.\n\nW którym kraju znajduje się Wasza główna działalność?",
+      "challenges": "Świetnie, zbadajmy Twoje obecne wyzwania, aby zbudować sensowne rekomendacje.\n\nJaki jest Twój główny ból operacyjny? (Wybierz lub wpisz)",
+      "goal": "Rozumiem. Radzenie sobie z kluczowymi wyzwaniami.\n\nTeraz, jeśli porozmawialibyśmy za 12 miesięcy, jakie GŁÓWNE stwierdzenie o sukcesie chciałbyś wygłosić?",
+      "horizon": "Jasny cel.\n\nKiedy musisz zobaczyć pierwsze namacalne rezultaty?",
+      "summary": "Doskonale. Mamy profil.\n\nPodsumowanie:\n- Rola: {role}\n- Sektor: {industry}\n- Cel: {goal}\n\nTeraz wygeneruję dla Ciebie konkretne pomysły.",
+      "done": "Świetnie! Kliknij przycisk po prawej stronie, aby zobaczyć Propozycje Działań.",
+      "step3Intro": "Na podstawie Twoich odpowiedzi, oto szybka migawka Twojej sytuacji i moje rekomendacje.",
+      "step3Summary": "Twoja firma działa w sektorze {industry} z jasnym celem: {goal}. Głównym wyzwaniem jest {painPoint}.",
       "step3Focus": "Rekomenduję natychmiastowe skupienie się na tych obszarach:",
-      "step3Wins": "Oto kilka Szybkich Wygranych, które możesz zacząć w najbliższy poniedziałek:",
-      "step3Upsell": "Czy chciałbyś przejść do Pełnego Projektu Transformacji i zbudować pełną mapę drogową?"
+      "step3Wins": "Oto kilka Szybkich Zwycięstw, które możesz zacząć w najbliższy poniedziałek:",
+      "step3Upsell": "Czy chcesz przejść do Pełnego Projektu Transformacji i zbudować pełną mapę drogową?"
     },
     "options": {
       "start": "OK, zaczynajmy",
       "explain": "Wyjaśnij proces",
-      "ceo": "Właściciel / Prezes",
-      "plant": "Dyrektor Zakładu",
-      "coo": "Dyrektor Operacyjny",
+      "ceo": "Właściciel / CEO",
+      "plant": "Kierownik Zakładu",
+      "coo": "Dyrektor Operacyjny (COO)",
       "mfg": "Produkcja",
       "log": "Logistyka",
-      "inefficient": "Nieefektywne procesy",
+      "inefficient": "Nieefektywne procesy produkcji",
       "lackData": "Brak danych / widoczności",
-      "manual": "Zbyt wiele zadań ręcznych",
+      "manual": "Zbyt wiele zadań manualnych",
       "quality": "Problemy z jakością",
       "automation": "Niski poziom automatyzacji",
       "proc": "Procesy",
@@ -134,234 +147,1904 @@
       "m3": "3 miesiące",
       "m6": "6 miesięcy",
       "m12": "12 miesięcy",
-      "confirm": "Zgadza się",
+      "confirm": "Wygląda poprawnie",
       "edit": "Zmień coś",
-      "yesFull": "Tak, startuj Pełny Projekt",
+      "yesFull": "Tak, rozpocznij Pełny Projekt",
       "notNow": "Nie teraz"
     }
   },
+  "assessment": {
+    "workspace": {
+      "header": "Ocena DRD",
+      "senseCheck": "Weryfikacja AI",
+      "analyzing": "Analizowanie...",
+      "logicVerified": "Logika Zweryfikowana",
+      "logicWarning": "Ostrzeżenie Logiczne",
+      "actual": "Obecny",
+      "target": "Docelowy",
+      "maturityLevels": "Poziomy Dojrzałości",
+      "transformationPathway": "Ścieżka Transformacji",
+      "pathwayIntro": "Aby przejść z Poziomu {{actual}} na Poziom {{target}}, wymagane są następujące kluczowe zmiany:",
+      "transitionPhase": "Faza Przejściowa {{phase}}",
+      "impliedStep": "krok wynikowy z {{from}} do {{to}}",
+      "selectLevelsHint": "Wybierz poziomy Obecny i Docelowy, aby zwizualizować ścieżkę.",
+      "strategicRationale": "Uzasadnienie Strategiczne",
+      "rationalePlaceholder": "Dlaczego ten cel jest krytyczny dla strategii biznesowej?",
+      "proMode": "Tryb PRO Aktywny: Walidacja Logiki Włączona",
+      "confirmNext": "Potwierdź i Dalej",
+      "validated": "Ocena Zatwierdzona"
+    },
+    "wizard": {
+      "startTitle": "Rozpocznij Ocenę",
+      "startDesc": "Odpowiedz na kilka pytań, aby nasz algorytm mógł zarekomendować Twój poziom dojrzałości cyfrowej w tym obszarze.",
+      "startBtn": "Start",
+      "questionProgress": "Pytanie {{current}} / {{total}}",
+      "yes": "Tak, w pełni",
+      "partial": "Częściowo / W trakcie",
+      "no": "Nie",
+      "skip": "Pomiń (Nie dotyczy)",
+      "recommendedLevel": "Rekomendowany Poziom",
+      "suggestedLevelDesc": "Na podstawie Twoich odpowiedzi sugerujemy ten poziom dojrzałości.",
+      "acceptResult": "Akceptuj Wynik",
+      "adjustManually": "Dostosuj Ręcznie",
+      "cancel": "Anuluj"
+    },
+    "axisContent": {
+      "processes": {
+        "title": "Procesy Cyfrowe",
+        "intro": "Ocena 9 kluczowych obszarów procesów biznesowych.",
+        "areas": {
+          "sales": {
+            "title": "Sprzedaż",
+            "levels": {
+              "1": "Podstawowa Rejestracja Danych",
+              "2": "Wdrożenie CRM",
+              "3": "Integracja chmury z ERP/Marketingiem",
+              "4": "Automatyzacja Sprzedaży",
+              "5": "Integracja Omnichannel",
+              "7": "Autonomiczni Agenci Sprzedaży"
+            },
+            "level1Desc": "Na tym poziomie firma rozpoczyna cyfryzację obszaru sprzedaży poprzez rejestrowanie podstawowych danych, takich jak umowy, zamówienia i informacje o klientach. Dane są zapisywane w systemach lub plikach, jednak nie są jeszcze wykorzystywane do zarządzania procesem sprzedaży. Sprzedaż opiera się głównie na wiedzy i doświadczeniu pojedynczych osób, a organizacja nie posiada realnej kontroli nad przebiegiem procesu.",
+            "level1Questions": [
+              "Czy dane sprzedażowe są rejestrowane cyfrowo?",
+              "Czy informacje o klientach są rozproszone w różnych narzędziach?",
+              "Czy raporty sprzedaży wymagają ręcznego przygotowania?",
+              "Czy odejście handlowca powoduje utratę wiedzy?"
+            ],
+            "level1Formula": "Decyzje podejmowane są wyłącznie przez ludzi, bez systemowego wsparcia.",
+            "level2Desc": "Firma posiada narzędzia umożliwiające monitorowanie pracy handlowców oraz wyników sprzedaży. Dane sprzedażowe są agregowane i prezentowane w formie raportów oraz wskaźników KPI, co pozwala menedżerom kontrolować efektywność zespołu. Proces sprzedaży jest widoczny, jednak nadal realizowany manualnie i silnie zależny od ludzi.",
+            "level2Questions": [
+              "Czy system automatycznie generuje raporty sprzedażowe?",
+              "Czy menedżer ma bieżący wgląd w wyniki zespołu?",
+              "Czy KPI sprzedaży są jasno zdefiniowane?",
+              "Czy kontrola pracy odbywa się systemowo, a nie doraźnie?"
+            ],
+            "level2Formula": "Decyzje podejmowane są przez ludzi na podstawie raportów.",
+            "level3Desc": "Na tym poziomie sprzedaż funkcjonuje jako zdefiniowany i zarządzany proces. Firma planuje cele sprzedażowe oraz budżety, a systemy monitorują realizację planów i identyfikują odchylenia. Zarządzanie sprzedażą przesuwa się z reaktywnego raportowania na aktywną kontrolę przebiegu procesu.",
+            "level3Questions": [
+              "Czy sprzedaż jest planowana w oparciu o budżet?",
+              "Czy realizacja celów jest monitorowana w trakcie procesu?",
+              "Czy odchylenia są widoczne na bieżąco?",
+              "Czy sprzedaż jest zarządzana procesowo?"
+            ],
+            "level3Formula": "Człowiek decyduje, system kontroluje realizację procesu.",
+            "level4Desc": "Sprzedaż jest częściowo realizowana automatycznie, bez konieczności bezpośredniego udziału handlowców. Klienci mogą składać zamówienia samodzielnie, a system wykonuje działania sprzedażowe zgodnie z ustalonymi regułami. Rola człowieka koncentruje się na nadzorze i obsłudze wyjątków.",
+            "level4Questions": [
+              "Czy klienci mogą kupować bez kontaktu z handlowcem?",
+              "Czy zamówienia są realizowane automatycznie?",
+              "Czy sprzedaż działa również poza godzinami pracy?",
+              "Czy handlowcy nadzorują proces zamiast go wykonywać?"
+            ],
+            "level4Formula": "System wykonuje działania według reguł, człowiek nadzoruje.",
+            "level5Desc": "Firma posiada bieżącą widoczność realizacji sprzedaży w kontekście operacyjnym. Systemy raportują statusy zamówień, dostaw i realizacji, umożliwiając zarządzanie sprzedażą jako procesem wykonawczym. Sprzedaż jest powiązana z logistyką i realizacją.",
+            "level5Questions": [
+              "Czy status realizacji zamówień jest widoczny w czasie rzeczywistym?",
+              "Czy sprzedaż jest zsynchronizowana z logistyką?",
+              "Czy mierzone są KPI realizacji sprzedaży?",
+              "Czy możliwa jest szybka reakcja na problemy?"
+            ],
+            "level5Formula": "Decyzje podejmowane są na podstawie danych operacyjnych.",
+            "level6Desc": "Sprzedaż jest w pełni zintegrowana z pozostałymi procesami firmy, takimi jak produkcja, zakupy, logistyka i finanse. System ERP zapewnia jedną wersję prawdy i koordynuje realizację zamówień w całej organizacji. Proces sprzedaży działa stabilnie i skalowalnie.",
+            "level6Questions": [
+              "Czy sprzedaż automatycznie wpływa na inne procesy firmy?",
+              "Czy dane sprzedażowe są spójne w całej organizacji?",
+              "Czy proces działa niezależnie od silosów?",
+              "Czy ERP steruje realizacją zamówień?"
+            ],
+            "level6Formula": "System steruje procesem, człowiek zarządza wyjątkami.",
+            "level7Desc": "Proces sprzedaży jest wspierany przez algorytmy sztucznej inteligencji, które analizują dane historyczne i bieżące w celu personalizacji ofert, prognozowania zachowań klientów i optymalizacji działań sprzedażowych. System uczy się wraz z nowymi danymi, a sprzedaż staje się adaptacyjna i samodoskonaląca.",
+            "level7Questions": [
+              "Czy oferty są personalizowane automatycznie?",
+              "Czy system przewiduje potrzeby klientów?",
+              "Czy boty sprzedażowe działają samodzielnie?",
+              "Czy proces sprzedaży uczy się na danych?"
+            ],
+            "level7Formula": "AI rekomenduje i optymalizuje, człowiek nadzoruje strategię."
+          },
+          "marketing": {
+            "title": "Marketing",
+            "levels": {
+              "1": "Podstawowa Promocja",
+              "2": "Obecność Cyfrowa",
+              "3": "Narzędzia Automatyzacji Marketingu",
+              "4": "Personalizacja i Segmentacja",
+              "5": "Kampanie Oparte na Danych",
+              "6": "Marketing Predykcyjny (AI)",
+              "7": "Hiperpolaryzacja w Czasie Rzeczywistym"
+            },
+            "level1Desc": "Na tym poziomie firma prowadzi działania marketingowe w sposób niesystemowy, koncentrując się głównie na rejestrowaniu podstawowych danych, takich jak kampanie, koszty i leady. Dane są gromadzone, ale nie są wykorzystywane do świadomego zarządzania marketingiem. Marketing opiera się głównie na intuicji i doświadczeniu, a nie na danych.",
+            "level1Questions": [
+              "Czy działania marketingowe są dokumentowane?",
+              "Czy koszty kampanii są rejestrowane?",
+              "Czy leady są zapisywane, ale nie analizowane?",
+              "Czy trudno ocenić skuteczność marketingu?"
+            ],
+            "level1Formula": "Decyzje podejmowane są intuicyjnie przez ludzi.",
+            "level2Desc": "Firma posiada narzędzia umożliwiające monitorowanie działań marketingowych oraz ich podstawowych wyników. Dane są prezentowane w raportach i dashboardach, co pozwala na ocenę efektywności kampanii. Marketing jest mierzalny, ale nadal zarządzany manualnie.",
+            "level2Questions": [
+              "Czy wyniki kampanii są raportowane automatycznie?",
+              "Czy istnieją KPI marketingowe?",
+              "Czy możliwa jest porównywalność kampanii?",
+              "Czy menedżer ma bieżący wgląd w dane?"
+            ],
+            "level2Formula": "Decyzje podejmowane są na podstawie raportów.",
+            "level3Desc": "Marketing funkcjonuje jako zaplanowany i zarządzany proces. Firma definiuje cele marketingowe, budżety oraz mierzy ich realizację na poziomie całego lejka marketingowego. Zarządzanie marketingiem staje się procesowe, a nie reaktywne.",
+            "level3Questions": [
+              "Czy istnieje plan marketingowy?",
+              "Czy budżet marketingu jest monitorowany?",
+              "Czy lejek marketingowy jest mierzony?",
+              "Czy odchylenia są widoczne w trakcie kampanii?"
+            ],
+            "level3Formula": "Człowiek decyduje, system kontroluje proces.",
+            "level4Desc": "Działania marketingowe są częściowo zautomatyzowane. Kampanie, komunikacja i lead nurturing uruchamiane są automatycznie zgodnie z regułami. Rola zespołu marketingu koncentruje się na projektowaniu scenariuszy i nadzorze nad ich realizacją.",
+            "level4Questions": [
+              "Czy kampanie uruchamiają się automatycznie?",
+              "Czy leady są obsługiwane bez ręcznej ingerencji?",
+              "Czy marketing działa 24/7?",
+              "Czy zespół nadzoruje zamiast wykonywać?"
+            ],
+            "level4Formula": "System wykonuje działania według reguł, człowiek nadzoruje.",
+            "level5Desc": "Firma monitoruje realizację działań marketingowych w czasie rzeczywistym. Widoczna jest skuteczność kampanii, przepływ leadów oraz ich konwersja. Marketing jest zarządzany operacyjnie i powiązany ze sprzedażą.",
+            "level5Questions": [
+              "Czy konwersje są widoczne w czasie rzeczywistym?",
+              "Czy marketing i sprzedaż są zsynchronizowane?",
+              "Czy KPI realizacyjne są mierzone?",
+              "Czy możliwa jest szybka reakcja?"
+            ],
+            "level5Formula": "Decyzje podejmowane są na podstawie danych operacyjnych.",
+            "level6Desc": "Marketing jest w pełni zintegrowany z pozostałymi procesami organizacji. Dane marketingowe wpływają bezpośrednio na sprzedaż, planowanie i finanse. Organizacja posiada jedną, spójną wersję danych marketingowych.",
+            "level6Questions": [
+              "Czy dane marketingowe są zintegrowane z ERP?",
+              "Czy marketing wpływa na planowanie sprzedaży?",
+              "Czy koszty i efekty są spójne?",
+              "Czy proces działa bez silosów?"
+            ],
+            "level6Formula": "System koordynuje proces, człowiek zarządza wyjątkami.",
+            "level7Desc": "Marketing jest wspierany przez algorytmy AI, które analizują dane klientów, kampanii i zachowań rynkowych. System automatycznie optymalizuje kampanie, personalizuje komunikację i przewiduje efekty działań marketingowych. Marketing staje się adaptacyjny i samodoskonalący.",
+            "level7Questions": [
+              "Czy komunikacja jest personalizowana automatycznie?",
+              "Czy system przewiduje skuteczność kampanii?",
+              "Czy AI optymalizuje budżety?",
+              "Czy marketing uczy się na danych?"
+            ],
+            "level7Formula": "AI rekomenduje i optymalizuje, człowiek nadzoruje strategię."
+          },
+          "technology": {
+            "title": "Technologia (B&R)",
+            "levels": {
+              "1": "Projektowanie Manualne",
+              "2": "Narzędzia CAD/CAM",
+              "3": "Narzędzia Symulacyjne",
+              "4": "Szybkie Prototypowanie (Druk 3D)",
+              "5": "Cyfrowy Bliźniak (Digital Twin)",
+              "6": "Projektowanie Wspierane przez AI",
+              "7": "Autonomiczne B&R"
+            }
+          },
+          "purchasing": {
+            "title": "Zakupy",
+            "levels": {
+              "1": "Zakupy Ad-hoc",
+              "2": "Zamówienia Cyfrowe",
+              "3": "System Zakupowy (SRM)",
+              "4": "Automatyczne Uzupełnianie Zapasów",
+              "5": "Integracja z Dostawcami",
+              "6": "Zakupy Wspierane przez AI",
+              "7": "Autonomiczne Pozyskiwanie (Sourcing)"
+            },
+            "level1Desc": "Na tym poziomie firma rejestruje podstawowe dane zakupowe, takie jak zamówienia, dostawcy, ceny i terminy dostaw. Dane są zapisywane cyfrowo, często w prostych narzędziach, ale nie są wykorzystywane do aktywnego zarządzania zakupami. Zakupy opierają się głównie na doświadczeniu pracowników i relacjach z dostawcami.",
+            "level1Questions": [
+              "Czy zamówienia zakupowe są rejestrowane cyfrowo?",
+              "Czy dane o dostawcach są zapisane w jednym miejscu?",
+              "Czy ceny i terminy są archiwizowane?",
+              "Czy raporty zakupowe powstają ręcznie?"
+            ],
+            "level1Formula": "Decyzje podejmowane są przez ludzi na podstawie doświadczenia.",
+            "level2Desc": "Firma monitoruje pracę działu zakupów oraz podstawowe wskaźniki, takie jak terminowość dostaw, ceny czy liczba zamówień. Dane są zbierane i prezentowane w raportach, co pozwala na bieżącą kontrolę działań zakupowych. Proces zakupowy jest widoczny, ale nadal zarządzany manualnie.",
+            "level2Questions": [
+              "Czy wyniki zakupów są raportowane automatycznie?",
+              "Czy KPI zakupowe są mierzone?",
+              "Czy kierownik ma wgląd w bieżące dane?",
+              "Czy problemy są identyfikowane na podstawie danych?"
+            ],
+            "level2Formula": "Decyzje podejmowane są przez ludzi na podstawie raportów.",
+            "level3Desc": "Zakupy funkcjonują jako zaplanowany i kontrolowany proces. Firma planuje potrzeby materiałowe, budżety zakupowe oraz monitoruje realizację planów i odchylenia. Zarządzanie zakupami staje się procesowe, a nie reaktywne.",
+            "level3Questions": [
+              "Czy istnieje plan zakupów?",
+              "Czy potrzeby materiałowe są planowane?",
+              "Czy realizacja dostaw jest monitorowana?",
+              "Czy odchylenia są widoczne w trakcie procesu?"
+            ],
+            "level3Formula": "Człowiek decyduje, system kontroluje proces.",
+            "level4Desc": "Część operacji zakupowych jest realizowana automatycznie zgodnie z ustalonymi regułami. Systemy generują zamówienia, potwierdzają dostawy i aktualizują dane bez stałej ingerencji człowieka. Rola pracowników zakupów koncentruje się na nadzorze i negocjacjach.",
+            "level4Questions": [
+              "Czy zamówienia są generowane automatycznie?",
+              "Czy dostawy są potwierdzane systemowo?",
+              "Czy praca ludzi skupia się na negocjacjach?",
+              "Czy proces działa stabilnie bez ręcznej obsługi?"
+            ],
+            "level4Formula": "System wykonuje operacje według reguł, człowiek nadzoruje.",
+            "level5Desc": "Firma posiada bieżącą widoczność realizacji zakupów w czasie rzeczywistym. Systemy monitorują statusy zamówień, dostaw i zgodność z planem. Zakupy są zarządzane operacyjnie na podstawie aktualnych danych.",
+            "level5Questions": [
+              "Czy status zamówień jest widoczny w czasie rzeczywistym?",
+              "Czy opóźnienia są identyfikowane natychmiast?",
+              "Czy KPI realizacji zakupów są mierzone?",
+              "Czy możliwa jest szybka reakcja?"
+            ],
+            "level5Formula": "Decyzje podejmowane są na podstawie danych operacyjnych.",
+            "level6Desc": "Zakupy są w pełni zintegrowane z produkcją, logistyką, finansami i planowaniem. System ERP synchronizuje dane zakupowe w całej organizacji, zapewniając spójność i stabilność procesów. Decyzje zakupowe są koordynowane systemowo.",
+            "level6Questions": [
+              "Czy zakupy są zintegrowane z ERP?",
+              "Czy dane zakupowe wpływają na planowanie produkcji?",
+              "Czy proces działa bez silosów?",
+              "Czy ERP steruje realizacją zakupów?"
+            ],
+            "level6Formula": "System koordynuje proces, człowiek zarządza wyjątkami.",
+            "level7Desc": "Zakupy są wspierane przez algorytmy AI, które analizują dane o dostawcach, cenach, terminowości i ryzykach. System optymalizuje strategie zakupowe, przewiduje problemy w łańcuchu dostaw i adaptuje decyzje do zmiennych warunków rynkowych.",
+            "level7Questions": [
+              "Czy AI optymalizuje wybór dostawców?",
+              "Czy system przewiduje ryzyka dostaw?",
+              "Czy ceny są optymalizowane dynamicznie?",
+              "Czy zakupy uczą się na danych?"
+            ],
+            "level7Formula": "AI rekomenduje i optymalizuje, człowiek nadzoruje strategię."
+          },
+          "logistics": {
+            "title": "Logistyka",
+            "levels": {
+              "1": "Śledzenie Manualne",
+              "2": "Wdrożenie WMS",
+              "3": "Zintegrowana Logistyka",
+              "4": "Śledzenie w Czasie Rzeczywistym",
+              "5": "Zautomatyzowane Magazynowanie",
+              "6": "Predykcyjny Łańcuch Dostaw",
+              "7": "Autonomiczna Sieć Logistyczna"
+            },
+            "level1Desc": "Na tym poziomie firma rejestruje podstawowe dane logistyczne, takie jak przyjęcia, wydania, stany magazynowe oraz dokumenty transportowe. Dane są zapisywane cyfrowo, jednak procesy logistyczne nie są jeszcze zarządzane w sposób systemowy. Logistyka opiera się głównie na doświadczeniu pracowników magazynu.",
+            "level1Questions": [
+              "Czy przyjęcia i wydania są rejestrowane cyfrowo?",
+              "Czy stany magazynowe są zapisywane w systemach lub plikach?",
+              "Czy raporty logistyczne powstają ręcznie?",
+              "Czy trudno ustalić aktualny stan zapasów?"
+            ],
+            "level1Formula": "Decyzje podejmowane są przez ludzi na podstawie doświadczenia.",
+            "level2Desc": "Firma monitoruje pracę magazynu oraz podstawowe wskaźniki logistyczne, takie jak rotacja zapasów czy terminowość wydań. Dane są zbierane i prezentowane w raportach, co pozwala na bieżącą kontrolę pracy magazynu. Proces logistyczny jest widoczny, ale nadal zarządzany manualnie.",
+            "level2Questions": [
+              "Czy praca magazynu jest raportowana automatycznie?",
+              "Czy KPI logistyczne są mierzone?",
+              "Czy kierownik magazynu ma bieżący wgląd w sytuację?",
+              "Czy problemy są identyfikowane na podstawie danych?"
+            ],
+            "level2Formula": "Decyzje podejmowane są przez ludzi na podstawie raportów.",
+            "level3Desc": "Logistyka funkcjonuje jako zaplanowany i kontrolowany proces. Firma planuje przepływy materiałów, poziomy zapasów oraz harmonogramy dostaw, a systemy monitorują realizację planów i identyfikują odchylenia. Zarządzanie logistyką staje się procesowe.",
+            "level3Questions": [
+              "Czy istnieje plan logistyczny?",
+              "Czy poziomy zapasów są planowane?",
+              "Czy realizacja dostaw jest monitorowana?",
+              "Czy odchylenia są widoczne w trakcie procesu?"
+            ],
+            "level3Formula": "Człowiek decyduje, system kontroluje proces.",
+            "level4Desc": "Część operacji logistycznych jest realizowana automatycznie zgodnie z ustalonymi regułami. Systemy realizują przyjęcia, wydania i transporty bez ciągłej ingerencji człowieka. Rola pracowników koncentruje się na nadzorze i obsłudze wyjątków.",
+            "level4Questions": [
+              "Czy przyjęcia i wydania są realizowane automatycznie?",
+              "Czy transporty są planowane systemowo?",
+              "Czy logistyka działa stabilnie bez ciągłej ingerencji?",
+              "Czy praca ludzi koncentruje się na nadzorze?"
+            ],
+            "level4Formula": "System wykonuje operacje według reguł, człowiek nadzoruje.",
+            "level5Desc": "Firma posiada bieżącą widoczność realizacji operacji logistycznych w czasie rzeczywistym. Systemy monitorują przepływy materiałów, obciążenie magazynu oraz terminowość dostaw. Logistyka jest zarządzana operacyjnie na podstawie aktualnych danych.",
+            "level5Questions": [
+              "Czy status operacji logistycznych jest widoczny w czasie rzeczywistym?",
+              "Czy problemy są identyfikowane natychmiast?",
+              "Czy KPI operacyjne są mierzone na bieżąco?",
+              "Czy możliwa jest szybka reakcja?"
+            ],
+            "level5Formula": "Decyzje podejmowane są na podstawie danych operacyjnych.",
+            "level6Desc": "Logistyka jest w pełni zintegrowana z produkcją, zakupami, sprzedażą i finansami. System ERP synchronizuje dane logistyczne w całej organizacji, zapewniając spójność i stabilność procesów. Decyzje logistyczne są koordynowane systemowo.",
+            "level6Questions": [
+              "Czy logistyka jest zintegrowana z ERP?",
+              "Czy dane logistyczne wpływają na planowanie i zakupy?",
+              "Czy proces działa bez silosów?",
+              "Czy ERP steruje realizacją operacji logistycznych?"
+            ],
+            "level6Formula": "System koordynuje proces, człowiek zarządza wyjątkami.",
+            "level7Desc": "Logistyka jest wspierana przez algorytmy AI, które analizują dane o przepływach materiałów, zapasach i transporcie. System optymalizuje trasy, poziomy zapasów i harmonogramy dostaw, adaptując się do zmiennych warunków. Logistyka staje się procesem samodoskonalącym.",
+            "level7Questions": [
+              "Czy trasy i zapasy są optymalizowane automatycznie?",
+              "Czy system przewiduje opóźnienia?",
+              "Czy AI poprawia terminowość i koszty?",
+              "Czy logistyka uczy się na danych?"
+            ],
+            "level7Formula": "AI rekomenduje i optymalizuje, człowiek nadzoruje strategię."
+          },
+          "production": {
+            "title": "Produkcja",
+            "levels": {
+              "1": "Operacje Manualne",
+              "2": "Monitorowanie Maszyn",
+              "3": "Systemy Kontroli Procesu",
+              "4": "Zautomatyzowane Linie Produkcyjne",
+              "5": "Wdrożenie MES",
+              "6": "Cyfrowy Bliźniak Produkcji",
+              "7": "Autonomiczna Fabryka"
+            },
+            "level1Desc": "Na tym poziomie firma rozpoczyna cyfryzację obszaru produkcji poprzez rejestrowanie podstawowych danych, takich jak czasy pracy maszyn, ilości wyprodukowanych sztuk, przestoje czy awarie. Dane są zapisywane ręcznie lub półautomatycznie, jednak nie są jeszcze wykorzystywane do aktywnego zarządzania produkcją. Produkcja opiera się głównie na doświadczeniu operatorów i kierowników zmian.",
+            "level1Questions": [
+              "Czy dane produkcyjne są rejestrowane w formie cyfrowej?",
+              "Czy czasy cykli i przestoje są zapisywane?",
+              "Czy raporty produkcyjne powstają ręcznie?",
+              "Czy trudno porównać zmiany lub linie produkcyjne?"
+            ],
+            "level1Formula": "Decyzje podejmowane są przez ludzi na podstawie doświadczenia.",
+            "level2Desc": "Firma posiada systemy umożliwiające monitorowanie stanowisk produkcyjnych oraz podstawowych wskaźników, takich jak wydajność, dostępność czy jakość. Dane są zbierane automatycznie z maszyn lub stanowisk i prezentowane w raportach. Produkcja jest widoczna, ale nadal zarządzana głównie manualnie.",
+            "level2Questions": [
+              "Czy maszyny raportują dane automatycznie?",
+              "Czy OEE lub podobne KPI są mierzone?",
+              "Czy kierownik zmiany widzi bieżącą sytuację?",
+              "Czy problemy są identyfikowane na podstawie danych?"
+            ],
+            "level2Formula": "Decyzje podejmowane są przez ludzi na podstawie raportów.",
+            "level3Desc": "Produkcja funkcjonuje jako zaplanowany i kontrolowany proces. Firma planuje produkcję w oparciu o harmonogramy i zasoby, a systemy monitorują realizację planów i identyfikują odchylenia. Zarządzanie produkcją przesuwa się z reagowania na problemy do aktywnej kontroli przebiegu procesu.",
+            "level3Questions": [
+              "Czy istnieje plan produkcji?",
+              "Czy realizacja planu jest monitorowana na bieżąco?",
+              "Czy odchylenia są widoczne w trakcie procesu?",
+              "Czy produkcja jest zarządzana procesowo?"
+            ],
+            "level3Formula": "Człowiek decyduje, system kontroluje realizację procesu.",
+            "level4Desc": "Część operacji produkcyjnych jest realizowana automatycznie zgodnie z ustalonymi regułami. Linie produkcyjne, maszyny lub roboty wykonują zadania bez stałej ingerencji człowieka, a rola operatorów koncentruje się na nadzorze i obsłudze wyjątków.",
+            "level4Questions": [
+              "Czy maszyny wykonują operacje automatycznie?",
+              "Czy rola operatora to głównie nadzór?",
+              "Czy produkcja działa stabilnie bez ciągłej ingerencji?",
+              "Czy zmiany parametrów są regułowe?"
+            ],
+            "level4Formula": "System wykonuje operacje według reguł, człowiek nadzoruje.",
+            "level5Desc": "Firma posiada pełną widoczność realizacji produkcji w czasie rzeczywistym. System MES monitoruje statusy zleceń, zużycie zasobów, jakość i wydajność. Produkcja jest zarządzana operacyjnie na podstawie aktualnych danych z hali.",
+            "level5Questions": [
+              "Czy status produkcji jest widoczny w czasie rzeczywistym?",
+              "Czy MES monitoruje realizację zleceń?",
+              "Czy problemy są identyfikowane natychmiast?",
+              "Czy KPI operacyjne są mierzone na bieżąco?"
+            ],
+            "level5Formula": "Decyzje podejmowane są na podstawie danych operacyjnych.",
+            "level6Desc": "Produkcja jest w pełni zintegrowana z planowaniem, zakupami, logistyką i finansami. System ERP synchronizuje dane produkcyjne z całą organizacją, zapewniając spójność i stabilność procesu. Decyzje operacyjne są koordynowane systemowo.",
+            "level6Questions": [
+              "Czy produkcja jest zintegrowana z ERP?",
+              "Czy dane produkcyjne wpływają na planowanie i zakupy?",
+              "Czy proces działa bez silosów?",
+              "Czy ERP steruje realizacją zleceń?"
+            ],
+            "level6Formula": "System koordynuje proces, człowiek zarządza wyjątkami.",
+            "level7Desc": "Produkcja jest wspierana przez algorytmy AI, które analizują dane procesowe, jakościowe i wydajnościowe w celu optymalizacji parametrów, przewidywania awarii i poprawy efektywności. Proces produkcyjny uczy się i adaptuje do zmieniających się warunków.",
+            "level7Questions": [
+              "Czy parametry produkcji są optymalizowane automatycznie?",
+              "Czy system przewiduje awarie?",
+              "Czy AI poprawia wydajność i jakość?",
+              "Czy produkcja uczy się na danych?"
+            ],
+            "level7Formula": "AI rekomenduje i optymalizuje, człowiek nadzoruje strategię."
+          },
+          "quality": {
+            "title": "Kontrola Jakości",
+            "levels": {
+              "1": "Inspekcja Manualna",
+              "2": "Zapisy Cyfrowe",
+              "3": "Statystyczna Kontrola Procesu",
+              "4": "Automatyczna Inspekcja",
+              "5": "Zintegrowane Zarządzanie Jakością",
+              "6": "Jakość Predykcyjna (AI)",
+              "7": "Systemy Autonomiczne Zero-Defektów"
+            }
+          },
+          "finance": {
+            "title": "Finanse",
+            "levels": {
+              "1": "Arkusze Kalkulacyjne",
+              "2": "Oprogramowanie Księgowe",
+              "3": "Moduły Finansowe ERP",
+              "4": "Automatyczne Fakturowanie",
+              "5": "Controlling Finansowy Real-time",
+              "6": "Predykcyjne Modelowanie Finansowe",
+              "7": "Autonomiczne Operacje Finansowe"
+            },
+            "level1Desc": "Na tym poziomie firma rejestruje podstawowe dane finansowe, takie jak faktury, koszty, przychody i płatności. Dane są zapisywane cyfrowo, często w rozproszonych systemach lub plikach, i służą głównie do spełnienia obowiązków księgowych. Finanse nie są jeszcze wykorzystywane jako narzędzie zarządcze.",
+            "level1Questions": [
+              "Czy faktury i koszty są rejestrowane cyfrowo?",
+              "Czy dane finansowe są rozproszone w różnych narzędziach?",
+              "Czy raporty finansowe powstają ręcznie?",
+              "Czy analiza finansowa jest opóźniona?"
+            ],
+            "level1Formula": "Decyzje podejmowane są przez ludzi na podstawie doświadczenia.",
+            "level2Desc": "Firma posiada narzędzia umożliwiające bieżące monitorowanie wyników finansowych oraz podstawowych wskaźników, takich jak koszty, marże czy cash flow. Dane finansowe są raportowane i dostępne dla menedżerów, jednak nadal wykorzystywane głównie w sposób reaktywny.",
+            "level2Questions": [
+              "Czy wyniki finansowe są raportowane automatycznie?",
+              "Czy KPI finansowe są mierzone?",
+              "Czy menedżerowie mają bieżący wgląd w wyniki?",
+              "Czy decyzje są podejmowane na podstawie raportów?"
+            ],
+            "level2Formula": "Decyzje podejmowane są przez ludzi na podstawie raportów.",
+            "level3Desc": "Finanse funkcjonują jako zaplanowany i kontrolowany proces. Firma planuje budżety, prognozy i kontroluje realizację celów finansowych w trakcie okresu. Controlling przestaje być raportowy, a zaczyna wspierać aktywne zarządzanie firmą.",
+            "level3Questions": [
+              "Czy istnieje budżet i prognozy finansowe?",
+              "Czy realizacja budżetu jest monitorowana?",
+              "Czy odchylenia są widoczne na bieżąco?",
+              "Czy controlling wspiera decyzje operacyjne?"
+            ],
+            "level3Formula": "Człowiek decyduje, system kontroluje realizację.",
+            "level4Desc": "Część operacji finansowych jest realizowana automatycznie zgodnie z ustalonymi regułami. Systemy obsługują fakturowanie, rozliczenia i płatności bez stałej ingerencji człowieka. Rola zespołu finansowego przesuwa się w stronę nadzoru i analizy.",
+            "level4Questions": [
+              "Czy faktury są generowane automatycznie?",
+              "Czy płatności są obsługiwane systemowo?",
+              "Czy praca zespołu skupia się na analizie?",
+              "Czy proces działa stabilnie bez ręcznej obsługi?"
+            ],
+            "level4Formula": "System wykonuje operacje według reguł, człowiek nadzoruje.",
+            "level5Desc": "Firma posiada bieżącą widoczność realizacji finansowej w czasie rzeczywistym. Systemy monitorują koszty, przychody i cash flow operacyjnie, umożliwiając szybkie reagowanie na odchylenia. Finanse są zarządzane operacyjnie.",
+            "level5Questions": [
+              "Czy cash flow jest widoczny w czasie rzeczywistym?",
+              "Czy odchylenia finansowe są identyfikowane natychmiast?",
+              "Czy KPI operacyjne są mierzone?",
+              "Czy możliwa jest szybka reakcja?"
+            ],
+            "level5Formula": "Decyzje podejmowane są na podstawie danych operacyjnych.",
+            "level6Desc": "Finanse są w pełni zintegrowane z pozostałymi procesami firmy. System ERP synchronizuje dane finansowe z produkcją, sprzedażą, zakupami i logistyką, zapewniając jedną wersję prawdy. Decyzje finansowe są koordynowane systemowo.",
+            "level6Questions": [
+              "Czy finanse są zintegrowane z ERP?",
+              "Czy dane finansowe wpływają na planowanie operacyjne?",
+              "Czy proces działa bez silosów?",
+              "Czy ERP steruje rozliczeniami?"
+            ],
+            "level6Formula": "System koordynuje proces, człowiek zarządza wyjątkami.",
+            "level7Desc": "Finanse są wspierane przez algorytmy AI, które analizują dane finansowe i operacyjne w celu prognozowania wyników, optymalizacji kosztów i zarządzania ryzykiem. System wspiera podejmowanie decyzji strategicznych i uczy się wraz z nowymi danymi.",
+            "level7Questions": [
+              "Czy AI prognozuje wyniki finansowe?",
+              "Czy system optymalizuje koszty?",
+              "Czy ryzyka są przewidywane automatycznie?",
+              "Czy finanse uczą się na danych?"
+            ],
+            "level7Formula": "AI rekomenduje i optymalizuje, człowiek nadzoruje strategię."
+          },
+          "hr": {
+            "title": "HR i Administracja",
+            "levels": {
+              "1": "Dokumentacja Papierowa",
+              "2": "Podstawowe Oprogramowanie Kadrowe",
+              "3": "System HRM",
+              "4": "System Zarządzania Talentami",
+              "5": "Analityka Ludzi (People Analytics)",
+              "6": "Rekrutacja Wspierana przez AI",
+              "7": "Autonomiczne Zarządzanie Kapitałem Ludzkim"
+            }
+          }
+        },
+        "level1Desc": "Procesy na tym poziomie opierają się na manualnej rejestracji danych. Dokumentacja jest papierowa lub rozproszona w arkuszach kalkulacyjnych, co prowadzi do błędów i braku spójności. Organizacja nie posiada centralnej bazy wiedzy o klientach.",
+        "level2Desc": "Wdrożono podstawowy system CRM, który porządkuje bazę klientów. Dane są jednak wprowadzane ręcznie, co nadal rodzi ryzyko niespójności. Brakuje pełnej integracji z innymi systemami w firmie.",
+        "level3Desc": "System CRM jest zintegrowany z ERP, zapewniając przepływ danych między sprzedażą a operacjami. Informacje są dostępne dla różnych działów w czasie rzeczywistym. Pozwala to na pełniejszy obraz klienta.",
+        "level4Desc": "Rutynowe zadania, takie jak mailingi czy ofertowanie, są w pełni zautomatyzowane. System generuje raporty i alerty, wspierając decyzje menedżerskie. Zespoły sprzedażowe mogą skupić się na budowaniu relacji.",
+        "level5Desc": "Osiągnięto pełną integrację Omnichannel, gdzie klient ma spójne doświadczenie w każdym kanale. Historia interakcji jest zunifikowana i dostępna dla wszystkich punktów styku. Organizacja działa jak jeden spójny organizm.",
+        "level6Desc": "Sztuczna inteligencja aktywnie wspiera prognozowanie sprzedaży i sugeruje kolejne najlepsze działania (Next Best Action). Analiza danych pozwala przewidywać potrzeby klientów zanim oni sami je zdefiniują.",
+        "level7Desc": "Autonomiczni Agenci AI samodzielnie prowadzą wybrane procesy sprzedażowe i negocjacje. Systemy uczą się na bieżąco, optymalizując strategię bez ingerencji człowieka w standardowe operacje."
+      },
+      "digitalProducts": {
+        "title": "Produkty Cyfrowe",
+        "intro": "Ocena cyfryzacji produktów i dopasowania.",
+        "areas": {
+          "electronic": {
+            "title": "Forma Elektroniczna",
+            "levels": {
+              "1": "Podstawowy Format Cyfrowy",
+              "2": "Treści Multimedialne",
+              "3": "Aplikacje Interaktywne",
+              "4": "Usługi w Chmurze",
+              "5": "Produkty API-First",
+              "6": "Produkty Wzbogacone o AI",
+              "7": "Autonomiczne Usługi Cyfrowe"
+            },
+            "level1Desc": "Na tym poziomie firma oferuje produkty cyfrowe w formie statycznych treści elektronicznych, takich jak dokumenty, katalogi, instrukcje lub materiały informacyjne. Produkt cyfrowy pełni funkcję uzupełniającą wobec produktu fizycznego lub usługi i nie posiada własnej logiki działania ani interakcji z użytkownikiem.",
+            "level1Questions": [
+              "Czy produkt cyfrowy ma formę pliku lub dokumentu?",
+              "Czy użytkownik jedynie pobiera lub odczytuje treść?",
+              "Czy brak jest interakcji i logiki działania?",
+              "Czy produkt nie zbiera danych o użytkowniku?"
+            ],
+            "level1Formula": "Wartość polega na dostarczeniu informacji.",
+            "level2Desc": "Produkt cyfrowy przyjmuje formę multimedialną, łącząc tekst, obraz, wideo i dźwięk. Firma zaczyna projektować doświadczenie użytkownika, jednak produkt nadal pozostaje bierny i nie reaguje na działania odbiorcy w sposób dynamiczny.",
+            "level2Questions": [
+              "Czy produkt zawiera multimedia?",
+              "Czy treści są zaprojektowane pod doświadczenie użytkownika?",
+              "Czy użytkownik nadal nie wpływa na działanie produktu?",
+              "Czy brak personalizacji treści?"
+            ],
+            "level2Formula": "Wartość polega na jakości i atrakcyjności treści.",
+            "level3Desc": "Produkt cyfrowy posiada własną logikę działania i może wykonywać określone funkcje, reagując na dane wejściowe użytkownika. Firma oferuje aplikację lub narzędzie cyfrowe, które realizuje konkretną wartość użytkową.",
+            "level3Questions": [
+              "Czy produkt wykonuje określone funkcje?",
+              "Czy reaguje na dane użytkownika?",
+              "Czy posiada własną logikę działania?",
+              "Czy użytkownik korzysta z produktu regularnie?"
+            ],
+            "level3Formula": "Wartość polega na funkcjonalności produktu.",
+            "level4Desc": "Produkt cyfrowy aktywnie reaguje na zachowania użytkownika, umożliwiając interakcję, konfigurację i współtworzenie wartości. Firma projektuje scenariusze użycia i doświadczenia, a produkt staje się platformą interakcji.",
+            "level4Questions": [
+              "Czy produkt reaguje na zachowania użytkownika?",
+              "Czy możliwa jest konfiguracja lub personalizacja?",
+              "Czy użytkownik współtworzy wartość?",
+              "Czy istnieją scenariusze użycia?"
+            ],
+            "level4Formula": "Wartość polega na doświadczeniu i interakcji.",
+            "level5Desc": "Produkt cyfrowy wykorzystuje sztuczną inteligencję do autonomicznej adaptacji, rekomendacji i optymalizacji wartości dla użytkownika. Produkt uczy się na danych, rozwija wraz z użytkowaniem i posiada globalny potencjał skalowania jako samodzielny byt rynkowy.",
+            "level5Questions": [
+              "Czy produkt uczy się na danych użytkowników?",
+              "Czy generuje rekomendacje lub decyzje?",
+              "Czy rozwija się wraz z użyciem?",
+              "Czy posiada globalny potencjał rynkowy?"
+            ],
+            "level5Formula": "Wartość polega na adaptacji i inteligencji."
+          },
+          "community": {
+            "title": "Oparte na Społeczności",
+            "levels": {
+              "1": "Brak Społeczności",
+              "2": "Podstawowe Forum Użytkowników",
+              "3": "Aktywna Społeczność Użytkowników",
+              "4": "Wsparcie Społeczności",
+              "5": "Współtworzenie ze Społecznością",
+              "6": "Rozwój Kierowany przez Społeczność",
+              "7": "Samo-Zarządzający się Ekosystem"
+            },
+            "level1Desc": "Firma publikuje treści i buduje zasięg (np. newsletter, blog, kanały social), ale użytkownicy są głównie odbiorcami. Nie ma jeszcze mechanizmów, które tworzą relacje pomiędzy użytkownikami, a produkt nie generuje wartości poprzez społeczność.",
+            "level1Questions": [
+              "Czy użytkownicy tylko konsumują treści?",
+              "Czy brak interakcji pomiędzy użytkownikami?",
+              "Czy nie ma moderacji i zasad społeczności?",
+              "Czy wartość nie rośnie wraz z liczbą użytkowników?"
+            ],
+            "level1Formula": "Wartość = zasięg i uwaga odbiorcy.",
+            "level2Desc": "Produkt umożliwia podstawowe interakcje (komentarze, reakcje, proste dyskusje). Zaczyna powstawać społeczność, ale jej aktywność i jakość nie są jeszcze zarządzane w sposób systemowy. Wartość rośnie, ale nadal jest niestabilna.",
+            "level2Questions": [
+              "Czy użytkownicy mogą komentować i dyskutować?",
+              "Czy widać powracających użytkowników?",
+              "Czy istnieją podstawowe zasady i moderacja?",
+              "Czy interakcja jest ograniczona do prostych funkcji?"
+            ],
+            "level2Formula": "Wartość = zaangażowanie i interakcja.",
+            "level3Desc": "Firma buduje zorganizowaną społeczność z jasnymi rolami, regułami i rytuałami. Użytkownicy wymieniają się wiedzą, tworzą treści i pomagają sobie nawzajem. Produkt zyskuje wartość dzięki relacjom i powtarzalnym interakcjom.",
+            "level3Questions": [
+              "Czy społeczność ma role (np. moderatorzy, eksperci)?",
+              "Czy użytkownicy tworzą treści lub rozwiązania?",
+              "Czy rośnie baza wiedzy?",
+              "Czy widać efekt „im więcej ludzi, tym lepiej”?"
+            ],
+            "level3Formula": "Wartość = relacje + wiedza + retencja.",
+            "level4Desc": "Użytkownicy współtworzą produkt, standardy, treści lub rozwiązania (np. marketplace wiedzy, biblioteki, wspólne projekty). Firma aktywnie zarządza ekosystemem i projektuje mechanizmy, które zwiększają wartość dla wszystkich uczestników.",
+            "level4Questions": [
+              "Czy użytkownicy współtworzą treści/rozwiązania?",
+              "Czy społeczność wpływa na roadmapę produktu?",
+              "Czy istnieją mechanizmy nagradzania wkładu?",
+              "Czy ekosystem generuje przychody lub oszczędności?"
+            ],
+            "level4Formula": "Wartość = współtworzenie + ekosystem.",
+            "level5Desc": "Społeczność działa jak inteligentny ekosystem: AI rekomenduje treści, łączy ludzi, wspiera moderację, wykrywa ryzyka i podnosi jakość interakcji. Produkt rozwija się wraz z danymi i zachowaniami użytkowników, a firma osiąga globalną skalowalność społeczności.",
+            "level5Questions": [
+              "Czy AI rekomenduje treści i relacje?",
+              "Czy moderacja jest wspierana przez AI?",
+              "Czy jakość społeczności rośnie z czasem?",
+              "Czy ekosystem jest skalowalny globalnie?"
+            ],
+            "level5Formula": "Wartość = inteligentna orkiestracja relacji i wiedzy."
+          },
+          "ict": {
+            "title": "Oparte na ICT",
+            "levels": {
+              "1": "Produkt Nie-ICT",
+              "2": "Podstawowe Funkcje ICT",
+              "3": "Produkt Połączony (IoT)",
+              "4": "Zdalne Sterowanie/Monitoring",
+              "5": "Produkt Generujący Dane",
+              "6": "Inteligentny Produkt (Smart)",
+              "7": "Produkt Autonomiczny"
+            },
+            "level1Desc": "Produkt cyfrowy jest dodatkiem do produktu fizycznego lub usługi (np. proste konto klienta, instrukcja, panel statusów). Wartość cyfrowa nie jest jeszcze samodzielnym argumentem rynkowym.",
+            "level1Questions": [
+              "Czy produkt cyfrowy jest tylko dodatkiem?",
+              "Czy klient kupuje głównie produkt fizyczny/usługę?",
+              "Czy funkcje cyfrowe są proste i statyczne?",
+              "Czy brak regularnego użycia?"
+            ],
+            "level1Formula": "Wartość = wygoda i dostęp do informacji.",
+            "level2Desc": "Produkt cyfrowy rozszerza ofertę i poprawia doświadczenie klienta (np. samoobsługa, konfiguracja, lepsza obsługa posprzedażowa). Zaczyna pojawiać się mierzalna wartość cyfrowa.",
+            "level2Questions": [
+              "Czy produkt cyfrowy realnie poprawia doświadczenie klienta?",
+              "Czy klient korzysta regularnie?",
+              "Czy są mierzone wskaźniki użycia?",
+              "Czy cyfrowe funkcje wpływają na retencję?"
+            ],
+            "level2Formula": "Wartość = lepsze CX + niższe koszty obsługi.",
+            "level3Desc": "Produkt cyfrowy jest samodzielnym elementem oferty (np. SaaS), za który klient może płacić niezależnie od produktu fizycznego. Firma ma własną roadmapę produktu cyfrowego i rozwija go iteracyjnie.",
+            "level3Questions": [
+              "Czy produkt cyfrowy jest sprzedawany niezależnie?",
+              "Czy istnieje roadmapa i cykl wydawniczy?",
+              "Czy klient płaci za wartość cyfrową?",
+              "Czy są metryki produktu (retencja, MAU)?"
+            ],
+            "level3Formula": "Wartość = funkcja i rezultat użytkownika.",
+            "level4Desc": "Produkt cyfrowy jest konfigurowalny i dopasowuje się do potrzeb klienta w sposób systemowy (workflow, role, integracje). Firma potrafi wdrażać i rozwijać rozwiązanie w wielu wariantach bez utraty jakości.",
+            "level4Questions": [
+              "Czy produkt ma konfigurację i role?",
+              "Czy integracje są standardem?",
+              "Czy wdrożenia są powtarzalne?",
+              "Czy produkt dostosowuje się do wielu branż/segmentów?"
+            ],
+            "level4Formula": "Wartość = dopasowanie + elastyczność.",
+            "level5Desc": "Produkt cyfrowy jest projektowany jako AI-first: AI tworzy kluczową wartość, automatyzuje decyzje lub dostarcza inteligentne rekomendacje. Produkt rozwija się wraz z danymi i może tworzyć nową kategorię rynkową.",
+            "level5Questions": [
+              "Czy AI jest argumentem sprzedażowym?",
+              "Czy bez AI produkt traci sens?",
+              "Czy modele są monitorowane i aktualizowane?",
+              "Czy produkt skaluje się globalnie?"
+            ],
+            "level5Formula": "Wartość = inteligencja i adaptacja."
+          },
+          "fit": {
+            "title": "Dopasowanie Rynkowe",
+            "levels": {
+              "1": "Produkt Standardowy",
+              "2": "Podstawowe Opcje",
+              "3": "Produkt Konfigurowalny",
+              "4": "Masowa Personalizacja",
+              "5": "Produkt Spersonalizowany",
+              "6": "Hiper-Personalizacja",
+              "7": "Produkt Płynny (Adaptacja Real-time)"
+            },
+            "level1Desc": "Produkt cyfrowy jest taki sam dla wszystkich klientów, a dopasowanie odbywa się co najwyżej ręcznie (np. przez konsultantów). Nie ma mechanizmów segmentacji ani personalizacji.",
+            "level1Questions": [
+              "Czy każdy klient dostaje to samo?",
+              "Czy dopasowanie odbywa się ręcznie?",
+              "Czy brak segmentów i profili użytkowników?",
+              "Czy brak danych o preferencjach?"
+            ],
+            "level1Formula": "Wartość = standaryzacja.",
+            "level2Desc": "Produkt/oferta jest dopasowana do segmentów (np. branża, wielkość firmy, rola). Firma zarządza wariantami produktu w sposób świadomy, ale personalizacja nie jest jeszcze indywidualna.",
+            "level2Questions": [
+              "Czy istnieją segmenty klientów?",
+              "Czy są warianty produktu/oferty?",
+              "Czy komunikacja jest segmentowa?",
+              "Czy widać różne ścieżki użytkownika?"
+            ],
+            "level2Formula": "Wartość = lepsze dopasowanie do segmentu.",
+            "level3Desc": "Użytkownik może konfigurować produkt indywidualnie (funkcje, workflow, integracje) w ramach zdefiniowanych granic. Firma potrafi utrzymać jakość mimo wielu konfiguracji.",
+            "level3Questions": [
+              "Czy klient sam konfiguruje produkt?",
+              "Czy konfiguracje są powtarzalne?",
+              "Czy istnieją reguły konfiguracji?",
+              "Czy wdrożenia są szybsze dzięki konfiguracji?"
+            ],
+            "level3Formula": "Wartość = dopasowanie 1:1 w granicach produktu.",
+            "level4Desc": "Produkt dynamicznie personalizuje doświadczenie w czasie użycia (np. treści, UI, rekomendacje workflow) na podstawie danych o zachowaniu użytkownika. Personalizacja jest częścią architektury produktu.",
+            "level4Questions": [
+              "Czy produkt zmienia się w trakcie użycia?",
+              "Czy personalizacja jest oparta o dane zachowań?",
+              "Czy istnieją profile i modele zachowań?",
+              "Czy personalizacja poprawia retencję?"
+            ],
+            "level4Formula": "Wartość = lepsze doświadczenie i wyniki użytkownika.",
+            "level5Desc": "Personalizacja jest autonomiczna: AI optymalizuje dopasowanie, rekomenduje działania i uczy się na danych w sposób ciągły. Produkt staje się systemem uczącym się, a dopasowanie jest przewagą konkurencyjną.",
+            "level5Questions": [
+              "Czy AI optymalizuje personalizację bez ręcznej konfiguracji?",
+              "Czy modele są monitorowane?",
+              "Czy personalizacja poprawia KPI biznesowe?",
+              "Czy działa w wielu segmentach/rynkach?"
+            ],
+            "level5Formula": "Wartość = inteligencja dopasowania."
+          },
+          "scalability": {
+            "title": "Skalowalność",
+            "levels": {
+              "1": "Tylko Lokalnie",
+              "2": "Replikacja Regionalna",
+              "3": "Skala Krajowa",
+              "4": "Eksport Międzynarodowy",
+              "5": "Globalna Platforma",
+              "6": "Nieskończona Skalowalność (Cloud-Native)",
+              "7": "Dostępność Uniwersalna"
+            },
+            "level1Desc": "Produkt cyfrowy działa lokalnie lub w jednym środowisku klienta i nie jest projektowany do skalowania. Wdrożenia są projektowe, a koszty rosną proporcjonalnie do liczby klientów.",
+            "level1Questions": [
+              "Czy wdrożenia są projektowe?",
+              "Czy każdy klient wymaga osobnej pracy?",
+              "Czy produkt nie ma standardu wdrożenia?",
+              "Czy brak automatyzacji wdrożeń?"
+            ],
+            "level1Formula": "Wartość = pojedyncze wdrożenia.",
+            "level2Desc": "Produkt jest standaryzowany na tyle, że wdrożenia są powtarzalne (templates, procedury, onboarding). Firma zaczyna skalować na poziomie regionu/segmentu, ale nadal wymaga istotnej pracy operacyjnej.",
+            "level2Questions": [
+              "Czy wdrożenia są powtarzalne?",
+              "Czy istnieją template’y i onboarding?",
+              "Czy koszt wdrożenia spada?",
+              "Czy wsparcie jest standaryzowane?"
+            ],
+            "level2Formula": "Wartość = powtarzalność.",
+            "level3Desc": "Produkt jest projektowany jako skalowalny: multi-tenant, monitoring, metryki produktu, automatyczne release’y. Firma może obsługiwać wielu klientów bez proporcjonalnego wzrostu zespołu.",
+            "level3Questions": [
+              "Czy produkt jest multi-tenant lub łatwo skalowalny?",
+              "Czy są metryki produktu i SLA?",
+              "Czy release’y są automatyczne?",
+              "Czy wsparcie jest procesowe?"
+            ],
+            "level3Formula": "Wartość = skalowalna obsługa wielu klientów.",
+            "level4Desc": "Produkt skaluje się jako platforma: integracje, partnerzy, marketplace dodatków, API-first. Wartość rośnie dzięki ekosystemowi i efektom sieciowym, a nie tylko liczbie klientów.",
+            "level4Questions": [
+              "Czy produkt ma API i integracje?",
+              "Czy partnerzy mogą budować dodatki?",
+              "Czy istnieje ekosystem?",
+              "Czy wartość rośnie z siecią?"
+            ],
+            "level4Formula": "Wartość = platforma i ekosystem.",
+            "level5Desc": "Produkt skaluje się autonomicznie: AI optymalizuje onboarding, wsparcie, jakość i dopasowanie, a platforma adaptuje się do rynków i użytkowników. Skalowanie nie wymaga proporcjonalnego wzrostu organizacji.",
+            "level5Questions": [
+              "Czy AI optymalizuje skalowanie i support?",
+              "Czy produkt adaptuje się do rynków?",
+              "Czy onboarding jest w dużej mierze autonomiczny?",
+              "Czy koszty marginalne są niskie?"
+            ],
+            "level5Formula": "Wartość = autonomiczne skalowanie i przewaga kosztowa."
+          }
+        }
+      },
+      "businessModels": {
+        "title": "Cyfrowe Modele Biznesowe",
+        "intro": "Ocena nowych strumieni przychodów i modeli.",
+        "areas": {
+          "ecommerce": {
+            "title": "E-commerce",
+            "levels": {
+              "1": "Brak Sprzedaży Online",
+              "2": "Podstawowy Sklep WWW",
+              "3": "Zintegrowany Sklep Internetowy",
+              "4": "Obecność na Marketplace",
+              "5": "Handel Omnichannel",
+              "6": "Handel Oparty na AI",
+              "7": "Autonomiczny Handel"
+            },
+            "level1Desc": "Firma prowadzi podstawową sprzedaż online poprzez własny sklep internetowy lub pojedynczą platformę e-commerce. Model sprzedaży jest prostym odwzorowaniem tradycyjnego handlu w środowisku cyfrowym i nie wykorzystuje danych do aktywnego sterowania ofertą.",
+            "level1Questions": [
+              "Czy firma sprzedaje online?",
+              "Czy sprzedaż odbywa się w jednym kanale?",
+              "Czy personalizacja jest minimalna?"
+            ],
+            "level1Formula": "Dostępność online",
+            "level2Desc": "Sprzedaż online jest zintegrowana z kilkoma platformami, a firma zarządza ofertą i zapasami w sposób bardziej spójny. Dane sprzedażowe zaczynają wspierać decyzje marketingowe i produktowe.",
+            "level2Questions": [
+              "Czy sprzedaż działa w wielu kanałach?",
+              "Czy dane sprzedaży są analizowane?"
+            ],
+            "level2Formula": "Widoczność oferty",
+            "level3Desc": "Firma wykorzystuje dane klientów do personalizacji oferty oraz umożliwia konfigurację produktów. E-commerce staje się narzędziem budowania przewagi konkurencyjnej.",
+            "level3Questions": [
+              "Czy oferta jest personalizowana?",
+              "Czy klient może konfigurować produkt?"
+            ],
+            "level3Formula": "Dopasowanie do klienta",
+            "level4Desc": "E-commerce działa w pełni omnichannelowo, a personalizacja jest kluczowym elementem strategii biznesowej. Oferta dynamicznie dopasowuje się do klienta w czasie rzeczywistym.",
+            "level4Questions": [
+              "Czy klient ma spójne doświadczenie?",
+              "Czy oferta zmienia się dynamicznie?"
+            ],
+            "level4Formula": "Doświadczenie klienta",
+            "level5Desc": "Model e-commerce wykorzystuje AI, VR, IoT i zaawansowaną analitykę do tworzenia inteligentnych doświadczeń zakupowych. System sam optymalizuje ofertę, ceny i kanały sprzedaży.",
+            "level5Questions": [
+              "Czy AI steruje ofertą?",
+              "Czy doświadczenie jest inteligentne?"
+            ],
+            "level5Formula": "Inteligentna wartość"
+          },
+          "platform": {
+            "title": "Modele Platformowe",
+            "levels": {
+              "1": "Biznes Liniowy",
+              "2": "Podstawowy Portal Partnerski",
+              "3": "Platforma Dwustronna",
+              "4": "Platforma Wielostronna",
+              "5": "Orkiestrator Ekosystemu",
+              "6": "Ekosystem Oparty na AI",
+              "7": "Autonomiczny Ekosystem"
+            },
+            "level1Desc": "Firma korzysta z istniejących platform do realizacji prostych transakcji, bez tworzenia własnego ekosystemu.",
+            "level1Questions": [
+              "Czy firma tylko korzysta z platform?"
+            ],
+            "level1Formula": "Dostęp do rynku",
+            "level2Desc": "Firma udostępnia platformę umożliwiającą sprzedaż produktów lub usług przez podmioty trzecie.",
+            "level2Questions": [
+              "Czy inni sprzedają na platformie?"
+            ],
+            "level2Formula": "Pośrednictwo",
+            "level3Desc": "Platforma łączy dostawców, partnerów i klientów, tworząc wartość poprzez ekosystem.",
+            "level3Questions": [
+              "Czy istnieje ekosystem?",
+              "Czy platforma tworzy synergie?"
+            ],
+            "level3Formula": "Synergia",
+            "level4Desc": "Platforma oferuje dodatkowo aplikacje i narzędzia SaaS dla uczestników rynku.",
+            "level4Questions": [
+              "Czy platforma oferuje narzędzia?",
+              "Czy klienci korzystają z SaaS?"
+            ],
+            "level4Formula": "Produktywność",
+            "level5Desc": "Platforma łączy SEM z aktywną społecznością i inteligentnym wsparciem użytkowników.",
+            "level5Questions": [
+              "Czy użytkownicy współpracują?",
+              "Czy AI wspiera społeczność?"
+            ],
+            "level5Formula": "Ekosystem wiedzy"
+          },
+          "aas": {
+            "title": "As-a-Service",
+            "levels": {
+              "1": "Tylko Sprzedaż Produktu",
+              "2": "Kontrakty Serwisowe",
+              "3": "Leasing / Wynajem",
+              "4": "Płatność za Użycie (Pay-per-Use)",
+              "5": "Opłaty oparte na Wartości",
+              "6": "Model Oparty na Wynikach",
+              "7": "Wszystko-jako-Usługa (XaaS)"
+            },
+            "level1Desc": "Usługi cyfrowe są realizowane w formie długoterminowych umów, przypominających tradycyjny outsourcing.",
+            "level1Questions": [
+              "Czy usługa przypomina outsourcing?"
+            ],
+            "level1Formula": "Wygoda",
+            "level2Desc": "Firma oferuje usługi w modelu subskrypcyjnym z jasno zdefiniowanym zakresem.",
+            "level2Questions": [
+              "Czy klient płaci abonament?"
+            ],
+            "level2Formula": "Dostępność",
+            "level3Desc": "Klient płaci za faktyczne użycie zasobów lub funkcji.",
+            "level3Questions": [
+              "Czy klient płaci za użycie?"
+            ],
+            "level3Formula": "Elastyczność",
+            "level4Desc": "Klient płaci za osiągnięcie konkretnego rezultatu, a dostawca przejmuje odpowiedzialność za wynik.",
+            "level4Questions": [
+              "Czy płatność zależy od wyniku?"
+            ],
+            "level4Formula": "Wynik",
+            "level5Desc": "Dostawca przejmuje całościowe procesy biznesowe klienta, działając jako główny operator.",
+            "level5Questions": [
+              "Czy dostawca zarządza procesem klienta?"
+            ],
+            "level5Formula": "Delegacja"
+          },
+          "sharing": {
+            "title": "Współdzielenie Zasobów",
+            "levels": {
+              "1": "Wyłączna Własność",
+              "2": "Współdzielenie Wewnętrzne",
+              "3": "Współdzielenie z Partnerami",
+              "4": "Publiczna Ekonomia Współdzielenia",
+              "5": "Współdzielenie Zasobów P2P",
+              "6": "Współdzielenie Optymalizowane AI",
+              "7": "Autonomiczna Pula Zasobów"
+            },
+            "level1Desc": "Platforma umożliwia współdzielenie zasobów cyfrowych.",
+            "level1Questions": [
+              "Czy zasoby są cyfrowe?"
+            ],
+            "level1Formula": "Współdzielenie",
+            "level2Desc": "Platforma umożliwia współdzielenie fizycznych aktywów.",
+            "level2Questions": [
+              "Czy zasoby są fizyczne?"
+            ],
+            "level2Formula": "Dostęp",
+            "level3Desc": "Platforma umożliwia współdzielenie wiedzy i kompetencji.",
+            "level3Questions": [
+              "Czy użytkownicy dzielą się wiedzą?"
+            ],
+            "level3Formula": "Know-how",
+            "level4Desc": "Platforma zarządza zasobami w imieniu klientów.",
+            "level4Questions": [
+              "Czy platforma zarządza zasobami?"
+            ],
+            "level4Formula": "Elastyczność",
+            "level5Desc": "Platforma udostępnia złożone rozwiązania biznesowe jako wspólne zasoby.",
+            "level5Questions": [
+              "Czy rozwiązania są kompleksowe?"
+            ],
+            "level5Formula": "Efektywność"
+          },
+          "monetization": {
+            "title": "Monetyzacja Danych",
+            "levels": {
+              "1": "Brak Wykorzystania Danych",
+              "2": "Raportowanie Wewnętrzne",
+              "3": "Optymalizacja Procesów",
+              "4": "Produkty Wzbogacone o Dane",
+              "5": "Sprzedaż Danych / Insightów",
+              "6": "Modele Przychodowe Oparte na Danych",
+              "7": "Dane jako Główny Zasób"
+            },
+            "level1Desc": "Firma gromadzi dane i wykorzystuje je do poprawy własnych działań.",
+            "level1Questions": [
+              "Czy dane są wykorzystywane wewnętrznie?"
+            ],
+            "level1Formula": "Zrozumienie",
+            "level2Desc": "Firma analizuje dane w celu wspierania decyzji biznesowych.",
+            "level2Questions": [
+              "Czy dane wspierają decyzje?"
+            ],
+            "level2Formula": "Insight",
+            "level3Desc": "Dane są wykorzystywane do personalizacji produktów i usług.",
+            "level3Questions": [
+              "Czy dane personalizują ofertę?"
+            ],
+            "level3Formula": "Dopasowanie",
+            "level4Desc": "Firma sprzedaje dane lub usługi analityczne innym podmiotom.",
+            "level4Questions": [
+              "Czy dane są sprzedawane?"
+            ],
+            "level4Formula": "Monetyzacja",
+            "level5Desc": "Dane stanowią fundament nowych produktów, modeli biznesowych i algorytmów AI.",
+            "level5Questions": [
+              "Czy dane są podstawą nowych modeli?"
+            ],
+            "level5Formula": "Innowacja"
+          }
+        }
+      },
+      "culture": {
+        "title": "Kultura Transformacji",
+        "intro": "Ocena nastawienia organizacyjnego i gotowości.",
+        "areas": {
+          "leadership": {
+            "title": "Style Przywództwa",
+            "levels": {
+              "1": "Tradycyjna Hierarchia",
+              "2": "Przywództwo Transakcyjne",
+              "3": "Przywództwo Partycypacyjne",
+              "4": "Przywództwo Transformacyjne",
+              "5": "Przywództwo Służebne",
+              "6": "Przywództwo Rozproszone",
+              "7": "Przywództwo Sieciowe"
+            },
+            "level1Desc": "Leadership avoids involvement in innovation and change. Employees are left without guidance, motivation or feedback, which leads to stagnation and loss of competitiveness.",
+            "level1Questions": [
+              "Are leaders disengaged from change?",
+              "Are ideas ignored?"
+            ],
+            "level1Formula": "High risk of failure",
+            "level2Desc": "Decisions are made centrally without employee involvement. Innovation is limited due to lack of trust and empowerment.",
+            "level2Questions": [
+              "Are decisions top-down only?"
+            ],
+            "level2Formula": "Low adaptability",
+            "level3Desc": "Leaders set ambitious goals and provide resources but tightly control execution.",
+            "level3Questions": [
+              "Are goals clear but rigid?"
+            ],
+            "level3Formula": "Fast results, limited learning",
+            "level4Desc": "Leaders encourage ideas, psychological safety and initiative.",
+            "level4Questions": [
+              "Do employees feel safe proposing ideas?"
+            ],
+            "level4Formula": "Strong engagement",
+            "level5Desc": "Leaders actively experiment, accept risk and learn from failure.",
+            "level5Questions": [
+              "Is experimentation encouraged?"
+            ],
+            "level5Formula": "High innovation capacity",
+            "level6Desc": "Leadership drives vision, values and long-term transformation across the organization.",
+            "level6Questions": [
+              "Is there a strong transformation vision?"
+            ],
+            "level6Formula": "Sustainable transformation"
+          },
+          "readiness": {
+            "title": "Gotowość na Zmianę",
+            "levels": {
+              "1": "Opór wobec Zmiany",
+              "2": "Świadomość Potrzeby",
+              "3": "Projekty Pilotażowe",
+              "4": "Dopasowanie Strategiczne",
+              "5": "Zaangażowanie Całej Organizacji",
+              "6": "Adaptacja Zwinna (Agile)",
+              "7": "Ciągłe Wymyślanie Się na Nowo"
+            },
+            "level1Desc": "The organization understands that change is necessary but has not yet organized action.",
+            "level1Questions": [
+              "Is change acknowledged but not executed?"
+            ],
+            "level1Formula": "High inertia",
+            "level2Desc": "A dedicated group supports and promotes transformation initiatives.",
+            "level2Questions": [
+              "Is there a change coalition?"
+            ],
+            "level2Formula": "Medium risk",
+            "level3Desc": "A clear transformation vision and strategy are being developed collaboratively.",
+            "level3Questions": [
+              "Is there a shared vision?"
+            ],
+            "level3Formula": "Lower risk",
+            "level4Desc": "Vision is communicated clearly and continuously across the organization.",
+            "level4Questions": [
+              "Is communication two-way?"
+            ],
+            "level4Formula": "Low risk",
+            "level5Desc": "Transformation initiatives are actively executed and monitored.",
+            "level5Questions": [
+              "Are initiatives implemented?"
+            ],
+            "level5Formula": "Controlled risk",
+            "level6Desc": "Change is embedded in culture and daily operations.",
+            "level6Questions": [
+              "Is change part of culture?"
+            ],
+            "level6Formula": "Very low risk"
+          },
+          "improvement": {
+            "title": "Ciągłe Doskonalenie",
+            "levels": {
+              "1": "Naprawy Doraźne",
+              "2": "Podstawowe Przeglądy",
+              "3": "Ustrukturyzowany Proces Doskonalenia",
+              "4": "Kultura Kaizen / Lean",
+              "5": "Doskonalenie Oparte na Danych",
+              "6": "Optymalizacja Predykcyjna",
+              "7": "Samo-Optymalizująca się Organizacja"
+            },
+            "level1Desc": "Learning occurs mainly through fairs, conferences and external events.",
+            "level1Questions": [
+              "Is learning external only?"
+            ],
+            "level1Formula": "Skill gaps",
+            "level2Desc": "Regular internal training programmes exist.",
+            "level2Questions": [
+              "Are trainings systematic?"
+            ],
+            "level2Formula": "Moderate risk",
+            "level3Desc": "External experts complement internal learning.",
+            "level3Questions": [
+              "Are external experts used?"
+            ],
+            "level3Formula": "Lower risk",
+            "level4Desc": "Employees actively pursue self-learning.",
+            "level4Questions": [
+              "Is self-learning encouraged?"
+            ],
+            "level4Formula": "Low risk",
+            "level5Desc": "Cross-functional teams learn through real projects.",
+            "level5Questions": [
+              "Are teams cross-functional?"
+            ],
+            "level5Formula": "Very low risk",
+            "level6Desc": "Formal mentoring accelerates competence transfer.",
+            "level6Questions": [
+              "Is mentoring systematic?"
+            ],
+            "level6Formula": "Minimal risk"
+          },
+          "innovation": {
+            "title": "Kultura Innowacji",
+            "levels": {
+              "1": "Brak Skupienia na Innowacjach",
+              "2": "Tylko Dział B&R",
+              "3": "Projekty Innowacyjne",
+              "4": "Otwarte Innowacje",
+              "5": "Ekosystem Innowacji",
+              "6": "Innowacje Przełomowe",
+              "7": "DNA Innowacji"
+            },
+            "level1Desc": "Employees are encouraged to submit ideas.",
+            "level1Questions": [
+              "Are ideas rewarded?"
+            ],
+            "level1Formula": "Low maturity",
+            "level2Desc": "Ideas are tested through pilots and prototypes.",
+            "level2Questions": [
+              "Are experiments allowed?"
+            ],
+            "level2Formula": "Moderate risk",
+            "level3Desc": "Organization actively analyzes market and technology trends.",
+            "level3Questions": [
+              "Are trends monitored?"
+            ],
+            "level3Formula": "Lower risk",
+            "level4Desc": "Failures are accepted as learning opportunities.",
+            "level4Questions": [
+              "Are mistakes tolerated?"
+            ],
+            "level4Formula": "Low risk",
+            "level5Desc": "R&D is embedded in company strategy.",
+            "level5Questions": [
+              "Is R&D strategic?"
+            ],
+            "level5Formula": "Very low risk",
+            "level6Desc": "Innovation ecosystem partnerships are strategic.",
+            "level6Questions": [
+              "Are external partners used?"
+            ],
+            "level6Formula": "Minimal risk"
+          },
+          "resources": {
+            "title": "Dostępność Zasobów",
+            "levels": {
+              "1": "Mentalność Niedoboru",
+              "2": "Podstawowe Budżetowanie",
+              "3": "Alokacja Strategiczna",
+              "4": "Elastyczne Zasoby",
+              "5": "Zasoby na Żądanie",
+              "6": "Zasoby Crowdsourcingowe",
+              "7": "Zasoby Obfitego Ekosystemu"
+            },
+            "level1Desc": "Financial resources for transformation are identified.",
+            "level1Questions": [
+              "Is budget allocated?"
+            ],
+            "level1Formula": "High risk",
+            "level2Desc": "Employees have access to training resources.",
+            "level2Questions": [
+              "Are trainings accessible?"
+            ],
+            "level2Formula": "Medium risk",
+            "level3Desc": "Internal and external experts are accessible.",
+            "level3Questions": [
+              "Are experts engaged?"
+            ],
+            "level3Formula": "Lower risk",
+            "level4Desc": "Reliable data supports decision-making.",
+            "level4Questions": [
+              "Is data available?"
+            ],
+            "level4Formula": "Low risk",
+            "level5Desc": "Modern tools and technologies are available.",
+            "level5Questions": [
+              "Are tools modern?"
+            ],
+            "level5Formula": "Very low risk",
+            "level6Desc": "Strategic partners extend organizational capabilities.",
+            "level6Questions": [
+              "Are partnerships strategic?"
+            ],
+            "level6Formula": "Minimal risk"
+          }
+        }
+      },
+      "dataManagement": {
+        "title": "Zarządzanie Danymi",
+        "intro": "Ocena ładu danych i ich wykorzystania.",
+        "areas": {
+          "collection": {
+            "title": "Zbieranie Danych",
+            "levels": {
+              "1": "Wprowadzanie Ręczne",
+              "2": "Przetwarzanie Wsadowe (Batch)",
+              "3": "Automatyczne Zbieranie",
+              "4": "Strumieniowanie w Czasie Rzeczywistym",
+              "5": "IoT / Sieci Sensorów",
+              "6": "Zbieranie Wspierane przez AI",
+              "7": "Autonomiczne Wykrywanie Danych"
+            },
+            "level1Desc": "Dane są zbierane ręcznie przez ludzi, często z opóźnieniem i w niejednolity sposób. Dane służą głównie do raportowania historycznego, a nie do bieżącego zarządzania.",
+            "level1Questions": [
+              "Czy dane są wprowadzane ręcznie?",
+              "Czy pojawiają się opóźnienia?"
+            ],
+            "level1Formula": "Dane opisują przeszłość",
+            "level2Desc": "Część danych jest zbierana automatycznie, ale proces nadal wymaga ręcznych korekt. Dane są dostępne szybciej, ale ich jakość bywa nierówna.",
+            "level2Questions": [
+              "Czy część danych zbiera się automatycznie?"
+            ],
+            "level2Formula": "Lepsza widoczność",
+            "level3Desc": "Dane są zbierane automatycznie w sposób ciągły i spójny, tworząc wiarygodną bazę operacyjną.",
+            "level3Questions": [
+              "Czy dane zbierają się automatycznie?",
+              "Czy są spójne?"
+            ],
+            "level3Formula": "Dane operacyjne",
+            "level4Desc": "Dane są dostępne w czasie rzeczywistym i pokazują aktualny stan procesów.",
+            "level4Questions": [
+              "Czy dane są real-time?"
+            ],
+            "level4Formula": "Bieżący obraz",
+            "level5Desc": "Dane są zbierane według wspólnych standardów w całej organizacji.",
+            "level5Questions": [
+              "Czy dane są standaryzowane?"
+            ],
+            "level5Formula": "Jedna wersja prawdy",
+            "level6Desc": "Dane są kompletne i wysokiej jakości, gotowe do analiz predykcyjnych.",
+            "level6Questions": [
+              "Czy dane są kompletne i jakościowe?"
+            ],
+            "level6Formula": "Przewidywalność",
+            "level7Desc": "System sam optymalizuje zbieranie danych, wykrywa luki i poprawia jakość.",
+            "level7Questions": [
+              "Czy system sam poprawia dane?"
+            ],
+            "level7Formula": "Autonomiczna baza"
+          },
+          "storage": {
+            "title": "Przechowywanie Danych",
+            "levels": {
+              "1": "Pliki Lokalne",
+              "2": "Serwer Centralny",
+              "3": "Hurtownia Danych",
+              "4": "Przechowywanie w Chmurze",
+              "5": "Jezioro Danych (Data Lake)",
+              "6": "Rejestr Rozproszony",
+              "7": "Zdecentralizowana Sieć (Mesh)"
+            },
+            "level1Desc": "Dane są przechowywane lokalnie w plikach i systemach rozproszonych, bez centralnej struktury i kontroli.",
+            "level1Questions": [
+              "Czy dane są w plikach lokalnych?"
+            ],
+            "level1Formula": "Brak spójności",
+            "level2Desc": "Dane są przechowywane w jednej centralnej bazie, ale bez zaawansowanej architektury.",
+            "level2Questions": [
+              "Czy istnieje jedna baza danych?"
+            ],
+            "level2Formula": "Podstawowa spójność",
+            "level3Desc": "Dane są uporządkowane w hurtowni danych i przygotowane do analiz.",
+            "level3Questions": [
+              "Czy istnieje hurtownia danych?"
+            ],
+            "level3Formula": "Porządek danych",
+            "level4Desc": "Firma przechowuje dane w różnych formatach w data lake.",
+            "level4Questions": [
+              "Czy dane są w różnych formatach?"
+            ],
+            "level4Formula": "Elastyczność",
+            "level5Desc": "Architektura łączy zalety hurtowni i data lake.",
+            "level5Questions": [
+              "Czy istnieje jedna architektura?"
+            ],
+            "level5Formula": "Jedna platforma",
+            "level6Desc": "Platforma danych spełnia standardy enterprise.",
+            "level6Questions": [
+              "Czy spełnione są standardy?"
+            ],
+            "level6Formula": "Zaufanie",
+            "level7Desc": "System sam zarządza przechowywaniem danych.",
+            "level7Questions": [
+              "Czy system sam zarządza?"
+            ],
+            "level7Formula": "Autonomia"
+          },
+          "communication": {
+            "title": "Komunikacja Danych",
+            "levels": {
+              "1": "Sneakernet (USB/Druk)",
+              "2": "Sieć Lokalna (LAN)",
+              "3": "Systemy Połączone (API)",
+              "4": "Szyna Przedsiębiorstwa (ESB)",
+              "5": "Architektura Zdarzeniowa",
+              "6": "Sieć Mesh Real-time",
+              "7": "Komunikacja Sieci Neuronowej"
+            },
+            "level1Desc": "Dane są przekazywane ręcznie pomiędzy systemami.",
+            "level1Questions": [
+              "Czy dane są przesyłane ręcznie?"
+            ],
+            "level1Formula": "Opóźnienia",
+            "level2Desc": "Dane są przesyłane cyklicznie w paczkach.",
+            "level2Questions": [
+              "Czy dane są batch?"
+            ],
+            "level2Formula": "Okresowa spójność",
+            "level3Desc": "Systemy komunikują się przez API.",
+            "level3Questions": [
+              "Czy istnieją API?"
+            ],
+            "level3Formula": "Bieżąca spójność",
+            "level4Desc": "Dane są przesyłane w reakcji na zdarzenia.",
+            "level4Questions": [
+              "Czy architektura jest event-driven?"
+            ],
+            "level4Formula": "Natychmiastowość",
+            "level5Desc": "Przepływy danych są centralnie orkiestrwane.",
+            "level5Questions": [
+              "Czy przepływy są orkiestrwane?"
+            ],
+            "level5Formula": "Kontrola",
+            "level6Desc": "Spójna warstwa komunikacji danych w skali enterprise.",
+            "level6Questions": [
+              "Czy istnieje data fabric?"
+            ],
+            "level6Formula": "Jednolitość",
+            "level7Desc": "System sam optymalizuje przepływy danych.",
+            "level7Questions": [
+              "Czy system działa autonomicznie?"
+            ],
+            "level7Formula": "Autonomia"
+          },
+          "analysis": {
+            "title": "Analiza Big Data",
+            "levels": {
+              "1": "Arkusze Kalkulacyjne",
+              "2": "Podstawowe Raportowanie",
+              "3": "Pulpity BI",
+              "4": "Zaawansowana Analityka",
+              "5": "Platformy Big Data",
+              "6": "Analityka Predykcyjna",
+              "7": "AI Preskryptywne"
+            },
+            "level1Desc": "Analiza danych opisuje przeszłość.",
+            "level1Questions": [
+              "Czy raporty opisują przeszłość?"
+            ],
+            "level1Formula": "Historia",
+            "level2Desc": "Analiza przyczyn zdarzeń.",
+            "level2Questions": [
+              "Czy znane są przyczyny?"
+            ],
+            "level2Formula": "Zrozumienie",
+            "level3Desc": "Prognozowanie przyszłych zdarzeń.",
+            "level3Questions": [
+              "Czy firma prognozuje?"
+            ],
+            "level3Formula": "Przewidywanie",
+            "level4Desc": "System rekomenduje działania.",
+            "level4Questions": [
+              "Czy system rekomenduje?"
+            ],
+            "level4Formula": "Rekomendacje",
+            "level5Desc": "Modele uczą się na bieżąco.",
+            "level5Questions": [
+              "Czy modele się uczą?"
+            ],
+            "level5Formula": "Uczenie",
+            "level6Desc": "System sam podejmuje decyzje.",
+            "level6Questions": [
+              "Czy system decyduje sam?"
+            ],
+            "level6Formula": "Autonomia",
+            "level7Desc": "System sam rozwija modele analityczne.",
+            "level7Questions": [
+              "Czy system się rozwija?"
+            ],
+            "level7Formula": "Ewolucja"
+          },
+          "computing": {
+            "title": "Przetwarzanie (Computing)",
+            "levels": {
+              "1": "Komputery PC",
+              "2": "Serwery Lokalne",
+              "3": "Wirtualizacja",
+              "4": "Przetwarzanie w Chmurze",
+              "5": "Edge Computing",
+              "6": "Gotowość na Quantum",
+              "7": "Przetwarzanie Wszechobecne"
+            },
+            "level1Desc": "Obliczenia wykonywane lokalnie.",
+            "level1Questions": [
+              "Czy obliczenia są lokalne?"
+            ],
+            "level1Formula": "Ograniczenia",
+            "level2Desc": "Obliczenia na serwerach centralnych.",
+            "level2Questions": [
+              "Czy istnieją centralne serwery?"
+            ],
+            "level2Formula": "Stabilność",
+            "level3Desc": "Elastyczna moc obliczeniowa w chmurze.",
+            "level3Questions": [
+              "Czy firma korzysta z chmury?"
+            ],
+            "level3Formula": "Elastyczność",
+            "level4Desc": "Połączenie chmury i on-prem.",
+            "level4Questions": [
+              "Czy architektura jest hybrydowa?"
+            ],
+            "level4Formula": "Optymalizacja",
+            "level5Desc": "Obliczenia rozproszone.",
+            "level5Questions": [
+              "Czy system jest rozproszony?"
+            ],
+            "level5Formula": "Skala",
+            "level6Desc": "Wykorzystanie GPU/TPU.",
+            "level6Questions": [
+              "Czy są akceleratory?"
+            ],
+            "level6Formula": "Wydajność",
+            "level7Desc": "System sam zarządza mocą obliczeniową.",
+            "level7Questions": [
+              "Czy system sam zarządza?"
+            ],
+            "level7Formula": "Autonomia"
+          }
+        }
+      },
+      "cybersecurity": {
+        "title": "Cyberbezpieczeństwo",
+        "intro": "Ocena postawy bezpieczeństwa.",
+        "areas": {
+          "strategy": {
+            "title": "Strategia i Ryzyko",
+            "levels": {
+              "1": "Brak Strategii",
+              "2": "Podstawowa Polityka",
+              "3": "Ocena Ryzyka",
+              "4": "Ramy Zgodności (Compliance)",
+              "5": "Zintegrowane Zarządzanie Ryzykiem",
+              "6": "Predykcyjne AI Ryzyka",
+              "7": "Autonomiczny System Immunologiczny"
+            },
+            "level1Desc": "Organizacja nie posiada strategii ani polityk cyberbezpieczeństwa. Działania są reaktywne i przypadkowe, a ryzyko biznesowe jest niekontrolowane.",
+            "level1Questions": [
+              "Czy istnieje formalna strategia?",
+              "Czy ryzyka są mapowane?"
+            ],
+            "level1Formula": "Wysokie ryzyko reputacyjne",
+            "level2Desc": "Organizacja identyfikuje podstawowe ryzyka cybernetyczne, ale nie posiada spójnego planu działania.",
+            "level2Questions": [
+              "Czy ryzyka są identyfikowane?"
+            ],
+            "level2Formula": "Świadomość zagrożeń",
+            "level3Desc": "Istnieje plan działań ograniczających ryzyko, jednak jego realizacja nie jest systematycznie monitorowana.",
+            "level3Questions": [
+              "Czy istnieje plan działań?"
+            ],
+            "level3Formula": "Kontrola ryzyka",
+            "level4Desc": "Funkcjonują formalne polityki bezpieczeństwa regulujące standardy i procedury.",
+            "level4Questions": [
+              "Czy polityki są egzekwowane?"
+            ],
+            "level4Formula": "Zaufanie operacyjne",
+            "level5Desc": "Strategia obejmuje kompetencje ludzi, szkolenia i role odpowiedzialne za cyberbezpieczeństwo.",
+            "level5Questions": [
+              "Czy ludzie są szkoleni?"
+            ],
+            "level5Formula": "Odporność organizacji",
+            "level6Desc": "Strategia jest stale monitorowana, audytowana i aktualizowana w odpowiedzi na nowe zagrożenia.",
+            "level6Questions": [
+              "Czy strategia jest audytowana?"
+            ],
+            "level6Formula": "Zaufanie strategiczne"
+          },
+          "network": {
+            "title": "Sieć i Systemy",
+            "levels": {
+              "1": "Tylko Firewall",
+              "2": "Antywirus/Malware",
+              "3": "Segmentacja Sieci",
+              "4": "IDPS",
+              "5": "Architektura Zero Trust",
+              "6": "Obrona Oparta na AI",
+              "7": "Samo-Naprawiające się Sieci"
+            },
+            "level1Desc": "Podstawowa ochrona sieci oparta na firewallach.",
+            "level1Questions": [
+              "Czy istnieją firewalle?"
+            ],
+            "level1Formula": "Minimalna ochrona",
+            "level2Desc": "Systemy zabezpieczone przed podstawowym malware.",
+            "level2Questions": [
+              "Czy antivirus jest aktualny?"
+            ],
+            "level2Formula": "Stabilność systemów",
+            "level3Desc": "Wykrywanie prób naruszeń i ataków.",
+            "level3Questions": [
+              "Czy ataki są wykrywane?"
+            ],
+            "level3Formula": "Szybka reakcja",
+            "level4Desc": "Centralna analiza zdarzeń bezpieczeństwa.",
+            "level4Questions": [
+              "Czy zdarzenia są korelowane?"
+            ],
+            "level4Formula": "Kontrola operacyjna",
+            "level5Desc": "Zaawansowane systemy uwierzytelniania i autoryzacji.",
+            "level5Questions": [
+              "Czy dostęp jest kontrolowany?"
+            ],
+            "level5Formula": "Zaufanie systemowe",
+            "level6Desc": "Bezpieczna komunikacja sieciowa w skali organizacji.",
+            "level6Questions": [
+              "Czy komunikacja jest szyfrowana?"
+            ],
+            "level6Formula": "Ciągłość operacyjna"
+          },
+          "dataProtection": {
+            "title": "Ochrona Danych",
+            "levels": {
+              "1": "Brak Szyfrowania",
+              "2": "Szyfrowanie Dysków",
+              "3": "Szyfrowanie w Transmisji",
+              "4": "DLP (Zapobieganie Wyciekom)",
+              "5": "Szyfrowanie End-to-End",
+              "6": "Technologie Ochrony Prywatności",
+              "7": "Szyfrowanie Odporne na Quantum"
+            },
+            "level1Desc": "Dane są szyfrowane w podstawowym zakresie.",
+            "level1Questions": [
+              "Czy dane są szyfrowane?"
+            ],
+            "level1Formula": "Ochrona danych",
+            "level2Desc": "Stosowane są zasady silnych haseł.",
+            "level2Questions": [
+              "Czy hasła są zarządzane?"
+            ],
+            "level2Formula": "Dostęp kontrolowany",
+            "level3Desc": "Dostęp do danych jest kontrolowany rolami.",
+            "level3Questions": [
+              "Czy role są zdefiniowane?"
+            ],
+            "level3Formula": "Minimalizacja ryzyka",
+            "level4Desc": "Systematyczne kopie zapasowe i procedury odtwarzania.",
+            "level4Questions": [
+              "Czy backupy są testowane?"
+            ],
+            "level4Formula": "Ciągłość biznesu",
+            "level5Desc": "Stały monitoring zagrożeń związanych z danymi.",
+            "level5Questions": [
+              "Czy zagrożenia są monitorowane?"
+            ],
+            "level5Formula": "Wczesne ostrzeganie",
+            "level6Desc": "Zaawansowane mechanizmy weryfikacji tożsamości.",
+            "level6Questions": [
+              "Czy stosowane jest MFA/biometria?"
+            ],
+            "level6Formula": "Wysokie zaufanie"
+          },
+          "education": {
+            "title": "Edukacja i Jakość",
+            "levels": {
+              "1": "Brak Szkoleń",
+              "2": "Doraźna Świadomość",
+              "3": "Regularne Szkolenia",
+              "4": "Symulacje Phishingu",
+              "5": "Kultura Bezpieczeństwa",
+              "6": "Uczenie Adaptacyjne",
+              "7": "Mentalność Security-First"
+            },
+            "level1Desc": "Zdefiniowany jest system szkoleń cyberbezpieczeństwa.",
+            "level1Questions": [
+              "Czy istnieje plan szkoleń?"
+            ],
+            "level1Formula": "Świadomość",
+            "level2Desc": "Szkolenia są realizowane według planu.",
+            "level2Questions": [
+              "Czy szkolenia są realizowane?"
+            ],
+            "level2Formula": "Zmniejszenie ryzyka",
+            "level3Desc": "Prowadzone są testy bezpieczeństwa.",
+            "level3Questions": [
+              "Czy system jest testowany?"
+            ],
+            "level3Formula": "Wykrywanie luk",
+            "level4Desc": "Istnieją kompetencje audytorskie wewnątrz organizacji.",
+            "level4Questions": [
+              "Czy są auditorzy?"
+            ],
+            "level4Formula": "Kontrola jakości",
+            "level5Desc": "Audyt bezpieczeństwa jest planowany i systematyczny.",
+            "level5Questions": [
+              "Czy audyty są planowane?"
+            ],
+            "level5Formula": "Zaufanie",
+            "level6Desc": "Organizacja posiada certyfikację ISO 27001.",
+            "level6Questions": [
+              "Czy istnieje certyfikacja?"
+            ],
+            "level6Formula": "Wiarygodność rynkowa"
+          },
+          "contingency": {
+            "title": "Plan Awaryjny",
+            "levels": {
+              "1": "Brak Planu",
+              "2": "Tylko Backup",
+              "3": "Plan Odtwarzania (DRP)",
+              "4": "Plan Ciągłości Działania (BCP)",
+              "5": "Testowanie Odporności",
+              "6": "Automatyczne Odzyskiwanie",
+              "7": "Operacje Antykruche"
+            },
+            "level1Desc": "Zidentyfikowano potencjalne zagrożenia.",
+            "level1Questions": [
+              "Czy zagrożenia są znane?"
+            ],
+            "level1Formula": "Świadomość",
+            "level2Desc": "Zdefiniowano priorytety reagowania.",
+            "level2Questions": [
+              "Czy priorytety są znane?"
+            ],
+            "level2Formula": "Szybka reakcja",
+            "level3Desc": "Istnieją procedury reagowania.",
+            "level3Questions": [
+              "Czy procedury są opisane?"
+            ],
+            "level3Formula": "Kontrola kryzysu",
+            "level4Desc": "Pracownicy są szkoleni w reagowaniu kryzysowym.",
+            "level4Questions": [
+              "Czy szkolenia są prowadzone?"
+            ],
+            "level4Formula": "Gotowość",
+            "level5Desc": "Plany awaryjne są regularnie testowane.",
+            "level5Questions": [
+              "Czy plany są testowane?"
+            ],
+            "level5Formula": "Odporność",
+            "level6Desc": "Dokumentacja awaryjna jest aktualna i używana.",
+            "level6Questions": [
+              "Czy dokumentacja jest aktualna?"
+            ],
+            "level6Formula": "Ciągłość"
+          }
+        }
+      },
+      "aiMaturity": {
+        "title": "Dojrzałość AI",
+        "intro": "Ocena adopcji Sztucznej Inteligencji i jej integracji z biznesem.",
+        "areas": {
+          "7A": {
+            "title": "Dane i Fundamenty AI",
+            "levels": {
+              "1": "Fragmented Data, No AI Readiness",
+              "2": "Structured Data in Silos",
+              "3": "Centralized Data & Initial AI Readiness",
+              "4": "Fully AI-Ready Data Architecture",
+              "5": "Autonomous Data Intelligence"
+            },
+            "level1Desc": "Dane są rozproszone w arkuszach, na dyskach lokalnych i systemach niepołączonych. Brak jednego widoku informacji. Każda analiza wymaga ręcznego zbierania danych. Dane są niekompletne lub niespójne między systemami. AI nie może działać, bo dane nie są dostępne w odpowiednim formacie.",
+            "level1Questions": [
+              "Czy macie problem z dostępem do danych?",
+              "Czy dane są zamknięte w oddzielnych systemach?",
+              "Czy jakość danych jest nieznana?"
+            ],
+            "level1Formula": "Dane jako koszt (Silosy)",
+            "level2Desc": "Firma posiada kilka systemów cyfrowych (ERP, MES, CRM), ale każdy z nich przechowuje dane we własnym „silosie”. Dane są bardziej uporządkowane, lecz nie są łatwo dostępne dla AI. Eksporty realizowane są ręcznie. Dane są cyfrowe, lecz niepołączone.",
+            "level2Questions": [
+              "Czy posiadacie centralną hurtownię danych?",
+              "Czy przygotowanie danych wymaga dużo pracy ręcznej?",
+              "Czy dane historyczne są archiwizowane cyfrowo?"
+            ],
+            "level2Formula": "Dane do raportowania",
+            "level3Desc": "Organizacja buduje pierwsze scentralizowane repozytoria danych. Procesy ETL zaczynają funkcjonować, a dane są pobierane do jednego miejsca. Pojawiają się pierwsze projekty machine learning, oparte na ustandaryzowanych zbiorach danych. Dane w hurtowni są aktualizowane regularnie.",
+            "level3Questions": [
+              "Czy data scientists mają łatwy dostęp do surowych danych?",
+              "Czy istnieje katalog danych (Data Catalog)?",
+              "Czy monitorujecie jakość kluczowych danych?"
+            ],
+            "level3Formula": "Dostępność dla Analityki",
+            "level4Desc": "Organizacja posiada spójne zasady governance, jakość danych jest monitorowana, a źródła danych są udokumentowane. Dane są dostępne w czasie zbliżonym do rzeczywistego. Dane są zawsze dostępne, spójne i aktualne. Modele AI mają stabilne, powtarzalne pipeline’y.",
+            "level4Questions": [
+              "Czy każdy zbiór danych ma właściciela?",
+              "Czy wiadomo, skąd pochodzą dane (Lineage)?",
+              "Czy istnieją SLA na dostępność danych?"
+            ],
+            "level4Formula": "Data as a Product",
+            "level5Desc": "Dane są automatycznie przygotowywane, czyszczone, wersjonowane i udostępniane modelom AI. Systemy potrafią wykrywać anomalie, uzupełniać braki i optymalizować przepływy danych bez udziału człowieka. Dane są traktowane jako produkt („data as a product”).",
+            "level5Questions": [
+              "Czy dane są dostępne w czasie rzeczywistym?",
+              "Czy biznes może samodzielnie korzystać z danych?",
+              "Czy infrastruktura skaluje się pod wolumen danych?"
+            ],
+            "level5Formula": "Demokratyzacja Danych"
+          },
+          "7B": {
+            "title": "Procesy Wspierane przez AI",
+            "levels": {
+              "1": "Isolated AI Experiments",
+              "2": "Assisted Work Automation",
+              "3": "Integrated AI Decision Support",
+              "4": "Semi-Autonomous Processes",
+              "5": "Fully Autonomous Operational Orchestration"
+            },
+            "level1Desc": "AI pojawia się w organizacji jedynie w formie małych, niepowiązanych inicjatyw. Mogą to być testy narzędzi generatywnych, chatboty, OCR lub podstawowe automatyzacje biurowe — ale nie mają one wpływu na główne procesy biznesowe. AI działa „obok” procesów, nie w ich środku.",
+            "level1Questions": [
+              "Czy AI to tylko ciekawostka w firmie?",
+              "Czy testy AI odbywają się bez planu?",
+              "Czy brakuje wpływu na główne procesy?"
+            ],
+            "level1Formula": "Eksperymenty punktowe",
+            "level2Desc": "AI wspiera pracowników w wykonywaniu zadań, ale nie decyduje w procesach. Pojawiają się pierwsze automatyzacje: planowanie spotkań, generowanie treści, analiza dokumentów. Rola AI to przyspieszanie pracy człowieka, nie jej przejmowanie. AI poprawia efektywność, ale nie ma wpływu na jakość procesu.",
+            "level2Questions": [
+              "Czy AI automatyzuje proste zadania biurowe?",
+              "Czy pracownicy używają AI jako asystenta?",
+              "Czy AI przyspiesza pracę, ale jej nie zmienia?"
+            ],
+            "level2Formula": "Wsparcie asystenckie",
+            "level3Desc": "AI zaczyna być częścią procesu, a nie dodatkiem. Modele AI dostarczają rekomendacje operacyjne (prognozy, scoring). Pracownicy podejmują decyzje w oparciu o wskazania AI. Procesy są projektowane tak, by uwzględniały dane i algorytmy — ale odpowiedzialność pozostaje po stronie człowieka.",
+            "level3Questions": [
+              "Czy AI sugeruje decyzje pracownikom?",
+              "Czy procesy uwzględniają wyniki z modeli AI?",
+              "Czy ludzie ufają rekomendacjom systemu?"
+            ],
+            "level3Formula": "Wsparcie decyzyjne",
+            "level4Desc": "AI wykonuje część działań procesowych samodzielnie. Człowiek pełni rolę nadzorcy lub zatwierdzającego. Przykłady: automatyczne planowanie, dynamiczne sterowanie zapasami. W wielu procesach człowiek nie podejmuje już decyzji — jedynie kontroluje system.",
+            "level4Questions": [
+              "Czy system podejmuje rutynowe decyzje sam?",
+              "Czy rola człowieka to tylko zatwierdzanie?",
+              "Czy AI steruje parametrami procesu?"
+            ],
+            "level4Formula": "Pół-autonomia",
+            "level5Desc": "Procesy są projektowane tak, aby były wykonywane przez autonomiczne systemy AI. AI nie tylko decyduje, ale monitoruje, reaguje i optymalizuje sposób działania organizacji. Człowiek zajmuje się nadzorem, audytami i strategią. Procesy wykonują się w całości bez udziału człowieka.",
+            "level5Questions": [
+              "Czy procesy działają bez ingerencji ludzi?",
+              "Czy AI samo optymalizuje swoje działanie?",
+              "Czy organizacja działa w trybie 'autopilota'?"
+            ],
+            "level5Formula": "Pełna autonomia operacyjna"
+          },
+          "7C": {
+            "title": "AI w Produktach i Usługach",
+            "levels": {
+              "1": "No AI Components in Products",
+              "2": "Add-On AI Features",
+              "3": "AI as a Core Product Component",
+              "4": "Fully AI-Driven Products",
+              "5": "AI-Native Business Offerings"
+            },
+            "level1Desc": "Produkty i usługi nie zawierają żadnych elementów AI. Wartość dostarczana klientowi wynika w całości z tradycyjnych funkcji. Produkty działają tak samo dla każdego użytkownika. Nie ma funkcji predykcyjnych ani rekomendacyjnych.",
+            "level1Questions": [
+              "Czy produkty są 'tradycyjne' bez AI?",
+              "Czy każdy klient dostaje to samo?",
+              "Czy brak personalizacji opartej na danych?"
+            ],
+            "level1Formula": "Produkt tradycyjny",
+            "level2Desc": "AI pojawia się jako dodatkowy moduł wzbogacający produkt, ale nie definiujący jego istoty. Funkcje AI mają charakter ulepszeń (rekomendacje, proste podsumowania). AI jest dodatkiem, który usprawnia doświadczenie klienta, ale produkt nadal posiada klasyczną strukturę.",
+            "level2Questions": [
+              "Czy AI to tylko dodatek (np. rekomendacje)?",
+              "Czy produkt działałby bez tego dodatku?",
+              "Czy AI poprawia UX, ale nie zmienia funkcji?"
+            ],
+            "level2Formula": "AI jako dodatek",
+            "level3Desc": "AI staje się kluczowym elementem architektury produktu. Bez niego większość nowoczesnych funkcji nie mogłaby działać. Produkt „rozumie” użytkownika, adaptuje się i reaguje na dane. Produkt znacząco różni się od konkurencji dzięki AI.",
+            "level3Questions": [
+              "Czy AI jest kluczowe dla działania produktu?",
+              "Czy produkt adaptuje się do użytkownika?",
+              "Czy bez AI produkt straciłby sens?"
+            ],
+            "level3Formula": "AI jako rdzeń (Core)",
+            "level4Desc": "AI odpowiada za większość logiki produktu i dynamicznie dostosowuje sposób działania. Produkt stale uczy się zachowań klienta, optymalizuje procesy i reaguje w czasie rzeczywistym. Funkcjonalność jest personalizowana, adaptacyjna i samodoskonaląca się.",
+            "level4Questions": [
+              "Czy produkt uczy się na bieżąco?",
+              "Czy logika produktu jest dynamiczna?",
+              "Czy personalizacja jest w czasie rzeczywistym?"
+            ],
+            "level4Formula": "Produkt adaptacyjny",
+            "level5Desc": "Firma oferuje produkty lub usługi, które nie mogłyby istnieć bez AI. AI tworzy cały model biznesowy. Powstają autonomiczne systemy zarządzania, agenty, cyfrowe bliźniaki. Produkt działa jak inteligentny system, nie aplikacja.",
+            "level5Questions": [
+              "Czy model biznesowy opiera się na AI?",
+              "Czy to zupełnie nowa kategoria produktu?",
+              "Czy produkt to autonomiczny agent?"
+            ],
+            "level5Formula": "AI-Native Business"
+          },
+          "7D": {
+            "title": "Governance, Bezpieczeństwo i Etyka",
+            "levels": {
+              "1": "No AI Governance, Uncontrolled Use",
+              "2": "Basic AI Usage Policies",
+              "3": "Organization-Wide AI Governance Framework",
+              "4": "Continuous AI Risk Management & Monitoring",
+              "5": "Ethical, Transparent & Autonomous AI Governance"
+            },
+            "level1Desc": "AI jest używane spontanicznie i bez nadzoru. Pracownicy korzystają z narzędzi AI według własnego uznania. Nie istnieją polityki użycia, zasady bezpieczeństwa ani standardy prywatności. Organizacja nie jest świadoma ryzyk.",
+            "level1Questions": [
+              "Czy pracownicy używają prywatnych kont AI do celów służbowych?",
+              "Czy brakuje polityki ochrony danych w kontekście AI?",
+              "Czy firma jest nieświadoma ryzyk prawnych związanych z AI?"
+            ],
+            "level1Formula": "Wysokie ryzyko (Shadow AI)",
+            "level2Desc": "Organizacja zaczyna dostrzegać ryzyka i tworzy podstawowe zasady korzystania z AI (co wolno, czego nie wolno). Polityki te mają charakter informacyjny i nie są jeszcze w pełni egzekwowane. Decyzje pozostają po stronie działów lub pojedynczych osób.",
+            "level2Questions": [
+              "Czy istnieją spisane zasady 'Do's & Don'ts' dla AI?",
+              "Czy przeprowadzono szkolenia z bezpiecznego użycia AI?",
+              "Czy dział prawny weryfikuje narzędzia AI ad-hoc?"
+            ],
+            "level2Formula": "Podstawowa higiena",
+            "level3Desc": "Firma formalizuje podejście do AI. Powstają procesy akceptacji projektów, kryteria oceny ryzyka, dedykowana rola (AI Officer/Committee). Modele są wersjonowane i audytowane. AI nie jest wdrażane bez formalnego zatwierdzenia.",
+            "level3Questions": [
+              "Czy istnieje osoba/komitet odpowiedzialny za AI Governance?",
+              "Czy każde wdrożenie AI przechodzi ocenę ryzyka?",
+              "Czy monitorowana jest zgodność z regulacjami (np. RODO, AI Act)?"
+            ],
+            "level3Formula": "Zarządzana zgodność",
+            "level4Desc": "Organizacja ma ustrukturyzowany system kontroli nad AI, który działa cały czas. Obejmuje to monitoring modeli w czasie rzeczywistym, wykrywanie driftu, testy bezpieczeństwa. AI jest traktowane tak samo poważnie jak systemy krytyczne.",
+            "level4Questions": [
+              "Czy modele AI są klasyfikowane wg poziomu ryzyka?",
+              "Czy istnieją standardy dokumentowania decyzji AI?",
+              "Czy monitoruje się stronniczość (bias) w danych?"
+            ],
+            "level4Formula": "Systemowe zarządzanie ryzykiem",
+            "level5Desc": "AI governance jest zautomatyzowane, wbudowane w systemy i zgodne z najlepszymi praktykami etycznymi. Systemy AI same wykrywają problemy i reagują. Firma posiada zaawansowane podejście do przejrzystości i potrafi to udowodnić audytorom.",
+            "level5Questions": [
+              "Czy etyka AI jest weryfikowana automatycznie?",
+              "Czy systemy są transparentne dla użytkownika końcowego?",
+              "Czy klienci ufają, jak firma używa ich danych w AI?"
+            ],
+            "level5Formula": "Etyczne przywództwo"
+          },
+          "7E": {
+            "title": "Kompetencje i Kultura AI",
+            "levels": {
+              "1": "Brak Kompetencji",
+              "2": "Ad-hoc Usage",
+              "3": "Zorganizowany Rozwój",
+              "4": "Płynność AI (AI Fluency)",
+              "5": "Kadra AI-Native"
+            },
+            "level1Desc": "Pracownicy nie mają umiejętności AI, polegają na metodach manualnych. Dominuje sceptycyzm lub lęk. Wiedza o sztucznej inteligencji ogranicza się do medialnych doniesień.",
+            "level1Questions": [
+              "Czy w firmie brakuje osób, które rozumieją AI?",
+              "Czy pracownicy boją się, że AI ich zastąpi?",
+              "Czy dział HR nie rekrutuje specjaistów od danych?"
+            ],
+            "level1Formula": "Luka kompetencyjna",
+            "level2Desc": "Część osób używa prostych narzędzi na własną rękę (Ad-hoc). Brak szkoleń systemowych, wiedza jest plemienna i niesformalizowana. Kompetencje AI są pozyskiwane głównie z zewnątrz (outsourcing).",
+            "level2Questions": [
+              "Czy polegacie w 100% na zewnętrznych dostawcach?",
+              "Czy po zakończeniu projektu wiedza znika z firmy?",
+              "Czy brakuje 'tłumaczy' biznesowych dla AI?"
+            ],
+            "level2Formula": "Zależność zewnętrzna",
+            "level3Desc": "Firma zapewnia szkolenia i narzędzia. Zdefiniowane role (np. AI Champion). Pierwsze sukcesy zespołowe. Powstaje wewnętrzny zespół lub grupa robocza ds. AI.",
+            "level3Questions": [
+              "Czy macie wewnętrzny zespół lub liderów AI?",
+              "Czy ten zespół współpracuje z biznesem?",
+              "Czy organizowane są szkolenia z AI?"
+            ],
+            "level3Formula": "Budowa kompetencji",
+            "level4Desc": "Pracownicy sami budują proste automatyzacje i workflowy AI (Citizen Developers). Ciągłe podnoszenie kompetencji jest normą. Kultura eksperymentowania jest powszechna.",
+            "level4Questions": [
+              "Czy pracownicy sami tworzą rozwiązania AI/Low-code?",
+              "Czy każdy ma dostęp do narzędzi AI?",
+              "Czy kultura firmy promuje eksperymentowanie?"
+            ],
+            "level4Formula": "Demokratyzacja (AI Fluency)",
+            "level5Desc": "Współpraca człowiek-AI jest bezszwowa. Pracownicy zarządzają agentami AI wykonującymi zadania operacyjne. Organizacja przyciąga najlepsze talenty dzięki kulturze innowacji.",
+            "level5Questions": [
+              "Czy każdy pracownik ma 'cyfrowego asystenta'?",
+              "Czy praca bez AI wydaje się nienaturalna?",
+              "Czy przyciągacie talenty AI z rynku?"
+            ],
+            "level5Formula": "AI-Native Culture"
+          }
+        }
+      }
+    }
+  },
   "fullAssessment": {
-    "intro": "Witaj w Pełnej Diagnozie Gotowości Cyfrowej (DRD). Ocenimy 6 kluczowych osi Twojej firmy w skali 1-7. To wygeneruje Twoją Mapę Dojrzałości.",
-    "axisIntro": "Oceńmy Twój obszar: {axis}. Jak dojrzały jesteś w tym aspekcie?",
+    "intro": "Witamy w Pełnej Diagnozie Gotowości Cyfrowej (DRD). Ocenimy 7 kluczowych osi Twojego biznesu w skali 1-7. To wygeneruje Twoją Mapę Cieplną Dojrzałości.",
+    "introMicrocopy": "To badanie ocenia Twoją organizację w 7 wymiarach modelu DRD.",
+    "axisIntro": "Oceńmy Twój {axis}. Jak dojrzały jesteś w tym obszarze?",
     "startAxis": "Rozpocznij Oś",
-    "currentAxis": "Bieżąca Oś",
     "continue": "Kontynuuj",
-    "completed": "Ukończono",
+    "completed": "Zakończono",
     "score": "Wynik",
     "maturityOverview": "Przegląd Dojrzałości",
     "nextStep": "Przejdź do Generatora Inicjatyw (Krok 2)",
-    "summary": "Oto Twój profil dojrzałości cyfrowej w 6 osiach. Na podstawie wyników powinniśmy nadać priorytet: {weakest}.",
-    "introMicrocopy": "Ta ocena ewaluuje Twoją organizację w 6 wymiarach modelu Digital Readiness Diagnosis (DRD). Wyniki wahają się od 1 (Nowicjusz) do 7 (Lider).",
+    "summary": "Oto Twój profil dojrzałości cyfrowej w 7 osiach.",
     "descriptions": {
       "processes": "Standaryzacja i Efektywność",
       "digitalProducts": "Łączność i UX",
       "businessModels": "Skalowalność i Przychody",
-      "dataManagement": "Jakość i Zarządzanie",
-      "culture": "Umiejętności i Nastawienie",
+      "dataManagement": "Jakość i Ład",
+      "culture": "Umiejętności i Mentalność",
+      "cybersecurity": "Bezpieczeństwo i Ryzyko",
       "aiMaturity": "Adopcja i Strategia"
-    },
-    "questions": {
-      "processes": [
-        {
-          "EN": "How standardized are your core production processes?",
-          "PL": "Jak ustandaryzowane są Twoje główne procesy produkcji?"
-        },
-        {
-          "EN": "How well are your processes measured and monitored?",
-          "PL": "Jak dobrze mierzone i monitorowane są procesy?"
-        },
-        {
-          "EN": "To what extent are your processes digitally supported?",
-          "PL": "W jakim stopniu procesy są wspierane cyfrowo?"
-        }
-      ],
-      "digitalProducts": [
-        {
-          "EN": "Does your product portfolio include digital services?",
-          "PL": "Czy Twoje portfolio zawiera usługi cyfrowe?"
-        },
-        {
-          "EN": "How integrated are your products with IoT?",
-          "PL": "Jak zintegrowane są produkty z IoT?"
-        },
-        {
-          "EN": "Do you use customer usage data to improve products?",
-          "PL": "Czy używasz danych o użyciu do ulepszania produktów?"
-        }
-      ],
-      "businessModels": [
-        {
-          "EN": "Are you shifting from CAPEX to OPEX models?",
-          "PL": "Czy przechodzisz z modeli CAPEX na OPEX?"
-        },
-        {
-          "EN": "Do you have digital ecosystem partnerships?",
-          "PL": "Czy masz partnerstwa w ekosystemie cyfrowym?"
-        },
-        {
-          "EN": "How scalable is your current business model?",
-          "PL": "Jak skalowalny jest obecny model biznesowy?"
-        }
-      ],
-      "dataManagement": [
-        {
-          "EN": "Is there a single source of truth for key data?",
-          "PL": "Czy istnieje jedno źródło prawdy dla kluczowych danych?"
-        },
-        {
-          "EN": "How automated is data collection?",
-          "PL": "Jak zautomatyzowane jest zbieranie danych?"
-        },
-        {
-          "EN": "Do you use predictive analytics?",
-          "PL": "Czy używasz analityki predykcyjnej?"
-        }
-      ],
-      "culture": [
-        {
-          "EN": "How open is the leadership to digital change?",
-          "PL": "Jak otwarte jest kierownictwo na zmiany cyfrowe?"
-        },
-        {
-          "EN": "Do employees have digital skills training?",
-          "PL": "Czy pracownicy mają szkolenia z umiejętności cyfrowych?"
-        },
-        {
-          "EN": "Is innovation rewarded in the company?",
-          "PL": "Czy innowacyjność jest nagradzana w firmie?"
-        }
-      ],
-      "aiMaturity": [
-        {
-          "EN": "Are you piloting any AI solutions currently?",
-          "PL": "Czy pilotujesz obecnie jakieś rozwiązania AI?"
-        },
-        {
-          "EN": "Do you have data ready for AI training?",
-          "PL": "Czy masz dane gotowe do trenowania AI?"
-        },
-        {
-          "EN": "Is there an AI strategy in place?",
-          "PL": "Czy istnieje strategia AI?"
-        }
-      ]
     }
   },
-  "fullInitiatives": {
-    "intro": "Na podstawie Twoich wyników dojrzałości wygenerowałem zestaw inicjatyw transformacyjnych. Możesz je przejrzeć i edytować w tabeli po prawej.",
-    "tableHeader": {
-      "initiative": "Nazwa Inicjatywy",
-      "axis": "Oś",
-      "priority": "Priorytet",
-      "complexity": "Złożoność",
-      "status": "Status",
-      "notes": "Notatki",
-      "actions": "Akcje"
-    },
-    "priorities": {
-      "High": "Wysoki",
-      "Medium": "Średni",
-      "Low": "Niski"
-    },
-    "complexities": {
-      "High": "Wysoka",
-      "Medium": "Średnia",
-      "Low": "Niska"
-    },
-    "statuses": {
-      "Draft": "Szkic",
-      "Ready": "Gotowe",
-      "Archived": "Zarchiwizowane"
-    },
-    "nextStep": "Przejdź do Mapy Drogowej (Krok 3)"
-  },
-  "fullRoadmap": {
-    "intro": "Przygotowałem dla Ciebie wstępną mapę drogową na podstawie priorytetu i złożoności inicjatyw. Zadania fundamentalne (Dane/Procesy) są zaplanowane wcześniej.",
-    "tableHeader": {
-      "quarter": "Kwartał",
-      "wave": "Fala"
-    },
-    "workload": {
-      "title": "Rozkład Pracy",
-      "initiatives": "inicjatyw",
-      "overloaded": "Przeciążenie"
-    },
-    "nextStep": "Przejdź do Ekonomii i ROI (Krok 4)"
-  },
-  "fullROI": {
-    "intro": "Teraz oszacujmy koszty i korzyści. Nie musisz być precyzyjny – wystarczą rzędy wielkości.",
-    "tableHeader": {
-      "cost": "Szac. Koszt (tys.$)",
-      "benefit": "Szac. Korzyść (tys.$/rok)"
-    },
-    "summary": {
-      "totalCost": "Koszt Całkowity",
-      "totalBenefit": "Całkowita Korzyść Roczna",
-      "roi": "Całkowite ROI",
-      "payback": "Okres Zwrotu",
-      "years": "lat"
-    },
-    "nextStep": "Przejdź do Pulpitu Wykonawczego (Krok 5)"
-  },
-  "fullExecution": {
-    "intro": "Witaj w Trybie Wykonawczym. Tutaj możesz śledzić postępy, przypisywać właścicieli i zarządzać blokadami.",
-    "columns": {
-      "todo": "Do Zrobienia",
-      "inProgress": "W Toku",
-      "blocked": "Zablokowane",
-      "done": "Zrobione"
-    },
-    "kpi": {
-      "total": "Wszystkie Inicjatywy",
-      "completion": "Wskaźnik Ukończenia"
-    },
-    "fields": {
-      "owner": "Właściciel",
-      "dueDate": "Termin",
-      "progress": "Postęp"
-    },
-    "nextStep": "Przejdź do Raportu Końcowego (Krok 6)"
-  },
-  "fullReports": {
-    "header": "Raport Transformacji",
-    "sections": {
-      "exec": "Podsumowanie Zarządcze",
-      "maturity": "Profil Dojrzałości Cyfrowej",
-      "initiatives": "Kluczowe Inicjatywy",
-      "roadmap": "Mapa Drogowa Transformacji",
-      "economics": "Ekonomia i ROI",
-      "execution": "Status Wykonania"
-    },
-    "cards": {
-      "maturity": "Dojrzałość i Skupienie",
-      "economics": "Ekonomia Projektu",
-      "execution": "Migawka Wykonania"
-    },
-    "buttons": {
-      "export": "Eksportuj Raport",
-      "copy": "Kopiuj Tekst"
-    },
-    "labels": {
-      "strongest": "Najsilniejszy Atut",
-      "weakest": "Krytyczna Luka",
-      "totalCost": "Koszt Całkowity",
-      "annualBenefit": "Roczna Korzyść",
-      "roi": "ROI",
-      "payback": "Okres Zwrotu",
-      "completionRate": "Wskaźnik Ukończenia",
-      "initiatives": "Inicjatywy",
-      "done": "Gotowe",
-      "inProg": "W Toku",
-      "blocked": "Zablok."
-    },
-    "reportTemplates": {
-      "execSummary": "{companyName} rozpoczęła strategiczną podróż transformacji cyfrowej. Na podstawie kompleksowej oceny DRD organizacja wykazuje silną dojrzałość w obszarze {strongest} ({strongestScore}/7), jednocześnie napotykając znaczące wyzwania w obszarze {weakest} ({weakestScore}/7).\n\nAby zaradzić tym lukom, opracowano mapę drogową składającą się z {initCount} inicjatyw strategicznych. Plan koncentruje się na budowaniu fundamentalnych zdolności w ciągu pierwszych 12 miesięcy przed skalowaniem zaawansowanych rozwiązań cyfrowych.\n\nZ perspektywy ekonomicznej przewiduje się, że transformacja przyniesie roczne korzyści w wysokości ${benefit}k przy całkowitej inwestycji ${cost}k. Daje to atrakcyjne ROI na poziomie {roi}% z okresem zwrotu wynoszącym {payback} lat.",
-      "finding1": "{strongest} to Twój najsilniejszy atut, stanowiący filar przyszłego wzrostu.",
-      "finding2": "{weakest} wymaga natychmiastowej uwagi, aby zapobiec wąskim gardłom w skalowaniu.",
-      "finding3": "Organizacja jest gotowa na {type} transformację.",
-      "aggressive": "agresywną",
-      "focused": "skoncentrowaną"
-    }
+  "common": {
+    "underConstruction": "Komponent w Budowie"
   },
   "settings": {
     "menu": {
@@ -374,14 +2057,13 @@
       "regionalization": "Regionalizacja"
     },
     "profile": {
-      "header": "Dane Osobowe",
+      "header": "Informacje Osobiste",
       "photo": "Zdjęcie Profilowe",
       "change": "Zmień",
-      "photoHint": "Akceptuje JPG, PNG (Auto-optymalizacja)",
       "firstName": "Imię",
       "lastName": "Nazwisko",
-      "role": "Rola / Stanowisko",
-      "email": "Adres Email (Zarządzany przez Admina)",
+      "role": "Stanowisko",
+      "email": "Adres Email",
       "preferences": "Preferencje",
       "theme": "Motyw Interfejsu",
       "light": "Jasny",

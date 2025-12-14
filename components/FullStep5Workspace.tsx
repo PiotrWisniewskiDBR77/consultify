@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { FullSession, FullInitiative, Language } from '../types';
-import { translations } from '../translations';
+import { FullSession, FullInitiative } from '../types';
+import { useTranslation } from 'react-i18next';
 import { ArrowRight, User, Calendar, BarChart2 } from 'lucide-react';
 import { InitiativeTaskBoard } from './InitiativeTaskBoard';
 
@@ -9,26 +9,25 @@ interface FullStep5WorkspaceProps {
    fullSession: FullSession;
    onUpdateInitiative: (initiative: FullInitiative) => void;
    onNextStep: () => void;
-   language: Language;
 }
 
 export const FullStep5Workspace: React.FC<FullStep5WorkspaceProps> = ({
    fullSession,
    onUpdateInitiative: _onUpdateInitiative,
-   onNextStep,
-   language
+   onNextStep
 }) => {
-   const t = translations.fullExecution;
+   const { t: translate } = useTranslation();
+   const t = translate('fullExecution', { returnObjects: true }) as any;
    const initiatives = fullSession.initiatives || [];
 
    const [selectedInitiative, setSelectedInitiative] = useState<FullInitiative | null>(null);
 
    // Group by Status
    const columns: { id: string; label: string; color: string }[] = [
-      { id: 'To Do', label: t.columns.todo[language], color: 'border-slate-500/50' },
-      { id: 'In Progress', label: t.columns.inProgress[language], color: 'border-blue-500/50' },
-      { id: 'Blocked', label: t.columns.blocked[language], color: 'border-red-500/50' },
-      { id: 'Done', label: t.columns.done[language], color: 'border-green-500/50' }
+      { id: 'To Do', label: t.columns.todo, color: 'border-slate-500/50' },
+      { id: 'In Progress', label: t.columns.inProgress, color: 'border-blue-500/50' },
+      { id: 'Blocked', label: t.columns.blocked, color: 'border-red-500/50' },
+      { id: 'Done', label: t.columns.done, color: 'border-green-500/50' }
    ];
 
    const getInitiativesByStatus = (status: string) => {
@@ -63,17 +62,17 @@ export const FullStep5Workspace: React.FC<FullStep5WorkspaceProps> = ({
          {/* Header with KPIs */}
          <div className="h-14 border-b border-white/5 flex items-center px-6 bg-navy-900 shrink-0 gap-8 overflow-x-auto">
             <div className="flex flex-col">
-               <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{t.kpi.total[language]}</span>
+               <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{t.kpi.total}</span>
                <span className="text-lg font-bold text-white">{total}</span>
             </div>
             <div className="w-px h-8 bg-white/10"></div>
             <div className="flex flex-col">
-               <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{t.kpi.completion[language]}</span>
+               <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{t.kpi.completion}</span>
                <span className="text-lg font-bold text-blue-400">{completionRate.toFixed(0)}%</span>
             </div>
             <div className="w-px h-8 bg-white/10"></div>
             <div className="flex flex-col">
-               <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{t.columns.blocked[language]}</span>
+               <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{t.columns.blocked}</span>
                <span className={`text-lg font-bold ${blockedCount > 0 ? 'text-red-400' : 'text-slate-400'}`}>{blockedCount}</span>
             </div>
          </div>
@@ -148,7 +147,7 @@ export const FullStep5Workspace: React.FC<FullStep5WorkspaceProps> = ({
                               {/* Hint to click */}
                               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg pointer-events-none">
                                  <div className="bg-navy-950/80 px-2 py-1 rounded text-[10px] text-white backdrop-blur flex items-center gap-1 border border-white/10">
-                                    <BarChart2 size={10} /> Manage
+                                    <BarChart2 size={10} /> M
                                  </div>
                               </div>
                            </div>
@@ -165,8 +164,8 @@ export const FullStep5Workspace: React.FC<FullStep5WorkspaceProps> = ({
                onClick={onNextStep}
                className="flex items-center gap-2 px-6 py-2.5 rounded-lg font-semibold text-sm transition-all shadow-lg bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/30"
             >
-               {t.nextStep[language]}
-               <ArrowRight size={16} className={language === 'AR' ? 'rotate-180' : ''} />
+               {t.nextStep}
+               <ArrowRight size={16} />
             </button>
          </div>
       </div>

@@ -1,24 +1,20 @@
+
 import React from 'react';
 import { ArrowRight, Target, CheckCircle2 } from 'lucide-react';
-import { CompanyProfile, FreeSession, Language } from '../types';
+import { CompanyProfile, FreeSession } from '../types';
 
 
 interface Step2WorkspaceProps {
   profile: Partial<CompanyProfile>;
   sessionData: Partial<FreeSession>;
   onNextStep: () => void;
-  language: Language;
 }
 
 export const Step2Workspace: React.FC<Step2WorkspaceProps> = ({
-   
   profile,
   sessionData,
-  onNextStep,
-  language
+  onNextStep
 }) => {
-  // const t = translations.step1; // Reusing Profile translations
-
 
   return (
     <div className="flex flex-col h-full bg-navy-900">
@@ -26,10 +22,10 @@ export const Step2Workspace: React.FC<Step2WorkspaceProps> = ({
       <div className="h-20 border-b border-white/5 flex flex-col justify-center px-8 bg-navy-900 shrink-0">
         <div className="flex justify-between items-center mb-1">
           <span className="text-sm font-semibold text-white tracking-wide">
-            {language === 'PL' ? 'Krok 2 z 3 — Profil Użytkownika' : 'Step 2 of 3 — User Profile'}
+            Step 2 of 3 — Strategic Profile
           </span>
           <span className="text-xs text-slate-500">
-            {language === 'PL' ? 'Szybka Ocena' : 'Quick Assessment'}
+            Quick Assessment
           </span>
         </div>
         <div className="w-full h-1 bg-navy-800 rounded-full overflow-hidden">
@@ -48,7 +44,7 @@ export const Step2Workspace: React.FC<Step2WorkspaceProps> = ({
 
           <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
             <span className="w-1 h-6 bg-purple-500 rounded-full"></span>
-            {language === 'PL' ? 'Cele Strategiczne' : 'Strategic Goals'}
+            Strategic Goals
           </h3>
 
           <div className="space-y-4">
@@ -72,7 +68,7 @@ export const Step2Workspace: React.FC<Step2WorkspaceProps> = ({
               ))
             ) : (
               <div className="text-center py-8 text-slate-500 italic border border-dashed border-white/10 rounded-lg">
-                {language === 'PL' ? 'Brak zdefiniowanych celów. Porozmawiaj z AI.' : 'No strategic goals defined yet. Chat with AI to define them.'}
+                No strategic goals defined yet. Chat with AI to define them.
               </div>
             )}
           </div>
@@ -82,11 +78,11 @@ export const Step2Workspace: React.FC<Step2WorkspaceProps> = ({
         <div className="bg-navy-950/50 border border-white/10 rounded-xl p-6 relative">
           <h3 className="text-lg font-semibold text-green-200 mb-4 flex items-center gap-2">
             <CheckCircle2 size={20} />
-            {language === 'PL' ? 'Kryteria Sukcesu' : 'Success Criteria'}
+            Success Criteria
           </h3>
           <div className="p-4 bg-white/5 rounded-lg border border-white/5 min-h-[80px]">
             <p className="text-slate-300 italic">
-              {sessionData.successCriteria || (language === 'PL' ? 'Jeszcze nie zdefiniowano.' : 'Not defined yet.')}
+              {sessionData.successCriteria || 'Not defined yet.'}
             </p>
           </div>
         </div>
@@ -103,8 +99,8 @@ export const Step2Workspace: React.FC<Step2WorkspaceProps> = ({
             : 'bg-navy-800 text-slate-500 cursor-not-allowed'
             }`}
         >
-          {language === 'PL' ? 'Przejdź do Oczekiwań (Krok 3)' : 'Go to Expectations (Step 3)'}
-          <ArrowRight size={18} className={language === 'AR' ? 'rotate-180' : ''} />
+          Go to Expectations (Step 3)
+          <ArrowRight size={18} />
         </button>
       </div>
     </div>

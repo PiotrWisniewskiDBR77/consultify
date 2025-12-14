@@ -1,21 +1,36 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MessageSquare, FileText, Layout, Lightbulb, TrendingUp, ShieldAlert, Target } from 'lucide-react';
+import { MessageSquare, FileText, Layout, Lightbulb, TrendingUp, ShieldAlert, Target, RefreshCw } from 'lucide-react';
 import { CompanyProfileModule } from './modules/CompanyProfileModule';
 import { GoalsExpectationsModule } from './modules/GoalsExpectationsModule';
 import { ChallengeMapModule } from './modules/ChallengeMapModule';
 import { MegatrendScannerModule } from './modules/MegatrendScannerModule';
 import { StrategicSynthesisModule } from './modules/StrategicSynthesisModule';
 import { SplitLayout } from '../../components/SplitLayout';
+import { useContextBuilderStore } from '../../store/useContextBuilderStore';
 
 interface ContextBuilderProps {
     initialTab?: number;
 }
 
+const RefreshAnalysisButton = () => {
+    const { isGenerating, generateAnalysis } = useContextBuilderStore();
+    return (
+        <button
+            onClick={generateAnalysis}
+            disabled={isGenerating}
+            className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-purple-600 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-500/30 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors disabled:opacity-50"
+        >
+            <RefreshCw size={14} className={isGenerating ? "animate-spin" : ""} />
+            {isGenerating ? "Analyzing..." : "Refresh Analysis"}
+        </button>
+    );
+};
+
 export const ContextBuilderView: React.FC<ContextBuilderProps> = ({ initialTab = 1 }) => {
     const { t } = useTranslation();
     const [activeModule, setActiveModule] = useState<number>(initialTab);
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     // Update active module if prop changes (e.g. navigation from sidebar)
     React.useEffect(() => {
@@ -45,21 +60,28 @@ export const ContextBuilderView: React.FC<ContextBuilderProps> = ({ initialTab =
                 {/* Main Content Area (Tabs + Active View) */}
                 <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-white/10 h-full">
                     <div className="max-w-6xl mx-auto">
-                        <div className="mb-6">
-                            <h1 className="text-2xl font-bold text-navy-900 dark:text-white">
-                                {activeModule === 1 && 'Company Profile'}
-                                {activeModule === 2 && 'Goals & Expectations'}
-                                {activeModule === 3 && 'Challenge Map'}
-                                {activeModule === 4 && 'Megatrend Scanner'}
-                                {activeModule === 5 && 'Strategic Synthesis'}
-                            </h1>
-                            <p className="text-slate-500 dark:text-slate-400">
-                                {activeModule === 1 && 'Define the "as-is" state of the organization.'}
-                                {activeModule === 2 && 'Set strategic objectives and success metrics.'}
-                                {activeModule === 3 && 'Map operational pain points and root causes.'}
-                                {activeModule === 4 && 'Analyze external trends and pressures.'}
-                                {activeModule === 5 && 'Synthesize findings into a strategic roadmap.'}
-                            </p>
+                        <div className="mb-6 flex justify-between items-end">
+                            <div>
+                                <h1 className="text-2xl font-bold text-navy-900 dark:text-white">
+                                    {activeModule === 1 && 'Company Profile'}
+                                    {activeModule === 2 && 'Goals & Expectations'}
+                                    {activeModule === 3 && 'Challenge Map'}
+                                    {activeModule === 4 && 'Megatrend Scanner'}
+                                    {activeModule === 5 && 'Strategic Synthesis'}
+                                </h1>
+                                <p className="text-slate-500 dark:text-slate-400">
+                                    {activeModule === 1 && 'Define the "as-is" state of the organization.'}
+                                    {activeModule === 2 && 'Set strategic objectives and success metrics.'}
+                                    {activeModule === 3 && 'Map operational pain points and root causes.'}
+                                    {activeModule === 4 && 'Analyze external trends and pressures.'}
+                                    {activeModule === 5 && 'Synthesize findings into a strategic roadmap.'}
+                                </p>
+                            </div>
+
+                            {/* Conditional Header Actions */}
+                            {activeModule === 5 && (
+                                <RefreshAnalysisButton />
+                            )}
                         </div>
 
                         {renderActiveModule()}

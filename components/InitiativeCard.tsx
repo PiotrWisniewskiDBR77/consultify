@@ -115,7 +115,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onCl
                         <Globe size={10} />
                         Market Insights
                     </div>
-                    <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-3 leading-relaxed">
+                    <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-3 leading-relaxed text-justify">
                         {initiative.marketContext}
                     </p>
                 </div>

@@ -57,7 +57,7 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
                 fullSession={fullSession}
                 onUpdateInitiative={onUpdateInitiative}
                 onNextStep={onNextStep}
-                language={language}
+
             />
         </div>
     );

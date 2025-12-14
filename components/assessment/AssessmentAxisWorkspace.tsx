@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
-import { DRDAxis, MaturityLevel, AxisAssessment, Language } from '../../types';
-import { ArrowRight, Info, CheckCircle2, AlertTriangle, BrainCircuit, TrendingUp, Lightbulb } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { DRDAxis, MaturityLevel, AxisAssessment } from '../../types';
+import { ArrowRight, Info, CheckCircle2, AlertTriangle, BrainCircuit, TrendingUp, Lightbulb, ChevronRight, ChevronDown } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { LevelNavigator } from './LevelNavigator';
+import { LevelSelector } from './LevelSelector';
+import { LevelDetailCard } from './LevelDetailCard';
 
 interface AssessmentAxisWorkspaceProps {
     axis: DRDAxis;
     data: Partial<AxisAssessment>;
     onChange: (data: Partial<AxisAssessment>) => void;
     onNext: () => void;
-    language: Language;
     context: {
         goals: string[];
         challenges: string[];
@@ -15,264 +18,400 @@ interface AssessmentAxisWorkspaceProps {
     };
 }
 
-// Placeholder content - In real app, this should come from detailed content library or AI
-const AXIS_CONTENT: Record<DRDAxis, { title: Record<Language, string>; levels: string[] }> = {
-    processes: {
-        title: { EN: 'Digital Processes', PL: 'Cyfryzacja Procesów', DE: 'Digitale Prozesse', AR: 'Digital Processes' },
-        levels: [
-            'Analog / Manual',
-            'Digital Islands (Isolated Systems)',
-            'Connected (Integrated Systems)',
-            'Real-time Visibility',
-            'Predictive / Optimized',
-            'Autonomous',
-            'Symbiotic (Ecosystem)'
-        ]
-    },
-    digitalProducts: {
-        title: { EN: 'Digital Products', PL: 'Produkty Cyfrowe', DE: 'Digitale Produkte', AR: 'Digital Products' },
-        levels: [
-            'Physical Only', 'Digital Extension', 'Connected Product', 'Smart Product', 'Product as a Service', 'Platform', 'Ecosystem'
-        ]
-    },
-    businessModels: {
-        title: { EN: 'Business Models', PL: 'Modele Biznesowe', DE: 'Geschäftsmodelle', AR: 'Business Models' },
-        levels: [
-            'Traditional Sales', 'E-commerce', 'Service-based', 'Subscription', 'Usage-based', 'Outcome-based', 'Ecosystem orchestrator'
-        ]
-    },
-    dataManagement: {
-        title: { EN: 'Data Management', PL: 'Zarządzanie Danymi', DE: 'Datenmanagement', AR: 'Data Management' },
-        levels: [
-            'No Data', 'Descriptive (What happened)', 'Diagnostic (Why)', 'Predictive (What will happen)', 'Prescriptive (What to do)', 'Cognitive (AI)', 'Generative'
-        ]
-    },
-    culture: {
-        title: { EN: 'Culture', PL: 'Kultura', DE: 'Kultur', AR: 'Culture' },
-        levels: [
-            'Resistant', 'Aware', 'Curious', 'Agile', 'Data-driven', 'Innovator', 'Digital Native'
-        ]
-    },
-    cybersecurity: {
-        title: { EN: "Cybersecurity", PL: "Cyberbezpieczeństwo", DE: "Cybersicherheit", AR: "الأمن السيبراني" },
-        levels: [
-            'None', 'Basic (Firewall)', 'Compliance-based', 'Proactive', 'Resilient', 'Zero Trust', 'Immune'
-        ]
-    },
-    aiMaturity: {
-        title: { EN: 'AI Maturity', PL: 'Dojrzałość AI', DE: 'KI-Reife', AR: 'AI Maturity' },
-        levels: [
-            'None', 'Experiments', 'Point Solutions', 'Integrated AI', 'AI-First Strategy', 'Autonomous Agents', 'Superintelligence'
-        ]
-    }
-};
-
 export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = ({
     axis,
     data,
     onChange,
     onNext,
-    language,
-     
     context
 }) => {
-    const content = AXIS_CONTENT[axis];
-    const [isAnalyzing, setIsAnalyzing] = useState(false);
-    const [aiFeedback, setAiFeedback] = useState<{ status: 'ok' | 'warning'; message: string } | null>(null);
+    const { t } = useTranslation();
 
-    const handleLevelSelect = (type: 'actual' | 'target', level: MaturityLevel) => {
-        onChange({ ...data, [type]: level });
-        setAiFeedback(null); // Reset feedback on change
-    };
+    // Fetch translated content
+    const axisContent = t(`assessment.axisContent.${axis}`, { returnObjects: true }) as { title: string; intro?: string; levels?: Record<string, string>, areas?: Record<string, { title: string, levels: Record<string, string> }> };
+    const workspaceT = t('assessment.workspace', { returnObjects: true }) as any;
 
-    const runSenseCheck = () => {
-        setIsAnalyzing(true);
-        // Mock AI Logic Check
-        setTimeout(() => {
-            const actual = data.actual || 0;
-            const target = data.target || 0;
-            const gap = target - actual;
+    // Resolve areas
+    const axisAreas = axisContent.areas || null;
+    const hasSubAreas = !!axisAreas;
 
-            if (gap > 2) {
-                setAiFeedback({
-                    status: 'warning',
-                    message: "Senior Consultant Alert: Jumping more than 2 levels in one cycle creates high failure risk (70%+). I recommend targeting Level " + (actual + 2) + " first."
+    // --- State Management ---
+    const [currentAreaKey, setCurrentAreaKey] = useState<string | null>(null);
+    const [currentLevelView, setCurrentLevelView] = useState<number>(1); // New state for Level View
+
+    // Initialize first area
+    useEffect(() => {
+        if (hasSubAreas && !currentAreaKey) {
+            const firstKey = Object.keys(axisAreas)[0];
+            if (firstKey) setCurrentAreaKey(firstKey);
+        }
+    }, [hasSubAreas, axisAreas, currentAreaKey]);
+
+    // Backfill logic
+    useEffect(() => {
+        if (hasSubAreas && (!data.areaScores || Object.keys(data.areaScores).length === 0)) {
+            if (data.actual || data.target) {
+                const initialScores: Record<string, number[]> = {};
+                Object.keys(axisAreas).forEach(key => {
+                    initialScores[key] = [data.actual || 0, data.target || 0];
                 });
-            } else if (gap <= 0) {
-                setAiFeedback({
-                    status: 'warning',
-                    message: "Logic Check: Target level must be higher than Actual level to drive transformation value."
-                });
-            } else {
-                setAiFeedback({
-                    status: 'ok',
-                    message: "Logic Verified: This trajectory is ambitious yet achievable given your resource profile."
-                });
+                onChange({ ...data, areaScores: initialScores });
             }
-            setIsAnalyzing(false);
-        }, 1500);
+        }
+    }, [hasSubAreas, data.actual, data.target, axisAreas]);
+
+    // --- Logic ---
+    const updateAggregateScores = (newAreaScores: Record<string, number[]>) => {
+        let totalActual = 0;
+        let totalTarget = 0;
+        let countActual = 0;
+        let countTarget = 0;
+
+        Object.values(newAreaScores).forEach(scores => {
+            if (scores[0] > 0) { totalActual += scores[0]; countActual++; }
+            if (scores[1] > 0) { totalTarget += scores[1]; countTarget++; }
+        });
+
+        const avgActual = countActual > 0 ? Math.round(totalActual / countActual) as MaturityLevel : undefined;
+        const avgTarget = countTarget > 0 ? Math.round(totalTarget / countTarget) as MaturityLevel : undefined;
+
+        onChange({
+            ...data,
+            areaScores: newAreaScores,
+            actual: avgActual,
+            target: avgTarget
+        });
     };
 
+    const handleLevelSelect = (type: 'actual' | 'target', level: number) => {
+        if (!hasSubAreas) {
+            // Simple Mode
+            onChange({ ...data, [type]: level });
+            return;
+        }
+
+        // Detailed Mode
+        if (currentAreaKey) {
+            const currentScores = data.areaScores?.[currentAreaKey] || [0, 0];
+            const newScores = [...currentScores];
+
+            if (type === 'actual') newScores[0] = level;
+            else newScores[1] = level;
+
+            const updatedAreaScores = {
+                ...(data.areaScores || {}),
+                [currentAreaKey]: newScores
+            };
+            updateAggregateScores(updatedAreaScores);
+        }
+    };
+
+    // --- Helpers ---
+    const activeArea = currentAreaKey && axisAreas ? axisAreas[currentAreaKey] : null;
+    const activeScores = currentAreaKey && data.areaScores ? (data.areaScores[currentAreaKey] || [0, 0]) : [0, 0];
+
+    // Main Levels for fallback
+    const mainLevelsRecord = axisContent.levels
+        ? (Array.isArray(axisContent.levels)
+            ? axisContent.levels.reduce((acc, val, idx) => ({ ...acc, [idx + 1]: val }), {})
+            : axisContent.levels)
+        : {};
+
+    // --- Render ---
     return (
-        <div className="flex flex-col h-full bg-navy-900 text-white">
+        <div className="flex flex-col h-full bg-navy-900 text-white overflow-hidden">
             {/* Header */}
-            <div className="h-20 border-b border-white/5 flex items-center justify-between px-8 bg-navy-900 shrink-0">
-                <div>
-                    <div className="text-xs text-purple-400 font-bold uppercase tracking-wider mb-1">DRD Assessment</div>
-                    <h2 className="text-xl font-bold flex items-center gap-2">
-                        {content.title[language]}
-                        <Info size={16} className="text-slate-500 cursor-pointer hover:text-white transition-colors" />
-                    </h2>
+            <div className="h-20 border-b border-white/5 flex items-center justify-between px-6 bg-navy-900 shrink-0 z-20 relative">
+                <div className="flex items-center gap-6">
+                    {/* Axis Label */}
+                    <div className="flex flex-col">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                            OBSZAR OCENY
+                        </label>
+                        <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                            {t(`sidebar.fullStep1_${axis === 'cybersecurity' ? 'cyber' : axis === 'aiMaturity' ? 'ai' : axis === 'processes' ? 'proc' : axis === 'digitalProducts' ? 'prod' : axis === 'businessModels' ? 'model' : axis === 'dataManagement' ? 'data' : axis === 'culture' ? 'cult' : 'proc'}`) || axisContent?.title || axis}
+                            <Info size={14} className="text-slate-500 cursor-pointer hover:text-white transition-colors" />
+                        </h2>
+                    </div>
+
+                    {/* Sub-Area Selector (If applicable) */}
+                    {hasSubAreas && (
+                        <div className="relative group ml-4 pl-4 border-l border-white/10">
+                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-0.5 block">OBSZAR FUNKCJONALNY</span>
+
+                            {/* Dropdown Trigger */}
+                            <div className="flex items-center gap-2 cursor-pointer text-white font-bold text-sm bg-navy-950/50 px-3 py-1.5 rounded-lg border border-white/5 hover:border-white/20 transition-all">
+                                {activeArea?.title || 'Wybierz Obszar'}
+                                <ChevronDown size={14} className="text-slate-400" />
+                            </div>
+
+                            {/* Dropdown Menu */}
+                            <div className="absolute top-full left-0 mt-2 w-64 bg-navy-900 border border-white/10 rounded-xl shadow-2xl overflow-hidden invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all z-50">
+                                {Object.entries(axisAreas).map(([key, area]: [string, any]) => {
+                                    const scores = data.areaScores?.[key] || [0, 0];
+                                    const isCompleted = scores[0] > 0 && scores[1] > 0;
+
+                                    return (
+                                        <button
+                                            key={key}
+                                            onClick={() => setCurrentAreaKey(key)}
+                                            className={`w-full text-left px-4 py-3 flex items-center justify-between hover:bg-white/5 transition-colors ${key === currentAreaKey ? 'bg-purple-600/10 text-purple-300' : 'text-slate-400'}`}
+                                        >
+                                            <span className="text-sm font-medium">{area.title}</span>
+                                            {isCompleted && <CheckCircle2 size={14} className="text-green-500" />}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
                 </div>
-                <div className="flex items-center gap-4">
-                    {/* Sense Check Button */}
+
+                <div className="flex items-center gap-6">
+                    {/* Overall Progress */}
+                    <div className="flex items-center gap-3 bg-navy-950/50 px-4 py-2 rounded-lg border border-white/5">
+                        <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">POSTĘP OSI</span>
+                        <div className="h-8 w-px bg-white/10 mx-2"></div>
+                        <div className="flex gap-4 text-sm">
+                            <div>
+                                <span className="text-xs text-slate-500 block">Zatwierdzone</span>
+                                <span className="font-bold text-blue-400">
+                                    {(() => {
+                                        if (hasSubAreas) {
+                                            const total = Object.keys(axisAreas).length;
+                                            const completed = Object.values(data.areaScores || {}).filter(s => s[0] > 0 && s[1] > 0).length;
+                                            return `${completed}/${total}`;
+                                        }
+                                        return (data.actual && data.target) ? '1/1' : '0/1';
+                                    })()}
+                                </span>
+                            </div>
+                            <div>
+                                <span className="text-xs text-slate-500 block">Pozostało</span>
+                                <span className="font-bold text-purple-400">
+                                    {(() => {
+                                        if (hasSubAreas) {
+                                            const total = Object.keys(axisAreas).length;
+                                            const completed = Object.values(data.areaScores || {}).filter(s => s[0] > 0 && s[1] > 0).length;
+                                            return total - completed;
+                                        }
+                                        return (data.actual && data.target) ? '0' : '1';
+                                    })()}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
                     <button
-                        onClick={runSenseCheck}
-                        disabled={!data.actual || !data.target || isAnalyzing}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${aiFeedback?.status === 'ok' ? 'bg-green-500/10 border-green-500/50 text-green-400' :
-                            aiFeedback?.status === 'warning' ? 'bg-yellow-500/10 border-yellow-500/50 text-yellow-400' :
-                                'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
+                        onClick={onNext}
+                        disabled={!data.actual || !data.target}
+                        className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm transition-all shadow-lg ${data.actual && data.target
+                            ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-purple-900/30'
+                            : 'bg-white/5 text-slate-500 cursor-not-allowed'
                             }`}
                     >
-                        {isAnalyzing ? <BrainCircuit size={14} className="animate-pulse" /> : <BrainCircuit size={14} />}
-                        {isAnalyzing ? 'Analyzing...' : aiFeedback ? (aiFeedback.status === 'ok' ? 'Logic Verified' : 'Logic Warning') : 'AI Sense Check'}
+                        {workspaceT.confirmNext || 'Potwierdź i Dalej'}
+                        <ArrowRight size={16} />
                     </button>
-
-                    <div className="flex gap-2 border-l border-white/10 pl-4">
-                        <div className={`px-3 py-1 rounded text-xs font-bold ${data.actual ? 'bg-blue-500 text-white' : 'bg-white/10 text-slate-500'}`}>
-                            Actual: {data.actual || '-'}
-                        </div>
-                        <div className={`px-3 py-1 rounded text-xs font-bold ${data.target ? 'bg-purple-500 text-white' : 'bg-white/10 text-slate-500'}`}>
-                            Target: {data.target || '-'}
-                        </div>
-                    </div>
                 </div>
             </div>
 
-            {/* Main Content */}
-            <div className="flex-1 overflow-y-auto p-8">
+            {/* Split View Container */}
+            <div className="flex-1 flex overflow-hidden">
 
-                {/* AI Feedback Banner */}
-                {aiFeedback && (
-                    <div className={`mb-8 p-4 rounded-xl border flex items-start gap-3 animate-in fade-in slide-in-from-top-2 ${aiFeedback.status === 'ok' ? 'bg-green-500/10 border-green-500/20' : 'bg-yellow-500/10 border-yellow-500/20'
-                        }`}>
-                        {aiFeedback.status === 'ok' ? <CheckCircle2 className="text-green-500 mt-0.5" size={18} /> : <AlertTriangle className="text-yellow-500 mt-0.5" size={18} />}
-                        <div>
-                            <h4 className={`text-sm font-bold mb-1 ${aiFeedback.status === 'ok' ? 'text-green-400' : 'text-yellow-400'}`}>
-                                {aiFeedback.status === 'ok' ? 'Assessment Validated' : 'Consultant Warning'}
-                            </h4>
-                            <p className="text-xs text-slate-300 leading-relaxed">{aiFeedback.message}</p>
-                        </div>
-                    </div>
-                )}
+                {/* 1. Sidebar (Level Navigation) */}
+                <LevelNavigator
+                    levels={(hasSubAreas && activeArea ? activeArea.levels : mainLevelsRecord) as Record<string, string>}
+                    currentLevel={currentLevelView}
+                    onSelectLevel={setCurrentLevelView}
+                    actualScore={hasSubAreas ? activeScores[0] : (data.actual || 0)}
+                    targetScore={hasSubAreas ? activeScores[1] : (data.target || 0)}
+                />
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                    {/* LEFT: Levels Description */}
-                    <div className="bg-navy-950/50 border border-white/10 rounded-xl p-6">
-                        <h3 className="text-sm font-bold text-slate-300 mb-4 uppercase tracking-wide">Maturity Levels</h3>
-                        <div className="space-y-4 relative">
-                            {/* Vertical Line */}
-                            <div className="absolute left-3 top-2 bottom-2 w-0.5 bg-white/10"></div>
-                            {content.levels.map((lvl, idx) => {
-                                const levelNum = idx + 1 as MaturityLevel;
-                                const isActual = data.actual === levelNum;
-                                const isTarget = data.target === levelNum;
-                                return (
-                                    <div
-                                        key={idx}
-                                        className={`relative pl-8 py-2 transition-all cursor-pointer group ${isActual || isTarget ? 'opacity-100' : 'opacity-60 hover:opacity-100'}`}
-                                        onClick={() => !data.actual ? handleLevelSelect('actual', levelNum) : handleLevelSelect('target', levelNum)}
-                                    >
-                                        <div className={`absolute left-0 top-3 w-6 h-6 rounded-full border-2 flex items-center justify-center bg-navy-900 z-10 transition-colors
-                                            ${isActual ? 'border-blue-500 text-blue-500' : isTarget ? 'border-purple-500 text-purple-500' : 'border-white/20 text-slate-500 group-hover:border-white/40'}
-                                        `}>
-                                            <span className="text-xs font-bold">{levelNum}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className={`text-sm font-medium ${isActual || isTarget ? 'text-white' : 'text-slate-400'}`}>{lvl}</span>
-                                            {isActual && <span className="text-[10px] font-bold bg-blue-500 text-white px-2 py-0.5 rounded">ACTUAL</span>}
-                                            {isTarget && <span className="text-[10px] font-bold bg-purple-500 text-white px-2 py-0.5 rounded">TARGET</span>}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
+                {/* 2. Main Content (Level Detail) */}
+                <div className="flex-1 overflow-y-auto bg-navy-900 relative">
+                    <div className="max-w-4xl mx-auto p-8 lg:p-12">
 
-                    {/* RIGHT: Pathway & Justification */}
-                    <div className="space-y-6">
+                        <LevelDetailCard
+                            level={currentLevelView}
+                            title={(hasSubAreas && activeArea ? activeArea.levels[currentLevelView] : mainLevelsRecord[currentLevelView]) || `Poziom ${currentLevelView}`}
+                            description={
+                                /* Try to get specific description if available, else generic */
+                                (hasSubAreas && activeArea
+                                    ? t(`assessment.axisContent.${axis}.areas.${currentAreaKey}.level${currentLevelView}Desc`)
+                                    : t(`assessment.axisContent.${axis}.level${currentLevelView}Desc`)) as string ||
+                                "Ten poziom reprezentuje określony etap dojrzałości w Twojej cyfrowej transformacji. Przeczytaj poniższe pytania pomocnicze, aby lepiej zrozumieć ten etap."
+                            }
+                            helperQuestions={(() => {
+                                const key = hasSubAreas && activeArea
+                                    ? `assessment.axisContent.${axis}.areas.${currentAreaKey}.level${currentLevelView}Questions`
+                                    : `assessment.axisContent.${axis}.level${currentLevelView}Questions`;
 
-                        {/* Transformation Pathway (PRO FEATURE) */}
-                        <div className="bg-navy-950/50 border border-white/10 rounded-xl p-6 relative overflow-hidden">
-                            <div className="absolute top-0 right-0 p-4 opacity-10">
-                                <TrendingUp size={100} />
-                            </div>
-                            <h3 className="text-sm font-bold text-slate-300 mb-4 uppercase tracking-wide flex items-center gap-2">
-                                <TrendingUp size={16} className="text-purple-500" />
-                                Transformation Pathway
-                            </h3>
+                                const questions = t(key, { returnObjects: true });
+                                return Array.isArray(questions) ? questions : [
+                                    "Czy Twoja organizacja posiada sformalizowane procedury dla tego obszaru?",
+                                    "Czy dane są zbierane automatycznie czy ręcznie?",
+                                    "Czy decyzje są podejmowane na podstawie danych w czasie rzeczywistym?"
+                                ];
+                            })()}
+                            formula={
+                                (hasSubAreas && activeArea
+                                    ? t(`assessment.axisContent.${axis}.areas.${currentAreaKey}.level${currentLevelView}Formula`)
+                                    : t(`assessment.axisContent.${axis}.level${currentLevelView}Formula`)) as string
+                            }
 
-                            {data.actual && data.target && data.target > data.actual ? (
-                                <div className="space-y-4">
-                                    <p className="text-xs text-slate-400 mb-2">
-                                        To move from <span className="text-blue-400 font-bold">Level {data.actual}</span> to <span className="text-purple-400 font-bold">Level {data.target}</span>, the following key shifts are required:
-                                    </p>
-                                    <div className="space-y-3">
-                                        {Array.from({ length: (data.target - data.actual) }).map((_, i) => (
-                                            <div key={i} className="flex gap-3 items-start p-2 rounded hover:bg-white/5 transition-colors">
-                                                <div className="mt-1 w-5 h-5 rounded-full border border-purple-500/30 flex items-center justify-center text-[10px] text-purple-400 font-mono">
-                                                    {i + 1}
-                                                </div>
-                                                <div>
-                                                    <h5 className="text-sm font-semibold text-white">Transition Phase {i + 1}</h5>
-                                                    <p className="text-xs text-slate-500">
-                                                        implied step from {content.levels[(data.actual || 0) + i - 1]} to {content.levels[(data.actual || 0) + i]}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="h-32 flex items-center justify-center text-slate-600 text-sm italic">
-                                    Select Actual and Target levels to visualize the pathway.
-                                </div>
-                            )}
-                        </div>
+                            // Check bits for checklist behavior
+                            isActual={(() => {
+                                const score = hasSubAreas ? (data.areaScores?.[currentAreaKey || '']?.[0] || 0) : (data.actual || 0);
+                                return (score & (1 << (currentLevelView - 1))) !== 0;
+                            })()}
+                            isTarget={(() => {
+                                const score = hasSubAreas ? (data.areaScores?.[currentAreaKey || '']?.[1] || 0) : (data.target || 0);
+                                return (score & (1 << (currentLevelView - 1))) !== 0;
+                            })()}
 
-                        {/* Justification Input */}
-                        <div className="bg-navy-950/50 border border-white/10 rounded-xl p-6">
-                            <h3 className="text-sm font-bold text-slate-300 mb-4 uppercase tracking-wide flex items-center gap-2">
-                                <Lightbulb size={16} className="text-yellow-500" />
-                                Strategic Rationale
-                            </h3>
-                            <textarea
-                                value={data.justification || ''}
-                                onChange={(e) => onChange({ ...data, justification: e.target.value })}
-                                placeholder={language === 'PL' ? "Dlaczego taki poziom? Podaj przykłady..." : "Why is this target critical for your business strategy?"}
-                                className="w-full h-24 bg-navy-900 border border-white/10 rounded-lg p-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-purple-500 transition-all"
-                            />
-                        </div>
+                            onSetActual={() => {
+                                const bit = 1 << (currentLevelView - 1);
+                                if (hasSubAreas && currentAreaKey) {
+                                    const currentScores = [...(data.areaScores?.[currentAreaKey] || [0, 0])];
+                                    // Toggle Actual
+                                    if ((currentScores[0] & bit) !== 0) {
+                                        currentScores[0] &= ~bit;
+                                    } else {
+                                        currentScores[0] |= bit;
+                                        currentScores[1] &= ~bit; // Mutually exclusive
+                                    }
+
+                                    const newAreaScores = { ...(data.areaScores || {}), [currentAreaKey]: currentScores };
+
+                                    // Recalculate aggregates using Population Count (Number of set bits)
+                                    let totalActual = 0;
+                                    let totalTarget = 0;
+                                    let countActual = 0;
+                                    let countTarget = 0;
+                                    const popcount = (n: number) => n.toString(2).replace(/0/g, "").length;
+
+                                    Object.values(newAreaScores).forEach(scores => {
+                                        // Count "Done" if actual > 0
+                                        if (scores[0] > 0) {
+                                            totalActual += popcount(scores[0]);
+                                            countActual++;
+                                        }
+                                        if (scores[1] > 0) {
+                                            // For target, we might want max level or count. Let's use count for consistency.
+                                            totalTarget += popcount(scores[1]);
+                                            countTarget++;
+                                        }
+                                    });
+
+                                    const updates: Partial<AxisAssessment> = {
+                                        areaScores: newAreaScores,
+                                        actual: countActual > 0 ? Math.round(totalActual / countActual) as MaturityLevel : undefined,
+                                        target: countTarget > 0 ? Math.round(totalTarget / countTarget) as MaturityLevel : undefined
+                                    };
+                                    onChange({ ...data, ...updates });
+                                } else {
+                                    // Simple Mode
+                                    let actual = (data.actual || 0) as number;
+                                    let target = (data.target || 0) as number;
+                                    if ((actual & bit) !== 0) actual &= ~bit;
+                                    else { actual |= bit; target &= ~bit; }
+                                    onChange({ ...data, actual: actual as MaturityLevel, target: target as MaturityLevel });
+                                }
+                            }}
+                            onSetTarget={() => {
+                                const bit = 1 << (currentLevelView - 1);
+                                if (hasSubAreas && currentAreaKey) {
+                                    const currentScores = [...(data.areaScores?.[currentAreaKey] || [0, 0])];
+                                    // Toggle Target
+                                    if ((currentScores[1] & bit) !== 0) {
+                                        currentScores[1] &= ~bit;
+                                    } else {
+                                        currentScores[1] |= bit;
+                                        currentScores[0] &= ~bit; // Mutually exclusive
+                                    }
+
+                                    const newAreaScores = { ...(data.areaScores || {}), [currentAreaKey]: currentScores };
+
+                                    // Recalculate aggregates
+                                    let totalActual = 0;
+                                    let totalTarget = 0;
+                                    let countActual = 0;
+                                    let countTarget = 0;
+                                    const popcount = (n: number) => n.toString(2).replace(/0/g, "").length;
+
+                                    Object.values(newAreaScores).forEach(scores => {
+                                        if (scores[0] > 0) { totalActual += popcount(scores[0]); countActual++; }
+                                        if (scores[1] > 0) { totalTarget += popcount(scores[1]); countTarget++; }
+                                    });
+
+                                    const updates: Partial<AxisAssessment> = {
+                                        areaScores: newAreaScores,
+                                        actual: countActual > 0 ? Math.round(totalActual / countActual) as MaturityLevel : undefined,
+                                        target: countTarget > 0 ? Math.round(totalTarget / countTarget) as MaturityLevel : undefined
+                                    };
+                                    onChange({ ...data, ...updates });
+                                } else {
+                                    // Simple Mode
+                                    let actual = (data.actual || 0) as number;
+                                    let target = (data.target || 0) as number;
+                                    if ((target & bit) !== 0) target &= ~bit;
+                                    else { target |= bit; actual &= ~bit; }
+                                    onChange({ ...data, actual: actual as MaturityLevel, target: target as MaturityLevel });
+                                }
+                            }}
+                            onSetNA={() => {
+                                const bit = 1 << (currentLevelView - 1);
+                                if (hasSubAreas && currentAreaKey) {
+                                    const currentScores = [...(data.areaScores?.[currentAreaKey] || [0, 0])];
+                                    // Clear both bits
+                                    currentScores[0] &= ~bit;
+                                    currentScores[1] &= ~bit;
+
+                                    const newAreaScores = { ...(data.areaScores || {}), [currentAreaKey]: currentScores };
+
+                                    // Recalculate aggregates
+                                    let totalActual = 0;
+                                    let totalTarget = 0;
+                                    let countActual = 0;
+                                    let countTarget = 0;
+                                    const popcount = (n: number) => n.toString(2).replace(/0/g, "").length;
+
+                                    Object.values(newAreaScores).forEach(scores => {
+                                        if (scores[0] > 0) { totalActual += popcount(scores[0]); countActual++; }
+                                        if (scores[1] > 0) { totalTarget += popcount(scores[1]); countTarget++; }
+                                    });
+
+                                    const updates: Partial<AxisAssessment> = {
+                                        areaScores: newAreaScores,
+                                        actual: countActual > 0 ? Math.round(totalActual / countActual) as MaturityLevel : undefined,
+                                        target: countTarget > 0 ? Math.round(totalTarget / countTarget) as MaturityLevel : undefined
+                                    };
+                                    onChange({ ...data, ...updates });
+                                } else {
+                                    // Simple Mode
+                                    let actual = (data.actual || 0) as number;
+                                    let target = (data.target || 0) as number;
+                                    actual &= ~bit;
+                                    target &= ~bit;
+                                    onChange({ ...data, actual: actual as MaturityLevel, target: target as MaturityLevel });
+                                }
+                            }}
+                            notes={data.justification || ''} // Using justification as notes placeholder for now
+                            onNotesChange={(text: string) => onChange({ ...data, justification: text })}
+                            onAiAssist={() => {
+                                // Placeholder for AI integration
+                                const currentNotes = data.justification || '';
+                                onChange({
+                                    ...data,
+                                    justification: currentNotes + (currentNotes ? "\n\n" : "") + "[Sugestia AI]: Biorąc pod uwagę Twój obecny poziom, warto skupić się najpierw na dokumentacji procesowej."
+                                });
+                            }}
+                        />
+
                     </div>
                 </div>
-            </div>
 
-            {/* Footer */}
-            <div className="p-6 border-t border-white/5 bg-navy-900 flex justify-between items-center">
-                <div className="text-xs text-slate-500">
-                    PRO Mode Active: Logic Validation Enabled
-                </div>
-                <button
-                    onClick={onNext}
-                    disabled={!data.actual || !data.target}
-                    className={`flex items-center gap-2 px-8 py-4 rounded-lg font-semibold text-sm transition-all shadow-lg ${data.actual && data.target
-                        ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-purple-900/30'
-                        : 'bg-navy-800 text-slate-500 cursor-not-allowed'
-                        }`}
-                >
-                    Confirm & Next
-                    <ArrowRight size={18} />
-                </button>
             </div>
         </div>
     );

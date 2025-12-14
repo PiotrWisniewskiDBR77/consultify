@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const db = require('../database');
+const verifyToken = require('../middleware/authMiddleware');
+
+router.use(verifyToken);
 
 // Helper: Run DB Run
 const dbRun = (query, params) => new Promise((resolve, reject) => {

@@ -5,7 +5,6 @@ import {
     SessionMode,
     User,
     AuthStep,
-    Language,
     FreeSession,
     FullSession,
     ChatMessage,
@@ -17,7 +16,6 @@ interface AppState {
     sessionMode: SessionMode;
     currentUser: User | null;
     authInitialStep: AuthStep;
-    language: Language;
     isSidebarOpen: boolean;
     isSidebarCollapsed: boolean;
     toggleSidebarCollapse: () => void;
@@ -61,7 +59,6 @@ interface AppState {
     setSessionMode: (mode: SessionMode) => void;
     setCurrentUser: (user: User | null) => void;
     setAuthInitialStep: (step: AuthStep) => void;
-    setLanguage: (lang: Language) => void;
     setIsSidebarOpen: (isOpen: boolean) => void;
 
     // Chat Actions
@@ -118,7 +115,6 @@ export const useAppStore = create<AppState>()(
             sessionMode: SessionMode.FREE,
             currentUser: null,
             authInitialStep: AuthStep.REGISTER,
-            language: 'EN',
             isSidebarOpen: false,
             activeChatMessages: [],
             isBotTyping: false,
@@ -149,9 +145,8 @@ export const useAppStore = create<AppState>()(
             setSessionMode: (mode) => set({ sessionMode: mode }),
             setCurrentUser: (user) => set({ currentUser: user }),
             setAuthInitialStep: (step) => set({ authInitialStep: step }),
-            setLanguage: (lang) => set({ language: lang }),
             setIsSidebarOpen: (isOpen) => set({ isSidebarOpen: isOpen }),
-            isSidebarCollapsed: false,
+            isSidebarCollapsed: true,
             toggleSidebarCollapse: () => set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
 
             setCurrentProjectId: (pid) => set({ currentProjectId: pid }),
@@ -203,7 +198,6 @@ export const useAppStore = create<AppState>()(
                 currentView: state.currentView,
                 sessionMode: state.sessionMode,
                 currentUser: state.currentUser,
-                language: state.language,
                 activeChatMessages: state.activeChatMessages, // Persisting chat!
                 freeSessionData: state.freeSessionData,
                 fullSessionData: state.fullSessionData,

@@ -1,12 +1,11 @@
 
 import React from 'react';
-import { FullReport, Language } from '../types';
-import { translations } from '../translations';
+import { FullReport } from '../types';
+import { useTranslation } from 'react-i18next';
 import { FileText } from 'lucide-react';
 
 interface FullReportDocumentProps {
    report: FullReport;
-   language: Language;
 }
 
 const SectionHeader = ({ title }: { title: string }) => (
@@ -16,17 +15,17 @@ const SectionHeader = ({ title }: { title: string }) => (
 );
 
 export const FullReportDocument: React.FC<FullReportDocumentProps> = ({
-   report,
-   language
+   report
 }) => {
-   const t = translations.fullReports;
+   const { t: translate } = useTranslation();
+   const t = translate('fullReports', { returnObjects: true }) as any;
 
    return (
       <div className="h-full bg-gray-50 dark:bg-navy-950 flex flex-col">
          {/* Document Header */}
          <div className="h-16 border-b border-slate-200 dark:border-navy-800 flex items-center px-8 bg-white dark:bg-navy-950 shrink-0 print:hidden">
             <FileText className="text-purple-500 mr-3" size={20} />
-            <span className="font-semibold text-navy-900 dark:text-white tracking-wide">{t.header[language]}</span>
+            <span className="font-semibold text-navy-900 dark:text-white tracking-wide">{t.header}</span>
             <span className="ml-auto text-xs text-slate-500 font-mono">
                Generated: {new Date(report.generatedAt).toLocaleDateString()}
             </span>
@@ -44,7 +43,7 @@ export const FullReportDocument: React.FC<FullReportDocumentProps> = ({
                </div>
 
                {/* 1. Executive Summary */}
-               <SectionHeader title={t.sections.exec[language]} />
+               <SectionHeader title={t.sections.exec} />
                <div className="prose prose-slate dark:prose-invert prose-p:text-slate-600 dark:prose-p:text-slate-300 prose-p:leading-relaxed max-w-none mb-12">
                   <p className="font-medium text-lg text-navy-900 dark:text-white mb-6">
                      {report.transformationDescription}
@@ -77,7 +76,7 @@ export const FullReportDocument: React.FC<FullReportDocumentProps> = ({
                {/* 3. Key Initiatives */}
                {report.keyInitiatives && (
                   <div className="mb-12">
-                     <SectionHeader title={t.sections.initiatives[language] || "Key Initiatives"} />
+                     <SectionHeader title={t.sections.initiatives || "Key Initiatives"} />
                      <table className="w-full text-left text-sm">
                         <thead>
                            <tr className="border-b border-slate-200 dark:border-white/10 text-slate-500">

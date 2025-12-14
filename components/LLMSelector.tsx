@@ -48,8 +48,8 @@ export const LLMSelector: React.FC = () => {
     }, []);
 
     const filteredModels = models.filter(m => {
-        const matchesSearch = m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            m.provider.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesSearch = (m.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+            (m.provider?.toLowerCase() || '').includes(searchQuery.toLowerCase());
 
         // Filter by user preference if defined and not empty
         // If config implies "System" provider handling, we check this. 
@@ -99,11 +99,11 @@ export const LLMSelector: React.FC = () => {
         <div className="relative z-50" ref={menuRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-xs font-medium text-navy-900 dark:text-white"
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all duration-200 ${isOpen ? 'bg-slate-100 dark:bg-white/10 border-brand/50' : 'bg-transparent border-slate-200 dark:border-white/10 hover:border-brand/50 hover:bg-slate-50 dark:hover:bg-white/5'} text-xs font-medium text-navy-900 dark:text-white`}
             >
                 <Sparkles size={14} className="text-purple-500" />
                 <span>{getActiveLabel()}</span>
-                <ChevronDown size={12} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown size={12} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {isOpen && (

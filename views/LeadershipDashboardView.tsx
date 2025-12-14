@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { SplitLayout } from '../components/SplitLayout';
 import { useAppStore } from '../store/useAppStore';
 import { Api } from '../services/api';
-import { translations } from '../translations';
+// import { translations } from '../translations';
 import {
     BarChart3, Users, DollarSign, TrendingUp,
     Activity, ArrowUpRight, ArrowDownRight, PieChart

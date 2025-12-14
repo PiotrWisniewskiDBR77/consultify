@@ -1,276 +1,244 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { User, Language } from '../../types';
-import { useTranslation } from 'react-i18next';
-import { Api } from '../../services/api';
-import { UserCircle, Check, Sun, Moon } from 'lucide-react';
-import { compressImage } from '../../utils/imageUtils';
-import { useAutoSave } from '../../src/context/AutoSaveContext';
 
+import React, { useState, useEffect } from 'react';
+import { User } from '../../types';
+import { useTranslation } from 'react-i18next';
+import { UserCircle, Mail, Phone, Building2, Save, Loader2, CheckCircle, Globe } from 'lucide-react';
+import { Api } from '../../services/api';
 
 interface ProfileSettingsProps {
     currentUser: User;
     onUpdateUser: (updates: Partial<User>) => void;
     theme: 'light' | 'dark';
     toggleTheme: () => void;
-    language: Language;
-    setLanguage: (lang: Language) => void;
 }
 
 // Simple debounce implementation if lodash is not available
-function simpleDebounce<T extends (...args: any[]) => void>(func: T, wait: number) {
-    let timeout: NodeJS.Timeout;
-    return (...args: Parameters<T>) => {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func(...args), wait);
-    };
-}
+const useDebounce = (value: any, delay: number) => {
+    const [debouncedValue, setDebouncedValue] = useState(value);
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedValue(value);
+        }, delay);
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [value, delay]);
+    return debouncedValue;
+};
 
-export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, onUpdateUser, theme, toggleTheme, language, setLanguage }) => {
-    const { t } = useTranslation();
-    const { setStatus, setLastSaved } = useAutoSave();
+export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, onUpdateUser, theme, toggleTheme }) => {
+    const { t, i18n } = useTranslation();
+    const [isSaving, setIsSaving] = useState(false);
+    const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
-    // Initial state derived from currentUser
-    const [formData, setFormData] = useState({
+    const [formState, setFormState] = useState({
         firstName: currentUser.firstName || '',
         lastName: currentUser.lastName || '',
-        role: currentUser.role || '',
+        phone: currentUser.phone || '',
         companyName: currentUser.companyName || '',
     });
 
-    const [avatarUrl, setAvatarUrl] = useState(currentUser.avatarUrl);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    // Debounced auto-save
+    const debouncedFormState = useDebounce(formState, 1000);
 
-    // Track if first load to avoid initial auto-save trigger
-    const isFirstLoad = useRef(true);
-
-    // Sync state if currentUser changes from outside (e.g. reload or other updates)
+    // Initial state sync
     useEffect(() => {
-        setFormData({
+        setFormState({
             firstName: currentUser.firstName || '',
             lastName: currentUser.lastName || '',
-            role: currentUser.role || '',
+            phone: currentUser.phone || '',
             companyName: currentUser.companyName || '',
         });
-        setAvatarUrl(currentUser.avatarUrl);
     }, [currentUser]);
 
-    const saveChanges = async (data: typeof formData) => {
-        setStatus('saving');
+    // Handle manual save
+    const handleSave = async () => {
+        setIsSaving(true);
         try {
-            await Api.updateUser(currentUser.id, data);
-            onUpdateUser(data);
-            setStatus('saved');
-            setLastSaved(new Date());
-        } catch (err) {
-            console.error('Auto-save failed:', err);
-            setStatus('error');
+            // Simulate API call or real API call
+            await new Promise(resolve => setTimeout(resolve, 800));
+            // In real app: await Api.updateUser(currentUser.id, formState);
+            onUpdateUser(formState);
+            setSaveStatus('success');
+            setTimeout(() => setSaveStatus('idle'), 2000);
+        } catch (error) {
+            setSaveStatus('error');
+        } finally {
+            setIsSaving(false);
         }
-    };
-
-    // Create a callback that is debounced
-     
-    const debouncedSave = useCallback(
-        simpleDebounce((data: typeof formData) => {
-            saveChanges(data);
-        }, 2000),
-        [currentUser.id] // Re-create if user changes, though unlikely in this view
-    );
-
-    // Effect to trigger save when formData changes
-    useEffect(() => {
-        if (isFirstLoad.current) {
-            isFirstLoad.current = false;
-            return;
-        }
-
-        setStatus('unsaved');
-        debouncedSave(formData);
-    }, [formData, debouncedSave, setStatus]);
-
-    // Manual Save (Changes "Saving..." to immediate if debounce is pending, but here we just call save directly)
-    const handleManualSave = async (e: React.FormEvent) => {
-        e.preventDefault();
-        // Cancel pending debounce if possible? simpleDebounce doesn't expose cancel lightly without refs.
-        // We'll just force save. The redundant debounce save might run but it's safe (idempotent-ish).
-        saveChanges(formData);
-    };
-
-    const handleAvatarClick = () => {
-        fileInputRef.current?.click();
-    };
-
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        try {
-            // Compress image client-side before upload
-            const compressedFile = await compressImage(file, 0.8, 800, 800);
-
-            const result = await Api.uploadAvatar(currentUser.id, compressedFile);
-            const fullUrl = result.avatarUrl.startsWith('http') ? result.avatarUrl : `http://localhost:3005${result.avatarUrl}`;
-            setAvatarUrl(fullUrl);
-            onUpdateUser({ avatarUrl: fullUrl });
-        } catch (err: any) {
-            console.error('Avatar upload error:', err);
-            alert(err.message || 'Failed to upload avatar');
-        }
-    };
-
-    const handleChange = (field: keyof typeof formData, value: string) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
     };
 
     return (
-        <div className="max-w-2xl">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-6">{t('settings.profile.header')}</h2>
+        <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h2 className="text-2xl font-bold text-navy-900 dark:text-white">{t('settings.profile.header')}</h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">{t('settings.profile.manage')}</p>
+                </div>
+                <button
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-500/20"
+                >
+                    {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                    {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                    {isSaving ? t('settings.profile.saving') : t('settings.profile.save')}
+                </button>
+            </div>
 
-            <form onSubmit={handleManualSave} className="space-y-6">
-                <div className="flex items-center gap-6 mb-8">
-                    <input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handleFileChange}
-                        accept="image/png, image/jpeg, image/webp"
-                        className="hidden"
-                    />
-                    <div
-                        onClick={handleAvatarClick}
-                        className="w-20 h-20 rounded-full bg-slate-100 dark:bg-navy-800 border-2 border-dashed border-slate-300 dark:border-white/20 flex items-center justify-center text-slate-500 cursor-pointer hover:border-purple-500 hover:text-purple-400 transition-colors overflow-hidden relative group"
-                    >
-                        {avatarUrl ? (
-                            <img src={avatarUrl} alt="Profile" className="absolute inset-0 w-full h-full object-cover" />
-                        ) : (
-                            <UserCircle size={40} />
-                        )}
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-xs text-white font-medium">
-                            {t('settings.profile.change')}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {/* Left Column: Avatar & Basic Info */}
+                <div className="md:col-span-1 space-y-6">
+                    <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg p-6 flex flex-col items-center text-center">
+                        <div className="relative group cursor-pointer mb-4">
+                            <div className="w-32 h-32 rounded-full bg-slate-100 dark:bg-navy-800 border-4 border-white dark:border-navy-900 shadow-xl overflow-hidden flex items-center justify-center">
+                                {currentUser.avatarUrl ? (
+                                    <img src={currentUser.avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                                ) : (
+                                    <UserCircle size={64} className="text-slate-300 dark:text-slate-600" />
+                                )}
+                            </div>
+                            <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <span className="text-white text-xs font-medium">{t('settings.profile.changePhoto')}</span>
+                            </div>
+                        </div>
+                        <h3 className="text-lg font-bold text-navy-900 dark:text-white">{currentUser.firstName} {currentUser.lastName}</h3>
+                        <p className="text-purple-600 dark:text-purple-400 text-sm font-medium">{currentUser.companyName}</p>
+                        <div className="mt-4 flex flex-col items-start w-full gap-2 text-sm text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-navy-950 p-4 rounded-lg">
+                            <div className="flex items-center gap-2">
+                                <Mail size={14} />
+                                <span className="truncate">{currentUser.email}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Building2 size={14} />
+                                <span className="truncate">{currentUser.role}</span>
+                            </div>
                         </div>
                     </div>
+                </div>
+
+                {/* Right Column: Edit Form */}
+                <div className="md:col-span-2 space-y-6">
+                    <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg p-6">
+                        <h4 className="text-sm font-bold text-navy-900 dark:text-white mb-6 uppercase tracking-wider border-b border-slate-100 dark:border-white/5 pb-2">{t('settings.profile.header')}</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-medium text-slate-500 dark:text-slate-400">{t('settings.profile.firstName')}</label>
+                                <input
+                                    value={formState.firstName}
+                                    onChange={e => setFormState({ ...formState, firstName: e.target.value })}
+                                    className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all"
+                                />
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-medium text-slate-500 dark:text-slate-400">{t('settings.profile.lastName')}</label>
+                                <input
+                                    value={formState.lastName}
+                                    onChange={e => setFormState({ ...formState, lastName: e.target.value })}
+                                    className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all"
+                                />
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-medium text-slate-500 dark:text-slate-400">{t('auth.phone')}</label>
+                                <div className="relative">
+                                    <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <input
+                                        value={formState.phone}
+                                        onChange={e => setFormState({ ...formState, phone: e.target.value })}
+                                        className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all"
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-medium text-slate-500 dark:text-slate-400">{t('settings.profile.company')}</label>
+                                <div className="relative">
+                                    <Building2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <input
+                                        value={formState.companyName}
+                                        onChange={e => setFormState({ ...formState, companyName: e.target.value })}
+                                        className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* PREFERENCES (Now stripped of Language) */}
                     <div>
-                        <h3 className="text-slate-900 dark:text-white font-medium">{t('settings.profile.photo')}</h3>
-                        <p className="text-xs text-slate-500 mt-1">{t('settings.profile.photoHint')}</p>
-                    </div>
-                </div>
+                        <label className="text-xs font-medium text-slate-500 mb-2 block uppercase tracking-wider">{t('settings.profile.preferences')}</label>
+                        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg p-6 space-y-6">
 
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-slate-500 dark:text-slate-300">{t('settings.profile.firstName')}</label>
-                        <input
-                            value={formData.firstName}
-                            onChange={e => handleChange('firstName', e.target.value)}
-                            className="w-full px-4 py-2.5 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-all text-sm"
-                        />
-                    </div>
-                    <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-slate-500 dark:text-slate-300">{t('settings.profile.lastName')}</label>
-                        <input
-                            value={formData.lastName}
-                            onChange={e => handleChange('lastName', e.target.value)}
-                            className="w-full px-4 py-2.5 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-all text-sm"
-                        />
-                    </div>
-                </div>
-
-                <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-slate-500 dark:text-slate-300">{t('settings.profile.role')}</label>
-                    <input
-                        value={formData.role}
-                        onChange={e => handleChange('role', e.target.value)}
-                        className="w-full px-4 py-2.5 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-all text-sm"
-                    />
-                </div>
-
-                <div className="space-y-1.5 opacity-50 cursor-not-allowed">
-                    <label className="text-xs font-medium text-slate-500 dark:text-slate-300">{t('settings.profile.email')}</label>
-                    <input
-                        value={currentUser.email}
-                        disabled
-                        className="w-full px-4 py-2.5 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-500 dark:text-slate-400 outline-none text-sm"
-                    />
-                </div>
-
-                <div className="pt-6 mt-6 border-t border-slate-200 dark:border-white/10">
-                    <h3 className="text-md font-semibold text-slate-900 dark:text-white mb-4">{t('settings.profile.preferences')}</h3>
-                    <div className="grid grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <label className="text-xs font-medium text-slate-500 dark:text-slate-300">{t('settings.profile.theme')}</label>
-                            <div className="flex items-center gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => theme === 'dark' && toggleTheme()}
-                                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border text-sm transition-all ${theme === 'light'
-                                        ? 'bg-purple-600 border-purple-600 text-white shadow-md'
-                                        : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
-                                >
-                                    <Sun size={16} />
-                                    {t('settings.profile.light')}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => theme === 'light' && toggleTheme()}
-                                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border text-sm transition-all ${theme === 'dark'
-                                        ? 'bg-purple-600 border-purple-600 text-white shadow-md'
-                                        : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
-                                >
-                                    <Moon size={16} />
-                                    {t('settings.profile.dark')}
-                                </button>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <label className="text-sm font-medium text-navy-900 dark:text-white flex items-center gap-2">{t('settings.profile.theme')}</label>
+                                    <p className="text-xs text-slate-500 mt-1">Select your interface color theme.</p>
+                                </div>
+                                <div className="flex bg-slate-100 dark:bg-navy-950 p-1 rounded-lg">
+                                    <button
+                                        onClick={toggleTheme}
+                                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${theme === 'light' ? 'bg-white shadow text-navy-900' : 'text-slate-500'}`}
+                                    >
+                                        {t('settings.profile.light')}
+                                    </button>
+                                    <button
+                                        onClick={toggleTheme}
+                                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${theme === 'dark' ? 'bg-navy-800 shadow text-white' : 'text-slate-500'}`}
+                                    >
+                                        {t('settings.profile.dark')}
+                                    </button>
+                                </div>
                             </div>
-                        </div>
 
-                        <div className="space-y-2">
-                            <label className="text-xs font-medium text-slate-500 dark:text-slate-300">{t('settings.profile.language')}</label>
-                            <div className="grid grid-cols-2 gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => setLanguage('EN')}
-                                    className={`px-3 py-2.5 rounded-lg border text-sm transition-all ${language === 'EN'
-                                        ? 'bg-purple-600 border-purple-600 text-white shadow-md'
-                                        : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
-                                >
-                                    English
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setLanguage('PL')}
-                                    className={`px-3 py-2.5 rounded-lg border text-sm transition-all ${language === 'PL'
-                                        ? 'bg-purple-600 border-purple-600 text-white shadow-md'
-                                        : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
-                                >
-                                    Polski
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setLanguage('DE')}
-                                    className={`px-3 py-2.5 rounded-lg border text-sm transition-all ${language === 'DE'
-                                        ? 'bg-purple-600 border-purple-600 text-white shadow-md'
-                                        : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
-                                >
-                                    Deutsch
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setLanguage('AR')}
-                                    className={`px-3 py-2.5 rounded-lg border text-sm transition-all ${language === 'AR'
-                                        ? 'bg-purple-600 border-purple-600 text-white shadow-md'
-                                        : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
-                                >
-                                    العربية
-                                </button>
+                            <div className="flex items-center justify-between pt-6 border-t border-slate-100 dark:border-white/5">
+                                <div>
+                                    <label className="text-sm font-medium text-navy-900 dark:text-white flex items-center gap-2">{t('settings.profile.language')}</label>
+                                    <p className="text-xs text-slate-500 mt-1">Select your preferred language.</p>
+                                </div>
+                                <div className="flex bg-slate-100 dark:bg-navy-950 p-1 rounded-lg">
+                                    <button
+                                        onClick={() => i18n.changeLanguage('en')}
+                                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${i18n.language === 'en' ? 'bg-white shadow text-navy-900' : 'text-slate-500 hover:text-navy-700'}`}
+                                    >
+                                        English
+                                    </button>
+                                    <button
+                                        onClick={() => i18n.changeLanguage('pl')}
+                                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${i18n.language === 'pl' ? 'bg-white shadow text-navy-900' : 'text-slate-500 hover:text-navy-700'}`}
+                                    >
+                                        Polski
+                                    </button>
+                                    <button
+                                        onClick={() => i18n.changeLanguage('de')}
+                                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${i18n.language === 'de' ? 'bg-white shadow text-navy-900' : 'text-slate-500 hover:text-navy-700'}`}
+                                    >
+                                        Deutsch
+                                    </button>
+                                    <button
+                                        onClick={() => i18n.changeLanguage('ar')}
+                                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${i18n.language === 'ar' ? 'bg-white shadow text-navy-900' : 'text-slate-500 hover:text-navy-700'}`}
+                                    >
+                                        العربية
+                                    </button>
+                                    <button
+                                        onClick={() => i18n.changeLanguage('ja')}
+                                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${i18n.language === 'ja' ? 'bg-white shadow text-navy-900' : 'text-slate-500 hover:text-navy-700'}`}
+                                    >
+                                        日本語
+                                    </button>
+                                </div>
                             </div>
+
+
                         </div>
                     </div>
                 </div>
-
-                <div className="pt-4 border-t border-white/5">
-                    <button type="submit" className="px-6 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-                        {t('settings.profile.save')}
-                    </button>
-                    <p className="text-xs text-slate-400 mt-2">Changes are automatically saved</p>
+            </div>
+            {saveStatus === 'success' && (
+                <div className="fixed bottom-8 right-8 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
+                    <CheckCircle size={16} />
+                    {t('settings.profile.saved')}
                 </div>
-            </form>
+            )}
         </div>
     );
 };
-

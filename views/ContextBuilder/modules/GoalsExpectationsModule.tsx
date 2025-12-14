@@ -1,46 +1,47 @@
 import React, { useState } from 'react';
 import { Target, BarChart2, Maximize, Ban, Zap, Sparkles, CheckCircle2, Rocket, Bot, GanttChartSquare } from 'lucide-react';
-
 import { DynamicList, DynamicListItem } from '../shared/DynamicList';
 import { AITextArea } from '../shared/AITextArea';
+import { useContextBuilderStore } from '../../../store/useContextBuilderStore';
 
 export const GoalsExpectationsModule: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'intent' | 'metrics' | 'scope' | 'nogo' | 'expectations'>('intent');
 
-    // MOCK DATA STATES
-    const [kpis, setKpis] = useState<DynamicListItem[]>([
-        { id: '1', name: 'Revenue Growth', baseline: '$10M', target: '$15M', timeframe: '12m' },
-        { id: '2', name: 'OEE', baseline: '65%', target: '80%', timeframe: '6m' }
-    ]);
+    // Store State
+    const {
+        goals,
+        setGoals,
+        updateGoalsList
+    } = useContextBuilderStore();
 
-    const [inScope, setInScope] = useState<DynamicListItem[]>([
-        { id: '1', item: 'Production Line A', notes: 'Full digitalization' }
-    ]);
-
-    const [outScope, setOutScope] = useState<DynamicListItem[]>([
-        { id: '1', item: 'Logistics Warehouse', notes: 'Next phase' }
-    ]);
-
-    const [noGo, setNoGo] = useState<DynamicListItem[]>([
-        { id: '1', area: 'Headcount Reduction', reason: 'Union agreement' }
-    ]);
-
-    // AI Suggestions Mock State
+    // AI Suggestions Mock State (Local UI state)
     const [aiSuggestions, setAiSuggestions] = useState([
         { id: 1, type: 'add', item: 'Safety Incident Rate (TRIR)', tab: 'metrics', reason: 'Common safety KPI missing compared to industry standard.', confidence: 'Medium' }
     ]);
 
     // Handlers
-    const createHandler = (setter: React.Dispatch<React.SetStateAction<DynamicListItem[]>>) => ({
-        onAdd: (item: Omit<DynamicListItem, 'id'>) => setter(prev => [...prev, { ...item, id: Math.random().toString(36).substr(2, 9) }]),
-        onUpdate: (id: string, updates: Partial<DynamicListItem>) => setter(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p)),
-        onDelete: (id: string) => setter(prev => prev.filter(p => p.id !== id))
+    const createHandler = (
+        listName: 'kpis' | 'inScope' | 'outScope' | 'noGo',
+        currentItems: DynamicListItem[]
+    ) => ({
+        onAdd: (item: Omit<DynamicListItem, 'id'>) => {
+            const newItem = { ...item, id: Math.random().toString(36).substr(2, 9) };
+            updateGoalsList(listName, [...currentItems, newItem]);
+        },
+        onUpdate: (id: string, updates: Partial<DynamicListItem>) => {
+            const newItems = currentItems.map(p => p.id === id ? { ...p, ...updates } : p);
+            updateGoalsList(listName, newItems);
+        },
+        onDelete: (id: string) => {
+            const newItems = currentItems.filter(p => p.id !== id);
+            updateGoalsList(listName, newItems);
+        }
     });
 
-    const kpiHandlers = createHandler(setKpis);
-    const inScopeHandlers = createHandler(setInScope);
-    const outScopeHandlers = createHandler(setOutScope);
-    const noGoHandlers = createHandler(setNoGo);
+    const kpiHandlers = createHandler('kpis', goals.kpis);
+    const inScopeHandlers = createHandler('inScope', goals.inScope);
+    const outScopeHandlers = createHandler('outScope', goals.outScope);
+    const noGoHandlers = createHandler('noGo', goals.noGo);
 
     // TABS CONFIG
     const tabs = [
@@ -64,8 +65,21 @@ export const GoalsExpectationsModule: React.FC = () => {
                         </p>
                     </div>
                     <div className="flex gap-2">
-                        <button className="px-3 py-1 bg-purple-600 text-white text-xs rounded hover:bg-purple-700">Add KPI</button>
-                        <button className="px-3 py-1 bg-white text-purple-600 border border-purple-200 text-xs rounded hover:bg-slate-50">Dismiss</button>
+                        <button
+                            onClick={() => {
+                                kpiHandlers.onAdd({ name: 'Safety Incident Rate (TRIR)', baseline: 'TBD', target: '0', timeframe: '12m' });
+                                setAiSuggestions([]);
+                            }}
+                            className="px-3 py-1 bg-purple-600 text-white text-xs rounded hover:bg-purple-700"
+                        >
+                            Add KPI
+                        </button>
+                        <button
+                            onClick={() => setAiSuggestions([])}
+                            className="px-3 py-1 bg-white text-purple-600 border border-purple-200 text-xs rounded hover:bg-slate-50"
+                        >
+                            Dismiss
+                        </button>
                     </div>
                 </div>
             )}
@@ -98,18 +112,24 @@ export const GoalsExpectationsModule: React.FC = () => {
                             <label className="block text-sm font-bold text-navy-900 dark:text-white mb-2">Primary Objective (North Star)</label>
                             <p className="text-xs text-slate-500 mb-2">What is the single most important goal for this transformation?</p>
                             <AITextArea
+                                value={goals.primaryObjective}
+                                onChange={(e) => setGoals({ primaryObjective: e.target.value })}
                                 rows={3}
                                 placeholder="E.g. Become the market leader in customized manufacturing by reducing lead times by 50%..."
                                 onRefine={() => { }}
+                                aiContext="objective"
                             />
                         </div>
 
                         <div>
                             <label className="block text-sm font-bold text-navy-900 dark:text-white mb-2">Secondary Objectives</label>
                             <AITextArea
+                                value={goals.secondaryObjectives}
+                                onChange={(e) => setGoals({ secondaryObjectives: e.target.value })}
                                 rows={2}
                                 placeholder="E.g. Improve employee retention, Reduce carbon footprint..."
                                 onRefine={() => { }}
+                                aiContext="objective"
                             />
                         </div>
 
@@ -125,7 +145,17 @@ export const GoalsExpectationsModule: React.FC = () => {
                                     { id: 'cust', label: 'Customer Experience' }
                                 ].map(p => (
                                     <label key={p.id} className="relative flex items-center gap-3 border border-slate-200 dark:border-white/10 p-4 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 transition-all group">
-                                        <input type="checkbox" className="w-5 h-5 text-purple-600 rounded focus:ring-purple-500 peer" />
+                                        <input
+                                            type="checkbox"
+                                            className="w-5 h-5 text-purple-600 rounded focus:ring-purple-500 peer"
+                                            checked={goals.topPriorities.includes(p.id)}
+                                            onChange={(e) => {
+                                                const newPriorities = e.target.checked
+                                                    ? [...goals.topPriorities, p.id]
+                                                    : goals.topPriorities.filter(id => id !== p.id);
+                                                setGoals({ topPriorities: newPriorities });
+                                            }}
+                                        />
                                         <span className="text-sm font-medium text-slate-700 dark:text-slate-200 peer-checked:text-purple-700 dark:peer-checked:text-purple-300">{p.label}</span>
                                         <div className="absolute inset-0 border-2 border-purple-500 rounded-lg opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity"></div>
                                     </label>
@@ -141,7 +171,7 @@ export const GoalsExpectationsModule: React.FC = () => {
                         <DynamicList
                             title="Success Metrics (KPIs)"
                             description="Define verifiable metrics to track success. Use 'Add Item' to define new KPIs."
-                            items={kpis}
+                            items={goals.kpis}
                             columns={[
                                 { key: 'name', label: 'KPI Name', width: 'w-1/3', placeholder: 'e.g. OEE' },
                                 { key: 'baseline', label: 'Baseline', width: 'w-1/6', placeholder: 'e.g. 60%' },
@@ -159,7 +189,7 @@ export const GoalsExpectationsModule: React.FC = () => {
                         <DynamicList
                             title="In Scope (Included)"
                             description="Areas, departments, or processes explicitly included."
-                            items={inScope}
+                            items={goals.inScope}
                             columns={[
                                 { key: 'item', label: 'Item / Area', width: 'w-1/2', placeholder: 'e.g. Plant A' },
                                 { key: 'notes', label: 'Notes', width: 'w-1/2', placeholder: 'e.g. Full audit' },
@@ -174,7 +204,7 @@ export const GoalsExpectationsModule: React.FC = () => {
                             <DynamicList
                                 title="Out of Scope (Excluded)"
                                 description="Areas explicitly excluded to prevent scope creep."
-                                items={outScope}
+                                items={goals.outScope}
                                 columns={[
                                     { key: 'item', label: 'Item / Area', width: 'w-1/2', placeholder: 'e.g. Logistics' },
                                     { key: 'notes', label: 'Reason', width: 'w-1/2', placeholder: 'e.g. Already optimized' },
@@ -190,7 +220,7 @@ export const GoalsExpectationsModule: React.FC = () => {
                     <DynamicList
                         title="No-Go Zone"
                         description="Areas or topics that are off-limits due to politics, regulations, or strategy."
-                        items={noGo}
+                        items={goals.noGo}
                         columns={[
                             { key: 'area', label: 'Sensitive Area', width: 'w-1/3', placeholder: 'e.g. Headcount' },
                             { key: 'reason', label: 'Reason/Constraint', width: 'w-2/3', placeholder: 'e.g. Strict union agreement until 2026' },
@@ -203,7 +233,6 @@ export const GoalsExpectationsModule: React.FC = () => {
                 {activeTab === 'expectations' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-                        {/* Preferred Working Style */}
                         {/* Transformation Archetype */}
                         <div className="bg-white dark:bg-navy-900 p-6 rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm hover:border-purple-300 dark:hover:border-purple-500/50 transition-colors">
                             <h3 className="font-bold text-navy-900 dark:text-white mb-2 flex items-center gap-2">
@@ -219,7 +248,13 @@ export const GoalsExpectationsModule: React.FC = () => {
                                     { id: 'targeted', label: 'value-Led / Use Case', desc: 'Focus on specific high-ROI pain points. Best for tight budgets.' }
                                 ].map(style => (
                                     <label key={style.id} className="relative block cursor-pointer group">
-                                        <input type="radio" name="style" className="peer sr-only" />
+                                        <input
+                                            type="radio"
+                                            name="style"
+                                            className="peer sr-only"
+                                            checked={goals.transformationArchetype === style.id}
+                                            onChange={() => setGoals({ transformationArchetype: style.id })}
+                                        />
                                         <div className="p-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-navy-950/50 peer-checked:bg-orange-50 dark:peer-checked:bg-orange-900/20 peer-checked:border-orange-500 peer-checked:ring-1 peer-checked:ring-orange-500/50 transition-all hover:bg-white dark:hover:bg-navy-800">
                                             <div className="flex items-center justify-between mb-1">
                                                 <span className="font-bold text-sm text-navy-900 dark:text-white peer-checked:text-orange-700 dark:peer-checked:text-orange-400">{style.label}</span>
@@ -249,7 +284,13 @@ export const GoalsExpectationsModule: React.FC = () => {
                                     { id: 'agent', label: 'Autonomous Agent', desc: 'AI executes defined workflows (e.g., data hygiene) with oversight.' }
                                 ].map(role => (
                                     <label key={role.id} className="relative block cursor-pointer group">
-                                        <input type="radio" name="airole" className="peer sr-only" />
+                                        <input
+                                            type="radio"
+                                            name="airole"
+                                            className="peer sr-only"
+                                            checked={goals.aiRole === role.id}
+                                            onChange={() => setGoals({ aiRole: role.id })}
+                                        />
                                         <div className="p-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-navy-950/50 peer-checked:bg-purple-50 dark:peer-checked:bg-purple-900/20 peer-checked:border-purple-500 peer-checked:ring-1 peer-checked:ring-purple-500/50 transition-all hover:bg-white dark:hover:bg-navy-800">
                                             <div className="flex items-center justify-between mb-1">
                                                 <span className="font-bold text-sm text-navy-900 dark:text-white peer-checked:text-purple-700 dark:peer-checked:text-purple-400">{role.label}</span>
@@ -280,7 +321,13 @@ export const GoalsExpectationsModule: React.FC = () => {
                                     { id: 'milestone', label: 'Milestone Based', desc: 'Reviews triggered by key deliverables.' }
                                 ].map(cadence => (
                                     <label key={cadence.id} className="relative block cursor-pointer group">
-                                        <input type="radio" name="cadence" className="peer sr-only" />
+                                        <input
+                                            type="radio"
+                                            name="cadence"
+                                            className="peer sr-only"
+                                            checked={goals.steeringCadence === cadence.id}
+                                            onChange={() => setGoals({ steeringCadence: cadence.id })}
+                                        />
                                         <div className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-navy-950/50 hover:bg-white dark:hover:bg-navy-800 peer-checked:bg-blue-50 dark:peer-checked:bg-blue-900/20 peer-checked:border-blue-500 transition-all">
                                             <div className="w-4 h-4 rounded-full border border-slate-300 peer-checked:border-blue-500 peer-checked:bg-blue-500 flex items-center justify-center shrink-0">
                                                 <div className="w-1.5 h-1.5 bg-white rounded-full opacity-0 peer-checked:opacity-100" />

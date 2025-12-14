@@ -13,8 +13,7 @@ import { toast } from 'react-hot-toast';
 
 interface AdminViewProps {
     currentUser: User;
-    onNavigate: (view: any) => void;
-    language: Language;
+    onNavigate: (view: AppView) => void;
 }
 
 interface Project {
@@ -26,7 +25,7 @@ interface Project {
     created_at: string;
 }
 
-export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate, language }) => {
+export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate }) => {
     const { currentView } = useAppStore();
     // const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'USERS' | 'PROJECTS'>('DASHBOARD'); // Removed internal state
     const [users, setUsers] = useState<User[]>([]);

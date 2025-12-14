@@ -6,13 +6,14 @@ export interface DynamicListItem {
     [key: string]: any;
 }
 
-interface ColumnConfig {
+export interface ColumnConfig {
     key: string;
     label: string;
     type?: 'text' | 'select' | 'number';
     options?: { label: string; value: string }[]; // For select type
     placeholder?: string;
     width?: string; // Tailwind width class e.g. "w-1/3"
+    render?: (item: DynamicListItem) => React.ReactNode; // Custom render function
 }
 
 interface DynamicListProps {
@@ -24,6 +25,7 @@ interface DynamicListProps {
     title?: string;
     description?: string;
     emptyStateMessage?: string;
+    onRowClick?: (item: DynamicListItem) => void;
 }
 
 export const DynamicList: React.FC<DynamicListProps> = ({
@@ -35,7 +37,11 @@ export const DynamicList: React.FC<DynamicListProps> = ({
     title,
     description,
     emptyStateMessage = "No items yet. Add one!",
+    onRowClick
 }) => {
+    // Safety check for undefined items
+    const safeItems = items || [];
+
     const [isAdding, setIsAdding] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -48,10 +54,16 @@ export const DynamicList: React.FC<DynamicListProps> = ({
         setEditingId(null);
     };
 
-    const handleStartEdit = (item: DynamicListItem) => {
+    const handleStartEdit = (item: DynamicListItem, e: React.MouseEvent) => {
+        e.stopPropagation();
         setFormData({ ...item });
         setEditingId(item.id);
         setIsAdding(false);
+    };
+
+    const handleDelete = (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        onDelete(id);
     };
 
     const handleCancel = () => {
@@ -94,13 +106,13 @@ export const DynamicList: React.FC<DynamicListProps> = ({
 
             {/* List Items */}
             <div className="space-y-2">
-                {items.length === 0 && !isAdding && (
+                {safeItems.length === 0 && !isAdding && (
                     <div className="p-8 text-center border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg text-slate-400">
                         {emptyStateMessage}
                     </div>
                 )}
 
-                {items.map(item => {
+                {safeItems.map(item => {
                     const isEditing = editingId === item.id;
 
                     if (isEditing) {
@@ -140,16 +152,24 @@ export const DynamicList: React.FC<DynamicListProps> = ({
                     }
 
                     return (
-                        <div key={item.id} className="flex flex-col md:flex-row gap-2 md:gap-4 p-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 rounded-lg hover:shadow-md transition-all group">
+                        <div
+                            key={item.id}
+                            onClick={() => onRowClick && onRowClick(item)}
+                            className={`flex flex-col md:flex-row gap-2 md:gap-4 p-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 rounded-lg hover:shadow-md transition-all group ${onRowClick ? 'cursor-pointer hover:border-purple-300 active:scale-[0.99] transition-transform' : ''}`}
+                        >
                             {columns.map(col => (
                                 <div key={col.key} className={`${col.width || 'flex-1'} flex items-center`}>
                                     <span className="md:hidden text-xs font-bold text-slate-400 mr-2 min-w-[80px]">{col.label}:</span>
-                                    <span className="text-sm text-navy-900 dark:text-slate-200">{item[col.key]}</span>
+                                    {col.render ? (
+                                        col.render(item)
+                                    ) : (
+                                        <span className="text-sm text-navy-900 dark:text-slate-200">{item[col.key]}</span>
+                                    )}
                                 </div>
                             ))}
                             <div className="md:w-20 flex items-center justify-end gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => handleStartEdit(item)} className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded"><Edit2 size={16} /></button>
-                                <button onClick={() => onDelete(item.id)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded"><Trash2 size={16} /></button>
+                                <button onClick={(e) => handleStartEdit(item, e)} className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded"><Edit2 size={16} /></button>
+                                <button onClick={(e) => handleDelete(item.id, e)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded"><Trash2 size={16} /></button>
                             </div>
                         </div>
                     );
