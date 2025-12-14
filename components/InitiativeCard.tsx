@@ -173,6 +173,24 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onCl
 
             {/* Hover Preview: Effort & Reason (Expanded) */}
             <div className="max-h-0 overflow-hidden group-hover:max-h-60 transition-all duration-500 ease-in-out">
+                {/* Footer / Metrics */}
+                <div className="mt-3 pt-3 border-t border-slate-100 dark:border-white/5 flex justify-between items-center relative z-20">
+                    <div className="flex gap-2 text-[10px] text-slate-400">
+                        <span>{initiative.effortProfile ? `${(initiative.effortProfile.analytical || 0) + (initiative.effortProfile.operational || 0) + (initiative.effortProfile.change || 0)}pts` : 'Est. Effort'}</span>
+                        <span>•</span>
+                        <span>{initiative.businessValue ? `$${initiative.businessValue}k` : 'No Value'}</span>
+                    </div>
+
+                    {/* C2: INLINE AI ACTIONS */}
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button className="p-1 rounded bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-[9px] font-bold px-1.5" title="Why is this placed here?">
+                            Why here?
+                        </button>
+                        <button className="p-1 rounded bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10" title="Suggest better placement">
+                            <RefreshCw size={10} />
+                        </button>
+                    </div>
+                </div>
                 <div className="pb-4 space-y-3 border-t border-slate-100 dark:border-white/5 pt-3 mt-2">
                     {/* PRO MAX: Effort Profile Bars */}
                     {initiative.effortProfile && (
