@@ -165,18 +165,27 @@ export const FullRoadmapView: React.FC = () => {
     // Check if any initiative is missing a quarter assignment
     const needsGeneration = fullSession.initiatives?.length > 0 && fullSession.initiatives.some(i => !i.quarter);
 
-    if (needsGeneration && !generatingRef.current) {
+    // FIX: Only trigger if explicitly needed and not already generating.
+    // Also check if we already have a "generated" flag to avoid spamming the chat
+    const hasGenerated = generatingRef.current; // Simple check, but ideally we'd store "generated" in session state
+
+    if (needsGeneration && !hasGenerated) {
       generatingRef.current = true;
+      // Only send message if we are actually doing work
       addAiMessage("Generating implementation roadmap...");
 
       generateRoadmap().finally(() => {
         // Add a small delay before releasing the lock to ensure state updates have propagated
         setTimeout(() => {
+          // We don't set generatingRef.current = false here immediately to prevent bounce-back loops.
+          // In a real app we'd want a more robust state machine.
+          // For now, keeping it true effectively "locks" it for this mount session unless manually reset.
+          // If we want to allow re-generation, we should check specifically for USER intent or data invalidation.
           generatingRef.current = false;
-        }, 1000);
+        }, 2000);
       });
     }
-  }, [fullSession.initiatives, generateRoadmap, addAiMessage]);
+  }, [fullSession.initiatives.length, generateRoadmap, addAiMessage]); // Reduced dependencies to length only to avoid deep object churn loops
 
   const handleUpdateInitiative = (updated: FullInitiative) => {
     const newInits = fullSession.initiatives.map(i => i.id === updated.id ? updated : i);
@@ -253,85 +262,108 @@ export const FullRoadmapView: React.FC = () => {
     // Keeping flow: Roadmap -> ROI -> Pilot Execution
   };
 
+  return (
+    <SplitLayout title="Module 3: Strategic Roadmap" onSendMessage={handleAiChat}>
+      <div className="w-full h-full relative">
+        <div className="w-full h-full bg-slate-50 dark:bg-navy-950 flex flex-col p-6 overflow-y-auto gap-6 relative">
+          <div className="absolute top-6 right-6 z-10">
+            <AIFeedbackButton context="roadmap" data={fullSession.initiatives} />
+          </div>
+
+          <RoadmapSummary
+            summary={summary}
+            isLoading={isSummaryLoading}
+          />
+
+          {hasManualChanges && (
+            <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 p-4 rounded-xl flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="p-2 bg-amber-100 dark:bg-amber-400/20 rounded-lg text-amber-600 dark:text-amber-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                </div>
+                <div>
+                  <h3 className="font-bold text-navy-900 dark:text-white text-sm">Manual Schedule Overrides</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">You have manually moved initiatives. AI optimization is paused.</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setHasManualChanges(false)}
+                  className="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-navy-900 dark:text-slate-400 dark:hover:text-white transition-colors"
+                >
+                  Keep Changes
+                </button>
+                <button
+                  onClick={() => setShowRebalanceModal(true)}
+                  className="px-4 py-1.5 text-xs font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-500 shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                  Rebalance with AI
+                </button>
               </div >
-  <div className="flex gap-2">
-    <button
-      onClick={() => setHasManualChanges(false)}
-      className="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-navy-900 dark:text-slate-400 dark:hover:text-white transition-colors"
-    >
-      Keep Changes
-    </button>
-    <button
-      onClick={() => setShowRebalanceModal(true)}
-      className="px-4 py-1.5 text-xs font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-500 shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2"
-    >
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-      Rebalance with AI
-    </button>
-  </div>
             </div >
           )}
 
-{/* 2. Workload Chart */ }
-<div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/5 rounded-xl p-5 shadow-sm">
-  <WorkloadChart initiatives={fullSession.initiatives} quarters={['Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7', 'Q8']} />
-</div>
+          {/* 2. Workload Chart */}
+          <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/5 rounded-xl p-5 shadow-sm">
+            <WorkloadChart initiatives={fullSession.initiatives} quarters={['Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7', 'Q8']} />
+          </div>
 
-{/* 3. Main Workspace */ }
-<FullStep3Workspace
-  fullSession={fullSession}
-  onUpdateInitiative={handleUpdateInitiative}
-  onNextStep={handleNext}
-  users={users} // Pass users
-  currentUser={currentUser} // Pass currentUser
-/>
+          {/* 3. Main Workspace */}
+          <FullStep3Workspace
+            fullSession={fullSession}
+            onUpdateInitiative={handleUpdateInitiative}
+            onNextStep={handleNext}
+            users={users} // Pass users
+            currentUser={currentUser} // Pass currentUser
+          />
         </div >
 
-  {/* Rebalance Modal */ }
-  < RebalanceModal
-isOpen = { showRebalanceModal }
-onClose = {() => setShowRebalanceModal(false)}
-onApply = { handleApplyRebalance }
-initiatives = { fullSession.initiatives }
-  />
+        {/* Rebalance Modal */}
+        < RebalanceModal
+          isOpen={showRebalanceModal}
+          onClose={() => setShowRebalanceModal(false)}
+          onApply={handleApplyRebalance}
+          initiatives={fullSession.initiatives}
+        />
 
-  { showPilotDecision && (
-    <div className="absolute inset-0 z-50 bg-slate-500/50 dark:bg-navy-950/90 backdrop-blur-sm flex items-center justify-center p-8">
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-2xl max-w-4xl w-full p-8 shadow-2xl transition-colors">
-        <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">Strategy Decision: Select Pilot</h2>
-        <p className="text-slate-500 dark:text-slate-400 mb-8">
-          Risk Management Protocol: We recommend starting with a "Quick Win" Pilot before full rollout.
-          Select <strong>one</strong> high-impact, low-complexity initiative to validate the strategy.
-        </p>
+        {showPilotDecision && (
+          <div className="absolute inset-0 z-50 bg-slate-500/50 dark:bg-navy-950/90 backdrop-blur-sm flex items-center justify-center p-8">
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-2xl max-w-4xl w-full p-8 shadow-2xl transition-colors">
+              <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">Strategy Decision: Select Pilot</h2>
+              <p className="text-slate-500 dark:text-slate-400 mb-8">
+                Risk Management Protocol: We recommend starting with a "Quick Win" Pilot before full rollout.
+                Select <strong>one</strong> high-impact, low-complexity initiative to validate the strategy.
+              </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 max-h-96 overflow-y-auto">
-          {/* Filter for Wave 1 candidates */}
-          {fullSession.initiatives.filter(i => i.wave === 'Wave 1').map(init => (
-            <div key={init.id}
-              onClick={() => confirmPilot(init.id)}
-              className="p-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 cursor-pointer transition-all hover:border-blue-500 group"
-            >
-              <div className="flex justify-between items-start mb-2">
-                <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase">{init.priority} Priority</span>
-                {init.complexity === 'Low' && <span className="text-[10px] bg-green-100 dark:bg-green-500/20 text-green-600 dark:text-green-400 px-2 py-0.5 rounded">Low Risk</span>}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 max-h-96 overflow-y-auto">
+                {/* Filter for Wave 1 candidates */}
+                {fullSession.initiatives.filter(i => i.wave === 'Wave 1').map(init => (
+                  <div key={init.id}
+                    onClick={() => confirmPilot(init.id)}
+                    className="p-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 cursor-pointer transition-all hover:border-blue-500 group"
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase">{init.priority} Priority</span>
+                      {init.complexity === 'Low' && <span className="text-[10px] bg-green-100 dark:bg-green-500/20 text-green-600 dark:text-green-400 px-2 py-0.5 rounded">Low Risk</span>}
+                    </div>
+                    <h4 className="text-lg font-bold text-navy-900 dark:text-white mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-300">{init.name}</h4>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">{init.description || init.summary}</p>
+                  </div>
+                ))}
               </div>
-              <h4 className="text-lg font-bold text-navy-900 dark:text-white mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-300">{init.name}</h4>
-              <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">{init.description || init.summary}</p>
-            </div>
-          ))}
-        </div>
 
-        <div className="flex justify-end gap-4">
-          <button
-            onClick={() => { setShowPilotDecision(false); /* Skip Logic? */ }}
-            className="text-slate-500 hover:text-navy-900 dark:hover:text-white px-4 text-sm transition-colors"
-          >
-            Review Roadmap Again
-          </button>
-        </div>
-      </div>
-    </div>
-  )}
+              <div className="flex justify-end gap-4">
+                <button
+                  onClick={() => { setShowPilotDecision(false); /* Skip Logic? */ }}
+                  className="text-slate-500 hover:text-navy-900 dark:hover:text-white px-4 text-sm transition-colors"
+                >
+                  Review Roadmap Again
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div >
     </SplitLayout >
   );

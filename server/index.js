@@ -141,6 +141,9 @@ app.use('/api/sso', ssoRoutes);
 const aiAsyncRoutes = require('./routes/aiAsync');
 app.use('/api/ai-async', aiAsyncRoutes); // New Async Endpoint
 
+const myWorkRoutes = require('./routes/myWork');
+app.use('/api/my-work', myWorkRoutes);
+
 const db = require('./database');
 
 // Health Check - MUST be before catchall

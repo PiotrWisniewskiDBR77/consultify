@@ -6,15 +6,12 @@ describe('PlanLimits Middleware', () => {
     let db;
 
     beforeEach(async () => {
-        vi.resetModules();
-        vi.unstubAllGlobals();
-
-        // Load Database
+        // Load Database (Singleton)
         const dbModule = await import('../../../../server/database.js');
         db = dbModule.default || dbModule;
         await db.initPromise;
 
-        // Import middleware
+        // Import middleware (Shares same DB instance due to module cache)
         const mod = await import('../../../../server/middleware/planLimits.js');
         checkPlanLimit = mod.checkPlanLimit;
 
@@ -27,22 +24,34 @@ describe('PlanLimits Middleware', () => {
             json: vi.fn()
         };
         next = vi.fn();
+
+        // Clean DB tables
+        await new Promise(r => db.run('DELETE FROM organizations WHERE id = ?', ['org-test-plan'], r));
+        await new Promise(r => db.run('DELETE FROM users WHERE organization_id = ?', ['org-test-plan'], r));
+        await new Promise(r => db.run('DELETE FROM projects WHERE organization_id = ?', ['org-test-plan'], r));
     });
 
     const setupOrg = async (plan, status = 'active') => {
-        await new Promise(resolve => {
+        await new Promise((resolve, reject) => {
             db.run('INSERT OR REPLACE INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)',
-                ['org-test-plan', 'Test Org', plan, status], resolve);
+                ['org-test-plan', 'Test Org', plan, status], (err) => {
+                    if (err) reject(err);
+                    else resolve();
+                });
         });
     };
 
     const setProjectCount = async (count) => {
-        await new Promise(resolve => db.run('DELETE FROM projects WHERE organization_id = ?', ['org-test-plan'], resolve));
+        await new Promise((resolve, reject) => db.run('DELETE FROM projects WHERE organization_id = ?', ['org-test-plan'], (err) => {
+            if (err) reject(err); else resolve();
+        }));
 
         for (let i = 0; i < count; i++) {
-            await new Promise(resolve => {
+            await new Promise((resolve, reject) => {
                 db.run('INSERT INTO projects (id, organization_id, name) VALUES (?, ?, ?)',
-                    [`proj-${i}`, 'org-test-plan', `Project ${i}`], resolve);
+                    [`proj-${i}`, 'org-test-plan', `Project ${i}`], (err) => {
+                        if (err) reject(err); else resolve();
+                    });
             });
         }
     };
@@ -119,8 +128,19 @@ describe('PlanLimits Middleware', () => {
 
         // Add users
         const orgId = 'org-test-plan';
-        await new Promise(r => db.run('INSERT INTO users (id, organization_id, email, password_hash, role) VALUES (?, ?, ?, ?, ?)', ['u1', orgId, 'u1@test.com', 'pass', 'USER'], r));
-        await new Promise(r => db.run('INSERT INTO users (id, organization_id, email, password_hash, role) VALUES (?, ?, ?, ?, ?)', ['u2', orgId, 'u2@test.com', 'pass', 'USER'], r));
+        try {
+            await new Promise((resolve, reject) => db.run('INSERT INTO users (id, organization_id, email, password, role) VALUES (?, ?, ?, ?, ?)', ['u1', orgId, 'u1@test.com', 'pass', 'USER'], function (err) {
+                if (err) reject(err); else resolve();
+            }));
+            await new Promise((resolve, reject) => db.run('INSERT INTO users (id, organization_id, email, password, role) VALUES (?, ?, ?, ?, ?)', ['u2', orgId, 'u2@test.com', 'pass', 'USER'], function (err) {
+                if (err) reject(err); else resolve();
+            }));
+
+            // Verify count in test
+            await new Promise((resolve, reject) => db.get('SELECT COUNT(*) as c FROM users', (err, row) => err ? reject(err) : resolve(row)));
+        } catch (e) {
+            throw e;
+        }
 
         // Current users = 2. Limit = 1.
 

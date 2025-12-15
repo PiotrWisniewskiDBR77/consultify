@@ -1,15 +1,184 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="5" failures="0" errors="0" time="0.001291958">
-    <testsuite name="tests/unit/transformationScenarios.test.ts" timestamp="2025-12-13T11:57:03.618Z" hostname="MacBook-Air-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.001291958">
-        <testcase classname="tests/unit/transformationScenarios.test.ts" name="Transformation Scenarios Logic &gt; should have 6 unique scenarios" time="0.000494458">
+<testsuites name="vitest tests" tests="36" failures="0" errors="0" time="0.045130584">
+    <testsuite name="tests/unit/backend/aiService.test.js" timestamp="2025-12-14T22:07:00.090Z" hostname="MacBook-Air-Piotr.local" tests="36" failures="0" errors="0" skipped="3" time="0.045130584">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; callLLM &gt; should use Google Gemini by default if checks pass" time="0">
+            <skipped/>
         </testcase>
-        <testcase classname="tests/unit/transformationScenarios.test.ts" name="Transformation Scenarios Logic &gt; recommendScenario should return stabilize for high risk &amp; low budget" time="0.000077459">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; callLLM &gt; should block if balance is insufficient" time="0.019454083">
+            <system-err>
+LLM Call Error Error: Insufficient token balance. Please top up.
+    at Object.callLLM [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/aiService.js:116:27[90m)[39m
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/aiService.test.js:135:13
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:20
+
+            </system-err>
         </testcase>
-        <testcase classname="tests/unit/transformationScenarios.test.ts" name="Transformation Scenarios Logic &gt; recommendScenario should return quickwins for low risk &amp; low budget" time="0.000054625">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; callLLM &gt; should call OpenAI via fetch when provider is openai" time="0.001245959">
         </testcase>
-        <testcase classname="tests/unit/transformationScenarios.test.ts" name="Transformation Scenarios Logic &gt; recommendScenario should return foundation for high risk &amp; high budget" time="0.000050709">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; callLLM &gt; should call Anthropic via fetch when provider is anthropic" time="0.000168125">
         </testcase>
-        <testcase classname="tests/unit/transformationScenarios.test.ts" name="Transformation Scenarios Logic &gt; recommendScenario should default to hybrid" time="0.000049166">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; generateInitiatives &gt; should parse JSON response correctly" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; generateInitiatives &gt; should return empty array on JSON parse error" time="0.015771125">
+            <system-out>
+Projects table created successfully (or already exists).
+
+Database initialization complete.
+
+            </system-out>
+            <system-err>
+LLM Call Error Error: AI Provider not configured.
+    at Object.callLLM [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/aiService.js:158:41[90m)[39m
+    at Object.generateInitiatives [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/aiService.js:593:29[90m)[39m
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/aiService.test.js:213:33
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:20
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; streamLLM &gt; should yield chunks from Gemini stream" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; streamLLM &gt; should handle errors in stream" time="0.000715583">
+            <system-err>
+Stream LLM Error Error: AI Provider not configured.
+    at Object.streamLLM [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/aiService.js:384:41[90m)[39m
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/aiService.test.js:241:30
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:20
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; buildRoadmap &gt; should return roadmap object on success" time="0.000368708">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; buildRoadmap &gt; should return empty object on error" time="0.000138125">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; suggestTasks &gt; should return tasks array on success" time="0.000347375">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; deepDiagnose &gt; should execute chain of thought and return diagnosis" time="0.000213958">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; enrichInitiative &gt; should maintain structure and fallback to LLM" time="0.000374792">
+            <system-err>
+Web Search failed, using LLM knowledge Error: Web Fail
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/aiService.test.js:311:59
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:145:11
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:26
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1240:20
+    at new Promise (&lt;anonymous&gt;)
+    at runWithTimeout [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1206:10[90m)[39m
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1650:37
+    at Traces.$ [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/traces.U4xDYhzZ.js:115:27[90m)[39m
+    at trace [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/test.BT8LKgU9.js:239:21[90m)[39m
+    at runTest [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1650:12[90m)[39m
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; generateObservations &gt; should return observations from feedback" time="0.000501834">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; testProviderConnection &gt; should test OpenAI connection" time="0.000376292">
+            <system-out>
+[AiService] Testing connection for: openai
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; enhancePrompt &gt; should return base system role when no extras found" time="0.000084125">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; enhancePrompt &gt; should inject global strategies" time="0.000081542">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; enhancePrompt &gt; should inject client context when orgId provided" time="0.000195291">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Queue Operations &gt; should enqueue task and return jobId" time="0.000263291">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Queue Operations &gt; should get job status" time="0.000081792">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Queue Operations &gt; should return null for non-existent job" time="0.000043375">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Vision Capabilities &gt; should format payload correctly for OpenAI Vision" time="0.0001625">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Vision Capabilities &gt; should use Gemini 1.5 Flash for vision fallback" time="0.000336417">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Advanced Streaming &gt; should parse OpenAI SSE stream correctly" time="0.000176375">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Advanced Streaming &gt; should handle OpenAI stream error" time="0.000261417">
+            <system-err>
+Stream LLM Error Error: Stream Error
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/aiService.test.js:237:69
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:145:11
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:26
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1240:20
+    at new Promise (&lt;anonymous&gt;)
+    at runWithTimeout [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1206:10[90m)[39m
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1650:37
+    at Traces.$ [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/traces.U4xDYhzZ.js:115:27[90m)[39m
+    at trace [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/test.BT8LKgU9.js:239:21[90m)[39m
+    at runTest [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1650:12[90m)[39m
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Provider Integrations &gt; should generate JWT for Zhipu AI provider" time="0.001239042">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="Extended AI Capabilities &gt; generateTaskInsight &gt; should return parsed insights when LLM returns valid JSON" time="0.000222459">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="Extended AI Capabilities &gt; generateTaskInsight &gt; should return fallback object on LLM failure/JSON error" time="0.000203792">
+            <system-err>
+Task Insight Error Error: LLM Fail
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/aiService.test.js:629:42
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:145:11
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:26
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1240:20
+    at new Promise (&lt;anonymous&gt;)
+    at runWithTimeout [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1206:10[90m)[39m
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1650:37
+    at Traces.$ [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/traces.U4xDYhzZ.js:115:27[90m)[39m
+    at trace [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/test.BT8LKgU9.js:239:21[90m)[39m
+    at runTest [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1650:12[90m)[39m
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="Extended AI Capabilities &gt; generateExecutionStrategy &gt; should return strategy object on success" time="0.00012175">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="Extended AI Capabilities &gt; generateExecutionStrategy &gt; should return empty structure on error" time="0.000150459">
+            <system-err>
+Execution Gen Error SyntaxError: Unexpected token &apos;N&apos;, &quot;Not JSON&quot; is not valid JSON
+    at JSON.parse (&lt;anonymous&gt;)
+    at Object.generateExecutionStrategy [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/aiService.js:740:25[90m)[39m
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/aiService.test.js:657:28
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:20
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="Extended AI Capabilities &gt; generateInsights (Pre-Mortem) &gt; should return insights on success" time="0.000090458">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="Extended AI Capabilities &gt; generateInsights (Pre-Mortem) &gt; should return fallback on error" time="0.000164291">
+            <system-err>
+Insights Gen Error Error: Fail
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/aiService.test.js:678:42
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:145:11
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:26
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1240:20
+    at new Promise (&lt;anonymous&gt;)
+    at runWithTimeout [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1206:10[90m)[39m
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1650:37
+    at Traces.$ [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/traces.U4xDYhzZ.js:115:27[90m)[39m
+    at trace [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/test.BT8LKgU9.js:239:21[90m)[39m
+    at runTest [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1650:12[90m)[39m
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="Extended AI Capabilities &gt; generateStrategicFit &gt; should return fit analysis on success" time="0.000093208">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="Extended AI Capabilities &gt; generateStrategicFit &gt; should return fallback on error" time="0.00012175">
+            <system-err>
+Fit Check Error SyntaxError: Unexpected token &apos;B&apos;, &quot;Bad JSON&quot; is not valid JSON
+    at JSON.parse (&lt;anonymous&gt;)
+    at Object.generateStrategicFit [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/aiService.js:802:25[90m)[39m
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/aiService.test.js:703:28
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:20
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="Extended AI Capabilities &gt; simulateEconomics &gt; should combine financial simulation with AI commentary" time="0.000101167">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="Extended AI Capabilities &gt; simulateEconomics &gt; should return just simulation if AI fails" time="0.000058292">
         </testcase>
     </testsuite>
 </testsuites>

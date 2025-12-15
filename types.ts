@@ -60,6 +60,7 @@ export enum AppView {
   CONTEXT_BUILDER_STRATEGY = 'CONTEXT_BUILDER_STRATEGY',
 
   // Teamwork Views
+  MY_WORK = 'MY_WORK', // New Module 7 (Tasks & Workflow)
 }
 
 export enum SessionMode {
@@ -259,7 +260,8 @@ export interface StakeholderImpact {
 
 export type Quarter = 'Q1' | 'Q2' | 'Q3' | 'Q4' | 'Q5' | 'Q6' | 'Q7' | 'Q8';
 export type Wave = 'Wave 1' | 'Wave 2' | 'Wave 3';
-export type InitiativeStatus = 'step3' | 'step4' | 'step5' | 'completed' | 'on_hold' | 'Draft' | 'Ready' | 'To Do' | 'In Progress' | 'Blocked' | 'Done' | 'Archived';
+// Updated InitiativeStatus to include Pilot-specific 'Validated' (Task) or Initiative status
+export type InitiativeStatus = 'step3' | 'step4' | 'step5' | 'completed' | 'on_hold' | 'Draft' | 'Ready' | 'To Do' | 'In Progress' | 'Validating' | 'Validated' | 'Blocked' | 'Done' | 'Archived';
 // Updated TaskType for Strategic Execution
 export type TaskType = 'ANALYSIS' | 'DESIGN' | 'BUILD' | 'PILOT' | 'VALIDATION' | 'DECISION' | 'CHANGE_MGMT';
 
@@ -286,8 +288,67 @@ export interface AIInsight {
   lastComputedAt: string;
 }
 
-export type RiskRating = 'low' | 'medium' | 'high' | 'critical';
+export interface RiskRating {
+  risk: string;
+  mitigation: string;
+  metric: 'Low' | 'Medium' | 'High';
+}
+
 export type DependencyType = 'hard' | 'soft';
+
+// NEW: Pilot Result Struct
+export interface PilotLearning {
+  type: 'success' | 'failure' | 'surprise';
+  insight: string;
+  impact: string;
+  actionable: string; // What we will do about it
+}
+
+// Module 5: Rollout Types
+export interface RAIDItem {
+  id: string;
+  type: 'Risk' | 'Assumption' | 'Issue' | 'Dependency';
+  title: string;
+  description: string;
+  severity: 'Critical' | 'High' | 'Medium' | 'Low';
+  probability?: 'High' | 'Medium' | 'Low'; // Only for Risks
+  ownerId?: string;
+  status: 'Open' | 'Mitigated' | 'Closed';
+  dueDate?: string;
+  linkedInitiativeId?: string;
+  mitigationPlan?: string;
+}
+
+export interface KPITracking {
+  id: string;
+  name: string;
+  baseline: number;
+  target: number;
+  current: number;
+  unit: string;
+  ownerId?: string;
+  linkedInitiativeIds?: string[];
+  history: { date: string; value: number }[];
+}
+
+export interface StakeholderMapItem {
+  id: string;
+  name: string;
+  role: string;
+  influence: 1 | 2 | 3 | 4 | 5;
+  attitude: 'Supportive' | 'Neutral' | 'Resistant';
+  engagementStrategy?: string;
+}
+
+export interface CommsPlanItem {
+  id: string;
+  message: string;
+  audience: string;
+  channel: string; // Email, Townhall, Slack...
+  ownerId?: string;
+  date: string;
+  status: 'Draft' | 'Scheduled' | 'Sent';
+}
 
 export type CostRange = 'Low (<$10k)' | 'Medium ($10k-$50k)' | 'High (>$50k)';
 export type BenefitRange = 'Low (<$20k/yr)' | 'Medium ($20k-$100k/yr)' | 'High (>$100k/yr)';
@@ -363,14 +424,22 @@ export interface FullInitiative {
   decisionReadiness?: number; // 0-100
   decisionReadinessBreakdown?: DecisionReadinessBreakdown; // New Task 8
   stakeholders?: StakeholderImpact[];
-  hypothesis?: string;
+
+  // Pilot Specific Fields (Module 4)
+  hypotheses?: string[]; // Mandatory for Pilot
+  killCriteria?: string[]; // Mandatory for Pilot
+  pilotRisks?: RiskRating[]; // Risks specific to pilot execution
+  pilotLearnings?: PilotLearning[]; // Post-pilot evaluation
+
+  hypothesis?: string; // Legacy singular
   businessValue?: 'High' | 'Medium' | 'Low';
   valueDriver?: 'Cost' | 'Revenue' | 'Capital' | 'Risk' | 'Capability';
   confidenceLevel?: 'High' | 'Medium' | 'Low';
   valueTiming?: 'Immediate' | 'Short term' | 'Long term';
   competenciesRequired?: string[];
   milestones?: Milestone[];
-  killCriteria?: string;
+  // killCriteria?: string; // Removed legacy singular in favor of array above
+
 
   // Professional Card Fields
   problemStatement?: string;
@@ -611,6 +680,33 @@ export interface FullSession {
   kpiResults?: Record<string, string>;
   economics?: EconomicsSummary;
   report?: FullReport;
+
+  // Module 5: Rollout Execution Data
+  rollout?: {
+    scope?: {
+      programName: string;
+      businessGoals: string[];
+      inScope: string[];
+      outScope: string[];
+      strategicPillars: { title: string; description: string }[];
+    };
+    governance?: {
+      roles: { role: string; personId?: string; responsibilities: string }[];
+      workstreams: { id: string; name: string; ownerId?: string; members: string[] }[];
+    };
+    risks?: RAIDItem[];
+    kpis?: KPITracking[];
+    changeManagement?: {
+      stakeholders: StakeholderMapItem[];
+      commsPlan: CommsPlanItem[];
+    };
+    closure?: {
+      checklist: { item: string; completed: boolean }[];
+      lessonsLearned: { category: string; lesson: string; recommendation: string }[];
+      isClosed: boolean;
+      closedAt?: string;
+    };
+  };
 
   chatHistory?: ChatMessage[];
 

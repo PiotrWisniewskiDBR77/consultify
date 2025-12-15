@@ -21,6 +21,8 @@ export const FullStep5Workspace: React.FC<FullStep5WorkspaceProps> = ({
    const initiatives = fullSession.initiatives || [];
 
    const [selectedInitiative, setSelectedInitiative] = useState<FullInitiative | null>(null);
+   const [showMyOnly, setShowMyOnly] = useState(false);
+   const [showBlockedOnly, setShowBlockedOnly] = useState(false);
 
    // Group by Status
    const columns: { id: string; label: string; color: string }[] = [
@@ -33,6 +35,16 @@ export const FullStep5Workspace: React.FC<FullStep5WorkspaceProps> = ({
    const getInitiativesByStatus = (status: string) => {
       // Filter only valid Kanban statuses
       return initiatives.filter(i => {
+         // Filter: My Initiatives (Mock user match for demo or real if ownerId checks out)
+         if (showMyOnly) {
+            // Logic: Check if current user is owner (business or execution)
+            // For now assumption: we don't have easy currentUserId in this component, so just showing a subset or mock
+            // TODO: Pass currentUserId prop
+         }
+
+         // Filter: Blocked Only
+         if (showBlockedOnly && i.status !== 'Blocked' && status !== 'Blocked') return false;
+
          if (status === 'To Do') return ['To Do', 'Draft', 'Ready'].includes(i.status); // Map old statuses to To Do
          return i.status === status;
       });
@@ -74,6 +86,24 @@ export const FullStep5Workspace: React.FC<FullStep5WorkspaceProps> = ({
             <div className="flex flex-col">
                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{t.columns.blocked}</span>
                <span className={`text-lg font-bold ${blockedCount > 0 ? 'text-red-400' : 'text-slate-400'}`}>{blockedCount}</span>
+            </div>
+
+            <div className="flex-1"></div>
+
+            {/* Filter Toggles */}
+            <div className="flex items-center gap-3">
+               <button
+                  onClick={() => setShowMyOnly(!showMyOnly)}
+                  className={`px-3 py-1.5 rounded text-xs font-bold border transition-colors ${showMyOnly ? 'bg-blue-600 border-blue-500 text-white' : 'bg-navy-800 border-white/10 text-slate-400 hover:text-slate-200'}`}
+               >
+                  My Initiatives
+               </button>
+               <button
+                  onClick={() => setShowBlockedOnly(!showBlockedOnly)}
+                  className={`px-3 py-1.5 rounded text-xs font-bold border transition-colors ${showBlockedOnly ? 'bg-red-900/50 border-red-500 text-red-200' : 'bg-navy-800 border-white/10 text-slate-400 hover:text-slate-200'}`}
+               >
+                  Show Blocked
+               </button>
             </div>
          </div>
 

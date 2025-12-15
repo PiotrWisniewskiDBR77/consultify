@@ -115,7 +115,11 @@ router.get('/', (req, res) => {
             acceptanceCriteria: t.acceptance_criteria,
             blockingIssues: t.blocking_issues,
             stepPhase: t.step_phase,
-            why: t.why
+            why: t.why,
+            roadmapInitiativeId: t.roadmap_initiative_id,
+            kpiId: t.kpi_id,
+            raidItemId: t.raid_item_id,
+            assignees: t.assignees ? JSON.parse(t.assignees) : []
         }));
 
         res.json(tasks);
@@ -190,7 +194,11 @@ router.get('/:id', (req, res) => {
             acceptanceCriteria: t.acceptance_criteria,
             blockingIssues: t.blocking_issues,
             stepPhase: t.step_phase,
-            why: t.why
+            why: t.why,
+            roadmapInitiativeId: t.roadmap_initiative_id,
+            kpiId: t.kpi_id,
+            raidItemId: t.raid_item_id,
+            assignees: t.assignees ? JSON.parse(t.assignees) : []
         };
 
         res.json(task);
@@ -211,7 +219,9 @@ router.post('/', async (req, res) => {
             taskType, initiativeId, why,
             // New Strategic Fields
             expectedOutcome, decisionImpact,
-            evidenceRequired, strategicContribution
+            evidenceRequired, strategicContribution,
+            // My Work Fields
+            roadmapInitiativeId, kpiId, raidItemId, assignees
         } = req.body;
 
         const id = uuidv4();
@@ -233,9 +243,10 @@ router.post('/', async (req, res) => {
                 due_date, estimated_hours, tags,
                 task_type, initiative_id, why,
                 expected_outcome, decision_impact, evidence_required, strategic_contribution,
+                roadmap_initiative_id, kpi_id, raid_item_id, assignees,
                 created_at, updated_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
 
         stmt.run(
@@ -244,6 +255,7 @@ router.post('/', async (req, res) => {
             dueDate, estimatedHours, tags ? JSON.stringify(tags) : '[]',
             finalTaskType, initiativeId, why,
             finalExpectedOutcome, finalDecisionImpact, finalEvidenceRequired, finalStrategicContribution,
+            roadmapInitiativeId, kpiId, raidItemId, assignees ? JSON.stringify(assignees) : '[]',
             now, now,
             function (err) {
                 if (err) {
@@ -303,7 +315,8 @@ router.put('/:id', async (req, res) => {
         'checklist', 'attachments', 'tags', 'custom_status_id',
         'task_type', 'initiative_id', 'why',
         'expected_outcome', 'decision_impact', 'evidence_required',
-        'evidence_items', 'strategic_contribution', 'ai_insight'
+        'evidence_items', 'strategic_contribution', 'ai_insight',
+        'roadmap_initiative_id', 'kpi_id', 'raid_item_id', 'assignees'
     ];
 
     // Helper to map generic names to DB column names if mixed
@@ -320,7 +333,11 @@ router.put('/:id', async (req, res) => {
         evidenceRequired: 'evidence_required',
         evidenceItems: 'evidence_items',
         strategicContribution: 'strategic_contribution',
-        aiInsight: 'ai_insight'
+        aiInsight: 'ai_insight',
+        roadmapInitiativeId: 'roadmap_initiative_id',
+        kpiId: 'kpi_id',
+        raidItemId: 'raid_item_id',
+        assignees: 'assignees'
     };
 
     db.get(`SELECT * FROM tasks WHERE id = ? AND organization_id = ?`, [id, req.user.organizationId], (err, currentTask) => {
@@ -337,7 +354,7 @@ router.put('/:id', async (req, res) => {
                 let value = updates[key];
 
                 // Serialize JSON fields
-                if (['checklist', 'attachments', 'tags', 'decision_impact', 'evidence_required', 'evidence_items', 'strategic_contribution', 'ai_insight'].includes(dbKey)) {
+                if (['checklist', 'attachments', 'tags', 'decision_impact', 'evidence_required', 'evidence_items', 'strategic_contribution', 'ai_insight', 'assignees'].includes(dbKey)) {
                     if (typeof value === 'object') value = JSON.stringify(value);
                 }
 

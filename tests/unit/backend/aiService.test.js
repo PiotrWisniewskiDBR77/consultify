@@ -46,6 +46,10 @@ const mockChatSession = {
     sendMessageStream: vi.fn()
 };
 
+const mockFinancialService = {
+    simulatePortfolio: vi.fn()
+};
+
 // Setup Google Mock Chain
 mockGoogleGenerativeAI.mockImplementation(function () {
     return {
@@ -67,7 +71,8 @@ describe('AIService Unit Tests', () => {
             AnalyticsService: mockAnalyticsService,
             FeedbackService: mockFeedbackService,
             GoogleGenerativeAI: mockGoogleGenerativeAI,
-            aiQueue: mockAiQueue
+            aiQueue: mockAiQueue,
+            FinancialService: mockFinancialService
         });
 
         // Mock Global Fetch
@@ -580,6 +585,153 @@ describe('AIService Unit Tests', () => {
             // Wait, code: authHeader = jwt.sign(...)
             // headers: { ... 'Authorization': authHeader }
             expect(headers['Authorization']).toMatch(/^ey/);
+        });
+    });
+});
+
+describe('Extended AI Capabilities', () => {
+    let callLLMSpy;
+
+    beforeEach(() => {
+        callLLMSpy = vi.spyOn(AIService, 'callLLM').mockResolvedValue('{}');
+    });
+
+    afterEach(() => {
+        callLLMSpy.mockRestore();
+    });
+
+    describe('generateTaskInsight', () => {
+        it('should return parsed insights when LLM returns valid JSON', async () => {
+            const mockInsight = {
+                strategicRelevance: 'HIGH',
+                executionRisk: 'LOW',
+                clarityScore: 95
+            };
+            callLLMSpy.mockResolvedValue(`\`\`\`json${JSON.stringify(mockInsight)}\`\`\``);
+
+            const task = { title: 'Do X', description: 'Desc X' };
+            const context = { summary: 'Context Y' };
+
+            const result = await AIService.generateTaskInsight(task, context, 'user-1');
+
+            expect(result).toEqual(mockInsight);
+            expect(callLLMSpy).toHaveBeenCalledWith(
+                expect.stringContaining('Do X'),
+                expect.stringContaining('Task Analyst'),
+                [],
+                null,
+                'user-1',
+                'task_insight'
+            );
+        });
+
+        it('should return fallback object on LLM failure/JSON error', async () => {
+            callLLMSpy.mockRejectedValue(new Error('LLM Fail'));
+
+            const task = { title: 'Do X' };
+            const result = await AIService.generateTaskInsight(task, {}, 'user-1');
+
+            expect(result.strategicRelevance).toBe('LOW');
+            expect(result.summary).toContain('AI Analysis failed');
+        });
+    });
+
+    describe('generateExecutionStrategy', () => {
+        it('should return strategy object on success', async () => {
+            const mockStrategy = {
+                killCriteria: 'Stop if cost > 1M',
+                keyRisks: [{ risk: 'R1' }],
+                milestones: []
+            };
+            callLLMSpy.mockResolvedValue(JSON.stringify(mockStrategy));
+
+            const context = { name: 'Init A', successCriteria: ['Crit 1'] };
+            const result = await AIService.generateExecutionStrategy(context, 'user-1');
+
+            expect(result).toEqual(mockStrategy);
+        });
+
+        it('should return empty structure on error', async () => {
+            callLLMSpy.mockResolvedValue('Not JSON');
+
+            const result = await AIService.generateExecutionStrategy({}, 'user-1');
+            expect(result.killCriteria).toBe('');
+            expect(result.keyRisks).toEqual([]);
+        });
+    });
+
+    describe('generateInsights (Pre-Mortem)', () => {
+        it('should return insights on success', async () => {
+            const mockInsights = {
+                lessonsLearned: 'Learn X',
+                strategicSurprises: 'Surprise Y',
+                nextTimeAvoid: 'Avoid Z',
+                patternTags: ['Tag1']
+            };
+            callLLMSpy.mockResolvedValue(JSON.stringify(mockInsights));
+
+            const result = await AIService.generateInsights({ name: 'Project X' }, 'user-1');
+            expect(result).toEqual(mockInsights);
+        });
+
+        it('should return fallback on error', async () => {
+            callLLMSpy.mockRejectedValue(new Error('Fail'));
+            const result = await AIService.generateInsights({}, 'user-1');
+            expect(result.patternTags).toContain('Error');
+        });
+    });
+
+    describe('generateStrategicFit', () => {
+        it('should return fit analysis on success', async () => {
+            const mockFit = {
+                axisAlign: true,
+                goalAlign: true,
+                painPointAlign: false,
+                reasoning: 'Matches goals.'
+            };
+            callLLMSpy.mockResolvedValue(JSON.stringify(mockFit));
+
+            const context = { name: 'Init Y', axis: 'Growth' };
+            const goals = [{ title: 'Goal 1' }];
+
+            const result = await AIService.generateStrategicFit(context, goals, 'user-1');
+            expect(result).toEqual(mockFit);
+        });
+
+        it('should return fallback on error', async () => {
+            callLLMSpy.mockResolvedValue('Bad JSON');
+            const result = await AIService.generateStrategicFit({}, [], 'user-1');
+            expect(result.axisAlign).toBe(false);
+            expect(result.reasoning).toContain('unavailable');
+        });
+    });
+
+    describe('simulateEconomics', () => {
+        it('should combine financial simulation with AI commentary', async () => {
+            const mockSimulation = {
+                roi: 150,
+                paybackPeriod: 12
+            };
+            mockFinancialService.simulatePortfolio.mockReturnValue(mockSimulation);
+
+            const mockCommentary = {
+                commentary: 'Good ROI',
+                riskAssessment: 'Low Risk'
+            };
+            callLLMSpy.mockResolvedValue(JSON.stringify(mockCommentary));
+
+            const result = await AIService.simulateEconomics([], 1000, 'user-1');
+
+            expect(mockFinancialService.simulatePortfolio).toHaveBeenCalled();
+            expect(result).toEqual({ ...mockSimulation, ...mockCommentary });
+        });
+
+        it('should return just simulation if AI fails', async () => {
+            mockFinancialService.simulatePortfolio.mockReturnValue({ roi: 100 });
+            callLLMSpy.mockRejectedValue(new Error('AI Fail'));
+
+            const result = await AIService.simulateEconomics([], 1000, 'user-1');
+            expect(result).toEqual({ roi: 100 });
         });
     });
 });

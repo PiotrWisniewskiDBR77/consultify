@@ -20,6 +20,7 @@ import { SuperAdminView } from './views/superadmin/SuperAdminView';
 import { UserDashboardView } from './views/UserDashboardView';
 import { Module1ContextView } from './views/Module1ContextView';
 import { ContextBuilderView } from './views/ContextBuilder/ContextBuilderView';
+import { MyWorkView } from './views/MyWorkView';
 import { AppView, SessionMode, AuthStep, User, UserRole } from './types';
 import { Menu, UserCircle, ChevronRight, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
 import { useAppStore } from './store/useAppStore';
@@ -136,7 +137,6 @@ const AppContent = () => {
 
     const isSessionView = currentView !== AppView.WELCOME &&
         currentView !== AppView.AUTH &&
-        currentView !== AppView.USER_DASHBOARD &&
         currentUser?.role !== 'SUPERADMIN';
 
     const getBreadcrumbs = () => {
@@ -273,6 +273,10 @@ const AppContent = () => {
         }
         if (currentView === AppView.FULL_STEP6_REPORTS) {
             return <FullReportsView />;
+        }
+
+        if (currentView === AppView.MY_WORK) {
+            return <MyWorkView />;
         }
 
         // Admin Views

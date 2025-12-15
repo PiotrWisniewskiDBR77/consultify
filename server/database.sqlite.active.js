@@ -241,6 +241,21 @@ function initDb() {
             });
         });
 
+        // My Work Module Fields
+        const myWorkColumns = [
+            'roadmap_initiative_id', 'kpi_id', 'raid_item_id'
+        ];
+
+        myWorkColumns.forEach(col => {
+            db.run(`ALTER TABLE tasks ADD COLUMN ${col} TEXT DEFAULT NULL`, (err) => {
+                // Ignore
+            });
+        });
+
+        db.run(`ALTER TABLE tasks ADD COLUMN assignees TEXT DEFAULT '[]'`, (err) => {
+            // Ignore
+        });
+
         // Task History (New Table)
         db.run(`CREATE TABLE IF NOT EXISTS task_history (
             id TEXT PRIMARY KEY,
@@ -526,6 +541,17 @@ function initDb() {
         db.run(`ALTER TABLE notifications ADD COLUMN priority TEXT DEFAULT 'normal'`, (err) => {
             // Ignore if exists
         });
+
+        // Notification Preferences Table
+        db.run(`CREATE TABLE IF NOT EXISTS notification_preferences (
+            user_id TEXT PRIMARY KEY,
+            channels TEXT DEFAULT '{"inApp":true,"email":true}', -- JSON
+            digest TEXT DEFAULT 'daily', -- daily, weekly, off
+            triggers TEXT DEFAULT '{"overdue":true,"assigned":true,"blocked":true,"mentioned":true}', -- JSON
+            quiet_hours TEXT DEFAULT '{"enabled":false,"start":"22:00","end":"08:00"}', -- JSON
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
 
         // ==========================================
         // PHASE 2: DRD STRATEGY EXECUTION ENGINE

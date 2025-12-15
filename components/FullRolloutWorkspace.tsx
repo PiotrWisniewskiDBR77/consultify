@@ -6,10 +6,18 @@ import {
     CheckCircle2
 } from 'lucide-react';
 import { FullStep5Workspace } from './FullStep5Workspace'; // Reuse Kanban
+import { RolloutStrategyTab } from './RolloutStrategyTab';
+import { RolloutTeamsTab } from './RolloutTeamsTab';
+import { RolloutPlanTab } from './RolloutPlanTab';
+import { RolloutRisksTab } from './RolloutRisksTab';
+import { RolloutChangeTab } from './RolloutChangeTab';
+import { RolloutKPITab } from './RolloutKPITab';
+import { RolloutClosureTab } from './RolloutClosureTab';
 
 interface FullRolloutWorkspaceProps {
     fullSession: FullSession;
     onUpdateInitiative: (initiative: FullInitiative) => void;
+    onUpdateSession?: (session: FullSession) => void; // New prop
     onNextStep: () => void;
     language: Language;
 }
@@ -19,6 +27,7 @@ type RolloutTab = 'strategy' | 'teams' | 'plan' | 'dashboard' | 'risks' | 'chang
 export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
     fullSession,
     onUpdateInitiative,
+    onUpdateSession,
     onNextStep,
     language
 }) => {
@@ -26,28 +35,47 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
 
     // Placeholders for PRO MAX tabs
     const renderStrategy = () => (
-        <div className="p-8 text-center bg-white dark:bg-navy-900 rounded-xl border border-white/5">
-            <Layout className="w-16 h-16 mx-auto text-purple-500 mb-4" />
-            <h3 className="text-xl font-bold mb-2">Rollout Scope & Strategy</h3>
-            <p className="text-slate-500">Master definition of the transformation program boundaries and strategic pillars.</p>
-            {/* Add editable fields for Strategy Summary, Program Goals etc. */}
-        </div>
+        <RolloutStrategyTab
+            data={fullSession.rollout || {}}
+            onUpdate={(updatedData) => {
+                if (onUpdateSession) {
+                    onUpdateSession({
+                        ...fullSession,
+                        rollout: { ...fullSession.rollout, ...updatedData }
+                    });
+                }
+            }}
+            isAdmin={true}
+        />
     );
 
     const renderTeams = () => (
-        <div className="p-8 text-center bg-white dark:bg-navy-900 rounded-xl border border-white/5">
-            <Users className="w-16 h-16 mx-auto text-blue-500 mb-4" />
-            <h3 className="text-xl font-bold mb-2">Workstreams & Teams</h3>
-            <p className="text-slate-500">Organizational structure for the rollout: SteerCo, PMO, Stream Leads.</p>
-        </div>
+        <RolloutTeamsTab
+            data={fullSession.rollout || {}}
+            onUpdate={(updatedData) => {
+                if (onUpdateSession) {
+                    onUpdateSession({
+                        ...fullSession,
+                        rollout: { ...fullSession.rollout, ...updatedData }
+                    });
+                }
+            }}
+        />
     );
 
     const renderPlan = () => (
-        <div className="p-8 text-center bg-white dark:bg-navy-900 rounded-xl border border-white/5">
-            <Calendar className="w-16 h-16 mx-auto text-pink-500 mb-4" />
-            <h3 className="text-xl font-bold mb-2">Master Rollout Plan</h3>
-            <p className="text-slate-500">Gantt Chart view of all initiatives and major phases (Wave 1, 2, 3).</p>
-        </div>
+        <RolloutPlanTab
+            data={fullSession.rollout || {}}
+            initiatives={fullSession.initiatives}
+            onUpdate={(updatedData) => {
+                if (onUpdateSession) {
+                    onUpdateSession({
+                        ...fullSession,
+                        rollout: { ...fullSession.rollout, ...updatedData }
+                    });
+                }
+            }}
+        />
     );
 
     const renderDashboard = () => (
@@ -63,35 +91,71 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
     );
 
     const renderRisks = () => (
-        <div className="p-8 text-center bg-white dark:bg-navy-900 rounded-xl border border-white/5">
-            <AlertOctagon className="w-16 h-16 mx-auto text-red-500 mb-4" />
-            <h3 className="text-xl font-bold mb-2">Risk & Issues Management</h3>
-            <p className="text-slate-500">RAID Log (Risks, Assumptions, Issues, Dependencies).</p>
-        </div>
+        <RolloutRisksTab
+            data={fullSession.rollout || {}}
+            initiatives={fullSession.initiatives}
+            onUpdate={(updatedData) => {
+                if (onUpdateSession) {
+                    onUpdateSession({
+                        ...fullSession,
+                        rollout: { ...fullSession.rollout, ...updatedData }
+                    });
+                }
+            }}
+        />
     );
 
     const renderChange = () => (
-        <div className="p-8 text-center bg-white dark:bg-navy-900 rounded-xl border border-white/5">
-            <Megaphone className="w-16 h-16 mx-auto text-yellow-500 mb-4" />
-            <h3 className="text-xl font-bold mb-2">Change Management Hub</h3>
-            <p className="text-slate-500">Communication plans, stakeholder engagement, and training materials.</p>
-        </div>
+        <RolloutChangeTab
+            data={fullSession.rollout || {}}
+            onUpdate={(updatedData) => {
+                if (onUpdateSession) {
+                    onUpdateSession({
+                        ...fullSession,
+                        rollout: { ...fullSession.rollout, ...updatedData }
+                    });
+                }
+            }}
+        />
     );
 
     const renderKPI = () => (
-        <div className="p-8 text-center bg-white dark:bg-navy-900 rounded-xl border border-white/5">
-            <TrendingUp className="w-16 h-16 mx-auto text-green-500 mb-4" />
-            <h3 className="text-xl font-bold mb-2">KPI Tracking</h3>
-            <p className="text-slate-500">Operational and Financial performance versus targets.</p>
-        </div>
+        <RolloutKPITab
+            data={fullSession.rollout || {}}
+            onUpdate={(updatedData) => {
+                if (onUpdateSession) {
+                    onUpdateSession({
+                        ...fullSession,
+                        rollout: { ...fullSession.rollout, ...updatedData }
+                    });
+                }
+            }}
+        />
     );
 
     const renderClosure = () => (
-        <div className="p-8 text-center bg-white dark:bg-navy-900 rounded-xl border border-white/5">
-            <Flag className="w-16 h-16 mx-auto text-slate-500 mb-4" />
-            <h3 className="text-xl font-bold mb-2">Rollout Review & Closure</h3>
-            <p className="text-slate-500">Lessons learned, final approvals, and handover to operations.</p>
-        </div>
+        <RolloutClosureTab
+            data={fullSession.rollout || {}}
+            onUpdate={(updatedData) => {
+                if (onUpdateSession) {
+                    onUpdateSession({
+                        ...fullSession,
+                        rollout: { ...fullSession.rollout, ...updatedData }
+                    });
+                }
+            }}
+            onCloseProgram={() => {
+                if (onUpdateSession) {
+                    onUpdateSession({
+                        ...fullSession,
+                        rollout: {
+                            ...fullSession.rollout,
+                            closure: { ...fullSession.rollout?.closure, isClosed: true, closedAt: new Date().toISOString() }
+                        }
+                    });
+                }
+            }}
+        />
     );
 
     const renderContent = () => {
@@ -116,6 +180,9 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
                     <CheckCircle2 className="text-green-500" size={24} />
                     Full Rollout Execution
                 </h1>
+                <a href="#" onClick={(e) => { e.preventDefault(); /* Would trigger navigation if I had access to router, but here I only have props */ }} className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-1">
+                    Open My Work &rarr;
+                </a>
             </div>
 
             {/* Navigation Tabs (Scrollable) */}

@@ -79,6 +79,7 @@ export const FullRolloutView: React.FC = () => {
                 <FullRolloutWorkspace
                     fullSession={fullSession}
                     onUpdateInitiative={handleUpdateInitiative}
+                    onUpdateSession={(session) => updateFullSession(session)} // Pass full session update
                     onNextStep={() => {
                         onNavigate(AppView.FULL_STEP6_REPORTS);
                     }}

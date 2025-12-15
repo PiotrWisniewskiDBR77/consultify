@@ -106,6 +106,13 @@ export const Sidebar: React.FC = () => {
       ]
     },
     {
+      id: 'MY_WORK',
+      label: t('myWork.title', 'My Work'),
+      icon: <CheckCircle2 size={20} />, // Or another suitable icon like Briefcase or ListTodo
+      viewId: AppView.MY_WORK,
+      isFloating: false
+    },
+    {
       id: 'INTRO_CONTEXT',
       label: t('sidebar.intro'),
       icon: <BookOpen size={20} />,
