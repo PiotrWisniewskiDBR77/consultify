@@ -44,3 +44,4 @@ test-results
 *.log
 backend_*.log
 frontend_*.log
+server/consultify.db
