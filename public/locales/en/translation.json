@@ -931,67 +931,232 @@
       },
       "aiMaturity": {
         "title": "AI Maturity",
-        "intro": "Assessment of Artificial Intelligence adoption.",
+        "intro": "Assessment of Artificial Intelligence adoption and business integration.",
         "areas": {
-          "strategy": {
-            "title": "AI Strategy",
+          "7A": {
+            "title": "Data & AI Foundations",
             "levels": {
-              "1": "No Strategy",
-              "2": "Interest/Exploration",
-              "3": "Pilot Projects",
-              "4": "Departmental Strategy",
-              "5": "Enterprise Strategy",
-              "6": "AI-First Strategy",
-              "7": "AI-Native Organization"
-            }
+              "1": "Fragmented Data, No AI Readiness",
+              "2": "Structured Data in Silos",
+              "3": "Centralized Data & Initial AI Readiness",
+              "4": "Fully AI-Ready Data Architecture",
+              "5": "Autonomous Data Intelligence"
+            },
+            "level1Desc": "Data are scattered across spreadsheets, local drives and disconnected systems. There is no unified view of the organization's information. Data is incomplete or inconsistent across systems. AI cannot function because data is not available in the right format.",
+            "level1Questions": [
+              "Do you have trouble accessing data?",
+              "Is data locked in separate systems?",
+              "Is data quality unknown?"
+            ],
+            "level1Formula": "Data as a Cost (Silos)",
+            "level2Desc": "The company has several digital systems (ERP, MES, CRM), but each stores data in its own 'silo'. Data is more structured but not easily accessible to AI. Exports are done manually. Data is digital but unconnected.",
+            "level2Questions": [
+              "Do you have a central data warehouse?",
+              "Does preparing data require manual work?",
+              "Is historical data archived digitally?"
+            ],
+            "level2Formula": "Data for Reporting",
+            "level3Desc": "The organization builds the first centralized data repositories. ETL processes start functioning. First machine learning projects appear, based on standardized datasets. Data in the warehouse is updated regularly.",
+            "level3Questions": [
+              "Do data scientists have easy access to raw data?",
+              "Does a Data Catalog exist?",
+              "Do you monitor key data quality?"
+            ],
+            "level3Formula": "Analytics Availability",
+            "level4Desc": "The organization has consistent governance rules, data quality is monitored, and sources are documented. Data is available in near real-time. AI models have stable, scalable pipelines.",
+            "level4Questions": [
+              "Does every dataset have an owner?",
+              "Is data lineage known?",
+              "Are there SLAs for data availability?"
+            ],
+            "level4Formula": "Data as a Product",
+            "level5Desc": "Data is automatically prepared, cleaned, versioned, and shared with AI models. Systems can detect anomalies, fill gaps, and optimize data flows without human intervention. Data is treated as a product.",
+            "level5Questions": [
+              "Is data available in real-time?",
+              "Can business users use data independently?",
+              "Does infrastructure scale with volume?"
+            ],
+            "level5Formula": "Data Democratization"
           },
-          "data_readiness": {
-            "title": "Data Readiness for AI",
+          "7B": {
+            "title": "AI-Augmented Processes",
             "levels": {
-              "1": "Unstructured Data",
-              "2": "Siloed Data",
-              "3": "Cleaned Datasets",
-              "4": "Data Pipeline",
-              "5": "Feature Engineering",
-              "6": "Real-time Training Data",
-              "7": "Self-Labeling Data"
-            }
+              "1": "Isolated AI Experiments",
+              "2": "Assisted Work Automation",
+              "3": "Integrated AI Decision Support",
+              "4": "Semi-Autonomous Processes",
+              "5": "Fully Autonomous Operational Orchestration"
+            },
+            "level1Desc": "AI appears only as small, unrelated initiatives (tests, chatbots, OCR). They have no impact on main business processes. AI works 'next to' processes, not inside them.",
+            "level1Questions": [
+              "Is AI just a curiosity in the company?",
+              "Are AI tests done without a plan?",
+              "Is there no impact on main processes?"
+            ],
+            "level1Formula": "Point Experiments",
+            "level2Desc": "AI supports employees but does not decide. First automations appear (scheduling, content generation). AI's role is to speed up human work. AI improves efficiency but doesn't affect process quality.",
+            "level2Questions": [
+              "Does AI automate simple office tasks?",
+              "Do employees use AI as an assistant?",
+              "Does AI speed up work but not change it?"
+            ],
+            "level2Formula": "Assistant Support",
+            "level3Desc": "AI becomes part of the process. Models provide operational recommendations. Employees make decisions based on AI. Processes utilize data and algorithms, but responsibility remains with humans.",
+            "level3Questions": [
+              "Does AI suggest decisions to employees?",
+              "Do processes consider AI model results?",
+              "Do people trust system recommendations?"
+            ],
+            "level3Formula": "Decision Support",
+            "level4Desc": "AI performs part of process activities independently. Humans supervise or approve. In many processes, humans no longer make decisions — only control the system.",
+            "level4Questions": [
+              "Does the system make routine decisions alone?",
+              "Is the human role just approving?",
+              "Does AI control process parameters?"
+            ],
+            "level4Formula": "Semi-Autonomy",
+            "level5Desc": "Processes are designed to be executed by autonomous AI systems. AI monitors, reacts, and optimizes. Humans handle supervision and strategy. Processes execute entirely without human participation.",
+            "level5Questions": [
+              "Do processes run without human interference?",
+              "Does AI optimize its own operation?",
+              "Does the organization run on 'autopilot'?"
+            ],
+            "level5Formula": "Full Operational Autonomy"
           },
-          "talent": {
-            "title": "AI Talent & Skills",
+          "7C": {
+            "title": "AI in Products & Services",
             "levels": {
-              "1": "No Skills",
-              "2": "Outsourced Only",
-              "3": "Internal DS Team",
-              "4": "Cross-functional AI Teams",
-              "5": "AI Literacy Company-wide",
-              "6": "Top-tier AI Research",
-              "7": "Democratized AI Creation"
-            }
+              "1": "No AI Components in Products",
+              "2": "Add-On AI Features",
+              "3": "AI as a Core Product Component",
+              "4": "Fully AI-Driven Products",
+              "5": "AI-Native Business Offerings"
+            },
+            "level1Desc": "Products and services contain no AI elements. Value comes from traditional functions. Products work the same for every user. No predictive functions.",
+            "level1Questions": [
+              "Are products 'traditional' without AI?",
+              "Does every client get the same thing?",
+              "Is there no data-based personalization?"
+            ],
+            "level1Formula": "Traditional Product",
+            "level2Desc": "AI appears as an additional module enhancing the product. AI functions are enhancements (recommendations). AI improves UX but the product still has a classic structure.",
+            "level2Questions": [
+              "Is AI just an add-on (e.g. recommendations)?",
+              "Would the product work without this add-on?",
+              "Does AI improve UX but not change features?"
+            ],
+            "level2Formula": "AI as Add-on",
+            "level3Desc": "AI becomes a key element of product architecture. The product 'understands' the user, adapts, and reacts to data. The product differs from competitors thanks to AI.",
+            "level3Questions": [
+              "Is AI key to product operation?",
+              "Does the product adapt to the user?",
+              "Would the product lose sense without AI?"
+            ],
+            "level3Formula": "AI as Core",
+            "level4Desc": "AI is responsible for most product logic and dynamically adjusts operation. Functionality is personalized, adaptive, and self-improving.",
+            "level4Questions": [
+              "Does the product learn on the fly?",
+              "Is product logic dynamic?",
+              "Is personalization real-time?"
+            ],
+            "level4Formula": "Adaptive Product",
+            "level5Desc": "Products couldn't exist without AI. AI creates the entire business model. Autonomous systems, agents, digital twins. The product is an intelligent system.",
+            "level5Questions": [
+              "Is the business model based on AI?",
+              "Is this a completely new product category?",
+              "Is the product an autonomous agent?"
+            ],
+            "level5Formula": "AI-Native Business"
           },
-          "governance": {
-            "title": "AI Governance & Ethics",
+          "7D": {
+            "title": "Governance, Security & Ethics",
             "levels": {
-              "1": "No Governance",
-              "2": "Basic Guidelines",
-              "3": "Ethics Committee",
-              "4": "Responsible AI Framework",
-              "5": "Auditable AI",
-              "6": "Explainable AI (XAI)",
-              "7": "Ethical AI by Design"
-            }
+              "1": "No AI Governance, Uncontrolled Use",
+              "2": "Basic AI Usage Policies",
+              "3": "Organization-Wide AI Governance Framework",
+              "4": "Continuous AI Risk Management & Monitoring",
+              "5": "Ethical, Transparent & Autonomous AI Governance"
+            },
+            "level1Desc": "AI is used spontaneously and without supervision. No usage policies or security rules. The organization is unaware of risks.",
+            "level1Questions": [
+              "Do employees use private AI accounts for work?",
+              "Is there no data protection policy for AI?",
+              "Is the firm unaware of AI legal risks?"
+            ],
+            "level1Formula": "High Risk (Shadow AI)",
+            "level2Desc": "The organization creates basic AI usage rules (do's & don'ts). Policies are informational and not yet fully enforced.",
+            "level2Questions": [
+              "Are there written 'Do's & Don'ts' for AI?",
+              "Was training on safe AI use conducted?",
+              "Does legal verify ad-hoc AI tools?"
+            ],
+            "level2Formula": "Basic Hygiene",
+            "level3Desc": "The firm formalizes its AI approach. Project acceptance processes, risk assessment criteria, dedicated roles. Models are versioned and audited.",
+            "level3Questions": [
+              "Is there an AI Officer/Committee?",
+              "Does every AI deployment undergo risk assessment?",
+              "Is regulatory compliance monitored?"
+            ],
+            "level3Formula": "Managed Compliance",
+            "level4Desc": "The organization has a continuous structured control system. Real-time model monitoring, drift detection. AI treated as critical infrastructure.",
+            "level4Questions": [
+              "Are AI models classified by risk level?",
+              "Are there standards for documenting AI decisions?",
+              "Is bias in data monitored?"
+            ],
+            "level4Formula": "Systemic Risk Management",
+            "level5Desc": "AI governance is automated and built-in. Systems detect problems and react. The firm proves transparency to auditors.",
+            "level5Questions": [
+              "Is AI ethics verified automatically?",
+              "Are systems transparent to the end user?",
+              "Do clients trust how the firm uses their data?"
+            ],
+            "level5Formula": "Ethical Leadership"
           },
-          "deployment": {
-            "title": "Deployment & MLOps",
+          "7E": {
+            "title": "Competence & AI Culture",
             "levels": {
-              "1": "Manual Deployment",
-              "2": "Scripted Deployment",
-              "3": "Basic MLOps",
-              "4": "CI/CD for ML",
-              "5": "Automated Retraining",
-              "6": "Continuous Learning",
-              "7": "Autonomous Lifecycle"
-            }
+              "1": "No Competence",
+              "2": "Ad-hoc Usage",
+              "3": "Organized Development",
+              "4": "AI Fluency",
+              "5": "AI-Native Staff"
+            },
+            "level1Desc": "Employees lack AI skills. Skepticism or fear dominates. Knowledge is limited to media reports.",
+            "level1Questions": [
+              "Are there no people who understand AI?",
+              "Do employees fear AI will replace them?",
+              "does HR not recruit data specialists?"
+            ],
+            "level1Formula": "Competence Gap",
+            "level2Desc": "Some use simple tools on their own. No systemic training. Competence acquired mainly externally.",
+            "level2Questions": [
+              "Do you rely 100% on external providers?",
+              "Does knowledge disappear after the project?",
+              "Are there no business 'translators' for AI?"
+            ],
+            "level2Formula": "External Dependency",
+            "level3Desc": "Firm provides training and tools. Defined roles. First team successes. Internal AI team formed.",
+            "level3Questions": [
+              "Do you have an internal AI team or leaders?",
+              "Does this team collaborate with business?",
+              "Are AI trainings organized?"
+            ],
+            "level3Formula": "Competence Building",
+            "level4Desc": "Employees build simple automations (Citizen Developers). Continuous upskilling is norm. Culture of experimentation.",
+            "level4Questions": [
+              "Do employees create AI/Low-code solutions themselves?",
+              "Does everyone have access to AI tools?",
+              "Does culture promote experimentation?"
+            ],
+            "level4Formula": "Democratization (AI Fluency)",
+            "level5Desc": "Human-AI collaboration is seamless. Employees manage AI agents. Organization attracts top talents.",
+            "level5Questions": [
+              "Does every employee have a 'digital assistant'?",
+              "Does work without AI feel unnatural?",
+              "Do you attract AI talent from the market?"
+            ],
+            "level5Formula": "AI-Native Culture"
           }
         }
       }

@@ -44,7 +44,7 @@ const apiLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     store: redisStore, // Use Custom Redis Store
-    skip: (req) => isTest, // Skip in test environment
+    skip: (req) => isTest || req.originalUrl.includes('/api/auth/'), // Skip in test environment or for auth routes
     message: { error: 'Too many requests, please try again later.' }
 });
 

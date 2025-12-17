@@ -1806,11 +1806,11 @@
           "7A": {
             "title": "Dane i Fundamenty AI",
             "levels": {
-              "1": "Fragmented Data, No AI Readiness",
-              "2": "Structured Data in Silos",
-              "3": "Centralized Data & Initial AI Readiness",
-              "4": "Fully AI-Ready Data Architecture",
-              "5": "Autonomous Data Intelligence"
+              "1": "Rozproszone dane, brak gotowości AI",
+              "2": "Ustrukturyzowane dane w silosach",
+              "3": "Scentralizowane dane i wstępna gotowość AI",
+              "4": "Pełna gotowość architektury danych dla AI",
+              "5": "Autonomiczna inteligencja danych"
             },
             "level1Desc": "Dane są rozproszone w arkuszach, na dyskach lokalnych i systemach niepołączonych. Brak jednego widoku informacji. Każda analiza wymaga ręcznego zbierania danych. Dane są niekompletne lub niespójne między systemami. AI nie może działać, bo dane nie są dostępne w odpowiednim formacie.",
             "level1Questions": [
@@ -1851,11 +1851,11 @@
           "7B": {
             "title": "Procesy Wspierane przez AI",
             "levels": {
-              "1": "Isolated AI Experiments",
-              "2": "Assisted Work Automation",
-              "3": "Integrated AI Decision Support",
-              "4": "Semi-Autonomous Processes",
-              "5": "Fully Autonomous Operational Orchestration"
+              "1": "Izolowane eksperymenty AI",
+              "2": "Wspomagana automatyzacja pracy",
+              "3": "Zintegrowane wsparcie decyzyjne AI",
+              "4": "Półautonomiczne procesy",
+              "5": "W pełni autonomiczna orkiestracja operacyjna"
             },
             "level1Desc": "AI pojawia się w organizacji jedynie w formie małych, niepowiązanych inicjatyw. Mogą to być testy narzędzi generatywnych, chatboty, OCR lub podstawowe automatyzacje biurowe — ale nie mają one wpływu na główne procesy biznesowe. AI działa „obok” procesów, nie w ich środku.",
             "level1Questions": [
@@ -1896,11 +1896,11 @@
           "7C": {
             "title": "AI w Produktach i Usługach",
             "levels": {
-              "1": "No AI Components in Products",
-              "2": "Add-On AI Features",
-              "3": "AI as a Core Product Component",
-              "4": "Fully AI-Driven Products",
-              "5": "AI-Native Business Offerings"
+              "1": "Brak komponentów AI w produktach",
+              "2": "Funkcje AI jako dodatek",
+              "3": "AI jako kluczowy składnik produktu",
+              "4": "Produkty w pełni sterowane przez AI",
+              "5": "Oferta biznesowa natywna dla AI"
             },
             "level1Desc": "Produkty i usługi nie zawierają żadnych elementów AI. Wartość dostarczana klientowi wynika w całości z tradycyjnych funkcji. Produkty działają tak samo dla każdego użytkownika. Nie ma funkcji predykcyjnych ani rekomendacyjnych.",
             "level1Questions": [
@@ -1941,11 +1941,11 @@
           "7D": {
             "title": "Governance, Bezpieczeństwo i Etyka",
             "levels": {
-              "1": "No AI Governance, Uncontrolled Use",
-              "2": "Basic AI Usage Policies",
-              "3": "Organization-Wide AI Governance Framework",
-              "4": "Continuous AI Risk Management & Monitoring",
-              "5": "Ethical, Transparent & Autonomous AI Governance"
+              "1": "Brak nadzoru AI, niekontrolowane użycie",
+              "2": "Podstawowe zasady użycia AI",
+              "3": "Ogólnormowe ramowe zasady nadzoru AI",
+              "4": "Ciągłe zarządzanie ryzykiem i monitorowanie AI",
+              "5": "Etyczny, przejrzysty i autonomiczny nadzór AI"
             },
             "level1Desc": "AI jest używane spontanicznie i bez nadzoru. Pracownicy korzystają z narzędzi AI według własnego uznania. Nie istnieją polityki użycia, zasady bezpieczeństwa ani standardy prywatności. Organizacja nie jest świadoma ryzyk.",
             "level1Questions": [
@@ -1987,7 +1987,7 @@
             "title": "Kompetencje i Kultura AI",
             "levels": {
               "1": "Brak Kompetencji",
-              "2": "Ad-hoc Usage",
+              "2": "Użycie doraźne",
               "3": "Zorganizowany Rozwój",
               "4": "Płynność AI (AI Fluency)",
               "5": "Kadra AI-Native"
