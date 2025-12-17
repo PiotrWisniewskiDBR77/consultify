@@ -567,7 +567,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                                             >
                                                 <Sparkles size={10} /> {isGenerating ? 'Generating...' : 'Auto-fill with AI'}
                                             </button>
-                                            </button>
+
                                         </div>
                                         <textarea
                                             className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded p-2 text-sm text-navy-900 dark:text-slate-300 h-20 focus:outline-none focus:border-blue-500/50"
@@ -760,248 +760,220 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                         </div>
                     )}
 
-                {/* EXECUTION & RISKS TAB */}
-                {activeTab === 'execution' && (
-                    <div className="grid grid-cols-2 gap-8">
-                        <div className="space-y-6">
-                            <h3 className="text-navy-900 dark:text-white font-bold mb-4 flex items-center justify-between">
-                                <span>Timeline & Milestones</span>
-                                <button
-                                    onClick={generateExecutionStrategy}
-                                    disabled={isGenerating}
-                                    className={`text-xs flex items-center gap-1 border rounded px-2 py-1 transition-colors ${isGenerating
-                                        ? 'text-slate-500 border-slate-700 bg-transparent cursor-not-allowed'
-                                        : 'text-purple-400 hover:text-purple-300 border-purple-500/30 bg-purple-500/10'
-                                        }`}
-                                >
-                                    <Sparkles size={12} className={isGenerating ? "animate-spin" : ""} />
-                                    {isGenerating ? "Generating..." : "Auto-fill Execution"}
-                                </button>
-                            </h3>
+                    {/* EXECUTION & RISKS TAB */}
+                    {activeTab === 'execution' && (
+                        <div className="grid grid-cols-2 gap-8">
+                            <div className="space-y-6">
+                                <h3 className="text-navy-900 dark:text-white font-bold mb-4 flex items-center justify-between">
+                                    <span>Timeline & Milestones</span>
+                                    <button
+                                        onClick={generateExecutionStrategy}
+                                        disabled={isGenerating}
+                                        className={`text-xs flex items-center gap-1 border rounded px-2 py-1 transition-colors ${isGenerating
+                                            ? 'text-slate-500 border-slate-700 bg-transparent cursor-not-allowed'
+                                            : 'text-purple-400 hover:text-purple-300 border-purple-500/30 bg-purple-500/10'
+                                            }`}
+                                    >
+                                        <Sparkles size={12} className={isGenerating ? "animate-spin" : ""} />
+                                        {isGenerating ? "Generating..." : "Auto-fill Execution"}
+                                    </button>
+                                </h3>
 
-                            <InputGroup label="Kill Criteria (Mandatory) *">
-                                <div className="bg-red-50 dark:bg-red-500/5 border border-red-200 dark:border-red-500/20 rounded-lg p-3">
-                                    <div className="flex items-center gap-2 mb-2 text-red-600 dark:text-red-400 text-xs font-bold uppercase">
-                                        <AlertTriangle size={12} />
-                                        <span>Stop Conditions</span>
+                                <InputGroup label="Kill Criteria (Mandatory) *">
+                                    <div className="bg-red-50 dark:bg-red-500/5 border border-red-200 dark:border-red-500/20 rounded-lg p-3">
+                                        <div className="flex items-center gap-2 mb-2 text-red-600 dark:text-red-400 text-xs font-bold uppercase">
+                                            <AlertTriangle size={12} />
+                                            <span>Stop Conditions</span>
+                                        </div>
+                                        <textarea
+                                            className="w-full bg-transparent border-none p-0 text-slate-700 dark:text-slate-300 focus:ring-0 placeholder:text-slate-400 dark:placeholder:text-slate-600 h-24 resize-none text-sm"
+                                            value={initiative.killCriteria || ''}
+                                            onChange={e => setInitiative({ ...initiative, killCriteria: e.target.value })}
+                                            placeholder="Define specific conditions under which this initiative MUST be stopped (e.g., Budget overrun > 15%, Technical failure in Pilot)..."
+                                        />
                                     </div>
-                                    <textarea
-                                        className="w-full bg-transparent border-none p-0 text-slate-700 dark:text-slate-300 focus:ring-0 placeholder:text-slate-400 dark:placeholder:text-slate-600 h-24 resize-none text-sm"
-                                        value={initiative.killCriteria || ''}
-                                        onChange={e => setInitiative({ ...initiative, killCriteria: e.target.value })}
-                                        placeholder="Define specific conditions under which this initiative MUST be stopped (e.g., Budget overrun > 15%, Technical failure in Pilot)..."
-                                    />
+                                </InputGroup>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <InputGroup label="Start Date">
+                                        <input type="date"
+                                            className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-navy-900 dark:text-white"
+                                            value={initiative.startDate ? initiative.startDate.split('T')[0] : ''}
+                                            onChange={e => setInitiative({ ...initiative, startDate: e.target.value })}
+                                        />
+                                    </InputGroup>
+                                    <InputGroup label="End Date">
+                                        <input type="date"
+                                            className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-navy-900 dark:text-white"
+                                            value={initiative.endDate ? initiative.endDate.split('T')[0] : ''}
+                                            onChange={e => setInitiative({ ...initiative, endDate: e.target.value })}
+                                        />
+                                    </InputGroup>
+                                    <InputGroup label="Pilot End">
+                                        <input type="date"
+                                            className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-navy-900 dark:text-white"
+                                            value={initiative.pilotEndDate ? initiative.pilotEndDate.split('T')[0] : ''}
+                                            onChange={e => setInitiative({ ...initiative, pilotEndDate: e.target.value })}
+                                        />
+                                    </InputGroup>
                                 </div>
-                            </InputGroup>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <InputGroup label="Start Date">
-                                    <input type="date"
-                                        className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-navy-900 dark:text-white"
-                                        value={initiative.startDate ? initiative.startDate.split('T')[0] : ''}
-                                        onChange={e => setInitiative({ ...initiative, startDate: e.target.value })}
-                                    />
-                                </InputGroup>
-                                <InputGroup label="End Date">
-                                    <input type="date"
-                                        className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-navy-900 dark:text-white"
-                                        value={initiative.endDate ? initiative.endDate.split('T')[0] : ''}
-                                        onChange={e => setInitiative({ ...initiative, endDate: e.target.value })}
-                                    />
-                                </InputGroup>
-                                <InputGroup label="Pilot End">
-                                    <input type="date"
-                                        className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-navy-900 dark:text-white"
-                                        value={initiative.pilotEndDate ? initiative.pilotEndDate.split('T')[0] : ''}
-                                        onChange={e => setInitiative({ ...initiative, pilotEndDate: e.target.value })}
-                                    />
-                                </InputGroup>
-                            </div>
-
-                            {/* Milestones UI */}
-                            <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-4 border border-slate-200 dark:border-white/5">
-                                <h4 className="text-sm font-bold text-navy-900 dark:text-white mb-2 flex justify-between items-center">
-                                    <span>Key Milestones & Gates</span>
-                                    <button onClick={() => {
-                                        const newMilestones = [...(initiative.milestones || []), { name: '', date: '', status: 'pending' as const }];
-                                        setInitiative({ ...initiative, milestones: newMilestones });
-                                    }} className="text-xs text-blue-600 dark:text-blue-400 hover:text-navy-900 dark:hover:text-white">+ Add</button>
-                                </h4>
-                                <div className="space-y-3">
-                                    {initiative.milestones?.map((m, idx: number) => (
-                                        <div key={idx} className={`p-3 rounded border transition-colors ${m.isDecisionGate ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-500/30' : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-white/5'} `}>
-                                            <div className="flex gap-2 mb-2">
-                                                <input
-                                                    type="date"
-                                                    className="w-24 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-1 text-xs text-navy-900 dark:text-white"
-                                                    value={m.date}
-                                                    onChange={e => {
-                                                        const list = [...(initiative.milestones || [])];
-                                                        list[idx] = { ...m, date: e.target.value };
-                                                        setInitiative({ ...initiative, milestones: list });
-                                                    }}
-                                                />
-                                                <input
-                                                    className="flex-1 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-1 text-xs text-navy-900 dark:text-white"
-                                                    placeholder="Milestone name..."
-                                                    value={m.name}
-                                                    onChange={e => {
-                                                        const list = [...(initiative.milestones || [])];
-                                                        list[idx] = { ...m, name: e.target.value };
-                                                        setInitiative({ ...initiative, milestones: list });
-                                                    }}
-                                                />
-                                                <button onClick={() => {
-                                                    const list = [...(initiative.milestones || [])];
-                                                    list.splice(idx, 1);
-                                                    setInitiative({ ...initiative, milestones: list });
-                                                }} className="text-slate-500 hover:text-red-500"><X size={14} /></button>
-                                            </div>
-
-                                            <div className="flex items-center gap-4 pl-1">
-                                                <label className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-300 cursor-pointer select-none">
+                                {/* Milestones UI */}
+                                <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-4 border border-slate-200 dark:border-white/5">
+                                    <h4 className="text-sm font-bold text-navy-900 dark:text-white mb-2 flex justify-between items-center">
+                                        <span>Key Milestones & Gates</span>
+                                        <button onClick={() => {
+                                            const newMilestones = [...(initiative.milestones || []), { name: '', date: '', status: 'pending' as const }];
+                                            setInitiative({ ...initiative, milestones: newMilestones });
+                                        }} className="text-xs text-blue-600 dark:text-blue-400 hover:text-navy-900 dark:hover:text-white">+ Add</button>
+                                    </h4>
+                                    <div className="space-y-3">
+                                        {initiative.milestones?.map((m, idx: number) => (
+                                            <div key={idx} className={`p-3 rounded border transition-colors ${m.isDecisionGate ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-500/30' : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-white/5'} `}>
+                                                <div className="flex gap-2 mb-2">
                                                     <input
-                                                        type="checkbox"
-                                                        checked={m.isDecisionGate || false}
+                                                        type="date"
+                                                        className="w-24 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-1 text-xs text-navy-900 dark:text-white"
+                                                        value={m.date}
                                                         onChange={e => {
                                                             const list = [...(initiative.milestones || [])];
-                                                            list[idx] = { ...m, isDecisionGate: e.target.checked };
+                                                            list[idx] = { ...m, date: e.target.value };
                                                             setInitiative({ ...initiative, milestones: list });
                                                         }}
-                                                        className="rounded bg-white dark:bg-navy-950 border-slate-300 dark:border-white/20 text-blue-600 dark:text-blue-500 focus:ring-offset-white dark:focus:ring-offset-navy-900"
                                                     />
-                                                    Decision Gate
-                                                </label>
+                                                    <input
+                                                        className="flex-1 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-1 text-xs text-navy-900 dark:text-white"
+                                                        placeholder="Milestone name..."
+                                                        value={m.name}
+                                                        onChange={e => {
+                                                            const list = [...(initiative.milestones || [])];
+                                                            list[idx] = { ...m, name: e.target.value };
+                                                            setInitiative({ ...initiative, milestones: list });
+                                                        }}
+                                                    />
+                                                    <button onClick={() => {
+                                                        const list = [...(initiative.milestones || [])];
+                                                        list.splice(idx, 1);
+                                                        setInitiative({ ...initiative, milestones: list });
+                                                    }} className="text-slate-500 hover:text-red-500"><X size={14} /></button>
+                                                </div>
 
-                                                {m.isDecisionGate && (
-                                                    <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-200">
-                                                        <span className="text-xs text-slate-500">Decision:</span>
-                                                        <select
-                                                            className={`text - xs border rounded px - 2 py - 0.5 outline - none ${m.decision === 'stop' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
-                                                                m.decision === 'adjust' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
-                                                                    'bg-green-500/20 text-green-400 border-green-500/30'
-                                                                } `}
-                                                            value={m.decision || 'continue'}
+                                                <div className="flex items-center gap-4 pl-1">
+                                                    <label className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-300 cursor-pointer select-none">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={m.isDecisionGate || false}
                                                             onChange={e => {
                                                                 const list = [...(initiative.milestones || [])];
-                                                                // @ts-ignore
-                                                                list[idx] = { ...m, decision: e.target.value };
+                                                                list[idx] = { ...m, isDecisionGate: e.target.checked };
                                                                 setInitiative({ ...initiative, milestones: list });
                                                             }}
-                                                        >
-                                                            <option value="continue">Continue</option>
-                                                            <option value="adjust">Adjust</option>
-                                                            <option value="stop">Stop</option>
-                                                        </select>
-                                                    </div>
-                                                )}
+                                                            className="rounded bg-white dark:bg-navy-950 border-slate-300 dark:border-white/20 text-blue-600 dark:text-blue-500 focus:ring-offset-white dark:focus:ring-offset-navy-900"
+                                                        />
+                                                        Decision Gate
+                                                    </label>
+
+                                                    {m.isDecisionGate && (
+                                                        <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-200">
+                                                            <span className="text-xs text-slate-500">Decision:</span>
+                                                            <select
+                                                                className={`text - xs border rounded px - 2 py - 0.5 outline - none ${m.decision === 'stop' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
+                                                                    m.decision === 'adjust' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
+                                                                        'bg-green-500/20 text-green-400 border-green-500/30'
+                                                                    } `}
+                                                                value={m.decision || 'continue'}
+                                                                onChange={e => {
+                                                                    const list = [...(initiative.milestones || [])];
+                                                                    // @ts-ignore
+                                                                    list[idx] = { ...m, decision: e.target.value };
+                                                                    setInitiative({ ...initiative, milestones: list });
+                                                                }}
+                                                            >
+                                                                <option value="continue">Continue</option>
+                                                                <option value="adjust">Adjust</option>
+                                                                <option value="stop">Stop</option>
+                                                            </select>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-4 border border-slate-200 dark:border-white/5">
+                                    <h4 className="text-sm font-bold text-navy-900 dark:text-white mb-2">Required Competencies</h4>
+                                    <input
+                                        className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded p-2 text-sm text-slate-600 dark:text-slate-300"
+                                        placeholder="e.g. UX Design, Python, Data Science (comma separated)"
+                                        value={initiative.competenciesRequired?.join(', ') || ''}
+                                        onChange={e => setInitiative({ ...initiative, competenciesRequired: e.target.value.split(',').map(s => s.trim()) })}
+                                    />
                                 </div>
                             </div>
 
-                            <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-4 border border-slate-200 dark:border-white/5">
-                                <h4 className="text-sm font-bold text-navy-900 dark:text-white mb-2">Required Competencies</h4>
-                                <input
-                                    className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded p-2 text-sm text-slate-600 dark:text-slate-300"
-                                    placeholder="e.g. UX Design, Python, Data Science (comma separated)"
-                                    value={initiative.competenciesRequired?.join(', ') || ''}
-                                    onChange={e => setInitiative({ ...initiative, competenciesRequired: e.target.value.split(',').map(s => s.trim()) })}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-4">
-                            <h3 className="text-navy-900 dark:text-white font-bold mb-4 flex items-center gap-2">
-                                <AlertTriangle size={18} className="text-orange-500" /> Key Risks
-                            </h3>
-                            {/* Simplified Risk Input for now (future: array of objects) */}
-                            <div className="bg-orange-50 dark:bg-orange-500/5 border border-orange-200 dark:border-orange-500/10 rounded-xl p-4">
-                                <p className="text-sm text-orange-800 dark:text-orange-200 mb-2">Identify top 3-5 risks that could derail this initiative.</p>
-                                {/* We are storing risks as simple array in JSON for this iteration, or strictly adhering to types updated */}
-                                {/* Currently logic stores keyRisks as JSON array. Let's make it simple strings for now or update UI for complex objects later. */}
-                                {/* To match updated types { risk: string; mitigation: string; metric: 'Low' | 'Medium' | 'High' }[] */}
-                                {initiative.keyRisks?.map((risk, idx: number) => (
-                                    <div key={idx} className="mb-4 bg-white dark:bg-navy-900 p-3 rounded border border-slate-200 dark:border-white/5">
-                                        <input
-                                            className="w-full bg-transparent border-b border-slate-100 dark:border-white/10 mb-2 text-sm text-navy-900 dark:text-white focus:outline-none"
-                                            placeholder="Risk description..."
-                                            value={risk.risk || ''}
-                                            onChange={e => {
+                            <div className="space-y-4">
+                                <h3 className="text-navy-900 dark:text-white font-bold mb-4 flex items-center gap-2">
+                                    <AlertTriangle size={18} className="text-orange-500" /> Key Risks
+                                </h3>
+                                {/* Simplified Risk Input for now (future: array of objects) */}
+                                <div className="bg-orange-50 dark:bg-orange-500/5 border border-orange-200 dark:border-orange-500/10 rounded-xl p-4">
+                                    <p className="text-sm text-orange-800 dark:text-orange-200 mb-2">Identify top 3-5 risks that could derail this initiative.</p>
+                                    {/* We are storing risks as simple array in JSON for this iteration, or strictly adhering to types updated */}
+                                    {/* Currently logic stores keyRisks as JSON array. Let's make it simple strings for now or update UI for complex objects later. */}
+                                    {/* To match updated types { risk: string; mitigation: string; metric: 'Low' | 'Medium' | 'High' }[] */}
+                                    {initiative.keyRisks?.map((risk, idx: number) => (
+                                        <div key={idx} className="mb-4 bg-white dark:bg-navy-900 p-3 rounded border border-slate-200 dark:border-white/5">
+                                            <input
+                                                className="w-full bg-transparent border-b border-slate-100 dark:border-white/10 mb-2 text-sm text-navy-900 dark:text-white focus:outline-none"
+                                                placeholder="Risk description..."
+                                                value={risk.risk || ''}
+                                                onChange={e => {
+                                                    const newRisks = [...(initiative.keyRisks || [])];
+                                                    newRisks[idx] = { ...risk, risk: e.target.value };
+                                                    setInitiative({ ...initiative, keyRisks: newRisks });
+                                                }}
+                                            />
+                                            <input
+                                                className="w-full bg-transparent text-xs text-slate-400 focus:outline-none"
+                                                placeholder="Mitigation strategy..."
+                                                value={risk.mitigation || ''}
+                                                onChange={e => {
+                                                    const newRisks = [...(initiative.keyRisks || [])];
+                                                    newRisks[idx] = { ...risk, mitigation: e.target.value };
+                                                    setInitiative({ ...initiative, keyRisks: newRisks });
+                                                }}
+                                            />
+                                            <button onClick={() => {
                                                 const newRisks = [...(initiative.keyRisks || [])];
-                                                newRisks[idx] = { ...risk, risk: e.target.value };
+                                                newRisks.splice(idx, 1);
                                                 setInitiative({ ...initiative, keyRisks: newRisks });
-                                            }}
-                                        />
-                                        <input
-                                            className="w-full bg-transparent text-xs text-slate-400 focus:outline-none"
-                                            placeholder="Mitigation strategy..."
-                                            value={risk.mitigation || ''}
-                                            onChange={e => {
-                                                const newRisks = [...(initiative.keyRisks || [])];
-                                                newRisks[idx] = { ...risk, mitigation: e.target.value };
-                                                setInitiative({ ...initiative, keyRisks: newRisks });
-                                            }}
-                                        />
-                                        <button onClick={() => {
+                                            }} className="text-xs text-red-500 mt-2">Remove</button>
+                                        </div>
+                                    ))}
+                                    <Button size="sm" variant="outline"
+                                        disabled={(initiative.keyRisks?.length || 0) >= 5}
+                                        onClick={() => {
                                             const newRisks = [...(initiative.keyRisks || [])];
-                                            newRisks.splice(idx, 1);
+                                            if (newRisks.length >= 5) return;
+                                            newRisks.push({ risk: '', mitigation: '', metric: 'Medium' });
                                             setInitiative({ ...initiative, keyRisks: newRisks });
-                                        }} className="text-xs text-red-500 mt-2">Remove</button>
-                                    </div>
-                                ))}
-                                <Button size="sm" variant="outline"
-                                    disabled={(initiative.keyRisks?.length || 0) >= 5}
-                                    onClick={() => {
-                                        const newRisks = [...(initiative.keyRisks || [])];
-                                        if (newRisks.length >= 5) return;
-                                        newRisks.push({ risk: '', mitigation: '', metric: 'Medium' });
-                                        setInitiative({ ...initiative, keyRisks: newRisks });
-                                    }}>
-                                    {(initiative.keyRisks?.length || 0) >= 5 ? 'Max 5 Risks Reached' : '+ Add Risk'}
-                                </Button>
+                                        }}>
+                                        {(initiative.keyRisks?.length || 0) >= 5 ? 'Max 5 Risks Reached' : '+ Add Risk'}
+                                    </Button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {/* ECONOMICS TAB */}
-                {activeTab === 'economics' && (
-                    <div className="grid grid-cols-2 gap-8">
-                        <div className="space-y-6">
-                            <InputGroup label="Business Value">
-                                <Select
-                                    value={initiative.businessValue || ''}
-                                    onChange={(val) => setInitiative({ ...initiative, businessValue: val as 'High' | 'Medium' | 'Low' })}
-                                    options={[
-                                        { value: 'High', label: 'High' },
-                                        { value: 'Medium', label: 'Medium' },
-                                        { value: 'Low', label: 'Low' }
-                                    ]}
-                                />
-                            </InputGroup>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <InputGroup label="Value Driver">
+                    {/* ECONOMICS TAB */}
+                    {activeTab === 'economics' && (
+                        <div className="grid grid-cols-2 gap-8">
+                            <div className="space-y-6">
+                                <InputGroup label="Business Value">
                                     <Select
-                                        value={initiative.valueDriver || ''}
-                                        onChange={(val) => setInitiative({ ...initiative, valueDriver: val as any })}
-                                        placeholder="Select Driver..."
-                                        options={[
-                                            { value: 'Cost', label: 'Cost Optimization' },
-                                            { value: 'Revenue', label: 'Revenue Growth' },
-                                            { value: 'Capital', label: 'Capital Efficiency' },
-                                            { value: 'Risk', label: 'Risk Reduction' },
-                                            { value: 'Capability', label: 'Strategic Capability' }
-                                        ]}
-                                    />
-                                </InputGroup>
-                                <InputGroup label="Confidence Level">
-                                    <Select
-                                        value={initiative.confidenceLevel || ''}
-                                        onChange={(val) => setInitiative({ ...initiative, confidenceLevel: val as any })}
-                                        placeholder="Confidence..."
+                                        value={initiative.businessValue || ''}
+                                        onChange={(val) => setInitiative({ ...initiative, businessValue: val as 'High' | 'Medium' | 'Low' })}
                                         options={[
                                             { value: 'High', label: 'High' },
                                             { value: 'Medium', label: 'Medium' },
@@ -1009,91 +981,119 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                                         ]}
                                     />
                                 </InputGroup>
-                            </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <InputGroup label="CAPEX Est. ($)">
-                                    <input type="number"
-                                        className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-navy-900 dark:text-white focus:border-blue-500 outline-none"
-                                        value={initiative.costCapex || 0}
-                                        onChange={e => setInitiative({ ...initiative, costCapex: parseInt(e.target.value) })}
-                                    />
-                                </InputGroup>
-                                <InputGroup label="OPEX Est. ($)">
-                                    <input type="number"
-                                        className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-navy-900 dark:text-white focus:border-blue-500 outline-none"
-                                        value={initiative.costOpex || 0}
-                                        onChange={e => setInitiative({ ...initiative, costOpex: parseInt(e.target.value) })}
-                                    />
-                                </InputGroup>
-                            </div>
-
-                            <InputGroup label="Value Timing">
-                                <Select
-                                    value={initiative.valueTiming || ''}
-                                    onChange={(val) => setInitiative({ ...initiative, valueTiming: val as any })}
-                                    placeholder="Expected Realization..."
-                                    options={[
-                                        { value: 'Immediate', label: 'Immediate (<3mo)' },
-                                        { value: 'Short term', label: 'Short term (3-12mo)' },
-                                        { value: 'Long term', label: 'Long term (>12mo)' }
-                                    ]}
-                                />
-                            </InputGroup>
-                        </div>
-
-                        <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-6 border border-slate-200 dark:border-white/5 flex flex-col items-center justify-center text-center relative">
-                            <TrendingUp size={48} className={`mb-4 opacity-50 ${initiative.valueDriver === 'Capability' ? 'text-purple-500' : 'text-green-500'} `} />
-                            <h3 className="text-xl font-bold text-navy-900 dark:text-white mb-2">Financial Summary</h3>
-
-                            <div className="mb-4">
-                                {initiative.valueDriver === 'Capability' ? (
-                                    <span className="px-3 py-1 rounded-full bg-purple-500/20 text-purple-400 text-xs font-bold border border-purple-500/30">
-                                        CAPABILITY PLAY
-                                    </span>
-                                ) : initiative.valueDriver ? (
-                                    <span className="px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-bold border border-green-500/30">
-                                        CASH PLAY
-                                    </span>
-                                ) : null}
-                            </div>
-
-                            <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">
-                                Total Investment: <span className="text-navy-900 dark:text-white font-mono">${((initiative.costCapex || 0) + (initiative.costOpex || 0)).toLocaleString()}</span>
-                            </p>
-
-                            {/* Sanity Check Logic Display */}
-                            {initiative.costCapex && initiative.costCapex > 0 && !initiative.valueDriver && (
-                                <div className="flex items-center gap-2 text-orange-400 text-xs bg-orange-500/10 p-2 rounded w-full justify-center mb-4">
-                                    <AlertTriangle size={12} />
-                                    <span>Missing Value Driver for Investment</span>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <InputGroup label="Value Driver">
+                                        <Select
+                                            value={initiative.valueDriver || ''}
+                                            onChange={(val) => setInitiative({ ...initiative, valueDriver: val as any })}
+                                            placeholder="Select Driver..."
+                                            options={[
+                                                { value: 'Cost', label: 'Cost Optimization' },
+                                                { value: 'Revenue', label: 'Revenue Growth' },
+                                                { value: 'Capital', label: 'Capital Efficiency' },
+                                                { value: 'Risk', label: 'Risk Reduction' },
+                                                { value: 'Capability', label: 'Strategic Capability' }
+                                            ]}
+                                        />
+                                    </InputGroup>
+                                    <InputGroup label="Confidence Level">
+                                        <Select
+                                            value={initiative.confidenceLevel || ''}
+                                            onChange={(val) => setInitiative({ ...initiative, confidenceLevel: val as any })}
+                                            placeholder="Confidence..."
+                                            options={[
+                                                { value: 'High', label: 'High' },
+                                                { value: 'Medium', label: 'Medium' },
+                                                { value: 'Low', label: 'Low' }
+                                            ]}
+                                        />
+                                    </InputGroup>
                                 </div>
-                            )}
 
-                            <div className="w-full bg-white dark:bg-navy-900 rounded-lg p-4 border border-slate-200 dark:border-white/5 text-left">
-                                <span className="text-xs uppercase text-slate-500">Social Impact</span>
-                                <p className="text-navy-900 dark:text-white mt-1 text-sm">{initiative.socialImpact || 'Not defined'}</p>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <InputGroup label="CAPEX Est. ($)">
+                                        <input type="number"
+                                            className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-navy-900 dark:text-white focus:border-blue-500 outline-none"
+                                            value={initiative.costCapex || 0}
+                                            onChange={e => setInitiative({ ...initiative, costCapex: parseInt(e.target.value) })}
+                                        />
+                                    </InputGroup>
+                                    <InputGroup label="OPEX Est. ($)">
+                                        <input type="number"
+                                            className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-navy-900 dark:text-white focus:border-blue-500 outline-none"
+                                            value={initiative.costOpex || 0}
+                                            onChange={e => setInitiative({ ...initiative, costOpex: parseInt(e.target.value) })}
+                                        />
+                                    </InputGroup>
+                                </div>
+
+                                <InputGroup label="Value Timing">
+                                    <Select
+                                        value={initiative.valueTiming || ''}
+                                        onChange={(val) => setInitiative({ ...initiative, valueTiming: val as any })}
+                                        placeholder="Expected Realization..."
+                                        options={[
+                                            { value: 'Immediate', label: 'Immediate (<3mo)' },
+                                            { value: 'Short term', label: 'Short term (3-12mo)' },
+                                            { value: 'Long term', label: 'Long term (>12mo)' }
+                                        ]}
+                                    />
+                                </InputGroup>
+                            </div>
+
+                            <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-6 border border-slate-200 dark:border-white/5 flex flex-col items-center justify-center text-center relative">
+                                <TrendingUp size={48} className={`mb-4 opacity-50 ${initiative.valueDriver === 'Capability' ? 'text-purple-500' : 'text-green-500'} `} />
+                                <h3 className="text-xl font-bold text-navy-900 dark:text-white mb-2">Financial Summary</h3>
+
+                                <div className="mb-4">
+                                    {initiative.valueDriver === 'Capability' ? (
+                                        <span className="px-3 py-1 rounded-full bg-purple-500/20 text-purple-400 text-xs font-bold border border-purple-500/30">
+                                            CAPABILITY PLAY
+                                        </span>
+                                    ) : initiative.valueDriver ? (
+                                        <span className="px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-bold border border-green-500/30">
+                                            CASH PLAY
+                                        </span>
+                                    ) : null}
+                                </div>
+
+                                <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">
+                                    Total Investment: <span className="text-navy-900 dark:text-white font-mono">${((initiative.costCapex || 0) + (initiative.costOpex || 0)).toLocaleString()}</span>
+                                </p>
+
+                                {/* Sanity Check Logic Display */}
+                                {initiative.costCapex && initiative.costCapex > 0 && !initiative.valueDriver && (
+                                    <div className="flex items-center gap-2 text-orange-400 text-xs bg-orange-500/10 p-2 rounded w-full justify-center mb-4">
+                                        <AlertTriangle size={12} />
+                                        <span>Missing Value Driver for Investment</span>
+                                    </div>
+                                )}
+
+                                <div className="w-full bg-white dark:bg-navy-900 rounded-lg p-4 border border-slate-200 dark:border-white/5 text-left">
+                                    <span className="text-xs uppercase text-slate-500">Social Impact</span>
+                                    <p className="text-navy-900 dark:text-white mt-1 text-sm">{initiative.socialImpact || 'Not defined'}</p>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {/* INTELLIGENCE TAB */}
-                {activeTab === 'intelligence' && (
-                    <InitiativeIntelligenceTab
-                        initiative={initiative}
-                        onChange={(updates) => setInitiative({ ...initiative, ...updates })}
-                    />
-                )}
+                    {/* INTELLIGENCE TAB */}
+                    {activeTab === 'intelligence' && (
+                        <InitiativeIntelligenceTab
+                            initiative={initiative}
+                            onChange={(updates) => setInitiative({ ...initiative, ...updates })}
+                        />
+                    )}
+                </div>
+
+                {/* Footer */}
+                <div className="h-20 border-t border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-navy-950 px-6 flex items-center justify-between shrink-0">
+                    <button onClick={onClose} className="text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white text-sm font-medium">Cancel</button>
+                    <Button onClick={handleSave} icon={<Save size={18} />}>Save Initiative Charter</Button>
+                </div>
+
             </div>
-
-            {/* Footer */}
-            <div className="h-20 border-t border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-navy-950 px-6 flex items-center justify-between shrink-0">
-                <button onClick={onClose} className="text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white text-sm font-medium">Cancel</button>
-                <Button onClick={handleSave} icon={<Save size={18} />}>Save Initiative Charter</Button>
-            </div>
-
-        </div>
         </div >
     );
 };
