@@ -153,7 +153,7 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
     };
 
     return (
-        <div className="flex flex-col h-full bg-navy-900 text-white p-8 overflow-y-auto" ref={componentRef}>
+        <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-900 text-navy-900 dark:text-white p-8 overflow-y-auto" ref={componentRef}>
 
             {/* Header */}
             <div className="flex justify-between items-start mb-8">
@@ -162,24 +162,24 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
                         <TrendingUp className="text-purple-500" />
                         Gap Map Analysis
                     </h2>
-                    <p className="text-slate-400 text-sm">
+                    <p className="text-slate-500 dark:text-slate-400 text-sm">
                         Summary of digital maturity. These gaps will directly drive initiative generation.
                     </p>
                 </div>
                 <div className="flex gap-4">
                     <button
                         onClick={handleDownloadPDF}
-                        className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-sm font-semibold transition-colors border border-white/10"
+                        className="flex items-center gap-2 px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-navy-900 dark:text-white rounded-lg text-sm font-semibold transition-colors border border-slate-300 dark:border-white/10"
                         title="Download Report as PDF"
                     >
                         <Download size={16} />
                         Export PDF
                     </button>
-                    <div className="bg-navy-950/50 p-3 rounded-xl border border-white/5 text-center min-w-[100px]">
+                    <div className="bg-white dark:bg-navy-950/50 p-3 rounded-xl border border-slate-200 dark:border-white/5 text-center min-w-[100px]">
                         <div className="text-2xl font-bold text-blue-400">{avgMaturity}</div>
                         <div className="text-[10px] uppercase text-slate-500 font-bold">Avg Actual</div>
                     </div>
-                    <div className="bg-navy-950/50 p-3 rounded-xl border border-white/5 text-center min-w-[100px]">
+                    <div className="bg-white dark:bg-navy-950/50 p-3 rounded-xl border border-slate-200 dark:border-white/5 text-center min-w-[100px]">
                         <div className="text-2xl font-bold text-red-400">{totalGap}</div>
                         <div className="text-[10px] uppercase text-slate-500 font-bold">Total Gap Points</div>
                     </div>
@@ -187,9 +187,9 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
             </div>
 
             {/* Main Chart / Table */}
-            <div className="bg-navy-950/50 border border-white/10 rounded-xl p-6 mb-8">
-                <div className="flex items-center justify-between mb-6 border-b border-white/5 pb-4">
-                    <h3 className="text-lg font-bold text-white">Wizualizacja Luk (Gap Map)</h3>
+            <div className="bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-xl p-6 mb-8">
+                <div className="flex items-center justify-between mb-6 border-b border-slate-200 dark:border-white/5 pb-4">
+                    <h3 className="text-lg font-bold text-navy-900 dark:text-white">Wizualizacja Luk (Gap Map)</h3>
                     <div className="flex gap-4 text-xs font-mono">
                         <div className="flex items-center gap-2"><div className="w-3 h-3 bg-blue-600 rounded-sm"></div> Obecny</div>
                         <div className="flex items-center gap-2"><div className="w-3 h-3 bg-purple-500/20 border border-purple-500 rounded-sm"></div> Docelowy</div>
@@ -197,7 +197,7 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
                     </div>
                 </div>
 
-                <div className="grid grid-cols-7 gap-4 mb-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center border-b border-white/5 pb-2">
+                <div className="grid grid-cols-7 gap-4 mb-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center border-b border-slate-200 dark:border-white/5 pb-2">
                     {axes.map(axis => <div key={axis}>{labels[axis]}</div>)}
                 </div>
 
@@ -228,7 +228,7 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
                                 {/* Actual Bar (Bottom) */}
                                 <div
                                     style={{ height: `${actual * 10}%` }}
-                                    className={`w-full rounded-b transition-all ${!data ? 'bg-slate-800' : 'bg-gradient-to-t from-blue-900 to-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.3)]'
+                                    className={`w-full rounded-b transition-all ${!data ? 'bg-slate-200 dark:bg-slate-800' : 'bg-gradient-to-t from-blue-900 to-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.3)]'
                                         }`}
                                 ></div>
 
@@ -243,7 +243,7 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
 
             {/* NEW: 7 Matrices Summary */}
             <div className="mb-8">
-                <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-6 flex items-center gap-2">
                     <BarChart2 className="text-blue-400" />
                     Szczegółowa Analiza Macierzy (Matrix Deep Dive)
                 </h2>
@@ -312,15 +312,15 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
             </div>
 
             {/* AI Summary Section - Refactored */}
-            <div className="bg-gradient-to-br from-purple-900/20 to-indigo-900/20 border border-purple-500/20 rounded-xl p-6 mb-6">
+            <div className="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 border border-purple-200 dark:border-purple-500/20 rounded-xl p-6 mb-6">
                 <div className="flex items-start justify-between mb-4">
                     <div className="flex gap-4 items-center">
-                        <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400">
+                        <div className="p-2 bg-purple-100 dark:bg-purple-500/20 rounded-lg text-purple-600 dark:text-purple-400">
                             <Sparkles size={24} />
                         </div>
                         <div>
-                            <h3 className="font-bold text-purple-200 text-lg">AI Assessment Summary</h3>
-                            <p className="text-xs text-purple-400/60">Powered by Gemini AI</p>
+                            <h3 className="font-bold text-purple-900 dark:text-purple-200 text-lg">AI Assessment Summary</h3>
+                            <p className="text-xs text-purple-600/60 dark:text-purple-400/60">Powered by Gemini AI</p>
                         </div>
                     </div>
                     <div className="flex gap-2" data-html2canvas-ignore>
@@ -336,7 +336,7 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
                         {summary && !isEditing && (
                             <button
                                 onClick={() => setIsEditing(true)}
-                                className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-colors"
+                                className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-navy-900 dark:hover:text-white transition-colors"
                                 title="Edit Summary"
                             >
                                 <Edit2 size={18} />
@@ -363,7 +363,7 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
                     )}
 
                     {!summary && !isGenerating && (
-                        <div className="text-slate-500 italic py-4 border-l-2 border-slate-700 pl-4">
+                        <div className="text-slate-500 italic py-4 border-l-2 border-slate-300 dark:border-slate-700 pl-4">
                             No summary generated yet. Click the button above to analyze your assessment results.
                         </div>
                     )}
@@ -372,12 +372,12 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
                         <textarea
                             value={summary}
                             onChange={(e) => setSummary(e.target.value)}
-                            className="w-full h-40 bg-navy-950/50 border border-white/10 rounded-lg p-4 text-slate-200 text-sm focus:outline-none focus:border-purple-500/50 transition-colors resize-none mb-4"
+                            className="w-full h-40 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-lg p-4 text-navy-900 dark:text-slate-200 text-sm focus:outline-none focus:border-purple-500/50 transition-colors resize-none mb-4"
                             autoFocus
                         />
                     ) : (
                         summary && (
-                            <div className="prose prose-invert prose-sm max-w-none text-slate-300">
+                            <div className="prose prose-sm max-w-none text-slate-700 dark:text-slate-300">
                                 <div className="whitespace-pre-wrap leading-relaxed">{summary}</div>
                             </div>
                         )
@@ -385,8 +385,8 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
 
                     {/* Comments Section */}
                     {summary && (
-                        <div className="mt-8 pt-6 border-t border-white/5">
-                            <h4 className="text-sm font-bold text-slate-400 mb-4 flex items-center gap-2">
+                        <div className="mt-8 pt-6 border-t border-purple-200 dark:border-white/5">
+                            <h4 className="text-sm font-bold text-slate-500 dark:text-slate-400 mb-4 flex items-center gap-2">
                                 <MessageSquare size={16} />
                                 Comments ({comments.length})
                             </h4>
@@ -398,35 +398,41 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
                                             <span className="text-xs font-bold text-blue-400">{comment.author}</span>
                                             <span className="text-[10px] text-slate-500">{comment.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                         </div>
-                                        <p className="text-sm text-slate-300">{comment.text}</p>
-                                    </div>
-                                ))}
-                            </div>
+                                        {comments.map(comment => (
+                                            <div key={comment.id} className="bg-white dark:bg-navy-950/30 rounded-lg p-3 border border-slate-200 dark:border-white/5">
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <span className="text-xs font-bold text-blue-600 dark:text-blue-400">{comment.author}</span>
+                                                </div>
 
-                            <div className="flex gap-2">
-                                <input
-                                    type="text"
-                                    value={newComment}
-                                    onChange={(e) => setNewComment(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
-                                    placeholder="Add a comment or observation..."
-                                    className="flex-1 bg-navy-900 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-purple-500/50"
-                                />
-                                <button
-                                    onClick={handleAddComment}
-                                    disabled={!newComment.trim()}
-                                    className="p-2 bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-500 text-white rounded-lg transition-colors"
-                                >
-                                    <Plus size={18} />
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </div>
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        type="text"
+                                                        value={newComment}
+                                                        onChange={(e) => setNewComment(e.target.value)}
+                                                        onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
+                                                        placeholder="Add a comment or observation..."
+                                                        type="text"
+                                                        value={newComment}
+                                                        onChange={(e) => setNewComment(e.target.value)}
+                                                        onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
+                                                        placeholder="Add a comment or observation..."
+                                                        className="flex-1 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg px-4 py-2 text-sm text-navy-900 dark:text-white focus:outline-none focus:border-purple-500/50"
+                                                    />
+                                                    <button
+                                                        onClick={handleAddComment}
+                                                        disabled={!newComment.trim()}
+                                                        className="p-2 bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-500 text-white rounded-lg transition-colors"
+                                                    >
+                                                        <Plus size={18} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
             </div>
 
 
 
-        </div>
-    );
+                        </div>
+                    );
 };

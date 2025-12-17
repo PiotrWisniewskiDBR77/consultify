@@ -40,14 +40,14 @@ export const AssessmentMatrixCard: React.FC<AssessmentMatrixCardProps> = ({
     const rows = Array.from({ length: maxLevel }, (_, i) => maxLevel - i);
 
     return (
-        <div className="bg-navy-950/30 border border-white/5 rounded-xl p-6 hover:bg-navy-950/50 transition-all flex flex-col h-full group">
+        <div className="bg-white dark:bg-navy-950/30 border border-slate-200 dark:border-white/5 rounded-xl p-6 hover:shadow-md dark:hover:bg-navy-950/50 transition-all flex flex-col h-full group">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                    {icon && <div className="p-2 bg-white/5 rounded-lg text-slate-400 group-hover:text-blue-400 transition-colors">{icon}</div>}
+                    {icon && <div className="p-2 bg-slate-100 dark:bg-white/5 rounded-lg text-slate-500 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{icon}</div>}
                     <div>
                         <div className="flex items-center gap-2 mb-1">
-                            <h3 className="text-lg font-bold text-white leading-none">{title}</h3>
+                            <h3 className="text-lg font-bold text-navy-900 dark:text-white leading-none">{title}</h3>
                             <div className="px-2 py-0.5 rounded bg-blue-600 text-white text-xs font-bold shadow-[0_0_10px_rgba(37,99,235,0.3)]">
                                 {actual.toFixed(1)}
                             </div>
@@ -69,8 +69,8 @@ export const AssessmentMatrixCard: React.FC<AssessmentMatrixCardProps> = ({
                         </div>
                     </div>
                     <div className="flex items-center gap-2 text-xs">
-                        <span className="text-slate-400">Target</span>
-                        <div className="px-2 py-0.5 rounded bg-purple-500/20 border border-purple-500 text-purple-300 font-bold">
+                        <span className="text-slate-500 dark:text-slate-400">Target</span>
+                        <div className="px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-500/20 border border-purple-500 text-purple-600 dark:text-purple-300 font-bold">
                             {target.toFixed(1)}
                         </div>
                     </div>
@@ -93,7 +93,7 @@ export const AssessmentMatrixCard: React.FC<AssessmentMatrixCardProps> = ({
                     {rows.map(level => (
                         <React.Fragment key={level}>
                             {/* Level Label Column */}
-                            <div className="flex items-center justify-start px-4 py-2 bg-purple-900/40 border border-purple-500/30 rounded text-xs font-bold text-white min-h-[60px]">
+                            <div className="flex items-center justify-start px-4 py-2 bg-purple-100 dark:bg-purple-900/40 border border-purple-200 dark:border-purple-500/30 rounded text-xs font-bold text-purple-800 dark:text-white min-h-[60px]">
                                 {level}. Poziom {level === 5 ? 'ekspert' : level === 4 ? 'interaktywny' : level === 3 ? 'zaawansowany' : level === 2 ? 'średni' : 'podstawowy'}
                                 {/* Note: We should probably map these generic names or use data if available. For now hardcoded polish mapping relative to standard 1-5 */}
                             </div>
@@ -120,8 +120,8 @@ export const AssessmentMatrixCard: React.FC<AssessmentMatrixCardProps> = ({
                                             ${isActual
                                                 ? 'bg-blue-600 border-blue-400 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)] z-10 scale-105'
                                                 : isTarget
-                                                    ? 'bg-purple-600/40 border-purple-400 text-white border-dashed'
-                                                    : 'bg-navy-900/40 border-slate-800 text-slate-500 hover:bg-navy-800/40 hover:border-slate-700'
+                                                    ? 'bg-purple-100 dark:bg-purple-600/40 border-purple-400 text-purple-900 dark:text-white border-dashed'
+                                                    : 'bg-slate-50 dark:bg-navy-900/40 border-slate-200 dark:border-slate-800 text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/40 hover:border-slate-300 dark:hover:border-slate-700'
                                             }
                                         `}
                                     >
@@ -144,20 +144,20 @@ export const AssessmentMatrixCard: React.FC<AssessmentMatrixCardProps> = ({
 
                     {/* Bottom Header: Area Names */}
                     {/* Empty cell for Y-axis column */}
-                    <div className="p-4 flex items-center justify-center font-bold text-sm text-white bg-purple-900/80 rounded border border-purple-500/50">
+                    <div className="p-4 flex items-center justify-center font-bold text-sm text-purple-900 dark:text-white bg-purple-200 dark:bg-purple-900/80 rounded border border-purple-300 dark:border-purple-500/50">
                         Poziom
                     </div>
                     {/* Area Headers */}
                     {areas.map(area => (
-                        <div key={`header-${area.id}`} className="bg-purple-900/60 border border-purple-500/30 p-2 rounded flex flex-col items-center justify-center min-h-[50px]">
-                            <span className="text-[10px] font-bold text-slate-300 mb-1">{area.id}</span>
-                            <span className="text-xs font-bold text-white text-center leading-tight">{area.name}</span>
+                        <div key={`header-${area.id}`} className="bg-purple-100 dark:bg-purple-900/60 border border-purple-200 dark:border-purple-500/30 p-2 rounded flex flex-col items-center justify-center min-h-[50px]">
+                            <span className="text-[10px] font-bold text-purple-500 dark:text-slate-300 mb-1">{area.id}</span>
+                            <span className="text-xs font-bold text-purple-900 dark:text-white text-center leading-tight">{area.name}</span>
                         </div>
                     ))}
                 </div>
 
                 {/* Footer Action */}
-                <div className="mt-8 pt-4 border-t border-white/5 flex justify-between items-center">
+                <div className="mt-8 pt-4 border-t border-slate-200 dark:border-white/5 flex justify-between items-center">
                     <div className="flex items-center gap-4">
                         <span className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">
                             {areas.length} Areas Evaluated
@@ -166,11 +166,11 @@ export const AssessmentMatrixCard: React.FC<AssessmentMatrixCardProps> = ({
                         <div className="flex gap-3 text-[10px]">
                             <div className="flex items-center gap-1.5">
                                 <span className="w-2 h-2 rounded-full bg-blue-600 block"></span>
-                                <span className="text-slate-300">Aktualny</span>
+                                <span className="text-slate-500 dark:text-slate-300">Aktualny</span>
                             </div>
                             <div className="flex items-center gap-1.5">
                                 <span className="w-2 h-2 rounded-full border border-purple-400 border-dashed block"></span>
-                                <span className="text-slate-300">Cel</span>
+                                <span className="text-slate-500 dark:text-slate-300">Cel</span>
                             </div>
                         </div>
                     </div>
@@ -178,7 +178,7 @@ export const AssessmentMatrixCard: React.FC<AssessmentMatrixCardProps> = ({
                     {onNavigate && (
                         <button
                             onClick={onNavigate}
-                            className="text-xs text-blue-400 hover:text-white flex items-center gap-1 transition-colors group/btn font-medium"
+                            className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-white flex items-center gap-1 transition-colors group/btn font-medium"
                         >
                             Deep Dive <ArrowRight size={12} className="group-hover/btn:translate-x-0.5 transition-transform" />
                         </button>

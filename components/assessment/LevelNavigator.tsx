@@ -25,10 +25,10 @@ export const LevelNavigator: React.FC<LevelNavigatorProps> = ({
     const levelKeys = ['1', '2', '3', '4', '5', '6', '7'];
 
     return (
-        <div className="w-80 bg-navy-950 border-r border-white/5 flex flex-col shrink-0">
-            <div className="p-6 border-b border-white/5">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{t('assessment.workspace.maturityLevels')}</h3>
-                <p className="text-[10px] text-slate-500">{t('assessment.workspace.levelDetailsHint')}</p>
+        <div className="w-80 bg-white dark:bg-navy-950 border-r border-slate-200 dark:border-white/5 flex flex-col shrink-0">
+            <div className="p-6 border-b border-slate-200 dark:border-white/5">
+                <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">{t('assessment.workspace.maturityLevels')}</h3>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500">{t('assessment.workspace.levelDetailsHint')}</p>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
@@ -58,13 +58,13 @@ export const LevelNavigator: React.FC<LevelNavigatorProps> = ({
                             key={key}
                             onClick={() => onSelectLevel(levelNum)}
                             className={`w-full text-left px-4 py-3 rounded-xl border transition-all relative group ${isActive
-                                ? 'bg-white/10 border-white/20 shadow-lg'
-                                : 'bg-transparent border-transparent hover:bg-white/5 text-slate-400'
+                                ? 'bg-slate-100 dark:bg-white/10 border-slate-200 dark:border-white/20 shadow-sm dark:shadow-lg'
+                                : 'bg-transparent border-transparent hover:bg-slate-50 dark:hover:bg-white/5 text-slate-500 dark:text-slate-400'
                                 }`}
                         >
                             <div className="flex items-center justify-between mb-1">
-                                <span className={`text-sm font-bold flex items-center gap-3 ${isActive ? 'text-white' : 'text-slate-300'}`}>
-                                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs border ${isActive ? 'border-white/30 bg-white/10' : 'border-white/10 bg-navy-900'
+                                <span className={`text-sm font-bold flex items-center gap-3 ${isActive ? 'text-navy-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>
+                                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs border ${isActive ? 'border-primary-200 dark:border-white/30 bg-primary-50 dark:bg-white/10 text-primary-700 dark:text-white' : 'border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 text-slate-500 dark:text-slate-400'
                                         }`}>
                                         {key}
                                     </span>
@@ -73,7 +73,7 @@ export const LevelNavigator: React.FC<LevelNavigatorProps> = ({
                                 {statusLabel}
                             </div>
                             {/* Short preview of title if available in levels prop, otherwise generic */}
-                            <div className={`text-xs truncate ml-9 ${isActive ? 'text-slate-300' : 'text-slate-500'}`}>
+                            <div className={`text-xs truncate ml-9 ${isActive ? 'text-slate-600 dark:text-slate-300' : 'text-slate-400 dark:text-slate-500'}`}>
                                 {levels[key] || `Level ${key} Description`}
                             </div>
                         </button>

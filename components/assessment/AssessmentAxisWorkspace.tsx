@@ -119,34 +119,34 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
 
     // --- Render ---
     return (
-        <div className="flex flex-col h-full bg-navy-900 text-white overflow-hidden">
+        <div className="flex flex-col h-full bg-white dark:bg-navy-900 text-navy-900 dark:text-white overflow-hidden">
             {/* Header */}
-            <div className="h-20 border-b border-white/5 flex items-center justify-between px-6 bg-navy-900 shrink-0 z-20 relative">
+            <div className="h-20 border-b border-slate-200 dark:border-white/5 flex items-center justify-between px-6 bg-white dark:bg-navy-900 shrink-0 z-20 relative">
                 <div className="flex items-center gap-6">
                     {/* Axis Label */}
                     <div className="flex flex-col">
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
                             OBSZAR OCENY
                         </label>
-                        <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                        <h2 className="text-xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
                             {t(`sidebar.fullStep1_${axis === 'cybersecurity' ? 'cyber' : axis === 'aiMaturity' ? 'ai' : axis === 'processes' ? 'proc' : axis === 'digitalProducts' ? 'prod' : axis === 'businessModels' ? 'model' : axis === 'dataManagement' ? 'data' : axis === 'culture' ? 'cult' : 'proc'}`) || axisContent?.title || axis}
-                            <Info size={14} className="text-slate-500 cursor-pointer hover:text-white transition-colors" />
+                            <Info size={14} className="text-slate-500 cursor-pointer hover:text-navy-900 dark:hover:text-white transition-colors" />
                         </h2>
                     </div>
 
                     {/* Sub-Area Selector (If applicable) */}
                     {hasSubAreas && (
-                        <div className="relative group ml-4 pl-4 border-l border-white/10">
+                        <div className="relative group ml-4 pl-4 border-l border-slate-200 dark:border-white/10">
                             <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-0.5 block">OBSZAR FUNKCJONALNY</span>
 
                             {/* Dropdown Trigger */}
-                            <div className="flex items-center gap-2 cursor-pointer text-white font-bold text-sm bg-navy-950/50 px-3 py-1.5 rounded-lg border border-white/5 hover:border-white/20 transition-all">
+                            <div className="flex items-center gap-2 cursor-pointer text-navy-900 dark:text-white font-bold text-sm bg-slate-100 dark:bg-navy-950/50 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20 transition-all">
                                 {activeArea?.title || 'Wybierz Obszar'}
                                 <ChevronDown size={14} className="text-slate-400" />
                             </div>
 
                             {/* Dropdown Menu */}
-                            <div className="absolute top-full left-0 mt-2 w-64 bg-navy-900 border border-white/10 rounded-xl shadow-2xl overflow-hidden invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all z-50">
+                            <div className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl overflow-hidden invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all z-50">
                                 {Object.entries(axisAreas).map(([key, area]: [string, any]) => {
                                     const scores = data.areaScores?.[key] || [0, 0];
                                     const isCompleted = scores[0] > 0 && scores[1] > 0;
@@ -155,7 +155,7 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                                         <button
                                             key={key}
                                             onClick={() => setCurrentAreaKey(key)}
-                                            className={`w-full text-left px-4 py-3 flex items-center justify-between hover:bg-white/5 transition-colors ${key === currentAreaKey ? 'bg-purple-600/10 text-purple-300' : 'text-slate-400'}`}
+                                            className={`w-full text-left px-4 py-3 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${key === currentAreaKey ? 'bg-purple-50 dark:bg-purple-600/10 text-purple-600 dark:text-purple-300' : 'text-slate-500 dark:text-slate-400'}`}
                                         >
                                             <span className="text-sm font-medium">{area.title}</span>
                                             {isCompleted && <CheckCircle2 size={14} className="text-green-500" />}
@@ -169,9 +169,9 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
 
                 <div className="flex items-center gap-6">
                     {/* Overall Progress */}
-                    <div className="flex items-center gap-3 bg-navy-950/50 px-4 py-2 rounded-lg border border-white/5">
+                    <div className="flex items-center gap-3 bg-slate-100 dark:bg-navy-950/50 px-4 py-2 rounded-lg border border-slate-200 dark:border-white/5">
                         <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">POSTĘP OSI</span>
-                        <div className="h-8 w-px bg-white/10 mx-2"></div>
+                        <div className="h-8 w-px bg-slate-200 dark:bg-white/10 mx-2"></div>
                         <div className="flex gap-4 text-sm">
                             <div>
                                 <span className="text-xs text-slate-500 block">Zatwierdzone</span>
@@ -207,7 +207,7 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                         disabled={!data.actual || !data.target}
                         className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm transition-all shadow-lg ${data.actual && data.target
                             ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-purple-900/30'
-                            : 'bg-white/5 text-slate-500 cursor-not-allowed'
+                            : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-500 cursor-not-allowed'
                             }`}
                     >
                         {workspaceT.confirmNext || 'Potwierdź i Dalej'}
@@ -229,7 +229,7 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                 />
 
                 {/* 2. Main Content (Level Detail) */}
-                <div className="flex-1 overflow-y-auto bg-navy-900 relative">
+                <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-navy-900 relative">
                     <div className="max-w-4xl mx-auto p-8 lg:p-12">
 
                         <LevelDetailCard

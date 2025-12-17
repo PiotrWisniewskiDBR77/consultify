@@ -196,12 +196,12 @@ export const FullAssessmentView: React.FC = () => {
     const axisData = fullSession.assessment?.[currentAxisId];
     return (
       <SplitLayout title={ta.header} onSendMessage={handleAiChat}>
-        <div className="flex flex-col h-full bg-navy-900 border-l border-white/5 w-full">
+        <div className="flex flex-col h-full bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-white/5 w-full">
           {/* Back Navigation Bar - Wizard Toggle Removed */}
-          <div className="h-12 border-b border-white/5 flex items-center justify-between px-4 bg-navy-950/30">
+          <div className="h-12 border-b border-slate-200 dark:border-white/5 flex items-center justify-between px-4 bg-slate-50 dark:bg-navy-950/30">
             <button
               onClick={() => onNavigate(AppView.FULL_STEP1_ASSESSMENT)}
-              className="text-xs text-slate-400 hover:text-white flex items-center gap-1"
+              className="text-xs text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white flex items-center gap-1"
             >
               ← {tc.backToDashboard}
             </button>
@@ -228,19 +228,19 @@ export const FullAssessmentView: React.FC = () => {
   // Render 2. Dashboard View
   return (
     <SplitLayout title={ta.dashboardHeader} onSendMessage={handleAiChat}>
-      <div className="flex flex-col h-full bg-navy-900 border-l border-white/5 w-full">
+      <div className="flex flex-col h-full bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-white/5 w-full">
         {/* Tabs */}
-        <div className="h-16 border-b border-white/5 flex items-center px-8 bg-navy-900 shrink-0 justify-between">
+        <div className="h-16 border-b border-slate-200 dark:border-white/5 flex items-center px-8 bg-white dark:bg-navy-900 shrink-0 justify-between">
           <div className="flex items-center gap-8 h-full">
             <button
               onClick={() => setDashboardTab('summary')}
-              className={`h-full border-b-2 text-sm font-semibold transition-colors ${dashboardTab === 'summary' ? 'border-purple-500 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+              className={`h-full border-b-2 text-sm font-semibold transition-colors ${dashboardTab === 'summary' ? 'border-purple-500 text-navy-900 dark:text-white' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
             >
               {ta.tabs.summary}
             </button>
             <button
               onClick={() => setDashboardTab('audits')}
-              className={`h-full border-b-2 text-sm font-semibold transition-colors ${dashboardTab === 'audits' ? 'border-purple-500 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+              className={`h-full border-b-2 text-sm font-semibold transition-colors ${dashboardTab === 'audits' ? 'border-purple-500 text-navy-900 dark:text-white' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
             >
               {ta.tabs.audits}
             </button>
@@ -259,7 +259,7 @@ export const FullAssessmentView: React.FC = () => {
           {dashboardTab === 'summary' ? (
             // Summary / Gap Map
             <>
-              <div className="grid grid-cols-7 gap-1 p-4 bg-navy-950/50 border-b border-white/5">
+              <div className="grid grid-cols-7 gap-1 p-4 bg-slate-50 dark:bg-navy-950/50 border-b border-slate-200 dark:border-white/5">
                 {(['processes', 'digitalProducts', 'businessModels', 'dataManagement', 'culture', 'cybersecurity', 'aiMaturity'] as DRDAxis[]).map(axis => (
                   <button
                     key={axis}
@@ -275,14 +275,14 @@ export const FullAssessmentView: React.FC = () => {
                       };
                       onNavigate(viewMap[axis]);
                     }}
-                    className="p-2 rounded bg-white/5 hover:bg-white/10 text-xs text-center border border-white/5 transition-all group"
+                    className="p-2 rounded bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-xs text-center border border-slate-200 dark:border-white/5 transition-all group"
                   >
-                    <span className="block text-slate-400 group-hover:text-white mb-1 truncate">{axis}</span>
+                    <span className="block text-slate-500 dark:text-slate-400 group-hover:text-navy-900 dark:group-hover:text-white mb-1 truncate">{axis}</span>
                     <div className="flex justify-center gap-1">
-                      <span className="w-5 h-5 rounded bg-navy-900 flex items-center justify-center font-bold text-blue-400">
+                      <span className="w-5 h-5 rounded bg-slate-100 dark:bg-navy-900 flex items-center justify-center font-bold text-blue-600 dark:text-blue-400">
                         {fullSession.assessment?.[axis]?.actual || '-'}
                       </span>
-                      <span className="w-5 h-5 rounded bg-navy-900 flex items-center justify-center font-bold text-purple-400">
+                      <span className="w-5 h-5 rounded bg-slate-100 dark:bg-navy-900 flex items-center justify-center font-bold text-purple-600 dark:text-purple-400">
                         {fullSession.assessment?.[axis]?.target || '-'}
                       </span>
                     </div>

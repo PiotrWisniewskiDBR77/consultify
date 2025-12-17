@@ -170,7 +170,7 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
 
             {/* Desktop Collapsed Trigger */}
             {isCollapsed && (
-                <div className="hidden lg:flex w-12 border-r border-white/5 bg-navy-950 flex-col items-center py-4 gap-4 h-full shrink-0">
+                <div className="hidden lg:flex w-12 border-r border-slate-200 dark:border-white/5 bg-white dark:bg-navy-950 flex-col items-center py-4 gap-4 h-full shrink-0">
                     <button
                         onClick={() => setIsCollapsed(false)}
                         className="w-8 h-8 rounded bg-brand/10 text-brand flex items-center justify-center hover:bg-brand/20 transition-colors"

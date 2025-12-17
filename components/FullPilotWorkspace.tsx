@@ -498,26 +498,26 @@ export const FullPilotWorkspace: React.FC<FullPilotWorkspaceProps> = ({
     };
 
     return (
-        <div className="flex flex-col h-full bg-navy-950 text-white">
+        <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white">
             {/* Header */}
-            <div className="h-20 border-b border-white/10 px-8 flex items-center justify-between bg-navy-900/50 backdrop-blur-sm sticky top-0 z-10">
+            <div className="h-20 border-b border-slate-200 dark:border-white/10 px-8 flex items-center justify-between bg-white/50 dark:bg-navy-900/50 backdrop-blur-sm sticky top-0 z-10">
                 <div>
-                    <div className="text-xs font-bold text-purple-400 uppercase tracking-widest mb-1 flex items-center gap-2">
+                    <div className="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-widest mb-1 flex items-center gap-2">
                         <span>MODULE 4: PILOT EXECUTION</span>
                         {pilotInitiative.status === 'Validating' && <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>}
                     </div>
-                    <h1 className="text-2xl font-bold flex items-center gap-3">
+                    <h1 className="text-2xl font-bold flex items-center gap-3 text-navy-900 dark:text-white">
                         {pilotInitiative.name}
-                        {pilotInitiative.status === 'Validating' && <span className="text-xs bg-green-900 text-green-400 border border-green-700 px-2 py-1 rounded">LIVE</span>}
+                        {pilotInitiative.status === 'Validating' && <span className="text-xs bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-700 px-2 py-1 rounded">LIVE</span>}
                     </h1>
                 </div>
                 <div className="flex items-center gap-4">
                     {isEditing ? (
-                        <button onClick={handleSave} className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-sm font-bold transition-colors">
+                        <button onClick={handleSave} className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-sm font-bold transition-colors text-white">
                             <Save size={16} /> Save Changes
                         </button>
                     ) : (
-                        <button onClick={startEdit} className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm font-bold transition-colors border border-white/10">
+                        <button onClick={startEdit} className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 rounded-lg text-sm font-bold transition-colors border border-slate-200 dark:border-white/10 text-slate-600 dark:text-white">
                             <Edit3 size={16} /> Edit Design
                         </button>
                     )}
@@ -525,7 +525,7 @@ export const FullPilotWorkspace: React.FC<FullPilotWorkspaceProps> = ({
             </div>
 
             {/* Navigation Tabs (Updated Structure) */}
-            <div className="flex border-b border-white/10 px-8 gap-8 mt-4">
+            <div className="flex border-b border-slate-200 dark:border-white/10 px-8 gap-8 mt-4">
                 {[
                     { id: 'design', label: '1. Design', icon: Target }, // 4.1 Scope -> Design
                     { id: 'team', label: '2. Team', icon: Users },
@@ -536,7 +536,7 @@ export const FullPilotWorkspace: React.FC<FullPilotWorkspaceProps> = ({
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as PilotTab)}
-                        className={`pb-4 flex items-center gap-2 text-sm font-medium transition-colors border-b-2 ${activeTab === tab.id ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-white'}`}
+                        className={`pb-4 flex items-center gap-2 text-sm font-medium transition-colors border-b-2 ${activeTab === tab.id ? 'border-purple-500 text-purple-600 dark:text-purple-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'}`}
                     >
                         <tab.icon size={16} />
                         {tab.label}
@@ -545,7 +545,7 @@ export const FullPilotWorkspace: React.FC<FullPilotWorkspaceProps> = ({
             </div>
 
             {/* Tab Content */}
-            <div className="flex-1 overflow-y-auto p-8 bg-navy-950">
+            <div className="flex-1 overflow-y-auto p-8 bg-slate-50 dark:bg-navy-950">
                 <div className="max-w-6xl mx-auto">
                     {renderContent()}
                 </div>

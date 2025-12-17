@@ -97,7 +97,7 @@ export const AssessmentWizard: React.FC<AssessmentWizardProps> = ({
     };
 
     return (
-        <div className="flex flex-col h-full bg-navy-900 text-white relative overflow-hidden">
+        <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-900 text-navy-900 dark:text-white relative overflow-hidden transition-colors">
 
             {/* Background Decor */}
             <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/2"></div>
@@ -108,7 +108,7 @@ export const AssessmentWizard: React.FC<AssessmentWizardProps> = ({
                 {/* BACK / CANCEL BUTTON */}
                 <button
                     onClick={onCancel}
-                    className="absolute top-8 left-8 text-slate-500 hover:text-white transition-colors flex items-center gap-2 text-sm"
+                    className="absolute top-8 left-8 text-slate-500 hover:text-navy-900 dark:hover:text-white transition-colors flex items-center gap-2 text-sm"
                 >
                     <ArrowLeft size={16} />
                     {wizT.cancel || 'Cancel'}
@@ -117,15 +117,15 @@ export const AssessmentWizard: React.FC<AssessmentWizardProps> = ({
                 {/* STEP 1: INTRO */}
                 {step === 'intro' && (
                     <div className="text-center space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="w-20 h-20 bg-purple-500/10 rounded-2xl flex items-center justify-center mx-auto border border-purple-500/20 mb-6">
-                            <RefreshCcw size={40} className="text-purple-400" />
+                        <div className="w-20 h-20 bg-purple-500/10 rounded-2xl flex items-center justify-center mx-auto border border-purple-500/20 mb-6 font-bold text-purple-600 dark:text-purple-400">
+                            <RefreshCcw size={40} />
                         </div>
 
                         <div>
-                            <h2 className="text-3xl font-bold mb-4">
+                            <h2 className="text-3xl font-bold mb-4 text-navy-900 dark:text-white">
                                 {axisContent.title} Assessment
                             </h2>
-                            <p className="text-slate-400 text-lg max-w-xl mx-auto leading-relaxed text-justify">
+                            <p className="text-slate-600 dark:text-slate-400 text-lg max-w-xl mx-auto leading-relaxed text-justify">
                                 {axisContent.intro || wizT.startDesc}
                             </p>
                             <p className="text-sm text-slate-500 mt-4">
@@ -152,7 +152,7 @@ export const AssessmentWizard: React.FC<AssessmentWizardProps> = ({
                                 <span>Area {currentAreaIdx + 1} / {areaKeys.length}</span>
                                 <span>{Math.round(((currentAreaIdx) / areaKeys.length) * 100)}%</span>
                             </div>
-                            <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+                            <div className="h-1 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
                                 <div
                                     className="h-full bg-purple-500 transition-all duration-500 ease-out"
                                     style={{ width: `${((currentAreaIdx) / areaKeys.length) * 100}%` }}
@@ -162,8 +162,8 @@ export const AssessmentWizard: React.FC<AssessmentWizardProps> = ({
 
                         {/* Area Title */}
                         <div className="mb-8 text-center">
-                            <h3 className="text-2xl font-bold mb-2">{currentArea.title}</h3>
-                            <p className="text-slate-400 text-sm">Select the level that best describes your current state.</p>
+                            <h3 className="text-2xl font-bold mb-2 text-navy-900 dark:text-white">{currentArea.title}</h3>
+                            <p className="text-slate-500 dark:text-slate-400 text-sm">Select the level that best describes your current state.</p>
                         </div>
 
                         {/* Level Options */}
@@ -174,12 +174,12 @@ export const AssessmentWizard: React.FC<AssessmentWizardProps> = ({
                                     <button
                                         key={idx}
                                         onClick={() => handleLevelSelect(levelNum)}
-                                        className="group flex items-center gap-4 p-4 rounded-xl border border-white/10 bg-white/5 hover:bg-purple-500/10 hover:border-purple-500/50 transition-all text-left"
+                                        className="group flex items-center gap-4 p-4 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 hover:bg-purple-50 dark:hover:bg-purple-500/10 hover:border-purple-500/50 transition-all text-left shadow-sm dark:shadow-none"
                                     >
-                                        <div className="w-8 h-8 rounded-full bg-navy-900 border border-white/20 flex items-center justify-center text-xs font-bold text-slate-400 group-hover:border-purple-500 group-hover:text-purple-400 shrink-0">
+                                        <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-white/20 flex items-center justify-center text-xs font-bold text-slate-500 dark:text-slate-400 group-hover:border-purple-500 group-hover:text-purple-600 dark:group-hover:text-purple-400 shrink-0">
                                             {levelNum}
                                         </div>
-                                        <span className="text-sm md:text-base text-slate-300 group-hover:text-white transition-colors">
+                                        <span className="text-sm md:text-base text-slate-700 dark:text-slate-300 group-hover:text-navy-900 dark:group-hover:text-white transition-colors">
                                             {lvl}
                                         </span>
                                     </button>
@@ -194,17 +194,17 @@ export const AssessmentWizard: React.FC<AssessmentWizardProps> = ({
                     <div className="text-center max-w-xl mx-auto animate-in fade-in slide-in-from-bottom-8 duration-700">
                         <div className="mb-6 relative inline-block">
                             <div className="absolute inset-0 bg-purple-500 blur-2xl opacity-20 rounded-full"></div>
-                            <Award size={80} className="text-purple-400 relative z-10" />
+                            <Award size={80} className="text-purple-500 dark:text-purple-400 relative z-10" />
                         </div>
 
                         <div className="mb-8">
-                            <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">
+                            <h2 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">
                                 {wizT.recommendedLevel}
                             </h2>
-                            <div className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 mb-4">
+                            <div className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 mb-4">
                                 Level {recommendedLevel}
                             </div>
-                            <p className="text-slate-300 text-lg">
+                            <p className="text-slate-600 dark:text-slate-300 text-lg">
                                 Based on your detailed assessment of {areaKeys.length} sub-areas.
                             </p>
                         </div>
@@ -212,7 +212,7 @@ export const AssessmentWizard: React.FC<AssessmentWizardProps> = ({
                         <div className="space-y-4">
                             <button
                                 onClick={handleComplete}
-                                className="w-full bg-white text-navy-950 hover:bg-slate-200 px-8 py-4 rounded-xl font-bold text-lg shadow-xl transition-colors flex items-center justify-center gap-2"
+                                className="w-full bg-navy-900 dark:bg-white text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-slate-200 px-8 py-4 rounded-xl font-bold text-lg shadow-xl transition-colors flex items-center justify-center gap-2"
                             >
                                 <Check size={20} />
                                 {wizT.acceptResult}
@@ -220,7 +220,7 @@ export const AssessmentWizard: React.FC<AssessmentWizardProps> = ({
 
                             <button
                                 onClick={onCancel}
-                                className="w-full bg-white/5 hover:bg-white/10 text-slate-300 px-8 py-4 rounded-xl font-semibold transition-colors"
+                                className="w-full bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 px-8 py-4 rounded-xl font-semibold transition-colors"
                             >
                                 {wizT.adjustManually}
                             </button>

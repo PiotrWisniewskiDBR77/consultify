@@ -32,7 +32,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
         <div
             onClick={onClick}
             className={`
-        bg-navy-900 border rounded-lg p-4 cursor-pointer hover:shadow-lg transition-all group
+        bg-white dark:bg-navy-900 border rounded-lg p-4 cursor-pointer hover:shadow-lg transition-all group shadow-sm dark:shadow-none
         ${getStatusColor(task.status).split(' ')[0]} border-opacity-30 hover:border-opacity-100
       `}
         >
@@ -51,7 +51,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
                     </span>
                     {/* Scope Badge */}
                     {task.scope && (
-                        <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border border-purple-500 text-purple-400 bg-purple-500/10">
+                        <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border border-purple-500 text-purple-600 dark:text-purple-400 bg-purple-500/10">
                             {task.scope}
                         </span>
                     )}
@@ -59,7 +59,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
                 {task.priority === 'urgent' && <AlertCircle size={14} className="text-red-500" />}
             </div>
 
-            <h4 className="text-white text-sm font-medium mb-1 line-clamp-2">{task.title}</h4>
+            <h4 className="text-navy-900 dark:text-white text-sm font-medium mb-1 line-clamp-2">{task.title}</h4>
 
             {task.why && (
                 <p className="text-xs text-slate-500 italic mb-3 line-clamp-2">
@@ -70,7 +70,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
             <div className="flex items-center justify-between text-xs text-slate-400 mt-3">
                 <div className="flex items-center gap-2">
                     {task.assignee ? (
-                        <div className="flex items-center gap-1 text-blue-300" title={`${task.assignee.firstName} ${task.assignee.lastName}`}>
+                        <div className="flex items-center gap-1 text-blue-600 dark:text-blue-300" title={`${task.assignee.firstName} ${task.assignee.lastName}`}>
                             {task.assignee.avatarUrl ? (
                                 <img src={task.assignee.avatarUrl} alt="Avatar" className="w-4 h-4 rounded-full" />
                             ) : (
@@ -79,12 +79,12 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
                             <span className="max-w-[60px] truncate">{task.assignee.lastName}</span>
                         </div>
                     ) : (
-                        <span className="text-slate-600 flex items-center gap-1"><User size={12} /> Unassigned</span>
+                        <span className="text-slate-600 dark:text-slate-500 flex items-center gap-1"><User size={12} /> Unassigned</span>
                     )}
                 </div>
 
                 {task.dueDate && (
-                    <div className={`flex items-center gap-1 ${new Date(task.dueDate) < new Date() && task.status !== 'completed' ? 'text-red-400' : ''}`}>
+                    <div className={`flex items-center gap-1 ${new Date(task.dueDate) < new Date() && task.status !== 'completed' ? 'text-red-500 dark:text-red-400' : ''}`}>
                         <Calendar size={12} />
                         <span>{new Date(task.dueDate).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })}</span>
                     </div>
@@ -93,7 +93,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
 
             {totalChecks > 0 && (
                 <div className="mt-3 flex items-center gap-2">
-                    <div className="flex-1 h-1 bg-navy-950 rounded-full overflow-hidden">
+                    <div className="flex-1 h-1 bg-slate-100 dark:bg-navy-950 rounded-full overflow-hidden">
                         <div
                             className="h-full bg-blue-500"
                             style={{ width: `${(completedChecks / totalChecks) * 100}%` }}

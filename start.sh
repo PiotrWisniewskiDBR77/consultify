@@ -6,7 +6,10 @@ if ! command -v npm &> /dev/null; then
     exit 1
 fi
 
-echo "Installing dependencies..."
+echo "Installing backend dependencies..."
+cd server && npm install && cd ..
+
+echo "Installing frontend dependencies..."
 npm install
 
 if [ $? -eq 0 ]; then
