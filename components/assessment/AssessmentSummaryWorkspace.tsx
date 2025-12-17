@@ -393,46 +393,43 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
 
                             <div className="space-y-4 mb-4">
                                 {comments.map(comment => (
-                                    <div key={comment.id} className="bg-navy-950/30 rounded-lg p-3 border border-white/5">
+                                    <div key={comment.id} className="bg-white dark:bg-navy-950/30 rounded-lg p-3 border border-slate-200 dark:border-white/5">
                                         <div className="flex justify-between items-center mb-1">
-                                            <span className="text-xs font-bold text-blue-400">{comment.author}</span>
+                                            <span className="text-xs font-bold text-blue-600 dark:text-blue-400">{comment.author}</span>
                                             <span className="text-[10px] text-slate-500">{comment.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                         </div>
-                                        {comments.map(comment => (
-                                            <div key={comment.id} className="bg-white dark:bg-navy-950/30 rounded-lg p-3 border border-slate-200 dark:border-white/5">
-                                                <div className="flex justify-between items-center mb-1">
-                                                    <span className="text-xs font-bold text-blue-600 dark:text-blue-400">{comment.author}</span>
-                                                </div>
-
-                                                <div className="flex gap-2">
-                                                    <input
-                                                        type="text"
-                                                        value={newComment}
-                                                        onChange={(e) => setNewComment(e.target.value)}
-                                                        onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
-                                                        placeholder="Add a comment or observation..."
-                                                        type="text"
-                                                        value={newComment}
-                                                        onChange={(e) => setNewComment(e.target.value)}
-                                                        onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
-                                                        placeholder="Add a comment or observation..."
-                                                        className="flex-1 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg px-4 py-2 text-sm text-navy-900 dark:text-white focus:outline-none focus:border-purple-500/50"
-                                                    />
-                                                    <button
-                                                        onClick={handleAddComment}
-                                                        disabled={!newComment.trim()}
-                                                        className="p-2 bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-500 text-white rounded-lg transition-colors"
-                                                    >
-                                                        <Plus size={18} />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        )}
+                                        <p className="text-sm text-navy-900 dark:text-slate-300">{comment.text}</p>
                                     </div>
-            </div>
+                                ))}
+                            </div>
 
-
-
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    value={newComment}
+                                    onChange={(e) => setNewComment(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
+                                    placeholder="Add a comment or observation..."
+                                    className="flex-1 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg px-4 py-2 text-sm text-navy-900 dark:text-white focus:outline-none focus:border-purple-500/50"
+                                />
+                                <button
+                                    onClick={handleAddComment}
+                                    disabled={!newComment.trim()}
+                                    className="p-2 bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-500 text-white rounded-lg transition-colors"
+                                >
+                                    <Plus size={18} />
+                                </button>
+                            </div>
                         </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
+
+                        </div >
                     );
 };
