@@ -428,8 +428,3 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
     );
 };
 
-
-
-                        </div >
-                    );
-};
