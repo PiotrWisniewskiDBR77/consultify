@@ -57,7 +57,7 @@ export const FullPilotWorkspace: React.FC<FullPilotWorkspaceProps> = ({
                         <h2 className="text-2xl font-bold mb-2">Experiment Design</h2>
                         <p className="text-slate-400">Define the parameters of your management experiment.</p>
                     </div>
-                    {!isEditing && pilotInitiative.status !== 'Validating' && (
+                    {!isEditing && (pilotInitiative.status as string) !== 'Validating' && (
                         <div className="flex gap-4">
                             {!isReadyToStart ? (
                                 <div className="px-4 py-2 bg-slate-800 rounded-lg text-slate-400 text-sm flex items-center gap-2 border border-slate-700">
@@ -73,7 +73,7 @@ export const FullPilotWorkspace: React.FC<FullPilotWorkspaceProps> = ({
                             )}
                         </div>
                     )}
-                    {pilotInitiative.status === 'Validating' && (
+                    {(pilotInitiative.status as string) === 'Validating' && (
                         <div className="px-4 py-2 bg-green-500/20 text-green-400 border border-green-500/30 rounded-lg font-bold flex items-center gap-2">
                             <span className="relative flex h-3 w-3">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
@@ -504,11 +504,11 @@ export const FullPilotWorkspace: React.FC<FullPilotWorkspaceProps> = ({
                 <div>
                     <div className="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-widest mb-1 flex items-center gap-2">
                         <span>MODULE 4: PILOT EXECUTION</span>
-                        {pilotInitiative.status === 'Validating' && <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>}
+                        {(pilotInitiative.status as string) === 'Validating' && <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>}
                     </div>
                     <h1 className="text-2xl font-bold flex items-center gap-3 text-navy-900 dark:text-white">
                         {pilotInitiative.name}
-                        {pilotInitiative.status === 'Validating' && <span className="text-xs bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-700 px-2 py-1 rounded">LIVE</span>}
+                        {(pilotInitiative.status as string) === 'Validating' && <span className="text-xs bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-700 px-2 py-1 rounded">LIVE</span>}
                     </h1>
                 </div>
                 <div className="flex items-center gap-4">

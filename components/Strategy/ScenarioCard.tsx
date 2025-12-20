@@ -28,9 +28,7 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({ scenario, isRecommen
     const { t: translate } = useTranslation();
     const t = translate('transformationScenarios', { returnObjects: true }) as any;
 
-    //@ts-ignore
     const name = t.scenarios[scenario.id]?.name || scenario.name;
-    //@ts-ignore
     const narrative = t.scenarios[scenario.id]?.narrative || scenario.narrative;
     const recommendedText = t.recommended;
 

@@ -14,7 +14,6 @@ export const DeepDivePanel: React.FC<DeepDivePanelProps> = ({ scenario, isRecomm
     const { t: translate } = useTranslation();
     const t = translate('transformationScenarios', { returnObjects: true }) as any;
 
-    //@ts-ignore
     const sTexts = t.scenarios[scenario.id];
 
     // Helpers to fallback to english or default

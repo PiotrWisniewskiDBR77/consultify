@@ -963,7 +963,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                                                                 value={m.decision || 'continue'}
                                                                 onChange={e => {
                                                                     const list = [...(initiative.milestones || [])];
-                                                                    // @ts-ignore
+                                                                    // @ts-expect-error - decision type is dynamic
                                                                     list[idx] = { ...m, decision: e.target.value };
                                                                     setInitiative({ ...initiative, milestones: list });
                                                                 }}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Task } from '../../types'; // Adjust legacy import path if needed
+import { Task, TaskStatus } from '../../types'; // Adjust legacy import path if needed
 import { AlertCircle, CheckCircle, Lock } from 'lucide-react';
 
 interface Props {
@@ -9,8 +9,8 @@ interface Props {
 
 export const TeamHealthBar: React.FC<Props> = ({ tasks, teamName = "Team" }) => {
     const total = tasks.length;
-    const blocked = tasks.filter(t => t.status === 'blocked').length;
-    const overdue = tasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'done' && t.status !== 'completed').length;
+    const blocked = tasks.filter(t => t.status === TaskStatus.BLOCKED).length;
+    const overdue = tasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== TaskStatus.DONE).length;
 
     // Health logic
     let healthStatus: 'Healthy' | 'At Risk' | 'Critical' = 'Healthy';
