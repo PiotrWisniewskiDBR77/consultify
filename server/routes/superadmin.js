@@ -548,4 +548,285 @@ router.delete('/storage/files', async (req, res) => {
     }
 });
 
+// ==========================================
+// LEGAL DOCUMENT MANAGEMENT (SuperAdmin)
+// ==========================================
+
+const LegalService = require('../services/legalService');
+
+/**
+ * GET /api/superadmin/legal/all
+ * List all legal document versions
+ */
+router.get('/legal/all', async (req, res) => {
+    try {
+        const documents = await LegalService.getAllDocuments();
+        res.json(documents);
+    } catch (err) {
+        console.error('[SuperAdmin] Legal documents error:', err);
+        res.status(500).json({ error: 'Failed to fetch legal documents' });
+    }
+});
+
+/**
+ * POST /api/superadmin/legal/publish
+ * Publish a new legal document version
+ * Body: { docType, version, title, contentMd, effectiveFrom, expiresAt?, reacceptRequiredFrom?, scopeType?, scopeValue?, changeSummary? }
+ */
+router.post('/legal/publish', async (req, res) => {
+    try {
+        const {
+            docType, version, title, contentMd, effectiveFrom,
+            expiresAt, reacceptRequiredFrom, scopeType, scopeValue, changeSummary, previousVersionId
+        } = req.body;
+
+        // Validate required fields
+        if (!docType || !version || !title || !contentMd || !effectiveFrom) {
+            return res.status(400).json({
+                error: 'Required fields: docType, version, title, contentMd, effectiveFrom'
+            });
+        }
+
+        // Validate docType
+        const validTypes = ['TOS', 'PRIVACY', 'COOKIES', 'AUP', 'AI_POLICY', 'DPA'];
+        if (!validTypes.includes(docType.toUpperCase())) {
+            return res.status(400).json({ error: `Invalid docType. Must be one of: ${validTypes.join(', ')}` });
+        }
+
+        // Validate scopeType if provided
+        const validScopes = ['global', 'region', 'product', 'license_tier'];
+        if (scopeType && !validScopes.includes(scopeType)) {
+            return res.status(400).json({ error: `Invalid scopeType. Must be one of: ${validScopes.join(', ')}` });
+        }
+
+        const document = await LegalService.publishDocument({
+            docType: docType.toUpperCase(),
+            version,
+            title,
+            contentMd,
+            effectiveFrom,
+            createdBy: req.user.id,
+            expiresAt,
+            reacceptRequiredFrom,
+            scopeType: scopeType || 'global',
+            scopeValue,
+            changeSummary,
+            previousVersionId
+        });
+
+        // Log activity
+        ActivityService.log({
+            userId: req.user.id,
+            action: 'legal_document_published',
+            entityType: 'legal_document',
+            entityId: document.id,
+            entityName: `${docType} v${version}`,
+            newValue: { docType, version, effectiveFrom, scopeType, expiresAt, reacceptRequiredFrom }
+        });
+
+        res.json(document);
+    } catch (err) {
+        console.error('[SuperAdmin] Publish legal document error:', err);
+        res.status(500).json({ error: 'Failed to publish document' });
+    }
+});
+
+
+/**
+ * PUT /api/superadmin/legal/:id/toggle-active
+ * Toggle document active status
+ * Body: { isActive: boolean }
+ */
+router.put('/legal/:id/toggle-active', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { isActive } = req.body;
+
+        if (typeof isActive !== 'boolean') {
+            return res.status(400).json({ error: 'isActive must be a boolean' });
+        }
+
+        const result = await LegalService.toggleDocumentActive(id, isActive);
+
+        ActivityService.log({
+            userId: req.user.id,
+            action: isActive ? 'legal_document_activated' : 'legal_document_deactivated',
+            entityType: 'legal_document',
+            entityId: id
+        });
+
+        res.json(result);
+    } catch (err) {
+        console.error('[SuperAdmin] Toggle document error:', err);
+        res.status(500).json({ error: err.message || 'Failed to toggle document status' });
+    }
+});
+
+/**
+ * GET /api/superadmin/legal/:id
+ * Get full document content by ID
+ */
+router.get('/legal/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const document = await new Promise((resolve, reject) => {
+            db.get('SELECT * FROM legal_documents WHERE id = ?', [id], (err, row) => {
+                if (err) return reject(err);
+                resolve(row);
+            });
+        });
+
+        if (!document) {
+            return res.status(404).json({ error: 'Document not found' });
+        }
+
+        res.json(document);
+    } catch (err) {
+        console.error('[SuperAdmin] Get document error:', err);
+        res.status(500).json({ error: 'Failed to fetch document' });
+    }
+});
+
+// ==========================================
+// ENTERPRISE+ LEGAL EVENTS AUDIT LOG
+// ==========================================
+
+const { LegalEventLogger } = require('../services/legalEventLogger');
+
+/**
+ * GET /api/superadmin/legal/events
+ * Get legal events audit log (SuperAdmin only)
+ * Query params: organizationId, userId, documentId, eventTypes, dateFrom, dateTo, limit
+ */
+router.get('/legal-events', async (req, res) => {
+    try {
+        const { organizationId, userId, documentId, eventTypes, dateFrom, dateTo, limit } = req.query;
+
+        const events = await LegalEventLogger.getEvents({
+            organizationId,
+            userId,
+            documentId,
+            eventTypes: eventTypes ? eventTypes.split(',') : null,
+            dateFrom,
+            dateTo,
+            limit: limit ? parseInt(limit, 10) : 1000
+        });
+
+        // Parse metadata JSON
+        const parsedEvents = events.map(e => ({
+            ...e,
+            metadata: typeof e.metadata === 'string' ? JSON.parse(e.metadata) : e.metadata
+        }));
+
+        res.json({
+            count: parsedEvents.length,
+            events: parsedEvents
+        });
+    } catch (err) {
+        console.error('[SuperAdmin] Legal events error:', err);
+        res.status(500).json({ error: 'Failed to fetch legal events' });
+    }
+});
+
+/**
+ * GET /api/superadmin/legal/events/stats
+ * Get legal events statistics (SuperAdmin only)
+ */
+router.get('/legal-events/stats', async (req, res) => {
+    try {
+        const { organizationId, days } = req.query;
+        const stats = await LegalEventLogger.getEventStats(
+            organizationId || null,
+            days ? parseInt(days, 10) : 30
+        );
+
+        res.json({
+            period: `${days || 30} days`,
+            stats
+        });
+    } catch (err) {
+        console.error('[SuperAdmin] Legal event stats error:', err);
+        res.status(500).json({ error: 'Failed to fetch event stats' });
+    }
+});
+
+// ==========================================
+// STEP 4: ATTRIBUTION SYSTEM (Enterprise+)
+// ==========================================
+
+const AttributionService = require('../services/attributionService');
+
+/**
+ * GET /api/superadmin/organizations/:id/attribution
+ * Get all attribution events for an organization
+ */
+router.get('/organizations/:id/attribution', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const attribution = await AttributionService.getOrganizationAttribution(id);
+        const firstAttribution = await AttributionService.getFirstAttribution(id);
+
+        res.json({
+            organizationId: id,
+            firstAttribution,
+            allEvents: attribution,
+            totalEvents: attribution.length
+        });
+    } catch (err) {
+        console.error('[SuperAdmin] Attribution fetch error:', err);
+        res.status(500).json({ error: 'Failed to fetch attribution data' });
+    }
+});
+
+/**
+ * GET /api/superadmin/attribution/export
+ * Export attribution data for compliance and partner settlements
+ * Query params: startDate, endDate, partnerCode, sourceType
+ */
+router.get('/attribution/export', async (req, res) => {
+    try {
+        const { startDate, endDate, partnerCode, sourceType } = req.query;
+
+        const data = await AttributionService.exportAttribution({
+            startDate,
+            endDate,
+            partnerCode,
+            sourceType
+        });
+
+        res.json({
+            count: data.length,
+            filters: { startDate, endDate, partnerCode, sourceType },
+            data
+        });
+    } catch (err) {
+        console.error('[SuperAdmin] Attribution export error:', err);
+        res.status(500).json({ error: 'Failed to export attribution data' });
+    }
+});
+
+/**
+ * GET /api/superadmin/attribution/partner-summary
+ * Get summary of attribution by partner code for settlements
+ * Query params: startDate, endDate
+ */
+router.get('/attribution/partner-summary', async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+
+        const summary = await AttributionService.getPartnerSummary(startDate, endDate);
+
+        res.json({
+            period: { startDate: startDate || 'all-time', endDate: endDate || 'now' },
+            partners: summary
+        });
+    } catch (err) {
+        console.error('[SuperAdmin] Partner summary error:', err);
+        res.status(500).json({ error: 'Failed to get partner summary' });
+    }
+});
+
 module.exports = router;
+
+

@@ -222,6 +222,26 @@ app.use('/api/locations', locationsRoutes);
 const notificationSettingsRoutes = require('./routes/notificationSettings');
 app.use('/api/notification-settings', notificationSettingsRoutes);
 
+// Legal & Compliance Routes
+const legalRoutes = require('./routes/legal');
+app.use('/api/legal', legalRoutes);
+
+// Trial + Demo Access Model Routes
+const demoRoutes = require('./routes/demo');
+const orgLimitsRoutes = require('./routes/organization-limits');
+app.use('/api/demo', demoRoutes);
+app.use('/api/organization', orgLimitsRoutes);
+
+// Step 4: Promo Codes + Attribution Routes
+const promoRoutes = require('./routes/promo');
+app.use('/api/promo', promoRoutes);
+
+// Step 5: Partner Settlements Routes
+const partnerRoutes = require('./routes/partners');
+const settlementRoutes = require('./routes/settlements');
+app.use('/api/partners', partnerRoutes);
+app.use('/api/settlements', settlementRoutes);
+
 // AI Core Layer Routes (already mounted above at /api/ai)
 
 const db = require('./database');

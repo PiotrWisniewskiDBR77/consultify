@@ -180,11 +180,36 @@ router.post('/revert-impersonation', authMiddleware, (req, res) => {
 
 
 // REGISTER (New Company)
-router.post('/register', (req, res) => {
-    const { email, password, firstName, lastName, companyName, accessCode, isDemo } = req.body;
+// Step 4: Enhanced with promo code support and attribution tracking
+router.post('/register', async (req, res) => {
+    const {
+        email, password, firstName, lastName, companyName, accessCode, isDemo,
+        promoCode, utm_campaign, utm_medium, partner_code
+    } = req.body;
+
+    // Import services (lazy load to avoid circular deps)
+    const PromoCodeService = require('../services/promoCodeService');
+    const AttributionService = require('../services/attributionService');
+
+    // Step 4: Validate promo code if provided (before any DB operations)
+    let promoValidation = null;
+    if (promoCode) {
+        try {
+            promoValidation = await PromoCodeService.validatePromoCode(promoCode);
+            if (!promoValidation.valid) {
+                return res.status(400).json({
+                    error: promoValidation.reason,
+                    errorCode: 'INVALID_PROMO_CODE'
+                });
+            }
+        } catch (err) {
+            console.error('[Auth] Promo validation error:', err);
+            return res.status(500).json({ error: 'Failed to validate promo code' });
+        }
+    }
 
     // Check if user exists
-    db.get('SELECT id FROM users WHERE email = ?', [email], (err, row) => {
+    db.get('SELECT id FROM users WHERE email = ?', [email], async (err, row) => {
         if (row) return res.status(400).json({ error: 'Email already in use' });
 
         const orgId = uuidv4();
@@ -192,10 +217,10 @@ router.post('/register', (req, res) => {
         const hashedPassword = bcrypt.hashSync(password, 8);
 
         // Helper function to proceed with insertion
-        const proceedWithRegistration = (finalStatus, finalPlan) => {
+        const proceedWithRegistration = async (finalStatus, finalPlan) => {
             // 1. Create Organization
             const insertOrg = db.prepare(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`);
-            insertOrg.run(orgId, companyName || 'My Company', finalPlan, finalStatus, (err) => {
+            insertOrg.run(orgId, companyName || 'My Company', finalPlan, finalStatus, async (err) => {
                 if (err) {
                     if (process.env.NODE_ENV !== 'production') console.error('Register Org Error:', err);
                     return res.status(500).json({ error: 'Failed to create organization' });
@@ -204,12 +229,46 @@ router.post('/register', (req, res) => {
 
                 // 2. Create Admin User for that Org
                 const insertUser = db.prepare(`INSERT INTO users (id, organization_id, email, password, first_name, last_name, role) VALUES (?, ?, ?, ?, ?, ?, ?)`);
-                insertUser.run(userId, orgId, email, hashedPassword, firstName, lastName, 'ADMIN', (err) => {
+                insertUser.run(userId, orgId, email, hashedPassword, firstName, lastName, 'ADMIN', async (err) => {
                     if (err) {
                         if (process.env.NODE_ENV !== 'production') console.error('Register User Error:', err);
                         return res.status(500).json({ error: 'Failed to create user' });
                     }
                     insertUser.finalize();
+
+                    // Step 4: Record attribution event
+                    try {
+                        await AttributionService.recordAttribution({
+                            organizationId: orgId,
+                            userId: userId,
+                            sourceType: promoCode
+                                ? AttributionService.SOURCE_TYPES.PROMO_CODE
+                                : AttributionService.SOURCE_TYPES.SELF_SERVE,
+                            sourceId: promoValidation?.codeId || null,
+                            campaign: utm_campaign,
+                            partnerCode: promoValidation?.partnerCode || partner_code,
+                            medium: utm_medium,
+                            metadata: {
+                                promoCode: promoCode || null,
+                                accessCode: accessCode || null,
+                                isDemo,
+                                entryPoint: 'registration'
+                            }
+                        });
+                    } catch (attrErr) {
+                        console.error('[Auth] Attribution recording failed:', attrErr);
+                        // Don't block registration on attribution failure
+                    }
+
+                    // Step 4: Mark promo code as used (if applicable)
+                    if (promoCode && promoValidation?.valid) {
+                        try {
+                            await PromoCodeService.markPromoCodeUsed(promoCode, orgId, userId);
+                        } catch (promoErr) {
+                            console.error('[Auth] Promo code usage marking failed:', promoErr);
+                            // Don't block registration on promo failure
+                        }
+                    }
 
                     // If pending, do not issue token, but return success with "pending" status
                     if (finalStatus === 'pending') {
@@ -250,7 +309,13 @@ router.post('/register', (req, res) => {
                             id: userId, email, firstName, lastName, role: 'ADMIN',
                             companyName: companyName, organizationId: orgId
                         },
-                        token
+                        token,
+                        // Step 4: Include promo code info in response
+                        promoApplied: promoCode ? {
+                            code: promoCode,
+                            discountType: promoValidation?.discountType,
+                            discountValue: promoValidation?.discountValue
+                        } : null
                     });
                 });
             });

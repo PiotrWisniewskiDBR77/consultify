@@ -1,6 +1,7 @@
 // AI Orchestrator - Core logic for AI responses
 // AI Core Layer — Enterprise PMO Brain
 // Extended for AI Trust & Explainability Layer
+// Extended for Demo/Trial Access Model
 
 const AIContextBuilder = require('./aiContextBuilder');
 const AIPolicyEngine = require('./aiPolicyEngine');
@@ -8,6 +9,7 @@ const AIMemoryManager = require('./aiMemoryManager');
 const AIRoleGuard = require('./aiRoleGuard');
 const RegulatoryModeGuard = require('./regulatoryModeGuard');
 const AIExplainabilityService = require('./aiExplainabilityService');
+const AccessPolicyService = require('./accessPolicyService');
 const { v4: uuidv4 } = require('uuid');
 
 const AI_ROLES = {
@@ -33,6 +35,31 @@ const AIOrchestrator = {
      * Process a chat message
      */
     processMessage: async (message, userId, organizationId, projectId = null, options = {}) => {
+        // 0. Check Demo/Trial access policy
+        const accessContext = await AccessPolicyService.getAIAccessContext(organizationId);
+
+        // Block if trial expired
+        if (accessContext.trialStatus?.expired && !accessContext.isPaid) {
+            return {
+                blocked: true,
+                errorCode: 'TRIAL_EXPIRED',
+                message: 'Your trial has expired. Please upgrade to continue using AI features.',
+                role: AI_ROLES.ADVISOR,
+                intent: CHAT_MODES.EXPLAIN
+            };
+        }
+
+        // Check daily AI limit
+        if (accessContext.dailyAIUsage.remaining <= 0 && !accessContext.isPaid) {
+            return {
+                blocked: true,
+                errorCode: 'AI_LIMIT_REACHED',
+                message: `You've reached your daily AI call limit (${accessContext.dailyAIUsage.limit}). Upgrade for unlimited AI access.`,
+                role: AI_ROLES.ADVISOR,
+                intent: CHAT_MODES.EXPLAIN
+            };
+        }
+
         // 1. Build context
         const context = await AIContextBuilder.buildContext(userId, organizationId, projectId, options);
 
@@ -44,7 +71,24 @@ const AIOrchestrator = {
 
         // 4. Determine intent and role
         const intent = AIOrchestrator._detectIntent(message);
-        const role = AIOrchestrator._selectRole(intent, policy);
+        let role = AIOrchestrator._selectRole(intent, policy);
+
+        // 4.1 Demo/Trial AI Role Restrictions
+        // In Demo/Trial mode, restrict roles to only those allowed
+        if (!accessContext.isPaid && !accessContext.allowedAIRoles.includes(role)) {
+            role = AI_ROLES.ADVISOR; // Fallback to ADVISOR
+        }
+
+        // 4.2 Block "DO" actions in Demo mode
+        if (accessContext.isDemo && intent === CHAT_MODES.DO) {
+            return {
+                blocked: true,
+                errorCode: 'DEMO_READ_ONLY',
+                message: 'Demo mode does not support creating or modifying data. Start a free trial to create your own projects.',
+                role: AI_ROLES.ADVISOR,
+                intent: CHAT_MODES.EXPLAIN
+            };
+        }
 
         // 5. Get project memory for context
         let projectMemory = null;
@@ -75,6 +119,15 @@ const AIOrchestrator = {
                 activeRole: roleConfig?.activeRole || 'ADVISOR',
                 capabilities: roleConfig?.capabilities || AIRoleGuard.getRoleCapabilities('ADVISOR'),
                 roleDescription: roleConfig?.roleDescription || AIRoleGuard.getRoleDescription('ADVISOR')
+            },
+            // Demo/Trial Access Context
+            accessContext: {
+                organizationType: accessContext.organizationType,
+                isDemo: accessContext.isDemo,
+                isTrial: accessContext.isTrial,
+                isPaid: accessContext.isPaid,
+                aiResponseBadge: accessContext.aiResponseBadge,
+                dailyAIUsage: accessContext.dailyAIUsage
             }
         };
 
@@ -86,6 +139,11 @@ const AIOrchestrator = {
         // 9. Generate response prompt (for LLM)
         const prompt = AIOrchestrator._buildPrompt(message, responseContext);
 
+        // 10. Increment daily AI usage counter (non-blocking)
+        AccessPolicyService.incrementUsage(organizationId, 'ai_calls', 1).catch(err => {
+            console.error('[AIOrchestrator] Failed to increment AI usage counter:', err);
+        });
+
         return {
             responseContext,
             prompt,
@@ -93,7 +151,8 @@ const AIOrchestrator = {
             role,
             intent,
             contextSummary: AIOrchestrator._summarizeContext(context),
-            explanation: responseContext.explanation // Expose explanation at top level
+            explanation: responseContext.explanation, // Expose explanation at top level
+            accessContext: responseContext.accessContext // Expose for frontend badge
         };
     },
 

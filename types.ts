@@ -1017,6 +1017,86 @@ export interface AIExplanation {
 }
 
 // ==========================================
+// INVITATION SYSTEM (Enterprise B2B Collaboration)
+// Supports organization and project-level invitations
+// ==========================================
+
+/** Invitation Types */
+export enum InvitationType {
+  ORG = 'ORG',
+  PROJECT = 'PROJECT'
+}
+
+/** Invitation Status Lifecycle */
+export enum InvitationStatus {
+  PENDING = 'pending',
+  ACCEPTED = 'accepted',
+  EXPIRED = 'expired',
+  REVOKED = 'revoked'
+}
+
+/** Invitation Event Types (Audit Trail) */
+export enum InvitationEventType {
+  CREATED = 'created',
+  SENT = 'sent',
+  RESENT = 'resent',
+  ACCEPTED = 'accepted',
+  EXPIRED = 'expired',
+  REVOKED = 'revoked'
+}
+
+/** Invitation - Token-based invitation to organization or project */
+export interface Invitation {
+  id: string;
+  invitationType: InvitationType;
+  organizationId: string;
+  organizationName?: string;
+  projectId?: string;
+  projectName?: string;
+  email: string;
+  roleToAssign: string;
+  token?: string; // Only returned when creating
+  status: InvitationStatus;
+  expiresAt: string;
+  invitedByUserId: string;
+  invitedBy?: {
+    firstName: string;
+    lastName: string;
+  };
+  acceptedByUserId?: string;
+  acceptedAt?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+}
+
+/** Invitation Event - Audit trail entry */
+export interface InvitationEvent {
+  id: string;
+  invitationId: string;
+  eventType: InvitationEventType;
+  performedBy?: {
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  performedByUserId?: string;
+  ipAddress?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+}
+
+/** Invitation Validation Response */
+export interface InvitationValidation {
+  valid: boolean;
+  invitationType: InvitationType;
+  organizationName: string;
+  projectName?: string;
+  email: string;
+  roleToAssign: string;
+  expiresAt: string;
+}
+
+// ==========================================
 // STEP 6: STABILIZATION, REPORTING & ECONOMICS
 // ==========================================
 
@@ -2458,18 +2538,59 @@ export interface Feedback {
   user?: Pick<User, 'firstName' | 'lastName' | 'email'>;
 }
 
-export type InvitationStatus = 'pending' | 'accepted' | 'expired' | 'revoked';
+// Legacy Invitation types removed - see INVITATION SYSTEM section above for comprehensive types
 
-export interface Invitation {
+// ==========================================
+// LEGAL & COMPLIANCE
+// ==========================================
+
+/** Legal Document Types */
+export type LegalDocType = 'TOS' | 'PRIVACY' | 'COOKIES' | 'AUP' | 'AI_POLICY' | 'DPA';
+
+/** Legal Document (from legal_documents table) */
+export interface LegalDocument {
   id: string;
-  organizationId: string;
-  email: string;
-  role: UserRole;
-  token: string;
-  status: InvitationStatus;
-  invitedBy?: string;
-  inviter?: Pick<User, 'firstName' | 'lastName'>;
-  expiresAt: string;
-  createdAt: string;
-  acceptedAt?: string;
+  docType: LegalDocType;
+  version: string;
+  title: string;
+  contentMd?: string;
+  effectiveFrom: string;
+  isActive: boolean;
+  createdAt?: string;
+  createdBy?: string;
 }
+
+/** Legal Acceptance Record */
+export interface LegalAcceptance {
+  id: string;
+  docType: LegalDocType;
+  version: string;
+  acceptedAt: string;
+  scope: 'USER' | 'ORG_ADMIN';
+  organizationId?: string;
+  userId: string;
+}
+
+/** Pending Legal Acceptances Response */
+export interface PendingLegalDocs {
+  required: LegalDocument[];
+  dpaPending: boolean;
+  dpaDoc?: LegalDocument;
+  isOrgAdmin: boolean;
+  hasAnyPending: boolean;
+}
+
+/** Legal Acceptance Status for Admin View */
+export interface UserAcceptanceStatus {
+  userId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  acceptanceStatus: Record<LegalDocType, {
+    accepted: boolean;
+    acceptedVersion?: string;
+    currentVersion: string;
+  }>;
+}
+

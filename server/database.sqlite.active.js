@@ -1162,6 +1162,67 @@ function initDb() {
             FOREIGN KEY(invited_by) REFERENCES users(id) ON DELETE SET NULL
         )`);
 
+        // ==========================================
+        // INVITATION SYSTEM EXTENSIONS (Enterprise-Ready)
+        // Supports ORG and PROJECT level invitations with full audit trail
+        // ==========================================
+
+        // Extend invitations table with enterprise features
+        db.run(`ALTER TABLE invitations ADD COLUMN invitation_type TEXT DEFAULT 'ORG'`, (err) => {
+            // Ignore if column exists - Values: ORG, PROJECT
+        });
+        db.run(`ALTER TABLE invitations ADD COLUMN project_id TEXT`, (err) => {
+            // Ignore if column exists - Only for PROJECT type invitations
+        });
+        db.run(`ALTER TABLE invitations ADD COLUMN role_to_assign TEXT`, (err) => {
+            // Ignore if column exists - More explicit role assignment field
+        });
+        db.run(`ALTER TABLE invitations ADD COLUMN accepted_by_user_id TEXT`, (err) => {
+            // Ignore if column exists - User who accepted the invitation
+        });
+        db.run(`ALTER TABLE invitations ADD COLUMN metadata TEXT DEFAULT '{}'`, (err) => {
+            // Ignore if column exists - JSON for extensibility (partner codes, billing hooks, etc.)
+        });
+
+        /**
+         * Invitation Events (Audit Trail)
+         * 
+         * Every state change for invitations is logged here for:
+         * - Enterprise compliance (SOC2, ISO 27001)
+         * - Security audit trails
+         * - Partner attribution tracking
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS invitation_events (
+            id TEXT PRIMARY KEY,
+            invitation_id TEXT NOT NULL,
+            event_type TEXT NOT NULL,  -- created, sent, resent, accepted, expired, revoked
+            performed_by_user_id TEXT,
+            ip_address TEXT,
+            user_agent TEXT,
+            metadata TEXT DEFAULT '{}',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(invitation_id) REFERENCES invitations(id) ON DELETE CASCADE,
+            FOREIGN KEY(performed_by_user_id) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        // Indexes for invitation performance
+        db.run(`CREATE INDEX IF NOT EXISTS idx_invitations_token ON invitations(token)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_invitations_email ON invitations(email)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_invitations_org_status ON invitations(organization_id, status)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_invitations_project ON invitations(project_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_invitation_events_invitation ON invitation_events(invitation_id)`);
+
+        // Step 3 Finalization: Resend tracking columns
+        db.run(`ALTER TABLE invitations ADD COLUMN resend_count INTEGER DEFAULT 0`, (err) => {
+            // Ignore if column exists
+        });
+        db.run(`ALTER TABLE invitations ADD COLUMN last_resent_at DATETIME`, (err) => {
+            // Ignore if column exists
+        });
+        db.run(`ALTER TABLE invitations ADD COLUMN token_hash TEXT`, (err) => {
+            // Ignore if column exists
+        });
+
         // Access Requests Table (for controlled organization access)
         db.run(`CREATE TABLE IF NOT EXISTS access_requests (
             id TEXT PRIMARY KEY,
@@ -1208,6 +1269,294 @@ function initDb() {
             FOREIGN KEY(code_id) REFERENCES access_codes(id) ON DELETE CASCADE,
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
         )`);
+
+        // ==========================================
+        // LEGAL & COMPLIANCE FOUNDATION
+        // Production-grade audit-friendly legal document management
+        // ==========================================
+
+        /**
+         * Legal Documents Table
+         * Stores versioned legal documents (ToS, Privacy Policy, DPA, etc.)
+         * Only one active document per doc_type at any time.
+         * 
+         * @doc_type Valid values: TOS, PRIVACY, COOKIES, AUP, AI_POLICY, DPA
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS legal_documents (
+            id TEXT PRIMARY KEY,
+            doc_type TEXT NOT NULL,
+            version TEXT NOT NULL,
+            title TEXT NOT NULL,
+            content_md TEXT NOT NULL,
+            effective_from TEXT NOT NULL,
+            created_at TEXT DEFAULT (datetime('now')),
+            created_by TEXT,
+            is_active INTEGER DEFAULT 0,
+            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        /**
+         * Legal Acceptances Table
+         * Records every user/organization acceptance event for audit trail.
+         * 
+         * @acceptance_scope: 'USER' for individual acceptance, 'ORG_ADMIN' for org-level (DPA)
+         * @evidence_json: Contains hash of document, timestamps, and metadata snapshot
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS legal_acceptances (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT,
+            user_id TEXT NOT NULL,
+            doc_type TEXT NOT NULL,
+            version TEXT NOT NULL,
+            accepted_at TEXT DEFAULT (datetime('now')),
+            accepted_ip TEXT,
+            user_agent TEXT,
+            acceptance_scope TEXT DEFAULT 'USER',
+            evidence_json TEXT DEFAULT '{}',
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+
+        // Create index for faster acceptance lookups
+        db.run(`CREATE INDEX IF NOT EXISTS idx_legal_acceptances_user ON legal_acceptances(user_id, doc_type)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_legal_acceptances_org ON legal_acceptances(organization_id, doc_type)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_legal_documents_active ON legal_documents(doc_type, is_active)`);
+
+        /**
+         * ENTERPRISE+ COMPLIANCE EXTENSIONS
+         * ISO 21500 / SOC2 / Due Diligence Ready
+         */
+
+        /**
+         * Legal Events Table (Immutable Audit Log)
+         * Append-only audit trail for all legal compliance events.
+         * CRITICAL: Never update or delete rows from this table.
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS legal_events (
+            id TEXT PRIMARY KEY,
+            event_type TEXT NOT NULL,
+            document_id TEXT,
+            document_version TEXT,
+            user_id TEXT,
+            organization_id TEXT,
+            performed_by TEXT NOT NULL,
+            metadata TEXT DEFAULT '{}',
+            created_at TEXT DEFAULT (datetime('now'))
+        )`);
+
+        // Indexes for audit log queries
+        db.run(`CREATE INDEX IF NOT EXISTS idx_legal_events_type ON legal_events(event_type)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_legal_events_doc ON legal_events(document_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_legal_events_org ON legal_events(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_legal_events_created ON legal_events(created_at)`);
+
+        // Legal Documents Lifecycle Extensions
+        db.run(`ALTER TABLE legal_documents ADD COLUMN expires_at TEXT`, (err) => {
+            // Ignore if column exists
+        });
+        db.run(`ALTER TABLE legal_documents ADD COLUMN reaccept_required_from TEXT`, (err) => {
+            // Ignore if column exists
+        });
+
+        // Legal Documents Scope Extensions
+        db.run(`ALTER TABLE legal_documents ADD COLUMN scope_type TEXT DEFAULT 'global'`, (err) => {
+            // Ignore if column exists - Values: global, region, product, license_tier
+        });
+        db.run(`ALTER TABLE legal_documents ADD COLUMN scope_value TEXT`, (err) => {
+            // Ignore if column exists - JSON string for scope details
+        });
+
+        // Legal Documents Version History
+        db.run(`ALTER TABLE legal_documents ADD COLUMN change_summary TEXT`, (err) => {
+            // Ignore if column exists - Human-readable summary of changes
+        });
+        db.run(`ALTER TABLE legal_documents ADD COLUMN previous_version_id TEXT`, (err) => {
+            // Ignore if column exists - Link to previous version for diff
+        });
+
+        // ==========================================
+        // TRIAL + DEMO ACCESS MODEL
+        // Supports Demo (read-only), Trial (time-limited), and Paid modes
+        // All restrictions enforced backend-side
+        // ==========================================
+
+        /**
+         * Extend organizations table with Trial/Demo fields
+         * organization_type: DEMO | TRIAL | PAID
+         */
+        db.run(`ALTER TABLE organizations ADD COLUMN organization_type TEXT DEFAULT 'TRIAL'`, (err) => {
+            // Ignore if exists
+        });
+        db.run(`ALTER TABLE organizations ADD COLUMN trial_started_at TEXT`, (err) => {
+            // Ignore if exists
+        });
+        db.run(`ALTER TABLE organizations ADD COLUMN trial_expires_at TEXT`, (err) => {
+            // Ignore if exists
+        });
+        db.run(`ALTER TABLE organizations ADD COLUMN is_active INTEGER DEFAULT 1`, (err) => {
+            // Ignore if exists
+        });
+        db.run(`ALTER TABLE organizations ADD COLUMN created_by_user_id TEXT`, (err) => {
+            // Ignore if exists
+        });
+
+        /**
+         * Organization Limits Table
+         * Per-org constraints for Trial/Demo mode
+         * Enforced by AccessPolicyService
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS organization_limits (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL UNIQUE,
+            max_projects INTEGER DEFAULT 3,
+            max_users INTEGER DEFAULT 5,
+            max_ai_calls_per_day INTEGER DEFAULT 50,
+            max_initiatives INTEGER DEFAULT 10,
+            max_storage_mb INTEGER DEFAULT 100,
+            ai_roles_enabled_json TEXT DEFAULT '["ADVISOR"]',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+
+        /**
+         * Demo Templates Table
+         * Seed data snapshots for demo organizations
+         * Used by demoService to hydrate ephemeral demo orgs
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS demo_templates (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT,
+            seed_data_json TEXT NOT NULL,
+            is_active INTEGER DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        /**
+         * Usage Counters Table
+         * Daily tracking of AI calls, projects, users per organization
+         * Reset daily by cron job
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS usage_counters (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            counter_date TEXT NOT NULL,
+            ai_calls_count INTEGER DEFAULT 0,
+            projects_count INTEGER DEFAULT 0,
+            users_count INTEGER DEFAULT 0,
+            initiatives_count INTEGER DEFAULT 0,
+            storage_used_mb INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(organization_id, counter_date),
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+
+        // Indexes for Trial/Demo performance
+        db.run(`CREATE INDEX IF NOT EXISTS idx_org_type ON organizations(organization_type)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_org_limits ON organization_limits(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_usage_counters_date ON usage_counters(organization_id, counter_date)`);
+
+        /**
+         * Organization Events Table (Audit Trail)
+         * Immutable log for trial/demo/paid lifecycle events
+         * Enterprise+ compliance requirement
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS organization_events (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            event_type TEXT NOT NULL,
+            performed_by_user_id TEXT,
+            metadata TEXT DEFAULT '{}',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_org_events ON organization_events(organization_id, event_type)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_org_events_created ON organization_events(created_at)`);
+
+        // Step 2 Finalization: Trial extension tracking and anti-spam
+        db.run(`ALTER TABLE organizations ADD COLUMN trial_warning_sent_at TEXT`, (err) => {
+            // Ignore if exists - tracks T-7 warning to prevent spam
+        });
+        db.run(`ALTER TABLE organizations ADD COLUMN trial_extension_count INTEGER DEFAULT 0`, (err) => {
+            // Ignore if exists - max 2 extensions allowed
+        });
+
+        // ==========================================
+        // STEP 4: PROMO CODES + ATTRIBUTION
+        // Enterprise+ partner tracking and promotional codes
+        // ==========================================
+
+        /**
+         * Promo Codes Table
+         * Supports DISCOUNT, PARTNER, and CAMPAIGN type codes
+         * Partner codes for attribution tracking (no discount required)
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS promo_codes (
+            id TEXT PRIMARY KEY,
+            code TEXT UNIQUE NOT NULL,
+            type TEXT NOT NULL,                    -- DISCOUNT | PARTNER | CAMPAIGN
+            discount_type TEXT DEFAULT 'NONE',     -- PERCENT | FIXED | NONE
+            discount_value REAL,                   -- nullable, only if discount_type != NONE
+            valid_from TEXT NOT NULL,
+            valid_until TEXT,                      -- nullable = infinite
+            max_uses INTEGER,                      -- nullable = unlimited
+            used_count INTEGER DEFAULT 0,
+            created_by_user_id TEXT,
+            is_active INTEGER DEFAULT 1,
+            metadata TEXT DEFAULT '{}',            -- JSON for extensibility
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(created_by_user_id) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        // Indexes for promo code performance
+        db.run(`CREATE INDEX IF NOT EXISTS idx_promo_codes_code ON promo_codes(code)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_promo_codes_active ON promo_codes(is_active, valid_from, valid_until)`);
+
+        /**
+         * Attribution Events Table (IMMUTABLE)
+         * Append-only audit trail for organization acquisition sources.
+         * CRITICAL: Never UPDATE or DELETE rows from this table.
+         * Used for partner settlements and marketing analytics.
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS attribution_events (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            user_id TEXT,                          -- nullable (anonymous demos)
+            source_type TEXT NOT NULL,             -- PROMO_CODE | INVITATION | DEMO | SALES | SELF_SERVE
+            source_id TEXT,                        -- promo_code_id | invitation_id | null
+            campaign TEXT,                         -- UTM campaign or similar
+            partner_code TEXT,                     -- Partner attribution
+            medium TEXT,                           -- UTM medium or channel
+            metadata TEXT DEFAULT '{}',            -- JSON for extensibility
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+
+        // Indexes for attribution performance
+        db.run(`CREATE INDEX IF NOT EXISTS idx_attribution_org ON attribution_events(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_attribution_source ON attribution_events(source_type)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_attribution_partner ON attribution_events(partner_code)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_attribution_created ON attribution_events(created_at)`);
+
+        /**
+         * Promo Code Usage Log (for detailed tracking)
+         * Links promo code uses to organizations
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS promo_code_usage (
+            id TEXT PRIMARY KEY,
+            promo_code_id TEXT NOT NULL,
+            organization_id TEXT NOT NULL,
+            user_id TEXT,
+            used_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(promo_code_id) REFERENCES promo_codes(id) ON DELETE CASCADE,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_promo_usage_code ON promo_code_usage(promo_code_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_promo_usage_org ON promo_code_usage(organization_id)`);
 
         // ==========================================
         // PHASE 1.5: NOTIFICATIONS & INTEGRATIONS
@@ -2131,6 +2480,146 @@ function initDb() {
             last_check_at DATETIME,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
+
+        // ==========================================
+        // STEP 4: PROMO CODES & ATTRIBUTION EXTENSIONS
+        // Enterprise+ commercial backbone foundation
+        // ==========================================
+
+        // Add partner_id column to promo_codes for partner settlements link
+        db.run(`ALTER TABLE promo_codes ADD COLUMN partner_id TEXT`, (err) => {
+            // Ignore if exists
+        });
+
+        // Add revenue_amount and currency to attribution_events for settlement calculations  
+        db.run(`ALTER TABLE attribution_events ADD COLUMN revenue_amount REAL DEFAULT 0`, (err) => {
+            // Ignore if exists
+        });
+        db.run(`ALTER TABLE attribution_events ADD COLUMN currency TEXT DEFAULT 'USD'`, (err) => {
+            // Ignore if exists
+        });
+
+        // Create index on partner_id for promo_codes
+        db.run(`CREATE INDEX IF NOT EXISTS idx_promo_codes_partner ON promo_codes(partner_id)`);
+
+        // ==========================================
+        // STEP 5: PARTNER SETTLEMENTS
+        // Enterprise+ revenue sharing and partner payouts ledger
+        // ==========================================
+
+        /**
+         * Partners Table
+         * Referral partners, resellers, and sales partners.
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS partners (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            partner_type TEXT NOT NULL,           -- REFERRAL | RESELLER | SALES
+            email TEXT,
+            contact_name TEXT,
+            default_revenue_share_percent REAL DEFAULT 10,
+            is_active INTEGER DEFAULT 1,
+            metadata TEXT DEFAULT '{}',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_partners_type ON partners(partner_type, is_active)`);
+
+        /**
+         * Partner Agreements Table
+         * Allows changing revenue share terms over time (enterprise must-have).
+         * Valid agreement is determined by date range.
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS partner_agreements (
+            id TEXT PRIMARY KEY,
+            partner_id TEXT NOT NULL,
+            valid_from DATETIME NOT NULL,
+            valid_until DATETIME,                 -- NULL = indefinitely valid
+            revenue_share_percent REAL NOT NULL,
+            applies_to TEXT DEFAULT 'GLOBAL',     -- GLOBAL | CAMPAIGN | PRODUCT
+            applies_value TEXT,                   -- Campaign/product ID if scoped
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(partner_id) REFERENCES partners(id) ON DELETE CASCADE
+        )`);
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_partner_agreements_partner ON partner_agreements(partner_id, valid_from)`);
+
+        /**
+         * Settlement Periods Table (IMMUTABLE after LOCKED)
+         * 
+         * Status flow: OPEN → CALCULATED → LOCKED
+         * Once LOCKED, no changes allowed.
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS settlement_periods (
+            id TEXT PRIMARY KEY,
+            period_start DATETIME NOT NULL,
+            period_end DATETIME NOT NULL,
+            status TEXT DEFAULT 'OPEN',           -- OPEN | CALCULATED | LOCKED
+            calculated_at DATETIME,
+            calculated_by TEXT,
+            locked_at DATETIME,
+            locked_by TEXT,
+            total_revenue REAL DEFAULT 0,
+            total_settlements REAL DEFAULT 0,
+            partner_count INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(calculated_by) REFERENCES users(id) ON DELETE SET NULL,
+            FOREIGN KEY(locked_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_settlement_periods_status ON settlement_periods(status)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_settlement_periods_dates ON settlement_periods(period_start, period_end)`);
+
+        /**
+         * Partner Settlements Table (IMMUTABLE - append-only)
+         * 
+         * CRITICAL: This table is append-only for audit compliance.
+         * Never UPDATE or DELETE rows from this table.
+         * After period is LOCKED, no new rows can be added for that period.
+         * Corrections require new adjustment entries in a new period.
+         * 
+         * Each row tracks:
+         * - Which partner gets paid
+         * - For which organization's revenue
+         * - From which attribution event
+         * - Using which agreement's terms
+         * - Entry type (NORMAL or ADJUSTMENT for corrections)
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS partner_settlements (
+            id TEXT PRIMARY KEY,
+            settlement_period_id TEXT NOT NULL,
+            partner_id TEXT NOT NULL,
+            organization_id TEXT NOT NULL,
+            source_attribution_id TEXT NOT NULL,
+            revenue_amount REAL NOT NULL,
+            revenue_share_percent REAL NOT NULL,
+            settlement_amount REAL NOT NULL,
+            currency TEXT DEFAULT 'USD',
+            agreement_id TEXT,
+            entry_type TEXT DEFAULT 'NORMAL',     -- NORMAL | ADJUSTMENT
+            adjusts_settlement_id TEXT,           -- FK to original settlement being corrected
+            adjustment_reason TEXT,               -- Required if entry_type = ADJUSTMENT
+            metadata TEXT DEFAULT '{}',           -- calculation timestamp, rate source, etc.
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(settlement_period_id) REFERENCES settlement_periods(id),
+            FOREIGN KEY(partner_id) REFERENCES partners(id),
+            FOREIGN KEY(organization_id) REFERENCES organizations(id),
+            FOREIGN KEY(source_attribution_id) REFERENCES attribution_events(id),
+            FOREIGN KEY(agreement_id) REFERENCES partner_agreements(id),
+            FOREIGN KEY(adjusts_settlement_id) REFERENCES partner_settlements(id)
+        )`);
+
+        // Migration: Add adjustment columns to existing table
+        db.run(`ALTER TABLE partner_settlements ADD COLUMN entry_type TEXT DEFAULT 'NORMAL'`, () => { });
+        db.run(`ALTER TABLE partner_settlements ADD COLUMN adjusts_settlement_id TEXT`, () => { });
+        db.run(`ALTER TABLE partner_settlements ADD COLUMN adjustment_reason TEXT`, () => { });
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_partner_settlements_period ON partner_settlements(settlement_period_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_partner_settlements_partner ON partner_settlements(partner_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_partner_settlements_org ON partner_settlements(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_partner_settlements_attribution ON partner_settlements(source_attribution_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_partner_settlements_entry_type ON partner_settlements(entry_type)`);
 
         // Seed Super Admin & Default Organization
         const superAdminOrgId = 'org-dbr77-system';

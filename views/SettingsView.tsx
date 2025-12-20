@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { User, Language } from '../types';
 import { useTranslation } from 'react-i18next';
-import { UserCircle, CreditCard, Cpu, Bell, Link as LinkIcon, Globe } from 'lucide-react';
+import { UserCircle, CreditCard, Cpu, Bell, Link as LinkIcon, Globe, FileText } from 'lucide-react';
 import { BillingSettings } from '../components/settings/BillingSettings';
 import { AISettings } from '../components/settings/AISettings';
 import { ProfileSettings } from '../components/settings/ProfileSettings';
 import { NotificationSettings } from '../components/settings/NotificationSettings';
 import { IntegrationSettings } from '../components/settings/IntegrationSettings';
 import { RegionalSettings } from '../components/settings/RegionalSettings';
+import { LegalSettings } from '../components/settings/LegalSettings';
 
 interface SettingsViewProps {
     currentUser: User;
@@ -18,7 +19,7 @@ interface SettingsViewProps {
 
 export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdateUser, theme, toggleTheme }) => {
     const { t } = useTranslation();
-    const [activeTab, setActiveTab] = useState<'PROFILE' | 'BILLING' | 'AI' | 'NOTIFICATIONS' | 'INTEGRATIONS' | 'REGIONAL'>('PROFILE');
+    const [activeTab, setActiveTab] = useState<'PROFILE' | 'BILLING' | 'AI' | 'NOTIFICATIONS' | 'INTEGRATIONS' | 'REGIONAL' | 'LEGAL'>('PROFILE');
 
     return (
         <div className="flex h-full bg-slate-50 dark:bg-navy-950 transition-colors duration-300">
@@ -72,6 +73,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
                     <Globe size={18} />
                     {t('settings.menu.regionalization')}
                 </button>
+
+                <button
+                    onClick={() => setActiveTab('LEGAL')}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-left transition-colors ${activeTab === 'LEGAL' ? 'bg-slate-100 dark:bg-navy-800 text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'}`}
+                >
+                    <FileText size={18} />
+                    {t('settings.menu.legal', 'Legal')}
+                </button>
             </div>
 
             {/* Content Area */}
@@ -89,6 +98,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
                 {activeTab === 'NOTIFICATIONS' && <NotificationSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />}
                 {activeTab === 'INTEGRATIONS' && <IntegrationSettings currentUser={currentUser} />}
                 {activeTab === 'REGIONAL' && <RegionalSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />}
+                {activeTab === 'LEGAL' && <LegalSettings currentUser={currentUser} />}
             </div>
         </div>
     );
