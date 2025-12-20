@@ -78,6 +78,13 @@ describe('Integration Test: Database Transactions', () => {
             const orgId = 'rollback-org-' + Date.now();
             const userId = 'rollback-user-' + Date.now();
 
+            // First, clean up any existing test org
+            await new Promise((resolve) => {
+                db.run('DELETE FROM organizations WHERE id = ?', [orgId], resolve);
+            });
+
+            let rollbackCompleted = false;
+
             try {
                 await new Promise((resolve, reject) => {
                     db.serialize(() => {
@@ -92,10 +99,13 @@ describe('Integration Test: Database Transactions', () => {
                         db.run(
                             'INSERT INTO users (id, organization_id, email, password, first_name) VALUES (?, ?, ?, ?, ?)',
                             [userId, 'non-existent-org', 'rollback@test.com', 'hash', 'User'],
-                            (err) => {
+                            function (err) {
                                 if (err) {
-                                    db.run('ROLLBACK');
-                                    reject(err);
+                                    // Rollback and wait for completion
+                                    db.run('ROLLBACK', function (rollbackErr) {
+                                        rollbackCompleted = true;
+                                        reject(err);
+                                    });
                                 } else {
                                     db.run('COMMIT', resolve);
                                 }
@@ -104,10 +114,16 @@ describe('Integration Test: Database Transactions', () => {
                     });
                 });
             } catch (error) {
-                // Expected error
+                // Expected error - FK constraint violation
+                expect(error.message).toMatch(/FOREIGN KEY/i);
             }
 
-            // Verify org was rolled back
+            // Ensure rollback was attempted
+            expect(rollbackCompleted).toBe(true);
+
+            // Verify org was rolled back - give a small delay for SQLite to finalize
+            await new Promise(resolve => setTimeout(resolve, 50));
+
             const org = await new Promise((resolve) => {
                 db.get('SELECT * FROM organizations WHERE id = ?', [orgId], (err, row) => {
                     resolve(row);
