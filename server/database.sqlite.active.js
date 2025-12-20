@@ -62,6 +62,11 @@ function initDb() {
             FOREIGN KEY(organization_id) REFERENCES organizations(id)
         )`);
 
+        // Migration: Ensure avatar_url exists
+        db.run(`ALTER TABLE users ADD COLUMN avatar_url TEXT`, (err) => {
+            // Ignore error if column exists
+        });
+
         // Sessions Table (Linked to user_id and optionally project_id)
         db.run(`CREATE TABLE IF NOT EXISTS sessions(
                                                         id TEXT PRIMARY KEY,

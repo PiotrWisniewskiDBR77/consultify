@@ -45,6 +45,51 @@ router.get('/context/:projectId', verifyToken, async (req, res) => {
 
 // ==================== CHAT ====================
 
+// POST /api/ai/chat/stream
+router.post('/chat/stream', verifyToken, async (req, res) => {
+    const { message, history, systemInstruction, context, roleName } = req.body;
+
+    if (!message) {
+        return res.status(400).json({ error: 'message required' });
+    }
+
+    // Set headers for SSE
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
+
+    try {
+        const stream = AIOrchestrator.streamMessage ?
+            AIOrchestrator.streamMessage(message, req.userId, req.organizationId, context?.projectId, { ...context, roleName }) :
+            // Fallback to direct service call if Orchestrator doesn't support stream yet (likely case based on file view)
+            // Actually, let's use the AiService directly as seen in aiService.js
+            require('../services/aiService').streamLLM(
+                message,
+                systemInstruction || '',
+                history || [],
+                null,
+                req.userId,
+                'chat'
+            );
+
+        for await (const chunk of stream) {
+            res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
+            // res.flush() is not needed in Node http/express usually, but good practice if compression is off
+        }
+
+        res.write('data: [DONE]\n\n');
+        res.end();
+
+        // TODO: Log interaction via AuditLogger (async)
+
+    } catch (err) {
+        console.error('Stream Error:', err);
+        res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
+        res.end();
+    }
+});
+
 // POST /api/ai/chat
 router.post('/chat', verifyToken, async (req, res) => {
     const { message, projectId, currentScreen, selectedObjectId, selectedObjectType } = req.body;
