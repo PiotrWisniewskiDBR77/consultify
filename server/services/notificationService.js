@@ -131,6 +131,19 @@ const NotificationService = {
     },
 
     /**
+     * Delete a notification
+     */
+    delete: async (notificationId, userId) => {
+        return new Promise((resolve, reject) => {
+            db.run(`DELETE FROM notifications WHERE id = ? AND user_id = ?`,
+                [notificationId, userId], function (err) {
+                    if (err) return reject(err);
+                    resolve({ deleted: this.changes > 0 });
+                });
+        });
+    },
+
+    /**
      * Get notification counts
      */
     getCounts: async (userId) => {

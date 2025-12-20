@@ -36,10 +36,11 @@ describe('Integration Test: Notifications Routes', () => {
                     [testUserId, testOrgId, testEmail, hash, 'Test', 'ADMIN']
                 );
                 db.run(
-                    'INSERT INTO notifications (id, user_id, type, title, message, read) VALUES (?, ?, ?, ?, ?, ?)',
+                    'INSERT INTO notifications (id, user_id, organization_id, type, title, message, is_read) VALUES (?, ?, ?, ?, ?, ?, ?)',
                     [
                         `notification-1-${testId}`,
                         testUserId,
+                        testOrgId,
                         'info',
                         'Test Notification',
                         'This is a test notification',
@@ -86,26 +87,25 @@ describe('Integration Test: Notifications Routes', () => {
         });
     });
 
-    describe('GET /api/notifications/unread', () => {
-        it('should return unread notifications count', async () => {
+    describe('GET /api/notifications/counts', () => {
+        it('should return notification counts', async () => {
             if (!authToken) {
-                console.log('Skipping unread test - no auth token');
+                console.log('Skipping counts test - no auth token');
                 return;
             }
 
             const res = await request(app)
-                .get('/api/notifications/unread')
+                .get('/api/notifications/counts')
                 .set('Authorization', `Bearer ${authToken}`);
 
             expect(res.status).toBe(200);
             expect(res.body).toBeDefined();
-            // Count may be in count, unreadCount, or as integer directly
-            const count = res.body.count ?? res.body.unreadCount ?? res.body;
-            expect(typeof count === 'number' || count !== undefined).toBe(true);
+            expect(res.body).toHaveProperty('unread');
+            expect(typeof res.body.unread).toBe('number');
         });
     });
 
-    describe('PUT /api/notifications/:id/read', () => {
+    describe('PATCH /api/notifications/:id/read', () => {
         it('should mark notification as read', async () => {
             if (!authToken) {
                 console.log('Skipping mark read test - no auth token');
@@ -117,11 +117,12 @@ describe('Integration Test: Notifications Routes', () => {
                 .get('/api/notifications')
                 .set('Authorization', `Bearer ${authToken}`);
 
-            if (notificationsRes.body.length > 0) {
-                const notificationId = notificationsRes.body[0].id;
+            const notifications = Array.isArray(notificationsRes.body) ? notificationsRes.body : notificationsRes.body.notifications;
+            if (notifications && notifications.length > 0) {
+                const notificationId = notifications[0].id;
 
                 const res = await request(app)
-                    .put(`/api/notifications/${notificationId}/read`)
+                    .patch(`/api/notifications/${notificationId}/read`)
                     .set('Authorization', `Bearer ${authToken}`);
 
                 expect(res.status).toBe(200);
@@ -129,15 +130,15 @@ describe('Integration Test: Notifications Routes', () => {
         });
     });
 
-    describe('PUT /api/notifications/read-all', () => {
+    describe('POST /api/notifications/mark-all-read', () => {
         it('should mark all notifications as read', async () => {
             if (!authToken) {
-                console.log('Skipping read all test - no auth token');
+                console.log('Skipping mark all read test - no auth token');
                 return;
             }
 
             const res = await request(app)
-                .put('/api/notifications/read-all')
+                .post('/api/notifications/mark-all-read')
                 .set('Authorization', `Bearer ${authToken}`);
 
             expect(res.status).toBe(200);
@@ -155,8 +156,8 @@ describe('Integration Test: Notifications Routes', () => {
             const notificationId = `delete-test-${testId}`;
             await new Promise((resolve) => {
                 db.run(
-                    'INSERT INTO notifications (id, user_id, type, title, message) VALUES (?, ?, ?, ?, ?)',
-                    [notificationId, testUserId, 'info', 'Delete Test', 'To be deleted'],
+                    'INSERT INTO notifications (id, user_id, organization_id, type, title, message) VALUES (?, ?, ?, ?, ?, ?)',
+                    [notificationId, testUserId, testOrgId, 'info', 'Delete Test', 'To be deleted'],
                     resolve
                 );
             });

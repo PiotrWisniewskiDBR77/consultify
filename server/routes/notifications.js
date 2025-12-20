@@ -79,6 +79,43 @@ router.post('/escalations/:projectId/run', verifyToken, async (req, res) => {
     }
 });
 
+// DELETE /api/notifications/:id
+router.delete('/:id', verifyToken, async (req, res) => {
+    try {
+        const result = await NotificationService.delete(req.params.id, req.userId);
+        res.json(result);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ==================== ESCALATIONS ====================
+
+// GET /api/notifications/escalations/:projectId
+router.get('/escalations/:projectId', verifyToken, async (req, res) => {
+    const { status } = req.query;
+    try {
+        const escalations = await EscalationService.getEscalations(req.params.projectId, status);
+        res.json(escalations);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// POST /api/notifications/escalations/:projectId/run
+router.post('/escalations/:projectId/run', verifyToken, async (req, res) => {
+    if (!req.can('edit_project_settings')) {
+        return res.status(403).json({ error: 'Permission denied' });
+    }
+
+    try {
+        const result = await EscalationService.runAutoEscalation(req.params.projectId);
+        res.json(result);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // PATCH /api/notifications/escalations/:id/acknowledge
 router.patch('/escalations/:id/acknowledge', verifyToken, async (req, res) => {
     try {

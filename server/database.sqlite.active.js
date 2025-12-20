@@ -348,18 +348,6 @@ function initDb() {
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
         )`);
 
-        // Notifications Table
-        db.run(`CREATE TABLE IF NOT EXISTS notifications (
-            id TEXT PRIMARY KEY,
-            user_id TEXT NOT NULL,
-            type TEXT NOT NULL, -- task_assigned, task_completed, status_changed, deadline, mention, project_milestone
-            title TEXT NOT NULL,
-            message TEXT,
-            data TEXT, -- JSON with entity_type, entity_id, etc.
-            read INTEGER DEFAULT 0,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
-        )`);
 
         // ==========================================
         // PHASE 1: GOVERNANCE & RBAC (Step 1)

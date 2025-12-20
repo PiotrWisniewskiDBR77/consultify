@@ -7,20 +7,38 @@ const db = require('../../../server/database');
 const { v4: uuidv4 } = require('uuid');
 
 describe('PMO Context API', () => {
-    let authToken;
-    let testProjectId;
     let testUserId;
+    let testProjectId;
+    let testEmail;
+    let authToken;
 
     beforeAll(async () => {
+        // Initialize standard DB schema
+        const { initTestDb } = require('../../helpers/dbHelper.cjs');
+        await initTestDb();
         await db.initPromise;
+
+        const bcrypt = require('bcryptjs');
+        const hash = bcrypt.hashSync('test123', 8);
+
         // Create test user and get auth token
         testUserId = uuidv4();
         testProjectId = uuidv4();
+        testEmail = `pmo-test-${uuidv4()}@test.com`;
+
+        // Ensure organization exists
+        await new Promise((resolve, reject) => {
+            db.run(`INSERT OR IGNORE INTO organizations (id, name, status) VALUES (?, ?, ?)`,
+                ['test-org', 'Test Org', 'active'], (err) => {
+                    if (err) reject(err);
+                    else resolve();
+                });
+        });
 
         await new Promise((resolve, reject) => {
             db.run(`INSERT INTO users (id, email, password, role, organization_id, first_name, last_name, status)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                [testUserId, 'pmo-test@test.com', 'hashedpassword', 'PROJECT_MANAGER', 'test-org', 'PMO', 'Tester', 'active'],
+                [testUserId, testEmail, hash, 'PROJECT_MANAGER', 'test-org', 'PMO', 'Tester', 'active'],
                 (err) => {
                     if (err) reject(err);
                     else resolve();
@@ -38,24 +56,24 @@ describe('PMO Context API', () => {
                 });
         });
 
-        // Get auth token
-        const jwt = require('jsonwebtoken');
-        authToken = jwt.sign(
-            { id: testUserId, organizationId: 'test-org', role: 'PROJECT_MANAGER' },
-            process.env.JWT_SECRET || 'test-secret',
-            { expiresIn: '1h' }
-        );
+        // Login to get token
+        const loginRes = await request(app)
+            .post('/api/auth/login')
+            .send({
+                email: testEmail,
+                password: 'test123',
+            });
+
+        if (loginRes.status !== 200) {
+            console.error('Login failed in pmoContext.test.js:', loginRes.status, loginRes.body);
+        }
+
+        authToken = loginRes.body.token;
+        if (!authToken) {
+            console.error('No authToken received in pmoContext.test.js');
+        }
     });
 
-    afterAll(async () => {
-        // Cleanup
-        await new Promise((resolve) => {
-            db.run(`DELETE FROM projects WHERE id = ?`, [testProjectId], resolve);
-        });
-        await new Promise((resolve) => {
-            db.run(`DELETE FROM users WHERE id = ?`, [testUserId], resolve);
-        });
-    });
 
     describe('GET /api/pmo-context/:projectId', () => {
         it('should return PMO context with phase information', async () => {
@@ -125,11 +143,6 @@ describe('PMO Context API', () => {
             });
         });
 
-        afterAll(async () => {
-            await new Promise((resolve) => {
-                db.run(`DELETE FROM tasks WHERE id = ?`, [testTaskId], resolve);
-            });
-        });
 
         it('should return task labels with PMO relevance', async () => {
             const response = await request(app)
