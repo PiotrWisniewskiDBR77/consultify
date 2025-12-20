@@ -41,7 +41,7 @@ describe('PMO Context API', () => {
         // Get auth token
         const jwt = require('jsonwebtoken');
         authToken = jwt.sign(
-            { userId: testUserId, organizationId: 'test-org', role: 'PROJECT_MANAGER' },
+            { id: testUserId, organizationId: 'test-org', role: 'PROJECT_MANAGER' },
             process.env.JWT_SECRET || 'test-secret',
             { expiresIn: '1h' }
         );

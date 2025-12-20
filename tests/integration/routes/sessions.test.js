@@ -59,8 +59,9 @@ describe('Integration Test: Sessions Routes', () => {
             }
 
             const res = await request(app)
-                .get('/api/sessions')
-                .set('Authorization', `Bearer ${authToken}`);
+                .get(`/api/sessions/${testUserId}`)
+                .set('Authorization', `Bearer ${authToken}`)
+                .query({ type: 'free' });
 
             expect(res.status).toBe(200);
             // Response may be array or object with sessions property
@@ -69,7 +70,8 @@ describe('Integration Test: Sessions Routes', () => {
 
         it('should require authentication', async () => {
             const res = await request(app)
-                .get('/api/sessions');
+                .get(`/api/sessions/${testUserId}`)
+                .query({ type: 'free' });
 
             expect([200, 401, 403]).toContain(res.status);
         });
@@ -128,9 +130,11 @@ describe('Integration Test: Sessions Routes', () => {
 
             if (createRes.body.id) {
                 const res = await request(app)
-                    .put(`/api/sessions/${createRes.body.id}`)
+                    .post('/api/sessions')
                     .set('Authorization', `Bearer ${authToken}`)
                     .send({
+                        userId: testUserId,
+                        type: 'free',
                         data: { step: 2 },
                     });
 

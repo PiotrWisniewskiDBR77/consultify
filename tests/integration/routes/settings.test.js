@@ -82,10 +82,11 @@ describe('Integration Test: Settings Routes', () => {
             }
 
             const res = await request(app)
-                .put('/api/settings')
+                .post('/api/settings')
                 .set('Authorization', `Bearer ${authToken}`)
                 .send({
-                    theme: 'dark',
+                    key: 'theme',
+                    value: 'dark',
                 });
 
             expect([200, 400]).toContain(res.status);

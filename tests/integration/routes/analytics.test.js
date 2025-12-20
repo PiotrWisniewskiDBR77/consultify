@@ -59,7 +59,7 @@ describe('Integration Test: Analytics Routes', () => {
             }
 
             const res = await request(app)
-                .get('/api/analytics/stats')
+                .get('/api/analytics/health')
                 .set('Authorization', `Bearer ${authToken}`)
                 .query({ period: '7d' });
 
@@ -69,7 +69,7 @@ describe('Integration Test: Analytics Routes', () => {
 
         it('should require authentication', async () => {
             const res = await request(app)
-                .get('/api/analytics/stats');
+                .get('/api/analytics/health');
 
             expect([200, 401, 403]).toContain(res.status);
         });
@@ -83,7 +83,7 @@ describe('Integration Test: Analytics Routes', () => {
             }
 
             const res = await request(app)
-                .get('/api/analytics/usage')
+                .get('/api/analytics/performance')
                 .set('Authorization', `Bearer ${authToken}`);
 
             expect(res.status).toBe(200);
@@ -99,7 +99,7 @@ describe('Integration Test: Analytics Routes', () => {
             }
 
             const res = await request(app)
-                .get('/api/analytics/maturity')
+                .get('/api/analytics/economics')
                 .set('Authorization', `Bearer ${authToken}`);
 
             expect(res.status).toBe(200);
