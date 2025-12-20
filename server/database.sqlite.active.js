@@ -103,6 +103,43 @@ function initDb() {
             else console.log('Projects table created successfully (or already exists).');
         });
 
+        // ==========================================
+        // PHASE 2: DRD STRATEGY EXECUTION ENGINE
+        // ==========================================
+
+        // Initiatves Table (Master Object)
+        db.run(`CREATE TABLE IF NOT EXISTS initiatives (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            project_id TEXT, -- Optional link to legacy project container
+            name TEXT NOT NULL,
+            axis TEXT, -- 1-6 or 7 (AI)
+            area TEXT,
+            summary TEXT,
+            hypothesis TEXT,
+            status TEXT DEFAULT 'step3', -- step3_list, step4_pilot, step5_full
+            current_stage TEXT,
+            business_value TEXT, -- High/Med/Low
+            competencies_required TEXT, -- JSON array
+            cost_capex REAL,
+            cost_opex REAL,
+            expected_roi REAL,
+            social_impact TEXT,
+            start_date DATETIME,
+            pilot_end_date DATETIME,
+            end_date DATETIME,
+            owner_business_id TEXT,
+            owner_execution_id TEXT,
+            sponsor_id TEXT,
+            market_context TEXT, -- AI-gathered research data
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(owner_business_id) REFERENCES users(id) ON DELETE SET NULL,
+            FOREIGN KEY(owner_execution_id) REFERENCES users(id) ON DELETE SET NULL,
+            FOREIGN KEY(sponsor_id) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
         // Migration: Add context_data if missing
         db.run(`ALTER TABLE projects ADD COLUMN context_data TEXT DEFAULT '{}'`, (err) => {
             // Ignore if exists
@@ -1305,42 +1342,6 @@ function initDb() {
             // Ignore if exists
         });
 
-        // ==========================================
-        // PHASE 2: DRD STRATEGY EXECUTION ENGINE
-        // ==========================================
-
-        // Initiatves Table (Master Object)
-        db.run(`CREATE TABLE IF NOT EXISTS initiatives (
-            id TEXT PRIMARY KEY,
-            organization_id TEXT NOT NULL,
-            project_id TEXT, -- Optional link to legacy project container
-            name TEXT NOT NULL,
-            axis TEXT, -- 1-6 or 7 (AI)
-            area TEXT,
-            summary TEXT,
-            hypothesis TEXT,
-            status TEXT DEFAULT 'step3', -- step3_list, step4_pilot, step5_full
-            current_stage TEXT,
-            business_value TEXT, -- High/Med/Low
-            competencies_required TEXT, -- JSON array
-            cost_capex REAL,
-            cost_opex REAL,
-            expected_roi REAL,
-            social_impact TEXT,
-            start_date DATETIME,
-            pilot_end_date DATETIME,
-            end_date DATETIME,
-            owner_business_id TEXT,
-            owner_execution_id TEXT,
-            sponsor_id TEXT,
-            market_context TEXT, -- AI-gathered research data
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
-            FOREIGN KEY(owner_business_id) REFERENCES users(id) ON DELETE SET NULL,
-            FOREIGN KEY(owner_execution_id) REFERENCES users(id) ON DELETE SET NULL,
-            FOREIGN KEY(sponsor_id) REFERENCES users(id) ON DELETE SET NULL
-        )`);
 
         // Update Initiatives Table with Professional Card fields
         const initiativeColumns = [
