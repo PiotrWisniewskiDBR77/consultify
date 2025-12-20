@@ -2772,17 +2772,25 @@ function initDb() {
         db.run(`CREATE TABLE IF NOT EXISTS action_decisions (
             id TEXT PRIMARY KEY,
             proposal_id TEXT NOT NULL,
+            organization_id TEXT,            -- Added for RBAC hardening
+            correlation_id TEXT,             -- Step 9.5: For tracing proposal→decision→execution
             decision TEXT NOT NULL,          -- APPROVED | REJECTED | MODIFIED
             decided_by_user_id TEXT NOT NULL,
             decision_reason TEXT,
-            original_payload TEXT,           -- JSON (added for execution)
+            action_type TEXT NOT NULL,       -- Denormalized for filtering
+            scope TEXT NOT NULL,            -- Denormalized for filtering
+            proposal_snapshot TEXT,          -- Full JSON of AI proposal (Step 9.2 alignment)
+            original_payload TEXT,           -- JSON (deprecated, use snapshot)
             modified_payload TEXT,           -- JSON (only if MODIFIED)
+            archived_at DATETIME,            -- Step 9.7: For retention policy
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(decided_by_user_id) REFERENCES users(id) ON DELETE SET NULL
         )`);
 
         db.run(`CREATE INDEX IF NOT EXISTS idx_action_decisions_proposal ON action_decisions(proposal_id)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_action_decisions_user ON action_decisions(decided_by_user_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_action_decisions_correlation ON action_decisions(correlation_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_action_decisions_org_created ON action_decisions(organization_id, created_at)`);
 
         /**
          * Action Executions Table (APPEND-ONLY)
@@ -2792,14 +2800,243 @@ function initDb() {
         db.run(`CREATE TABLE IF NOT EXISTS action_executions (
             id TEXT PRIMARY KEY,
             decision_id TEXT NOT NULL,
+            proposal_id TEXT NOT NULL,       -- Consistency
+            action_type TEXT NOT NULL,       -- Consistency
+            organization_id TEXT NOT NULL,   -- Consistency
+            correlation_id TEXT NOT NULL,    -- Step 9.5: For tracing
             executed_by TEXT DEFAULT 'SYSTEM',
             status TEXT NOT NULL,            -- SUCCESS | FAILED
             result TEXT,                     -- JSON
+            error_code TEXT,                 -- For diagnostics (uses ACTION_ERROR_CODES)
+            error_message TEXT,              -- For diagnostics
+            duration_ms INTEGER,             -- Step 9.5: Execution duration
+            archived_at DATETIME,            -- Step 9.7: For retention policy
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(decision_id) REFERENCES action_decisions(id)
         )`);
 
         db.run(`CREATE INDEX IF NOT EXISTS idx_action_executions_decision ON action_executions(decision_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_action_exec_org_created ON action_executions(organization_id, created_at)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_action_executions_correlation ON action_executions(correlation_id)`);
+
+        // ==========================================
+        // STEP 9.8: POLICY ENGINE
+        // AI Auto-Approval & Threshold Rules
+        // ==========================================
+
+        /**
+         * AI Policy Rules Table
+         * 
+         * Defines rules for conditional auto-approval of AI Action Proposals.
+         * Policy Engine is deterministic, auditable, and always overridable.
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS ai_policy_rules (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            enabled INTEGER DEFAULT 1,
+            action_type TEXT NOT NULL,           -- TASK_CREATE | PLAYBOOK_ASSIGN | etc.
+            scope TEXT NOT NULL,                 -- USER | ORG | INITIATIVE
+            max_risk_level TEXT NOT NULL,        -- LOW | MEDIUM | HIGH
+            conditions JSON NOT NULL,            -- Rule conditions JSON
+            auto_decision TEXT NOT NULL,         -- APPROVED | MODIFIED
+            auto_decision_reason TEXT NOT NULL,
+            created_by_user_id TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(created_by_user_id) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_policy_rules_org ON ai_policy_rules(organization_id, enabled)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_policy_rules_action ON ai_policy_rules(action_type, scope)`);
+
+        // Migration: Add policy_rule_id to action_decisions for auto-approval tracking
+        db.run(`ALTER TABLE action_decisions ADD COLUMN policy_rule_id TEXT`, () => { });
+
+        /**
+         * Global Policy Engine Settings (Singleton)
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS ai_policy_settings (
+            id TEXT PRIMARY KEY DEFAULT 'singleton',
+            policy_engine_enabled INTEGER DEFAULT 1,
+            updated_by TEXT,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        // Ensure singleton row exists
+        db.run(`INSERT OR IGNORE INTO ai_policy_settings (id) VALUES ('singleton')`);
+
+        // ==========================================
+        // STEP 10: AI PLAYBOOKS (Multi-Step Action Plans)
+        // ==========================================
+
+        /**
+         * AI Playbook Templates
+         * Defines reusable multi-step action sequences triggered by signals.
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS ai_playbook_templates (
+            id TEXT PRIMARY KEY,
+            key TEXT UNIQUE NOT NULL,
+            title TEXT NOT NULL,
+            description TEXT,
+            trigger_signal TEXT,
+            estimated_duration_mins INTEGER,
+            is_active INTEGER DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_ai_playbook_templates_key ON ai_playbook_templates(key)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_ai_playbook_templates_signal ON ai_playbook_templates(trigger_signal)`);
+
+        /**
+         * AI Playbook Template Steps
+         * Individual actions within a playbook template.
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS ai_playbook_template_steps (
+            id TEXT PRIMARY KEY,
+            template_id TEXT NOT NULL,
+            step_order INTEGER NOT NULL,
+            action_type TEXT NOT NULL,
+            title TEXT NOT NULL,
+            description TEXT,
+            payload_template TEXT,
+            is_optional INTEGER DEFAULT 0,
+            wait_for_previous INTEGER DEFAULT 1,
+            FOREIGN KEY(template_id) REFERENCES ai_playbook_templates(id) ON DELETE CASCADE
+        )`);
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_ai_playbook_steps_template ON ai_playbook_template_steps(template_id)`);
+
+        /**
+         * AI Playbook Runs
+         * Execution instances of playbook templates.
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS ai_playbook_runs (
+            id TEXT PRIMARY KEY,
+            template_id TEXT NOT NULL,
+            organization_id TEXT NOT NULL,
+            correlation_id TEXT NOT NULL,
+            initiated_by TEXT NOT NULL,
+            status TEXT NOT NULL,
+            context_snapshot TEXT,
+            started_at DATETIME,
+            completed_at DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(template_id) REFERENCES ai_playbook_templates(id)
+        )`);
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_ai_playbook_runs_template ON ai_playbook_runs(template_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_ai_playbook_runs_org ON ai_playbook_runs(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_ai_playbook_runs_correlation ON ai_playbook_runs(correlation_id)`);
+
+        /**
+         * AI Playbook Run Steps
+         * Progress tracking for each step in a run.
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS ai_playbook_run_steps (
+            id TEXT PRIMARY KEY,
+            run_id TEXT NOT NULL,
+            template_step_id TEXT NOT NULL,
+            decision_id TEXT,
+            execution_id TEXT,
+            status TEXT NOT NULL,
+            resolved_payload TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(run_id) REFERENCES ai_playbook_runs(id) ON DELETE CASCADE
+        )`);
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_ai_playbook_run_steps_run ON ai_playbook_run_steps(run_id)`);
+
+        // ==========================================
+        // STEP 13: VISUAL PLAYBOOK EDITOR - VERSIONING
+        // Template versioning, graph model, publish workflow
+        // ==========================================
+
+        // Add versioning columns to ai_playbook_templates
+        db.run(`ALTER TABLE ai_playbook_templates ADD COLUMN version INTEGER DEFAULT 1`, () => { });
+        db.run(`ALTER TABLE ai_playbook_templates ADD COLUMN status TEXT DEFAULT 'DRAFT'`, () => { });
+        db.run(`ALTER TABLE ai_playbook_templates ADD COLUMN published_at DATETIME`, () => { });
+        db.run(`ALTER TABLE ai_playbook_templates ADD COLUMN published_by_user_id TEXT`, () => { });
+        db.run(`ALTER TABLE ai_playbook_templates ADD COLUMN template_graph TEXT`, () => { });
+        db.run(`ALTER TABLE ai_playbook_templates ADD COLUMN parent_template_id TEXT`, () => { });
+
+        // Indexes for versioning queries
+        db.run(`CREATE INDEX IF NOT EXISTS idx_ai_playbook_templates_status_signal ON ai_playbook_templates(status, trigger_signal)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_ai_playbook_templates_parent ON ai_playbook_templates(parent_template_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_ai_playbook_templates_status ON ai_playbook_templates(status)`);
+
+        // ==========================================
+        // STEP 11: ASYNC / QUEUE / SAGA EXECUTION
+        // Job Registry for Async Action & Playbook Execution
+        // ==========================================
+
+        /**
+         * Async Jobs Table (Job Registry - Append-Only)
+         * 
+         * DB is source of truth, queue (BullMQ) is execution mechanism.
+         * Tracks all async jobs for Action Decisions and Playbook Step Advances.
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS async_jobs (
+            id TEXT PRIMARY KEY,
+            type TEXT NOT NULL,                    -- EXECUTE_DECISION | ADVANCE_PLAYBOOK_STEP
+            organization_id TEXT NOT NULL,
+            correlation_id TEXT NOT NULL,
+            entity_id TEXT NOT NULL,               -- decisionId or playbookRunStepId
+            status TEXT NOT NULL DEFAULT 'QUEUED', -- QUEUED|RUNNING|SUCCESS|FAILED|DEAD_LETTER|CANCELLED
+            priority TEXT DEFAULT 'normal',        -- low|normal|high
+            attempts INTEGER DEFAULT 0,
+            max_attempts INTEGER DEFAULT 3,
+            last_error_code TEXT,
+            last_error_message TEXT,
+            scheduled_at DATETIME,
+            started_at DATETIME,
+            finished_at DATETIME,
+            created_by TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_async_jobs_org_created ON async_jobs(organization_id, created_at)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_async_jobs_status ON async_jobs(status)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_async_jobs_type_entity ON async_jobs(type, entity_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_async_jobs_correlation ON async_jobs(correlation_id)`);
+
+        // Migration: Add job_id to action_executions for linking
+        db.run(`ALTER TABLE action_executions ADD COLUMN job_id TEXT`, () => { });
+
+        // Migration: Add job_id and async_status to ai_playbook_run_steps
+        db.run(`ALTER TABLE ai_playbook_run_steps ADD COLUMN job_id TEXT`, () => { });
+        db.run(`ALTER TABLE ai_playbook_run_steps ADD COLUMN async_status TEXT`, () => { });
+
+        // ==========================================
+        // STEP 12: CONDITIONAL BRANCHING & DYNAMIC PLAYBOOKS
+        // Extends Step 10 with branching, routing, and debug traces.
+        // ==========================================
+
+        /**
+         * Extend ai_playbook_template_steps with branching support.
+         * step_type: ACTION | CHECK | WAIT | BRANCH | AI_ROUTER
+         * next_step_id: Default next step for linear flow
+         * branch_rules: JSON for conditional routing
+         * inputs_schema: JSON Schema of required inputs
+         * outputs_schema: JSON Schema of produced outputs
+         */
+        db.run(`ALTER TABLE ai_playbook_template_steps ADD COLUMN step_type TEXT DEFAULT 'ACTION'`, () => { });
+        db.run(`ALTER TABLE ai_playbook_template_steps ADD COLUMN next_step_id TEXT`, () => { });
+        db.run(`ALTER TABLE ai_playbook_template_steps ADD COLUMN branch_rules TEXT`, () => { });
+        db.run(`ALTER TABLE ai_playbook_template_steps ADD COLUMN inputs_schema TEXT DEFAULT '{}'`, () => { });
+        db.run(`ALTER TABLE ai_playbook_template_steps ADD COLUMN outputs_schema TEXT DEFAULT '{}'`, () => { });
+
+        /**
+         * Extend ai_playbook_run_steps with routing trace support.
+         * status_reason: Human-readable reason for status
+         * outputs: JSON of step outputs (for CHECK/BRANCH evaluation)
+         * selected_next_step_id: Which step was routed to after branching
+         * evaluation_trace: Debug JSON with matched rule and context snapshot
+         */
+        db.run(`ALTER TABLE ai_playbook_run_steps ADD COLUMN status_reason TEXT`, () => { });
+        db.run(`ALTER TABLE ai_playbook_run_steps ADD COLUMN outputs TEXT DEFAULT '{}'`, () => { });
+        db.run(`ALTER TABLE ai_playbook_run_steps ADD COLUMN selected_next_step_id TEXT`, () => { });
+        db.run(`ALTER TABLE ai_playbook_run_steps ADD COLUMN evaluation_trace TEXT DEFAULT '{}'`, () => { });
 
         // Seed Super Admin & Default Organization
         const superAdminOrgId = 'org-dbr77-system';

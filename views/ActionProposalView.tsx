@@ -78,6 +78,45 @@ export const ActionProposalView: React.FC = () => {
         }
     };
 
+    const handleExport = async (format: 'json' | 'csv') => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`/api/ai/actions/audit/export?format=${format}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) throw new Error('Export failed');
+
+            if (format === 'csv') {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'audit_decisions.csv';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
+            } else {
+                const data = await response.json();
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'audit_decisions.json';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
+            }
+
+            toast.success(`Exported audit log as ${format.toUpperCase()}`);
+        } catch (error) {
+            console.error('[ActionProposalView] Export error:', error);
+            toast.error('Failed to export audit log');
+        }
+    };
+
     return (
         <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-navy-950 overflow-hidden">
             {/* Top Stats/Header Strip */}
@@ -154,7 +193,7 @@ export const ActionProposalView: React.FC = () => {
                     <div className="w-full flex flex-col min-h-0 max-w-4xl mx-auto">
                         <div className="flex items-center justify-between mb-6">
                             <div>
-                                <h3 className="text-xl font-bold text-navy-900 dark:text-white">Immutible Action Audit</h3>
+                                <h3 className="text-xl font-bold text-navy-900 dark:text-white">Immutable Action Audit</h3>
                                 <p className="text-sm text-slate-500">Every AI intervention is logged with human accountability.</p>
                             </div>
                             <div className="p-3 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 rounded-2xl flex items-center gap-3">
@@ -163,7 +202,7 @@ export const ActionProposalView: React.FC = () => {
                             </div>
                         </div>
                         <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin">
-                            <ActionAuditTrail records={auditRecords} loading={isLoading} />
+                            <ActionAuditTrail records={auditRecords} loading={isLoading} onExport={handleExport} />
                         </div>
                     </div>
                 )}

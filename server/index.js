@@ -257,6 +257,10 @@ app.use('/api/ai/coach', aiCoachRoutes);
 const actionDecisionRoutes = require('./routes/actionDecisions');
 app.use('/api/ai/actions', actionDecisionRoutes);
 
+// Step 10: AI Playbooks (Multi-Step Action Plans)
+const aiPlaybooksRoutes = require('./routes/aiPlaybooks');
+app.use('/api/ai/playbooks', aiPlaybooksRoutes);
+
 const db = require('./database');
 
 // Health Check - MUST be before catchall

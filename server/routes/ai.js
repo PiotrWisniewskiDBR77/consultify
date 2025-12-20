@@ -294,6 +294,8 @@ router.post('/actions/:id/execute', verifyToken, async (req, res) => {
 router.get('/actions/proposals', verifyToken, async (req, res) => {
     // RBAC: ADMIN or SUPERADMIN
     if (req.userRole !== 'ADMIN' && req.userRole !== 'SUPERADMIN') {
+        const logger = require('../utils/logger');
+        logger.warn('Unauthorized proposal access attempt', { userId: req.userId, role: req.userRole });
         return res.status(403).json({ error: 'Permission denied. ADMIN or SUPERADMIN required.' });
     }
 
@@ -307,14 +309,24 @@ router.get('/actions/proposals', verifyToken, async (req, res) => {
     }
 
     try {
-        const AIContextBuilder = require('../ai/aiContextBuilder');
+        const logger = require('../utils/logger');
+        const { getRequestContext } = require('../utils/requestContext');
+
+        logger.info('Generating action proposals', {
+            ...getRequestContext(req),
+            targetOrgId: organizationId
+        });
+
+        // Use the correct paths for AI components
+        const AIContextBuilder = require('../services/aiContextBuilder');
         const ActionProposalEngine = require('../ai/actionProposalEngine');
 
-        const context = await AIContextBuilder.buildContext(organizationId);
+        const context = await AIContextBuilder.buildContext(null, organizationId);
         const proposals = ActionProposalEngine.generateProposals(context);
 
         res.json(proposals);
     } catch (err) {
+        console.error('[AI Proposals] Error:', err);
         res.status(500).json({ error: err.message });
     }
 });

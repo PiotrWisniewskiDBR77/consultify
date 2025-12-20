@@ -71,14 +71,15 @@ const PermissionService = require('../services/permissionService');
 
 function attachUser(decoded, req, next) {
     req.userId = decoded.id;
-    req.userRole = decoded.role;
+    req.userRole = decoded.role || decoded.userRole; // Handle both variants
+    req.organizationId = decoded.organizationId || decoded.organization_id;
     req.user = decoded;
 
     // Attach Permissions Helper
     // This allows routes to do: if (!req.can('manage_users')) ...
     req.can = (capability) => {
         return PermissionService.can(req.user, capability, {
-            organizationId: req.user.organizationId
+            organizationId: req.organizationId
         });
     };
 

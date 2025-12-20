@@ -32,6 +32,10 @@ const verifySuperAdmin = require('../middleware/superAdminMiddleware');
  */
 router.get('/overview', verifyToken, verifySuperAdmin, async (req, res) => {
     try {
+        const logger = require('../utils/logger');
+        const { getRequestContext } = require('../utils/requestContext');
+        logger.info('SuperAdmin fetching metrics overview', getRequestContext(req));
+
         const overview = await MetricsAggregator.getOverview();
         res.json(overview);
     } catch (err) {
@@ -322,11 +326,16 @@ router.post('/snapshots/build', verifyToken, verifySuperAdmin, async (req, res) 
  */
 router.get('/org/overview', verifyToken, async (req, res) => {
     try {
-        const organizationId = req.user.organizationId;
+        const organizationId = req.organizationId;
+        const logger = require('../utils/logger');
+        const { getRequestContext } = require('../utils/requestContext');
 
         if (!organizationId) {
+            logger.warn('Metrics org/overview access without orgId', getRequestContext(req));
             return res.status(400).json({ error: 'Organization ID not found' });
         }
+
+        logger.info('Fetching organization metrics overview', { ...getRequestContext(req), organizationId });
 
         const metrics = await MetricsAggregator.getOrganizationMetrics(organizationId);
         res.json(metrics);

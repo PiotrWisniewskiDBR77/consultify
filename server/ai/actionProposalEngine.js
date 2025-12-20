@@ -41,6 +41,22 @@ const ActionProposalEngine = {
 
         // Ensure deterministic output (sort by proposal_id)
         return allProposals.sort((a, b) => a.proposal_id.localeCompare(b.proposal_id));
+    },
+
+    /**
+     * Gets a specific proposal by ID for server-side verification.
+     * @param {string} orgId - The organization ID.
+     * @param {string} proposalId - The target proposal ID.
+     * @returns {Promise<Object|null>} The proposal if found.
+     */
+    getProposalById: async (orgId, proposalId) => {
+        // In a real system, we'd build context first.
+        // For simplicity, we use the AICoach to get all proposals and filter.
+        const AICoach = require('./aiCoach');
+        const report = await AICoach.getAdvisoryReport(orgId);
+        const proposals = ActionProposalEngine.generateProposals({ data: report.context_snapshot });
+
+        return proposals.find(p => p.proposal_id === proposalId) || null;
     }
 };
 

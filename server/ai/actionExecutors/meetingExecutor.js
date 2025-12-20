@@ -28,6 +28,7 @@ const MeetingExecutor = {
             summary,
             participants: participants || [],
             scheduledAt: new Date().toISOString(),
+            metadata: { mock: true },
             message: `Meeting "${summary}" scheduled successfully for ${entity_id || 'context resource'}. Participants: ${(participants || []).join(', ')}`
         };
     }

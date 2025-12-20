@@ -1,6 +1,7 @@
 const { Worker } = require('bullmq');
 const redisConfig = require('../config/queue.config');
 const AiService = require('../services/aiService');
+const AsyncJobProcessor = require('./asyncJobProcessor');
 
 const workerName = 'ai-tasks-worker';
 
@@ -25,6 +26,13 @@ const processor = async (job) => {
                 break;
             case 'validate_initiative':
                 result = await AiService.validateInitiative(payload.initiativeContext, userId);
+                break;
+            // Step 11: Async Job Types
+            case 'EXECUTE_DECISION':
+                result = await AsyncJobProcessor.processDecisionExecution(job);
+                break;
+            case 'ADVANCE_PLAYBOOK_STEP':
+                result = await AsyncJobProcessor.processPlaybookAdvance(job);
                 break;
             default:
                 throw new Error(`Unknown task type: ${taskType}`);

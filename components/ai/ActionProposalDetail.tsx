@@ -2,14 +2,22 @@ import React from 'react';
 import { ActionProposal } from './ActionProposalList';
 import { Brain, Target, Shield, AlertTriangle, TrendingUp, CheckCircle2, XCircle, Terminal, HelpCircle, Activity, Info } from 'lucide-react';
 
+interface PolicyEvaluation {
+    matched: boolean;
+    decision: string | null;
+    reason: string | null;
+    rule_id: string | null;
+}
+
 interface ActionProposalDetailProps {
     proposal: ActionProposal | null;
     onApprove: () => void;
     onReject: () => void;
     onModify?: () => void;
+    policyEvaluation?: PolicyEvaluation | null;
 }
 
-export const ActionProposalDetail: React.FC<ActionProposalDetailProps> = ({ proposal, onApprove, onReject, onModify }) => {
+export const ActionProposalDetail: React.FC<ActionProposalDetailProps> = ({ proposal, onApprove, onReject, onModify, policyEvaluation }) => {
     if (!proposal) {
         return (
             <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-400 bg-slate-50/50 dark:bg-navy-950/30 rounded-2xl border border-dashed border-slate-200 dark:border-white/5">
@@ -66,6 +74,44 @@ export const ActionProposalDetail: React.FC<ActionProposalDetailProps> = ({ prop
                         </div>
                     </div>
                 </section>
+
+                {/* Policy Evaluation Section */}
+                {policyEvaluation && (
+                    <section className="bg-violet-50/50 dark:bg-violet-900/10 border border-violet-100 dark:border-violet-500/20 rounded-xl p-5">
+                        <h3 className="flex items-center gap-2 text-sm font-bold text-navy-900 dark:text-white uppercase tracking-wider mb-4">
+                            <Shield size={16} className="text-violet-500" />
+                            Policy Evaluation
+                        </h3>
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-4">
+                                <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${policyEvaluation.matched
+                                        ? 'bg-emerald-100 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400'
+                                        : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                                    }`}>
+                                    {policyEvaluation.matched ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
+                                    <span className="text-xs font-bold uppercase">
+                                        {policyEvaluation.matched ? 'Policy Match' : 'No Policy Match'}
+                                    </span>
+                                </div>
+                                {policyEvaluation.matched && policyEvaluation.decision && (
+                                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-100 dark:bg-violet-900/30 border border-violet-200 dark:border-violet-500/30 text-violet-700 dark:text-violet-400">
+                                        <span className="text-xs font-bold">{policyEvaluation.decision}</span>
+                                    </div>
+                                )}
+                            </div>
+                            {policyEvaluation.reason && (
+                                <p className="text-xs text-slate-600 dark:text-slate-400 italic">
+                                    "{policyEvaluation.reason}"
+                                </p>
+                            )}
+                            {policyEvaluation.rule_id && (
+                                <p className="text-[10px] text-violet-500 font-mono">
+                                    RULE ID: {policyEvaluation.rule_id}
+                                </p>
+                            )}
+                        </div>
+                    </section>
+                )}
 
                 {/* Simulation & Impact */}
                 <section>

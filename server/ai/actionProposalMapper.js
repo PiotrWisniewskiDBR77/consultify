@@ -7,6 +7,21 @@
  * - LOW_HELP_ADOPTION  -> PLAYBOOK_ASSIGN
  * - STRONG_TEAM_MEMBER -> ROLE_SUGGESTION
  */
+const crypto = require('crypto');
+
+/**
+ * Generate a deterministic hash from content for stable proposal IDs.
+ * @param {string} prefix - The proposal type prefix (e.g., 'tc', 'pa')
+ * @param {string} entityId - The entity ID
+ * @param {string} signalType - The signal type
+ * @returns {string} A stable proposal ID
+ */
+const generateProposalId = (prefix, entityId, signalType) => {
+    const content = `${prefix}-${entityId || 'global'}-${signalType}`;
+    const hash = crypto.createHash('sha256').update(content).digest('hex').substring(0, 8);
+    return `ap-${prefix}-${hash}`;
+};
+
 const ActionProposalMapper = {
     /**
      * Maps a signal and its associated recommendation/simulation to proposals.
@@ -22,7 +37,7 @@ const ActionProposalMapper = {
             case 'USER_AT_RISK':
                 // Mapping: TASK_CREATE
                 proposals.push({
-                    proposal_id: `ap-tc-${signal.entity_id || 'global'}-${Date.now()}`,
+                    proposal_id: generateProposalId('tc', signal.entity_id, signal.type),
                     origin_signal: signal.type,
                     origin_recommendation: recommendation?.title || "N/A",
                     title: `Create onboarding review task for ${signal.title.split(': ')[1] || 'User'}`,
@@ -44,7 +59,7 @@ const ActionProposalMapper = {
 
                 // Mapping: PLAYBOOK_ASSIGN
                 proposals.push({
-                    proposal_id: `ap-pa-${signal.entity_id || 'global'}-${Date.now()}`,
+                    proposal_id: generateProposalId('pa', signal.entity_id, signal.type),
                     origin_signal: signal.type,
                     origin_recommendation: recommendation?.title || "N/A",
                     title: `Assign First Value playbook to ${signal.title.split(': ')[1] || 'User'}`,
@@ -67,7 +82,7 @@ const ActionProposalMapper = {
             case 'BLOCKED_INITIATIVE':
                 // Mapping: MEETING_SCHEDULE
                 proposals.push({
-                    proposal_id: `ap-ms-${signal.entity_id || 'global'}-${Date.now()}`,
+                    proposal_id: generateProposalId('ms', signal.entity_id, signal.type),
                     origin_signal: signal.type,
                     origin_recommendation: recommendation?.title || "N/A",
                     title: `Schedule unblocking sync for ${signal.title.split(': ')[1] || 'Initiative'}`,
@@ -91,7 +106,7 @@ const ActionProposalMapper = {
             case 'LOW_HELP_ADOPTION':
                 // Mapping: PLAYBOOK_ASSIGN
                 proposals.push({
-                    proposal_id: `ap-ha-${signal.entity_id || 'global'}-${Date.now()}`,
+                    proposal_id: generateProposalId('ha', signal.entity_id, signal.type),
                     origin_signal: signal.type,
                     origin_recommendation: recommendation?.title || "N/A",
                     title: "Assign 'Help Content Optimization' playbook to Admin",
@@ -114,7 +129,7 @@ const ActionProposalMapper = {
             case 'STRONG_TEAM_MEMBER':
                 // Mapping: ROLE_SUGGESTION
                 proposals.push({
-                    proposal_id: `ap-rs-${signal.entity_id || 'global'}-${Date.now()}`,
+                    proposal_id: generateProposalId('rs', signal.entity_id, signal.type),
                     origin_signal: signal.type,
                     origin_recommendation: recommendation?.title || "N/A",
                     title: `Suggest Mentoring role for ${signal.title.split(': ')[1] || 'User'}`,

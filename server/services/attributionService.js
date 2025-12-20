@@ -39,6 +39,7 @@ const AttributionService = {
      * @returns {Promise<{eventId: string}>}
      */
     recordAttribution: async (params) => {
+        if (db.initPromise) await db.initPromise;
         const {
             organizationId,
             userId = null,

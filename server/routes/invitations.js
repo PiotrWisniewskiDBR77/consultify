@@ -187,7 +187,7 @@ router.get('/pending', async (req, res) => {
  */
 router.get('/org', verifyAdmin, async (req, res) => {
     try {
-        const organizationId = req.user?.organizationId;
+        const organizationId = req.organizationId;
         if (!organizationId) {
             return res.status(400).json({ error: 'Organization ID not found' });
         }
@@ -229,8 +229,8 @@ router.get('/org', verifyAdmin, async (req, res) => {
  */
 router.post('/org', verifyAdmin, async (req, res) => {
     try {
-        const organizationId = req.user?.organizationId;
-        const invitedByUserId = req.user?.id;
+        const organizationId = req.organizationId;
+        const invitedByUserId = req.userId;
 
         if (!organizationId || !invitedByUserId) {
             return res.status(400).json({ error: 'Authentication context missing' });
@@ -466,8 +466,11 @@ router.get('/:id/audit', verifyAdmin, async (req, res) => {
  */
 router.get('/', verifyAdmin, async (req, res) => {
     try {
-        const { organizationId } = req.query;
-        const orgId = organizationId || req.user?.organizationId;
+        const { organizationId: queryOrgId } = req.query;
+        // RBAC enforcement: Only SUPERADMIN can view other orgs
+        const orgId = (req.userRole === 'SUPERADMIN' && queryOrgId)
+            ? queryOrgId
+            : req.organizationId;
 
         if (!orgId) {
             return res.status(400).json({ error: 'Organization ID is required' });
