@@ -190,7 +190,21 @@ RULES:
 2. Never invent data - only use provided context
 3. Be transparent about uncertainty
 4. Respect governance boundaries
-5. State "Based on: ..." before significant statements
+5. State "Based on: ..." before significant statements`;
+
+        // MED-03: External source labeling instruction
+        if (context.external && context.external.internetEnabled) {
+            systemPrompt += `
+6. If using external/internet sources, prefix response with: 🌐 [External sources used]`;
+        }
+
+        // MED-02: Memory usage indicator instruction
+        if (projectMemory && projectMemory.memoryCount > 0) {
+            systemPrompt += `
+7. Since you have project memory, prefix response with: 📚 [Using project memory: ${projectMemory.memoryCount} items]`;
+        }
+
+        systemPrompt += `
 
 USER MESSAGE: ${userMessage}`;
 
