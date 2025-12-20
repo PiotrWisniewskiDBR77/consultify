@@ -4,6 +4,7 @@ import { AppView } from '../types';
 import { DashboardOverview } from '../components/dashboard/DashboardOverview';
 import { DashboardExecutionSnapshot } from '../components/dashboard/DashboardExecutionSnapshot';
 import { TaskDetailModal } from '../components/MyWork/TaskDetailModal';
+import { GateStatus } from '../components/PMO/GateStatus'; // CRIT-01
 import { SplitLayout } from '../components/SplitLayout'; // Import SplitLayout
 import { useTranslation } from 'react-i18next'; // Import useTranslation
 
@@ -15,7 +16,7 @@ interface UserDashboardViewProps {
 import { useScreenContext } from '../hooks/useScreenContext';
 
 export const UserDashboardView: React.FC<UserDashboardViewProps> = ({ currentUser, onNavigate }) => {
-    const { fullSessionData, currentView, addChatMessage: addMessage, activeChatMessages: messages, setIsBotTyping: setTyping } = useAppStore();
+    const { fullSessionData, currentView, addChatMessage: addMessage, activeChatMessages: messages, setIsBotTyping: setTyping, currentProjectId } = useAppStore();
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -67,6 +68,17 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({ currentUse
         >
             <div className="flex h-full flex-col bg-slate-50 dark:bg-navy-950">
                 <div className="flex-1 p-2 lg:p-4 overflow-auto">
+                    {/* CRIT-01: Gate Status - shows progression blockers */}
+                    {currentProjectId && (
+                        <div className="mb-4">
+                            <GateStatus
+                                projectId={currentProjectId}
+                                compact={false}
+                                onProceed={() => setRefreshTrigger(prev => prev + 1)}
+                            />
+                        </div>
+                    )}
+
                     {isSnapshot ? (
                         <DashboardExecutionSnapshot session={fullSessionData} onNavigate={onNavigate} />
                     ) : (
@@ -96,3 +108,4 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({ currentUse
         </SplitLayout>
     );
 };
+
