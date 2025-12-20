@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LayoutDashboard, CheckSquare, Users, BarChart2, Bell, Plus, Filter, Brain } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, Users, BarChart2, Bell, Plus, Filter, Brain, FileQuestion } from 'lucide-react';
 import { SplitLayout } from '../components/SplitLayout';
 import { TodayDashboard } from '../components/MyWork/TodayDashboard';
 import { TaskInbox } from '../components/MyWork/TaskInbox';
@@ -8,8 +8,11 @@ import { WorkloadView } from '../components/MyWork/WorkloadView';
 import { NotificationSettings } from '../components/MyWork/NotificationSettings';
 import { ProgressView } from '../components/MyWork/ProgressView';
 import { TaskDetailModal } from '../components/MyWork/TaskDetailModal';
+import { DecisionsPanel } from '../components/MyWork/DecisionsPanel';
+import { LocationFilter } from '../components/MyWork/LocationFilter'; // CRIT-04
+import { usePMOContext } from '../hooks/usePMOContext';
 
-type Tab = 'today' | 'inbox' | 'workload' | 'progress' | 'settings';
+type Tab = 'today' | 'inbox' | 'decisions' | 'workload' | 'progress' | 'settings';
 
 export const MyWorkView: React.FC = () => {
     const { t } = useTranslation();
@@ -17,10 +20,15 @@ export const MyWorkView: React.FC = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
+    const [locationFilter, setLocationFilter] = useState<string[]>([]); // CRIT-04
+
+    // Initialize PMO context - auto-fetches when project changes
+    usePMOContext();
 
     const tabs = [
         { id: 'today', label: t('myWork.tabs.today', 'Today'), icon: LayoutDashboard },
         { id: 'inbox', label: t('myWork.tabs.inbox', 'Inbox'), icon: CheckSquare },
+        { id: 'decisions', label: t('myWork.tabs.decisions', 'Decisions'), icon: FileQuestion },
         { id: 'workload', label: t('myWork.tabs.workload', 'Workload'), icon: Users },
         { id: 'progress', label: t('myWork.tabs.progress', 'Progress'), icon: BarChart2 },
         { id: 'settings', label: t('myWork.tabs.settings', 'Notifications'), icon: Bell },
@@ -34,6 +42,12 @@ export const MyWorkView: React.FC = () => {
     const handleEditTask = (taskId: string) => {
         setSelectedTaskId(taskId);
         setIsCreateModalOpen(true);
+    };
+
+    // CRIT-04: Handle location filter change
+    const handleLocationChange = (ids: string[]) => {
+        setLocationFilter(ids);
+        setRefreshTrigger(prev => prev + 1); // Trigger refresh with new filter
     };
 
     return (
@@ -58,6 +72,11 @@ export const MyWorkView: React.FC = () => {
                         </p>
                     </div>
                     <div className="flex gap-3">
+                        {/* CRIT-04: Location Filter */}
+                        <LocationFilter
+                            selectedIds={locationFilter}
+                            onChange={handleLocationChange}
+                        />
                         <button
                             onClick={handleCreateTask}
                             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium transition-colors"
@@ -92,6 +111,7 @@ export const MyWorkView: React.FC = () => {
                     <div className="mx-auto max-w-7xl h-full">
                         {activeTab === 'today' && <TodayDashboard onEditTask={handleEditTask} onCreateTask={handleCreateTask} refreshTrigger={refreshTrigger} />}
                         {activeTab === 'inbox' && <TaskInbox onEditTask={handleEditTask} onCreateTask={handleCreateTask} />}
+                        {activeTab === 'decisions' && <DecisionsPanel />}
                         {activeTab === 'workload' && <WorkloadView />}
                         {activeTab === 'progress' && <ProgressView />}
                         {activeTab === 'settings' && <NotificationSettings />}
