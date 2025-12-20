@@ -126,7 +126,7 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                     {/* Axis Label */}
                     <div className="flex flex-col">
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                            OBSZAR OCENY
+                            {workspaceT.assessmentArea || 'ASSESSMENT AREA'}
                         </label>
                         <h2 className="text-xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
                             {t(`sidebar.fullStep1_${axis === 'cybersecurity' ? 'cyber' : axis === 'aiMaturity' ? 'ai' : axis === 'processes' ? 'proc' : axis === 'digitalProducts' ? 'prod' : axis === 'businessModels' ? 'model' : axis === 'dataManagement' ? 'data' : axis === 'culture' ? 'cult' : 'proc'}`) || axisContent?.title || axis}
@@ -137,11 +137,11 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                     {/* Sub-Area Selector (If applicable) */}
                     {hasSubAreas && (
                         <div className="relative group ml-4 pl-4 border-l border-slate-200 dark:border-white/10">
-                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-0.5 block">OBSZAR FUNKCJONALNY</span>
+                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-0.5 block">{workspaceT.functionalArea || 'FUNCTIONAL AREA'}</span>
 
                             {/* Dropdown Trigger */}
                             <div className="flex items-center gap-2 cursor-pointer text-navy-900 dark:text-white font-bold text-sm bg-slate-100 dark:bg-navy-950/50 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20 transition-all">
-                                {activeArea?.title || 'Wybierz Obszar'}
+                                {activeArea?.title || workspaceT.selectArea || 'Select Area'}
                                 <ChevronDown size={14} className="text-slate-400" />
                             </div>
 
@@ -170,11 +170,11 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                 <div className="flex items-center gap-6">
                     {/* Overall Progress */}
                     <div className="flex items-center gap-3 bg-slate-100 dark:bg-navy-950/50 px-4 py-2 rounded-lg border border-slate-200 dark:border-white/5">
-                        <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">POSTĘP OSI</span>
+                        <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">{workspaceT.axisProgress || 'AXIS PROGRESS'}</span>
                         <div className="h-8 w-px bg-slate-200 dark:bg-white/10 mx-2"></div>
                         <div className="flex gap-4 text-sm">
                             <div>
-                                <span className="text-xs text-slate-500 block">Zatwierdzone</span>
+                                <span className="text-xs text-slate-500 block">{workspaceT.approved || 'Approved'}</span>
                                 <span className="font-bold text-blue-400">
                                     {(() => {
                                         if (hasSubAreas) {
@@ -187,7 +187,7 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                                 </span>
                             </div>
                             <div>
-                                <span className="text-xs text-slate-500 block">Pozostało</span>
+                                <span className="text-xs text-slate-500 block">{workspaceT.remaining || 'Remaining'}</span>
                                 <span className="font-bold text-purple-400">
                                     {(() => {
                                         if (hasSubAreas) {
@@ -234,13 +234,13 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
 
                         <LevelDetailCard
                             level={currentLevelView}
-                            title={(hasSubAreas && activeArea ? activeArea.levels[currentLevelView] : mainLevelsRecord[currentLevelView]) || `Poziom ${currentLevelView}`}
+                            title={(hasSubAreas && activeArea ? activeArea.levels[currentLevelView] : mainLevelsRecord[currentLevelView]) || `${t('common.level')} ${currentLevelView}`}
                             description={
                                 /* Try to get specific description if available, else generic */
                                 (hasSubAreas && activeArea
                                     ? t(`assessment.axisContent.${axis}.areas.${currentAreaKey}.level${currentLevelView}Desc`)
                                     : t(`assessment.axisContent.${axis}.level${currentLevelView}Desc`)) as string ||
-                                "Ten poziom reprezentuje określony etap dojrzałości w Twojej cyfrowej transformacji. Przeczytaj poniższe pytania pomocnicze, aby lepiej zrozumieć ten etap."
+                                (t('assessment.card.defaultDesc') as string) || "This level represents a specific stage of maturity in your digital transformation. Read the helper questions below to better understand this stage."
                             }
                             helperQuestions={(() => {
                                 const key = hasSubAreas && activeArea
@@ -249,9 +249,9 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
 
                                 const questions = t(key, { returnObjects: true });
                                 return Array.isArray(questions) ? questions : [
-                                    "Czy Twoja organizacja posiada sformalizowane procedury dla tego obszaru?",
-                                    "Czy dane są zbierane automatycznie czy ręcznie?",
-                                    "Czy decyzje są podejmowane na podstawie danych w czasie rzeczywistym?"
+                                    "Does your organization have formalized procedures for this area?",
+                                    "Are data collected automatically or manually?",
+                                    "Are decisions made based on real-time data?"
                                 ];
                             })()}
                             formula={

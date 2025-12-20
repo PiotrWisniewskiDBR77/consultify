@@ -1,31 +1,38 @@
 <div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+<img width="1200" height="475" alt="Consultify Banner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+
+# Consultify
+### AI-Powered Digital Transformation Platform
 </div>
 
-# Run and deploy your AI Studio app
+**Consultify** serves as a digital executive consultant, guiding organizations through the complex journey of digital maturity—from initial assessment to full-scale rollout.
 
-This contains everything you need to run your app locally.
+## 📚 Documentation
+- **[Introduction](docs/00-introduction.md)**: Overview, value proposition, and key terms.
+- **[Getting Started](docs/01-getting-started.md)**: Installation, environment setup, and running locally.
+- **[Architecture](docs/02-architecture.md)**: Tech stack, project structure, and data flow.
+- **[Features](docs/03-features.md)**: Detailed breakdown of the dashboard, assessment modules, and AI capabilities.
+- **[Development Guide](docs/04-development.md)**: Git workflow, coding standards, and testing strategies.
+- **[Backend API](docs/05-backend-api.md)**: API reference and database schema information.
+- **[Deployment](docs/06-deployment.md)**: Building for production and Docker usage.
 
-View your app in AI Studio: https://ai.studio/apps/drive/1J1xRn5uClDuZAVSe5Vuh8zL1qrjrE8Ma
+## 🚀 Quick Start (Development)
 
-## Run Locally
+1.  **Install dependencies**:
+    ```bash
+    npm install
+    ```
+2.  **Configure Environment**:
+    Copy `.env.production.example` to `.env.local` and set your `GEMINI_API_KEY`.
+3.  **Run Application**:
+    ```bash
+    npm run dev
+    ```
 
-**Prerequisites:**  Node.js
+## 🧪 Running Tests
+```bash
+npm run test:all
+```
 
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
-
-## Performance & Architecture Best Practices
-
-### Global State & Persistence
-The application uses Zustand with `persist` middleware for state management. This writes state changes to `localStorage` synchronously.
-
-**CRITICAL RULE:** Do NOT use persisted state for high-frequency updates (e.g., typing animations, progress bars, mouse tracking).
-- **Bad:** Updating `activeChatMessages` 50 times/second during AI streaming. This will freeze the UI.
-- **Good:** Use `currentStreamContent` (non-persisted) or local component state for high-frequency data. Only update the persisted store once the operation is complete.
-
-See `hooks/useAIStream.ts` for the reference implementation of this pattern.
+---
+*For legacy documentation, see [docs/archive](docs/archive/).*

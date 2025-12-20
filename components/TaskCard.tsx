@@ -49,12 +49,6 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
                         }`}>
                         {task.priority || 'Normal'}
                     </span>
-                    {/* Scope Badge */}
-                    {task.scope && (
-                        <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border border-purple-500 text-purple-600 dark:text-purple-400 bg-purple-500/10">
-                            {task.scope}
-                        </span>
-                    )}
                 </div>
                 {task.priority === 'urgent' && <AlertCircle size={14} className="text-red-500" />}
             </div>
@@ -91,15 +85,19 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
                 )}
             </div>
 
-            {totalChecks > 0 && (
+            {(totalChecks > 0 || (task.progress || 0) > 0) && (
                 <div className="mt-3 flex items-center gap-2">
                     <div className="flex-1 h-1 bg-slate-100 dark:bg-navy-950 rounded-full overflow-hidden">
                         <div
-                            className="h-full bg-blue-500"
-                            style={{ width: `${(completedChecks / totalChecks) * 100}%` }}
+                            className={`h-full ${task.status === 'blocked' ? 'bg-red-500' : 'bg-blue-500'}`}
+                            style={{ width: `${task.progress || ((completedChecks / (totalChecks || 1)) * 100)}%` }}
                         ></div>
                     </div>
-                    <span className="text-[10px] text-slate-500">{completedChecks}/{totalChecks}</span>
+                    {totalChecks > 0 ? (
+                        <span className="text-[10px] text-slate-500">{completedChecks}/{totalChecks}</span>
+                    ) : (
+                        <span className="text-[10px] text-slate-500">{task.progress}%</span>
+                    )}
                 </div>
             )}
         </div>

@@ -1,15 +1,24 @@
 import React from 'react';
 import { FullSession } from '../../types';
-import { UserTaskList } from './UserTaskList';
+// import { UserTaskList } from './UserTaskList';
+import { TaskInbox } from '../MyWork/TaskInbox';
 import { NotificationCenter } from './NotificationCenter';
 import { useAppStore } from '../../store/useAppStore';
 
 interface DashboardOverviewProps {
     onStartModule1: () => void;
     session?: FullSession;
+    onCreateTask?: () => void;
+    onEditTask?: (id: string) => void;
+    refreshTrigger?: number;
 }
 
-export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onStartModule1, session }) => {
+export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
+    onStartModule1,
+    session,
+    onCreateTask,
+    onEditTask
+}) => {
     // We can use the global navigation from store if not passed, but UserDashboardView passes it or handles it.
     // Ideally UserTaskList needs a way to navigate.
     // Let's grab setCurrentView from store to pass down if needed, or assume the parent handles it.
@@ -17,16 +26,22 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onStartMod
 
     return (
         <div className="max-w-7xl mx-auto animate-fade-in relative z-10 w-full h-full">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full">
 
                 {/* Left Panel: User Tasks (Action Plan) - Spans 8 columns */}
                 <div className="lg:col-span-8">
-                    <UserTaskList session={session} onNavigate={setCurrentView} />
+                    {/* Replaced UserTaskList with TaskInbox */}
+                    <div className="sticky top-2 h-[calc(100vh-4rem)]">
+                        <TaskInbox
+                            onCreateTask={onCreateTask}
+                            onEditTask={onEditTask || (() => { })}
+                        />
+                    </div>
                 </div>
 
                 {/* Right Panel: Notification Center - Spans 4 columns */}
                 <div className="lg:col-span-4 h-full">
-                    <div className="sticky top-6 h-[calc(100vh-8rem)]">
+                    <div className="sticky top-2 h-[calc(100vh-4rem)]">
                         <NotificationCenter />
                     </div>
                 </div>

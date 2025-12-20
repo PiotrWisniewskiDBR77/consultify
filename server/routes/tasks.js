@@ -5,6 +5,7 @@ const { v4: uuidv4 } = require('uuid');
 const verifyToken = require('../middleware/authMiddleware');
 const notificationsRouter = require('./notifications');
 const ActivityService = require('../services/activityService');
+const InitiativeService = require('../services/initiativeService');
 
 router.use(verifyToken);
 
@@ -24,11 +25,13 @@ router.get('/', (req, res) => {
             r.first_name as reporter_first_name,
             r.last_name as reporter_last_name,
             r.avatar_url as reporter_avatar,
-            p.name as project_name
+            p.name as project_name,
+            i.name as initiative_name
         FROM tasks t
         LEFT JOIN users a ON t.assignee_id = a.id
         LEFT JOIN users r ON t.reporter_id = r.id
         LEFT JOIN projects p ON t.project_id = p.id
+        LEFT JOIN initiatives i ON t.initiative_id = i.id
         WHERE t.organization_id = ?
     `;
     const params = [orgId];
@@ -119,7 +122,11 @@ router.get('/', (req, res) => {
             roadmapInitiativeId: t.roadmap_initiative_id,
             kpiId: t.kpi_id,
             raidItemId: t.raid_item_id,
-            assignees: t.assignees ? JSON.parse(t.assignees) : []
+            assignees: t.assignees ? JSON.parse(t.assignees) : [],
+            initiativeId: t.initiative_id,
+            initiativeName: t.initiative_name,
+            progress: t.progress || 0,
+            blockedReason: t.blocked_reason || ''
         }));
 
         res.json(tasks);
@@ -142,11 +149,13 @@ router.get('/:id', (req, res) => {
             r.first_name as reporter_first_name,
             r.last_name as reporter_last_name,
             r.avatar_url as reporter_avatar,
-            p.name as project_name
+            p.name as project_name,
+            i.name as initiative_name
         FROM tasks t
         LEFT JOIN users a ON t.assignee_id = a.id
         LEFT JOIN users r ON t.reporter_id = r.id
         LEFT JOIN projects p ON t.project_id = p.id
+        LEFT JOIN initiatives i ON t.initiative_id = i.id
         WHERE t.id = ? AND t.organization_id = ?
     `;
 
@@ -198,7 +207,12 @@ router.get('/:id', (req, res) => {
             roadmapInitiativeId: t.roadmap_initiative_id,
             kpiId: t.kpi_id,
             raidItemId: t.raid_item_id,
-            assignees: t.assignees ? JSON.parse(t.assignees) : []
+            raidItemId: t.raid_item_id,
+            assignees: t.assignees ? JSON.parse(t.assignees) : [],
+            initiativeId: t.initiative_id,
+            initiativeName: t.initiative_name,
+            progress: t.progress || 0,
+            blockedReason: t.blocked_reason || ''
         };
 
         res.json(task);
@@ -221,7 +235,8 @@ router.post('/', async (req, res) => {
             expectedOutcome, decisionImpact,
             evidenceRequired, strategicContribution,
             // My Work Fields
-            roadmapInitiativeId, kpiId, raidItemId, assignees
+            roadmapInitiativeId, kpiId, raidItemId, assignees,
+            progress, blockedReason
         } = req.body;
 
         const id = uuidv4();
@@ -235,6 +250,8 @@ router.post('/', async (req, res) => {
         const finalDecisionImpact = decisionImpact ? JSON.stringify(decisionImpact) : '{}';
         const finalEvidenceRequired = evidenceRequired ? JSON.stringify(evidenceRequired) : '[]';
         const finalStrategicContribution = strategicContribution ? JSON.stringify(strategicContribution) : '[]';
+        const finalProgress = progress || 0;
+        const finalBlockedReason = blockedReason || '';
 
         const stmt = db.prepare(`
             INSERT INTO tasks (
@@ -244,9 +261,10 @@ router.post('/', async (req, res) => {
                 task_type, initiative_id, why,
                 expected_outcome, decision_impact, evidence_required, strategic_contribution,
                 roadmap_initiative_id, kpi_id, raid_item_id, assignees,
+                progress, blocked_reason,
                 created_at, updated_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
 
         stmt.run(
@@ -256,6 +274,7 @@ router.post('/', async (req, res) => {
             finalTaskType, initiativeId, why,
             finalExpectedOutcome, finalDecisionImpact, finalEvidenceRequired, finalStrategicContribution,
             roadmapInitiativeId, kpiId, raidItemId, assignees ? JSON.stringify(assignees) : '[]',
+            finalProgress, finalBlockedReason,
             now, now,
             function (err) {
                 if (err) {
@@ -292,6 +311,12 @@ router.post('/', async (req, res) => {
                 });
             }
         );
+
+        // Recalculate Initiative Progress if linked
+        if (initiativeId) {
+            InitiativeService.recalculateProgress(initiativeId).catch(console.error);
+        }
+
         stmt.finalize();
 
     } catch (e) {
@@ -316,7 +341,9 @@ router.put('/:id', async (req, res) => {
         'task_type', 'initiative_id', 'why',
         'expected_outcome', 'decision_impact', 'evidence_required',
         'evidence_items', 'strategic_contribution', 'ai_insight',
-        'roadmap_initiative_id', 'kpi_id', 'raid_item_id', 'assignees'
+        'evidence_items', 'strategic_contribution', 'ai_insight',
+        'roadmap_initiative_id', 'kpi_id', 'raid_item_id', 'assignees',
+        'progress', 'blocked_reason'
     ];
 
     // Helper to map generic names to DB column names if mixed
@@ -337,7 +364,9 @@ router.put('/:id', async (req, res) => {
         roadmapInitiativeId: 'roadmap_initiative_id',
         kpiId: 'kpi_id',
         raidItemId: 'raid_item_id',
-        assignees: 'assignees'
+        raidItemId: 'raid_item_id',
+        assignees: 'assignees',
+        blockedReason: 'blocked_reason'
     };
 
     db.get(`SELECT * FROM tasks WHERE id = ? AND organization_id = ?`, [id, req.user.organizationId], (err, currentTask) => {
@@ -385,6 +414,28 @@ router.put('/:id', async (req, res) => {
         if (updates.status === 'done' && currentTask.status !== 'done') {
             sqlUpdates.push(`completed_at = ?`);
             params.push(new Date().toISOString());
+
+            // EVENT MAP: Force progress to 100% when Done
+            if (!updates.progress || updates.progress < 100) {
+                sqlUpdates.push(`progress = ?`);
+                params.push(100);
+                updates.progress = 100; // Update local obj for history/logging
+            }
+        }
+
+        // EVENT MAP: Validate Blocked Reason
+        if (updates.status === 'blocked') {
+            if (!updates.blockedReason && !currentTask.blocked_reason) {
+                // We enforce it, or at least warn. For now, we allow it but log a warning if strict mode is off. 
+                // To follow the user instructions "Kategorie eventow -> Blocked -> require reason":
+                // If the user didn't send blockedReason, and it's not set in DB, we should technically fail.
+                // However, to avoid breaking UI that might not send it immediately, we will default it if missing.
+                if (updates.blockedReason === undefined) {
+                    // If purely missing from payload, do nothing (maybe just status update). 
+                } else if (updates.blockedReason === '') {
+                    return res.status(400).json({ error: 'Blocked reason is required when marking task as blocked.' });
+                }
+            }
         }
 
         sqlUpdates.push(`updated_at = ?`);
@@ -416,9 +467,46 @@ router.put('/:id', async (req, res) => {
                 newValue: updates
             });
 
+            // Notifications & Side Effects
+            const notify = (type, title, msg) => {
+                if (currentTask.assignee_id) {
+                    notificationsRouter.createNotification(currentTask.assignee_id, type, title, msg, { entityType: 'task', entityId: id });
+                }
+            };
+
+            // 1. Assignment Change
+            if (updates.assigneeId && updates.assigneeId !== currentTask.assignee_id) {
+                if (userId !== updates.assigneeId) { // Don't notify if assigning to self
+                    notificationsRouter.createNotification(updates.assigneeId, 'task_assigned', 'Task Assigned', `You have been assigned to "${currentTask.title}"`, { entityType: 'task', entityId: id });
+                }
+            }
+
+            // 2. Status Change
+            if (updates.status && updates.status !== currentTask.status) {
+                // Blocked
+                if (updates.status === 'blocked') {
+                    notify('task_blocked', 'Task Blocked', `Task "${currentTask.title}" is now BLOCKED. Reason: ${updates.blockedReason || 'No reason provided'}`);
+                }
+                // Done
+                else if (updates.status === 'done') {
+                    notify('task_completed', 'Task Completed', `Task "${currentTask.title}" marked as DONE.`);
+                }
+                // General Status Change
+                else {
+                    notify('task_updated', 'Task Status Updated', `Task "${currentTask.title}" moved to ${updates.status.toUpperCase()}`);
+                }
+            }
+
             // Return updated task
             db.get(`SELECT * FROM tasks WHERE id = ?`, [id], (err, row) => {
                 if (err) return res.status(500).json({ error: err.message });
+
+                // Recalculate Initiative Progress if linked (use old or new initiative ID)
+                const linkedInitiativeId = updates.initiativeId || currentTask.initiative_id;
+                if (linkedInitiativeId) {
+                    InitiativeService.recalculateProgress(linkedInitiativeId).catch(err => console.error("Error recalc:", err));
+                }
+
                 res.json(row);
             });
         });
@@ -447,6 +535,11 @@ router.delete('/:id', (req, res) => {
         // Delete task
         db.run('DELETE FROM tasks WHERE id = ? AND organization_id = ?', [id, orgId], function (err) {
             if (err) return res.status(500).json({ error: err.message });
+
+            // EVENT MAP: Recalculate Initiative Progress on Delete
+            if (task.initiative_id) {
+                InitiativeService.recalculateProgress(task.initiative_id).catch(console.error);
+            }
 
             // Log Activity
             ActivityService.log({

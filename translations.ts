@@ -239,6 +239,66 @@ export const translations = {
       ]
     }
   },
+  assessment: {
+    wizard: {
+      startDesc: "Assess your current digital maturity across different sub-areas.",
+      startBtn: "Start Assessment",
+      cancel: "Cancel",
+      recommendedLevel: "Recommended Level",
+      acceptResult: "Accept & Continue",
+      adjustManually: "Adjust Manually"
+    },
+    axisContent: {
+      processes: {
+        title: "Processes & Operations",
+        intro: "We evaluate how digitized and efficient your operational processes are.",
+        areas: {
+          standardization: { title: "Standardization", levels: ["Ad-hoc", "Defined", "Standardized", "Measured", "Optimized", "Automated", "Autonomous"] },
+          integration: { title: "Digital Integration", levels: ["None", "Silos", "Connected", "Integrated", "Platform", "Ecosystem", "Universal"] }
+        }
+      },
+      digitalProducts: {
+        title: "Digital Products",
+        intro: "How smart and connected are your products?",
+        areas: {
+          connectivity: { title: "Connectivity", levels: ["Offline", "Basic", "Connected", "Smart", "Intelligent", "Predictive", "Adaptive"] },
+          service: { title: "Digital Services", levels: ["Product only", "Support", "Value-add", "Service-based", "Outcome-based", "Platform", "Ecosystem"] }
+        }
+      },
+      businessModels: {
+        title: "Business Models",
+        intro: "Are you leveraging digital to create new value streams?",
+        areas: {
+          revenue: { title: "Revenue Model", levels: ["Asset sale", "Licensing", "Subscription", "Usage-based", "Performance", "Outcome", "Ecosystem"] },
+          scalability: { title: "Scalability", levels: ["Linear", "Incremental", "Modular", "Digital", "Platform", " Exponential", "Infinite"] }
+        }
+      },
+      dataManagement: {
+        title: "Data Management",
+        intro: "Is data a byproduct or a strategic asset?",
+        areas: {
+          governance: { title: "Governance", levels: ["None", "Ad-hoc", "Departmental", "Corporate", "Managed", "Optimized", "Automated"] },
+          analytics: { title: "Analytics", levels: ["None", "Descriptive", "Diagnostic", "Predictive", "Prescriptive", "Cognitive", "Autonomous"] }
+        }
+      },
+      culture: {
+        title: "Culture & Organization",
+        intro: "Is your organization ready for change?",
+        areas: {
+          leadership: { title: "Leadership", levels: ["Skeptical", "Aware", "Supportive", "Committed", "Driving", "Visionary", "Digital-Native"] },
+          skills: { title: "Digital Skills", levels: ["None", "Basic", "Specialists", "Broad", "Advanced", "Expert", "Culture"] }
+        }
+      },
+      aiMaturity: {
+        title: "AI Maturity",
+        intro: "How advanced is your AI adoption?",
+        areas: {
+          adoption: { title: "Adoption", levels: ["None", "Interest", "Pilots", "Production", "Scaling", "Strategic", "Native"] },
+          capability: { title: "Capability", levels: ["None", "Outsourced", "Hybrid", "Internal", "Center of Excellence", "Industry Leader", "Innovator"] }
+        }
+      }
+    }
+  },
   fullInitiatives: {
     intro: "Based on your maturity scores, I've generated a set of transformation initiatives. You can review and edit them in the table on the right.",
     tableHeader: {

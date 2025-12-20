@@ -3,6 +3,7 @@ import { ReportBlock, BlockType } from '../../types';
 import { GripVertical, Lock, Unlock, Wand2, Trash2 } from 'lucide-react';
 import { TextBlock } from './blocks/TextBlock';
 import { CalloutBlock } from './blocks/CalloutBlock';
+import { TableBlock } from './blocks/TableBlock';
 
 interface BlockRendererProps {
     block: ReportBlock;
@@ -18,6 +19,8 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({ block, onUpdate, o
         switch (block.type) {
             case 'text':
                 return <TextBlock block={block} onUpdate={onUpdate} />;
+            case 'table':
+                return <TableBlock block={block} onUpdate={onUpdate} />;
             case 'callout':
                 return <CalloutBlock block={block} onUpdate={onUpdate} />;
             default:

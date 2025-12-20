@@ -8,8 +8,8 @@ import { Api } from '../../services/api';
 interface ProfileSettingsProps {
     currentUser: User;
     onUpdateUser: (updates: Partial<User>) => void;
-    theme: 'light' | 'dark';
-    toggleTheme: () => void;
+    theme: 'light' | 'dark' | 'system';
+    toggleTheme: (newTheme?: 'light' | 'dark' | 'system') => void;
 }
 
 // Simple debounce implementation if lodash is not available
@@ -175,16 +175,22 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                                 </div>
                                 <div className="flex bg-slate-100 dark:bg-navy-950 p-1 rounded-lg">
                                     <button
-                                        onClick={toggleTheme}
+                                        onClick={() => toggleTheme('light')}
                                         className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${theme === 'light' ? 'bg-white shadow text-navy-900' : 'text-slate-500'}`}
                                     >
                                         {t('settings.profile.light')}
                                     </button>
                                     <button
-                                        onClick={toggleTheme}
+                                        onClick={() => toggleTheme('dark')}
                                         className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${theme === 'dark' ? 'bg-navy-800 shadow text-white' : 'text-slate-500'}`}
                                     >
                                         {t('settings.profile.dark')}
+                                    </button>
+                                    <button
+                                        onClick={() => toggleTheme('system')}
+                                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${theme === 'system' ? 'bg-white dark:bg-navy-800 shadow text-purple-600' : 'text-slate-500'}`}
+                                    >
+                                        System
                                     </button>
                                 </div>
                             </div>

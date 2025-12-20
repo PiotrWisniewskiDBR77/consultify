@@ -1,81 +1,72 @@
+// Reports Routes - Executive reporting
+// Step 6: Stabilization, Reporting & Economics
+
 const express = require('express');
 const router = express.Router();
-const ReportService = require('../services/reportService');
-const auth = require('../middleware/authMiddleware'); // Updated to correct filename
+const ReportingService = require('../services/reportingService');
+const NarrativeService = require('../services/narrativeService');
+const verifyToken = require('../middleware/authMiddleware');
 
-// Get Report by Project ID
-router.get('/project/:projectId', auth, async (req, res) => {
+// GET /api/reports/executive-overview
+router.get('/executive-overview', verifyToken, async (req, res) => {
     try {
-        const report = await ReportService.getReport(req.params.projectId);
-
-        if (!report) {
-            // Auto-create draft if not exists? Or return 404? 
-            // For MVP let's return 404 and let frontend trigger creation
-            return res.status(404).json({ message: 'Report not found' });
-        }
-
+        const report = await ReportingService.generateExecutiveOverview(req.organizationId, req.userId);
         res.json(report);
     } catch (err) {
-        console.error('Error fetching report:', err);
-        res.status(500).json({ message: 'Internal Server Error' });
+        res.status(500).json({ error: err.message });
     }
 });
 
-// Create Draft Report
-router.post('/draft', auth, async (req, res) => {
+// GET /api/reports/project-health/:projectId
+router.get('/project-health/:projectId', verifyToken, async (req, res) => {
     try {
-        const { projectId, title, sources } = req.body;
-        const result = await ReportService.createDraft(projectId, req.user.organizationId, title || 'New Report', sources);
-        res.status(201).json(result);
+        const report = await ReportingService.generateProjectHealthReport(req.params.projectId, req.userId);
+        res.json(report);
     } catch (err) {
-        console.error('Error creating draft:', err);
-        res.status(500).json({ message: 'Internal Server Error' });
+        res.status(500).json({ error: err.message });
     }
 });
 
-// Add Block
-router.post('/:reportId/blocks', auth, async (req, res) => {
+// GET /api/reports/governance/:projectId
+router.get('/governance/:projectId', verifyToken, async (req, res) => {
     try {
-        const result = await ReportService.addBlock(req.params.reportId, req.body);
-        res.status(201).json(result);
+        const report = await ReportingService.generateGovernanceReport(req.params.projectId, req.userId);
+        res.json(report);
     } catch (err) {
-        console.error('Error adding block:', err);
-        res.status(500).json({ message: 'Internal Server Error' });
+        res.status(500).json({ error: err.message });
     }
 });
 
-// Update Block
-router.put('/:reportId/blocks/:blockId', auth, async (req, res) => {
+// ==================== NARRATIVES ====================
+
+// GET /api/reports/narrative/weekly/:projectId
+router.get('/narrative/weekly/:projectId', verifyToken, async (req, res) => {
     try {
-        await ReportService.updateBlock(req.params.reportId, req.params.blockId, req.body);
-        res.json({ status: 'ok' });
+        const narrative = await NarrativeService.generateWeeklySummary(req.params.projectId);
+        res.json(narrative);
     } catch (err) {
-        console.error('Error updating block:', err);
-        res.status(500).json({ message: 'Internal Server Error' });
+        res.status(500).json({ error: err.message });
     }
 });
 
-// Reorder Blocks
-router.post('/:reportId/reorder', auth, async (req, res) => {
+// GET /api/reports/narrative/memo/:projectId
+router.get('/narrative/memo/:projectId', verifyToken, async (req, res) => {
+    const { topic } = req.query;
     try {
-        const { blockOrder } = req.body;
-        await ReportService.reorderBlocks(req.params.reportId, blockOrder);
-        res.json({ status: 'ok' });
+        const narrative = await NarrativeService.generateExecutiveMemo(req.params.projectId, topic);
+        res.json(narrative);
     } catch (err) {
-        console.error('Error reordering blocks:', err);
-        res.status(500).json({ message: 'Internal Server Error' });
+        res.status(500).json({ error: err.message });
     }
 });
 
-// Regenerate Block (AI)
-router.post('/:reportId/blocks/:blockId/regenerate', auth, async (req, res) => {
+// GET /api/reports/narrative/progress/:projectId
+router.get('/narrative/progress/:projectId', verifyToken, async (req, res) => {
     try {
-        const { instructions } = req.body;
-        const result = await ReportService.regenerateBlock(req.params.reportId, req.params.blockId, instructions);
-        res.json(result);
+        const narrative = await NarrativeService.generateProgressNarrative(req.params.projectId);
+        res.json(narrative);
     } catch (err) {
-        console.error('Error regenerating block:', err);
-        res.status(500).json({ message: 'Internal Server Error' });
+        res.status(500).json({ error: err.message });
     }
 });
 

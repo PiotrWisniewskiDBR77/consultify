@@ -98,33 +98,33 @@ export const BillingSettings: React.FC<BillingSettingsProps> = ({ currentUser })
 
     return (
         <div className="max-w-4xl space-y-8">
-            <h2 className="text-lg font-semibold text-white mb-6">Subscription & Billing</h2>
+            <h2 className="text-lg font-semibold text-slate-800 dark:text-white mb-6">Subscription & Billing</h2>
 
             {/* User License Card */}
-            <div className="bg-navy-900 border border-white/10 rounded-xl p-5 mb-8">
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-5 mb-8">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400">
+                        <div className="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-500/20 flex items-center justify-center text-purple-600 dark:text-purple-400">
                             <UserCircle size={24} />
                         </div>
                         <div>
-                            <h3 className="text-white font-semibold text-lg">Your User License</h3>
-                            <p className="text-slate-400 text-sm">
+                            <h3 className="text-slate-800 dark:text-white font-semibold text-lg">Your User License</h3>
+                            <p className="text-slate-500 dark:text-slate-400 text-sm">
                                 {userLicense ? userLicense.name : 'Standard License'}
                                 {userLicense && <span className="text-slate-500 ml-2">(${userLicense.price_monthly}/mo)</span>}
                             </p>
                         </div>
                     </div>
                     <div className="text-right">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium border ${userLicense ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : 'bg-slate-700/50 text-slate-400 border-white/5'}`}>
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium border ${userLicense ? 'bg-purple-100 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-500/20' : 'bg-slate-100 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-white/5'}`}>
                             {userLicense ? 'Active' : 'Default'}
                         </span>
                     </div>
                 </div>
                 {userLicense?.features && (
-                    <div className="mt-4 pt-4 border-t border-white/5">
+                    <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/5">
                         <p className="text-xs font-medium text-slate-500 mb-2 uppercase tracking-wide">Included Features</p>
-                        <ul className="grid grid-cols-2 gap-2 text-sm text-slate-300">
+                        <ul className="grid grid-cols-2 gap-2 text-sm text-slate-600 dark:text-slate-300">
                             {(() => {
                                 try {
                                     const f = JSON.parse(userLicense.features);
@@ -177,29 +177,29 @@ export const BillingSettings: React.FC<BillingSettingsProps> = ({ currentUser })
 
             {/* Usage Meters */}
             <div>
-                <h3 className="text-md font-semibold text-white mb-4">Usage This Period</h3>
+                <h3 className="text-md font-semibold text-slate-800 dark:text-white mb-4">Usage This Period</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Token Usage */}
-                    <div className="bg-navy-900 border border-white/10 rounded-xl p-5">
+                    <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-5">
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                            <div className="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
                                 <Cpu size={20} />
                             </div>
                             <div>
-                                <h4 className="text-white font-medium">Token Usage</h4>
+                                <h4 className="text-slate-800 dark:text-white font-medium">Token Usage</h4>
                                 <p className="text-xs text-slate-500">AI requests this month</p>
                             </div>
                         </div>
                         <div className="space-y-2">
                             <div className="flex justify-between text-sm">
-                                <span className="text-slate-400">
+                                <span className="text-slate-500 dark:text-slate-400">
                                     {(usage.tokensUsed || 0).toLocaleString()} / {(usage.tokenLimit || 0).toLocaleString()}
                                 </span>
-                                <span className={`font-medium ${tokenPercentage >= 80 ? 'text-orange-400' : 'text-slate-300'}`}>
+                                <span className={`font-medium ${tokenPercentage >= 80 ? 'text-orange-500 dark:text-orange-400' : 'text-slate-600 dark:text-slate-300'}`}>
                                     {tokenPercentage}%
                                 </span>
                             </div>
-                            <div className="w-full bg-navy-950 rounded-full h-2.5 overflow-hidden">
+                            <div className="w-full bg-slate-100 dark:bg-navy-950 rounded-full h-2.5 overflow-hidden">
                                 <div
                                     className={`h-full rounded-full transition-all duration-500 ${tokenPercentage >= 95 ? 'bg-red-500' :
                                         tokenPercentage >= 80 ? 'bg-orange-500' :
@@ -212,26 +212,26 @@ export const BillingSettings: React.FC<BillingSettingsProps> = ({ currentUser })
                     </div>
 
                     {/* Storage Usage */}
-                    <div className="bg-navy-900 border border-white/10 rounded-xl p-5">
+                    <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-5">
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                            <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                                 <Globe size={20} />
                             </div>
                             <div>
-                                <h4 className="text-white font-medium">Storage Usage</h4>
+                                <h4 className="text-slate-800 dark:text-white font-medium">Storage Usage</h4>
                                 <p className="text-xs text-slate-500">Documents & files</p>
                             </div>
                         </div>
                         <div className="space-y-2">
                             <div className="flex justify-between text-sm">
-                                <span className="text-slate-400">
+                                <span className="text-slate-500 dark:text-slate-400">
                                     {(usage.storageUsed || 0).toFixed(2)} GB / {usage.storageLimit || 0} GB
                                 </span>
-                                <span className={`font-medium ${storagePercentage >= 80 ? 'text-orange-400' : 'text-slate-300'}`}>
+                                <span className={`font-medium ${storagePercentage >= 80 ? 'text-orange-500 dark:text-orange-400' : 'text-slate-600 dark:text-slate-300'}`}>
                                     {storagePercentage}%
                                 </span>
                             </div>
-                            <div className="w-full bg-navy-950 rounded-full h-2.5 overflow-hidden">
+                            <div className="w-full bg-slate-100 dark:bg-navy-950 rounded-full h-2.5 overflow-hidden">
                                 <div
                                     className={`h-full rounded-full transition-all duration-500 ${storagePercentage >= 95 ? 'bg-red-500' :
                                         storagePercentage >= 80 ? 'bg-orange-500' :
@@ -248,18 +248,18 @@ export const BillingSettings: React.FC<BillingSettingsProps> = ({ currentUser })
             {/* Available Plans (Admin Only) */}
             {isAdmin && (
                 <div>
-                    <h3 className="text-md font-semibold text-white mb-4">Available Plans</h3>
+                    <h3 className="text-md font-semibold text-slate-800 dark:text-white mb-4">Available Plans</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {plans.filter(p => p.is_active).map(plan => (
                             <div
                                 key={plan.id}
                                 className={`rounded-xl p-5 border transition-all ${plan.id === currentPlanId
-                                    ? 'bg-purple-900/30 border-purple-500/50'
-                                    : 'bg-navy-900 border-white/10 hover:border-purple-500/30'
+                                    ? 'bg-purple-50 dark:bg-purple-900/30 border-purple-200 dark:border-purple-500/50'
+                                    : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-white/10 hover:border-purple-300 dark:hover:border-purple-500/30'
                                     }`}
                             >
-                                <h4 className="text-lg font-bold text-white mb-1">{plan.name}</h4>
-                                <p className="text-2xl font-bold text-purple-400 mb-3">
+                                <h4 className="text-lg font-bold text-slate-800 dark:text-white mb-1">{plan.name}</h4>
+                                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-3">
                                     ${plan.price_monthly}<span className="text-sm text-slate-500">/mo</span>
                                 </p>
                                 <ul className="text-sm text-slate-400 space-y-1 mb-4">
@@ -277,12 +277,12 @@ export const BillingSettings: React.FC<BillingSettingsProps> = ({ currentUser })
                                         const entries = Object.entries(feats);
                                         if (entries.length === 0) return null;
                                         return (
-                                            <div className="mt-3 pt-3 border-t border-white/5 mb-4">
-                                                <ul className="text-xs text-slate-400 space-y-1.5">
+                                            <div className="mt-3 pt-3 border-t border-slate-100 dark:border-white/5 mb-4">
+                                                <ul className="text-xs text-slate-500 dark:text-slate-400 space-y-1.5">
                                                     {entries.map(([key, val]) => (
                                                         <li key={key} className="flex justify-between items-start">
                                                             <span className="capitalize">{key.replace(/_/g, ' ')}</span>
-                                                            <span className="text-slate-200 font-medium text-right max-w-[50%] break-words">
+                                                            <span className="text-slate-700 dark:text-slate-200 font-medium text-right max-w-[50%] break-words">
                                                                 {String(val) === 'true' ? 'Yes' : String(val) === 'false' ? 'No' : String(val)}
                                                             </span>
                                                         </li>
@@ -293,7 +293,7 @@ export const BillingSettings: React.FC<BillingSettingsProps> = ({ currentUser })
                                     } catch (e) { return null; }
                                 })()}
                                 {plan.id === currentPlanId ? (
-                                    <div className="w-full py-2 rounded-lg text-center text-sm font-medium text-purple-400 bg-purple-500/10 border border-purple-500/20">
+                                    <div className="w-full py-2 rounded-lg text-center text-sm font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20">
                                         Current Plan
                                     </div>
                                 ) : (
@@ -314,19 +314,19 @@ export const BillingSettings: React.FC<BillingSettingsProps> = ({ currentUser })
             {/* Invoice History */}
             {invoices.length > 0 && (
                 <div>
-                    <h3 className="text-md font-semibold text-white mb-4">Invoice History</h3>
-                    <div className="bg-navy-900 border border-white/10 rounded-xl overflow-hidden">
+                    <h3 className="text-md font-semibold text-slate-800 dark:text-white mb-4">Invoice History</h3>
+                    <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
                         <table className="w-full text-sm">
                             <thead>
-                                <tr className="bg-navy-950 text-slate-400 text-xs uppercase">
+                                <tr className="bg-slate-50 dark:bg-navy-950 text-slate-500 dark:text-slate-400 text-xs uppercase">
                                     <th className="px-4 py-3 text-left">Date</th>
                                     <th className="px-4 py-3 text-left">Amount</th>
                                     <th className="px-4 py-3 text-left">Status</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-white/5">
+                            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                                 {invoices.slice(0, 5).map(inv => (
-                                    <tr key={inv.id} className="text-slate-300">
+                                    <tr key={inv.id} className="text-slate-700 dark:text-slate-300">
                                         <td className="px-4 py-3">
                                             {new Date(inv.created_at).toLocaleDateString()}
                                         </td>

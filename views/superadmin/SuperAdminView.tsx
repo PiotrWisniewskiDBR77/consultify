@@ -162,8 +162,8 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
     };
 
     const filteredOrgs = organizations.filter(org =>
-        org.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        org.id.includes(searchTerm)
+        (org.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (org.id || '').includes(searchTerm)
     );
 
     const filteredUsers = allUsers.filter(user =>

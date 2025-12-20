@@ -133,6 +133,62 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
         }
     };
 
+    const handleGenerateList = async (targetField: any, subField: string | null = null) => {
+        setIsGenerating(true);
+        try {
+            const contextStr = `Initiative: ${initiative.name}\nObjective: ${initiative.applicantOneLiner}`;
+            let listType = targetField;
+            if (subField) listType += ` (${subField})`;
+
+            const res = await fetch('/api/ai/generate-list', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ context: contextStr, listType, count: 3, userId: currentUser?.id })
+            });
+            const items = await res.json();
+
+            if (!Array.isArray(items)) return;
+
+            setInitiative(prev => {
+                const copy = { ...prev };
+                if (targetField === 'targetState' && subField) {
+                    const ts = { ...copy.targetState } as any;
+                    ts[subField] = [...(ts[subField] || []), ...items];
+                    copy.targetState = ts;
+                }
+                else if (targetField === 'deliverables') {
+                    copy.deliverables = [...(copy.deliverables || []), ...items];
+                }
+                else if (targetField === 'scopeIn') {
+                    copy.scopeIn = [...(copy.scopeIn || []), ...items];
+                }
+                else if (targetField === 'scopeOut') {
+                    copy.scopeOut = [...(copy.scopeOut || []), ...items];
+                }
+                else if (targetField === 'assumptions' && subField) {
+                    const assum = { ...copy.assumptions } as any;
+                    // For assumptions we want a single string usually, but if list returned, join it or take first?
+                    // The UI has inputs, not lists for assumptions.
+                    // Wait, existing UI: input value={initiative.assumptions?.org}.
+                    // So we expect a single string.
+                    // I will change generate-list to just return one string if we request count=1 or join them.
+                    assum[subField] = items.join('. ');
+                    copy.assumptions = assum;
+                }
+                else if (targetField === 'successCriteria') {
+                    const newCriteria = items.map((val: string) => ({ type: 'Metric' as const, value: val }));
+                    copy.structuredSuccessCriteria = [...(copy.structuredSuccessCriteria || []), ...newCriteria];
+                }
+                return copy;
+            });
+
+        } catch (e) {
+            console.error("AI List Gen Error", e);
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
     const handleSave = () => {
         // Validation
         if (!initiative.strategicIntent) {
@@ -191,6 +247,11 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                                 <span className="uppercase">{initiative.id ? `ID: ${initiative.id.slice(0, 8)} ` : 'New Initiative'}</span>
                                 <span className="w-1 h-1 bg-slate-600 rounded-full"></span>
                                 <span className="uppercase text-blue-400">{initiative.status?.replace('_', ' ') || 'DRAFT'}</span>
+                                <span className="w-1 h-1 bg-slate-600 rounded-full"></span>
+                                <div className="flex items-center gap-1 text-blue-400">
+                                    <TrendingUp size={12} />
+                                    <span>Progress: {initiative.progress || 0}%</span>
+                                </div>
                                 <span className="w-1 h-1 bg-slate-600 rounded-full"></span>
                                 <div className={`flex items-center gap-1 ${isReady ? 'text-green-400' : 'text-orange-400'} `}>
                                     <Brain size={12} />
@@ -415,7 +476,10 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                                 <div className="grid grid-cols-3 gap-4">
                                     {['Process', 'Behavior', 'Capability'].map(type => (
                                         <div key={type} className="bg-white dark:bg-navy-900 p-3 rounded-lg border border-slate-200 dark:border-white/5">
-                                            <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 border-b border-slate-100 dark:border-white/5 pb-1">{type} Changes</h4>
+                                            <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 border-b border-slate-100 dark:border-white/5 pb-1 flex justify-between">
+                                                {type} Changes
+                                                <button onClick={() => handleGenerateList('targetState', type.toLowerCase())} disabled={isGenerating} className="text-blue-500 hover:text-purple-500"><Sparkles size={10} /></button>
+                                            </h4>
                                             <div className="space-y-2">
                                                 {(initiative.targetState?.[type.toLowerCase() as keyof typeof initiative.targetState] || []).map((item: string, idx: number) => (
                                                     <div key={idx} className="flex gap-1 group">
@@ -620,6 +684,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                                 <div className="space-y-4">
                                     <h3 className="text-navy-900 dark:text-white font-bold flex items-center gap-2 border-b border-slate-200 dark:border-white/10 pb-2">
                                         <TrendingUp size={18} className="text-blue-500" /> Success Criteria (Typed)
+                                        <button onClick={() => handleGenerateList('successCriteria')} disabled={isGenerating} className="ml-auto text-xs flex items-center gap-1 text-purple-500 bg-purple-100 dark:bg-purple-500/10 px-2 py-1 rounded hover:bg-purple-200"><Sparkles size={12} /> Auto-Suggest</button>
                                     </h3>
 
                                     {(initiative.structuredSuccessCriteria || initiative.successCriteria?.map(s => ({ type: 'Metric', value: s })) || []).map((item: any, idx: number) => (
@@ -666,11 +731,14 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                                 <div className="space-y-4">
                                     <h3 className="text-navy-900 dark:text-white font-bold flex items-center gap-2 border-b border-slate-200 dark:border-white/10 pb-2">
                                         <AlertOctagon size={18} className="text-purple-600 dark:text-purple-500" /> Explicit Assumptions
+                                        <span className="text-xs text-slate-400 font-normal ml-2">(Click label to auto-fill)</span>
                                     </h3>
 
                                     <div className="grid grid-cols-1 gap-4">
                                         <div className="bg-slate-50 dark:bg-navy-950 p-3 rounded border border-slate-200 dark:border-white/5">
-                                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Organizational</label>
+                                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 flex items-center gap-2 cursor-pointer hover:text-purple-500" onClick={() => handleGenerateList('assumptions', 'org')}>
+                                                Organizational <Sparkles size={10} />
+                                            </label>
                                             <input
                                                 className="w-full bg-transparent text-sm text-navy-900 dark:text-slate-300 focus:outline-none"
                                                 placeholder="e.g. Structure remains stable..."
@@ -679,7 +747,9 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                                             />
                                         </div>
                                         <div className="bg-slate-50 dark:bg-navy-950 p-3 rounded border border-slate-200 dark:border-white/5">
-                                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Data / Tech</label>
+                                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 flex items-center gap-2 cursor-pointer hover:text-purple-500" onClick={() => handleGenerateList('assumptions', 'data')}>
+                                                Data / Tech <Sparkles size={10} />
+                                            </label>
                                             <input
                                                 className="w-full bg-transparent text-sm text-navy-900 dark:text-slate-300 focus:outline-none"
                                                 placeholder="e.g. ERP data is available by Q2..."
@@ -688,7 +758,9 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                                             />
                                         </div>
                                         <div className="bg-slate-50 dark:bg-navy-950 p-3 rounded border border-slate-200 dark:border-white/5">
-                                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Budget / Resources</label>
+                                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 flex items-center gap-2 cursor-pointer hover:text-purple-500" onClick={() => handleGenerateList('assumptions', 'budget')}>
+                                                Budget / Resources <Sparkles size={10} />
+                                            </label>
                                             <input
                                                 className="w-full bg-transparent text-sm text-navy-900 dark:text-slate-300 focus:outline-none"
                                                 placeholder="e.g. Budget approval 1st Jan..."
@@ -697,7 +769,9 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                                             />
                                         </div>
                                         <div className="bg-slate-50 dark:bg-navy-950 p-3 rounded border border-slate-200 dark:border-white/5">
-                                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">People / Skills</label>
+                                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 flex items-center gap-2 cursor-pointer hover:text-purple-500" onClick={() => handleGenerateList('assumptions', 'people')}>
+                                                People / Skills <Sparkles size={10} />
+                                            </label>
                                             <input
                                                 className="w-full bg-transparent text-sm text-navy-900 dark:text-slate-300 focus:outline-none"
                                                 placeholder="e.g. Key Stakeholders are available..."
@@ -712,6 +786,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                             <div className="space-y-4">
                                 <h3 className="text-navy-900 dark:text-white font-bold flex items-center gap-2 border-b border-slate-200 dark:border-white/10 pb-2">
                                     <CheckCircle size={18} className="text-green-500" /> Key Deliverables
+                                    <button onClick={() => handleGenerateList('deliverables')} disabled={isGenerating} className="ml-auto text-xs flex items-center gap-1 text-purple-500 bg-purple-100 dark:bg-purple-500/10 px-2 py-1 rounded hover:bg-purple-200"><Sparkles size={12} /> Auto-Suggest</button>
                                 </h3>
                                 {initiative.deliverables?.map((item, idx) => (
                                     <div key={idx} className="flex gap-2">
@@ -734,7 +809,9 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                                         <p className="text-xs text-orange-800 dark:text-orange-200 mb-2">Scope In / Out definition determines the boundary of AI monitoring.</p>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <h4 className="text-xs font-bold text-green-600 dark:text-green-400 uppercase mb-2">In Scope</h4>
+                                                <h4 className="text-xs font-bold text-green-600 dark:text-green-400 uppercase mb-2 flex justify-between">
+                                                    In Scope <button onClick={() => handleGenerateList('scopeIn')}><Sparkles size={10} /></button>
+                                                </h4>
                                                 {initiative.scopeIn?.map((s, idx) => (
                                                     <div key={idx} className="flex gap-1 mb-1">
                                                         <input className="w-full bg-white dark:bg-navy-900 text-xs p-1 rounded border border-orange-500/20 dark:border-white/10 text-navy-900 dark:text-white" value={s} onChange={e => handleArrayChange('scopeIn', idx, e.target.value)} />
@@ -744,7 +821,9 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                                                 <button onClick={() => addArrayItem('scopeIn')} className="text-xs text-green-600 dark:text-green-400">+ Add</button>
                                             </div>
                                             <div>
-                                                <h4 className="text-xs font-bold text-red-600 dark:text-red-400 uppercase mb-2">Out of Scope</h4>
+                                                <h4 className="text-xs font-bold text-red-600 dark:text-red-400 uppercase mb-2 flex justify-between">
+                                                    Out of Scope <button onClick={() => handleGenerateList('scopeOut')}><Sparkles size={10} /></button>
+                                                </h4>
                                                 {initiative.scopeOut?.map((s, idx) => (
                                                     <div key={idx} className="flex gap-1 mb-1">
                                                         <input className="w-full bg-white dark:bg-navy-900 text-xs p-1 rounded border border-orange-500/20 dark:border-white/10 text-navy-900 dark:text-white" value={s} onChange={e => handleArrayChange('scopeOut', idx, e.target.value)} />

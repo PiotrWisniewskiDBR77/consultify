@@ -1,463 +1,291 @@
+// AI Routes - Complete AI API
+// AI Core Layer — Enterprise PMO Brain
+
 const express = require('express');
 const router = express.Router();
-const AiService = require('../services/aiService');
-const FeedbackService = require('../services/feedbackService');
-const AnalyticsService = require('../services/analyticsService');
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const { enforceTokenQuota, recordTokenUsageAfterResponse } = require('../middleware/quotaMiddleware');
+const AIContextBuilder = require('../services/aiContextBuilder');
+const AIPolicyEngine = require('../services/aiPolicyEngine');
+const AIMemoryManager = require('../services/aiMemoryManager');
+const AIOrchestrator = require('../services/aiOrchestrator');
+const AIActionExecutor = require('../services/aiActionExecutor');
+const AIAuditLogger = require('../services/aiAuditLogger');
 const verifyToken = require('../middleware/authMiddleware');
 
-// Authenticate all AI routes
-router.use(verifyToken);
+// ==================== CONTEXT ====================
 
-// Apply token quota enforcement to all AI POST endpoints
-const quotaProtectedRoutes = ['/chat', '/chat/stream', '/diagnose', '/recommend', '/roadmap', '/simulate', '/validate', '/suggest-tasks', '/verify', '/extract-insight', '/task-insight'];
-quotaProtectedRoutes.forEach(route => {
-    router.use(route, enforceTokenQuota);
-});
-
-// --- TEST CONNECTION ---
-router.post('/test-connection', async (req, res) => {
+// GET /api/ai/context
+router.get('/context', verifyToken, async (req, res) => {
     try {
-        const config = req.body;
-        // Basic validation
-        if (!config.provider || !config.api_key) {
-            return res.status(400).json({ error: 'Missing provider or API Key' });
-        }
-
-        const result = await AiService.testProviderConnection(config);
-        if (result.success) {
-            res.json(result);
-        } else {
-            res.status(400).json({ error: result.message });
-        }
-    } catch (error) {
-        console.error('Test Connection Error:', error);
-        res.status(500).json({ error: 'Connection test failed' });
+        const context = await AIContextBuilder.buildContext(
+            req.userId,
+            req.organizationId,
+            null,
+            { currentScreen: req.query.screen }
+        );
+        res.json(context);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
-// --- CHAT ---
-router.post('/chat', async (req, res) => {
+// GET /api/ai/context/:projectId
+router.get('/context/:projectId', verifyToken, async (req, res) => {
     try {
-        const { message, history, systemInstruction, roleName } = req.body;
-        const userId = req.body.userId || req.user?.id;
-        // userId might come from req.user if auth middleware is on, but simplified here
-        const response = await AiService.chat(message, history, roleName, userId);
-        res.json({ text: response });
-    } catch (error) {
-        console.error('AI Chat Error:', error);
-        res.status(500).json({ error: 'AI processing failed' });
+        const context = await AIContextBuilder.buildContext(
+            req.userId,
+            req.organizationId,
+            req.params.projectId,
+            { currentScreen: req.query.screen }
+        );
+        res.json(context);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
-router.post('/chat/stream', async (req, res) => {
-    // #region agent log
-    const fs = require('fs');
-    const logPath = '/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/.cursor/debug.log';
-    fs.appendFileSync(logPath, JSON.stringify({ location: 'ai.js:chat/stream:entry', message: 'Stream endpoint hit', data: { hasUser: !!req.user, userId: req.user?.id, bodyUserId: req.body?.userId, hasAuth: !!req.headers?.authorization }, timestamp: Date.now(), sessionId: 'debug-session', hypothesisId: 'A,B' }) + '\n');
-    // #endregion
-    // Set headers for SSE
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
+// ==================== CHAT ====================
+
+// POST /api/ai/chat
+router.post('/chat', verifyToken, async (req, res) => {
+    const { message, projectId, currentScreen, selectedObjectId, selectedObjectType } = req.body;
+
+    if (!message) {
+        return res.status(400).json({ error: 'message required' });
+    }
 
     try {
-        const { message, history, roleName, context } = req.body;
-        const userId = req.body.userId || req.user?.id;
-        // #region agent log
-        fs.appendFileSync(logPath, JSON.stringify({ location: 'ai.js:chat/stream:userId', message: 'UserId resolved', data: { userId, roleName, hasContext: !!context, contextScreenId: context?.screenId }, timestamp: Date.now(), sessionId: 'debug-session', hypothesisId: 'B,E' }) + '\n');
-        // #endregion
+        const result = await AIOrchestrator.processMessage(
+            message,
+            req.userId,
+            req.organizationId,
+            projectId,
+            { currentScreen, selectedObjectId, selectedObjectType }
+        );
 
-        const stream = AiService.chatStream(message, history, roleName, userId, null, context);
+        // Log the interaction
+        await AIAuditLogger.logSuggestion(
+            req.userId, req.organizationId, projectId,
+            result.role, result.prompt, result.contextSummary
+        );
 
-        for await (const chunk of stream) {
-            if (chunk) {
-                // Send SSE data
-                res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
-            }
-        }
-        res.write('data: [DONE]\n\n');
-        res.end();
-    } catch (error) {
-        console.error('AI Chat Stream Error:', error);
-        res.write(`data: ${JSON.stringify({ error: 'Stream failed' })}\n\n`);
-        res.end();
+        res.json({
+            role: result.role,
+            roleDescription: AIOrchestrator.getRoleDescription(result.role),
+            intent: result.intent,
+            contextSummary: result.contextSummary,
+            dataSources: result.responseContext.dataSources,
+            prompt: result.prompt, // For LLM integration
+            policyLevel: result.responseContext.policy.policyLevel
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
-// --- DIAGNOSE ---
-router.post('/diagnose', async (req, res) => {
+// ==================== POLICY ====================
+
+// GET /api/ai/policy
+router.get('/policy', verifyToken, async (req, res) => {
     try {
-        const { axis, input } = req.body;
-        const userId = req.body.userId || req.user?.id;
-        const result = await AiService.diagnose(axis, input, userId);
+        const policy = await AIPolicyEngine.getPolicySummary(req.organizationId);
+        res.json(policy);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// PATCH /api/ai/policy (Admin only)
+router.patch('/policy', verifyToken, async (req, res) => {
+    if (!req.can('edit_organization_settings')) {
+        return res.status(403).json({ error: 'Admin required' });
+    }
+
+    try {
+        const result = await AIPolicyEngine.updatePolicy(req.organizationId, req.body);
         res.json(result);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
-// --- RECOMMEND ---
-router.post('/recommend', async (req, res) => {
+// GET /api/ai/policy/can-perform/:actionType
+router.get('/policy/can-perform/:actionType', verifyToken, async (req, res) => {
+    const { projectId } = req.query;
     try {
-        const { diagnosisReport } = req.body;
-        const userId = req.body.userId || req.user?.id;
-        const initiatives = await AiService.generateInitiatives(diagnosisReport, userId);
-        res.json(initiatives);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// --- ROADMAP ---
-router.post('/roadmap', async (req, res) => {
-    try {
-        const { initiatives } = req.body;
-        const userId = req.body.userId || req.user?.id;
-        const roadmap = await AiService.buildRoadmap(initiatives, userId);
-        res.json(roadmap);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// --- SIMULATE ---
-router.post('/simulate', async (req, res) => {
-    try {
-        const { initiatives, revenue } = req.body;
-        const userId = req.body.userId || req.user?.id;
-        const result = await AiService.simulateEconomics(initiatives, revenue, userId);
+        const result = await AIPolicyEngine.canPerformAction(
+            req.params.actionType, req.organizationId, projectId, req.userId
+        );
         res.json(result);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
-// --- VALIDATE ---
-router.post('/validate', async (req, res) => {
+// ==================== MEMORY ====================
+
+// GET /api/ai/memory/project/:projectId
+router.get('/memory/project/:projectId', verifyToken, async (req, res) => {
     try {
-        const { initiative } = req.body;
-        const userId = req.body.userId || req.user?.id;
-        const result = await AiService.validateInitiative(initiative, userId);
+        const memory = await AIMemoryManager.buildProjectMemorySummary(req.params.projectId);
+        res.json(memory);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// POST /api/ai/memory/project/:projectId/decision
+router.post('/memory/project/:projectId/decision', verifyToken, async (req, res) => {
+    const { decisionId, title, outcome, rationale } = req.body;
+
+    try {
+        const result = await AIMemoryManager.recordDecision(
+            req.params.projectId, decisionId, title, outcome, rationale, req.userId
+        );
         res.json(result);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
-// --- ROADMAP EXTENSIONS ---
-
-router.post('/roadmap-workload', async (req, res) => {
+// GET /api/ai/memory/user
+router.get('/memory/user', verifyToken, async (req, res) => {
     try {
-        const { quarterLoad, initiatives } = req.body;
-        const userId = req.body.userId || req.user?.id;
-        const result = await AiService.generateWorkloadAnalysis(quarterLoad, initiatives, userId);
+        const preferences = await AIMemoryManager.getUserPreferences(req.userId);
+        res.json(preferences);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// PATCH /api/ai/memory/user
+router.patch('/memory/user', verifyToken, async (req, res) => {
+    try {
+        const result = await AIMemoryManager.updateUserPreferences(req.userId, req.body);
         res.json(result);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
-router.post('/roadmap-summary', async (req, res) => {
+// DELETE /api/ai/memory/project/:projectId (Admin)
+router.delete('/memory/project/:projectId', verifyToken, async (req, res) => {
+    if (!req.can('edit_project_settings')) {
+        return res.status(403).json({ error: 'Permission denied' });
+    }
+
     try {
-        const { initiatives } = req.body;
-        const userId = req.body.userId || req.user?.id;
-        const result = await AiService.generateRoadmapSummary(initiatives, userId);
+        const result = await AIMemoryManager.clearProjectMemory(req.params.projectId);
         res.json(result);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
-router.post('/placement-reason', async (req, res) => {
+// ==================== ACTIONS ====================
+
+// POST /api/ai/actions/draft
+router.post('/actions/draft', verifyToken, async (req, res) => {
+    const { draftType, content, projectId } = req.body;
+
+    if (!draftType || !content || !projectId) {
+        return res.status(400).json({ error: 'draftType, content, and projectId required' });
+    }
+
     try {
-        const { initiative, quarter, otherInitiatives } = req.body;
-        const userId = req.body.userId || req.user?.id;
-        const result = await AiService.generatePlacementReason(initiative, quarter, otherInitiatives, userId);
+        const result = await AIActionExecutor.createDraft(
+            draftType, content, req.userId, req.organizationId, projectId
+        );
         res.json(result);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
-router.post('/rebalance-roadmap', async (req, res) => {
+// GET /api/ai/actions/pending
+router.get('/actions/pending', verifyToken, async (req, res) => {
+    const { projectId } = req.query;
     try {
-        const { initiatives } = req.body;
-        const userId = req.body.userId || req.user?.id;
-        const result = await AiService.rebalanceRoadmap(initiatives, userId);
+        const actions = await AIActionExecutor.getPendingActions(
+            null, projectId, req.organizationId
+        );
+        res.json(actions);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// PATCH /api/ai/actions/:id/approve
+router.patch('/actions/:id/approve', verifyToken, async (req, res) => {
+    try {
+        const result = await AIActionExecutor.approveAction(req.params.id, req.userId);
         res.json(result);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
-// --- EXECUTION STRATEGY ---
-router.post('/execution-strategy', async (req, res) => {
+// PATCH /api/ai/actions/:id/reject
+router.patch('/actions/:id/reject', verifyToken, async (req, res) => {
+    const { reason } = req.body;
     try {
-        const { initiative } = req.body;
-        const userId = req.body.userId || req.user?.id;
-        const result = await AiService.generateExecutionStrategy(initiative, userId);
+        const result = await AIActionExecutor.rejectAction(req.params.id, req.userId, reason);
         res.json(result);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
-// --- AI CONSULTANT ACTIONS ---
-
-router.post('/roadmap-validate', async (req, res) => {
+// POST /api/ai/actions/:id/execute
+router.post('/actions/:id/execute', verifyToken, async (req, res) => {
     try {
-        const { initiatives, quarters } = req.body;
-        const userId = req.body.userId || req.user?.id;
-        const result = await AiService.validateRoadmap(initiatives, quarters);
+        const result = await AIActionExecutor.executeAction(req.params.id, req.userId);
         res.json(result);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
-router.post('/roadmap-explain', async (req, res) => {
+// ==================== AUDIT ====================
+
+// GET /api/ai/audit
+router.get('/audit', verifyToken, async (req, res) => {
+    if (!req.can('view_audit_logs')) {
+        return res.status(403).json({ error: 'Permission denied' });
+    }
+
+    const { projectId, userId, actionType, limit, offset } = req.query;
+
     try {
-        const { initiatives } = req.body;
-        const userId = req.body.userId || req.user?.id;
-        const result = await AiService.explainRoadmap(initiatives);
+        const logs = await AIAuditLogger.getAuditLogs(req.organizationId, {
+            projectId, userId, actionType,
+            limit: parseInt(limit) || 50,
+            offset: parseInt(offset) || 0
+        });
+        res.json(logs);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// GET /api/ai/audit/stats
+router.get('/audit/stats', verifyToken, async (req, res) => {
+    const { projectId } = req.query;
+    try {
+        const stats = await AIAuditLogger.getAuditStats(req.organizationId, projectId);
+        res.json(stats);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// POST /api/ai/audit/:id/decision
+router.post('/audit/:id/decision', verifyToken, async (req, res) => {
+    const { decision, feedback } = req.body;
+    try {
+        const result = await AIAuditLogger.recordUserDecision(req.params.id, decision, feedback);
         res.json(result);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-router.post('/roadmap-optimize', async (req, res) => {
-    try {
-        const { initiatives, strategy } = req.body;
-        const userId = req.body.userId || req.user?.id;
-        const result = await AiService.optimizeRoadmap(initiatives, strategy);
-        res.json(result);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-router.post('/quarter-review', async (req, res) => {
-    try {
-        const { quarter, initiatives } = req.body;
-        const userId = req.body.userId || req.user?.id;
-        const result = await AiService.reviewQuarter(quarter, initiatives);
-        res.json(result);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-router.post('/suggest-placement', async (req, res) => {
-    try {
-        const { initiative, allInitiatives } = req.body;
-        const userId = req.body.userId || req.user?.id;
-        const result = await AiService.suggestPlacement(initiative, allInitiatives);
-        res.json(result);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-router.post('/insights', async (req, res) => {
-    try {
-        const { initiative } = req.body;
-        const userId = req.body.userId || req.user?.id;
-        const result = await AiService.generateInsights(initiative, userId);
-        res.json(result);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-router.post('/strategic-fit', async (req, res) => {
-    try {
-        const { initiative, strategicGoals } = req.body;
-        const userId = req.body.userId || req.user?.id;
-        const result = await AiService.generateStrategicFit(initiative, strategicGoals, userId);
-        res.json(result);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// --- SUGGEST TASKS ---
-router.post('/suggest-tasks', async (req, res) => {
-    try {
-        const { initiative } = req.body;
-        const userId = req.body.userId || req.user?.id;
-        const result = await AiService.suggestTasks(initiative, userId);
-        res.json(result);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// --- TASK INSIGHT ---
-router.post('/task-insight', async (req, res) => {
-    try {
-        const { task, initiative } = req.body;
-        const userId = req.body.userId || req.user?.id;
-        const result = await AiService.generateTaskInsight(task, initiative, userId);
-        res.json(result);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// --- VERIFY (WEB) ---
-router.post('/verify', async (req, res) => {
-    try {
-        const { query } = req.body;
-        const userId = req.body.userId || req.user?.id;
-        const result = await AiService.verifyWithWeb(query, userId);
-        res.json(result);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// --- EXTRACT INSIGHTS (LEARNING) ---
-router.post('/extract-insight', async (req, res) => {
-    try {
-        const { text, source } = req.body;
-        const userId = req.body.userId || req.user?.id;
-        const result = await AiService.extractInsights(text, source, userId);
-        res.json(result || { found: false });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// --- FEEDBACK ---
-router.post('/feedback', async (req, res) => {
-    try {
-        const { userId, context, prompt, response, rating, correction } = req.body;
-        await FeedbackService.saveFeedback(userId, context, prompt, response, rating, correction);
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// --- GLOBAL LEARNING (Trigger) ---
-router.post('/learn', async (req, res) => {
-    try {
-        const result = await FeedbackService.consolidateLearning();
-        res.json(result);
-    } catch (error) {
-        console.error("Learning Loop Error:", error);
-        res.status(500).json({ error: 'Failed to consolidate learning.' });
-    }
-});
-
-// --- ANALYTICS (Admin) ---
-router.get('/stats', async (req, res) => {
-    try {
-        const stats = await AnalyticsService.getStats();
-        const topTopics = await AnalyticsService.getTopTopics();
-        res.json({ usage: stats, topics: topTopics });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-router.get('/benchmarks', async (req, res) => {
-    try {
-        const { industry } = req.query;
-        const benchmarks = await AnalyticsService.getIndustryBenchmarks(industry);
-        res.json(benchmarks);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// --- SYSTEM PROMPTS (Admin) ---
-router.get('/prompts', (req, res) => {
-    db.all("SELECT * FROM system_prompts ORDER BY key", [], (err, rows) => {
-        if (err) res.status(500).json({ error: err.message });
-        else res.json(rows);
-    });
-});
-
-router.put('/prompts/:key', (req, res) => {
-    const { content, description, updatedBy } = req.body;
-    const key = req.params.key;
-    const stmt = db.prepare("UPDATE system_prompts SET content = ?, description = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP WHERE key = ?");
-    stmt.run(content, description, updatedBy, key, function (err) {
-        if (err) res.status(500).json({ error: err.message });
-        else res.json({ success: true, changes: this.changes });
-    });
-    stmt.finalize();
-});
-
-
-// --- STRATEGIC IDEAS ---
-router.get('/ideas', async (req, res) => {
-    try {
-        const ideas = await AiService.getStrategicIdeas();
-        res.json(ideas);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-router.post('/ideas', async (req, res) => {
-    try {
-        const idea = await AiService.addStrategicIdea(req.body);
-        res.json(idea);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-router.put('/ideas/:id', async (req, res) => {
-    try {
-        const updated = await AiService.updateStrategicIdea(req.params.id, req.body);
-        res.json(updated);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-router.delete('/ideas/:id', async (req, res) => {
-    try {
-        await AiService.deleteStrategicIdea(req.params.id);
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// --- OBSERVATIONS ---
-router.get('/observations', async (req, res) => {
-    try {
-        const observations = await AiService.getObservations();
-        res.json(observations);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-router.post('/observations', async (req, res) => {
-    try {
-        const obs = await AiService.addObservation(req.body);
-        res.json(obs);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// --- DEEP REPORTS ---
-router.get('/reports/performance', async (req, res) => {
-    try {
-        const report = await AiService.getDeepPerformanceReport();
-        res.json(report);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 

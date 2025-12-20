@@ -1,5 +1,6 @@
 const db = require('../database');
 const { v4: uuidv4 } = require('uuid');
+const AiService = require('./aiService');
 
 const ReportService = {
     /**
@@ -137,22 +138,46 @@ const ReportService = {
     /**
      * Regenerate block content (Mock AI)
      */
-    regenerateBlock: (reportId, blockId, instructions) => {
+    /**
+     * Regenerate block content (Real AI)
+     */
+    regenerateBlock: async (reportId, blockId, instructions) => {
         return new Promise((resolve, reject) => {
-            // Mock AI delay
-            setTimeout(() => {
-                const sql = `SELECT * FROM report_blocks WHERE id = ? AND report_id = ?`;
-                db.get(sql, [blockId, reportId], (err, block) => {
-                    if (err) return reject(err);
-                    if (!block) return reject(new Error('Block not found'));
+            const sql = `SELECT * FROM report_blocks WHERE id = ? AND report_id = ?`;
+            db.get(sql, [blockId, reportId], async (err, block) => {
+                if (err) return reject(err);
+                if (!block) return reject(new Error('Block not found'));
 
-                    let content = JSON.parse(block.content || '{}');
+                let content = JSON.parse(block.content || '{}');
 
-                    // Simple Mock Logic
+                try {
+                    // AI LOGIC
                     if (block.type === 'text') {
-                        content.text = (content.text || '') + "\n\n[AI Refined]: " + (instructions || "Better version of the text.");
-                    } else if (block.type === 'callout') {
-                        content.text = "AI Updated Warning: " + (instructions || "Pay attention to this.");
+                        const prompt = `Refine the following text for a strategic report.
+                        Instructions: ${instructions || 'Improve clarity and tone'}
+                        Current Text: "${content.text || ''}"`;
+
+                        const result = await AiService.callLLM("Report Text Refinement", prompt, [], null, null, 'chat');
+                        content.text = result;
+                    }
+                    else if (block.type === 'callout') {
+                        const prompt = `Create a callout/warning text.
+                        Instructions: ${instructions || 'Summarize key risk'}
+                        Current Text: "${content.text || ''}"`;
+
+                        const result = await AiService.callLLM("Report Callout", prompt, [], null, null, 'chat');
+                        content.text = result;
+                    }
+                    else if (block.type === 'table') {
+                        // Table regeneration
+                        const headers = content.headers || ['Column 1', 'Column 2'];
+                        const prompt = `Generate table rows.
+                        Instructions: ${instructions || 'Fill with relevant data'}
+                        Context: Report Title: [Fetch report title if possible, or just use block title]
+                        Columns: ${JSON.stringify(headers)}`;
+
+                        const tableData = await AiService.generateTable(prompt, headers, 5, null);
+                        content.rows = tableData.rows;
                     }
 
                     // Update
@@ -161,8 +186,11 @@ const ReportService = {
                         if (err) return reject(err);
                         resolve({ ...block, content });
                     });
-                });
-            }, 1000);
+                } catch (aiError) {
+                    console.error("AI Regen Error", aiError);
+                    reject(aiError);
+                }
+            });
         });
     },
 

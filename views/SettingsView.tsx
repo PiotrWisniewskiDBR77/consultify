@@ -12,8 +12,8 @@ import { RegionalSettings } from '../components/settings/RegionalSettings';
 interface SettingsViewProps {
     currentUser: User;
     onUpdateUser: (updates: Partial<User>) => void;
-    theme: 'light' | 'dark';
-    toggleTheme: () => void;
+    theme: 'light' | 'dark' | 'system';
+    toggleTheme: (newTheme?: 'light' | 'dark' | 'system') => void;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdateUser, theme, toggleTheme }) => {

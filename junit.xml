@@ -1,36 +1,226 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="36" failures="0" errors="0" time="0.045130584">
-    <testsuite name="tests/unit/backend/aiService.test.js" timestamp="2025-12-14T22:07:00.090Z" hostname="MacBook-Air-Piotr.local" tests="36" failures="0" errors="0" skipped="3" time="0.045130584">
+<testsuites name="vitest tests" tests="297" failures="0" errors="0" time="4.679497376">
+    <testsuite name="tests/unit/backend/activityService.test.js" timestamp="2025-12-20T10:28:05.101Z" hostname="MacBook-Pro-Piotr.local" tests="6" failures="0" errors="0" skipped="0" time="0.813834167">
+        <testcase classname="tests/unit/backend/activityService.test.js" name="Backend Service Test: ActivityService &gt; log &gt; logs activity with all parameters" time="0.102693958">
+        </testcase>
+        <testcase classname="tests/unit/backend/activityService.test.js" name="Backend Service Test: ActivityService &gt; log &gt; handles optional parameters" time="0.10206175">
+        </testcase>
+        <testcase classname="tests/unit/backend/activityService.test.js" name="Backend Service Test: ActivityService &gt; getRecent &gt; fetches recent activities with default limit" time="0.103458375">
+        </testcase>
+        <testcase classname="tests/unit/backend/activityService.test.js" name="Backend Service Test: ActivityService &gt; getRecent &gt; fetches recent activities with custom limit" time="0.10136675">
+        </testcase>
+        <testcase classname="tests/unit/backend/activityService.test.js" name="Backend Service Test: ActivityService &gt; getRecent &gt; handles database errors gracefully" time="0.000402042">
+        </testcase>
+        <testcase classname="tests/unit/backend/activityService.test.js" name="Backend Service Test: ActivityService &gt; getByOrganization &gt; fetches activities for organization" time="0.101241459">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/aiActions.test.js" timestamp="2025-12-20T10:28:05.101Z" hostname="MacBook-Pro-Piotr.local" tests="23" failures="0" errors="0" skipped="0" time="0.085659833">
+        <testcase classname="tests/unit/backend/aiActions.test.js" name="AIActionExecutor &gt; ACTION_TYPES &gt; should have 7 action types" time="0.029225291">
+            <system-out>
+[Database] Selected: SQLite
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/unit/backend/aiActions.test.js" name="AIActionExecutor &gt; ACTION_TYPES &gt; should define CREATE_DRAFT_TASK type" time="0.000230959">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiActions.test.js" name="AIActionExecutor &gt; ACTION_TYPES &gt; should define CREATE_DRAFT_INITIATIVE type" time="0.000080958">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiActions.test.js" name="AIActionExecutor &gt; ACTION_TYPES &gt; should define SUGGEST_ROADMAP_CHANGE type" time="0.000091166">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiActions.test.js" name="AIActionExecutor &gt; ACTION_TYPES &gt; should define GENERATE_REPORT type" time="0.000078875">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiActions.test.js" name="AIActionExecutor &gt; ACTION_TYPES &gt; should define PREPARE_DECISION_SUMMARY type" time="0.000059125">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiActions.test.js" name="AIActionExecutor &gt; ACTION_TYPES &gt; should define EXPLAIN_CONTEXT type" time="0.004791625">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiActions.test.js" name="AIActionExecutor &gt; ACTION_TYPES &gt; should define ANALYZE_RISKS type" time="0.000142458">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiActions.test.js" name="AIActionExecutor &gt; ACTION_STATUS &gt; should define PENDING status" time="0.00052925">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiActions.test.js" name="AIActionExecutor &gt; ACTION_STATUS &gt; should define APPROVED status" time="0.000361875">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiActions.test.js" name="AIActionExecutor &gt; ACTION_STATUS &gt; should define REJECTED status" time="0.00009">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiActions.test.js" name="AIActionExecutor &gt; ACTION_STATUS &gt; should define EXECUTED status" time="0.000046625">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiActions.test.js" name="AIActionExecutor &gt; Service Structure &gt; should export requestAction function" time="0.000040167">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiActions.test.js" name="AIActionExecutor &gt; Service Structure &gt; should export createDraft function" time="0.0000285">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiActions.test.js" name="AIActionExecutor &gt; Service Structure &gt; should export approveAction function" time="0.000027042">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiActions.test.js" name="AIActionExecutor &gt; Service Structure &gt; should export rejectAction function" time="0.000031083">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiActions.test.js" name="AIActionExecutor &gt; Service Structure &gt; should export getPendingActions function" time="0.000027584">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiActions.test.js" name="AIActionExecutor &gt; Service Structure &gt; should export executeAction function" time="0.000025666">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiActions.test.js" name="AIAuditLogger &gt; Service Structure &gt; should export logInteraction function" time="0.046909583">
+            <system-out>
+[DB:d9kire] Initializing database at :memory:
+Connected to the SQLite database.
+Created billing tables and seeded default subscription plans.
+Seeded SuperAdmin and DBR77 Users.
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/unit/backend/aiActions.test.js" name="AIAuditLogger &gt; Service Structure &gt; should export logSuggestion function" time="0.000453042">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiActions.test.js" name="AIAuditLogger &gt; Service Structure &gt; should export recordUserDecision function" time="0.000069916">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiActions.test.js" name="AIAuditLogger &gt; Service Structure &gt; should export getAuditLogs function" time="0.000055583">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiActions.test.js" name="AIAuditLogger &gt; Service Structure &gt; should export getAuditStats function" time="0.000233334">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/aiCoreLayer.test.js" timestamp="2025-12-20T10:28:05.103Z" hostname="MacBook-Pro-Piotr.local" tests="56" failures="0" errors="0" skipped="0" time="0.109753667">
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIContextBuilder &gt; Service Structure &gt; should export buildContext function" time="0.030773792">
+            <system-out>
+[Database] Selected: SQLite
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIContextBuilder &gt; Service Structure &gt; should export _buildPlatformContext function" time="0.000257333">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIContextBuilder &gt; Service Structure &gt; should export _buildOrganizationContext function" time="0.001117875">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIContextBuilder &gt; Service Structure &gt; should export _buildProjectContext function" time="0.000441625">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIContextBuilder &gt; Service Structure &gt; should export _buildExecutionContext function" time="0.00010875">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIContextBuilder &gt; Service Structure &gt; should export _buildKnowledgeContext function" time="0.000067">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIContextBuilder &gt; Service Structure &gt; should export _buildExternalContext function" time="0.000047709">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIContextBuilder &gt; Service Structure &gt; should export _generateHash function" time="0.000037375">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIContextBuilder &gt; _generateHash &gt; should generate consistent hash" time="0.000120583">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIContextBuilder &gt; _generateHash &gt; should generate different hash for different inputs" time="0.000307667">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIPolicyEngine &gt; POLICY_LEVELS &gt; should define ADVISORY level" time="0.045724416">
+            <system-out>
+[DB:cmcxko] Initializing database at :memory:
+Connected to the SQLite database.
+Created billing tables and seeded default subscription plans.
+Seeded SuperAdmin and DBR77 Users.
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIPolicyEngine &gt; POLICY_LEVELS &gt; should define ASSISTED level" time="0.000067375">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIPolicyEngine &gt; POLICY_LEVELS &gt; should define PROACTIVE level" time="0.000045083">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIPolicyEngine &gt; POLICY_LEVELS &gt; should define AUTOPILOT level" time="0.000035041">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIPolicyEngine &gt; AI_ROLES &gt; should define ADVISOR role" time="0.000035042">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIPolicyEngine &gt; AI_ROLES &gt; should define PMO_MANAGER role" time="0.000035125">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIPolicyEngine &gt; AI_ROLES &gt; should define EXECUTOR role" time="0.00003175">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIPolicyEngine &gt; AI_ROLES &gt; should define EDUCATOR role" time="0.000032167">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIPolicyEngine &gt; Service Structure &gt; should export getEffectivePolicy function" time="0.000033083">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIPolicyEngine &gt; Service Structure &gt; should export canPerformAction function" time="0.000035625">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIPolicyEngine &gt; Service Structure &gt; should export getPolicySummary function" time="0.000040125">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIPolicyEngine &gt; Service Structure &gt; should export updatePolicy function" time="0.000039584">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIMemoryManager &gt; MEMORY_TYPES &gt; should define DECISION type" time="0.016742459">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIMemoryManager &gt; MEMORY_TYPES &gt; should define PHASE_TRANSITION type" time="0.000061125">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIMemoryManager &gt; MEMORY_TYPES &gt; should define RECOMMENDATION type" time="0.000034792">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIMemoryManager &gt; MEMORY_TYPES &gt; should define PATTERN type" time="0.0000295">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIMemoryManager &gt; createSession &gt; should create session with unique conversationId" time="0.00505625">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIMemoryManager &gt; createSession &gt; should create session with empty messages array" time="0.000188458">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIMemoryManager &gt; createSession &gt; should create session with startedAt timestamp" time="0.000056625">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIMemoryManager &gt; addMessage &gt; should add message to session" time="0.000396667">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIMemoryManager &gt; addMessage &gt; should add timestamp to message" time="0.00004675">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIMemoryManager &gt; Service Structure &gt; should export recordProjectMemory function" time="0.000033041">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIMemoryManager &gt; Service Structure &gt; should export getUserPreferences function" time="0.000027875">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIMemoryManager &gt; Service Structure &gt; should export updateUserPreferences function" time="0.000025959">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIOrchestrator &gt; AI_ROLES &gt; should define all 4 roles" time="0.00482475">
+            <system-out>
+Projects table created successfully (or already exists).
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIOrchestrator &gt; CHAT_MODES &gt; should define EXPLAIN mode" time="0.000101125">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIOrchestrator &gt; CHAT_MODES &gt; should define GUIDE mode" time="0.000050042">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIOrchestrator &gt; CHAT_MODES &gt; should define ANALYZE mode" time="0.000035167">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIOrchestrator &gt; CHAT_MODES &gt; should define DO mode" time="0.000030834">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIOrchestrator &gt; CHAT_MODES &gt; should define TEACH mode" time="0.000027334">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIOrchestrator &gt; _detectIntent &gt; should detect EXPLAIN intent" time="0.000077875">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIOrchestrator &gt; _detectIntent &gt; should detect GUIDE intent" time="0.000038542">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIOrchestrator &gt; _detectIntent &gt; should detect ANALYZE intent" time="0.000039375">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIOrchestrator &gt; _detectIntent &gt; should detect DO intent" time="0.000039">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIOrchestrator &gt; _detectIntent &gt; should detect TEACH intent" time="0.000035875">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIOrchestrator &gt; _detectIntent &gt; should default to EXPLAIN" time="0.00002675">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIOrchestrator &gt; _selectRole &gt; should select ADVISOR for EXPLAIN intent" time="0.00004975">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIOrchestrator &gt; _selectRole &gt; should select PMO_MANAGER for GUIDE intent" time="0.00002925">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIOrchestrator &gt; _selectRole &gt; should select EXECUTOR for DO intent" time="0.000027042">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIOrchestrator &gt; _selectRole &gt; should select EDUCATOR for TEACH intent" time="0.000143334">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIOrchestrator &gt; _selectRole &gt; should fallback to ADVISOR if role not active" time="0.000168917">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIOrchestrator &gt; getRoleDescription &gt; should return description for ADVISOR" time="0.000328125">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIOrchestrator &gt; getRoleDescription &gt; should return description for PMO_MANAGER" time="0.000086458">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIOrchestrator &gt; getRoleDescription &gt; should return description for EXECUTOR" time="0.000049666">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIOrchestrator &gt; getRoleDescription &gt; should return description for EDUCATOR" time="0.000035666">
+        </testcase>
+        <testcase classname="tests/unit/backend/aiCoreLayer.test.js" name="AIOrchestrator &gt; Service Structure &gt; should export processMessage function" time="0.000032416">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/aiService.test.js" timestamp="2025-12-20T10:28:05.106Z" hostname="MacBook-Pro-Piotr.local" tests="36" failures="0" errors="0" skipped="4" time="0.056547875">
         <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; callLLM &gt; should use Google Gemini by default if checks pass" time="0">
             <skipped/>
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; callLLM &gt; should block if balance is insufficient" time="0.019454083">
-            <system-err>
-LLM Call Error Error: Insufficient token balance. Please top up.
-    at Object.callLLM [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/aiService.js:116:27[90m)[39m
-    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/aiService.test.js:135:13
-    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:20
-
-            </system-err>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; callLLM &gt; should block if balance is insufficient" time="0">
+            <skipped/>
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; callLLM &gt; should call OpenAI via fetch when provider is openai" time="0.001245959">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; callLLM &gt; should call OpenAI via fetch when provider is openai" time="0.001743625">
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; callLLM &gt; should call Anthropic via fetch when provider is anthropic" time="0.000168125">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; callLLM &gt; should call Anthropic via fetch when provider is anthropic" time="0.00016375">
         </testcase>
         <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; generateInitiatives &gt; should parse JSON response correctly" time="0">
             <skipped/>
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; generateInitiatives &gt; should return empty array on JSON parse error" time="0.015771125">
-            <system-out>
-Projects table created successfully (or already exists).
-
-Database initialization complete.
-
-            </system-out>
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; generateInitiatives &gt; should return empty array on JSON parse error" time="0.008903083">
             <system-err>
 LLM Call Error Error: AI Provider not configured.
-    at Object.callLLM [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/aiService.js:158:41[90m)[39m
-    at Object.generateInitiatives [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/aiService.js:593:29[90m)[39m
+    at Object.callLLM [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/aiService.js:170:41[90m)[39m
+    at Object.generateInitiatives [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/aiService.js:653:29[90m)[39m
     at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/aiService.test.js:213:33
     at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:20
 
@@ -39,146 +229,627 @@ LLM Call Error Error: AI Provider not configured.
         <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; streamLLM &gt; should yield chunks from Gemini stream" time="0">
             <skipped/>
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; streamLLM &gt; should handle errors in stream" time="0.000715583">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; streamLLM &gt; should handle errors in stream" time="0.036793375">
+            <system-out>
+Projects table created successfully (or already exists).
+
+Database initialization complete.
+
+            </system-out>
             <system-err>
 Stream LLM Error Error: AI Provider not configured.
-    at Object.streamLLM [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/aiService.js:384:41[90m)[39m
+    at Object.streamLLM [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/aiService.js:396:41[90m)[39m
     at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/aiService.test.js:241:30
     at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:20
 
             </system-err>
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; buildRoadmap &gt; should return roadmap object on success" time="0.000368708">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; buildRoadmap &gt; should return roadmap object on success" time="0.00038875">
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; buildRoadmap &gt; should return empty object on error" time="0.000138125">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; buildRoadmap &gt; should return empty object on error" time="0.000137833">
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; suggestTasks &gt; should return tasks array on success" time="0.000347375">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; suggestTasks &gt; should return tasks array on success" time="0.000462084">
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; deepDiagnose &gt; should execute chain of thought and return diagnosis" time="0.000213958">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; deepDiagnose &gt; should execute chain of thought and return diagnosis" time="0.000220625">
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; enrichInitiative &gt; should maintain structure and fallback to LLM" time="0.000374792">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; enrichInitiative &gt; should maintain structure and fallback to LLM" time="0.000312542">
             <system-err>
 Web Search failed, using LLM knowledge Error: Web Fail
     at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/aiService.test.js:311:59
     at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:145:11
     at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:26
-    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1240:20
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1243:20
     at new Promise (&lt;anonymous&gt;)
-    at runWithTimeout [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1206:10[90m)[39m
-    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1650:37
+    at runWithTimeout [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1209:10[90m)[39m
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1653:37
     at Traces.$ [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/traces.U4xDYhzZ.js:115:27[90m)[39m
-    at trace [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/test.BT8LKgU9.js:239:21[90m)[39m
-    at runTest [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1650:12[90m)[39m
+    at trace [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/test.B8ej_ZHS.js:239:21[90m)[39m
+    at runTest [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1653:12[90m)[39m
 
             </system-err>
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; generateObservations &gt; should return observations from feedback" time="0.000501834">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; generateObservations &gt; should return observations from feedback" time="0.000233875">
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; testProviderConnection &gt; should test OpenAI connection" time="0.000376292">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Generation Methods &gt; testProviderConnection &gt; should test OpenAI connection" time="0.000226167">
             <system-out>
 [AiService] Testing connection for: openai
 
             </system-out>
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; enhancePrompt &gt; should return base system role when no extras found" time="0.000084125">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; enhancePrompt &gt; should return base system role when no extras found" time="0.0000675">
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; enhancePrompt &gt; should inject global strategies" time="0.000081542">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; enhancePrompt &gt; should inject global strategies" time="0.000067959">
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; enhancePrompt &gt; should inject client context when orgId provided" time="0.000195291">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; enhancePrompt &gt; should inject client context when orgId provided" time="0.000155583">
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Queue Operations &gt; should enqueue task and return jobId" time="0.000263291">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Queue Operations &gt; should enqueue task and return jobId" time="0.000232375">
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Queue Operations &gt; should get job status" time="0.000081792">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Queue Operations &gt; should get job status" time="0.000076583">
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Queue Operations &gt; should return null for non-existent job" time="0.000043375">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Queue Operations &gt; should return null for non-existent job" time="0.000042875">
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Vision Capabilities &gt; should format payload correctly for OpenAI Vision" time="0.0001625">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Vision Capabilities &gt; should format payload correctly for OpenAI Vision" time="0.000146917">
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Vision Capabilities &gt; should use Gemini 1.5 Flash for vision fallback" time="0.000336417">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Vision Capabilities &gt; should use Gemini 1.5 Flash for vision fallback" time="0.001542334">
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Advanced Streaming &gt; should parse OpenAI SSE stream correctly" time="0.000176375">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Advanced Streaming &gt; should parse OpenAI SSE stream correctly" time="0.000226792">
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Advanced Streaming &gt; should handle OpenAI stream error" time="0.000261417">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Advanced Streaming &gt; should handle OpenAI stream error" time="0.000286667">
             <system-err>
 Stream LLM Error Error: Stream Error
     at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/aiService.test.js:237:69
     at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:145:11
     at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:26
-    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1240:20
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1243:20
     at new Promise (&lt;anonymous&gt;)
-    at runWithTimeout [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1206:10[90m)[39m
-    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1650:37
+    at runWithTimeout [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1209:10[90m)[39m
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1653:37
     at Traces.$ [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/traces.U4xDYhzZ.js:115:27[90m)[39m
-    at trace [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/test.BT8LKgU9.js:239:21[90m)[39m
-    at runTest [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1650:12[90m)[39m
+    at trace [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/test.B8ej_ZHS.js:239:21[90m)[39m
+    at runTest [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1653:12[90m)[39m
 
             </system-err>
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Provider Integrations &gt; should generate JWT for Zhipu AI provider" time="0.001239042">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="AIService Unit Tests &gt; Provider Integrations &gt; should generate JWT for Zhipu AI provider" time="0.00158475">
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="Extended AI Capabilities &gt; generateTaskInsight &gt; should return parsed insights when LLM returns valid JSON" time="0.000222459">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="Extended AI Capabilities &gt; generateTaskInsight &gt; should return parsed insights when LLM returns valid JSON" time="0.000270416">
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="Extended AI Capabilities &gt; generateTaskInsight &gt; should return fallback object on LLM failure/JSON error" time="0.000203792">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="Extended AI Capabilities &gt; generateTaskInsight &gt; should return fallback object on LLM failure/JSON error" time="0.000284375">
             <system-err>
 Task Insight Error Error: LLM Fail
-    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/aiService.test.js:629:42
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/aiService.test.js:630:42
     at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:145:11
     at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:26
-    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1240:20
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1243:20
     at new Promise (&lt;anonymous&gt;)
-    at runWithTimeout [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1206:10[90m)[39m
-    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1650:37
+    at runWithTimeout [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1209:10[90m)[39m
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1653:37
     at Traces.$ [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/traces.U4xDYhzZ.js:115:27[90m)[39m
-    at trace [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/test.BT8LKgU9.js:239:21[90m)[39m
-    at runTest [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1650:12[90m)[39m
+    at trace [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/test.B8ej_ZHS.js:239:21[90m)[39m
+    at runTest [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1653:12[90m)[39m
 
             </system-err>
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="Extended AI Capabilities &gt; generateExecutionStrategy &gt; should return strategy object on success" time="0.00012175">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="Extended AI Capabilities &gt; generateExecutionStrategy &gt; should return strategy object on success" time="0.000116708">
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="Extended AI Capabilities &gt; generateExecutionStrategy &gt; should return empty structure on error" time="0.000150459">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="Extended AI Capabilities &gt; generateExecutionStrategy &gt; should return empty structure on error" time="0.000152042">
             <system-err>
 Execution Gen Error SyntaxError: Unexpected token &apos;N&apos;, &quot;Not JSON&quot; is not valid JSON
     at JSON.parse (&lt;anonymous&gt;)
-    at Object.generateExecutionStrategy [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/aiService.js:740:25[90m)[39m
-    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/aiService.test.js:657:28
+    at Object.generateExecutionStrategy [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/aiService.js:800:25[90m)[39m
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/aiService.test.js:658:28
     at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:20
 
             </system-err>
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="Extended AI Capabilities &gt; generateInsights (Pre-Mortem) &gt; should return insights on success" time="0.000090458">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="Extended AI Capabilities &gt; generateInsights (Pre-Mortem) &gt; should return insights on success" time="0.000102417">
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="Extended AI Capabilities &gt; generateInsights (Pre-Mortem) &gt; should return fallback on error" time="0.000164291">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="Extended AI Capabilities &gt; generateInsights (Pre-Mortem) &gt; should return fallback on error" time="0.000185625">
             <system-err>
 Insights Gen Error Error: Fail
-    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/aiService.test.js:678:42
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/aiService.test.js:679:42
     at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:145:11
     at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:26
-    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1240:20
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1243:20
     at new Promise (&lt;anonymous&gt;)
-    at runWithTimeout [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1206:10[90m)[39m
-    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1650:37
+    at runWithTimeout [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1209:10[90m)[39m
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1653:37
     at Traces.$ [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/traces.U4xDYhzZ.js:115:27[90m)[39m
-    at trace [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/test.BT8LKgU9.js:239:21[90m)[39m
-    at runTest [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1650:12[90m)[39m
+    at trace [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvitest[24m/dist/chunks/test.B8ej_ZHS.js:239:21[90m)[39m
+    at runTest [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1653:12[90m)[39m
 
             </system-err>
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="Extended AI Capabilities &gt; generateStrategicFit &gt; should return fit analysis on success" time="0.000093208">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="Extended AI Capabilities &gt; generateStrategicFit &gt; should return fit analysis on success" time="0.000087917">
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="Extended AI Capabilities &gt; generateStrategicFit &gt; should return fallback on error" time="0.00012175">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="Extended AI Capabilities &gt; generateStrategicFit &gt; should return fallback on error" time="0.000117458">
             <system-err>
 Fit Check Error SyntaxError: Unexpected token &apos;B&apos;, &quot;Bad JSON&quot; is not valid JSON
     at JSON.parse (&lt;anonymous&gt;)
-    at Object.generateStrategicFit [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/aiService.js:802:25[90m)[39m
-    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/aiService.test.js:703:28
+    at Object.generateStrategicFit [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/aiService.js:862:25[90m)[39m
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/aiService.test.js:704:28
     at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:20
 
             </system-err>
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="Extended AI Capabilities &gt; simulateEconomics &gt; should combine financial simulation with AI commentary" time="0.000101167">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="Extended AI Capabilities &gt; simulateEconomics &gt; should combine financial simulation with AI commentary" time="0.0001005">
         </testcase>
-        <testcase classname="tests/unit/backend/aiService.test.js" name="Extended AI Capabilities &gt; simulateEconomics &gt; should return just simulation if AI fails" time="0.000058292">
+        <testcase classname="tests/unit/backend/aiService.test.js" name="Extended AI Capabilities &gt; simulateEconomics &gt; should return just simulation if AI fails" time="0.000064667">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/analyticsService.test.js" timestamp="2025-12-20T10:28:05.108Z" hostname="MacBook-Pro-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.243202625">
+        <testcase classname="tests/unit/backend/analyticsService.test.js" name="AnalyticsService - Integration &gt; logUsage &gt; should log AI usage to the database without errors" time="0.001791333">
+        </testcase>
+        <testcase classname="tests/unit/backend/analyticsService.test.js" name="AnalyticsService - Integration &gt; getStats &gt; should retrieve aggregated stats from real database" time="0.000680166">
+        </testcase>
+        <testcase classname="tests/unit/backend/analyticsService.test.js" name="AnalyticsService - Integration &gt; getTopTopics &gt; should retrieve top topics from real database" time="0.000471333">
+        </testcase>
+        <testcase classname="tests/unit/backend/analyticsService.test.js" name="AnalyticsService - Integration &gt; saveMaturityScore &gt; should save maturity score without errors" time="0.000238708">
+        </testcase>
+        <testcase classname="tests/unit/backend/analyticsService.test.js" name="AnalyticsService - Integration &gt; getIndustryBenchmarks &gt; should retrieve industry benchmarks from real database" time="0.000302">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/billingService.test.js" timestamp="2025-12-20T10:28:05.109Z" hostname="MacBook-Pro-Piotr.local" tests="4" failures="0" errors="0" skipped="0" time="0.1233465">
+        <testcase classname="tests/unit/backend/billingService.test.js" name="BillingService (Unit) &gt; getPlans &gt; should return all available plans from database" time="0.002203167">
+        </testcase>
+        <testcase classname="tests/unit/backend/billingService.test.js" name="BillingService (Unit) &gt; getPlans &gt; should handle database errors gracefully" time="0.00034075">
+        </testcase>
+        <testcase classname="tests/unit/backend/billingService.test.js" name="BillingService (Unit) &gt; createPlan &gt; should create a new plan successfully" time="0.000322083">
+        </testcase>
+        <testcase classname="tests/unit/backend/billingService.test.js" name="BillingService (Unit) &gt; getOrganizationBilling &gt; should return billing info from database" time="0.000249667">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/emailService.test.js" timestamp="2025-12-20T10:28:05.109Z" hostname="MacBook-Pro-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.206132333">
+        <testcase classname="tests/unit/backend/emailService.test.js" name="Backend Service Test: EmailService &gt; sendEmail &gt; sends email with default config" time="0.006569583">
+        </testcase>
+        <testcase classname="tests/unit/backend/emailService.test.js" name="Backend Service Test: EmailService &gt; sendEmail &gt; uses SMTP settings from database" time="0.05470225">
+        </testcase>
+        <testcase classname="tests/unit/backend/emailService.test.js" name="Backend Service Test: EmailService &gt; sendEmail &gt; handles database errors gracefully" time="0.000881583">
+        </testcase>
+        <testcase classname="tests/unit/backend/emailService.test.js" name="Backend Service Test: EmailService &gt; sendEmail &gt; logs email details" time="0.000702875">
+        </testcase>
+        <testcase classname="tests/unit/backend/emailService.test.js" name="Backend Service Test: EmailService &gt; sendEmail &gt; uses environment variables when database settings are missing" time="0.001421208">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/feedbackService.test.js" timestamp="2025-12-20T10:28:05.110Z" hostname="MacBook-Pro-Piotr.local" tests="6" failures="0" errors="0" skipped="0" time="0.668382834">
+        <testcase classname="tests/unit/backend/feedbackService.test.js" name="Backend Service Test: FeedbackService &gt; saveFeedback &gt; saves feedback with all parameters" time="0.103435167">
+        </testcase>
+        <testcase classname="tests/unit/backend/feedbackService.test.js" name="Backend Service Test: FeedbackService &gt; saveFeedback &gt; saves feedback without correction" time="0.10137175">
+        </testcase>
+        <testcase classname="tests/unit/backend/feedbackService.test.js" name="Backend Service Test: FeedbackService &gt; getLearningExamples &gt; retrieves learning examples for context" time="0.104815208">
+        </testcase>
+        <testcase classname="tests/unit/backend/feedbackService.test.js" name="Backend Service Test: FeedbackService &gt; getLearningExamples &gt; handles empty results" time="0.001049375">
+        </testcase>
+        <testcase classname="tests/unit/backend/feedbackService.test.js" name="Backend Service Test: FeedbackService &gt; getLearningExamples &gt; handles database errors gracefully" time="0.000904125">
+        </testcase>
+        <testcase classname="tests/unit/backend/feedbackService.test.js" name="Backend Service Test: FeedbackService &gt; getLearningExamples &gt; only returns examples with rating &gt;= 4" time="0.1016085">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/financialService.test.js" timestamp="2025-12-20T10:28:05.110Z" hostname="MacBook-Pro-Piotr.local" tests="10" failures="0" errors="0" skipped="0" time="0.003335958">
+        <testcase classname="tests/unit/backend/financialService.test.js" name="Backend Service Test: FinancialService &gt; estimateCost &gt; returns correct cost for High complexity" time="0.001118166">
+        </testcase>
+        <testcase classname="tests/unit/backend/financialService.test.js" name="Backend Service Test: FinancialService &gt; estimateCost &gt; returns correct cost for Medium complexity" time="0.000117459">
+        </testcase>
+        <testcase classname="tests/unit/backend/financialService.test.js" name="Backend Service Test: FinancialService &gt; estimateCost &gt; returns correct cost for Low complexity" time="0.00006425">
+        </testcase>
+        <testcase classname="tests/unit/backend/financialService.test.js" name="Backend Service Test: FinancialService &gt; estimateBenefit &gt; calculates benefit for High priority" time="0.000083958">
+        </testcase>
+        <testcase classname="tests/unit/backend/financialService.test.js" name="Backend Service Test: FinancialService &gt; estimateBenefit &gt; calculates benefit for Medium priority" time="0.000067709">
+        </testcase>
+        <testcase classname="tests/unit/backend/financialService.test.js" name="Backend Service Test: FinancialService &gt; estimateBenefit &gt; calculates benefit for Low priority" time="0.000049167">
+        </testcase>
+        <testcase classname="tests/unit/backend/financialService.test.js" name="Backend Service Test: FinancialService &gt; estimateBenefit &gt; returns High benefit range for large benefits" time="0.000039541">
+        </testcase>
+        <testcase classname="tests/unit/backend/financialService.test.js" name="Backend Service Test: FinancialService &gt; simulatePortfolio &gt; calculates portfolio economics correctly" time="0.000504291">
+        </testcase>
+        <testcase classname="tests/unit/backend/financialService.test.js" name="Backend Service Test: FinancialService &gt; simulatePortfolio &gt; handles empty portfolio" time="0.000111834">
+        </testcase>
+        <testcase classname="tests/unit/backend/financialService.test.js" name="Backend Service Test: FinancialService &gt; simulatePortfolio &gt; uses custom revenue base" time="0.000060333">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/knowledgeService.test.js" timestamp="2025-12-20T10:28:05.111Z" hostname="MacBook-Pro-Piotr.local" tests="11" failures="0" errors="0" skipped="0" time="0.30972775">
+        <testcase classname="tests/unit/backend/knowledgeService.test.js" name="KnowledgeService - Integration &gt; Candidate Management &gt; should add a candidate idea without throwing" time="0.001033458">
+        </testcase>
+        <testcase classname="tests/unit/backend/knowledgeService.test.js" name="KnowledgeService - Integration &gt; Candidate Management &gt; should get candidates without throwing" time="0.000540667">
+        </testcase>
+        <testcase classname="tests/unit/backend/knowledgeService.test.js" name="KnowledgeService - Integration &gt; Strategies &gt; should add a global strategy without throwing" time="0.0004195">
+        </testcase>
+        <testcase classname="tests/unit/backend/knowledgeService.test.js" name="KnowledgeService - Integration &gt; Strategies &gt; should get active strategies without throwing" time="0.000324958">
+        </testcase>
+        <testcase classname="tests/unit/backend/knowledgeService.test.js" name="KnowledgeService - Integration &gt; Client Context &gt; should set and get client context" time="0.001574625">
+        </testcase>
+        <testcase classname="tests/unit/backend/knowledgeService.test.js" name="KnowledgeService - Integration &gt; Client Context &gt; should update existing client context" time="0.000799958">
+        </testcase>
+        <testcase classname="tests/unit/backend/knowledgeService.test.js" name="KnowledgeService - Integration &gt; Candidate Status &gt; should update candidate status" time="0.000746416">
+        </testcase>
+        <testcase classname="tests/unit/backend/knowledgeService.test.js" name="KnowledgeService - Integration &gt; Process Document (RAG) &gt; should process document chunks" time="0.150478666">
+        </testcase>
+        <testcase classname="tests/unit/backend/knowledgeService.test.js" name="KnowledgeService - Integration &gt; Access Control &gt; should restrict user access to project docs" time="0.000499583">
+        </testcase>
+        <testcase classname="tests/unit/backend/knowledgeService.test.js" name="KnowledgeService - Integration &gt; Strategies Toggle &gt; should toggle strategy active status" time="0.001128">
+        </testcase>
+        <testcase classname="tests/unit/backend/knowledgeService.test.js" name="KnowledgeService - Integration &gt; Document Lifecycle &gt; should soft delete document" time="0.003501333">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/ragService.test.js" timestamp="2025-12-20T10:28:05.111Z" hostname="MacBook-Pro-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.255841333">
+        <testcase classname="tests/unit/backend/ragService.test.js" name="RagService - Integration &gt; generateEmbedding &gt; should return null if no provider configured in database" time="0.078021917">
+            <system-out>
+[DB:1brow] Initializing database at :memory:
+Connected to the SQLite database.
+Created billing tables and seeded default subscription plans.
+Seeded SuperAdmin and DBR77 Users.
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/unit/backend/ragService.test.js" name="RagService - Integration &gt; getContext &gt; should return context string without throwing" time="0.108661416">
+            <system-out>
+Projects table created successfully (or already exists).
+
+Database initialization complete.
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/unit/backend/ragService.test.js" name="RagService - Integration &gt; getContext &gt; should accept limit parameter" time="0.000801791">
+        </testcase>
+        <testcase classname="tests/unit/backend/ragService.test.js" name="RagService - Integration &gt; getContextKeyword &gt; should perform keyword search without throwing" time="0.001169917">
+        </testcase>
+        <testcase classname="tests/unit/backend/ragService.test.js" name="RagService - Integration &gt; getAxisDefinitions &gt; should retrieve axis definitions without throwing" time="0.001166875">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/scmsGovernance.test.js" timestamp="2025-12-20T10:28:05.111Z" hostname="MacBook-Pro-Piotr.local" tests="17" failures="0" errors="0" skipped="0" time="0.017656458">
+        <testcase classname="tests/unit/backend/scmsGovernance.test.js" name="StatusMachine &gt; Initiative Status Transitions &gt; should allow DRAFT to PLANNED transition" time="0.015742083">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsGovernance.test.js" name="StatusMachine &gt; Initiative Status Transitions &gt; should allow PLANNED to APPROVED transition" time="0.00014475">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsGovernance.test.js" name="StatusMachine &gt; Initiative Status Transitions &gt; should allow APPROVED to IN_EXECUTION transition" time="0.000083083">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsGovernance.test.js" name="StatusMachine &gt; Initiative Status Transitions &gt; should allow IN_EXECUTION to BLOCKED transition" time="0.000093875">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsGovernance.test.js" name="StatusMachine &gt; Initiative Status Transitions &gt; should allow IN_EXECUTION to COMPLETED transition" time="0.000080583">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsGovernance.test.js" name="StatusMachine &gt; Initiative Status Transitions &gt; should disallow COMPLETED to DRAFT transition" time="0.00005575">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsGovernance.test.js" name="StatusMachine &gt; Initiative Status Transitions &gt; should disallow invalid status transition" time="0.000044">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsGovernance.test.js" name="StatusMachine &gt; Task Status Transitions &gt; should allow TODO to IN_PROGRESS transition" time="0.000070625">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsGovernance.test.js" name="StatusMachine &gt; Task Status Transitions &gt; should allow IN_PROGRESS to DONE transition" time="0.000052875">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsGovernance.test.js" name="StatusMachine &gt; Task Status Transitions &gt; should allow IN_PROGRESS to BLOCKED transition" time="0.000059">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsGovernance.test.js" name="StatusMachine &gt; Task Status Transitions &gt; should allow BLOCKED to IN_PROGRESS transition" time="0.000038792">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsGovernance.test.js" name="StatusMachine &gt; Task Status Transitions &gt; should disallow direct DONE to TODO transition" time="0.000032458">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsGovernance.test.js" name="StatusMachine &gt; Blocked Status Validation &gt; should require blocked reason for BLOCKED initiative status" time="0.000112166">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsGovernance.test.js" name="StatusMachine &gt; Blocked Status Validation &gt; should accept blocked reason for BLOCKED status" time="0.000040625">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsGovernance.test.js" name="StatusMachine &gt; Status Constants &gt; should export INITIATIVE_STATUSES" time="0.000047209">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsGovernance.test.js" name="StatusMachine &gt; Status Constants &gt; should export TASK_STATUSES" time="0.000033875">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsGovernance.test.js" name="StatusMachine &gt; Status Constants &gt; should export DECISION_STATUSES" time="0.000032208">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/scmsLifecycle.test.js" timestamp="2025-12-20T10:28:05.112Z" hostname="MacBook-Pro-Piotr.local" tests="16" failures="0" errors="0" skipped="0" time="0.041741417">
+        <testcase classname="tests/unit/backend/scmsLifecycle.test.js" name="StageGateService &gt; Gate Types &gt; should define READINESS_GATE" time="0.031503292">
+            <system-out>
+[Database] Selected: SQLite
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsLifecycle.test.js" name="StageGateService &gt; Gate Types &gt; should define DESIGN_GATE" time="0.0001805">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsLifecycle.test.js" name="StageGateService &gt; Gate Types &gt; should define PLANNING_GATE" time="0.001078834">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsLifecycle.test.js" name="StageGateService &gt; Gate Types &gt; should define EXECUTION_GATE" time="0.000124584">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsLifecycle.test.js" name="StageGateService &gt; Gate Types &gt; should define CLOSURE_GATE" time="0.000526417">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsLifecycle.test.js" name="StageGateService &gt; Service Structure &gt; should export getGateType function" time="0.000087625">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsLifecycle.test.js" name="StageGateService &gt; Service Structure &gt; should export evaluateGate function" time="0.000050875">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsLifecycle.test.js" name="StageGateService &gt; Service Structure &gt; should export passGate function" time="0.00007275">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsLifecycle.test.js" name="StageGateService &gt; Gate Mapping &gt; should map Context to Assessment with READINESS_GATE" time="0.000134875">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsLifecycle.test.js" name="StageGateService &gt; Gate Mapping &gt; should map Roadmap to Execution with EXECUTION_GATE" time="0.000085042">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsLifecycle.test.js" name="StageGateService &gt; Gate Mapping &gt; should map Assessment to Initiatives with DESIGN_GATE" time="0.000047917">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsLifecycle.test.js" name="StageGateService &gt; Gate Mapping &gt; should map Initiatives to Roadmap with PLANNING_GATE" time="0.00003425">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsLifecycle.test.js" name="StageGateService &gt; Gate Mapping &gt; should map Execution to Stabilization with CLOSURE_GATE" time="0.000029208">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsLifecycle.test.js" name="Phase Constants &gt; should have 6 phases in SCMS lifecycle" time="0.001037042">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsLifecycle.test.js" name="Phase Constants &gt; should have Context as first phase" time="0.000479958">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsLifecycle.test.js" name="Phase Constants &gt; should have Stabilization as last phase" time="0.000053666">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/scmsServices.test.js" timestamp="2025-12-20T10:28:05.113Z" hostname="MacBook-Pro-Piotr.local" tests="39" failures="0" errors="0" skipped="0" time="0.120637625">
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="NotificationService &gt; NOTIFICATION_TYPES &gt; should have notification types defined" time="0.034951917">
+            <system-out>
+[Database] Selected: SQLite
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="NotificationService &gt; NOTIFICATION_TYPES &gt; should include TASK_ASSIGNED type" time="0.000178208">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="NotificationService &gt; NOTIFICATION_TYPES &gt; should include DECISION_REQUIRED type" time="0.000080708">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="NotificationService &gt; NOTIFICATION_TYPES &gt; should include AI_RISK_DETECTED type" time="0.000090875">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="NotificationService &gt; SEVERITY &gt; should define INFO severity" time="0.000088167">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="NotificationService &gt; SEVERITY &gt; should define WARNING severity" time="0.00006175">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="NotificationService &gt; SEVERITY &gt; should define CRITICAL severity" time="0.000048">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="MyWorkService &gt; Service Structure &gt; should export getMyWork function" time="0.044823167">
+            <system-out>
+[DB:ffa6td] Initializing database at :memory:
+Connected to the SQLite database.
+Created billing tables and seeded default subscription plans.
+Seeded SuperAdmin and DBR77 Users.
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="MyWorkService &gt; Service Structure &gt; should export _getMyTasks helper function" time="0.000095667">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="MyWorkService &gt; Service Structure &gt; should export _getMyAlerts helper function" time="0.000090333">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="ExecutionMonitorService &gt; Service Structure &gt; should export runDailyMonitor function" time="0.006981084">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="ExecutionMonitorService &gt; Service Structure &gt; should export generateExecutionSummary function" time="0.000062917">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="EscalationService &gt; Service Structure &gt; should export createEscalation function" time="0.003673459">
+            <system-out>
+Projects table created successfully (or already exists).
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="EscalationService &gt; Service Structure &gt; should export getEscalations function" time="0.000083292">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="EscalationService &gt; Service Structure &gt; should export acknowledgeEscalation function" time="0.000043625">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="EscalationService &gt; Service Structure &gt; should export resolveEscalation function" time="0.000034833">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="EscalationService &gt; Service Structure &gt; should export runAutoEscalation function" time="0.00002975">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="StabilizationService &gt; STABILIZATION_STATUSES &gt; should define STABILIZED status" time="0.006270917">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="StabilizationService &gt; STABILIZATION_STATUSES &gt; should define PARTIALLY_STABILIZED status" time="0.000056208">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="StabilizationService &gt; STABILIZATION_STATUSES &gt; should define UNSTABLE status" time="0.000034583">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="StabilizationService &gt; STABILIZATION_STATUSES &gt; should define NOT_APPLICABLE status" time="0.000028292">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="StabilizationService &gt; Service Structure &gt; should export checkEntryCriteria function" time="0.000042959">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="StabilizationService &gt; Service Structure &gt; should export checkExitCriteria function" time="0.000032208">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="StabilizationService &gt; Service Structure &gt; should export closeProject function" time="0.000033791">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="EconomicsService &gt; VALUE_TYPES &gt; should have 5 value types" time="0.005721916">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="EconomicsService &gt; VALUE_TYPES &gt; should define COST_REDUCTION type" time="0.00054475">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="EconomicsService &gt; VALUE_TYPES &gt; should define REVENUE_INCREASE type" time="0.000042584">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="EconomicsService &gt; VALUE_TYPES &gt; should define RISK_REDUCTION type" time="0.000031541">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="EconomicsService &gt; VALUE_TYPES &gt; should define EFFICIENCY type" time="0.000028083">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="EconomicsService &gt; VALUE_TYPES &gt; should define STRATEGIC_OPTION type" time="0.000026125">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="EconomicsService &gt; Service Structure &gt; should export createValueHypothesis function" time="0.000029166">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="EconomicsService &gt; Service Structure &gt; should export getValueSummary function" time="0.000025625">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="EconomicsService &gt; Service Structure &gt; should export detectMissingValueHypotheses function" time="0.000026">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="ReportingService &gt; Service Structure &gt; should export generateExecutiveOverview function" time="0.008470542">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="ReportingService &gt; Service Structure &gt; should export generateProjectHealthReport function" time="0.000058208">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="ReportingService &gt; Service Structure &gt; should export generateGovernanceReport function" time="0.000033375">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="NarrativeService &gt; Service Structure &gt; should export generateWeeklySummary function" time="0.006318542">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="NarrativeService &gt; Service Structure &gt; should export generateExecutiveMemo function" time="0.000062541">
+        </testcase>
+        <testcase classname="tests/unit/backend/scmsServices.test.js" name="NarrativeService &gt; Service Structure &gt; should export generateProgressNarrative function" time="0.000034209">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/tokenBillingService.test.js" timestamp="2025-12-20T10:28:05.115Z" hostname="MacBook-Pro-Piotr.local" tests="16" failures="0" errors="0" skipped="0" time="0.457705209">
+        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Margins &gt; should get margins without throwing" time="0.000831875">
+        </testcase>
+        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Margins &gt; should get specific margin by source type" time="0.000601542">
+        </testcase>
+        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Packages &gt; should get packages without throwing" time="0.000326833">
+        </testcase>
+        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Packages &gt; should upsert package without throwing" time="0.001193084">
+        </testcase>
+        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Balance &gt; should get balance without throwing" time="0.001212375">
+        </testcase>
+        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Balance &gt; should ensure balance creates record" time="0.001060208">
+        </testcase>
+        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Balance &gt; should credit tokens to user" time="0.00205525">
+        </testcase>
+        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Balance Check &gt; should check sufficient balance" time="0.000337334">
+        </testcase>
+        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Margin Updates &gt; should update margin and persist changes" time="0.002545459">
+        </testcase>
+        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Token Deduction / Usage &gt; should deduct tokens correctly for platform usage" time="0.001923416">
+        </testcase>
+        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Token Deduction / Usage &gt; should handle markup multipliers" time="0.001305167">
+        </testcase>
+        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; User API Keys (BYOK) &gt; should add, get and delete user API keys" time="0.083943542">
+        </testcase>
+        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Source Determination &gt; should prefer BYOK if available and requested" time="0.092828333">
+        </testcase>
+        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Source Determination &gt; should fallback to platform if no BYOK key" time="0.000527667">
+        </testcase>
+        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Analytics &gt; should retrieve revenue analytics" time="0.001326375">
+        </testcase>
+        <testcase classname="tests/unit/backend/tokenBillingService.test.js" name="TokenBillingService - Integration &gt; Analytics &gt; should retrieve transactions for user" time="0.013207042">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/usageService.test.js" timestamp="2025-12-20T10:28:05.116Z" hostname="MacBook-Pro-Piotr.local" tests="4" failures="0" errors="0" skipped="0" time="0.17990975">
+        <testcase classname="tests/unit/backend/usageService.test.js" name="UsageService - Integration &gt; Record Usage &gt; should record token usage without throwing" time="0.001482959">
+        </testcase>
+        <testcase classname="tests/unit/backend/usageService.test.js" name="UsageService - Integration &gt; Record Usage &gt; should record storage usage without throwing" time="0.001233542">
+        </testcase>
+        <testcase classname="tests/unit/backend/usageService.test.js" name="UsageService - Integration &gt; Get Usage &gt; should get current usage without throwing" time="0.00247275">
+        </testcase>
+        <testcase classname="tests/unit/backend/usageService.test.js" name="UsageService - Integration &gt; Check Quota &gt; should check quota without throwing" time="0.001004583">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/middleware/adminMiddleware.test.js" timestamp="2025-12-20T10:28:05.116Z" hostname="MacBook-Pro-Piotr.local" tests="4" failures="0" errors="0" skipped="0" time="0.006364334">
+        <testcase classname="tests/unit/backend/middleware/adminMiddleware.test.js" name="AdminMiddleware &gt; should call next() if user is admin" time="0.003065042">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/adminMiddleware.test.js" name="AdminMiddleware &gt; should call next() if user is superadmin" time="0.000461083">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/adminMiddleware.test.js" name="AdminMiddleware &gt; should return 403 if user is not admin" time="0.001827917">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/adminMiddleware.test.js" name="AdminMiddleware &gt; should return 401 if verify failed (bad signature)" time="0.000419209">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/middleware/auditLog.test.js" timestamp="2025-12-20T10:28:05.117Z" hostname="MacBook-Pro-Piotr.local" tests="3" failures="0" errors="0" skipped="0" time="0.291808083">
+        <testcase classname="tests/unit/backend/middleware/auditLog.test.js" name="AuditLog Middleware &gt; should call next() and override res.end" time="0.23585975">
+            <system-out>
+[Database] Selected: SQLite
+
+[DB:xfjiewd] Initializing database at :memory:
+Connected to the SQLite database.
+Created billing tables and seeded default subscription plans.
+Seeded SuperAdmin and DBR77 Users.
+
+Projects table created successfully (or already exists).
+
+Database initialization complete.
+
+[Database] Selected: SQLite
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/auditLog.test.js" name="AuditLog Middleware &gt; should log activity when res.end is called for 2xx POST" time="0.053743667">
+            <system-out>
+[Database] Selected: SQLite
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/auditLog.test.js" name="AuditLog Middleware &gt; should NOT log for GET requests" time="0.001514625">
+            <system-out>
+[Database] Selected: SQLite
+
+            </system-out>
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/middleware/authMiddleware.test.js" timestamp="2025-12-20T10:28:05.117Z" hostname="MacBook-Pro-Piotr.local" tests="6" failures="0" errors="0" skipped="4" time="0.002203083">
+        <testcase classname="tests/unit/backend/middleware/authMiddleware.test.js" name="AuthMiddleware &gt; should return 403 if no token provided" time="0.001423709">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/authMiddleware.test.js" name="AuthMiddleware &gt; should return 401 if token expired" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/authMiddleware.test.js" name="AuthMiddleware &gt; should return 401 if token invalid" time="0.000306125">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/authMiddleware.test.js" name="AuthMiddleware &gt; should call next() if token valid and no revocation check needed (no jti)" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/authMiddleware.test.js" name="AuthMiddleware &gt; should check revocation if jti is present" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/authMiddleware.test.js" name="AuthMiddleware &gt; should return 401 if token is revoked" time="0">
+            <skipped/>
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/middleware/planLimits.test.js" timestamp="2025-12-20T10:28:05.118Z" hostname="MacBook-Pro-Piotr.local" tests="8" failures="0" errors="0" skipped="0" time="0.169681375">
+        <testcase classname="tests/unit/backend/middleware/planLimits.test.js" name="PlanLimits Middleware &gt; should return 403 if no organization found in user" time="0.1484175">
+            <system-out>
+[Database] Selected: SQLite
+
+[DB:7w9es] Initializing database at :memory:
+Connected to the SQLite database.
+Created billing tables and seeded default subscription plans.
+Seeded SuperAdmin and DBR77 Users.
+
+Projects table created successfully (or already exists).
+
+Database initialization complete.
+
+[Database] Selected: SQLite
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/planLimits.test.js" name="PlanLimits Middleware &gt; should return 404 if organization does not exist in DB" time="0.000727583">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/planLimits.test.js" name="PlanLimits Middleware &gt; should allow request if within limit (Free plan)" time="0.00329175">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/planLimits.test.js" name="PlanLimits Middleware &gt; should block request if limit reached (Free plan)" time="0.004831333">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/planLimits.test.js" name="PlanLimits Middleware &gt; should allow request if within limit (Pro plan)" time="0.004713208">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/planLimits.test.js" name="PlanLimits Middleware &gt; should treat trial status as pro plan" time="0.002294333">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/planLimits.test.js" name="PlanLimits Middleware &gt; should handle undefined limits gracefully (warn and allow)" time="0.001118208">
+            <system-err>
+Limit key unknown_limit_key not found for plan free
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/planLimits.test.js" name="PlanLimits Middleware &gt; should check max_members limit" time="0.003510459">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/middleware/projectQuotaMiddleware.test.js" timestamp="2025-12-20T10:28:05.118Z" hostname="MacBook-Pro-Piotr.local" tests="6" failures="0" errors="0" skipped="0" time="0.177993292">
+        <testcase classname="tests/unit/backend/middleware/projectQuotaMiddleware.test.js" name="Project Quota Middleware (Integration) &gt; should skip check if no project_id provided" time="0.001031542">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/projectQuotaMiddleware.test.js" name="Project Quota Middleware (Integration) &gt; should allow request if quota is sufficient" time="0.002664875">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/projectQuotaMiddleware.test.js" name="Project Quota Middleware (Integration) &gt; should allow request if limit is NULL (unlimited)" time="0.001922833">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/projectQuotaMiddleware.test.js" name="Project Quota Middleware (Integration) &gt; should block 429 if quota exceeded" time="0.003089167">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/projectQuotaMiddleware.test.js" name="Project Quota Middleware (Integration) &gt; should cleanup temp file if quota exceeded" time="0.000885375">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/projectQuotaMiddleware.test.js" name="Project Quota Middleware (Integration) &gt; should handle errors gracefully (e.g. project not found)" time="0.001112667">
+            <system-err>
+Project quota check error: Error: Project not found
+    at Statement.&lt;anonymous&gt; [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/usageService.js:300:41[90m)[39m
+    at Statement.replacement [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4msqlite3[24m/lib/trace.js:25:27[90m)[39m
+    at Statement.replacement [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4msqlite3[24m/lib/trace.js:25:27[90m)[39m
+
+            </system-err>
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/middleware/quotaMiddleware.test.js" timestamp="2025-12-20T10:28:05.119Z" hostname="MacBook-Pro-Piotr.local" tests="8" failures="0" errors="0" skipped="0" time="0.333428042">
+        <testcase classname="tests/unit/backend/middleware/quotaMiddleware.test.js" name="Quota Middleware (Integration) &gt; enforceTokenQuota &gt; should return 401 if no orgId" time="0.001607917">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/quotaMiddleware.test.js" name="Quota Middleware (Integration) &gt; enforceTokenQuota &gt; should allow if usage is below limit" time="0.006925541">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/quotaMiddleware.test.js" name="Quota Middleware (Integration) &gt; enforceTokenQuota &gt; should block 429 if usage exceeds limit" time="0.002463792">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/quotaMiddleware.test.js" name="Quota Middleware (Integration) &gt; enforceTokenQuota &gt; should allow if overage is enabled even if exceeded" time="0.002563292">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/quotaMiddleware.test.js" name="Quota Middleware (Integration) &gt; enforceTokenQuota &gt; should set warning headers if &gt; 80%" time="0.003368875">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/quotaMiddleware.test.js" name="Quota Middleware (Integration) &gt; enforceStorageQuota &gt; should allow if allowed" time="0.001858167">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/quotaMiddleware.test.js" name="Quota Middleware (Integration) &gt; enforceStorageQuota &gt; should block 429 if exceeded" time="0.004444083">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/quotaMiddleware.test.js" name="Quota Middleware (Integration) &gt; recordTokenUsageAfterResponse &gt; should insert usage record into DB" time="0.054189167">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/middleware/superAdminMiddleware.test.js" timestamp="2025-12-20T10:28:05.119Z" hostname="MacBook-Pro-Piotr.local" tests="3" failures="0" errors="0" skipped="0" time="0.004603833">
+        <testcase classname="tests/unit/backend/middleware/superAdminMiddleware.test.js" name="SuperAdminMiddleware &gt; should call next() if user is superadmin" time="0.002580833">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/superAdminMiddleware.test.js" name="SuperAdminMiddleware &gt; should return 403 if user is admin (not super)" time="0.001232875">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/superAdminMiddleware.test.js" name="SuperAdminMiddleware &gt; should return 401 if token is invalid (bad signature)" time="0.000286208">
         </testcase>
     </testsuite>
 </testsuites>

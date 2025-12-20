@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Loader2, Plus } from 'lucide-react';
 import { Api } from '../../services/api';
+import { PersonalExecutionBar } from './PersonalExecutionBar';
 
 interface TodayDashboardProps {
     onEditTask: (id: string) => void;
@@ -92,6 +93,15 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({ onEditTask, onCr
 
             {/* Side Panel (Quick Actions / Blocked) */}
             <div className="space-y-6">
+                {data && (
+                    <PersonalExecutionBar stats={{
+                        total: data.totalCount || 0,
+                        completed: data.completedCount || 0,
+                        overdue: data.overdueCount || 0,
+                        blocked: data.blockedCount || 0
+                    }} />
+                )}
+
                 {/* Placeholder for future widgets */}
                 <div className="bg-blue-50 dark:bg-blue-900/10 p-4 rounded-xl border border-blue-100 dark:border-blue-900/20">
                     <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Pro Tip</h3>

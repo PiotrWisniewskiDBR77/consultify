@@ -50,6 +50,10 @@ export enum AppView {
   ADMIN_BILLING = 'ADMIN_BILLING',
   SETTINGS_PROFILE = 'SETTINGS_PROFILE',
   SETTINGS_BILLING = 'SETTINGS_BILLING',
+  SETTINGS_AI = 'SETTINGS_AI',
+  SETTINGS_NOTIFICATIONS = 'SETTINGS_NOTIFICATIONS',
+  SETTINGS_INTEGRATIONS = 'SETTINGS_INTEGRATIONS',
+  SETTINGS_REGIONALIZATION = 'SETTINGS_REGIONALIZATION',
 
   // Context Builder (Renamed directly or used as parent)
   CONTEXT_BUILDER = 'CONTEXT_BUILDER',
@@ -63,6 +67,16 @@ export enum AppView {
   MY_WORK = 'MY_WORK', // New Module 7 (Tasks & Workflow)
 }
 
+// SCMS: Canonical Change Lifecycle Phases (System Reframe Step 0)
+export enum SCMSPhase {
+  PHASE_1_CONTEXT = 'Context',          // AppView.FULL_STEP1_CONTEXT
+  PHASE_2_ASSESSMENT = 'Assessment',    // AppView.FULL_STEP1_ASSESSMENT
+  PHASE_3_INITIATIVES = 'Initiatives',  // AppView.FULL_STEP2_INITIATIVES
+  PHASE_4_ROADMAP = 'Roadmap',          // AppView.FULL_STEP3_ROADMAP
+  PHASE_5_EXECUTION = 'Execution',      // AppView.FULL_STEP5_EXECUTION + FULL_PILOT_EXECUTION
+  PHASE_6_STABILIZATION = 'Stabilization' // AppView.FULL_ROLLOUT + FULL_STEP6_REPORTS
+}
+
 export enum SessionMode {
   FREE = 'FREE',
   FULL = 'FULL'
@@ -74,16 +88,1089 @@ export enum AuthStep {
   CODE_ENTRY = 'CODE_ENTRY'
 }
 
+// SCMS: Canonical Roles (Step 1)
 export enum UserRole {
-  SUPERADMIN = 'SUPERADMIN',
-  ADMIN = 'ADMIN',
-  USER = 'USER',
-  CEO = 'CEO',
-  COO = 'COO',
-  CFO = 'CFO',
-  CIO = 'CIO',
-  MANAGER = 'MANAGER',
-  OTHER = 'OTHER'
+  SUPERADMIN = 'SUPERADMIN',   // DBR77 Platform Owner
+  ADMIN = 'ADMIN',             // Tenant Admin (CEO/COO usually)
+  PROJECT_MANAGER = 'PROJECT_MANAGER', // PMO Lead
+  TEAM_MEMBER = 'TEAM_MEMBER', // Executor
+  VIEWER = 'VIEWER'            // Stakeholder/Auditor
+}
+
+// SCMS: System Capabilities (Permissions)
+export type Capability =
+  // Tenant Admin Scope
+  | 'manage_users'
+  | 'manage_roles'
+  | 'manage_billing'
+  | 'manage_org_settings'
+  | 'manage_ai_policy'
+
+  // Project Governance Scope
+  | 'create_project'
+  | 'edit_project_settings'
+  | 'manage_project_roles'
+  | 'manage_workstreams'
+  | 'approve_changes'         // CR Approval
+  | 'manage_stage_gates'      // Phase Transitions
+  | 'view_audit_log'
+
+  // Execution Scope
+  | 'create_initiative'
+  | 'edit_initiative'
+  | 'manage_roadmap'
+  | 'assign_tasks'
+  | 'update_task_status'
+  | 'manage_risks'
+
+  // AI Scope
+  | 'ai_execute_actions'      // "Auto" mode
+  | 'ai_view_insights';
+
+// Governance: Change Request Status
+export type ChangeRequestStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'IMPLEMENTED';
+
+// Governance: Change Request Type
+export type ChangeRequestType = 'SCOPE' | 'SCHEDULE' | 'BUDGET' | 'GOVERNANCE' | 'RESOURCE';
+
+// Governance: Change Request Entity
+export interface ChangeRequest {
+  id: string;
+  projectId: string;
+  title: string;
+  description: string;
+  type: ChangeRequestType;
+  status: ChangeRequestStatus;
+
+  // Impact Analysis
+  impactedObjects: { type: 'initiative' | 'task' | 'milestone'; id: string }[];
+  riskAssessment: 'LOW' | 'MEDIUM' | 'HIGH';
+  rationale: string;
+
+  // Workflow
+  createdBy: string;
+  createdAt: string;
+  approvers?: string[]; // List of UserIDs who must approve
+  approvedBy?: string;
+  approvedAt?: string;
+  rejectedReason?: string;
+
+  // AI
+  aiRecommendedDecision?: 'APPROVE' | 'REJECT' | 'REQUEST_INFO';
+  aiAnalysis?: string;
+}
+
+// Governance: Policy Settings (Tenant or Project Level)
+export interface GovernancePolicy {
+  id: string;
+  scopeId: string;   // OrgID or ProjectID
+  scopeType: 'ORGANIZATION' | 'PROJECT';
+
+  // Rules
+  requireChangeRequestFor: ('SCOPE' | 'SCHEDULE' | 'BUDGET')[];
+  approvalThresholdCost?: number; // e.g., > $10k requires specific approval
+
+  // AI strictness
+  aiMode: 'ADVISORY' | 'ASSISTED' | 'PROACTIVE' | 'AUTOPILOT';
+  allowedAiActions: Capability[]; // Which actions AI can take without human loop
+}
+
+// ==========================================
+// STEP 3: PMO OBJECT MODEL
+// ==========================================
+
+// 3.1 STANDARDIZED STATUS ENUMS
+
+/** Initiative Status Lifecycle (ENFORCED) */
+export enum InitiativeStatus {
+  DRAFT = 'DRAFT',
+  PLANNED = 'PLANNED',
+  APPROVED = 'APPROVED',
+  IN_EXECUTION = 'IN_EXECUTION',
+  BLOCKED = 'BLOCKED',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED'
+}
+
+/** Task Status Lifecycle (ENFORCED) */
+export enum TaskStatus {
+  TODO = 'TODO',
+  IN_PROGRESS = 'IN_PROGRESS',
+  BLOCKED = 'BLOCKED',
+  DONE = 'DONE'
+}
+
+/** Decision Status */
+export enum DecisionStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED'
+}
+
+/** Dependency Types */
+export enum DependencyType {
+  FINISH_TO_START = 'FINISH_TO_START', // Hard dependency
+  SOFT = 'SOFT'                         // Informational only
+}
+
+/** Stage Gate Types */
+export enum StageGateType {
+  READINESS_GATE = 'READINESS_GATE',     // Context → Assessment
+  DESIGN_GATE = 'DESIGN_GATE',           // Assessment → Initiatives
+  PLANNING_GATE = 'PLANNING_GATE',       // Initiatives → Roadmap
+  EXECUTION_GATE = 'EXECUTION_GATE',     // Roadmap → Execution
+  CLOSURE_GATE = 'CLOSURE_GATE'          // Execution → Stabilization
+}
+
+// 3.2 PORTFOLIO (Implicit per Organization)
+
+export interface Portfolio {
+  organizationId: string;
+
+  // Aggregated Metrics
+  totalProjects: number;
+  activeProjects: number;
+  projectsOnTrack: number;
+  projectsAtRisk: number;
+  projectsBlocked: number;
+
+  // Capacity
+  totalInitiatives: number;
+  completedInitiatives: number;
+  overallProgress: number; // 0-100
+
+  // Health
+  healthScore: number; // 0-100
+  topRisks: string[];
+}
+
+// 3.3 TRANSFORMATION PROJECT
+
+export interface TransformationProject {
+  id: string;
+  organizationId: string;
+  name: string;
+
+  // Governance
+  sponsorId: string;           // REQUIRED: Executive Sponsor
+  decisionOwnerId: string;     // REQUIRED: Final decision maker
+  projectManagerId?: string;
+
+  // Scope
+  locationsInScope: string[];  // Site/Location IDs
+
+  // Timeline
+  startDate?: string;
+  targetEndDate?: string;
+
+  // Phase Tracking (1-6)
+  currentPhase: SCMSPhase;
+  phaseHistory: { phase: SCMSPhase; enteredAt: string; exitedAt?: string }[];
+
+  // Settings
+  governanceSettings: {
+    requireApprovalForPhaseTransition: boolean;
+    allowPhaseRollback: boolean;
+    stageGatesEnabled: boolean;
+  };
+
+  // Progress
+  progress: number; // 0-100 (calculated from initiatives)
+  status: 'ACTIVE' | 'ON_HOLD' | 'COMPLETED' | 'CANCELLED';
+
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 3.4 INITIATIVE (Core Unit of Change)
+
+export interface PMOInitiative {
+  id: string;
+  projectId: string;           // REQUIRED: Must belong to exactly one project
+  ownerId: string;             // REQUIRED: Must have exactly one owner
+
+  // Core Attributes
+  title: string;
+  description: string;
+
+  // Scope
+  relatedLocationIds: string[]; // May span multiple locations
+
+  // Status & Priority
+  status: InitiativeStatus;
+  blockedReason?: string;      // Required if status = BLOCKED
+  priority: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+
+  // Dependencies
+  dependsOn: { initiativeId: string; type: DependencyType }[];
+
+  // Related Decisions
+  relatedDecisionIds: string[];
+
+  // Progress (calculated)
+  progress: number;            // 0-100 (from tasks)
+  totalTasks: number;
+  completedTasks: number;
+
+  // Roadmap
+  waveId?: string;
+  baselineVersion: number;
+
+  // Audit
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 3.5 TASK (Execution Unit)
+
+export interface PMOTask {
+  id: string;
+  initiativeId: string;        // REQUIRED: Must belong to exactly one initiative
+  projectId: string;           // Denormalized for queries
+
+  // Core Attributes
+  title: string;
+  description?: string;
+
+  // Assignment
+  assigneeId?: string;
+
+  // Execution
+  status: TaskStatus;
+  blockedReason?: string;      // Required if status = BLOCKED
+  blockerType?: 'RISK' | 'DECISION' | 'DEPENDENCY' | 'RESOURCE' | 'OTHER';
+
+  // Timeline
+  dueDate?: string;
+  effortEstimate?: number;     // Hours (lightweight)
+
+  // Evidence
+  attachments?: { id: string; name: string; url: string }[];
+  evidence?: string;
+
+  // Progress
+  progress: number;            // 0-100
+
+  // Audit
+  createdAt: string;
+  updatedAt: string;
+  completedAt?: string;
+}
+
+// 3.6 DECISION (Governance Checkpoint)
+
+export interface Decision {
+  id: string;
+  projectId: string;
+
+  // Type
+  decisionType: 'INITIATIVE_APPROVAL' | 'PHASE_TRANSITION' | 'UNBLOCK' | 'CANCEL' | 'OTHER';
+
+  // Related Object
+  relatedObjectType: 'INITIATIVE' | 'PHASE' | 'ROADMAP' | 'TASK';
+  relatedObjectId: string;
+
+  // Ownership
+  decisionOwnerId: string;     // Single owner (no voting)
+
+  // Status
+  status: DecisionStatus;
+  required: boolean;           // Based on project governance settings
+
+  // Details
+  title: string;
+  description?: string;
+  outcome?: string;            // Notes from decision maker
+
+  // Audit
+  createdAt: string;
+  decidedAt?: string;
+  auditTrail: { action: string; by: string; at: string; notes?: string }[];
+}
+
+// 3.7 STAGE GATE
+
+export interface StageGate {
+  id: string;
+  projectId: string;
+
+  // Gate Definition
+  gateType: StageGateType;
+  fromPhase: SCMSPhase;
+  toPhase: SCMSPhase;
+
+  // Criteria
+  completionCriteria: {
+    criterion: string;
+    isMet: boolean;
+    evidence?: string;
+  }[];
+
+  // Status
+  status: 'NOT_READY' | 'READY' | 'PASSED' | 'FAILED';
+  requiresApproval: boolean;
+
+  // Audit
+  evaluatedAt?: string;
+  evaluatedBy?: string;
+  approvedAt?: string;
+  approvedBy?: string;
+  notes?: string;
+}
+
+// 3.8 INITIATIVE DEPENDENCY
+
+export interface InitiativeDependency {
+  id: string;
+  fromInitiativeId: string;    // Depends on
+  toInitiativeId: string;      // Dependent
+  type: DependencyType;
+
+  // Status
+  isSatisfied: boolean;
+
+  createdAt: string;
+}
+
+// ==========================================
+// STEP 4: ROADMAP, SEQUENCING & CAPACITY
+// ==========================================
+
+/** Roadmap: Time-based execution plan for initiatives */
+export interface Roadmap {
+  id: string;
+  projectId: string;
+  name: string;
+
+  // Status
+  status: 'DRAFT' | 'ACTIVE' | 'BASELINED' | 'ARCHIVED';
+
+  // Timeline
+  plannedStartDate?: string;
+  plannedEndDate?: string;
+
+  // Metadata
+  currentBaselineVersion: number;
+  lastBaselinedAt?: string;
+
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** RoadmapInitiative: Initiative with timeline data on roadmap */
+export interface RoadmapInitiative {
+  id: string;         // Same as initiative.id
+  roadmapId: string;
+  initiativeId: string;
+
+  // Planned (from baseline)
+  plannedStartDate: string;
+  plannedEndDate: string;
+  plannedDuration: number;  // Days
+  sequencePosition: number;
+
+  // Actual
+  actualStartDate?: string;
+  actualEndDate?: string;
+
+  // Flags
+  isMilestone: boolean;
+  isCriticalPath: boolean;
+
+  // Variance
+  startVarianceDays?: number;  // Actual - Planned
+  endVarianceDays?: number;
+}
+
+/** ScheduleBaseline: Captured roadmap snapshot */
+export interface ScheduleBaseline {
+  id: string;
+  roadmapId: string;
+  projectId: string;
+
+  // Version
+  version: number;
+
+  // Snapshot
+  initiativeSnapshots: {
+    initiativeId: string;
+    plannedStartDate: string;
+    plannedEndDate: string;
+    sequencePosition: number;
+  }[];
+
+  // Approval
+  approvedBy: string;
+  approvedAt: string;
+  rationale: string;
+
+  createdAt: string;
+}
+
+/** CapacityEntry: User workload tracking */
+export interface CapacityEntry {
+  userId: string;
+  weekStart: string;  // Monday of the week
+
+  // Hours
+  allocatedHours: number;
+  availableHours: number;  // Default: 40
+  utilizationPercent: number;
+
+  // Breakdown
+  initiativeAllocations: {
+    initiativeId: string;
+    hours: number;
+  }[];
+
+  // Status
+  isOverloaded: boolean;
+}
+
+/** Scenario: What-if simulation (non-persistent) */
+export interface Scenario {
+  id: string;
+  projectId: string;
+  name: string;
+
+  // Changes
+  proposedChanges: {
+    initiativeId: string;
+    field: 'plannedStartDate' | 'plannedEndDate' | 'sequencePosition';
+    originalValue: string | number;
+    newValue: string | number;
+  }[];
+
+  // Impact Analysis
+  impactAnalysis?: {
+    affectedInitiatives: string[];
+    dependencyBreaks: string[];
+    capacityOverloads: string[];
+    delayedByDays: number;
+  };
+
+  createdAt: string;
+  createdBy: string;
+}
+
+/** VarianceReport: Baseline vs Actual comparison */
+export interface VarianceReport {
+  projectId: string;
+  roadmapId: string;
+  baselineVersion: number;
+
+  // Summary
+  totalInitiatives: number;
+  onTrackCount: number;
+  delayedCount: number;
+  criticalDelays: number;
+  onTrackPercent: number;
+
+  // Details
+  initiativeVariances: {
+    initiativeId: string;
+    initiativeName: string;
+    plannedStart: string;
+    plannedEnd: string;
+    actualStart?: string;
+    actualEnd?: string;
+    startVarianceDays: number;
+    endVarianceDays: number;
+    status: 'ON_TRACK' | 'DELAYED' | 'CRITICAL' | 'EARLY';
+  }[];
+
+  generatedAt: string;
+}
+
+// ==========================================
+// STEP 5: EXECUTION CONTROL, MY WORK & NOTIFICATIONS
+// ==========================================
+
+/** Notification Types */
+export type NotificationType =
+  // Execution
+  | 'TASK_ASSIGNED'
+  | 'TASK_OVERDUE'
+  | 'TASK_BLOCKED'
+  | 'INITIATIVE_STARTED'
+  | 'INITIATIVE_STALLED'
+  | 'INITIATIVE_COMPLETED'
+  // Governance
+  | 'DECISION_REQUIRED'
+  | 'DECISION_OVERDUE'
+  | 'CHANGE_REQUEST_SUBMITTED'
+  | 'CHANGE_REQUEST_DECIDED'
+  | 'GATE_PENDING_APPROVAL'
+  // AI
+  | 'AI_RISK_DETECTED'
+  | 'AI_OVERLOAD_DETECTED'
+  | 'AI_DEPENDENCY_CONFLICT'
+  | 'AI_RECOMMENDATION';
+
+/** Notification Severity */
+export type NotificationSeverity = 'INFO' | 'WARNING' | 'CRITICAL';
+
+/** Notification Entity */
+export interface Notification {
+  id: string;
+  userId: string;
+  organizationId: string;
+  projectId?: string;
+
+  // Type & Severity
+  type: NotificationType;
+  severity: NotificationSeverity;
+
+  // Content
+  title: string;
+  message: string;
+
+  // Related Object
+  relatedObjectType?: 'TASK' | 'INITIATIVE' | 'DECISION' | 'PROJECT' | 'GATE';
+  relatedObjectId?: string;
+
+  // Status
+  isRead: boolean;
+  isActionable: boolean;
+  actionUrl?: string;
+
+  // Timestamps
+  createdAt: string;
+  readAt?: string;
+  expiresAt?: string;
+}
+
+/** User Notification Settings */
+export interface UserNotificationSettings {
+  userId: string;
+
+  // Channels
+  inAppEnabled: boolean;
+  emailEnabled: boolean;
+
+  // Filters
+  muteInfo: boolean;
+  muteWarning: boolean;
+  muteCritical: boolean;
+
+  // Specific types
+  mutedTypes: NotificationType[];
+}
+
+/** MyWork Aggregation */
+export interface MyWork {
+  userId: string;
+  generatedAt: string;
+
+  // Tasks Section
+  myTasks: {
+    total: number;
+    overdue: number;
+    dueToday: number;
+    blocked: number;
+    items: {
+      id: string;
+      title: string;
+      initiativeName: string;
+      projectName: string;
+      dueDate?: string;
+      status: string;
+      priority: string;
+      blockedReason?: string;
+    }[];
+  };
+
+  // Initiatives Section (for Owners/PMs)
+  myInitiatives?: {
+    total: number;
+    atRisk: number;
+    items: {
+      id: string;
+      name: string;
+      projectName: string;
+      status: string;
+      progress: number;
+      blockers: string[];
+      pendingDecisions: number;
+    }[];
+  };
+
+  // Decisions Section (for Decision Owners)
+  myDecisions?: {
+    total: number;
+    overdue: number;
+    items: {
+      id: string;
+      title: string;
+      projectName: string;
+      decisionType: string;
+      createdAt: string;
+      isOverdue: boolean;
+    }[];
+  };
+
+  // Alerts Section
+  myAlerts: {
+    total: number;
+    critical: number;
+    items: Notification[];
+  };
+}
+
+/** Escalation Request */
+export interface EscalationRequest {
+  id: string;
+  projectId: string;
+
+  // Source
+  sourceType: 'DECISION' | 'INITIATIVE' | 'TASK' | 'CAPACITY';
+  sourceId: string;
+
+  // Escalation Path
+  fromUserId: string;
+  toUserId: string;
+  toRole: string;
+
+  // Reason
+  reason: string;
+  triggerType: 'OVERDUE' | 'STALLED' | 'OVERLOAD' | 'MANUAL';
+  daysOverdue?: number;
+
+  // Status
+  status: 'PENDING' | 'ACKNOWLEDGED' | 'RESOLVED';
+
+  // Audit
+  createdAt: string;
+  acknowledgedAt?: string;
+  resolvedAt?: string;
+}
+
+// ==========================================
+// STEP 6: STABILIZATION, REPORTING & ECONOMICS
+// ==========================================
+
+/** Stabilization Status for Initiatives */
+export type StabilizationStatus = 'STABILIZED' | 'PARTIALLY_STABILIZED' | 'UNSTABLE' | 'NOT_APPLICABLE';
+
+/** Value Hypothesis Types */
+export type ValueHypothesisType = 'COST_REDUCTION' | 'REVENUE_INCREASE' | 'RISK_REDUCTION' | 'EFFICIENCY' | 'STRATEGIC_OPTION';
+
+/** Value Hypothesis - Expected benefit of an initiative */
+export interface ValueHypothesis {
+  id: string;
+  initiativeId: string;
+  projectId: string;
+
+  // Core
+  description: string;
+  type: ValueHypothesisType;
+  confidenceLevel: 'LOW' | 'MEDIUM' | 'HIGH';
+
+  // Ownership
+  ownerId: string;
+
+  // Linked initiatives
+  relatedInitiativeIds: string[];
+
+  // Status
+  isValidated: boolean;
+  validatedAt?: string;
+  validatedBy?: string;
+
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Financial Assumption - Order-of-magnitude estimates */
+export interface FinancialAssumption {
+  id: string;
+  valueHypothesisId: string;
+
+  // Range-based (non-binding)
+  lowEstimate?: number;
+  expectedEstimate?: number;
+  highEstimate?: number;
+  currency: string;
+  timeframe: string; // e.g., "per year", "one-time"
+
+  // Metadata
+  notes?: string;
+  isNonBinding: boolean; // Always true
+
+  createdAt: string;
+}
+
+/** Executive Report - High-level overview */
+export interface ExecutiveReport {
+  reportType: 'EXECUTIVE_OVERVIEW' | 'PROJECT_HEALTH' | 'GOVERNANCE' | 'BRIEFING';
+  generatedAt: string;
+  generatedBy: string;
+
+  // Portfolio Summary
+  portfolioHealth: {
+    totalProjects: number;
+    activeProjects: number;
+    onTrack: number;
+    atRisk: number;
+    blocked: number;
+  };
+
+  // Phase Distribution
+  phaseDistribution: {
+    phase: string;
+    count: number;
+  }[];
+
+  // Top Risks
+  topRisks: string[];
+
+  // Pending Decisions
+  pendingDecisions: number;
+  overdueDecisions: number;
+
+  // Baseline Variance
+  initiativesOnTrack: number;
+  initiativesDelayed: number;
+
+  // Stabilization
+  stabilizationSummary?: {
+    stabilized: number;
+    partiallyStabilized: number;
+    unstable: number;
+  };
+
+  // AI Narrative
+  aiNarrative: string;
+  changesSinceLastReview: string[];
+}
+
+/** Project Closure - Formal end of project */
+export interface ProjectClosure {
+  id: string;
+  projectId: string;
+
+  // Closure Details
+  closureType: 'COMPLETED' | 'CANCELLED' | 'ARCHIVED';
+  closureDate: string;
+  closedBy: string;
+
+  // Summary
+  lessonsLearned?: string;
+  finalStatus: string;
+
+  // Metrics at Closure
+  totalInitiatives: number;
+  completedInitiatives: number;
+  cancelledInitiatives: number;
+
+  // Value Realization
+  valueHypothesesValidated: number;
+  valueHypothesesTotal: number;
+
+  // Audit
+  approvedBy?: string;
+  approvedAt?: string;
+}
+
+// ==========================================
+// AI CORE LAYER — ENTERPRISE PMO BRAIN
+// ==========================================
+
+/** AI Policy Levels - Control what AI can do */
+export type AIPolicyLevel = 'ADVISORY' | 'ASSISTED' | 'PROACTIVE' | 'AUTOPILOT';
+
+/** AI Role - Runtime behavior mode */
+export type AIRole = 'ADVISOR' | 'PMO_MANAGER' | 'EXECUTOR' | 'EDUCATOR';
+
+/** AI Chat Mode - User-selectable intent */
+export type AIChatMode = 'EXPLAIN' | 'GUIDE' | 'ANALYZE' | 'DO' | 'TEACH';
+
+/** AI Action Type */
+export type AIActionType =
+  | 'CREATE_DRAFT_TASK'
+  | 'CREATE_DRAFT_INITIATIVE'
+  | 'SUGGEST_ROADMAP_CHANGE'
+  | 'GENERATE_REPORT'
+  | 'PREPARE_DECISION_SUMMARY'
+  | 'EXPLAIN_CONTEXT'
+  | 'ANALYZE_RISKS';
+
+/** Platform Context Layer */
+export interface AIPlatformContext {
+  role: 'SUPERADMIN' | 'ADMIN' | 'USER';
+  tenantId: string;
+  userId: string;
+  policyLevel: AIPolicyLevel;
+  globalPolicies: {
+    internetEnabled: boolean;
+    maxPolicyLevel: AIPolicyLevel;
+    auditRequired: boolean;
+  };
+}
+
+/** Organization Context Layer */
+export interface AIOrganizationContext {
+  organizationId: string;
+  organizationName: string;
+  locations: string[];
+  activeProjectIds: string[];
+  activeProjectCount: number;
+  pmoMaturityLevel?: 'BASIC' | 'INTERMEDIATE' | 'ADVANCED';
+}
+
+/** Project Context Layer */
+export interface AIProjectContext {
+  projectId: string;
+  projectName: string;
+  currentPhase: string;
+  phaseNumber: number;
+  governanceRules: {
+    requireApprovalForPhaseTransition: boolean;
+    stageGatesEnabled: boolean;
+    aiPolicyOverride?: AIPolicyLevel;
+  };
+  sponsorId?: string;
+  projectManagerId?: string;
+  roadmapStatus?: string;
+  initiativeCount: number;
+  completedInitiatives: number;
+}
+
+/** Execution Context Layer */
+export interface AIExecutionContext {
+  userId: string;
+  userTasks: { id: string; title: string; status: string; dueDate?: string }[];
+  userInitiatives: { id: string; name: string; status: string }[];
+  pendingDecisions: { id: string; title: string; createdAt: string }[];
+  blockers: { id: string; type: string; description: string }[];
+  capacityStatus: 'HEALTHY' | 'WARNING' | 'OVERLOADED';
+}
+
+/** Knowledge Context Layer */
+export interface AIKnowledgeContext {
+  projectDocuments: { id: string; name: string; type: string }[];
+  previousDecisions: { id: string; title: string; outcome: string }[];
+  changeRequests: { id: string; title: string; status: string }[];
+  lessonsLearned: string[];
+  phaseHistory: { phase: string; enteredAt: string }[];
+}
+
+/** External Context Layer */
+export interface AIExternalContext {
+  internetEnabled: boolean;
+  externalSourcesUsed: string[];
+}
+
+/** Complete 6-Layer AI Context */
+export interface AIContext {
+  platform: AIPlatformContext;
+  organization: AIOrganizationContext;
+  project?: AIProjectContext;
+  execution: AIExecutionContext;
+  knowledge: AIKnowledgeContext;
+  external: AIExternalContext;
+
+  // Meta
+  builtAt: string;
+  contextHash: string;
+  currentScreen?: string;
+  selectedObjectId?: string;
+  selectedObjectType?: string;
+}
+
+/** AI Memory - Session Layer */
+export interface AISessionMemory {
+  conversationId: string;
+  messages: { role: 'user' | 'ai'; content: string; timestamp: string }[];
+  currentScreen: string;
+  startedAt: string;
+}
+
+/** AI Memory - Project Layer */
+export interface AIProjectMemory {
+  projectId: string;
+
+  // Decisions & Rationale
+  majorDecisions: {
+    decisionId: string;
+    title: string;
+    outcome: string;
+    rationale: string;
+    recordedAt: string;
+  }[];
+
+  // Phase Transitions
+  phaseTransitions: {
+    from: string;
+    to: string;
+    reason: string;
+    transitionedAt: string;
+  }[];
+
+  // AI Recommendations
+  aiRecommendations: {
+    recommendation: string;
+    accepted: boolean;
+    userFeedback?: string;
+    recordedAt: string;
+  }[];
+
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** AI Memory - Organization Layer */
+export interface AIOrganizationMemory {
+  organizationId: string;
+
+  governanceStyle: 'STRICT' | 'BALANCED' | 'FLEXIBLE';
+  aiStrictnessPreference: 'MINIMAL' | 'STANDARD' | 'AGGRESSIVE';
+  recurringPatterns: string[];
+
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** AI User Preferences */
+export interface AIUserPreferences {
+  userId: string;
+
+  preferredTone: 'BUDDY' | 'EXPERT' | 'MANAGER';
+  educationModeEnabled: boolean;
+  proactiveNotifications: boolean;
+  preferredLanguage: string;
+
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** AI Action Request */
+export interface AIAction {
+  id: string;
+  type: AIActionType;
+
+  // Context
+  contextSnapshot: AIContext;
+  projectId?: string;
+
+  // Action Details
+  payload: Record<string, unknown>;
+  draftContent?: string;
+
+  // Policy
+  requiredPolicyLevel: AIPolicyLevel;
+  currentPolicyLevel: AIPolicyLevel;
+  requiresApproval: boolean;
+
+  // Status
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'EXECUTED';
+
+  // Audit
+  createdAt: string;
+  approvedAt?: string;
+  approvedBy?: string;
+  executedAt?: string;
+}
+
+/** AI Audit Entry */
+export interface AIAuditEntry {
+  id: string;
+  userId: string;
+  organizationId: string;
+  projectId?: string;
+
+  // Action
+  actionType: string;
+  actionDescription: string;
+
+  // Context
+  contextSnapshot: string; // JSON
+  dataSourcesUsed: string[];
+
+  // AI Details
+  aiRole: AIRole;
+  policyLevel: AIPolicyLevel;
+  confidenceLevel?: number;
+
+  // Result
+  aiSuggestion: string;
+  userDecision: 'ACCEPTED' | 'REJECTED' | 'MODIFIED' | 'IGNORED';
+  userFeedback?: string;
+
+  // Timestamp
+  createdAt: string;
+}
+
+// ==========================================
+// SCMS PHASE 1: CONTEXT (Why Change?)
+// ==========================================
+
+// Project Context: Captures the strategic "Why" behind transformation
+export interface ProjectContext {
+  projectId: string;
+
+  // Business Context
+  businessModel?: {
+    type: string[]; // B2B, B2C, Marketplace
+    description: string;
+  };
+  coreProcesses?: string[];
+  itLandscape?: {
+    erp?: string;
+    crm?: string;
+    integrationLevel?: 'Low' | 'Medium' | 'High';
+  };
+
+  // Strategic Intent
+  strategicGoals: StrategicGoal[];
+  successCriteria?: string;
+  transformationHorizon?: '12m' | '24m' | '36m';
+
+  // Constraints & Challenges
+  challenges: Challenge[];
+  constraints: Constraint[];
+
+  // AI Analysis
+  contextReadinessScore?: number; // 0-100
+  contextGaps?: string[]; // AI-detected missing information
+  isContextComplete?: boolean;
+
+  updatedAt?: string;
+}
+
+// ==========================================
+// SCMS PHASE 2: ASSESSMENT (Where are we now?)
+// ==========================================
+
+// Maturity Assessment: Captures As-Is vs To-Be state
+export interface MaturityAssessment {
+  id: string;
+  projectId: string;
+
+  // Per-Axis Scores
+  axisScores: {
+    axis: AxisId;
+    asIs: number;      // 1-7
+    toBe: number;      // 1-7
+    gap: number;       // Calculated: toBe - asIs
+    justification?: string;
+    areaScores?: Record<string, number[]>; // Sub-area scores
+  }[];
+
+  // Overall
+  overallAsIs?: number;
+  overallToBe?: number;
+  overallGap?: number;
+
+  // AI Analysis
+  gapAnalysisSummary?: string;
+  prioritizedGaps?: string[];
+
+  // Audit Trail
+  completedAxes: AxisId[];
+  isComplete?: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export enum AssessmentStep {
@@ -844,6 +1931,8 @@ export interface Task {
   title: string;
   description?: string;
   status: TaskStatus;
+  progress?: number; // 0-100
+  blockedReason?: string;
   priority: TaskPriority;
   assigneeId?: string;
   assignee?: Pick<User, 'id' | 'firstName' | 'lastName' | 'avatarUrl'>;
@@ -887,6 +1976,7 @@ export interface Task {
   blockingIssues?: string;
   stepPhase?: 'design' | 'pilot' | 'rollout';
   initiativeId?: string;
+  initiativeName?: string;
   why?: string;
 }
 

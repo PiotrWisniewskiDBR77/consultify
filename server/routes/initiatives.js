@@ -39,6 +39,7 @@ router.get('/', (req, res) => {
             summary: i.summary,
             hypothesis: i.hypothesis,
             status: i.status,
+            progress: i.progress || 0,
             currentStage: i.current_stage,
             businessValue: i.business_value,
             competenciesRequired: i.competencies_required ? JSON.parse(i.competencies_required) : [],
@@ -146,19 +147,40 @@ router.post('/', (req, res) => {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    db.run(sql, [
-        id, orgId, name, axis, area, summary, hypothesis,
-        businessValue, JSON.stringify(competenciesRequired || []),
-        costCapex, costOpex, expectedRoi, socialImpact,
-        ownerBusinessId, ownerExecutionId, sponsorId,
-        startDate, pilotEndDate, endDate,
-        businessValue, JSON.stringify(competenciesRequired || []),
-        costCapex, costOpex, expectedRoi, socialImpact,
-        valueDriver, confidenceLevel, valueTiming,
-        ownerBusinessId, ownerExecutionId, sponsorId,
-        startDate, pilotEndDate, endDate,
-        now, now
-    ], function (err) {
+    const params = [
+        id,
+        orgId,
+        name,
+        axis ?? null,
+        area ?? null,
+        summary ?? null,
+        hypothesis ?? null,
+        businessValue ?? null,
+        JSON.stringify(competenciesRequired || []),
+        costCapex ?? null,
+        costOpex ?? null,
+        expectedRoi ?? null,
+        socialImpact ?? null,
+        valueDriver ?? null,
+        confidenceLevel ?? null,
+        valueTiming ?? null,
+        ownerBusinessId ?? null,
+        ownerExecutionId ?? null,
+        sponsorId ?? null,
+        startDate ?? null,
+        pilotEndDate ?? null,
+        endDate ?? null,
+        problemStatement ?? null,
+        JSON.stringify(deliverables || []),
+        JSON.stringify(successCriteria || []),
+        JSON.stringify(scopeIn || []),
+        JSON.stringify(scopeOut || []),
+        JSON.stringify(keyRisks || []),
+        now,
+        now
+    ];
+
+    db.run(sql, params, function (err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ id, name, message: 'Initiative created' });
     });

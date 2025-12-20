@@ -3,6 +3,7 @@ import { X, Calendar, CheckSquare, Link as LinkIcon, Save, Loader2, Trash2 } fro
 import { Api } from '../../services/api';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import { InitiativeService } from '../../services/initiativeService';
 
 interface TaskDetailModalProps {
     taskId: string | null;
@@ -22,10 +23,41 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ isOpen, onClos
     const [status, setStatus] = useState('todo');
     const [priority, setPriority] = useState('medium');
     const [dueDate, setDueDate] = useState('');
+    const [progress, setProgress] = useState(0);
+    const [blockedReason, setBlockedReason] = useState('');
     const [checklist, setChecklist] = useState<{ id: string, text: string, completed: boolean }[]>([]);
 
-    // Links (Minimal Implementation)
+    // Links
     const [initiativeId, setInitiativeId] = useState('');
+    const [initiatives, setInitiatives] = useState<{ id: string, name: string }[]>([]);
+    // Users
+    const [assigneeId, setAssigneeId] = useState('');
+    const [users, setUsers] = useState<{ id: string, firstName: string, lastName: string }[]>([]);
+
+    useEffect(() => {
+        loadInitiatives();
+        loadUsers();
+    }, []);
+
+    const loadUsers = async () => {
+        try {
+            // Assuming we have an endpoint for fetching users. If not, we might need to create it.
+            // Using a simple GET /users for now.
+            const data = await Api.get('/users');
+            setUsers(data.map((u: any) => ({ id: u.id, firstName: u.firstName, lastName: u.lastName })));
+        } catch (error) {
+            console.error('Failed to load users', error);
+        }
+    };
+
+    const loadInitiatives = async () => {
+        try {
+            const data = await InitiativeService.getAll();
+            setInitiatives(data.map(i => ({ id: i.id, name: i.name })));
+        } catch (error) {
+            console.error('Failed to load initiatives', error);
+        }
+    };
 
     useEffect(() => {
         if (isOpen) {
@@ -43,8 +75,11 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ isOpen, onClos
         setStatus('todo');
         setPriority('medium');
         setDueDate('');
+        setProgress(0);
+        setBlockedReason('');
         setChecklist([]);
         setInitiativeId('');
+        setAssigneeId('');
     };
 
     const loadTask = async (id: string) => {
@@ -56,8 +91,11 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ isOpen, onClos
             setStatus(task.status);
             setPriority(task.priority);
             setDueDate(task.dueDate ? task.dueDate.split('T')[0] : '');
+            setProgress(task.progress || 0);
+            setBlockedReason(task.blockedReason || '');
             setChecklist(task.checklist || []);
             setInitiativeId(task.initiativeId || '');
+            setAssigneeId(task.assigneeId || '');
         } catch (error) {
             console.error('Failed to load task', error);
             toast.error('Failed to load task details');
@@ -81,8 +119,11 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ isOpen, onClos
                 status,
                 priority,
                 dueDate: dueDate || null,
+                progress,
+                blockedReason: status === 'blocked' ? blockedReason : '',
                 checklist,
-                initiativeId: initiativeId || null
+                initiativeId: initiativeId || null,
+                assigneeId: assigneeId || null
             };
 
             if (taskId) {
@@ -201,6 +242,40 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ isOpen, onClos
                                 </div>
                             </div>
 
+                            {/* Progress & Blocked Reason */}
+                            <div className="space-y-4">
+                                <div>
+                                    <div className="flex justify-between mb-1">
+                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Progress</label>
+                                        <span className="text-sm font-bold text-blue-600">{progress}%</span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="100"
+                                        step="5"
+                                        value={progress}
+                                        onChange={(e) => setProgress(Number(e.target.value))}
+                                        className="w-full h-2 bg-slate-200 dark:bg-navy-950 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                    />
+                                </div>
+
+                                {status === 'blocked' && (
+                                    <div className="animate-in fade-in slide-in-from-top-2">
+                                        <label className="block text-sm font-bold text-red-600 dark:text-red-400 mb-1">
+                                            Reason for blocking
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={blockedReason}
+                                            onChange={(e) => setBlockedReason(e.target.value)}
+                                            className="w-full px-3 py-2 border border-red-300 dark:border-red-500/30 rounded-lg bg-red-50 dark:bg-red-500/10 text-red-900 dark:text-white placeholder:text-red-400 focus:ring-2 focus:ring-red-500 outline-none"
+                                            placeholder="What is blocking this task?"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+
                             {/* Description */}
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
@@ -256,19 +331,43 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ isOpen, onClos
                                 </div>
                             </div>
 
-                            {/* Links Section (Simple placeholder for Initiative Link) */}
+                            {/* Links Section (Initiative Link) */}
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-2">
                                     <LinkIcon size={16} />
                                     Linked Initiative
                                 </label>
-                                <input
-                                    type="text"
+                                <select
                                     value={initiativeId}
                                     onChange={(e) => setInitiativeId(e.target.value)}
-                                    className="w-full px-3 py-2 border border-slate-300 dark:border-white/10 rounded-lg bg-slate-50 dark:bg-navy-950 text-sm"
-                                    placeholder="Initiative ID (Optional)"
-                                />
+                                    className="w-full px-3 py-2 border border-slate-300 dark:border-white/10 rounded-lg bg-slate-50 dark:bg-navy-950 text-sm outline-none"
+                                >
+                                    <option value="">Select Initiative (Optional)</option>
+                                    {initiatives.map(initiative => (
+                                        <option key={initiative.id} value={initiative.id}>
+                                            {initiative.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Assignee */}
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                    Assignee
+                                </label>
+                                <select
+                                    value={assigneeId}
+                                    onChange={(e) => setAssigneeId(e.target.value)}
+                                    className="w-full px-3 py-2 border border-slate-300 dark:border-white/10 rounded-lg bg-slate-50 dark:bg-navy-950 text-sm outline-none"
+                                >
+                                    <option value="">Unassigned</option>
+                                    {users.map(user => (
+                                        <option key={user.id} value={user.id}>
+                                            {user.firstName} {user.lastName}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
                     )}

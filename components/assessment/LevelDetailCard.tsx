@@ -1,4 +1,5 @@
 import { CheckCircle2, Circle, MessageSquare, AlertCircle, Sparkles, BrainCircuit } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface LevelDetailCardProps {
     level: number;
@@ -31,6 +32,9 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
     onNotesChange,
     onAiAssist
 }) => {
+    const { t } = useTranslation();
+    const cardT = t('assessment.card', { returnObjects: true }) as any;
+
     return (
         <div className="bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-white/5 rounded-2xl p-8 relative overflow-hidden flex flex-col items-center text-center shadow-lg dark:shadow-none">
 
@@ -42,7 +46,7 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
             <div className="relative z-10 w-full max-w-2xl">
                 {/* Header */}
                 <div className="mb-8">
-                    <span className="text-purple-400 font-bold tracking-wider text-xs uppercase mb-3 block">POZIOM {level}</span>
+                    <span className="text-purple-400 font-bold tracking-wider text-xs uppercase mb-3 block">{cardT.level || 'LEVEL'} {level}</span>
                     <h1 className="text-2xl md:text-3xl font-bold text-navy-900 dark:text-white mb-4 leading-tight">
                         {title}
                     </h1>
@@ -56,7 +60,7 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
                     <div className="bg-slate-50 dark:bg-white/5 rounded-xl p-6 mb-8 text-left border border-slate-200 dark:border-white/5">
                         <div className="flex items-center gap-2 mb-3 text-purple-300 font-semibold text-sm">
                             <AlertCircle size={16} />
-                            <span>Pytania Pomocnicze</span>
+                            <span>{cardT.helperQuestions || 'Helper Questions'}</span>
                         </div>
                         <ul className="space-y-2">
                             {helperQuestions.map((q, idx) => (
@@ -74,7 +78,7 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
                     <div className="bg-blue-50 dark:bg-blue-900/10 rounded-xl p-4 mb-8 text-left border border-blue-200 dark:border-blue-500/10">
                         <div className="flex items-center gap-2 mb-2 text-blue-300 font-semibold text-xs uppercase tracking-wider">
                             <BrainCircuit size={14} />
-                            <span>Formuła Pracy (Logic)</span>
+                            <span>{cardT.workingFormula || 'Working Formula (Logic)'}</span>
                         </div>
                         <p className="text-slate-600 dark:text-slate-400 text-sm italic">
                             "{formula}"
@@ -92,8 +96,7 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
                             }`}
                     >
                         {isActual && <CheckCircle2 size={16} />}
-                        {/* Just "Obecny" whether selected or not, as per request "Just words..." */}
-                        Obecny
+                        {cardT.actual || 'Actual'}
                     </button>
 
                     <button
@@ -104,14 +107,14 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
                             }`}
                     >
                         {isTarget && <CheckCircle2 size={16} />}
-                        Docelowy
+                        {cardT.target || 'Target'}
                     </button>
 
                     <button
                         onClick={onSetNA}
                         className="px-6 py-3 rounded-xl font-medium text-sm transition-all border bg-slate-100 dark:bg-navy-950/30 border-slate-200 dark:border-white/10 text-slate-400 hover:border-slate-400 hover:bg-slate-200 dark:hover:bg-white/5 hover:text-slate-600 dark:hover:text-white"
                     >
-                        Nie dotyczy
+                        {cardT.notApplicable || 'Not Applicable'}
                     </button>
                 </div>
 
@@ -120,7 +123,7 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
                     <div className="flex items-center mb-3">
                         <label className="text-xs text-slate-500 font-bold uppercase tracking-wider flex items-center gap-2">
                             <MessageSquare size={14} />
-                            Notatka
+                            {cardT.note || 'Note'}
                         </label>
                     </div>
 
@@ -128,14 +131,14 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
                         <textarea
                             value={notes || ''}
                             onChange={(e) => onNotesChange(e.target.value)}
-                            placeholder="Wpisz swoje spostrzeżenia... a AI pomoże Ci je rozwinąć i sformatować."
+                            placeholder={cardT.notePlaceholder || "Type your observations... AI will help you expand and format them."}
                             className="w-full bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-navy-900 dark:text-slate-300 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 transition-all min-h-[100px] resize-none"
                         />
                     </div>
 
                     <div className="flex items-center justify-between mt-3">
                         <p className="text-[10px] text-slate-500 italic">
-                            Dokładne notatki pomagają generować lepsze rekomendacje.
+                            {cardT.accuracyHint || 'Accurate notes help generate better recommendations.'}
                         </p>
 
                         <div className="flex gap-2">
@@ -143,7 +146,7 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
                             {notes && (
                                 <button className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 dark:text-slate-400 hover:text-green-600 dark:hover:text-green-400 bg-white dark:bg-white/5 hover:bg-green-50 dark:hover:bg-green-500/10 px-3 py-1.5 rounded-full transition-all border border-slate-200 dark:border-white/10 hover:border-green-500/30">
                                     <CheckCircle2 size={12} />
-                                    Zapisz
+                                    {cardT.save || 'Save'}
                                 </button>
                             )}
 
@@ -154,7 +157,7 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
                                     className="flex items-center gap-1.5 text-[10px] font-bold text-purple-400 hover:text-white bg-purple-500/20 hover:bg-purple-500 px-3 py-1.5 rounded-full transition-all border border-purple-500/30"
                                 >
                                     <Sparkles size={12} />
-                                    AI
+                                    {cardT.ai || 'AI'}
                                 </button>
                             )}
                         </div>

@@ -76,9 +76,14 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
   // Filter Logic
   const filteredInitiatives = useMemo(() => {
     return initiatives.filter(init => {
-      const matchesSearch = init.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        init.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        init.id.includes(searchQuery);
+      const name = init.name || '';
+      const description = init.description || '';
+      const id = init.id || '';
+      const query = searchQuery.toLowerCase();
+
+      const matchesSearch = name.toLowerCase().includes(query) ||
+        description.toLowerCase().includes(query) ||
+        id.toLowerCase().includes(query); // Added toLowerCase for ID search consistency, though ID usually generic
 
       const matchesAxis = filterAxis === 'ALL' || init.axis === filterAxis;
       const matchesPriority = filterPriority === 'ALL' || init.priority === filterPriority;

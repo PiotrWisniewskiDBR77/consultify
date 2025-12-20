@@ -1,132 +1,102 @@
+// Notifications Routes
+// Step 5: Execution Control, My Work & Notifications
+
 const express = require('express');
 const router = express.Router();
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+const NotificationService = require('../services/notificationService');
+const EscalationService = require('../services/escalationService');
 const verifyToken = require('../middleware/authMiddleware');
 
-router.use(verifyToken);
+// GET /api/notifications
+router.get('/', verifyToken, async (req, res) => {
+    const { unreadOnly, limit, projectId } = req.query;
+    try {
+        const notifications = await NotificationService.getForUser(req.userId, {
+            unreadOnly: unreadOnly === 'true',
+            limit: limit ? parseInt(limit) : 50,
+            projectId
+        });
+        res.json(notifications);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
-// ==========================================
-// GET NOTIFICATIONS (For current user)
-// ==========================================
-router.get('/', (req, res) => {
-    const userId = req.user.id;
-    const { unreadOnly, limit = 50 } = req.query;
+// GET /api/notifications/counts
+router.get('/counts', verifyToken, async (req, res) => {
+    try {
+        const counts = await NotificationService.getCounts(req.userId);
+        res.json(counts);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
-    let sql = `
-        SELECT * FROM notifications
-        WHERE user_id = ?
-    `;
+// PATCH /api/notifications/:id/read
+router.patch('/:id/read', verifyToken, async (req, res) => {
+    try {
+        const result = await NotificationService.markRead(req.params.id, req.userId);
+        res.json(result);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
-    if (unreadOnly === 'true') {
-        sql += ` AND read = 0`;
+// POST /api/notifications/mark-all-read
+router.post('/mark-all-read', verifyToken, async (req, res) => {
+    try {
+        const result = await NotificationService.markAllRead(req.userId);
+        res.json(result);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ==================== ESCALATIONS ====================
+
+// GET /api/notifications/escalations/:projectId
+router.get('/escalations/:projectId', verifyToken, async (req, res) => {
+    const { status } = req.query;
+    try {
+        const escalations = await EscalationService.getEscalations(req.params.projectId, status);
+        res.json(escalations);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// POST /api/notifications/escalations/:projectId/run
+router.post('/escalations/:projectId/run', verifyToken, async (req, res) => {
+    if (!req.can('edit_project_settings')) {
+        return res.status(403).json({ error: 'Permission denied' });
     }
 
-    sql += ` ORDER BY created_at DESC LIMIT ?`;
-
-    db.all(sql, [userId, parseInt(limit)], (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
-
-        const notifications = rows.map(n => ({
-            id: n.id,
-            userId: n.user_id,
-            type: n.type,
-            title: n.title,
-            message: n.message,
-            data: n.data ? JSON.parse(n.data) : null,
-            read: n.read === 1,
-            createdAt: n.created_at
-        }));
-
-        res.json(notifications);
-    });
+    try {
+        const result = await EscalationService.runAutoEscalation(req.params.projectId);
+        res.json(result);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-// ==========================================
-// GET UNREAD COUNT
-// ==========================================
-router.get('/unread-count', (req, res) => {
-    const userId = req.user.id;
-
-    db.get('SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND read = 0', [userId], (err, row) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ count: row.count });
-    });
+// PATCH /api/notifications/escalations/:id/acknowledge
+router.patch('/escalations/:id/acknowledge', verifyToken, async (req, res) => {
+    try {
+        const result = await EscalationService.acknowledgeEscalation(req.params.id, req.userId);
+        res.json(result);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-// ==========================================
-// MARK NOTIFICATION AS READ
-// ==========================================
-router.put('/:id/read', (req, res) => {
-    const { id } = req.params;
-    const userId = req.user.id;
-
-    db.run('UPDATE notifications SET read = 1 WHERE id = ? AND user_id = ?', [id, userId], function (err) {
-        if (err) return res.status(500).json({ error: err.message });
-        if (this.changes === 0) return res.status(404).json({ error: 'Notification not found' });
-        res.json({ message: 'Marked as read' });
-    });
+// PATCH /api/notifications/escalations/:id/resolve
+router.patch('/escalations/:id/resolve', verifyToken, async (req, res) => {
+    try {
+        const result = await EscalationService.resolveEscalation(req.params.id);
+        res.json(result);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
-
-// ==========================================
-// MARK ALL AS READ
-// ==========================================
-router.put('/read-all', (req, res) => {
-    const userId = req.user.id;
-
-    db.run('UPDATE notifications SET read = 1 WHERE user_id = ? AND read = 0', [userId], function (err) {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ message: 'All notifications marked as read', count: this.changes });
-    });
-});
-
-// ==========================================
-// DELETE NOTIFICATION
-// ==========================================
-router.delete('/:id', (req, res) => {
-    const { id } = req.params;
-    const userId = req.user.id;
-
-    db.run('DELETE FROM notifications WHERE id = ? AND user_id = ?', [id, userId], function (err) {
-        if (err) return res.status(500).json({ error: err.message });
-        if (this.changes === 0) return res.status(404).json({ error: 'Notification not found' });
-        res.json({ message: 'Notification deleted' });
-    });
-});
-
-// ==========================================
-// DELETE ALL READ NOTIFICATIONS
-// ==========================================
-router.delete('/', (req, res) => {
-    const userId = req.user.id;
-
-    db.run('DELETE FROM notifications WHERE user_id = ? AND read = 1', [userId], function (err) {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ message: 'Read notifications deleted', count: this.changes });
-    });
-});
-
-// ==========================================
-// CREATE NOTIFICATION (Internal helper - not exposed as API)
-// This would be called from other routes like tasks.js
-// ==========================================
-const createNotification = (userId, type, title, message, data) => {
-    const id = uuidv4();
-    const now = new Date().toISOString();
-
-    db.run(
-        `INSERT INTO notifications (id, user_id, type, title, message, data, read, created_at) 
-         VALUES (?, ?, ?, ?, ?, ?, 0, ?)`,
-        [id, userId, type, title, message, data ? JSON.stringify(data) : null, now],
-        (err) => {
-            if (err) console.error('Failed to create notification:', err);
-        }
-    );
-
-    return id;
-};
-
-// Export both router and helper function
-router.createNotification = createNotification;
 
 module.exports = router;

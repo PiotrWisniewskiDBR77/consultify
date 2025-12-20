@@ -9,8 +9,8 @@ interface ChatPanelProps {
   onOptionSelect: (option: ChatOption, isMultiSelect?: boolean) => void;
   onMultiSelectSubmit?: (selectedOptions: string[]) => void;
   isTyping: boolean;
-  title?: string;
-  subtitle?: string;
+  title?: React.ReactNode;
+  subtitle?: React.ReactNode;
 }
 
 import { useTranslation } from 'react-i18next';

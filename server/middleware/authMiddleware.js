@@ -67,10 +67,21 @@ function verifyToken(req, res, next) {
     });
 }
 
+const PermissionService = require('../services/permissionService');
+
 function attachUser(decoded, req, next) {
     req.userId = decoded.id;
     req.userRole = decoded.role;
     req.user = decoded;
+
+    // Attach Permissions Helper
+    // This allows routes to do: if (!req.can('manage_users')) ...
+    req.can = (capability) => {
+        return PermissionService.can(req.user, capability, {
+            organizationId: req.user.organizationId
+        });
+    };
+
     next();
 }
 

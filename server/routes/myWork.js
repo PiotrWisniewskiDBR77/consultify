@@ -55,6 +55,19 @@ router.get('/dashboard', (req, res) => {
             WHERE organization_id = ? 
             AND assignee_id = ? 
             AND status = 'blocked'
+        `,
+        completed: `
+            SELECT COUNT(*) as count 
+            FROM tasks 
+            WHERE organization_id = ? 
+            AND assignee_id = ? 
+            AND status = 'done'
+        `,
+        total: `
+            SELECT COUNT(*) as count 
+            FROM tasks 
+            WHERE organization_id = ? 
+            AND assignee_id = ?
         `
     };
 
@@ -87,7 +100,16 @@ router.get('/dashboard', (req, res) => {
                         if (err) return res.status(500).json({ error: err.message });
                         result.blockedCount = row.count;
 
-                        res.json(result);
+                        db.get(queries.completed, [orgId, userId], (err, row) => {
+                            if (err) return res.status(500).json({ error: err.message });
+                            result.completedCount = row.count;
+
+                            db.get(queries.total, [orgId, userId], (err, row) => {
+                                if (err) return res.status(500).json({ error: err.message });
+                                result.totalCount = row.count;
+                                res.json(result);
+                            });
+                        });
                     });
                 });
             });

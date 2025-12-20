@@ -115,17 +115,17 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
 
     return (
         <div className="max-w-2xl">
-            <h2 className="text-lg font-semibold text-white mb-6">AI Configuration</h2>
+            <h2 className="text-lg font-semibold text-slate-800 dark:text-white mb-6">AI Configuration</h2>
 
             {/* Tabs */}
-            <div className="flex p-1 bg-navy-900 rounded-lg mb-6 border border-white/5">
+            <div className="flex p-1 bg-white dark:bg-navy-900 rounded-lg mb-6 border border-slate-200 dark:border-white/5">
                 {(['system', 'gemini', 'openai'] as AIProviderType[]).map((mode) => (
                     <button
                         key={mode}
                         onClick={() => setConfigMode(mode)}
                         className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${configMode === mode
                             ? 'bg-purple-600 text-white shadow-lg'
-                            : 'text-slate-400 hover:text-white hover:bg-white/5'
+                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
                             }`}
                     >
                         {mode === 'system' && 'Default (System)'}
@@ -135,28 +135,28 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 ))}
             </div>
 
-            <form onSubmit={handleSaveConfig} className="bg-navy-900 border border-white/10 rounded-xl p-6">
+            <form onSubmit={handleSaveConfig} className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
 
                 {configMode === 'system' && (
                     <div className="text-center py-8 space-y-6">
-                        <div className="w-16 h-16 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4 text-purple-400">
+                        <div className="w-16 h-16 bg-purple-100 dark:bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4 text-purple-600 dark:text-purple-400">
                             <Cpu size={32} />
                         </div>
                         <div>
-                            <h3 className="text-white font-medium mb-2">System AI (Managed)</h3>
-                            <p className="text-slate-400 text-sm max-w-sm mx-auto">
+                            <h3 className="text-slate-800 dark:text-white font-medium mb-2">System AI (Managed)</h3>
+                            <p className="text-slate-500 dark:text-slate-400 text-sm max-w-sm mx-auto">
                                 You are using the organization's default AI provider.
                                 No configuration is needed. Usage counts towards your plan limit.
                             </p>
                         </div>
 
                         {/* Personal Model Preferences */}
-                        <div className="mt-8 pt-8 border-t border-white/5 text-left bg-navy-950/50 rounded-lg p-6">
+                        <div className="mt-8 pt-8 border-t border-slate-100 dark:border-white/5 text-left bg-slate-50 dark:bg-navy-950/50 rounded-lg p-6">
                             <div className="flex items-center gap-2 mb-4">
-                                <div className="p-2 rounded bg-purple-500/20 text-purple-400"><Sparkles size={16} /></div>
+                                <div className="p-2 rounded bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400"><Sparkles size={16} /></div>
                                 <div>
-                                    <h4 className="text-sm font-bold text-white">Your Preferred Models</h4>
-                                    <p className="text-xs text-slate-400">Select which models appear in your top bar selector.</p>
+                                    <h4 className="text-sm font-bold text-slate-800 dark:text-white">Your Preferred Models</h4>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">Select which models appear in your top bar selector.</p>
                                 </div>
                             </div>
 
@@ -165,7 +165,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                     <div className="text-xs text-slate-500">Loading available models...</div>
                                 ) : (
                                     availableModels.map(model => (
-                                        <label key={model.id} className="flex items-center gap-3 p-2 hover:bg-white/5 rounded cursor-pointer group">
+                                        <label key={model.id} className="flex items-center gap-3 p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded cursor-pointer group">
                                             <input
                                                 type="checkbox"
                                                 checked={visibleModelIds.includes(model.id)}
@@ -176,10 +176,10 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                                         setVisibleModelIds(visibleModelIds.filter(id => id !== model.id));
                                                     }
                                                 }}
-                                                className="w-4 h-4 rounded border-slate-600 bg-navy-900 text-purple-500 focus:ring-purple-500/50"
+                                                className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 bg-white dark:bg-navy-900 text-purple-600 dark:text-purple-500 focus:ring-purple-500/50"
                                             />
                                             <div className="flex-1">
-                                                <div className="text-sm text-slate-200 group-hover:text-white">{model.name}</div>
+                                                <div className="text-sm text-slate-700 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-white">{model.name}</div>
                                                 <div className="text-[10px] text-slate-500 uppercase">{model.provider} • {model.model_id}</div>
                                             </div>
                                             {visibleModelIds.includes(model.id) && <Check size={14} className="text-purple-500" />}
@@ -191,12 +191,12 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
 
                         {/* Organization Admin Control */}
                         {(currentUser.role === 'ADMIN' || currentUser.role === 'SUPERADMIN') && orgConfig && (
-                            <div className="mt-8 pt-8 border-t border-white/5 text-left bg-navy-950/50 rounded-lg p-6">
+                            <div className="mt-8 pt-8 border-t border-slate-100 dark:border-white/5 text-left bg-slate-50 dark:bg-navy-950/50 rounded-lg p-6">
                                 <div className="flex items-center gap-2 mb-4">
-                                    <div className="p-2 rounded bg-blue-500/20 text-blue-400"><Monitor size={16} /></div>
+                                    <div className="p-2 rounded bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400"><Monitor size={16} /></div>
                                     <div>
-                                        <h4 className="text-sm font-bold text-white">Organization Default Model</h4>
-                                        <p className="text-xs text-slate-400">Select which model powers your organization.</p>
+                                        <h4 className="text-sm font-bold text-slate-800 dark:text-white">Organization Default Model</h4>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">Select which model powers your organization.</p>
                                     </div>
                                 </div>
 
@@ -204,7 +204,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                     <select
                                         value={orgConfig.activeProviderId || ''}
                                         onChange={(e) => setOrgConfig({ ...orgConfig, activeProviderId: e.target.value || null })}
-                                        className="flex-1 bg-navy-900 border border-white/10 rounded-lg px-4 py-2 text-white text-sm"
+                                        className="flex-1 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg px-4 py-2 text-slate-800 dark:text-white text-sm"
                                     >
                                         <option value="">System Default (Auto)</option>
                                         {orgConfig.availableProviders.map(p => (
@@ -228,12 +228,12 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
 
                 {(configMode === 'gemini' || configMode === 'openai') && (
                     <div className="space-y-4">
-                        <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-300 text-xs flex gap-2">
+                        <div className="p-3 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-lg text-blue-600 dark:text-blue-300 text-xs flex gap-2">
                             <Monitor size={16} className="shrink-0" />
                             <p>Your API key is stored locally in your browser and used directly. It is never sent to our servers.</p>
                         </div>
                         <div className="space-y-1.5">
-                            <label className="text-xs font-medium text-slate-300">
+                            <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
                                 {configMode === 'gemini' ? 'Google AI Studio Key' : 'OpenAI API Key'}
                             </label>
                             <div className="relative">
@@ -242,7 +242,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                     value={customKey}
                                     onChange={e => setCustomKey(e.target.value)}
                                     placeholder="sk-..."
-                                    className="w-full px-4 py-2.5 bg-navy-950 border border-white/10 rounded-lg text-white focus:border-purple-500 outline-none transition-all text-sm font-mono"
+                                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-800 dark:text-white focus:border-purple-500 outline-none transition-all text-sm font-mono"
                                 />
                                 <div className="absolute right-3 top-2.5 text-slate-500">
                                     <Lock size={16} />
@@ -252,7 +252,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                     </div>
                 )}
 
-                <div className="pt-6 mt-6 border-t border-white/10 flex justify-end">
+                <div className="pt-6 mt-6 border-t border-slate-100 dark:border-white/10 flex justify-end">
                     <button
                         type="submit"
                         className="px-6 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"

@@ -127,7 +127,57 @@ db.serialize(() => {
     db.run(`INSERT INTO sessions (user_id, type, data, project_id) VALUES (?, ?, ?, ?)`,
         [PIOTR_ID, 'full', JSON.stringify(MOCK_SESSION_DATA), PROJECT_ID]);
 
-    // 7. Create Tasks Table
+    // 7. Create Initiatives Table
+    db.run(`CREATE TABLE IF NOT EXISTS initiatives (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT,
+        project_id TEXT,
+        name TEXT,
+        description TEXT,
+        axis TEXT,
+        area TEXT,
+        summary TEXT,
+        hypothesis TEXT,
+        status TEXT,
+        current_stage TEXT,
+        business_value TEXT,
+        competencies_required TEXT,
+        market_context TEXT,
+        cost_capex REAL,
+        cost_opex REAL,
+        expected_roi REAL,
+        social_impact TEXT,
+        value_driver TEXT,
+        confidence_level TEXT,
+        value_timing TEXT,
+        start_date DATETIME,
+        pilot_end_date DATETIME,
+        end_date DATETIME,
+        owner_business_id TEXT,
+        owner_execution_id TEXT,
+        sponsor_id TEXT,
+        problem_statement TEXT,
+        deliverables TEXT,
+        success_criteria TEXT,
+        scope_in TEXT,
+        scope_out TEXT,
+        key_risks TEXT,
+        strategic_fit TEXT,
+        attachments TEXT,
+        change_log TEXT,
+        target_state TEXT,
+        decision_readiness_breakdown TEXT,
+        applicant_one_liner TEXT,
+        strategic_intent TEXT,
+        decision_to_make TEXT,
+        decision_owner_id TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME,
+        FOREIGN KEY (organization_id) REFERENCES organizations(id),
+        FOREIGN KEY (project_id) REFERENCES projects(id)
+    )`);
+
+    // 8. Create Tasks Table (Updated Schema)
     db.run(`CREATE TABLE IF NOT EXISTS tasks (
         id TEXT PRIMARY KEY,
         project_id TEXT,
@@ -143,9 +193,34 @@ db.serialize(() => {
         reporter_id TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         completed_at DATETIME,
+        updated_at DATETIME,
+        
+        -- Extended Fields
+        estimated_hours REAL,
+        checklist TEXT,
+        attachments TEXT,
+        tags TEXT,
+        custom_status_id TEXT,
+        budget_allocated REAL,
+        budget_spent REAL,
+        risk_rating TEXT,
+        acceptance_criteria TEXT,
+        blocking_issues TEXT,
+        why TEXT,
+        initiative_id TEXT,
+        expected_outcome TEXT,
+        decision_impact TEXT,
+        evidence_required TEXT,
+        strategic_contribution TEXT,
+        roadmap_initiative_id TEXT,
+        kpi_id TEXT,
+        raid_item_id TEXT,
+        assignees TEXT,
+
         FOREIGN KEY (project_id) REFERENCES projects(id),
         FOREIGN KEY (organization_id) REFERENCES organizations(id),
-        FOREIGN KEY (assignee_id) REFERENCES users(id)
+        FOREIGN KEY (assignee_id) REFERENCES users(id),
+        FOREIGN KEY (initiative_id) REFERENCES initiatives(id)
     )`);
 
     // 8. Seed Consulting Tasks

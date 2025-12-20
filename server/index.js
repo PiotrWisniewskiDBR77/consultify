@@ -144,6 +144,65 @@ app.use('/api/ai-async', aiAsyncRoutes); // New Async Endpoint
 const myWorkRoutes = require('./routes/myWork');
 app.use('/api/my-work', myWorkRoutes);
 
+// SCMS Governance Routes (Step 1)
+const governanceRoutes = require('./routes/governance');
+app.use('/api/governance', governanceRoutes);
+
+// SCMS Context Routes (Step 2)
+const contextRoutes = require('./routes/context');
+app.use('/api/context', contextRoutes);
+
+// SCMS Assessment Routes (Step 3)
+const assessmentRoutes = require('./routes/assessment');
+app.use('/api/assessment', assessmentRoutes);
+
+// SCMS Roadmap Routes (Step 5)
+const roadmapRoutes = require('./routes/roadmap');
+app.use('/api/roadmap', roadmapRoutes);
+
+// SCMS Execution Routes (Step 6)
+const executionRoutes = require('./routes/execution');
+app.use('/api/execution', executionRoutes);
+
+// SCMS Stabilization Routes (Step 7)
+const stabilizationRoutes = require('./routes/stabilization');
+app.use('/api/stabilization', stabilizationRoutes);
+
+// SCMS Step 3: PMO Object Model Routes
+const decisionsRoutes = require('./routes/decisions');
+app.use('/api/decisions', decisionsRoutes);
+
+const stageGatesRoutes = require('./routes/stage-gates');
+app.use('/api/stage-gates', stageGatesRoutes);
+
+const pmoAnalysisRoutes = require('./routes/pmo-analysis');
+app.use('/api/pmo-analysis', pmoAnalysisRoutes);
+
+// SCMS Step 4: Roadmap, Sequencing & Capacity Routes
+const baselinesRoutes = require('./routes/baselines');
+app.use('/api/baselines', baselinesRoutes);
+
+const capacityRoutes = require('./routes/capacity');
+app.use('/api/capacity', capacityRoutes);
+
+const scenariosRoutes = require('./routes/scenarios');
+app.use('/api/scenarios', scenariosRoutes);
+
+// SCMS Step 5: Execution Control & Notifications Routes
+// Note: myWorkRoutes already mounted above at /api/my-work
+
+const notificationsRoutes = require('./routes/notifications');
+app.use('/api/notifications', notificationsRoutes);
+
+// SCMS Step 6: Stabilization, Reporting & Economics Routes
+const reportsRoutes = require('./routes/reports');
+app.use('/api/reports', reportsRoutes);
+
+const economicsRoutes = require('./routes/economics');
+app.use('/api/economics', economicsRoutes);
+
+// AI Core Layer Routes (already mounted above at /api/ai)
+
 const db = require('./database');
 
 // Health Check - MUST be before catchall

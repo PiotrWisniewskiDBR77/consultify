@@ -71,8 +71,8 @@ interface AppState {
     setFreeSessionData: (data: Partial<FreeSession> | ((prev: Partial<FreeSession>) => Partial<FreeSession>)) => void;
     setFullSessionData: (data: Partial<FullSession> | ((prev: FullSession) => FullSession)) => void;
     logout: () => void;
-    theme: 'light' | 'dark';
-    toggleTheme: () => void;
+    theme: 'light' | 'dark' | 'system';
+    toggleTheme: (newTheme?: 'light' | 'dark' | 'system') => void;
     updateLastChatMessage: (content: string) => void;
 }
 
@@ -176,8 +176,11 @@ export const useAppStore = create<AppState>()(
                 notifications: [],
                 aiConfig: { autoMode: true, maxMode: false, multiModel: false, selectedModelId: null }
             }),
-            theme: 'dark',
-            toggleTheme: () => set((state) => ({ theme: state.theme === 'dark' ? 'light' : 'dark' })),
+            theme: 'dark', // Default
+            toggleTheme: (newTheme) => set((state) => {
+                if (newTheme) return { theme: newTheme };
+                return { theme: state.theme === 'dark' ? 'light' : 'dark' };
+            }),
 
             updateLastChatMessage: (content: string) => set((state) => {
                 const messages = [...state.activeChatMessages];

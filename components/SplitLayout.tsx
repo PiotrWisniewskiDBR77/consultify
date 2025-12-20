@@ -7,8 +7,8 @@ import { useAIContext } from '../contexts/AIContext';
 
 interface SplitLayoutProps {
     children: React.ReactNode;
-    title?: string;
-    subtitle?: string;
+    title?: React.ReactNode;
+    subtitle?: React.ReactNode;
     isFullScreen?: boolean; // Escape hatch for tools needing full width
     onSendMessage?: (text: string) => void; // Optional override
     hideSidebar?: boolean;

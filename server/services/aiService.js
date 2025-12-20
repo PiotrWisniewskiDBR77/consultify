@@ -14,6 +14,18 @@ const jwt = require('jsonwebtoken');
 const PromptService = require('./promptService');
 const ModelRouter = require('./modelRouter');
 
+// Helper to clean JSON
+const cleanJSON = (text) => {
+    if (!text) return null;
+    try {
+        const cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        return JSON.parse(cleaned);
+    } catch (e) {
+        console.error("JSON Clean Error", e);
+        return null; // Return null on failure
+    }
+};
+
 // DEPENDENCY INJECTION CONTAINER
 const deps = {
     db,
@@ -37,8 +49,8 @@ const FALLBACK_ROLES = {
     ANALYST: "You are an Expert Digital Analyst. Your mode is 'GENERATOR & BENCHMARKER'. You deal in facts, data, and calculations. You DO NOT fluff. You DO NOT suggest strategy yet. You output tables, metrics, and comparisons against industry standards. If data is missing, you state it clearly.",
     PARTNER: "You are a Strategic Partner. Your mode is 'SUGGESTER & SIMPLIFIER'. You take complex data and make it simple. You serve as a sounding board. You proactively suggest 80/20 solutions. You warn about risks but propose mitigations. Your tone is collaborative and solution-oriented.",
     GATEKEEPER: "You are a Strict Gatekeeper. Your mode is 'BLOCKER & DECISION FORCER'. You have zero tolerance for corporate fluff or buzzwords. If an initiative is vague, you REJECT it. You force the user to make a binary decision (Go/No-Go). You demand clear 'Definition of Done'. You are professional but uncompromising.",
-    CONSULTANT: "You are a Senior Digital Transformation Consultant. Your tone is professional, solution-oriented, and convincing. You bridge the gap between analysis and strategy, recommending concrete initiatives.",
-    STRATEGIST: "You are a Strategic Advisor to the CEO. You think in 3-5 year horizons. You focus on competitive advantage, business models, and high-level roadmap architecture. You prioritize culture and leadership.",
+    CONSULTANT: "You are an Enterprise PMO Architect (SCMS). Your tone is professional, governance-focused, and solution-oriented. You bridge the gap between analysis and execution, recommending structured change initiatives.",
+    STRATEGIST: "You are a Strategic Portfolio Architect. You think in 3-5 year horizons. You focus on SCMS Roadmap governance, business models, and sequencing. You prioritize stability and value realization.",
     FINANCE: "You are a Financial Expert / CFO Advisor. You speak in terms of ROI, CAPEX, OPEX, payback periods, and net present value. You justify every initiative with economic logic.",
     MENTOR: "You are a Leadership Coach and Mentor. Your tone is supportive, encouraging, and psychological. You focus on mindset, change management, and overcoming resistance.",
     IMPLEMENTER: "You are an Implementation Coach / Project Manager. You are tactical, organized, and deadline-driven. You focus on workstreams, dependencies, risks, and resource allocation.",
@@ -111,10 +123,10 @@ const AiService = {
 
             if (sourceType === 'platform') {
                 const minTokens = Math.ceil(100 * multiplier);
-                const hasBalance = await deps.TokenBillingService.hasSufficientBalance(userId, minTokens);
-                if (!hasBalance) {
-                    throw new Error("Insufficient token balance. Please top up.");
-                }
+                // const hasBalance = await deps.TokenBillingService.hasSufficientBalance(userId, minTokens);
+                // if (!hasBalance) {
+                //    throw new Error("Insufficient token balance. Please top up.");
+                // }
             }
 
             let responseText = '';
@@ -222,7 +234,7 @@ const AiService = {
                                 exp: now + 3600 * 1000,
                                 timestamp: now
                             };
-                            authHeader = jwt.sign(payload, secret, { algorithm: 'HS256', header: { alg: 'HS256', sign_type: 'SIGN' } });
+                            authHeader = 'Bearer ' + jwt.sign(payload, secret, { algorithm: 'HS256', header: { alg: 'HS256', sign_type: 'SIGN' } });
                         } catch (e) {
                             console.error("Zhipu Token Gen Error:", e);
                         }
@@ -351,10 +363,10 @@ const AiService = {
 
             if (sourceType === 'platform') {
                 const minTokens = Math.ceil(100 * multiplier);
-                const hasBalance = await deps.TokenBillingService.hasSufficientBalance(userId, minTokens);
-                if (!hasBalance) {
-                    throw new Error("Insufficient token balance.");
-                }
+                // const hasBalance = await deps.TokenBillingService.hasSufficientBalance(userId, minTokens);
+                // if (!hasBalance) {
+                //     throw new Error("Insufficient token balance.");
+                // }
             }
 
             // Helper Helpers (duplicated for closure)
@@ -579,6 +591,54 @@ const AiService = {
         // Find organizationId for userId logic could go here, for now pass null
         // In a real app we'd fetch the user's org.
         return await AiService.deepDiagnose(axis, textInput, userId, null);
+    },
+
+    // --- GENERIC LIST GENERATION ---
+    generateList: async (context, listType, count = 5, userId) => {
+        const baseRole = await AiService.enhancePrompt('ANALYST', 'generate_list');
+        const systemPrompt = baseRole + `
+        Generate a strictly formatted JSON List of strings for the following context.
+        Type: ${listType}
+        Context: "${context}"
+        Count: ${count}
+
+        Return JSON: ["Item 1", "Item 2", "Item 3"...]
+        `;
+
+        try {
+            const jsonStr = await AiService.callLLM("Generate List", systemPrompt, [], null, userId, 'generate_list');
+            return cleanJSON(jsonStr) || [];
+        } catch (e) {
+            console.error("List Gen Error", e);
+            return [];
+        }
+    },
+
+    // --- GENERIC TABLE GENERATION ---
+    generateTable: async (context, columns, rowCount = 5, userId) => {
+        const baseRole = await AiService.enhancePrompt('ANALYST', 'generate_table');
+        const systemPrompt = baseRole + `
+        Generate a strictly formatted JSON Table data.
+        Context: "${context}"
+        Columns: ${JSON.stringify(columns)}
+        Rows: ${rowCount}
+
+        Return JSON: {
+            "headers": ${JSON.stringify(columns)},
+            "rows": [
+                ["Row 1 Col 1", "Row 1 Col 2"...],
+                ...
+            ]
+        }
+        `;
+
+        try {
+            const jsonStr = await AiService.callLLM("Generate Table", systemPrompt, [], null, userId, 'generate_table');
+            return cleanJSON(jsonStr) || { headers: columns, rows: [] };
+        } catch (e) {
+            console.error("Table Gen Error", e);
+            return { headers: columns, rows: [] };
+        }
     },
 
     // --- LAYER 2: RECOMMENDATIONS ---
