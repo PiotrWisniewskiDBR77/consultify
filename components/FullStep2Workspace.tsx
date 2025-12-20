@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { FullSession, FullInitiative, AxisId, StrategicGoal } from '../types';
+import { FullSession, FullInitiative, AxisId, StrategicGoal, InitiativeStatus } from '../types';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight, Plus, Search, Layers } from 'lucide-react';
 import { InitiativeCard } from './InitiativeCard';
@@ -58,7 +58,7 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
       axis: filterAxis !== 'ALL' ? filterAxis : 'processes',
       priority: 'Medium',
       complexity: 'Medium',
-      status: 'step3',
+      status: InitiativeStatus.PLANNED,
       businessValue: 'Medium',
       costCapex: 0,
       costOpex: 0,

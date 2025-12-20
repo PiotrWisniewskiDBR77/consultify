@@ -593,7 +593,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                                             <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Strategic Role</label>
                                             <Select
                                                 value={initiative.strategicRole || ''}
-                                                onChange={(val) => setInitiative({ ...initiative, strategicRole: val })}
+                                                onChange={(val) => setInitiative({ ...initiative, strategicRole: val as any })}
                                                 placeholder="Select Role..."
                                                 options={[
                                                     { value: 'Platform', label: 'Platform (Enabler)' },
@@ -866,8 +866,8 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                                         </div>
                                         <textarea
                                             className="w-full bg-transparent border-none p-0 text-slate-700 dark:text-slate-300 focus:ring-0 placeholder:text-slate-400 dark:placeholder:text-slate-600 h-24 resize-none text-sm"
-                                            value={initiative.killCriteria || ''}
-                                            onChange={e => setInitiative({ ...initiative, killCriteria: e.target.value })}
+                                            value={Array.isArray(initiative.killCriteria) ? initiative.killCriteria.join('\n') : initiative.killCriteria || ''}
+                                            onChange={e => setInitiative({ ...initiative, killCriteria: e.target.value.split('\n') })}
                                             placeholder="Define specific conditions under which this initiative MUST be stopped (e.g., Budget overrun > 15%, Technical failure in Pilot)..."
                                         />
                                     </div>

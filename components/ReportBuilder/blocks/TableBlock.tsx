@@ -12,8 +12,11 @@ export const TableBlock: React.FC<TableBlockProps> = ({ block, onUpdate }) => {
     const [rows, setRows] = useState<string[][]>(block.content?.rows || [['Data 1', 'Data 2']]);
 
     useEffect(() => {
-        setHeaders(block.content?.headers || ['Column 1', 'Column 2']);
-        setRows(block.content?.rows || [['Data 1', 'Data 2']]);
+        const newHeaders = block.content?.headers || ['Column 1', 'Column 2'];
+        const newRows = block.content?.rows || [['Data 1', 'Data 2']];
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        if (JSON.stringify(newHeaders) !== JSON.stringify(headers)) setHeaders(newHeaders);
+        if (JSON.stringify(newRows) !== JSON.stringify(rows)) setRows(newRows);
     }, [block.content]);
 
     const save = (newHeaders: string[], newRows: string[][]) => {

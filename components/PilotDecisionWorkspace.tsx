@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { FullSession, FullInitiative } from '../types';
+import { FullInitiative, FullSession, InitiativeStatus } from '../types';
 import { Scale, ArrowRight, Lightbulb, CheckCircle } from 'lucide-react';
 import { Button } from './Button';
 
@@ -32,7 +33,7 @@ export const PilotDecisionWorkspace: React.FC<PilotDecisionWorkspaceProps> = ({
         if (selectedPilotId) {
             const init = initiatives.find(i => i.id === selectedPilotId);
             if (init) {
-                onUpdateInitiative({ ...init, status: 'step4' }); // 'step4' usually indicates Pilot Execution phase?
+                onUpdateInitiative({ ...init, status: InitiativeStatus.IN_EXECUTION }); // 'step4' usually indicates Pilot Execution phase?
                 // Actually 'step4' in types is InitiativeStatus. Let's use 'In Progress' or a specialized tag. 
                 // Or just proceed. The main thing is identifying the scope for Module 4.
             }
@@ -60,10 +61,10 @@ export const PilotDecisionWorkspace: React.FC<PilotDecisionWorkspaceProps> = ({
                                 <div
                                     key={init.id}
                                     onClick={() => handleSelectPilot(init.id)}
-                                    className={`p-3 rounded-lg border cursor-pointer transition-all ${selectedPilotId === init.id
-                                        ? 'bg-purple-500/10 border-purple-500 ring-1 ring-purple-500'
-                                        : 'bg-slate-50 dark:bg-navy-900 border-slate-200 dark:border-white/10 hover:border-purple-300'
-                                        }`}
+                                    className={`p - 3 rounded - lg border cursor - pointer transition - all ${selectedPilotId === init.id
+                                            ? 'bg-purple-500/10 border-purple-500 ring-1 ring-purple-500'
+                                            : 'bg-slate-50 dark:bg-navy-900 border-slate-200 dark:border-white/10 hover:border-purple-300'
+                                        } `}
                                 >
                                     <div className="flex justify-between items-start">
                                         <h4 className="font-semibold text-sm text-navy-900 dark:text-white">{init.name}</h4>

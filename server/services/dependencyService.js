@@ -12,6 +12,7 @@ const DependencyService = {
      * @param {string} type - FINISH_TO_START or SOFT
      */
     addDependency: (fromInitiativeId, toInitiativeId, type = 'FINISH_TO_START') => {
+        if (fromInitiativeId === toInitiativeId) return Promise.reject(new Error('Self-dependency not allowed'));
         return new Promise((resolve, reject) => {
             const id = uuidv4();
             const sql = `INSERT INTO initiative_dependencies (id, from_initiative_id, to_initiative_id, type, is_satisfied, created_at)

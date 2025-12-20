@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { FullSession } from '../types';
+import { FullSession, InitiativeStatus } from '../types';
 import { useTranslation } from 'react-i18next';
 import { Download, Copy, BarChart3, TrendingUp, CheckSquare } from 'lucide-react';
 
@@ -40,9 +40,9 @@ export const FullStep6Workspace: React.FC<FullStep6WorkspaceProps> = ({
    // 3. Execution
    const initiatives = fullSession.initiatives || [];
    const total = initiatives.length;
-   const done = initiatives.filter(i => i.status === 'Done').length;
-   const inProg = initiatives.filter(i => i.status === 'In Progress').length;
-   const blocked = initiatives.filter(i => i.status === 'Blocked').length;
+   const done = initiatives.filter(i => i.status === InitiativeStatus.COMPLETED).length;
+   const inProg = initiatives.filter(i => i.status === InitiativeStatus.IN_EXECUTION).length;
+   const blocked = initiatives.filter(i => i.status === InitiativeStatus.BLOCKED).length;
    const completion = total > 0 ? (done / total) * 100 : 0;
 
    const handleExport = () => {

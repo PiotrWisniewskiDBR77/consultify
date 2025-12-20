@@ -176,17 +176,22 @@ export const TaskDropdown = () => {
                                     >
                                         <div className="flex gap-3">
                                             <div className="mt-0.5">
-                                                {task.status === 'done' ? (
-                                                    <CheckCircle size={16} className="text-emerald-500" />
-                                                ) : isOverdue(task.dueDate) ? (
-                                                    <AlertCircle size={16} className="text-red-500" />
+                                                {task.status === TaskStatus.DONE ? (
+                                                    <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10 px-2 py-0.5 rounded textxs font-bold uppercase">
+                                                        <CheckCircle size={10} /> Done
+                                                    </div>
                                                 ) : (
-                                                    <div className="w-4 h-4 rounded-full border-2 border-slate-300 dark:border-slate-600" />
+                                                    <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded border bg-opacity-10 ${task.status === TaskStatus.IN_PROGRESS ? 'border-blue-500 text-blue-500 bg-blue-500' :
+                                                        task.status === TaskStatus.BLOCKED ? 'border-red-500 text-red-500 bg-red-500' :
+                                                            'border-slate-500 text-slate-500 bg-slate-500'
+                                                        }`}>
+                                                        {task.status.replace('_', ' ')}
+                                                    </span>
                                                 )}
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex justify-between items-start gap-2">
-                                                    <p className={`text-sm font-medium truncate ${task.status === 'done' ? 'text-slate-500 line-through' : 'text-navy-900 dark:text-white'}`}>
+                                                    <p className={`text-sm font-medium truncate ${task.status === TaskStatus.DONE ? 'text-slate-500 line-through' : 'text-navy-900 dark:text-white'}`}>
                                                         {task.title}
                                                     </p>
                                                     <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded shrink-0 ${getPriorityColor(task.priority)}`}>
@@ -195,7 +200,7 @@ export const TaskDropdown = () => {
                                                 </div>
                                                 <div className="flex items-center gap-3 mt-1 text-xs text-slate-500 dark:text-slate-400">
                                                     {task.dueDate && (
-                                                        <div className={`flex items-center gap-1 ${isOverdue(task.dueDate) && task.status !== 'done' ? 'text-red-500 font-medium' : ''}`}>
+                                                        <div className={`flex items-center gap-1 ${isOverdue(task.dueDate) && task.status !== TaskStatus.DONE ? 'text-red-500 font-medium' : ''}`}>
                                                             <Calendar size={12} />
                                                             {formatDueDate(task.dueDate)}
                                                         </div>

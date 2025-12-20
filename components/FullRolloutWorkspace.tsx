@@ -150,7 +150,13 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
                         ...fullSession,
                         rollout: {
                             ...fullSession.rollout,
-                            closure: { ...fullSession.rollout?.closure, isClosed: true, closedAt: new Date().toISOString() }
+                            closure: {
+                                checklist: [],
+                                lessonsLearned: [],
+                                ...fullSession.rollout?.closure,
+                                isClosed: true,
+                                closedAt: new Date().toISOString()
+                            }
                         }
                     });
                 }

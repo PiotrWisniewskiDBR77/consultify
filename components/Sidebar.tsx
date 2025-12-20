@@ -104,6 +104,7 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({
     // Ensure it doesn't go above top
     if (top < 10) top = 10;
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPosition({ top, left });
   }, [parentRect]);
 
@@ -205,10 +206,13 @@ export const Sidebar: React.FC = () => {
       id: 'DASHBOARD',
       label: t('sidebar.dashboard'),
       icon: <LayoutDashboard size={20} />,
-      subItems: [
-        { id: 'DASHBOARD_OVERVIEW', label: t('sidebar.dashboardSub.overview'), viewId: AppView.DASHBOARD_OVERVIEW, icon: <Map size={16} /> },
-        { id: 'DASHBOARD_SNAPSHOT', label: t('sidebar.dashboardSub.snapshot'), viewId: AppView.DASHBOARD_SNAPSHOT, icon: <Activity size={16} /> }
-      ]
+      viewId: AppView.DASHBOARD_OVERVIEW,
+    },
+    {
+      id: 'DASHBOARD_SNAPSHOT',
+      label: t('sidebar.dashboardSub.snapshot'),
+      icon: <Activity size={20} />,
+      viewId: AppView.DASHBOARD_SNAPSHOT,
     },
     {
       id: 'MY_WORK',

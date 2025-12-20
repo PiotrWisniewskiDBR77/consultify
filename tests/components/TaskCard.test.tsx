@@ -2,13 +2,13 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { TaskCard } from '../../components/TaskCard';
-import { Task } from '../../types';
+import { Task, TaskStatus } from '../../types';
 
 describe('Component Test: TaskCard', () => {
     const mockTask: Task = {
         id: 'task-1',
         title: 'Test Task',
-        status: 'in_progress',
+        status: TaskStatus.IN_PROGRESS,
         priority: 'high',
         why: 'Test reason',
     } as Task;
@@ -92,10 +92,10 @@ describe('Component Test: TaskCard', () => {
 
     it('handles different status values', () => {
         const statuses: Array<Task['status']> = [
-            'not_started',
-            'in_progress',
-            'completed',
-            'blocked',
+            TaskStatus.TODO,
+            TaskStatus.IN_PROGRESS,
+            TaskStatus.DONE,
+            TaskStatus.BLOCKED,
         ];
 
         statuses.forEach(status => {

@@ -9,13 +9,10 @@ interface TaskCardProps {
 
 const getStatusColor = (status: TaskStatus) => {
     switch (status) {
-        case 'not_started': return 'border-slate-500 text-slate-500';
-        case 'in_progress': return 'border-blue-500 text-blue-500';
-        case 'waiting_data':
-        case 'waiting_decision': return 'border-amber-500 text-amber-500';
-        case 'blocked': return 'border-red-500 text-red-500';
-        case 'completed': return 'border-green-500 text-green-500';
-        case 'rejected': return 'border-slate-700 text-slate-700 opacity-50';
+        case TaskStatus.TODO: return 'border-slate-500 text-slate-500';
+        case TaskStatus.IN_PROGRESS: return 'border-blue-500 text-blue-500';
+        case TaskStatus.BLOCKED: return 'border-red-500 text-red-500';
+        case TaskStatus.DONE: return 'border-green-500 text-green-500';
         default: return 'border-slate-500';
     }
 };
@@ -78,7 +75,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
                 </div>
 
                 {task.dueDate && (
-                    <div className={`flex items-center gap-1 ${new Date(task.dueDate) < new Date() && task.status !== 'completed' ? 'text-red-500 dark:text-red-400' : ''}`}>
+                    <div className={`flex items-center gap-1 ${new Date(task.dueDate) < new Date() && task.status !== TaskStatus.DONE ? 'text-red-500 dark:text-red-400' : ''}`}>
                         <Calendar size={12} />
                         <span>{new Date(task.dueDate).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })}</span>
                     </div>
@@ -89,7 +86,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
                 <div className="mt-3 flex items-center gap-2">
                     <div className="flex-1 h-1 bg-slate-100 dark:bg-navy-950 rounded-full overflow-hidden">
                         <div
-                            className={`h-full ${task.status === 'blocked' ? 'bg-red-500' : 'bg-blue-500'}`}
+                            className={`h-full ${task.status === TaskStatus.BLOCKED ? 'bg-red-500' : 'bg-blue-500'}`}
                             style={{ width: `${task.progress || ((completedChecks / (totalChecks || 1)) * 100)}%` }}
                         ></div>
                     </div>

@@ -11,7 +11,9 @@ export const TextBlock: React.FC<TextBlockProps> = ({ block, onUpdate }) => {
     const [isEditing, setIsEditing] = useState(false);
 
     useEffect(() => {
-        setText(block.content?.text || '');
+        const newText = block.content?.text || '';
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        if (text !== newText) setText(newText);
     }, [block.content?.text]);
 
     const handleBlur = () => {

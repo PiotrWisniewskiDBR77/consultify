@@ -31,5 +31,22 @@
     "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": true
-  }
+  },
+  "include": [
+    "src",
+    "components",
+    "views",
+    "hooks",
+    "services",
+    "store",
+    "contexts",
+    "utils",
+    "*.ts",
+    "*.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "node_modules_trash",
+    "dist"
+  ]
 }

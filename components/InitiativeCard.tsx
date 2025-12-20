@@ -33,22 +33,26 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onCl
     // Helpers for Status Colors
     const getStatusColor = (status: InitiativeStatus) => {
         switch (status) {
-            case 'step3': return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
-            case 'step4': return 'bg-blue-500/10 text-blue-400 border-blue-500/20'; // Pilot
-            case 'step5': return 'bg-purple-500/10 text-purple-400 border-purple-500/20'; // Full
-            case 'completed': return 'bg-green-500/10 text-green-400 border-green-500/20';
-            case 'on_hold': return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20';
+            case InitiativeStatus.DRAFT:
+            case InitiativeStatus.PLANNED: return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+            case InitiativeStatus.APPROVED: return 'bg-teal-500/10 text-teal-400 border-teal-500/20';
+            case InitiativeStatus.IN_EXECUTION: return 'bg-blue-500/10 text-blue-400 border-blue-500/20'; // Execution
+            case InitiativeStatus.COMPLETED: return 'bg-green-500/10 text-green-400 border-green-500/20';
+            case InitiativeStatus.BLOCKED: return 'bg-red-500/10 text-red-400 border-red-500/20';
+            case InitiativeStatus.CANCELLED: return 'bg-slate-300/10 text-slate-400 border-slate-300/20';
             default: return 'bg-slate-500/10 text-slate-400';
         }
     };
 
     const getStatusLabel = (status: InitiativeStatus) => {
         const labels: Record<string, string> = {
-            'step3': 'Initiative List (Step 3)',
-            'step4': 'Pilot Execution (Step 4)',
-            'step5': 'Full Rollout (Step 5)',
-            'completed': 'Done & Verified',
-            'on_hold': 'On Hold'
+            [InitiativeStatus.DRAFT]: 'Draft',
+            [InitiativeStatus.PLANNED]: 'Planned (Step 3)',
+            [InitiativeStatus.APPROVED]: 'Approved',
+            [InitiativeStatus.IN_EXECUTION]: 'In Execution',
+            [InitiativeStatus.COMPLETED]: 'Done & Verified',
+            [InitiativeStatus.BLOCKED]: 'Blocked',
+            [InitiativeStatus.CANCELLED]: 'Cancelled'
         };
         return labels[status] || status;
     };
@@ -296,15 +300,15 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onCl
             {/* Progress Footer */}
             <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-white/5">
                 <div className="flex items-center gap-3 text-[10px] text-slate-500 font-medium">
-                    <div className={`flex items-center gap-1 ${initiative.status !== 'step3' ? 'text-blue-500' : ''}`}>
+                    <div className={`flex items-center gap-1 ${initiative.status !== InitiativeStatus.PLANNED && initiative.status !== InitiativeStatus.DRAFT ? 'text-blue-500' : ''}`}>
                         <CheckCircle size={12} />
                         <span>Plan</span>
                     </div>
-                    <div className={`flex items-center gap-1 ${initiative.status === 'step4' ? 'text-blue-500' : ''}`}>
+                    <div className={`flex items-center gap-1 ${initiative.status === InitiativeStatus.IN_EXECUTION || initiative.status === InitiativeStatus.COMPLETED ? 'text-blue-500' : ''}`}>
                         <Clock size={12} />
                         <span>Pilot</span>
                     </div>
-                    <div className={`flex items-center gap-1 ${initiative.status === 'step5' ? 'text-blue-500' : ''}`}>
+                    <div className={`flex items-center gap-1 ${initiative.status === InitiativeStatus.IN_EXECUTION || initiative.status === InitiativeStatus.COMPLETED ? 'text-blue-500' : ''}`}>
                         <Target size={12} />
                         <span>Scale</span>
                     </div>

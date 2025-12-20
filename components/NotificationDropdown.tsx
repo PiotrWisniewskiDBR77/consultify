@@ -54,7 +54,7 @@ export const NotificationDropdown = () => {
         event.stopPropagation();
         try {
             await Api.markNotificationRead(id);
-            setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+            setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
             setUnreadCount(prev => Math.max(0, prev - 1));
         } catch {
             toast.error('Failed to mark as read');
@@ -64,7 +64,7 @@ export const NotificationDropdown = () => {
     const handleMarkAllRead = async () => {
         try {
             await Api.markAllNotificationsRead();
-            setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+            setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
             setUnreadCount(0);
             toast.success('All marked as read');
         } catch {
@@ -77,7 +77,7 @@ export const NotificationDropdown = () => {
         try {
             await Api.deleteNotification(id);
             setNotifications(prev => prev.filter(n => n.id !== id));
-            if (!notifications.find(n => n.id === id)?.read) {
+            if (!notifications.find(n => n.id === id)?.isRead) {
                 setUnreadCount(prev => Math.max(0, prev - 1));
             }
         } catch {
@@ -162,20 +162,20 @@ export const NotificationDropdown = () => {
                                 {notifications.map(notification => (
                                     <div
                                         key={notification.id}
-                                        className={`group relative p-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer ${!notification.read
+                                        className={`group relative p-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer ${!notification.isRead
                                             ? (notification.type.includes('ai') ? 'bg-purple-900/20 dark:bg-purple-900/30' : 'bg-slate-100/50 dark:bg-navy-800/50')
                                             : ''
                                             }`}
-                                         
-                                        onClick={() => !notification.read && handleMarkAsRead(notification.id, {} as any)}
+
+                                        onClick={() => !notification.isRead && handleMarkAsRead(notification.id, {} as any)}
                                     >
                                         <div className="flex gap-3">
-                                            <div className={`mt-0.5 shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${!notification.read ? 'bg-white dark:bg-white/10 shadow-sm' : 'bg-slate-100 dark:bg-white/5'}`}>
+                                            <div className={`mt-0.5 shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${!notification.isRead ? 'bg-white dark:bg-white/10 shadow-sm' : 'bg-slate-100 dark:bg-white/5'}`}>
                                                 {getIcon(notification.type)}
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-start justify-between gap-2">
-                                                    <p className={`text-sm font-medium truncate ${!notification.read ? 'text-navy-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>
+                                                    <p className={`text-sm font-medium truncate ${!notification.isRead ? 'text-navy-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>
                                                         {notification.title}
                                                     </p>
                                                     <span className="text-[10px] text-slate-400 shrink-0 whitespace-nowrap">
@@ -201,7 +201,7 @@ export const NotificationDropdown = () => {
 
                                         {/* Actions */}
                                         <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 bg-white/80 dark:bg-navy-900/80 backdrop-blur-sm p-1 rounded-lg shadow-sm border border-slate-100 dark:border-white/5">
-                                            {!notification.read && (
+                                            {!notification.isRead && (
                                                 <button
                                                     onClick={(e) => handleMarkAsRead(notification.id, e)}
                                                     className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-500/20 rounded-md transition-colors"
@@ -219,7 +219,7 @@ export const NotificationDropdown = () => {
                                             </button>
                                         </div>
 
-                                        {!notification.read && (
+                                        {!notification.isRead && (
                                             <div className={`absolute left-0 top-4 bottom-4 w-1 rounded-r-full ${notification.type.includes('ai') ? 'bg-indigo-500' : 'bg-purple-500'
                                                 }`}></div>
                                         )}

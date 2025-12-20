@@ -10,7 +10,7 @@ import {
 import { AdminLLMView } from './AdminLLMView';
 import { AdminKnowledgeView } from './AdminKnowledgeView';
 import { AdminAnalyticsView } from './AdminAnalyticsView';
-import { ProjectGovernance } from '../../components/admin/ProjectGovernance'; // CRIT-02
+import { ProjectGovernance } from '../../components/Admin/ProjectGovernance'; // CRIT-02
 import { toast } from 'react-hot-toast';
 
 interface AdminViewProps {

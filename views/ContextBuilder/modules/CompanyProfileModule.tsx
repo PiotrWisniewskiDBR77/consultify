@@ -31,10 +31,13 @@ export const CompanyProfileModule: React.FC = () => {
             addNotification({
                 id: insightId,
                 userId: currentUser?.id || 'guest',
-                type: 'ai_insight',
+                organizationId: currentUser?.organizationId || 'default-org',
+                type: 'AI_RECOMMENDATION',
                 title: 'AI Insight Available',
                 message: 'Based on Annual Report 2024.pdf, I suggest updating Industry to Automotive Parts Manufacturing.',
-                read: false,
+                isRead: false,
+                severity: 'INFO',
+                isActionable: true,
                 createdAt: new Date().toISOString(),
                 data: {
                     priority: 'high',

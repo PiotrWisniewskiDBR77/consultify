@@ -2,7 +2,7 @@ import React, { useEffect, useCallback } from 'react';
 import { useScreenContext } from '../hooks/useScreenContext';
 import { SplitLayout } from '../components/SplitLayout';
 import { FullStep5Workspace } from '../components/FullStep5Workspace';
-import { FullInitiative, AppView, AIMessageHistory } from '../types';
+import { FullInitiative, AppView, AIMessageHistory, InitiativeStatus } from '../types';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../store/useAppStore';
 import { sendMessageToAI } from '../services/ai/gemini';
@@ -25,9 +25,9 @@ export const FullExecutionView: React.FC = () => {
   const t = translate('fullExecution', { returnObjects: true }) as any;
 
   // --- AI CONTEXT INJECTION ---
-  const todoCount = fullSession.initiatives.filter(i => i.status === 'To Do' || i.status === 'Draft' || i.status === 'Ready').length;
-  const inProgCount = fullSession.initiatives.filter(i => i.status === 'In Progress').length;
-  const blockedCount = fullSession.initiatives.filter(i => i.status === 'Blocked').length;
+  const todoCount = fullSession.initiatives.filter(i => [InitiativeStatus.DRAFT, InitiativeStatus.PLANNED, InitiativeStatus.APPROVED].includes(i.status)).length;
+  const inProgCount = fullSession.initiatives.filter(i => i.status === InitiativeStatus.IN_EXECUTION).length;
+  const blockedCount = fullSession.initiatives.filter(i => i.status === InitiativeStatus.BLOCKED).length;
 
   useScreenContext(
     'execution_kanban',
@@ -68,9 +68,9 @@ export const FullExecutionView: React.FC = () => {
       }));
 
       // Context: Execution
-      const todo = fullSession.initiatives.filter(i => i.status === 'To Do' || i.status === 'Draft' || i.status === 'Ready').length;
-      const inProg = fullSession.initiatives.filter(i => i.status === 'In Progress').length;
-      const blocked = fullSession.initiatives.filter(i => i.status === 'Blocked').length;
+      const todo = fullSession.initiatives.filter(i => [InitiativeStatus.DRAFT, InitiativeStatus.PLANNED, InitiativeStatus.APPROVED].includes(i.status)).length;
+      const inProg = fullSession.initiatives.filter(i => i.status === InitiativeStatus.IN_EXECUTION).length;
+      const blocked = fullSession.initiatives.filter(i => i.status === InitiativeStatus.BLOCKED).length;
 
       const context = `
         Context: User is in the Execution Phase (Kanban Board).
@@ -90,12 +90,15 @@ export const FullExecutionView: React.FC = () => {
 
 
   useEffect(() => {
-    const needsInit = fullSession.initiatives.some(i => ['Draft', 'Ready', 'Archived'].includes(i.status));
+    // Legacy cleanup: Ensure statuses are valid Enums
+    // We don't need to force change to 'To Do' as it's not a valid status
+    // Just ensure existing initiatives have valid status if easier, but here we just skip valid ones.
+    const needsInit = fullSession.initiatives.some(i => !Object.values(InitiativeStatus).includes(i.status));
 
     if (needsInit) {
       const initializedInitiatives = fullSession.initiatives.map(i => ({
         ...i,
-        status: ['Draft', 'Ready', 'Archived'].includes(i.status) ? 'To Do' : i.status,
+        status: Object.values(InitiativeStatus).includes(i.status) ? i.status : InitiativeStatus.PLANNED,
         progress: i.progress || 0
       }));
 

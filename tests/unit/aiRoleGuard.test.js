@@ -1,9 +1,5 @@
-/**
- * AI Role Guard Unit Tests
- * Tests for AI Roles Model enforcement (ADVISOR < MANAGER < OPERATOR)
- */
-
-const AIRoleGuard = require('../../server/services/aiRoleGuard');
+import { describe, it, expect, vi } from 'vitest';
+import AIRoleGuard from '../../server/services/aiRoleGuard';
 
 describe('AI Role Guard', () => {
     describe('Role Definitions', () => {
@@ -53,7 +49,7 @@ describe('AI Role Guard', () => {
             it('should allow explain actions', async () => {
                 // Mock getProjectRole to return ADVISOR
                 const originalGetProjectRole = AIRoleGuard.getProjectRole;
-                AIRoleGuard.getProjectRole = jest.fn().mockResolvedValue('ADVISOR');
+                AIRoleGuard.getProjectRole = vi.fn().mockResolvedValue('ADVISOR');
 
                 const result = await AIRoleGuard.canPerformAction('test-project', 'EXPLAIN_CONTEXT');
                 expect(result.allowed).toBe(true);
@@ -64,7 +60,7 @@ describe('AI Role Guard', () => {
 
             it('should block draft creation', async () => {
                 const originalGetProjectRole = AIRoleGuard.getProjectRole;
-                AIRoleGuard.getProjectRole = jest.fn().mockResolvedValue('ADVISOR');
+                AIRoleGuard.getProjectRole = vi.fn().mockResolvedValue('ADVISOR');
 
                 const result = await AIRoleGuard.canPerformAction('test-project', 'CREATE_DRAFT_TASK');
                 expect(result.allowed).toBe(false);
@@ -75,7 +71,7 @@ describe('AI Role Guard', () => {
 
             it('should block execution actions', async () => {
                 const originalGetProjectRole = AIRoleGuard.getProjectRole;
-                AIRoleGuard.getProjectRole = jest.fn().mockResolvedValue('ADVISOR');
+                AIRoleGuard.getProjectRole = vi.fn().mockResolvedValue('ADVISOR');
 
                 const result = await AIRoleGuard.canPerformAction('test-project', 'EXECUTE_TASK_UPDATE');
                 expect(result.allowed).toBe(false);
@@ -87,7 +83,7 @@ describe('AI Role Guard', () => {
         describe('MANAGER Role', () => {
             it('should allow draft creation with approval required', async () => {
                 const originalGetProjectRole = AIRoleGuard.getProjectRole;
-                AIRoleGuard.getProjectRole = jest.fn().mockResolvedValue('MANAGER');
+                AIRoleGuard.getProjectRole = vi.fn().mockResolvedValue('MANAGER');
 
                 const result = await AIRoleGuard.canPerformAction('test-project', 'CREATE_DRAFT_TASK');
                 expect(result.allowed).toBe(true);
@@ -98,7 +94,7 @@ describe('AI Role Guard', () => {
 
             it('should block execution actions', async () => {
                 const originalGetProjectRole = AIRoleGuard.getProjectRole;
-                AIRoleGuard.getProjectRole = jest.fn().mockResolvedValue('MANAGER');
+                AIRoleGuard.getProjectRole = vi.fn().mockResolvedValue('MANAGER');
 
                 const result = await AIRoleGuard.canPerformAction('test-project', 'EXECUTE_TASK_UPDATE');
                 expect(result.allowed).toBe(false);
@@ -110,7 +106,7 @@ describe('AI Role Guard', () => {
         describe('OPERATOR Role', () => {
             it('should allow execution actions', async () => {
                 const originalGetProjectRole = AIRoleGuard.getProjectRole;
-                AIRoleGuard.getProjectRole = jest.fn().mockResolvedValue('OPERATOR');
+                AIRoleGuard.getProjectRole = vi.fn().mockResolvedValue('OPERATOR');
 
                 const result = await AIRoleGuard.canPerformAction('test-project', 'EXECUTE_TASK_UPDATE');
                 expect(result.allowed).toBe(true);
@@ -121,7 +117,7 @@ describe('AI Role Guard', () => {
 
             it('should allow entity modifications', async () => {
                 const originalGetProjectRole = AIRoleGuard.getProjectRole;
-                AIRoleGuard.getProjectRole = jest.fn().mockResolvedValue('OPERATOR');
+                AIRoleGuard.getProjectRole = vi.fn().mockResolvedValue('OPERATOR');
 
                 const result = await AIRoleGuard.canPerformAction('test-project', 'UPDATE_ENTITY');
                 expect(result.allowed).toBe(true);
@@ -134,7 +130,7 @@ describe('AI Role Guard', () => {
     describe('Mutation Validation', () => {
         it('should block all mutations for ADVISOR', async () => {
             const originalGetProjectRole = AIRoleGuard.getProjectRole;
-            AIRoleGuard.getProjectRole = jest.fn().mockResolvedValue('ADVISOR');
+            AIRoleGuard.getProjectRole = vi.fn().mockResolvedValue('ADVISOR');
 
             const result = await AIRoleGuard.validateMutation('test-project', 'create');
             expect(result.allowed).toBe(false);
@@ -145,7 +141,7 @@ describe('AI Role Guard', () => {
 
         it('should allow mutations as drafts for MANAGER', async () => {
             const originalGetProjectRole = AIRoleGuard.getProjectRole;
-            AIRoleGuard.getProjectRole = jest.fn().mockResolvedValue('MANAGER');
+            AIRoleGuard.getProjectRole = vi.fn().mockResolvedValue('MANAGER');
 
             const result = await AIRoleGuard.validateMutation('test-project', 'create');
             expect(result.allowed).toBe(true);
@@ -157,7 +153,7 @@ describe('AI Role Guard', () => {
 
         it('should allow direct mutations for OPERATOR', async () => {
             const originalGetProjectRole = AIRoleGuard.getProjectRole;
-            AIRoleGuard.getProjectRole = jest.fn().mockResolvedValue('OPERATOR');
+            AIRoleGuard.getProjectRole = vi.fn().mockResolvedValue('OPERATOR');
 
             const result = await AIRoleGuard.validateMutation('test-project', 'create');
             expect(result.allowed).toBe(true);
@@ -170,7 +166,7 @@ describe('AI Role Guard', () => {
     describe('isActionBlocked', () => {
         it('should return blocked with required role for insufficient permissions', async () => {
             const originalGetProjectRole = AIRoleGuard.getProjectRole;
-            AIRoleGuard.getProjectRole = jest.fn().mockResolvedValue('ADVISOR');
+            AIRoleGuard.getProjectRole = vi.fn().mockResolvedValue('ADVISOR');
 
             const result = await AIRoleGuard.isActionBlocked('test-project', 'CREATE_DRAFT_TASK');
             expect(result.blocked).toBe(true);
@@ -183,7 +179,7 @@ describe('AI Role Guard', () => {
 
         it('should return not blocked for allowed actions', async () => {
             const originalGetProjectRole = AIRoleGuard.getProjectRole;
-            AIRoleGuard.getProjectRole = jest.fn().mockResolvedValue('MANAGER');
+            AIRoleGuard.getProjectRole = vi.fn().mockResolvedValue('MANAGER');
 
             const result = await AIRoleGuard.isActionBlocked('test-project', 'CREATE_DRAFT_TASK');
             expect(result.blocked).toBe(false);

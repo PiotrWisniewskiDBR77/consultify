@@ -35,7 +35,7 @@ export const InitiativeTaskBoard: React.FC<InitiativeTaskBoardProps> = ({ initia
             // I will fetch all tasks for the organization (or project if linked) and filter client side for now to save a round trip of fixes. 
             // Or better, fetch by project if initiative is linked to project. 
 
-             
+
             const allTasks = await Api.getTasks({ projectId: initiative.id }); // Using initiative ID as project ID context? No. 
             // We need to fix backend to support filtering by initiativeId to be scalable.
             // For now, I will filter client side if I fetch all tasks, but that's bad.
@@ -83,7 +83,7 @@ export const InitiativeTaskBoard: React.FC<InitiativeTaskBoardProps> = ({ initia
     };
 
     const phases: Phase[] = ['design', 'pilot', 'rollout'];
-    const statuses: TaskStatus[] = ['not_started', 'in_progress', 'waiting_decision', 'blocked', 'completed'];
+    const statuses: TaskStatus[] = [TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.BLOCKED, TaskStatus.DONE];
 
     const getPhaseTasks = (phase: Phase) => tasks.filter(t => t.stepPhase === phase);
 

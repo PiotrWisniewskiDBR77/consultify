@@ -2,14 +2,14 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { InitiativeCard } from '../../components/InitiativeCard';
-import { Initiative } from '../../types';
+import { Initiative, InitiativeStatus } from '../../types';
 
 describe('Component Test: InitiativeCard', () => {
     const mockInitiative: Initiative = {
         id: 'init-1',
         name: 'Test Initiative',
         description: 'Test description',
-        status: 'step3',
+        status: InitiativeStatus.PLANNED,
         priority: 'High',
         complexity: 'Medium',
         axis: 'processes',
@@ -53,7 +53,7 @@ describe('Component Test: InitiativeCard', () => {
             />
         );
 
-        expect(screen.getByText(/Initiative List/)).toBeInTheDocument();
+        expect(screen.getByText(/Planned/i)).toBeInTheDocument();
     });
 
     it('displays axis badge when present', () => {
@@ -88,7 +88,12 @@ describe('Component Test: InitiativeCard', () => {
     });
 
     it('handles different status values', () => {
-        const statuses: Array<Initiative['status']> = ['step3', 'step4', 'step5', 'completed', 'on_hold'];
+        const statuses: Array<Initiative['status']> = [
+            InitiativeStatus.PLANNED,
+            InitiativeStatus.IN_EXECUTION,
+            InitiativeStatus.COMPLETED,
+            InitiativeStatus.BLOCKED
+        ];
 
         statuses.forEach(status => {
             const { unmount } = render(

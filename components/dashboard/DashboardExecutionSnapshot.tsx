@@ -3,7 +3,7 @@ import {
     LayoutDashboard, CheckCircle2, AlertTriangle,
     TrendingUp, TrendingDown, Activity, Play, Clock
 } from 'lucide-react';
-import { FullSession, AppView } from '../../types';
+import { FullSession, AppView, FullInitiative, InitiativeStatus } from '../../types';
 
 interface DashboardExecutionSnapshotProps {
     session: FullSession;
@@ -19,7 +19,7 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
         const inProgress = inits.filter(i => ['In Progress', 'To Do', 'Ready'].includes(i.status)).length;
         const completed = inits.filter(i => ['Done', 'completed'].includes(i.status)).length;
         // Simplified "Delayed" logic: if status is Blocked or priority is Critical and not done
-        const delayed = inits.filter(i => i.status === 'Blocked' || (i.priority === 'Critical' && i.status !== 'Done')).length;
+        const delayed = inits.filter(i => i.status === InitiativeStatus.BLOCKED || (i.priority === 'Critical' && i.status !== InitiativeStatus.COMPLETED)).length;
 
         return { total, inProgress, completed, delayed };
     }, [session]);

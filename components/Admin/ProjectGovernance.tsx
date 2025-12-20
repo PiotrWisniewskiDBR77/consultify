@@ -79,7 +79,9 @@ export const ProjectGovernance: React.FC<ProjectGovernanceProps> = ({ projectId,
                     try {
                         const parsed = JSON.parse(project.governance_settings);
                         setSettings({ ...defaultSettings, ...parsed });
-                    } catch { }
+                    } catch (e) {
+                        // Ignore parse error
+                    }
                 }
             }
         } catch (err) {
@@ -378,8 +380,8 @@ export const ProjectGovernance: React.FC<ProjectGovernanceProps> = ({ projectId,
                             onClick={handleToggleRegulatoryMode}
                             disabled={isSavingRegulatoryMode}
                             className={`relative w-12 h-6 rounded-full transition-colors ${regulatoryModeEnabled
-                                    ? 'bg-amber-500'
-                                    : 'bg-slate-300 dark:bg-slate-600'
+                                ? 'bg-amber-500'
+                                : 'bg-slate-300 dark:bg-slate-600'
                                 } ${isSavingRegulatoryMode ? 'opacity-50' : ''}`}
                         >
                             <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${regulatoryModeEnabled ? 'translate-x-7' : 'translate-x-1'
@@ -389,8 +391,8 @@ export const ProjectGovernance: React.FC<ProjectGovernanceProps> = ({ projectId,
 
                     {/* Warning/Info Box */}
                     <div className={`mt-3 p-3 rounded-lg text-sm ${regulatoryModeEnabled
-                            ? 'bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300'
-                            : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400'
+                        ? 'bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300'
+                        : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400'
                         }`}>
                         {regulatoryModeEnabled ? (
                             <>

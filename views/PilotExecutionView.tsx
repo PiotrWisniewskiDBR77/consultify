@@ -77,11 +77,11 @@ export const PilotExecutionView: React.FC = () => {
             projectId: selectedInitiative?.id || 'default', // Fallback
             organizationId: currentUser!.organizationId!,
             title: '',
-            status: 'todo',
+            status: TaskStatus.TODO,
             priority: 'medium',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-            taskType: 'execution',
+            taskType: 'PILOT',
             initiativeId: selectedInitiative?.id
         };
         setEditingTask(newTask);
@@ -163,7 +163,7 @@ export const PilotExecutionView: React.FC = () => {
                     taskType: s.taskType,
                     priority: s.priority,
                     estimatedHours: s.estimatedHours,
-                    status: 'todo',
+                    status: TaskStatus.TODO,
                     initiativeId: selectedInitiative.id
                 });
             }
@@ -311,10 +311,10 @@ export const PilotExecutionView: React.FC = () => {
                     {/* Kanban Board */}
                     {selectedInitiative && (
                         <div className="flex-1 flex gap-4 overflow-x-auto pb-4">
-                            {renderKanbanColumn('todo', 'Backlog')}
-                            {renderKanbanColumn('in_progress', 'In Progress')}
-                            {renderKanbanColumn('review', 'Review / QA')}
-                            {renderKanbanColumn('done', 'Completed')}
+                            {renderKanbanColumn(TaskStatus.TODO, 'Backlog')}
+                            {renderKanbanColumn(TaskStatus.IN_PROGRESS, 'In Progress')}
+                            {renderKanbanColumn(TaskStatus.BLOCKED, 'Blocked')}
+                            {renderKanbanColumn(TaskStatus.DONE, 'Completed')}
                         </div>
                     )}
 

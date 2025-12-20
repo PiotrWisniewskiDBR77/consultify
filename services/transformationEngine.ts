@@ -1,4 +1,4 @@
-import { FullSession, FullInitiative, AxisId } from '../types';
+import { FullSession, FullInitiative, AxisId, StrategicGoal, Challenge, Idea, InitiativeStatus } from '../types';
 import { DRD_STRUCTURE, DRDLevel } from './drdStructure';
 
 export const generateInitiatives = (session: FullSession): FullInitiative[] => {
@@ -38,7 +38,7 @@ export const generateInitiatives = (session: FullSession): FullInitiative[] => {
                     axis: axisKey,
                     priority: (!currentLevel || currentLevel === 1) ? 'High' : (currentLevel < 3 ? 'Medium' : 'Low'),
                     complexity: nextLevel.level > 4 ? 'High' : (nextLevel.level > 2 ? 'Medium' : 'Low'),
-                    status: 'Draft',
+                    status: InitiativeStatus.DRAFT,
                     estimatedCost: nextLevel.level * 10000,
                     estimatedAnnualBenefit: nextLevel.level * 20000
                 });

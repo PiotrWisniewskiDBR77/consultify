@@ -97,7 +97,10 @@ export enum UserRole {
   ADMIN = 'ADMIN',             // Tenant Admin (CEO/COO usually)
   PROJECT_MANAGER = 'PROJECT_MANAGER', // PMO Lead
   TEAM_MEMBER = 'TEAM_MEMBER', // Executor
-  VIEWER = 'VIEWER'            // Stakeholder/Auditor
+  VIEWER = 'VIEWER',            // Stakeholder/Auditor
+  CEO = 'CEO',
+  MANAGER = 'MANAGER',
+  OTHER = 'OTHER'
 }
 
 // SCMS: System Capabilities (Permissions)
@@ -831,6 +834,14 @@ export interface Notification {
   // Related Object
   relatedObjectType?: 'TASK' | 'INITIATIVE' | 'DECISION' | 'PROJECT' | 'GATE';
   relatedObjectId?: string;
+
+  // Legacy Data Support
+  data?: {
+    link?: string;
+    actionLabel?: string;
+    priority?: string;
+    [key: string]: any;
+  };
 
   // Status
   isRead: boolean;
@@ -1637,8 +1648,7 @@ export interface StakeholderImpact {
 export type Quarter = 'Q1' | 'Q2' | 'Q3' | 'Q4' | 'Q5' | 'Q6' | 'Q7' | 'Q8';
 export type Wave = 'Wave 1' | 'Wave 2' | 'Wave 3';
 // Updated InitiativeStatus to include Pilot-specific 'Validated' (Task) or Initiative status
-export type InitiativeStatus = 'step3' | 'step4' | 'step5' | 'completed' | 'on_hold' | 'Draft' | 'Ready' | 'To Do' | 'In Progress' | 'Validating' | 'Validated' | 'Blocked' | 'Done' | 'Archived';
-// Updated TaskType for Strategic Execution
+
 export type TaskType = 'ANALYSIS' | 'DESIGN' | 'BUILD' | 'PILOT' | 'VALIDATION' | 'DECISION' | 'CHANGE_MGMT';
 
 export interface DecisionImpact {
@@ -1670,7 +1680,7 @@ export interface RiskRating {
   metric: 'Low' | 'Medium' | 'High';
 }
 
-export type DependencyType = 'hard' | 'soft';
+
 
 // NEW: Pilot Result Struct
 export interface PilotLearning {
@@ -2195,8 +2205,9 @@ export interface PrivateModel {
 
 // Task Status (Workflow)
 // Extended to include legacy aliases used in some components
-export type TaskStatus = 'not_started' | 'in_progress' | 'waiting_data' | 'waiting_decision' | 'blocked' | 'completed' | 'rejected' | 'todo' | 'review' | 'done';
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+// Task Status (Workflow)
+// Extended to include legacy aliases used in some components
 export type ProjectRole = 'owner' | 'admin' | 'member' | 'viewer';
 export type TeamRole = 'lead' | 'member';
 
@@ -2317,35 +2328,9 @@ export interface CustomStatus {
 }
 
 // Notification Types
-export type NotificationType =
-  | 'task_assigned'
-  | 'task_completed'
-  | 'status_changed'
-  | 'deadline'
-  | 'mention'
-  | 'project_milestone'
-  | 'comment'
-  | 'team_invite';
 
-export interface Notification {
-  id: string;
-  userId: string;
-  type: 'system' | 'task' | 'task_assigned' | 'task_completed' | 'deadline' | 'status_changed' | 'alert' | 'info' | 'ai_insight' | 'ai_message';
-  title: string;
-  message?: string;
-  data?: {
-    priority?: 'high' | 'normal' | 'low';
-    category?: 'ai' | 'task' | 'system';
-    actionLabel?: string;
-    link?: string;
-    entityType?: 'task' | 'project' | 'team' | 'user';
-    entityId?: string;
-    entityName?: string;
-    [key: string]: any;
-  };
-  read: boolean;
-  createdAt: string;
-}
+
+
 
 // Activity Log (Audit Trail)
 export type ActivityAction =

@@ -25,7 +25,7 @@ const auditLogMiddleware = (req, res, next) => {
                 // Extract User Info
                 const user = req.user;
                 const userId = user ? user.id : 'anonymous';
-                const organizationId = user ? user.organizationId : (req.body.organizationId || 'unknown');
+                const organizationId = user ? user.organizationId : ((req.body && req.body.organizationId) || 'unknown');
 
                 // Determine Entity & Action
                 // URL: /api/projects/:id -> Entity: project, ID: :id

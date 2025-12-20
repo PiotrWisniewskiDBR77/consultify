@@ -7,14 +7,18 @@ describe('DependencyService', () => {
 
     beforeEach(async () => {
         vi.resetModules();
-        DependencyService = (await import('../../../server/services/dependencyService.js')).default;
 
         dbMock = {
             run: vi.fn(),
             all: vi.fn()
         };
-        DependencyService._setDb(dbMock);
+        // Mock globally
+        vi.doMock('../../../server/database', () => dbMock);
+
+        DependencyService = (await import('../../../server/services/dependencyService.js')).default;
+        if (DependencyService._setDb) DependencyService._setDb(dbMock);
     });
+
 
     describe('addDependency', () => {
         it('should prevent self-dependency', async () => {

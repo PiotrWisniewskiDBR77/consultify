@@ -26,8 +26,9 @@ describe('PMODomainRegistry', () => {
 
     describe('getDomain', () => {
         it('should return domain', async () => {
-            dbMock.get.mockImplementation((sql, params, cb) => cb(null, { id: 'd1' }));
-            const res = await PMODomainRegistry.getDomain('d1');
+            const validId = 'GOVERNANCE_DECISION_MAKING';
+            dbMock.get.mockImplementation((sql, params, cb) => cb(null, { id: validId }));
+            const res = await PMODomainRegistry.getDomain(validId);
             expect(res).toBeDefined();
         });
     });

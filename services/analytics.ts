@@ -1,4 +1,4 @@
-import { FullInitiative, Task } from '../types';
+import { FullInitiative, Task, InitiativeStatus, TaskStatus } from '../types';
 
 export interface AnalyticsData {
     totalInitiatives: number;
@@ -29,9 +29,9 @@ export const calculateAnalytics = (
     initiatives: FullInitiative[],
     tasks: Task[]
 ): AnalyticsData => {
-    const completedInitiatives = initiatives.filter(i => i.status === 'completed');
-    const inProgressInitiatives = initiatives.filter(i => i.status === 'In Progress');
-    const completedTasks = tasks.filter(t => t.status === 'completed');
+    const completedInitiatives = initiatives.filter(i => i.status === InitiativeStatus.COMPLETED);
+    const inProgressInitiatives = initiatives.filter(i => i.status === InitiativeStatus.IN_EXECUTION);
+    const completedTasks = tasks.filter(t => t.status === TaskStatus.DONE);
 
     const totalCost = initiatives.reduce((sum, i) => sum + (i.capex || 0) + (i.firstYearOpex || 0), 0);
     const totalBenefit = initiatives.reduce((sum, i) => sum + (i.annualBenefit || 0), 0);
@@ -71,7 +71,7 @@ export const generateBurnDownData = (tasks: Task[], startDate: Date, endDate: Da
 
         // Actual completed by this week (would need real dates on tasks)
         const completedByWeek = tasks.filter(t =>
-            t.status === 'completed' &&
+            t.status === TaskStatus.DONE &&
             new Date(t.updatedAt || t.createdAt) <= weekDate
         ).length;
 

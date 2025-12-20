@@ -20,7 +20,7 @@ import {
     useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { FullInitiative, Quarter, User } from '../types';
+import { FullInitiative, InitiativeStatus, User, Quarter } from '../types';
 import { InitiativeDetailModal } from './InitiativeDetailModal';
 import { GripVertical, Clock } from 'lucide-react';
 
@@ -95,7 +95,7 @@ const SortableItem: React.FC<{ id: string, initiative: FullInitiative, onClick: 
                             </span>
                         )}
 
-                        {initiative.status === 'step5' && <span className="w-2 h-2 rounded-full bg-blue-500 block animate-pulse" title="In Execution"></span>}
+                        {initiative.status === InitiativeStatus.IN_EXECUTION && <span className="w-2 h-2 rounded-full bg-blue-500 block animate-pulse" title="In Execution"></span>}
 
                         {/* High Change Indicator */}
                         {isHighChange && (

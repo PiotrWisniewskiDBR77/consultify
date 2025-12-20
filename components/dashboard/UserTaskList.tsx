@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { CheckCircle2, Circle, ArrowRight, Play, FileText, BarChart, MoveRight, Lock, Plus, RefreshCw } from 'lucide-react';
-import { FullSession, AppView, Task } from '../../types';
+import { FullSession, AppView, Task, TaskStatus } from '../../types';
 import { TaskDetailModal } from '../TaskDetailModal';
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
@@ -24,11 +24,12 @@ export const UserTaskList: React.FC<UserTaskListProps> = ({ session, onNavigate 
         organizationId: currentUser?.organizationId || '',
         title: '',
         description: '',
-        status: 'todo',
+
+        status: TaskStatus.TODO,
         priority: 'medium',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        taskType: 'execution',
+        taskType: 'DESIGN',
         stepPhase: 'design'
     };
 
@@ -57,8 +58,8 @@ export const UserTaskList: React.FC<UserTaskListProps> = ({ session, onNavigate 
     };
 
     const getIcon = (task: Task) => {
-        if (task.taskType === 'analytical') return <BarChart size={20} />;
-        if (task.taskType === 'execution') return <Play size={20} />;
+        if (task.taskType === 'ANALYSIS') return <BarChart size={20} />;
+        if (task.taskType === 'PILOT' || task.taskType === 'BUILD') return <Play size={20} />;
         return <FileText size={20} />;
     };
 
@@ -116,8 +117,8 @@ export const UserTaskList: React.FC<UserTaskListProps> = ({ session, onNavigate 
                 {!loading && tasks.length === 0 && <div className="text-center p-8 text-slate-500">No pending tasks. Great job!</div>}
 
                 {tasks.map((task) => {
-                    const isCompleted = task.status === 'completed';
-                    const isActive = task.status === 'in_progress' || task.status === 'todo';
+                    const isCompleted = task.status === TaskStatus.DONE;
+                    const isActive = task.status === TaskStatus.IN_PROGRESS || task.status === TaskStatus.TODO;
 
                     return (
                         <div

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { calculateAnalytics, generateBurnDownData, generateVelocityData } from '../../services/analytics';
-import { FullInitiative, Task } from '../../types';
+import { FullInitiative, Task, TaskStatus, InitiativeStatus } from '../../types';
 
 describe('Service Test: Analytics', () => {
     describe('calculateAnalytics', () => {
@@ -16,9 +16,9 @@ describe('Service Test: Analytics', () => {
 
         it('calculates completion rate correctly', () => {
             const tasks: Task[] = [
-                { id: '1', title: 'Task 1', status: 'completed' } as unknown as Task,
-                { id: '2', title: 'Task 2', status: 'pending' } as unknown as Task,
-                { id: '3', title: 'Task 3', status: 'completed' } as unknown as Task,
+                { id: '1', title: 'Task 1', status: TaskStatus.DONE } as unknown as Task,
+                { id: '2', title: 'Task 2', status: TaskStatus.TODO } as unknown as Task,
+                { id: '3', title: 'Task 3', status: TaskStatus.DONE } as unknown as Task,
             ];
 
             const result = calculateAnalytics([], tasks);
@@ -30,9 +30,9 @@ describe('Service Test: Analytics', () => {
 
         it('calculates initiative statistics', () => {
             const initiatives: FullInitiative[] = [
-                { id: '1', title: 'Initiative 1', status: 'completed', roi: 50 } as unknown as FullInitiative,
-                { id: '2', title: 'Initiative 2', status: 'In Progress', roi: 30 } as unknown as FullInitiative,
-                { id: '3', title: 'Initiative 3', status: 'pending', roi: 20 } as unknown as FullInitiative,
+                { id: '1', title: 'Initiative 1', status: InitiativeStatus.COMPLETED, roi: 50 } as unknown as FullInitiative,
+                { id: '2', title: 'Initiative 2', status: InitiativeStatus.IN_EXECUTION, roi: 30 } as unknown as FullInitiative,
+                { id: '3', title: 'Initiative 3', status: InitiativeStatus.PLANNED, roi: 20 } as unknown as FullInitiative,
             ];
 
             const result = calculateAnalytics(initiatives, []);
@@ -61,8 +61,8 @@ describe('Service Test: Analytics', () => {
             const startDate = new Date('2024-01-01');
             const endDate = new Date('2024-01-29'); // 4 weeks
             const tasks: Task[] = [
-                { id: '1', title: 'Task 1', status: 'completed', createdAt: '2024-01-05' } as unknown as Task,
-                { id: '2', title: 'Task 2', status: 'pending' } as unknown as Task,
+                { id: '1', title: 'Task 1', status: TaskStatus.DONE, createdAt: '2024-01-05' } as unknown as Task,
+                { id: '2', title: 'Task 2', status: TaskStatus.TODO } as unknown as Task,
             ];
 
             const result = generateBurnDownData(tasks, startDate, endDate);

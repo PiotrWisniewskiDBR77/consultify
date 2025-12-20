@@ -1,9 +1,9 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
-import { Task, User } from '../types';
+import { Task, User, TaskStatus, FullInitiative, InitiativeStatus } from '../types';
 import { Button } from './Button';
 import { Plus, CheckCircle, Clock } from 'lucide-react';
 import { TaskDetailModal } from './TaskDetailModal';
-import { FullInitiative } from '../types'; // Assuming FullInitiative is defined here or needs to be imported
 
 interface Props {
     initiativeId: string;
@@ -82,7 +82,7 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
     // Initial empty task for creation
     const emptyTask: Partial<Task> = {
         title: '',
-        status: 'todo',
+        status: TaskStatus.TODO,
         priority: 'medium',
         taskType: 'ANALYSIS', // Default to Analysis
         initiativeId: initiativeId
@@ -103,7 +103,6 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
                         projectId: '',
                         initiativeId: initiative.id,
                         taskType: t.taskType || 'ANALYSIS',
-                        expectedOutcome: t.expectedOutcome || '',
                         why: t.why,
                         stepPhase: t.stepPhase
                     });
@@ -134,7 +133,7 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
                     <button
                         onClick={handleGenerateTasks}
                         disabled={isGenerating || !initiative}
-                        className={`px-3 py-1.5 bg-purple-50 dark:bg-purple-600/20 hover:bg-purple-100 dark:hover:bg-purple-600/30 text-purple-600 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30 rounded text-xs font-medium flex items-center gap-2 transition-colors ${isGenerating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className={`px - 3 py - 1.5 bg - purple - 50 dark: bg - purple - 600 / 20 hover: bg - purple - 100 dark: hover: bg - purple - 600 / 30 text - purple - 600 dark: text - purple - 300 border border - purple - 200 dark: border - purple - 500 / 30 rounded text - xs font - medium flex items - center gap - 2 transition - colors ${isGenerating ? 'opacity-50 cursor-not-allowed' : ''} `}
                     >
                         {isGenerating ? (
                             <div className="w-4 h-4 rounded-full border-2 border-t-transparent border-purple-400 animate-spin" />
@@ -148,7 +147,7 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
                             <button
                                 key={s}
                                 onClick={() => setFilterStatus(s)}
-                                className={`px-3 py-1 text-xs rounded transition-colors ${filterStatus === s ? 'bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'}`}
+                                className={`px - 3 py - 1 text - xs rounded transition - colors ${filterStatus === s ? 'bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'} `}
                             >
                                 {s.replace('_', ' ').toUpperCase()}
                             </button>
@@ -177,12 +176,12 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
                             className="bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/5 rounded-lg p-3 hover:border-blue-500/30 transition-colors cursor-pointer group flex items-center gap-4 shadow-sm dark:shadow-none"
                         >
                             {/* Status Indicator */}
-                            <div className={`w-2 h-full self-stretch rounded-full ${(task.status === 'completed' ? 'bg-green-500' : task.status === 'in_progress' ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-600')}`}></div>
+                            <div className={`w - 2 h - full self - stretch rounded - full ${(task.status === TaskStatus.DONE ? 'bg-green-500' : task.status === TaskStatus.IN_PROGRESS ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-600')} `}></div>
 
                             <div className="flex-1">
                                 <div className="flex justify-between items-start">
                                     <h4 className="text-navy-900 dark:text-slate-200 font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{task.title}</h4>
-                                    <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border ${getStatusColor(task.status)}`}>
+                                    <span className={`text - [10px] uppercase font - bold px - 1.5 py - 0.5 rounded border ${getStatusColor(task.status)} `}>
                                         {task.status.replace('_', ' ')}
                                     </span>
                                 </div>
@@ -191,14 +190,14 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
                                         <div className="w-4 h-4 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[8px] text-navy-600 dark:text-white overflow-hidden">
                                             {task.assignee?.avatarUrl ? <img src={task.assignee.avatarUrl} className="w-full h-full object-cover" /> : (task.assignee?.firstName?.[0] || '?')}
                                         </div>
-                                        {task.assignee ? `${task.assignee.firstName} ${task.assignee.lastName}` : 'Unassigned'}
+                                        {task.assignee ? `${task.assignee.firstName} ${task.assignee.lastName} ` : 'Unassigned'}
                                     </span>
                                     {task.dueDate && (
                                         <span className="flex items-center gap-1">
                                             <Clock size={12} /> {new Date(task.dueDate).toLocaleDateString()}
                                         </span>
                                     )}
-                                    <span className={`uppercase ${task.priority === 'urgent' ? 'text-red-500 dark:text-red-400' : task.priority === 'high' ? 'text-orange-500 dark:text-orange-400' : 'text-slate-500'}`}>
+                                    <span className={`uppercase ${task.priority === 'urgent' ? 'text-red-500 dark:text-red-400' : task.priority === 'high' ? 'text-orange-500 dark:text-orange-400' : 'text-slate-500'} `}>
                                         {task.priority}
                                     </span>
                                 </div>

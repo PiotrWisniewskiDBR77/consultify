@@ -2,7 +2,7 @@
 import React, { useEffect, useCallback } from 'react';
 import { SplitLayout } from '../components/SplitLayout';
 import { FullStep3Workspace } from '../components/FullStep3Workspace';
-import { FullInitiative, Quarter, Wave, AppView, SessionMode } from '../types';
+import { FullInitiative, Quarter, Wave, AppView, SessionMode, InitiativeStatus } from '../types';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../store/useAppStore';
 import { Api } from '../services/api';
@@ -250,9 +250,9 @@ export const FullRoadmapView: React.FC = () => {
   };
 
   const confirmPilot = async (pilotId: string) => {
-    // Mark initiative as PILOT (step4)
+    // Mark initiative as PILOT (step4 -> IN_EXECUTION)
     const updated = fullSession.initiatives.map(i =>
-      i.id === pilotId ? { ...i, status: 'step4' as const } : i
+      i.id === pilotId ? { ...i, status: InitiativeStatus.IN_EXECUTION } : i
     );
     updateFullSession({ initiatives: updated, step3Completed: true });
     await Api.saveSession(currentUser!.id, SessionMode.FULL, { ...fullSession, initiatives: updated, step3Completed: true }, currentProjectId || undefined);

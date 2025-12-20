@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { FullSession, FullInitiative } from '../types';
+import { FullSession, FullInitiative, InitiativeStatus } from '../types';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight, User, Calendar, BarChart2 } from 'lucide-react';
 import { InitiativeTaskBoard } from './InitiativeTaskBoard';
@@ -43,10 +43,13 @@ export const FullStep5Workspace: React.FC<FullStep5WorkspaceProps> = ({
          }
 
          // Filter: Blocked Only
-         if (showBlockedOnly && i.status !== 'Blocked' && status !== 'Blocked') return false;
+         if (showBlockedOnly && i.status !== InitiativeStatus.BLOCKED && status !== 'Blocked') return false;
 
-         if (status === 'To Do') return ['To Do', 'Draft', 'Ready'].includes(i.status); // Map old statuses to To Do
-         return i.status === status;
+         if (status === 'To Do') return [InitiativeStatus.DRAFT, InitiativeStatus.PLANNED, InitiativeStatus.APPROVED].includes(i.status);
+         if (status === 'In Progress') return i.status === InitiativeStatus.IN_EXECUTION;
+         if (status === 'Blocked') return i.status === InitiativeStatus.BLOCKED;
+         if (status === 'Done') return i.status === InitiativeStatus.COMPLETED;
+         return false;
       });
    };
 
@@ -56,8 +59,8 @@ export const FullStep5Workspace: React.FC<FullStep5WorkspaceProps> = ({
 
    // KPIs
    const total = initiatives.length;
-   const doneCount = initiatives.filter(i => i.status === 'Done').length;
-   const blockedCount = initiatives.filter(i => i.status === 'Blocked').length;
+   const doneCount = initiatives.filter(i => i.status === InitiativeStatus.COMPLETED).length;
+   const blockedCount = initiatives.filter(i => i.status === InitiativeStatus.BLOCKED).length;
    const completionRate = total > 0 ? (doneCount / total) * 100 : 0;
 
    if (selectedInitiative) {

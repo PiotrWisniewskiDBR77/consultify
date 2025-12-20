@@ -1,7 +1,7 @@
 import React, { useEffect, useCallback, useState } from 'react';
 import { SplitLayout } from '../components/SplitLayout';
 import { FullPilotWorkspace } from '../components/FullPilotWorkspace'; // New Component
-import { FullInitiative, AppView, AIMessageHistory, SessionMode } from '../types';
+import { FullInitiative, AppView, AIMessageHistory, SessionMode, InitiativeStatus } from '../types';
 import { Api } from '../services/api';
 import { useAppStore } from '../store/useAppStore';
 import { sendMessageToAI } from '../services/ai/gemini';
@@ -22,12 +22,10 @@ export const FullPilotView: React.FC = () => {
     const language = currentUser?.preferredLanguage || 'EN';
 
     // Find the Active Pilot Initiative
-    // We look for status 'step4' (which we set in RoadmapView) OR 'In Progress' if marked as Pilot
+    // We look for status 'IN_EXECUTION' (which replaced step4) AND Wave 1
     // For simplicity, let's assume the "Pilot" is the one passed from Roadmap.
-    // Actually, we should probably add a specific 'isPilot: boolean' flag to initiatives or rely on status='step4'.
-    // Using status='step4' as "Ready for Pilot" / "In Pilot".
 
-    const pilotInitiative = fullSession.initiatives.find(i => i.status === 'step4' || i.status === 'In Progress' && i.wave === 'Wave 1');
+    const pilotInitiative = fullSession.initiatives.find(i => i.status === InitiativeStatus.IN_EXECUTION && i.wave === 'Wave 1');
 
     const addUserMessage = (content: string) => {
         addMessage({ id: Date.now().toString(), role: 'user', content, timestamp: new Date() });
@@ -137,7 +135,7 @@ export const FullPilotView: React.FC = () => {
                                             console.log("Pilot selection - Clicked:", init.id);
                                             // Activate Pilot
                                             const updated = fullSession.initiatives.map(i =>
-                                                i.id === init.id ? { ...i, status: 'step4' as const } : i
+                                                i.id === init.id ? { ...i, status: InitiativeStatus.IN_EXECUTION } : i
                                             );
 
                                             updateFullSession({ initiatives: updated, step3Completed: true });
@@ -195,7 +193,7 @@ export const FullPilotView: React.FC = () => {
                                                 try {
                                                     // Activate Pilot
                                                     const updated = fullSession.initiatives.map(i =>
-                                                        i.id === init.id ? { ...i, status: 'step4' as const } : i
+                                                        i.id === init.id ? { ...i, status: InitiativeStatus.IN_EXECUTION } : i
                                                     );
 
                                                     updateFullSession({ initiatives: updated, step3Completed: true });

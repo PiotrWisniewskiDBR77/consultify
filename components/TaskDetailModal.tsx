@@ -82,8 +82,11 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
         }
     };
 
-    const getRiskColor = (risk?: RiskRating) => {
-        switch (risk) {
+    const getRiskColor = (risk?: RiskRating | string) => {
+        // Handle RiskRating object or string legacy
+        const val = (typeof risk === 'object' ? (risk?.metric || '') : (risk || '')).toLowerCase();
+
+        switch (val) {
             case 'critical': return 'text-red-500 bg-red-500/10 border-red-500/20';
             case 'high': return 'text-orange-500 bg-orange-500/10 border-orange-500/20';
             case 'medium': return 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20';

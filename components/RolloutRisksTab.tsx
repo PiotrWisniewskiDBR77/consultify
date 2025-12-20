@@ -23,6 +23,7 @@ export const RolloutRisksTab: React.FC<RolloutRisksTabProps> = ({ data, initiati
 
     const addItem = () => {
         const newItem: RAIDItem = {
+            // eslint-disable-next-line
             id: Date.now().toString(),
             type: activeType,
             title: 'New ' + activeType,
@@ -78,8 +79,8 @@ export const RolloutRisksTab: React.FC<RolloutRisksTabProps> = ({ data, initiati
                         key={type.id}
                         onClick={() => setActiveType(type.id as any)}
                         className={`px-4 py-3 font-bold text-sm flex items-center gap-2 rounded-t-lg transition-colors border-b-2 ${activeType === type.id
-                                ? 'bg-slate-50 dark:bg-white/5 border-red-500 text-slate-800 dark:text-white'
-                                : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 border-transparent'
+                            ? 'bg-slate-50 dark:bg-white/5 border-red-500 text-slate-800 dark:text-white'
+                            : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 border-transparent'
                             }`}
                     >
                         <type.icon size={16} className={activeType === type.id ? type.color : 'text-slate-400'} />

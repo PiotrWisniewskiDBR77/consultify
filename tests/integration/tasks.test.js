@@ -87,11 +87,11 @@ describe('Tasks Integration', () => {
                 priority: 'medium'
             });
 
-        if (res.status !== 200) {
+        if (res.status !== 201) {
             console.error('Task creation failed:', JSON.stringify(res.body, null, 2));
             console.error('Status:', res.status);
         }
-        expect(res.status).toBe(200);
+        expect(res.status).toBe(201);
         expect(res.body.title).toBe(`New Task ${testId}`);
     });
 });
