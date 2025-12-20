@@ -50,3 +50,4 @@ server/consultify.db
 node_modules_trash
 trash_node_modules_*
 package-lock 2.json
+verify_all_apis.cjs
