@@ -4,11 +4,12 @@ import { User, UserRole, Language, AppView } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
 import {
     Users, Search, Layers, Plus, Trash2, Edit, Shield, TrendingUp, Activity,
-    DollarSign, X, Check, Briefcase
+    DollarSign, X, Check, Briefcase, Settings
 } from 'lucide-react';
 import { AdminLLMView } from './AdminLLMView';
 import { AdminKnowledgeView } from './AdminKnowledgeView';
 import { AdminAnalyticsView } from './AdminAnalyticsView';
+import { ProjectGovernance } from '../../components/admin/ProjectGovernance'; // CRIT-02
 import { toast } from 'react-hot-toast';
 
 interface AdminViewProps {
@@ -38,6 +39,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const [showAddProjectModal, setShowAddProjectModal] = useState(false);
     const [newProjectName, setNewProjectName] = useState('');
+    const [selectedProjectForGovernance, setSelectedProjectForGovernance] = useState<Project | null>(null); // CRIT-02
 
     // User Form State
     const [formData, setFormData] = useState({
@@ -202,6 +204,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
                                 <Layers size={20} />
                             </div>
                             <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onClick={() => setSelectedProjectForGovernance(p)} className="text-slate-500 hover:text-purple-400" title="Governance Settings"><Settings size={16} /></button>
                                 <button onClick={() => handleDeleteProject(p.id)} className="text-slate-500 hover:text-red-400"><Trash2 size={16} /></button>
                             </div>
                         </div>
@@ -358,6 +361,29 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
                     </div>
                 </div>
             )}
+
+            {/* CRIT-02: Project Governance Modal */}
+            {selectedProjectForGovernance && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                    <div className="bg-navy-900 border border-white/10 rounded-xl p-6 w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-auto">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                                <Settings size={20} className="text-purple-400" />
+                                Governance: {selectedProjectForGovernance.name}
+                            </h2>
+                            <button onClick={() => setSelectedProjectForGovernance(null)} className="text-slate-400 hover:text-white"><X size={20} /></button>
+                        </div>
+                        <ProjectGovernance
+                            projectId={selectedProjectForGovernance.id}
+                            onSave={() => {
+                                toast.success('Governance settings saved');
+                                setSelectedProjectForGovernance(null);
+                            }}
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
+
