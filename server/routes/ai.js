@@ -290,6 +290,35 @@ router.post('/actions/:id/execute', verifyToken, async (req, res) => {
     }
 });
 
+// GET /api/ai/actions/proposals
+router.get('/actions/proposals', verifyToken, async (req, res) => {
+    // RBAC: ADMIN or SUPERADMIN
+    if (req.userRole !== 'ADMIN' && req.userRole !== 'SUPERADMIN') {
+        return res.status(403).json({ error: 'Permission denied. ADMIN or SUPERADMIN required.' });
+    }
+
+    // SUPERADMIN can specify ?organizationId=...
+    const organizationId = (req.userRole === 'SUPERADMIN' && req.query.organizationId)
+        ? req.query.organizationId
+        : req.organizationId;
+
+    if (!organizationId) {
+        return res.status(400).json({ error: 'organizationId required' });
+    }
+
+    try {
+        const AIContextBuilder = require('../ai/aiContextBuilder');
+        const ActionProposalEngine = require('../ai/actionProposalEngine');
+
+        const context = await AIContextBuilder.buildContext(organizationId);
+        const proposals = ActionProposalEngine.generateProposals(context);
+
+        res.json(proposals);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // ==================== AUDIT ====================
 
 // GET /api/ai/audit

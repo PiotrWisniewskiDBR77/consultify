@@ -42,6 +42,8 @@ import {
   Bell, // Notifications
   Link, // Integrations
   Eye, // Step D: Executive View
+  TrendingUp,
+  Sparkles,
 } from 'lucide-react';
 import { SidebarUsage } from './SidebarUsage';
 import { PhaseIndicator } from './PMO/PhaseIndicator';
@@ -282,6 +284,13 @@ export const Sidebar: React.FC = () => {
       icon: <BookOpen size={20} />,
       viewId: AppView.FULL_STEP6_REPORTS,
       requiresView: AppView.FULL_STEP5_EXECUTION
+    },
+    {
+      id: 'AI_ADVISOR',
+      label: t('sidebar.aiAdvisor', 'AI Advisor'),
+      icon: <Sparkles size={20} />,
+      viewId: AppView.AI_ACTION_PROPOSALS,
+      requiresView: AppView.DASHBOARD // Available essentially always for admins
     }
   ];
 
@@ -291,6 +300,7 @@ export const Sidebar: React.FC = () => {
     icon: <Shield size={20} />,
     subItems: [
       { id: 'ADMIN_DASHBOARD', label: t('sidebar.dashboard'), viewId: AppView.ADMIN_DASHBOARD, icon: <LayoutDashboard size={16} /> },
+      { id: 'ADMIN_METRICS', label: t('sidebar.metrics', 'Metrics & Conversion'), viewId: AppView.ADMIN_METRICS, icon: <TrendingUp size={16} /> },
       { id: 'ADMIN_USERS', label: t('sidebar.adminUsers'), viewId: AppView.ADMIN_USERS, icon: <Users size={16} /> },
       { id: 'ADMIN_PROJECTS', label: t('sidebar.adminProjects'), viewId: AppView.ADMIN_PROJECTS, icon: <Building2 size={16} /> },
       { id: 'ADMIN_LLM', label: t('sidebar.adminLLM'), viewId: AppView.ADMIN_LLM, icon: <Brain size={16} /> },

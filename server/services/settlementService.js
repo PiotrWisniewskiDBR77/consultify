@@ -19,6 +19,7 @@ const db = require('../database');
 const { v4: uuidv4 } = require('uuid');
 const AttributionService = require('./attributionService');
 const PartnerService = require('./partnerService');
+const MetricsCollector = require('./metricsCollector');
 
 const PERIOD_STATUS = {
     OPEN: 'OPEN',
@@ -354,6 +355,25 @@ const SettlementService = {
         });
 
         console.log(`[SettlementService] Calculated ${settlements.length} settlements for period ${periodId}`);
+
+        // Step 7: Record metrics event for conversion intelligence
+        try {
+            await MetricsCollector.recordEvent(MetricsCollector.EVENT_TYPES.SETTLEMENT_GENERATED, {
+                userId: calculatedByUserId,
+                source: MetricsCollector.SOURCE_TYPES.PARTNER,
+                context: {
+                    periodId,
+                    periodStart: period.periodStart,
+                    periodEnd: period.periodEnd,
+                    settlementCount: settlements.length,
+                    partnerCount: partnerIds.size,
+                    totalRevenue,
+                    totalSettlements
+                }
+            });
+        } catch (metricsErr) {
+            console.warn('[SettlementService] Metrics recording failed:', metricsErr);
+        }
 
         return {
             periodId,

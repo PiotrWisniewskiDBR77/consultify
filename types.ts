@@ -48,6 +48,7 @@ export enum AppView {
   ADMIN_ANALYTICS = 'ADMIN_ANALYTICS',
   ADMIN_FEEDBACK = 'ADMIN_FEEDBACK',
   ADMIN_BILLING = 'ADMIN_BILLING',
+  ADMIN_METRICS = 'ADMIN_METRICS',
   SETTINGS_PROFILE = 'SETTINGS_PROFILE',
   SETTINGS_BILLING = 'SETTINGS_BILLING',
   SETTINGS_AI = 'SETTINGS_AI',
@@ -67,7 +68,10 @@ export enum AppView {
   MY_WORK = 'MY_WORK', // New Module 7 (Tasks & Workflow)
 
   // Step D: Executive View (Read-only reporting for executives)
-  EXECUTIVE_VIEW = 'EXECUTIVE_VIEW'
+  EXECUTIVE_VIEW = 'EXECUTIVE_VIEW',
+
+  // AI Action Proposals Review
+  AI_ACTION_PROPOSALS = 'AI_ACTION_PROPOSALS'
 }
 
 // SCMS: Canonical Change Lifecycle Phases (System Reframe Step 0)

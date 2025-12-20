@@ -15,7 +15,7 @@ const express = require('express');
 const router = express.Router();
 const PartnerService = require('../services/partnerService');
 const SettlementService = require('../services/settlementService');
-const authMiddleware = require('../middleware/auth');
+const authMiddleware = require('../middleware/authMiddleware');
 const { requireRole } = require('../middleware/rbac');
 
 // ==========================================
@@ -186,15 +186,54 @@ router.get('/:id/agreements', authMiddleware, async (req, res) => {
 
 // ==========================================
 // PARTNER SETTLEMENT ROUTES (READ-ONLY)
+// Self-only access: partners can only see their own settlements
 // ==========================================
+
+/**
+ * Check if user has access to partner data
+ * SuperAdmin: can access all
+ * Partner: can only access self (via user → partner mapping)
+ */
+const checkPartnerAccess = async (req, res, next) => {
+    const requestedPartnerId = req.params.id;
+    const user = req.user;
+
+    // SuperAdmin can access any partner
+    if (user.role === 'SUPERADMIN' || user.role === 'ADMIN') {
+        return next();
+    }
+
+    // For regular users, check if they have a partner profile linked
+    // Partner profile is stored in user metadata or via a separate table
+    const userPartnerId = user.partnerId || user.metadata?.partnerId;
+
+    if (!userPartnerId) {
+        return res.status(403).json({
+            error: true,
+            errorCode: 'NO_PARTNER_PROFILE',
+            message: 'No partner profile associated with this user'
+        });
+    }
+
+    if (userPartnerId !== requestedPartnerId) {
+        return res.status(403).json({
+            error: true,
+            errorCode: 'FORBIDDEN',
+            message: 'You can only access your own settlement data'
+        });
+    }
+
+    next();
+};
 
 /**
  * Get all settlements for a partner
  * GET /api/partners/:id/settlements
+ * 
+ * RBAC: Partner can only see own settlements
  */
-router.get('/:id/settlements', authMiddleware, async (req, res) => {
+router.get('/:id/settlements', authMiddleware, checkPartnerAccess, async (req, res) => {
     try {
-        // TODO: Add permission check - partner can only see own settlements
         const settlements = await SettlementService.getPartnerSettlements(req.params.id);
 
         res.json({
@@ -214,10 +253,11 @@ router.get('/:id/settlements', authMiddleware, async (req, res) => {
 /**
  * Get partner report for a specific period
  * GET /api/partners/:id/settlements/:periodId
+ * 
+ * RBAC: Partner can only see own settlements
  */
-router.get('/:id/settlements/:periodId', authMiddleware, async (req, res) => {
+router.get('/:id/settlements/:periodId', authMiddleware, checkPartnerAccess, async (req, res) => {
     try {
-        // TODO: Add permission check - partner can only see own settlements
         const report = await SettlementService.getPartnerReport(req.params.id, req.params.periodId);
 
         res.json({

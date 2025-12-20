@@ -13,7 +13,7 @@
 const express = require('express');
 const router = express.Router();
 const SettlementService = require('../services/settlementService');
-const authMiddleware = require('../middleware/auth');
+const authMiddleware = require('../middleware/authMiddleware');
 const { requireRole } = require('../middleware/rbac');
 
 // All routes require SUPERADMIN

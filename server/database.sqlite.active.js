@@ -2621,6 +2621,186 @@ function initDb() {
         db.run(`CREATE INDEX IF NOT EXISTS idx_partner_settlements_attribution ON partner_settlements(source_attribution_id)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_partner_settlements_entry_type ON partner_settlements(entry_type)`);
 
+        // ==========================================
+        // STEP 6: IN-APP HELP + TRAINING + PLAYBOOKS
+        // Enterprise+ contextual help and user guidance system
+        // ==========================================
+
+        /**
+         * Help Playbooks Table
+         * 
+         * Stores contextual help sequences that guide users through features.
+         * Playbooks are filtered by organization type (DEMO/TRIAL/PAID) and user role.
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS help_playbooks (
+            id TEXT PRIMARY KEY,
+            key TEXT UNIQUE NOT NULL,              -- Unique key e.g. "trial_expired", "invite_users"
+            title TEXT NOT NULL,
+            description TEXT,
+            target_role TEXT DEFAULT 'ANY',        -- ADMIN | USER | SUPERADMIN | PARTNER | ANY
+            target_org_type TEXT DEFAULT 'ANY',    -- DEMO | TRIAL | PAID | ANY
+            priority INTEGER DEFAULT 3,            -- 1-5 (1=highest priority)
+            is_active INTEGER DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        /**
+         * Help Steps Table
+         * 
+         * Individual steps within each playbook.
+         * Steps are displayed in order and can link to specific UI elements or routes.
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS help_steps (
+            id TEXT PRIMARY KEY,
+            playbook_id TEXT NOT NULL,
+            step_order INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            content_md TEXT NOT NULL,              -- Markdown content
+            ui_target TEXT,                        -- CSS selector or route path
+            action_type TEXT DEFAULT 'INFO',       -- INFO | CTA | LINK
+            action_payload TEXT DEFAULT '{}',      -- JSON payload for CTA/LINK actions
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(playbook_id) REFERENCES help_playbooks(id) ON DELETE CASCADE
+        )`);
+
+        /**
+         * Help Events Table (AUDIT / ANALYTICS)
+         * 
+         * CRITICAL: This table is APPEND-ONLY for audit compliance.
+         * Never UPDATE or DELETE rows. All interactions are logged for analytics.
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS help_events (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            organization_id TEXT NOT NULL,
+            playbook_key TEXT NOT NULL,
+            event_type TEXT NOT NULL,              -- VIEWED | STARTED | COMPLETED | DISMISSED
+            context TEXT DEFAULT '{}',             -- JSON context (route, feature, blocked_action, etc.)
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+
+        // Indexes for Help System performance
+        db.run(`CREATE INDEX IF NOT EXISTS idx_help_playbooks_key ON help_playbooks(key)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_help_playbooks_target ON help_playbooks(target_org_type, target_role, is_active)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_help_steps_playbook ON help_steps(playbook_id, step_order)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_help_events_user ON help_events(user_id, playbook_key)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_help_events_org ON help_events(organization_id, event_type)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_help_events_created ON help_events(created_at)`);
+
+        // ==========================================
+        // STEP 7: METRICS & CONVERSION INTELLIGENCE
+        // Enterprise+ Decision Layer
+        // ==========================================
+
+        /**
+         * Metrics Events Table (APPEND-ONLY - Single Source of Truth)
+         * 
+         * CRITICAL: This table is APPEND-ONLY for audit compliance.
+         * NEVER UPDATE or DELETE rows - all business intelligence is derived from this.
+         * 
+         * Event Sources:
+         * - trial_started: Trial organization created
+         * - trial_extended: Trial period extended
+         * - trial_expired: Trial expired without upgrade
+         * - upgraded_to_paid: Trial converted to paid plan
+         * - demo_started: Demo session initiated
+         * - invite_sent: Invitation email sent
+         * - invite_accepted: User accepted invitation
+         * - help_started: User started a playbook
+         * - help_completed: User completed a playbook
+         * - settlement_generated: Partner settlement calculated
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS metrics_events (
+            id TEXT PRIMARY KEY,
+            event_type TEXT NOT NULL,
+            user_id TEXT,
+            organization_id TEXT,
+            source TEXT,
+            context TEXT DEFAULT '{}',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+
+        // Indexes for metrics_events performance
+        db.run(`CREATE INDEX IF NOT EXISTS idx_metrics_events_type ON metrics_events(event_type)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_metrics_events_org ON metrics_events(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_metrics_events_created ON metrics_events(created_at)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_metrics_events_source ON metrics_events(source)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_metrics_events_type_created ON metrics_events(event_type, created_at)`);
+
+        /**
+         * Metrics Snapshots Table (Materialized Views)
+         * 
+         * Generated daily via cron for dashboard performance.
+         * Can be rebuilt from metrics_events at any time (idempotent).
+         * 
+         * Metric Keys:
+         * - funnel_demo_to_trial: Demo to Trial conversion rate
+         * - funnel_trial_to_paid: Trial to Paid conversion rate
+         * - funnel_help_completion: Help playbook completion rate
+         * - funnel_attribution_conversion: Attribution channel conversion rates
+         * - avg_days_to_upgrade: Average days from trial to paid
+         * - trial_expiry_rate: Trials that expire without action
+         * - partner_revenue: Revenue per partner
+         * - help_effectiveness: Help leading to action rate
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS metrics_snapshots (
+            id TEXT PRIMARY KEY,
+            snapshot_date DATE NOT NULL,
+            metric_key TEXT NOT NULL,
+            metric_value REAL NOT NULL,
+            dimensions TEXT DEFAULT '{}',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        // Indexes for metrics_snapshots performance
+        db.run(`CREATE INDEX IF NOT EXISTS idx_snapshots_date ON metrics_snapshots(snapshot_date)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_snapshots_key ON metrics_snapshots(metric_key)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_snapshots_date_key ON metrics_snapshots(snapshot_date, metric_key)`);
+
+        // Unique constraint for snapshot deduplication (allows rebuilding)
+        db.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_snapshots_unique ON metrics_snapshots(snapshot_date, metric_key, dimensions)`);
+
+        /**
+         * Action Decisions Table (IMMUTABLE AUDIT LOG)
+         * Step 9.2: Approval & Audit Layer
+         * Captures human decisions (Approved, Rejected, Modified) for AI Action Proposals.
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS action_decisions (
+            id TEXT PRIMARY KEY,
+            proposal_id TEXT NOT NULL,
+            decision TEXT NOT NULL,          -- APPROVED | REJECTED | MODIFIED
+            decided_by_user_id TEXT NOT NULL,
+            decision_reason TEXT,
+            original_payload TEXT,           -- JSON (added for execution)
+            modified_payload TEXT,           -- JSON (only if MODIFIED)
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(decided_by_user_id) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_action_decisions_proposal ON action_decisions(proposal_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_action_decisions_user ON action_decisions(decided_by_user_id)`);
+
+        /**
+         * Action Executions Table (APPEND-ONLY)
+         * Step 9.3: Execution Adapter
+         * Logs the result of executing approved decisions.
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS action_executions (
+            id TEXT PRIMARY KEY,
+            decision_id TEXT NOT NULL,
+            executed_by TEXT DEFAULT 'SYSTEM',
+            status TEXT NOT NULL,            -- SUCCESS | FAILED
+            result TEXT,                     -- JSON
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(decision_id) REFERENCES action_decisions(id)
+        )`);
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_action_executions_decision ON action_executions(decision_id)`);
+
         // Seed Super Admin & Default Organization
         const superAdminOrgId = 'org-dbr77-system';
         const superAdminId = 'admin-001';

@@ -45,6 +45,8 @@ test-results
 backend_*.log
 frontend_*.log
 server/consultify.db
+server/database.sqlite
+junit.xml
 
 # Garbage / Backup files
 node_modules_trash

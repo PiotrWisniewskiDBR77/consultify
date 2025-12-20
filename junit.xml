@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="3" failures="0" errors="0" time="0.119452625">
+    <testsuite name="tests/integration/actionExecution.test.js" timestamp="2025-12-20T21:23:33.284Z" hostname="MacBook-Pro-Piotr.local" tests="3" failures="0" errors="0" skipped="0" time="0.119452625">
+        <testcase classname="tests/integration/actionExecution.test.js" name="Action Execution Integration (Step 9.3) &gt; should successfully execute an APPROVED TASK_CREATE action" time="0.010394958">
+        </testcase>
+        <testcase classname="tests/integration/actionExecution.test.js" name="Action Execution Integration (Step 9.3) &gt; should maintain idempotency (not execute twice)" time="0.004753791">
+        </testcase>
+        <testcase classname="tests/integration/actionExecution.test.js" name="Action Execution Integration (Step 9.3) &gt; should fail if decision is REJECTED" time="0.003506459">
+        </testcase>
+    </testsuite>
+</testsuites>

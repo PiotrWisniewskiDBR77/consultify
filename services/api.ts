@@ -1548,5 +1548,96 @@ export const Api = {
         const res = await fetch(`${API_URL}/pmo-context/${projectId}/task-labels`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch PMO task labels');
         return res.json();
+    },
+
+    // ==========================================
+    // STEP 7: METRICS & CONVERSION INTELLIGENCE
+    // ==========================================
+    getMetricsOverview: async () => {
+        const res = await fetch(`${API_URL}/metrics/overview`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch metrics overview');
+        return res.json();
+    },
+
+    getMetricsFunnels: async (days: number = 30) => {
+        const res = await fetch(`${API_URL}/metrics/funnels?days=${days}`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch funnels');
+        return res.json();
+    },
+
+    getMetricsCohorts: async (type: string = 'weekly', weeks: number = 12) => {
+        const res = await fetch(`${API_URL}/metrics/cohorts?type=${type}&weeks=${weeks}`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch cohorts');
+        return res.json();
+    },
+
+    getMetricsHelp: async (days: number = 30) => {
+        const res = await fetch(`${API_URL}/metrics/help?days=${days}`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch help metrics');
+        return res.json();
+    },
+
+    getMetricsAttribution: async (days: number = 30) => {
+        const res = await fetch(`${API_URL}/metrics/attribution?days=${days}`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch attribution');
+        return res.json();
+    },
+
+    getMetricsPartners: async (days: number = 90) => {
+        const res = await fetch(`${API_URL}/metrics/partners?days=${days}`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch partner metrics');
+        return res.json();
+    },
+
+    getMetricsWarnings: async () => {
+        const res = await fetch(`${API_URL}/metrics/warnings`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch warnings');
+        return res.json();
+    },
+
+    getOrgMetricsOverview: async () => {
+        const res = await fetch(`${API_URL}/metrics/org/overview`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch organization metrics');
+        return res.json();
+    },
+
+    getOrgMetricsHelp: async () => {
+        const res = await fetch(`${API_URL}/metrics/org/help`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch organization help metrics');
+        return res.json();
+    },
+
+    getOrgMetricsTeam: async () => {
+        const res = await fetch(`${API_URL}/metrics/org/team`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch organization team metrics');
+        return res.json();
+    },
+
+    // ==========================================
+    // STEP 9: AI ADVISOR & ACTIONS
+    // ==========================================
+    getAIActionProposals: async (): Promise<any[]> => {
+        const res = await fetch(`${API_URL}/ai/actions/proposals`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch AI action proposals');
+        return res.json();
+    },
+
+    getAIActionAudit: async (): Promise<any[]> => {
+        const res = await fetch(`${API_URL}/ai/actions/audit`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch AI action audit log');
+        return res.json();
+    },
+
+    recordAIActionDecision: async (data: { proposal_id: string, decision: string, reason?: string }): Promise<any> => {
+        const res = await fetch(`${API_URL}/ai/actions/decide`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error || 'Failed to record action decision');
+        }
+        return res.json();
     }
 };

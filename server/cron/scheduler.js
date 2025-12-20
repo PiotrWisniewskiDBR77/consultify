@@ -31,7 +31,16 @@ const Scheduler = {
             TrialCron.cleanupOldUsageCounters();
         });
 
-        console.log('[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM)');
+        // 5. Metrics Snapshot Generation - Run every day at 2:45 AM
+        cron.schedule('45 2 * * *', () => {
+            console.log('[Scheduler] Running Daily Metrics Snapshot Generation');
+            const MetricsAggregator = require('../services/metricsAggregator');
+            MetricsAggregator.buildDailySnapshots().catch(err => {
+                console.error('[Scheduler] Metrics Snapshot Generation failed:', err.message);
+            });
+        });
+
+        console.log('[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM)');
     }
 };
 

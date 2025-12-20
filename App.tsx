@@ -21,6 +21,7 @@ import { UserDashboardView } from './views/UserDashboardView';
 import { Module1ContextView } from './views/Module1ContextView';
 import { ContextBuilderView } from './views/ContextBuilder/ContextBuilderView';
 import { MyWorkView } from './views/MyWorkView';
+import { ActionProposalView } from './views/ActionProposalView';
 import { AppView, SessionMode, AuthStep, User, UserRole } from './types';
 import { Menu, UserCircle, ChevronRight, CheckCircle, CheckSquare, Loader2, AlertCircle, LogOut, Settings, CreditCard, Cpu, Sun, Moon, Monitor, Languages } from 'lucide-react';
 import { useAppStore } from './store/useAppStore';
@@ -36,6 +37,20 @@ import { ChatOverlay } from './components/AIChat/ChatOverlay';
 import { AIProvider } from './contexts/AIContext';
 import { PMOStatusBar } from './components/PMO';
 import { usePMOContext } from './hooks/usePMOContext';
+import { HelpProvider, useHelpPanel } from './contexts/HelpContext';
+import HelpButton from './components/HelpButton';
+import HelpPanel from './components/HelpPanel';
+
+// Help system wrapper component
+const HelpButtonWrapper = () => {
+    const { isPanelOpen, openPanel, closePanel } = useHelpPanel();
+    return (
+        <>
+            <HelpButton onClick={openPanel} />
+            <HelpPanel isOpen={isPanelOpen} onClose={closePanel} />
+        </>
+    );
+};
 
 const AppContent = () => {
     const {
@@ -301,6 +316,10 @@ const AppContent = () => {
             return <MyWorkView />;
         }
 
+        if (currentView === AppView.AI_ACTION_PROPOSALS) {
+            return <ActionProposalView />;
+        }
+
         // Admin Views
         if (currentView.startsWith('ADMIN')) {
             return <AdminView currentUser={currentUser} onNavigate={setCurrentView} />;
@@ -331,6 +350,13 @@ const AppContent = () => {
             <div className="flex h-screen w-full bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white font-sans overflow-hidden">
                 <Toaster position="bottom-right" />
                 <ChatOverlay />
+
+                {/* Help System - Global floating button + panel */}
+                {isSessionView && (
+                    <>
+                        <HelpButtonWrapper />
+                    </>
+                )}
 
                 {/* Impersonation Banner */}
                 {currentUser?.impersonatorId && (
@@ -582,7 +608,9 @@ const AppContent = () => {
 export const App = () => (
     <AutoSaveProvider>
         <AIProvider>
-            <AppContent />
+            <HelpProvider>
+                <AppContent />
+            </HelpProvider>
         </AIProvider>
     </AutoSaveProvider>
 );

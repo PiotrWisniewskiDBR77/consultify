@@ -242,7 +242,20 @@ const settlementRoutes = require('./routes/settlements');
 app.use('/api/partners', partnerRoutes);
 app.use('/api/settlements', settlementRoutes);
 
+// Step 6: In-App Help + Training + Playbooks Routes
+const helpRoutes = require('./routes/help');
+app.use('/api/help', helpRoutes);
+
+// Step 7: Metrics & Conversion Intelligence Routes
+const metricsRoutes = require('./routes/metrics');
+app.use('/api/metrics', metricsRoutes);
+
 // AI Core Layer Routes (already mounted above at /api/ai)
+const aiCoachRoutes = require('./routes/aiCoach');
+app.use('/api/ai/coach', aiCoachRoutes);
+
+const actionDecisionRoutes = require('./routes/actionDecisions');
+app.use('/api/ai/actions', actionDecisionRoutes);
 
 const db = require('./database');
 

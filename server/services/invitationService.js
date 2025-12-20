@@ -21,6 +21,7 @@ const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const AccessPolicyService = require('./accessPolicyService');
 const AttributionService = require('./attributionService');
+const MetricsCollector = require('./metricsCollector');
 
 // Constants
 const INVITATION_EXPIRY_DAYS = 7;
@@ -306,6 +307,18 @@ const InvitationService = {
 
                     // Log sent event
                     await InvitationService.logEvent(id, INVITATION_EVENT_TYPES.SENT, invitedByUserId, { inviteLink }, requestInfo);
+
+                    // Step 7: Record metrics event for conversion intelligence
+                    try {
+                        await MetricsCollector.recordEvent(MetricsCollector.EVENT_TYPES.INVITE_SENT, {
+                            userId: invitedByUserId,
+                            organizationId,
+                            source: MetricsCollector.SOURCE_TYPES.INVITATION,
+                            context: { email: email.toLowerCase(), role, invitationType: INVITATION_TYPES.ORG }
+                        });
+                    } catch (metricsErr) {
+                        console.warn('[InvitationService] Metrics recording failed:', metricsErr);
+                    }
 
                     resolve({
                         id,
@@ -612,6 +625,23 @@ const InvitationService = {
             projectId: invitation.project_id,
             role_assigned: invitation.role_to_assign || invitation.role
         }, requestInfo);
+
+        // Step 7: Record metrics event for conversion intelligence
+        try {
+            await MetricsCollector.recordEvent(MetricsCollector.EVENT_TYPES.INVITE_ACCEPTED, {
+                userId,
+                organizationId: invitation.organization_id,
+                source: MetricsCollector.SOURCE_TYPES.INVITATION,
+                context: {
+                    isNewUser,
+                    invitationType: invitation.invitation_type,
+                    invitationId: invitation.id,
+                    role: invitation.role_to_assign || invitation.role
+                }
+            });
+        } catch (metricsErr) {
+            console.warn('[InvitationService] Metrics recording failed:', metricsErr);
+        }
 
         return {
             success: true,

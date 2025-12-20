@@ -17,6 +17,7 @@ const AccessPolicyService = require('./accessPolicyService');
 const ActivityService = require('./activityService');
 const NotificationService = require('./notificationService');
 const OrganizationEventService = require('./organizationEventService');
+const MetricsCollector = require('./metricsCollector');
 
 const TrialService = {
     /**
@@ -63,6 +64,14 @@ const TrialService = {
                                 userId,
                                 { durationDays, orgName }
                             );
+
+                            // Step 7: Record metrics event for conversion intelligence
+                            await MetricsCollector.recordEvent(MetricsCollector.EVENT_TYPES.TRIAL_STARTED, {
+                                userId,
+                                organizationId: orgId,
+                                source: MetricsCollector.SOURCE_TYPES.TRIAL,
+                                context: { durationDays, orgName }
+                            });
 
                             resolve({
                                 organizationId: orgId,
@@ -165,6 +174,18 @@ const TrialService = {
                                 message: `Your organization has been upgraded to the ${planType} plan. All trial limits have been removed.`
                             });
 
+                            // Step 7: Record metrics event for conversion intelligence
+                            await MetricsCollector.recordEvent(MetricsCollector.EVENT_TYPES.UPGRADED_TO_PAID, {
+                                userId: upgradedByUserId,
+                                organizationId,
+                                source: MetricsCollector.SOURCE_TYPES.TRIAL,
+                                context: {
+                                    planType,
+                                    previousType: orgInfo.organizationType,
+                                    previousPlan: orgInfo.plan
+                                }
+                            });
+
                             resolve({
                                 success: true,
                                 organizationType: AccessPolicyService.ORG_TYPES.PAID,
@@ -201,6 +222,13 @@ const TrialService = {
                             null,
                             { lockedAt: new Date().toISOString() }
                         );
+
+                        // Step 7: Record metrics event for conversion intelligence
+                        await MetricsCollector.recordEvent(MetricsCollector.EVENT_TYPES.TRIAL_EXPIRED, {
+                            organizationId,
+                            source: MetricsCollector.SOURCE_TYPES.TRIAL,
+                            context: { lockedAt: new Date().toISOString() }
+                        });
                     }
 
                     resolve();
@@ -245,12 +273,7 @@ const TrialService = {
                                 message: `Your trial for "${org.name}" will expire on ${new Date(org.trial_expires_at).toLocaleDateString()}. Upgrade now to keep your data and continue using all features.`
                             });
 
-                            // Create in-app notification
-                            await TrialService._createInAppNotification(org.id, {
-                                title: 'Trial expires in 7 days',
-                                message: 'Upgrade to continue using all features.',
-                                type: 'TRIAL_WARNING'
-                            });
+                            // Note: _notifyOrgAdmins uses NotificationService.create which handles in-app notifications
 
                             // ANTI-SPAM: Mark as warned
                             await new Promise((res, rej) => {
@@ -403,6 +426,18 @@ const TrialService = {
                                 }
                             );
 
+                            // Step 7: Record metrics event for conversion intelligence
+                            await MetricsCollector.recordEvent(MetricsCollector.EVENT_TYPES.TRIAL_EXTENDED, {
+                                userId: extendedByUserId,
+                                organizationId,
+                                source: MetricsCollector.SOURCE_TYPES.TRIAL,
+                                context: {
+                                    additionalDays,
+                                    reason,
+                                    extensionNumber: extensionCount + 1
+                                }
+                            });
+
                             resolve({
                                 success: true,
                                 newExpiresAt: newExpiry.toISOString(),
@@ -465,34 +500,6 @@ const TrialService = {
         });
     },
 
-    // Create in-app notification
-    _createInAppNotification: async (organizationId, { title, message, type }) => {
-        return new Promise((resolve, reject) => {
-            db.all(
-                `SELECT id FROM users WHERE organization_id = ? AND role IN ('ADMIN', 'SUPERADMIN')`,
-                [organizationId],
-                async (err, admins) => {
-                    if (err) return reject(err);
-
-                    for (const admin of admins || []) {
-                        try {
-                            db.run(
-                                `INSERT INTO notifications (id, user_id, organization_id, type, title, message, is_read, created_at)
-                                 VALUES (?, ?, ?, ?, ?, ?, 0, datetime('now'))`,
-                                [uuidv4(), admin.id, organizationId, type, title, message],
-                                (err) => {
-                                    if (err) console.error(`[TrialService] Failed to create notification:`, err);
-                                }
-                            );
-                        } catch (e) {
-                            console.error(`[TrialService] Notification creation error:`, e);
-                        }
-                    }
-                    resolve();
-                }
-            );
-        });
-    }
 };
 
 module.exports = TrialService;
