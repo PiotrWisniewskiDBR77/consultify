@@ -34,21 +34,33 @@ const MyWorkService = {
 
     /**
      * Get user's tasks
+     * GAP-04: Added locationIds filter support
      */
-    _getMyTasks: async (userId) => {
+    _getMyTasks: async (userId, locationIds = null) => {
         return new Promise((resolve, reject) => {
             const today = new Date().toISOString().split('T')[0];
 
-            const sql = `
+            let sql = `
                 SELECT t.*, i.name as initiative_name, p.name as project_name
                 FROM tasks t
                 LEFT JOIN initiatives i ON t.initiative_id = i.id
                 LEFT JOIN projects p ON t.project_id = p.id
                 WHERE t.assignee_id = ? AND t.status NOT IN ('done', 'DONE')
-                ORDER BY t.due_date ASC, t.priority DESC
             `;
+            const params = [userId];
 
-            db.all(sql, [userId], (err, rows) => {
+            // GAP-04: Filter by location if provided
+            if (locationIds && locationIds.length > 0) {
+                const placeholders = locationIds.map(() => '?').join(',');
+                sql += ` AND (i.id IN (
+                    SELECT il.initiative_id FROM initiative_locations il WHERE il.location_id IN (${placeholders})
+                ) OR t.initiative_id IS NULL)`;
+                params.push(...locationIds);
+            }
+
+            sql += ` ORDER BY t.due_date ASC, t.priority DESC`;
+
+            db.all(sql, params, (err, rows) => {
                 if (err) return reject(err);
 
                 const tasks = rows || [];

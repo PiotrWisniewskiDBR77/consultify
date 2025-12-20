@@ -116,6 +116,16 @@ const RagService = {
                     .map(r => `[Source: ${r.filename}] (Relevance: ${Math.round(r.score * 100)}%)\n${r.content}`)
                     .join('\n\n');
 
+                // GAP-13: Log RAG query for audit
+                db.run(`INSERT INTO activity_log (id, user_id, action, entity_type, entity_id, new_value, created_at)
+                        VALUES (?, NULL, 'rag_query', 'knowledge', NULL, ?, CURRENT_TIMESTAMP)`,
+                    [require('uuid').v4(), JSON.stringify({
+                        query: query.substring(0, 200),
+                        resultsCount: topChunks.filter(c => c.score > 0.5).length,
+                        topScore: topChunks[0]?.score
+                    })]
+                );
+
                 resolve(context);
             });
         });

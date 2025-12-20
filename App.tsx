@@ -34,6 +34,8 @@ import { AutoSaveProvider, useAutoSave } from './src/context/AutoSaveContext';
 import { SystemHealth } from './components/SystemHealth';
 import { ChatOverlay } from './components/AIChat/ChatOverlay';
 import { AIProvider } from './contexts/AIContext';
+import { PMOStatusBar } from './components/PMO';
+import { usePMOContext } from './hooks/usePMOContext';
 
 const AppContent = () => {
     const {
@@ -48,6 +50,9 @@ const AppContent = () => {
         logout,
         theme, toggleTheme
     } = useAppStore();
+
+    // Initialize PMO context for session views
+    const pmoContext = usePMOContext();
 
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const profileRef = useRef<HTMLDivElement>(null);
@@ -537,6 +542,11 @@ const AppContent = () => {
                                 </div>
                             </div>
                         </div>
+                    )}
+
+                    {/* PMO Status Bar - Shows phase, gate status, blocking issues */}
+                    {isSessionView && (
+                        <PMOStatusBar />
                     )}
 
                     {/* If SuperAdmin, simple full screen container logic is handled inside SuperAdminView which expects full height */}

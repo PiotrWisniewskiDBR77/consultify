@@ -242,11 +242,31 @@ const AIContextBuilder = {
     _buildKnowledgeContext: async (projectId) => {
         if (!projectId) {
             return {
+                ragDisabled: false,
                 projectDocuments: [],
                 previousDecisions: [],
                 changeRequests: [],
                 lessonsLearned: [],
                 phaseHistory: []
+            };
+        }
+
+        // GAP-03: Check if RAG is enabled for project
+        const project = await new Promise((resolve) => {
+            db.get(`SELECT rag_enabled FROM projects WHERE id = ?`, [projectId], (err, row) => {
+                resolve(row || { rag_enabled: 1 });
+            });
+        });
+
+        if (project.rag_enabled === 0) {
+            return {
+                ragDisabled: true,
+                projectDocuments: [],
+                previousDecisions: [],
+                changeRequests: [],
+                lessonsLearned: [],
+                phaseHistory: [],
+                message: 'RAG is disabled for this project'
             };
         }
 
@@ -262,7 +282,7 @@ const AIContextBuilder = {
         });
 
         // Phase history from project
-        const project = await new Promise((resolve, reject) => {
+        const projectInfo = await new Promise((resolve, reject) => {
             db.get(`SELECT phase_history FROM projects WHERE id = ?`, [projectId], (err, row) => {
                 if (err) reject(err);
                 else resolve(row || {});
@@ -271,7 +291,7 @@ const AIContextBuilder = {
 
         let phaseHistory = [];
         try {
-            phaseHistory = JSON.parse(project.phase_history || '[]');
+            phaseHistory = JSON.parse(projectInfo.phase_history || '[]');
         } catch { }
 
         return {

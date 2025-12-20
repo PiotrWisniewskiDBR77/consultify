@@ -106,7 +106,102 @@ const RoadmapService = {
                 resolve(Object.values(wavesMap));
             });
         });
+    },
+
+    /**
+     * GAP-06: Update initiative schedule with CR check
+     * If roadmap is baselined and governance requires CR, create one instead of direct update
+     */
+    updateInitiativeSchedule: async (initiativeId, updates, userId, projectId) => {
+        const db = require('../database');
+
+        // Check if initiative's wave is baselined
+        const initiative = await new Promise((resolve) => {
+            db.get(`SELECT i.wave_id, w.is_baselined, p.governance_settings
+                    FROM initiatives i
+                    LEFT JOIN roadmap_waves w ON i.wave_id = w.id
+                    LEFT JOIN projects p ON i.project_id = p.id
+                    WHERE i.id = ?`, [initiativeId], (err, row) => {
+                resolve(row || {});
+            });
+        });
+
+        const isBaselined = initiative.is_baselined === 1;
+        let governanceSettings = {};
+        try {
+            governanceSettings = JSON.parse(initiative.governance_settings || '{}');
+        } catch { }
+
+        // If baselined and governance requires CR for schedule changes
+        if (isBaselined && governanceSettings.requireChangeRequestForSchedule) {
+            // Create Change Request instead of direct update
+            const crId = uuidv4();
+            const auditTrail = JSON.stringify([{
+                action: 'CREATED',
+                by: userId,
+                at: new Date().toISOString()
+            }]);
+
+            await new Promise((resolve, reject) => {
+                db.run(`INSERT INTO decisions (
+                    id, project_id, decision_type, related_object_type, related_object_id,
+                    decision_owner_id, required, title, description, audit_trail, status
+                ) VALUES (?, ?, 'SCHEDULE_CHANGE', 'INITIATIVE', ?, ?, 1, ?, ?, ?, 'PENDING')`,
+                    [
+                        crId,
+                        projectId,
+                        initiativeId,
+                        userId,
+                        `Schedule change for initiative`,
+                        JSON.stringify(updates),
+                        auditTrail
+                    ], (err) => {
+                        if (err) reject(err);
+                        else resolve();
+                    });
+            });
+
+            return {
+                changeRequestCreated: true,
+                crId,
+                message: 'Schedule change requires approval. Change request created.',
+                proposedChanges: updates
+            };
+        }
+
+        // Direct update allowed
+        const setClauses = [];
+        const params = [];
+
+        if (updates.plannedStartDate) {
+            setClauses.push('start_date = ?');
+            params.push(updates.plannedStartDate);
+        }
+        if (updates.plannedEndDate) {
+            setClauses.push('end_date = ?');
+            params.push(updates.plannedEndDate);
+        }
+        if (updates.waveId !== undefined) {
+            setClauses.push('wave_id = ?');
+            params.push(updates.waveId);
+        }
+
+        if (setClauses.length === 0) {
+            return { success: true, message: 'No changes to apply' };
+        }
+
+        params.push(initiativeId);
+
+        await new Promise((resolve, reject) => {
+            db.run(`UPDATE initiatives SET ${setClauses.join(', ')} WHERE id = ?`, params, (err) => {
+                if (err) reject(err);
+                else resolve();
+            });
+        });
+
+        return { success: true, initiativeId, updates };
     }
 };
 
 module.exports = RoadmapService;
+

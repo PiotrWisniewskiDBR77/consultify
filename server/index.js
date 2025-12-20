@@ -178,6 +178,10 @@ app.use('/api/stage-gates', stageGatesRoutes);
 const pmoAnalysisRoutes = require('./routes/pmo-analysis');
 app.use('/api/pmo-analysis', pmoAnalysisRoutes);
 
+// PMO Context Routes (UI behavior integration)
+const pmoContextRoutes = require('./routes/pmo-context');
+app.use('/api/pmo-context', pmoContextRoutes);
+
 // SCMS Step 4: Roadmap, Sequencing & Capacity Routes
 const baselinesRoutes = require('./routes/baselines');
 app.use('/api/baselines', baselinesRoutes);

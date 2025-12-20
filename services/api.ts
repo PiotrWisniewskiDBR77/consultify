@@ -1533,5 +1533,20 @@ export const Api = {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to get analytics');
         return data.analytics;
+    },
+
+    // ==========================================
+    // PMO CONTEXT API (UI Behavior Integration)
+    // ==========================================
+    getPMOContext: async (projectId: string): Promise<any> => {
+        const res = await fetch(`${API_URL}/pmo-context/${projectId}`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch PMO context');
+        return res.json();
+    },
+
+    getPMOTaskLabels: async (projectId: string): Promise<{ taskLabels: Record<string, any[]> }> => {
+        const res = await fetch(`${API_URL}/pmo-context/${projectId}/task-labels`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch PMO task labels');
+        return res.json();
     }
 };

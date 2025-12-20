@@ -37,6 +37,7 @@ const AIMemoryManager = {
 
     /**
      * Record significant project event
+     * GAP-08: Added audit logging
      */
     recordProjectMemory: async (projectId, memoryType, content, userId) => {
         const id = uuidv4();
@@ -46,6 +47,17 @@ const AIMemoryManager = {
                     VALUES (?, ?, ?, ?, ?)`,
                 [id, projectId, memoryType, JSON.stringify(content), userId], function (err) {
                     if (err) return reject(err);
+
+                    // GAP-08: Log memory write to activity table for audit
+                    const contentSnippet = typeof content === 'string'
+                        ? content.substring(0, 100)
+                        : JSON.stringify(content).substring(0, 100);
+
+                    db.run(`INSERT INTO activity_log (id, user_id, action, entity_type, entity_id, new_value, created_at)
+                            VALUES (?, ?, 'ai_memory_write', 'ai_memory', ?, ?, CURRENT_TIMESTAMP)`,
+                        [uuidv4(), userId, id, JSON.stringify({ memoryType, snippet: contentSnippet })]
+                    );
+
                     resolve({ id, projectId, memoryType });
                 });
         });
