@@ -4,6 +4,8 @@
 const db = require('../database');
 const { v4: uuidv4 } = require('uuid');
 const AIPolicyEngine = require('./aiPolicyEngine');
+const AIRoleGuard = require('./aiRoleGuard');
+const RegulatoryModeGuard = require('./regulatoryModeGuard');
 
 const ACTION_TYPES = {
     CREATE_DRAFT_TASK: 'CREATE_DRAFT_TASK',
@@ -30,7 +32,46 @@ const AIActionExecutor = {
      * Request an AI action
      */
     requestAction: async (actionType, payload, userId, organizationId, projectId = null) => {
-        // Check if action is allowed
+        // 0. REGULATORY MODE: Block ALL mutation actions (highest priority)
+        if (projectId) {
+            const regulatoryCheck = await RegulatoryModeGuard.enforceRegulatoryMode(
+                { userId, organizationId, projectId },
+                actionType
+            );
+
+            if (regulatoryCheck.blocked) {
+                return {
+                    success: false,
+                    blocked: true,
+                    error: regulatoryCheck.message || 'Action blocked by Regulatory Mode',
+                    reason: regulatoryCheck.reason,
+                    regulatoryModeEnabled: true,
+                    suggestion: 'Regulatory Mode is enabled. AI can only explain and advise. Disable Regulatory Mode in Project Governance settings to allow AI actions.'
+                };
+            }
+        }
+
+        // AI Roles Model: Check if action is blocked by project role
+        if (projectId) {
+            const roleCheck = await AIRoleGuard.isActionBlocked(projectId, actionType);
+            if (roleCheck.blocked) {
+                return {
+                    success: false,
+                    blocked: true,
+                    error: roleCheck.reason,
+                    currentRole: roleCheck.currentRole,
+                    requiredRole: roleCheck.roleRequired,
+                    suggestion: roleCheck.suggestion
+                };
+            }
+
+            // For MANAGER role, force requiresApproval regardless of policy level
+            if (roleCheck.requiresApproval) {
+                payload._forceApproval = true;
+            }
+        }
+
+        // Check if action is allowed by policy level
         const permission = await AIPolicyEngine.canPerformAction(actionType, organizationId, projectId, userId);
 
         if (!permission.allowed) {
@@ -40,6 +81,9 @@ const AIActionExecutor = {
                 requiresUpgrade: true
             };
         }
+
+        // AI Roles Model: MANAGER role always requires approval for draft actions
+        const requiresApproval = permission.requiresApproval || payload._forceApproval;
 
         const id = uuidv4();
 
@@ -52,16 +96,16 @@ const AIActionExecutor = {
                     id, userId, organizationId, projectId, actionType,
                     JSON.stringify(payload),
                     permission.requiredLevel, permission.currentLevel,
-                    permission.requiresApproval ? 1 : 0,
-                    permission.requiresApproval ? ACTION_STATUS.PENDING : ACTION_STATUS.APPROVED
+                    requiresApproval ? 1 : 0,
+                    requiresApproval ? ACTION_STATUS.PENDING : ACTION_STATUS.APPROVED
                 ], function (err) {
                     if (err) return reject(err);
 
                     resolve({
                         success: true,
                         actionId: id,
-                        requiresApproval: permission.requiresApproval,
-                        status: permission.requiresApproval ? ACTION_STATUS.PENDING : ACTION_STATUS.APPROVED
+                        requiresApproval: requiresApproval,
+                        status: requiresApproval ? ACTION_STATUS.PENDING : ACTION_STATUS.APPROVED
                     });
                 });
         });

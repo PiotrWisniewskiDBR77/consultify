@@ -334,4 +334,101 @@ router.post('/audit/:id/decision', verifyToken, async (req, res) => {
     }
 });
 
+// ==================== EXPLAINABILITY ====================
+
+// GET /api/ai/explanations/:projectId - Get AI explanations for a project
+router.get('/explanations/:projectId', verifyToken, async (req, res) => {
+    if (!req.can('view_audit_logs')) {
+        return res.status(403).json({ error: 'Permission denied' });
+    }
+
+    const { limit, offset } = req.query;
+
+    try {
+        const logs = await AIAuditLogger.getAuditLogs(req.organizationId, {
+            projectId: req.params.projectId,
+            limit: parseInt(limit) || 50,
+            offset: parseInt(offset) || 0,
+            includeExplanation: true
+        });
+
+        // Extract only explanation data for clean API response
+        const explanations = logs.map(log => ({
+            id: log.id,
+            timestamp: log.created_at,
+            explanation: log.explanation,
+            aiResponse: log.ai_suggestion,
+            userDecision: log.user_decision
+        }));
+
+        res.json({
+            projectId: req.params.projectId,
+            total: explanations.length,
+            explanations
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// GET /api/ai/explanations/export - Export all explanations as JSON for compliance
+router.get('/explanations/export', verifyToken, async (req, res) => {
+    if (!req.can('view_audit_logs')) {
+        return res.status(403).json({ error: 'Permission denied' });
+    }
+
+    const { projectId, startDate, endDate } = req.query;
+
+    try {
+        const logs = await AIAuditLogger.getAuditLogs(req.organizationId, {
+            projectId: projectId || null,
+            limit: 1000, // Reasonable limit for export
+            offset: 0,
+            includeExplanation: true
+        });
+
+        // Filter by date range if provided
+        let filteredLogs = logs;
+        if (startDate) {
+            const start = new Date(startDate);
+            filteredLogs = filteredLogs.filter(log => new Date(log.created_at) >= start);
+        }
+        if (endDate) {
+            const end = new Date(endDate);
+            filteredLogs = filteredLogs.filter(log => new Date(log.created_at) <= end);
+        }
+
+        // Format for compliance export
+        const exportData = {
+            exportedAt: new Date().toISOString(),
+            organizationId: req.organizationId,
+            projectId: projectId || 'ALL',
+            totalRecords: filteredLogs.length,
+            dateRange: {
+                start: startDate || 'N/A',
+                end: endDate || 'N/A'
+            },
+            records: filteredLogs.map(log => ({
+                id: log.id,
+                userId: log.user_id,
+                projectId: log.project_id,
+                timestamp: log.created_at,
+                actionType: log.action_type,
+                explanation: log.explanation,
+                aiResponse: log.ai_suggestion,
+                userDecision: log.user_decision,
+                userFeedback: log.user_feedback
+            }))
+        };
+
+        // Set headers for file download
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', `attachment; filename="ai_explanations_${new Date().toISOString().split('T')[0]}.json"`);
+        res.json(exportData);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 module.exports = router;
+

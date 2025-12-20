@@ -15,6 +15,8 @@ interface PMOContext {
     currentScreen: string;
     userRole: string;
     selectedObject: { type: 'task' | 'initiative' | null; id: string | null };
+    // AI Roles Model
+    aiRole: 'ADVISOR' | 'MANAGER' | 'OPERATOR';
 }
 
 interface AIContextProps {
@@ -76,6 +78,9 @@ export const AIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     // Selected object state (for task/initiative focus)
     const [selectedObject, setSelectedObject] = useState<{ type: 'task' | 'initiative' | null; id: string | null }>({ type: null, id: null });
 
+    // AI Roles Model: Project AI role state
+    const [projectAIRole, setProjectAIRole] = useState<'ADVISOR' | 'MANAGER' | 'OPERATOR'>('ADVISOR');
+
     // Compute PMO Context from store
     const pmoContext = useMemo<PMOContext>(() => ({
         organizationId: currentUser?.organizationId || null,
@@ -83,8 +88,10 @@ export const AIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         currentPhase: viewToPhase(currentView),
         currentScreen: viewToScreen(currentView),
         userRole: currentUser?.role || 'user',
-        selectedObject
-    }), [currentUser?.organizationId, currentProjectId, currentView, currentUser?.role, selectedObject]);
+        selectedObject,
+        // AI Roles Model
+        aiRole: projectAIRole
+    }), [currentUser?.organizationId, currentProjectId, currentView, currentUser?.role, selectedObject, projectAIRole]);
 
     // Robust setter with validation
     const setScreenContext = useCallback((rawContext: unknown) => {
@@ -201,6 +208,27 @@ _Context: ${pmoContext.currentScreen}_`,
             return () => clearTimeout(timer);
         }
     }, [currentProjectId, currentUser, autoSummaryEnabled, lastSummarizedProject, triggerProjectSummary]);
+
+    // AI Roles Model: Fetch project AI role when project changes
+    useEffect(() => {
+        if (currentProjectId) {
+            const fetchAIRole = async () => {
+                try {
+                    const { Api } = await import('../services/api');
+                    const response = await Api.get(`/api/projects/${currentProjectId}/ai-role`);
+                    if (response?.aiRole) {
+                        setProjectAIRole(response.aiRole);
+                    }
+                } catch (error) {
+                    console.warn('[AIContext] Failed to fetch AI role, defaulting to ADVISOR:', error);
+                    setProjectAIRole('ADVISOR');
+                }
+            };
+            fetchAIRole();
+        } else {
+            setProjectAIRole('ADVISOR');
+        }
+    }, [currentProjectId]);
 
     const globalContext = {
         user: currentUser,

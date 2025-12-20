@@ -65,6 +65,9 @@ export enum AppView {
 
   // Teamwork Views
   MY_WORK = 'MY_WORK', // New Module 7 (Tasks & Workflow)
+
+  // Step D: Executive View (Read-only reporting for executives)
+  EXECUTIVE_VIEW = 'EXECUTIVE_VIEW'
 }
 
 // SCMS: Canonical Change Lifecycle Phases (System Reframe Step 0)
@@ -220,6 +223,206 @@ export enum StageGateType {
   PLANNING_GATE = 'PLANNING_GATE',       // Initiatives → Roadmap
   EXECUTION_GATE = 'EXECUTION_GATE',     // Roadmap → Execution
   CLOSURE_GATE = 'CLOSURE_GATE'          // Execution → Stabilization
+}
+
+// ==========================================
+// META-PMO FRAMEWORK: CERTIFIABLE DOMAINS
+// Standards: ISO 21500, PMI PMBOK 7th Ed, PRINCE2
+// ==========================================
+
+/**
+ * PMO Domain IDs - Certifiable Core Domains
+ * 
+ * These 7 domains represent the common denominators across professional PMO standards.
+ * Each is methodology-neutral and can be traced to ISO 21500, PMBOK, and PRINCE2.
+ * 
+ * @mapping ISO 21500: Subject Groups
+ * @mapping PMBOK 7: Performance Domains
+ * @mapping PRINCE2: Themes
+ */
+export enum PMODomainId {
+  /** 
+   * Governance & Decision Making
+   * @iso21500 Integration Subject Group (Decision Making)
+   * @pmbok7 Stakeholder Performance Domain / Project Governance
+   * @prince2 Organization Theme / Exception Management
+   */
+  GOVERNANCE_DECISION_MAKING = 'GOVERNANCE_DECISION_MAKING',
+
+  /** 
+   * Scope & Change Control
+   * @iso21500 Scope Subject Group
+   * @pmbok7 Development Approach & Life Cycle Performance Domain
+   * @prince2 Change Theme / Configuration Management
+   */
+  SCOPE_CHANGE_CONTROL = 'SCOPE_CHANGE_CONTROL',
+
+  /** 
+   * Schedule & Milestones
+   * @iso21500 Time Subject Group
+   * @pmbok7 Planning Performance Domain / Schedule Management
+   * @prince2 Plans Theme / Stage
+   */
+  SCHEDULE_MILESTONES = 'SCHEDULE_MILESTONES',
+
+  /** 
+   * Risk & Issue Management
+   * @iso21500 Risk Subject Group
+   * @pmbok7 Uncertainty Performance Domain
+   * @prince2 Risk Theme
+   */
+  RISK_ISSUE_MANAGEMENT = 'RISK_ISSUE_MANAGEMENT',
+
+  /** 
+   * Resource & Responsibility
+   * @iso21500 Resource Subject Group
+   * @pmbok7 Team Performance Domain
+   * @prince2 Organization Theme (Roles & Responsibilities)
+   */
+  RESOURCE_RESPONSIBILITY = 'RESOURCE_RESPONSIBILITY',
+
+  /** 
+   * Performance Monitoring
+   * @iso21500 Integration Subject Group (Control)
+   * @pmbok7 Measurement Performance Domain
+   * @prince2 Progress Theme
+   */
+  PERFORMANCE_MONITORING = 'PERFORMANCE_MONITORING',
+
+  /** 
+   * Benefits Realization (Placeholder for future enhancement)
+   * @iso21500 Integration Subject Group (Benefits)
+   * @pmbok7 Delivery Performance Domain / Benefits Management
+   * @prince2 Business Case Theme
+   */
+  BENEFITS_REALIZATION = 'BENEFITS_REALIZATION'
+}
+
+/**
+ * PMO Standards Mapping - Explicit terminology mapping for certification
+ * 
+ * Each SCMS concept maps to its equivalent in professional standards.
+ * This enables auditors to trace SCMS terminology to known norms.
+ */
+export interface PMOStandardMapping {
+  /** The SCMS concept name (e.g., 'Phase', 'Decision') */
+  scmsConcept: string;
+  /** The SCMS TypeScript object (e.g., 'SCMSPhase', 'Decision') */
+  scmsObject: string;
+  /** ISO 21500:2021 equivalent term */
+  iso21500Term: string;
+  /** ISO 21500 clause reference */
+  iso21500Clause?: string;
+  /** PMI PMBOK 7th Edition equivalent term */
+  pmbokTerm: string;
+  /** PMBOK Performance Domain */
+  pmbokDomain?: string;
+  /** PRINCE2 equivalent term */
+  prince2Term: string;
+  /** PRINCE2 Theme */
+  prince2Theme?: string;
+  /** Which PMO domain this belongs to */
+  domainId: PMODomainId;
+  /** Methodology-neutral description */
+  description: string;
+}
+
+/**
+ * PMO Domain - First-class certifiable domain concept
+ * 
+ * Each domain is:
+ * - Optional and configurable per project
+ * - Named with neutral terminology
+ * - Mappable to ISO/PMBOK/PRINCE2
+ */
+export interface PMODomain {
+  /** Unique domain identifier */
+  id: PMODomainId;
+  /** Display name (neutral terminology) */
+  name: string;
+  /** Description of domain scope */
+  description: string;
+  /** ISO 21500 equivalent terminology */
+  iso21500Term: string;
+  /** PMBOK 7th Edition equivalent terminology */
+  pmbokTerm: string;
+  /** PRINCE2 equivalent terminology */
+  prince2Term: string;
+  /** Whether this domain can be enabled/disabled per project */
+  isConfigurable: boolean;
+  /** SCMS objects that belong to this domain */
+  scmsObjects: string[];
+  /** Notes for certification auditors */
+  certificationNotes?: string;
+}
+
+/**
+ * Project PMO Configuration - Per-project domain enablement
+ * 
+ * Allows projects to:
+ * - Enable/disable specific domains
+ * - Customize phase/gate labels
+ * - Configure governance without methodology lock-in
+ */
+export interface ProjectPMOConfiguration {
+  projectId: string;
+  /** Array of enabled domain IDs */
+  enabledDomains: PMODomainId[];
+  /** Custom phase names (optional) */
+  phaseLabels?: Record<string, string>;
+  /** Custom gate names (optional) */
+  gateLabels?: Record<string, string>;
+  /** Custom domain names (optional) */
+  domainLabels?: Record<PMODomainId, string>;
+}
+
+/**
+ * PMO Auditable Object - Base interface for certification traceability
+ * 
+ * Any PMO object implementing this interface can be traced
+ * back to its domain, phase, and standards equivalents.
+ */
+export interface PMOAuditableObject {
+  /** The PMO domain this object belongs to */
+  pmoDomainId: PMODomainId;
+  /** The phase when this was created/modified */
+  pmoPhase: SCMSPhase;
+  /** Optional explicit standards mapping for this instance */
+  standardsMapping?: {
+    iso21500: string;
+    pmbok: string;
+    prince2: string;
+  };
+}
+
+/**
+ * PMO Audit Entry - Individual audit trail record
+ * 
+ * Captures every governance action with full traceability:
+ * - Domain → Standard terminology
+ * - Phase → Lifecycle position
+ * - Action → What was done
+ */
+export interface PMOAuditEntry {
+  id: string;
+  projectId: string;
+  pmoDomainId: PMODomainId;
+  pmoPhase: SCMSPhase;
+  /** Type of PMO object (DECISION, BASELINE, CHANGE_REQUEST, etc.) */
+  objectType: string;
+  objectId: string;
+  /** Action performed (CREATED, APPROVED, REJECTED, etc.) */
+  action: string;
+  actorId?: string;
+  /** ISO 21500 term at time of action */
+  iso21500Mapping: string;
+  /** PMBOK term at time of action */
+  pmbokMapping: string;
+  /** PRINCE2 term at time of action */
+  prince2Mapping: string;
+  /** Additional context */
+  metadata?: Record<string, unknown>;
+  createdAt: string;
 }
 
 // 3.2 PORTFOLIO (Implicit per Organization)
@@ -746,6 +949,63 @@ export interface EscalationRequest {
 }
 
 // ==========================================
+// AI TRUST & EXPLAINABILITY LAYER
+// ==========================================
+
+/**
+ * AI Confidence Level - Computed deterministically based on data quality
+ * 
+ * Rules:
+ * - LOW: Missing data, conflicting signals, or no PMOHealthSnapshot
+ * - MEDIUM: Partial data available, heuristics used, or blockers present
+ * - HIGH: Strong PMOHealthSnapshot signals, no missing blockers, full context
+ */
+export enum AIConfidenceLevel {
+  LOW = 'LOW',
+  MEDIUM = 'MEDIUM',
+  HIGH = 'HIGH'
+}
+
+/**
+ * AI Explanation Object - Attached to every AI response
+ * 
+ * This object ensures every AI output is:
+ * - Explainable (reasoningSummary)
+ * - Traceable (dataUsed)
+ * - Auditable (timestamp, stored in audit log)
+ * - Defensible (constraintsApplied)
+ */
+export interface AIExplanation {
+  /** The active AI role for this interaction */
+  aiRole: AIProjectRole;
+
+  /** Whether regulatory/compliance mode is active */
+  regulatoryMode: boolean;
+
+  /** Computed confidence based on data quality */
+  confidenceLevel: AIConfidenceLevel;
+
+  /** Human-readable summary of reasoning (not LLM-dependent) */
+  reasoningSummary: string;
+
+  /** Data sources used for this response */
+  dataUsed: {
+    /** Whether project-specific data was available */
+    projectData: boolean;
+    /** Number of project memory items consulted */
+    projectMemoryCount: number;
+    /** List of external sources used (if any) */
+    externalSources: string[];
+  };
+
+  /** List of governance constraints that affected the response */
+  constraintsApplied: string[];
+
+  /** ISO 8601 timestamp when explanation was generated */
+  timestamp: string;
+}
+
+// ==========================================
 // STEP 6: STABILIZATION, REPORTING & ECONOMICS
 // ==========================================
 
@@ -881,6 +1141,35 @@ export type AIPolicyLevel = 'ADVISORY' | 'ASSISTED' | 'PROACTIVE' | 'AUTOPILOT';
 
 /** AI Role - Runtime behavior mode */
 export type AIRole = 'ADVISOR' | 'PMO_MANAGER' | 'EXECUTOR' | 'EDUCATOR';
+
+// ==========================================
+// AI ROLES MODEL — PROJECT-LEVEL GOVERNANCE
+// ==========================================
+
+/** AI Project Role - Hierarchical governance level (ADVISOR < MANAGER < OPERATOR) */
+export enum AIProjectRole {
+  ADVISOR = 'ADVISOR',   // Explains, suggests, warns - cannot modify data
+  MANAGER = 'MANAGER',   // Prepares drafts - requires explicit approval
+  OPERATOR = 'OPERATOR'  // Executes approved actions within governance
+}
+
+/** AI Role Capabilities - What each role can do */
+export interface AIRoleCapabilities {
+  canExplain: boolean;
+  canSuggest: boolean;
+  canAnalyze: boolean;
+  canCreateDrafts: boolean;
+  canExecuteActions: boolean;
+  canModifyEntities: boolean;
+  requiresApproval: boolean;
+}
+
+/** AI Role Configuration for Projects */
+export interface AIRoleConfig {
+  activeRole: AIProjectRole;
+  capabilities: AIRoleCapabilities;
+  roleDescription: string;
+}
 
 /** AI Chat Mode - User-selectable intent */
 export type AIChatMode = 'EXPLAIN' | 'GUIDE' | 'ANALYZE' | 'DO' | 'TEACH';

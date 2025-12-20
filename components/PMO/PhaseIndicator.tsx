@@ -14,9 +14,31 @@ interface PhaseIndicatorProps {
 export const PhaseIndicator: React.FC<PhaseIndicatorProps> = ({ compact = false }) => {
     const { currentPhase, phaseNumber, totalPhases, gateStatus, isLoading, projectName } = usePMOStore();
 
-    // Don't render if no project context
-    if (!currentPhase || isLoading) {
-        return null;
+    // Show loading skeleton while fetching
+    if (isLoading) {
+        return compact ? (
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 animate-pulse">
+                <div className="w-4 h-4 rounded-full bg-slate-300 dark:bg-slate-600" />
+            </div>
+        ) : (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 animate-pulse">
+                <div className="w-4 h-4 rounded-full bg-slate-300 dark:bg-slate-600" />
+                <div className="flex flex-col gap-1">
+                    <div className="h-2 w-12 bg-slate-300 dark:bg-slate-600 rounded" />
+                    <div className="h-3 w-16 bg-slate-300 dark:bg-slate-600 rounded" />
+                </div>
+            </div>
+        );
+    }
+
+    // Show empty state when no project context
+    if (!currentPhase) {
+        return compact ? null : (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                <Target size={14} className="text-slate-400" />
+                <span className="text-xs text-slate-400">No project selected</span>
+            </div>
+        );
     }
 
     const phases = ['Context', 'Assessment', 'Initiatives', 'Roadmap', 'Execution', 'Stabilization'];
@@ -74,10 +96,10 @@ export const PhaseIndicator: React.FC<PhaseIndicatorProps> = ({ compact = false 
                     <div
                         key={i}
                         className={`w-1.5 h-1.5 rounded-full transition-colors ${i < phaseIndex
-                                ? 'bg-green-500'
-                                : i === phaseIndex
-                                    ? 'bg-purple-500 ring-2 ring-purple-500/30'
-                                    : 'bg-slate-300 dark:bg-slate-600'
+                            ? 'bg-green-500'
+                            : i === phaseIndex
+                                ? 'bg-purple-500 ring-2 ring-purple-500/30'
+                                : 'bg-slate-300 dark:bg-slate-600'
                             }`}
                     />
                 ))}

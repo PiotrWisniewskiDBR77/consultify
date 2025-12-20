@@ -16,6 +16,8 @@ interface GovernanceSettings {
     requireChangeRequestForSchedule: boolean;
     requireChangeRequestForScope: boolean;
     aiPolicyLevel: 'ADVISORY' | 'ASSISTED' | 'PROACTIVE' | 'AUTOPILOT' | null;
+    // AI Roles Model
+    aiRole: 'ADVISOR' | 'MANAGER' | 'OPERATOR';
 }
 
 interface ProjectGovernanceProps {
@@ -29,7 +31,9 @@ const defaultSettings: GovernanceSettings = {
     stageGatesEnabled: true,
     requireChangeRequestForSchedule: true,
     requireChangeRequestForScope: true,
-    aiPolicyLevel: null
+    aiPolicyLevel: null,
+    // AI Roles Model
+    aiRole: 'ADVISOR'
 };
 
 export const ProjectGovernance: React.FC<ProjectGovernanceProps> = ({ projectId, onSave }) => {
@@ -37,12 +41,31 @@ export const ProjectGovernance: React.FC<ProjectGovernanceProps> = ({ projectId,
     const [settings, setSettings] = useState<GovernanceSettings>(defaultSettings);
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    // Regulatory Mode: Separate state for strict compliance mode
+    const [regulatoryModeEnabled, setRegulatoryModeEnabled] = useState(true); // Default to enabled (safest)
+    const [isSavingRegulatoryMode, setIsSavingRegulatoryMode] = useState(false);
 
     useEffect(() => {
         if (projectId) {
             fetchSettings();
+            fetchRegulatoryMode();
         }
     }, [projectId]);
+
+    // Fetch Regulatory Mode status separately (stored in projects table)
+    const fetchRegulatoryMode = async () => {
+        try {
+            const res = await fetch(`/api/projects/${projectId}/regulatory-mode`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setRegulatoryModeEnabled(data.enabled);
+            }
+        } catch (err) {
+            console.error('Failed to fetch regulatory mode:', err);
+        }
+    };
 
     const fetchSettings = async () => {
         setIsLoading(true);
@@ -90,6 +113,36 @@ export const ProjectGovernance: React.FC<ProjectGovernanceProps> = ({ projectId,
             toast.error('Failed to save governance settings');
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    // Save Regulatory Mode separately
+    const handleToggleRegulatoryMode = async () => {
+        const newValue = !regulatoryModeEnabled;
+        setIsSavingRegulatoryMode(true);
+        try {
+            const res = await fetch(`/api/projects/${projectId}/regulatory-mode`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ enabled: newValue })
+            });
+
+            if (res.ok) {
+                setRegulatoryModeEnabled(newValue);
+                toast.success(newValue
+                    ? 'Regulatory Mode enabled - AI is now advisory-only'
+                    : 'Regulatory Mode disabled - AI can operate normally'
+                );
+            } else {
+                throw new Error('Failed to update');
+            }
+        } catch (err) {
+            toast.error('Failed to update Regulatory Mode');
+        } finally {
+            setIsSavingRegulatoryMode(false);
         }
     };
 
@@ -193,8 +246,8 @@ export const ProjectGovernance: React.FC<ProjectGovernanceProps> = ({ projectId,
                         <button
                             onClick={() => toggleSetting(config.key)}
                             className={`relative w-12 h-6 rounded-full transition-colors ${settings[config.key]
-                                    ? 'bg-purple-600'
-                                    : 'bg-slate-300 dark:bg-slate-600'
+                                ? 'bg-purple-600'
+                                : 'bg-slate-300 dark:bg-slate-600'
                                 }`}
                         >
                             <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${settings[config.key] ? 'translate-x-7' : 'translate-x-1'
@@ -232,6 +285,132 @@ export const ProjectGovernance: React.FC<ProjectGovernanceProps> = ({ projectId,
                         <option value="PROACTIVE">Proactive (Suggestions)</option>
                         <option value="AUTOPILOT">Autopilot (Autonomous)</option>
                     </select>
+                </div>
+
+                {/* AI Roles Model: AI Governance Role Selector */}
+                <div className="px-6 py-4 border-t border-slate-100 dark:border-white/5">
+                    <div className="flex items-center gap-3 mb-3">
+                        <div className="p-2 rounded-lg bg-purple-500/10 text-purple-500">
+                            <Shield size={18} />
+                        </div>
+                        <div>
+                            <div className="font-medium text-slate-900 dark:text-white">
+                                AI Governance Role
+                            </div>
+                            <div className="text-sm text-slate-500 dark:text-slate-400">
+                                Controls what AI is allowed to do in this project
+                            </div>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                        {(['ADVISOR', 'MANAGER', 'OPERATOR'] as const).map(role => {
+                            const roleInfo = {
+                                ADVISOR: {
+                                    label: 'Advisor',
+                                    desc: 'Explains only, no changes',
+                                    color: 'blue'
+                                },
+                                MANAGER: {
+                                    label: 'Manager',
+                                    desc: 'Prepares drafts, needs approval',
+                                    color: 'amber'
+                                },
+                                OPERATOR: {
+                                    label: 'Operator',
+                                    desc: 'Executes within governance',
+                                    color: 'green'
+                                }
+                            };
+                            const info = roleInfo[role];
+                            const isSelected = settings.aiRole === role;
+
+                            return (
+                                <button
+                                    key={role}
+                                    onClick={() => setSettings(prev => ({ ...prev, aiRole: role }))}
+                                    className={`p-4 rounded-xl border-2 text-left transition-all ${isSelected
+                                        ? `border-${info.color}-500 bg-${info.color}-500/10`
+                                        : 'border-slate-200 dark:border-white/10 hover:border-purple-500/50'
+                                        }`}
+                                >
+                                    <div className={`font-semibold ${isSelected
+                                        ? `text-${info.color}-600 dark:text-${info.color}-400`
+                                        : 'text-slate-900 dark:text-white'
+                                        }`}>
+                                        {info.label}
+                                    </div>
+                                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                        {info.desc}
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
+                    <p className="mt-2 text-xs text-slate-400">
+                        ⚠️ Changing AI role affects what AI can do: Advisor (read-only) → Manager (drafts) → Operator (execute)
+                    </p>
+                </div>
+
+                {/* Regulatory Mode: Strict Compliance Toggle */}
+                <div className="px-6 py-4 border-t border-slate-100 dark:border-white/5 bg-amber-500/5">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-amber-500/20 text-amber-500">
+                                <Shield size={18} />
+                            </div>
+                            <div>
+                                <div className="font-medium text-slate-900 dark:text-white flex items-center gap-2">
+                                    Regulatory Mode
+                                    {regulatoryModeEnabled && (
+                                        <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-500/20 text-amber-500 rounded border border-amber-500/30">
+                                            ACTIVE
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="text-sm text-slate-500 dark:text-slate-400">
+                                    Strict compliance mode: AI can only explain and advise
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Toggle Switch */}
+                        <button
+                            onClick={handleToggleRegulatoryMode}
+                            disabled={isSavingRegulatoryMode}
+                            className={`relative w-12 h-6 rounded-full transition-colors ${regulatoryModeEnabled
+                                    ? 'bg-amber-500'
+                                    : 'bg-slate-300 dark:bg-slate-600'
+                                } ${isSavingRegulatoryMode ? 'opacity-50' : ''}`}
+                        >
+                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${regulatoryModeEnabled ? 'translate-x-7' : 'translate-x-1'
+                                }`} />
+                        </button>
+                    </div>
+
+                    {/* Warning/Info Box */}
+                    <div className={`mt-3 p-3 rounded-lg text-sm ${regulatoryModeEnabled
+                            ? 'bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300'
+                            : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400'
+                        }`}>
+                        {regulatoryModeEnabled ? (
+                            <>
+                                <strong>⚠️ Regulatory Mode is ON</strong>
+                                <ul className="mt-1 ml-4 list-disc text-xs space-y-0.5">
+                                    <li>AI cannot create, modify, or delete any data</li>
+                                    <li>AI cannot propose executable actions</li>
+                                    <li>AI uses only advisory language</li>
+                                    <li>All blocked attempts are logged for audit</li>
+                                </ul>
+                            </>
+                        ) : (
+                            <>
+                                <strong>ℹ️ Regulatory Mode is OFF</strong>
+                                <p className="mt-1 text-xs">
+                                    AI operates with normal permissions based on the AI Governance Role setting above.
+                                </p>
+                            </>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

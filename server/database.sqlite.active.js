@@ -517,6 +517,17 @@ function initDb() {
             // Ignore if exists
         });
 
+        // AI Roles Model: Project-level AI governance role (ADVISOR, MANAGER, OPERATOR)
+        db.run(`ALTER TABLE projects ADD COLUMN ai_role TEXT DEFAULT 'ADVISOR'`, (err) => {
+            // Ignore if exists - Default to ADVISOR (safest)
+        });
+
+        // Regulatory Mode: Strict compliance mode - AI can only advise, never execute
+        // Default TRUE (1) for maximum safety in regulated environments
+        db.run(`ALTER TABLE projects ADD COLUMN regulatory_mode_enabled INTEGER DEFAULT 1`, (err) => {
+            // Ignore if exists - Default to enabled (safest for compliance)
+        });
+
         // ==========================================
         // STEP 4: ROADMAP, SEQUENCING & CAPACITY TABLES
         // ==========================================
@@ -753,6 +764,113 @@ function initDb() {
         )`);
 
         // ==========================================
+        // META-PMO FRAMEWORK: DOMAIN REGISTRY & AUDIT
+        // Certifiable, Methodology-Neutral PMO Model
+        // Standards: ISO 21500, PMI PMBOK 7th Ed, PRINCE2
+        // ==========================================
+
+        /**
+         * PMO Domains Registry (Reference Table)
+         * 
+         * Stores the 7 certifiable PMO domains with explicit standards mapping.
+         * This is a reference table - domains are seeded on initialization.
+         * 
+         * @mapping ISO 21500: Subject Groups
+         * @mapping PMBOK 7: Performance Domains
+         * @mapping PRINCE2: Themes
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS pmo_domains (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT,
+            iso21500_term TEXT,      -- ISO 21500 equivalent terminology
+            pmbok_term TEXT,         -- PMI PMBOK equivalent terminology
+            prince2_term TEXT,       -- PRINCE2 equivalent terminology
+            is_configurable INTEGER DEFAULT 1,  -- Can be enabled/disabled per project
+            sort_order INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        /**
+         * Project PMO Domain Configuration
+         * 
+         * Junction table allowing per-project enablement of PMO domains.
+         * Projects can choose which domains are active for their governance model.
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS project_pmo_domains (
+            project_id TEXT NOT NULL,
+            domain_id TEXT NOT NULL,
+            is_enabled INTEGER DEFAULT 1,
+            enabled_by TEXT,
+            enabled_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            custom_label TEXT,       -- Optional custom terminology for this project
+            PRIMARY KEY(project_id, domain_id),
+            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+            FOREIGN KEY(domain_id) REFERENCES pmo_domains(id),
+            FOREIGN KEY(enabled_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        /**
+         * PMO Audit Trail (Certification Traceability)
+         * 
+         * Every governance action (decision, baseline, change) is logged with:
+         * - PMO domain reference
+         * - Current phase reference
+         * - Standards mapping (ISO/PMI/PRINCE2 terminology)
+         * 
+         * This enables auditors to trace:
+         * - Decisions → Domain → Standard
+         * - Baselines → Domain → Standard
+         * - Changes → Domain → Standard
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS pmo_audit_trail (
+            id TEXT PRIMARY KEY,
+            project_id TEXT NOT NULL,
+            pmo_domain_id TEXT NOT NULL,
+            pmo_phase TEXT NOT NULL,           -- Current phase when action occurred
+            object_type TEXT NOT NULL,         -- DECISION, BASELINE, CHANGE_REQUEST, STAGE_GATE, etc.
+            object_id TEXT NOT NULL,           -- ID of the PMO object
+            action TEXT NOT NULL,              -- CREATED, UPDATED, APPROVED, REJECTED, TRANSITIONED, etc.
+            actor_id TEXT,                     -- User who performed the action
+            iso21500_mapping TEXT,             -- ISO 21500 term at time of action
+            pmbok_mapping TEXT,                -- PMBOK term at time of action
+            prince2_mapping TEXT,              -- PRINCE2 term at time of action
+            metadata TEXT DEFAULT '{}',        -- JSON: additional context
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+            FOREIGN KEY(pmo_domain_id) REFERENCES pmo_domains(id),
+            FOREIGN KEY(actor_id) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        /**
+         * Add PMO domain references to existing governance tables
+         * These columns enable traceability from objects to domains
+         */
+
+        // Decisions: Add domain and phase tracking
+        db.run(`ALTER TABLE decisions ADD COLUMN pmo_domain_id TEXT DEFAULT 'GOVERNANCE_DECISION_MAKING'`, (err) => {
+            // Ignore if exists
+        });
+        db.run(`ALTER TABLE decisions ADD COLUMN pmo_phase TEXT`, (err) => {
+            // Ignore if exists
+        });
+
+        // Schedule Baselines: Add domain tracking
+        db.run(`ALTER TABLE schedule_baselines ADD COLUMN pmo_domain_id TEXT DEFAULT 'SCOPE_CHANGE_CONTROL'`, (err) => {
+            // Ignore if exists
+        });
+
+        // Change Requests: Add domain tracking
+        db.run(`ALTER TABLE change_requests ADD COLUMN pmo_domain_id TEXT DEFAULT 'SCOPE_CHANGE_CONTROL'`, (err) => {
+            // Ignore if exists
+        });
+
+        // Stage Gates: Add domain tracking
+        db.run(`ALTER TABLE stage_gates ADD COLUMN pmo_domain_id TEXT DEFAULT 'SCHEDULE_MILESTONES'`, (err) => {
+            // Ignore if exists
+        });
+
+        // ==========================================
         // AI CORE LAYER — ENTERPRISE PMO BRAIN
         // ==========================================
 
@@ -850,6 +968,17 @@ function initDb() {
             FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
             FOREIGN KEY(approved_by) REFERENCES users(id) ON DELETE SET NULL
         )`);
+
+        // AI Roles Model: Add columns to ai_audit_logs for enhanced tracking
+        db.run(`ALTER TABLE ai_audit_logs ADD COLUMN ai_project_role TEXT DEFAULT 'ADVISOR'`, (err) => {
+            // Ignore if exists
+        });
+        db.run(`ALTER TABLE ai_audit_logs ADD COLUMN justification TEXT`, (err) => {
+            // Ignore if exists
+        });
+        db.run(`ALTER TABLE ai_audit_logs ADD COLUMN approving_user TEXT`, (err) => {
+            // Ignore if exists
+        });
 
         // User Token Quota (Add columns to users - we'll use ALTER TABLE to add if not exists)
         db.run(`ALTER TABLE users ADD COLUMN token_limit INTEGER DEFAULT 100000`, (err) => {

@@ -1,12 +1,13 @@
 // AI Audit Logger - Full audit trail for AI actions
 // AI Core Layer — Enterprise PMO Brain
+// Extended for AI Trust & Explainability Layer
 
 const db = require('../database');
 const { v4: uuidv4 } = require('uuid');
 
 const AIAuditLogger = {
     /**
-     * Log an AI interaction
+     * Log an AI interaction with full explainability support
      */
     logInteraction: async (entry) => {
         const {
@@ -14,7 +15,16 @@ const AIAuditLogger = {
             actionType, actionDescription,
             contextSnapshot, dataSourcesUsed,
             aiRole, policyLevel, confidenceLevel,
-            aiSuggestion, userDecision, userFeedback
+            aiSuggestion, userDecision, userFeedback,
+            // AI Roles Model fields
+            aiProjectRole,  // ADVISOR, MANAGER, OPERATOR
+            justification,  // Reason for action
+            approvingUser,  // User who approved (for OPERATOR actions)
+            // AI Trust & Explainability fields
+            regulatoryMode,
+            reasoningSummary,
+            dataUsed,
+            constraintsApplied
         } = entry;
 
         const id = uuidv4();
@@ -23,19 +33,68 @@ const AIAuditLogger = {
             db.run(`INSERT INTO ai_audit_logs 
                 (id, user_id, organization_id, project_id, action_type, action_description,
                  context_snapshot, data_sources_used, ai_role, policy_level, confidence_level,
-                 ai_suggestion, user_decision, user_feedback)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                 ai_suggestion, user_decision, user_feedback,
+                 ai_project_role, justification, approving_user,
+                 regulatory_mode, reasoning_summary, data_used_json, constraints_applied_json)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     id, userId, organizationId, projectId,
                     actionType, actionDescription,
                     typeof contextSnapshot === 'string' ? contextSnapshot : JSON.stringify(contextSnapshot),
                     JSON.stringify(dataSourcesUsed || []),
                     aiRole, policyLevel, confidenceLevel,
-                    aiSuggestion, userDecision, userFeedback
+                    aiSuggestion, userDecision, userFeedback,
+                    // AI Roles Model fields
+                    aiProjectRole || 'ADVISOR',
+                    justification || null,
+                    approvingUser || null,
+                    // AI Trust & Explainability fields
+                    regulatoryMode ? 1 : 0,
+                    reasoningSummary || null,
+                    dataUsed ? JSON.stringify(dataUsed) : null,
+                    constraintsApplied ? JSON.stringify(constraintsApplied) : null
                 ], function (err) {
                     if (err) return reject(err);
-                    resolve({ id, actionType });
+                    resolve({ id, actionType, aiProjectRole: aiProjectRole || 'ADVISOR' });
                 });
+        });
+    },
+
+    /**
+     * Log AI interaction with full AIExplanation object
+     * Primary entry point for AI Trust & Explainability Layer
+     * 
+     * @param {Object} params - Log parameters
+     * @param {string} params.userId - User ID
+     * @param {string} params.organizationId - Organization ID
+     * @param {string} params.projectId - Project ID
+     * @param {Object} params.explanation - AIExplanation object
+     * @param {string} params.aiResponse - The AI response text
+     * @param {string} params.actionType - Type of action (SUGGESTION, ACTION, etc.)
+     * @returns {Promise<Object>} - Result with audit log ID
+     */
+    logWithExplanation: async ({ userId, organizationId, projectId, explanation, aiResponse, actionType = 'AI_RESPONSE' }) => {
+        if (!explanation) {
+            console.warn('[AIAuditLogger] logWithExplanation called without explanation object');
+        }
+
+        return AIAuditLogger.logInteraction({
+            userId,
+            organizationId,
+            projectId,
+            actionType,
+            actionDescription: 'AI response with explainability metadata',
+            contextSnapshot: null, // Context is represented in explanation
+            dataSourcesUsed: explanation?.dataUsed?.externalSources || [],
+            aiRole: explanation?.aiRole || 'ADVISOR',
+            policyLevel: 'ADVISORY',
+            confidenceLevel: explanation?.confidenceLevel || 'MEDIUM',
+            aiSuggestion: aiResponse,
+            aiProjectRole: explanation?.aiRole || 'ADVISOR',
+            regulatoryMode: explanation?.regulatoryMode || false,
+            reasoningSummary: explanation?.reasoningSummary || null,
+            dataUsed: explanation?.dataUsed || null,
+            constraintsApplied: explanation?.constraintsApplied || []
         });
     },
 
@@ -71,10 +130,10 @@ const AIAuditLogger = {
     },
 
     /**
-     * Get audit logs for organization
+     * Get audit logs for organization with explainability data
      */
     getAuditLogs: async (organizationId, options = {}) => {
-        const { projectId, userId, actionType, limit, offset } = options;
+        const { projectId, userId, actionType, limit, offset, includeExplanation } = options;
 
         return new Promise((resolve, reject) => {
             let sql = `SELECT al.*, u.first_name, u.last_name 
@@ -106,6 +165,23 @@ const AIAuditLogger = {
                     try {
                         row.contextSnapshot = JSON.parse(row.context_snapshot || '{}');
                         row.dataSourcesUsed = JSON.parse(row.data_sources_used || '[]');
+
+                        // Parse explainability fields if requested
+                        if (includeExplanation !== false) {
+                            row.dataUsed = row.data_used_json ? JSON.parse(row.data_used_json) : null;
+                            row.constraintsApplied = row.constraints_applied_json ? JSON.parse(row.constraints_applied_json) : [];
+
+                            // Build explanation object for convenience
+                            row.explanation = {
+                                aiRole: row.ai_project_role || row.ai_role,
+                                regulatoryMode: row.regulatory_mode === 1,
+                                confidenceLevel: row.confidence_level,
+                                reasoningSummary: row.reasoning_summary,
+                                dataUsed: row.dataUsed,
+                                constraintsApplied: row.constraintsApplied,
+                                timestamp: row.created_at
+                            };
+                        }
                     } catch { }
                     return row;
                 });

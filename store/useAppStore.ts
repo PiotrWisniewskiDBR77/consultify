@@ -22,6 +22,7 @@ interface AppState {
 
     // Chat State
     activeChatMessages: ChatMessage[];
+    projectChatMessages: Record<string, ChatMessage[]>; // MED-01: Per-project chat storage
     isBotTyping: boolean;
     /* 
      * PERFORMANCE CRITICAL: 
@@ -67,6 +68,9 @@ interface AppState {
     setIsBotTyping: (isTyping: boolean) => void;
     setCurrentStreamContent: (content: string) => void;
     clearChat: () => void;
+    // MED-01: Per-project chat actions
+    loadProjectChat: () => void;
+    saveProjectChat: () => void;
 
     setFreeSessionData: (data: Partial<FreeSession> | ((prev: Partial<FreeSession>) => Partial<FreeSession>)) => void;
     setFullSessionData: (data: Partial<FullSession> | ((prev: FullSession) => FullSession)) => void;
@@ -117,6 +121,7 @@ export const useAppStore = create<AppState>()(
             authInitialStep: AuthStep.REGISTER,
             isSidebarOpen: false,
             activeChatMessages: [],
+            projectChatMessages: {}, // MED-01: Per-project chat storage
             isBotTyping: false,
             currentStreamContent: '',
             freeSessionData: initialFreeSession,
@@ -149,13 +154,78 @@ export const useAppStore = create<AppState>()(
             isSidebarCollapsed: true,
             toggleSidebarCollapse: () => set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
 
-            setCurrentProjectId: (pid) => set({ currentProjectId: pid }),
+            setCurrentProjectId: (pid) => set((state) => {
+                // MED-01: Save current chat before switching projects
+                const MAX_MESSAGES = 100;
+                const currentKey = state.currentProjectId || 'global';
+                const trimmedMessages = state.activeChatMessages.slice(-MAX_MESSAGES);
 
-            addChatMessage: (message) => set((state) => ({ activeChatMessages: [...state.activeChatMessages, message] })),
-            setChatMessages: (messages) => set({ activeChatMessages: messages }),
+                // Load chat for new project
+                const newMessages = pid ? (state.projectChatMessages[pid] || []) : [];
+
+                return {
+                    currentProjectId: pid,
+                    activeChatMessages: newMessages,
+                    projectChatMessages: {
+                        ...state.projectChatMessages,
+                        [currentKey]: trimmedMessages
+                    }
+                };
+            }),
+
+            addChatMessage: (message) => set((state) => {
+                const MAX_MESSAGES = 100;
+                const newMessages = [...state.activeChatMessages, message].slice(-MAX_MESSAGES);
+                const projectKey = state.currentProjectId || 'global';
+
+                return {
+                    activeChatMessages: newMessages,
+                    projectChatMessages: {
+                        ...state.projectChatMessages,
+                        [projectKey]: newMessages
+                    }
+                };
+            }),
+            setChatMessages: (messages) => set((state) => {
+                const projectKey = state.currentProjectId || 'global';
+                const trimmedMessages = messages.slice(-100);
+                return {
+                    activeChatMessages: trimmedMessages,
+                    projectChatMessages: {
+                        ...state.projectChatMessages,
+                        [projectKey]: trimmedMessages
+                    }
+                };
+            }),
             setIsBotTyping: (isTyping) => set({ isBotTyping: isTyping }),
             setCurrentStreamContent: (content) => set({ currentStreamContent: content }),
-            clearChat: () => set({ activeChatMessages: [] }),
+            clearChat: () => set((state) => {
+                const projectKey = state.currentProjectId || 'global';
+                return {
+                    activeChatMessages: [],
+                    projectChatMessages: {
+                        ...state.projectChatMessages,
+                        [projectKey]: []
+                    }
+                };
+            }),
+            // MED-01: Helper functions for project chat - moved outside persist to avoid circular reference
+            loadProjectChat: () => set((state) => {
+                const projectKey = state.currentProjectId || 'global';
+                const messages = state.projectChatMessages[projectKey] || [];
+                return { activeChatMessages: messages };
+            }),
+            saveProjectChat: () => set((state) => {
+                const projectKey = state.currentProjectId || 'global';
+                const MAX_MESSAGES = 100;
+                const trimmedMessages = state.activeChatMessages.slice(-MAX_MESSAGES);
+                return {
+                    projectChatMessages: {
+                        ...state.projectChatMessages,
+                        [projectKey]: trimmedMessages
+                    }
+                };
+            }),
 
             setFreeSessionData: (data) => set((state) => ({
                 freeSessionData: typeof data === 'function' ? data(state.freeSessionData) : { ...state.freeSessionData, ...data }
@@ -202,6 +272,7 @@ export const useAppStore = create<AppState>()(
                 sessionMode: state.sessionMode,
                 currentUser: state.currentUser,
                 activeChatMessages: state.activeChatMessages, // Persisting chat!
+                projectChatMessages: state.projectChatMessages, // MED-01: Persist per-project chat
                 freeSessionData: state.freeSessionData,
                 fullSessionData: state.fullSessionData,
                 currentProjectId: state.currentProjectId,

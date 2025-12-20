@@ -13,6 +13,8 @@ const path = require('path');
 const jwt = require('jsonwebtoken');
 const PromptService = require('./promptService');
 const ModelRouter = require('./modelRouter');
+// Step B: Import post-processor for deterministic labeling
+const { aiResponsePostProcessor } = require('./aiResponsePostProcessor');
 
 // Helper to clean JSON
 const cleanJSON = (text) => {

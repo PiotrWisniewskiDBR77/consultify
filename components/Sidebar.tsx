@@ -41,6 +41,7 @@ import {
   CreditCard, // Billing
   Bell, // Notifications
   Link, // Integrations
+  Eye, // Step D: Executive View
 } from 'lucide-react';
 import { SidebarUsage } from './SidebarUsage';
 import { PhaseIndicator } from './PMO/PhaseIndicator';
@@ -214,6 +215,12 @@ export const Sidebar: React.FC = () => {
       label: t('myWork.title', 'My Work'),
       icon: <Briefcase size={20} />,
       viewId: AppView.MY_WORK,
+    },
+    {
+      id: 'EXECUTIVE_VIEW',
+      label: t('sidebar.executiveView', 'Executive View'),
+      icon: <Eye size={20} />,
+      viewId: AppView.EXECUTIVE_VIEW,
     },
     {
       id: 'INTRO_CONTEXT',

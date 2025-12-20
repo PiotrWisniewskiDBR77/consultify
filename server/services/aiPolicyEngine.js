@@ -2,6 +2,8 @@
 // AI Core Layer — Enterprise PMO Brain
 
 const db = require('../database');
+const AIRoleGuard = require('./aiRoleGuard');
+const RegulatoryModeGuard = require('./regulatoryModeGuard');
 
 const POLICY_LEVELS = {
     ADVISORY: 'ADVISORY',       // Suggest only
@@ -37,6 +39,37 @@ const AIPolicyEngine = {
      * Get effective policy for a context
      */
     getEffectivePolicy: async (organizationId, projectId = null, userId = null) => {
+        // 0. REGULATORY MODE CHECK - Highest priority override
+        // When enabled, forces ADVISORY-only mode regardless of other settings
+        if (projectId) {
+            const regulatoryModeEnabled = await RegulatoryModeGuard.isEnabled(projectId);
+            if (regulatoryModeEnabled) {
+                // Return maximally restricted policy
+                return {
+                    policyLevel: 'ADVISORY',
+                    maxPolicyLevel: 'ADVISORY',
+                    internetEnabled: false,
+                    auditRequired: true,
+                    defaultRole: 'ADVISOR',
+                    activeRoles: ['ADVISOR'],
+                    userTone: 'EXPERT',
+                    educationMode: false,
+                    // AI Roles Model - Force ADVISOR
+                    projectAIRole: 'ADVISOR',
+                    roleCapabilities: {
+                        canExplain: true,
+                        canCreateDrafts: false,
+                        canExecute: false,
+                        canModify: false
+                    },
+                    roleDescription: 'Regulatory Mode: Advisory-only',
+                    // Regulatory Mode specific flags
+                    regulatoryModeEnabled: true,
+                    regulatoryModePrompt: RegulatoryModeGuard.getRegulatoryPrompt()
+                };
+            }
+        }
+
         // 1. Get organization (tenant) policy
         const orgPolicy = await new Promise((resolve, reject) => {
             db.get(`SELECT * FROM ai_policies WHERE organization_id = ?`, [organizationId], (err, row) => {
@@ -88,6 +121,14 @@ const AIPolicyEngine = {
             effectiveLevel = maxLevel;
         }
 
+        // 4. Get project AI role (AI Roles Model)
+        let projectAIRole = 'ADVISOR';
+        let roleCapabilities = AIRoleGuard.getRoleCapabilities('ADVISOR');
+        if (projectId) {
+            projectAIRole = await AIRoleGuard.getProjectRole(projectId);
+            roleCapabilities = AIRoleGuard.getRoleCapabilities(projectAIRole);
+        }
+
         return {
             policyLevel: effectiveLevel,
             maxPolicyLevel: maxLevel,
@@ -96,7 +137,11 @@ const AIPolicyEngine = {
             defaultRole: orgPolicy.default_ai_role || 'ADVISOR',
             activeRoles: JSON.parse(orgPolicy.active_roles || '["ADVISOR","PMO_MANAGER","EXECUTOR","EDUCATOR"]'),
             userTone: userPreferences.preferred_tone || 'EXPERT',
-            educationMode: userPreferences.education_mode === 1
+            educationMode: userPreferences.education_mode === 1,
+            // AI Roles Model
+            projectAIRole,
+            roleCapabilities,
+            roleDescription: AIRoleGuard.getRoleDescription(projectAIRole)
         };
     },
 

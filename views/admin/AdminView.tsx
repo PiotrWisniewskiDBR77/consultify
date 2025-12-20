@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Api } from '../../services/api';
 import { User, UserRole, Language, AppView } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
+import { useUserCan } from '../../hooks/useUserCan'; // MED-05: Permission hook
 import {
     Users, Search, Layers, Plus, Trash2, Edit, Shield, TrendingUp, Activity,
     DollarSign, X, Check, Briefcase, Settings
@@ -28,6 +29,7 @@ interface Project {
 
 export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate }) => {
     const { currentView } = useAppStore();
+    const { canDelete, canEdit, isAdmin, isSuperAdmin } = useUserCan(); // MED-05: Permission gating
     // const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'USERS' | 'PROJECTS'>('DASHBOARD'); // Removed internal state
     const [users, setUsers] = useState<User[]>([]);
     const [projects, setProjects] = useState<Project[]>([]);
@@ -204,8 +206,8 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
                                 <Layers size={20} />
                             </div>
                             <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => setSelectedProjectForGovernance(p)} className="text-slate-500 hover:text-purple-400" title="Governance Settings"><Settings size={16} /></button>
-                                <button onClick={() => handleDeleteProject(p.id)} className="text-slate-500 hover:text-red-400"><Trash2 size={16} /></button>
+                                {canEdit && <button onClick={() => setSelectedProjectForGovernance(p)} className="text-slate-500 hover:text-purple-400" title="Governance Settings"><Settings size={16} /></button>}
+                                {canDelete && <button onClick={() => handleDeleteProject(p.id)} className="text-slate-500 hover:text-red-400"><Trash2 size={16} /></button>}
                             </div>
                         </div>
                         <h3 className="font-semibold text-white mb-1">{p.name}</h3>
@@ -280,8 +282,8 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
                                 </td>
                                 <td className="px-6 py-4 text-right">
                                     <div className="flex items-center justify-end gap-2">
-                                        <button onClick={() => openEditModal(user)} className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white"><Edit size={16} /></button>
-                                        <button onClick={() => handleDeleteUser(user.id)} className="p-2 hover:bg-red-500/20 rounded-lg text-slate-400 hover:text-red-400"><Trash2 size={16} /></button>
+                                        {canEdit && <button onClick={() => openEditModal(user)} className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white"><Edit size={16} /></button>}
+                                        {canDelete && <button onClick={() => handleDeleteUser(user.id)} className="p-2 hover:bg-red-500/20 rounded-lg text-slate-400 hover:text-red-400"><Trash2 size={16} /></button>}
                                     </div>
                                 </td>
                             </tr>

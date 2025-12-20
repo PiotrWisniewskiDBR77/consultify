@@ -2,10 +2,17 @@
 // AI Core Layer — Enterprise PMO Brain
 
 const db = require('../database');
+// Step A: Import PMOHealthService for canonical health snapshot
+let PMOHealthService;
+try {
+    PMOHealthService = require('./pmoHealthService');
+} catch (e) {
+    console.warn('[AIContextBuilder] PMOHealthService not available, pmo.healthSnapshot will be null');
+}
 
 const AIContextBuilder = {
     /**
-     * Build complete 6-layer context
+     * Build complete 6-layer context + PMO health snapshot
      */
     buildContext: async (userId, organizationId, projectId = null, options = {}) => {
         const platform = await AIContextBuilder._buildPlatformContext(userId, organizationId);
@@ -15,6 +22,16 @@ const AIContextBuilder = {
         const knowledge = await AIContextBuilder._buildKnowledgeContext(projectId);
         const external = await AIContextBuilder._buildExternalContext(organizationId);
 
+        // Step A: Fetch PMOHealthSnapshot for AI context (same data as UI sees)
+        let pmo = { healthSnapshot: null };
+        if (projectId && PMOHealthService) {
+            try {
+                pmo.healthSnapshot = await PMOHealthService.getHealthSnapshot(projectId);
+            } catch (err) {
+                console.warn('[AIContextBuilder] Failed to get PMO health snapshot:', err.message);
+            }
+        }
+
         const context = {
             platform,
             organization,
@@ -22,6 +39,7 @@ const AIContextBuilder = {
             execution,
             knowledge,
             external,
+            pmo, // Step A: PMO health data for AI
             builtAt: new Date().toISOString(),
             contextHash: AIContextBuilder._generateHash(platform, organization, project),
             currentScreen: options.currentScreen || null,

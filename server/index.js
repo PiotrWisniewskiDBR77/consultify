@@ -182,6 +182,15 @@ app.use('/api/pmo-analysis', pmoAnalysisRoutes);
 const pmoContextRoutes = require('./routes/pmo-context');
 app.use('/api/pmo-context', pmoContextRoutes);
 
+// Step A: PMO Health Snapshot (Single Source of Truth)
+const pmoRoutes = require('./routes/pmo');
+app.use('/api/pmo', pmoRoutes);
+
+// Meta-PMO Framework: Domain Registry & Standards Mapping
+// Certifiable PMO model compatible with ISO 21500, PMI PMBOK, PRINCE2
+const pmoDomainsRoutes = require('./routes/pmoDomains');
+app.use('/api/pmo-domains', pmoDomainsRoutes);
+
 // SCMS Step 4: Roadmap, Sequencing & Capacity Routes
 const baselinesRoutes = require('./routes/baselines');
 app.use('/api/baselines', baselinesRoutes);
@@ -204,6 +213,14 @@ app.use('/api/reports', reportsRoutes);
 
 const economicsRoutes = require('./routes/economics');
 app.use('/api/economics', economicsRoutes);
+
+// CRIT-04: Locations API for filtering
+const locationsRoutes = require('./routes/locations');
+app.use('/api/locations', locationsRoutes);
+
+// MED-04: Project Notification Settings API
+const notificationSettingsRoutes = require('./routes/notificationSettings');
+app.use('/api/notification-settings', notificationSettingsRoutes);
 
 // AI Core Layer Routes (already mounted above at /api/ai)
 

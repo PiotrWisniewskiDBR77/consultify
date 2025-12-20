@@ -1,9 +1,13 @@
 // AI Orchestrator - Core logic for AI responses
 // AI Core Layer — Enterprise PMO Brain
+// Extended for AI Trust & Explainability Layer
 
 const AIContextBuilder = require('./aiContextBuilder');
 const AIPolicyEngine = require('./aiPolicyEngine');
 const AIMemoryManager = require('./aiMemoryManager');
+const AIRoleGuard = require('./aiRoleGuard');
+const RegulatoryModeGuard = require('./regulatoryModeGuard');
+const AIExplainabilityService = require('./aiExplainabilityService');
 const { v4: uuidv4 } = require('uuid');
 
 const AI_ROLES = {
@@ -48,7 +52,13 @@ const AIOrchestrator = {
             projectMemory = await AIMemoryManager.buildProjectMemorySummary(projectId);
         }
 
-        // 6. Build response context
+        // 6. Get AI Role configuration for the project (AI Roles Model)
+        let roleConfig = null;
+        if (projectId) {
+            roleConfig = await AIRoleGuard.getRoleConfig(projectId);
+        }
+
+        // 7. Build response context
         const responseContext = {
             id: uuidv4(),
             role,
@@ -58,10 +68,22 @@ const AIOrchestrator = {
             preferences,
             projectMemory,
             dataSources: AIOrchestrator._identifyDataSources(context),
-            confidenceLevel: null // Will be set by actual AI response
+            confidenceLevel: null, // Will be set by explainability service
+            explanation: null,     // Will be populated by explainability service
+            // AI Roles Model
+            aiGovernance: {
+                activeRole: roleConfig?.activeRole || 'ADVISOR',
+                capabilities: roleConfig?.capabilities || AIRoleGuard.getRoleCapabilities('ADVISOR'),
+                roleDescription: roleConfig?.roleDescription || AIRoleGuard.getRoleDescription('ADVISOR')
+            }
         };
 
-        // 7. Generate response prompt (for LLM)
+        // 8. Generate AI Explanation (deterministic, not LLM-dependent)
+        // This ensures every AI response has an explanation object
+        responseContext.explanation = AIExplainabilityService.buildAIExplanation(responseContext);
+        responseContext.confidenceLevel = responseContext.explanation.confidenceLevel;
+
+        // 9. Generate response prompt (for LLM)
         const prompt = AIOrchestrator._buildPrompt(message, responseContext);
 
         return {
@@ -70,7 +92,8 @@ const AIOrchestrator = {
             policyAllows: true,
             role,
             intent,
-            contextSummary: AIOrchestrator._summarizeContext(context)
+            contextSummary: AIOrchestrator._summarizeContext(context),
+            explanation: responseContext.explanation // Expose explanation at top level
         };
     },
 
@@ -108,6 +131,11 @@ const AIOrchestrator = {
      * Select appropriate AI role based on intent and policy
      */
     _selectRole: (intent, policy) => {
+        // REGULATORY MODE: Force ADVISOR role regardless of intent
+        if (policy.regulatoryModeEnabled) {
+            return AI_ROLES.ADVISOR;
+        }
+
         const roleMap = {
             [CHAT_MODES.EXPLAIN]: AI_ROLES.ADVISOR,
             [CHAT_MODES.GUIDE]: AI_ROLES.PMO_MANAGER,
@@ -130,7 +158,13 @@ const AIOrchestrator = {
      * Build prompt for LLM
      */
     _buildPrompt: (userMessage, responseContext) => {
-        const { role, context, projectMemory, preferences } = responseContext;
+        const { role, context, policy, projectMemory, preferences } = responseContext;
+
+        // REGULATORY MODE: Inject compliance prompt FIRST if enabled
+        let regulatoryPrefix = '';
+        if (policy?.regulatoryModeEnabled) {
+            regulatoryPrefix = RegulatoryModeGuard.getRegulatoryPrompt() + '\n\n';
+        }
 
         let systemPrompt = `You are an AI ${role} for an Enterprise Strategic Change Management System (SCMS).
 
@@ -192,6 +226,44 @@ RULES:
 4. Respect governance boundaries
 5. State "Based on: ..." before significant statements`;
 
+        // AI Roles Model: Inject role-specific behavioral constraints
+        const aiGovernanceRole = responseContext.aiGovernance?.activeRole || 'ADVISOR';
+        const roleConstraints = {
+            'ADVISOR': `
+
+AI GOVERNANCE - ADVISOR MODE:
+⚠️ STRICT CONSTRAINTS:
+- You MAY: explain, summarize, suggest, warn, analyze
+- You MAY NOT: create, modify, delete, or change any data
+- Output style: descriptive, educational, neutral
+- Never propose action execution, only explain options
+- If user asks to create/modify something, explain how they can do it themselves`,
+
+            'MANAGER': `
+
+AI GOVERNANCE - MANAGER MODE:
+⚠️ STRICT CONSTRAINTS:
+- You MAY: do everything an Advisor can, plus prepare drafts
+- You MAY: propose tasks, initiatives, decisions as drafts
+- You MAY NOT: execute any action without explicit user approval
+- All actions must be returned as "📋 PROPOSED ACTION:" sections
+- User must confirm each action before execution
+- Always include: "This is a draft proposal. Approve to proceed."`,
+
+            'OPERATOR': `
+
+AI GOVERNANCE - OPERATOR MODE:
+✅ EXECUTION ENABLED (within governance):
+- You MAY: execute previously approved actions
+- You MAY: update task status, assign owners, modify data
+- You MUST: operate within project governance rules
+- You MUST: log every action with "✅ ACTION EXECUTED:" prefix
+- Only execute actions marked as AI-executable
+- Always confirm what was done and what changed`
+        };
+
+        systemPrompt += roleConstraints[aiGovernanceRole] || roleConstraints['ADVISOR'];
+
         // MED-03: External source labeling instruction
         if (context.external && context.external.internetEnabled) {
             systemPrompt += `
@@ -208,7 +280,8 @@ RULES:
 
 USER MESSAGE: ${userMessage}`;
 
-        return systemPrompt;
+        // Prepend regulatory mode prompt if enabled
+        return regulatoryPrefix + systemPrompt;
     },
 
     /**
@@ -271,7 +344,39 @@ USER MESSAGE: ${userMessage}`;
             [AI_ROLES.EDUCATOR]: 'Teaches change management concepts'
         };
         return descriptions[role] || 'AI Assistant';
+    },
+
+    /**
+     * Step B: Post-process AI response for deterministic labeling
+     * Call this method after receiving LLM response to ensure labels are present
+     * Now includes explainability footer
+     */
+    postProcessResponse: (responseText, responseContext) => {
+        const { aiResponsePostProcessor } = require('./aiResponsePostProcessor');
+
+        // Build context object from responseContext for post-processor
+        const context = {
+            projectMemory: responseContext?.projectMemory,
+            pmo: { healthSnapshot: responseContext?.context?.pmo?.healthSnapshot },
+            knowledge: responseContext?.context?.knowledge,
+            external: responseContext?.context?.external,
+            execution: responseContext?.context?.execution
+        };
+
+        // Apply existing post-processing (memory/external prefixes)
+        let processedResponse = aiResponsePostProcessor(responseText, context);
+
+        // Inject explainability footer if explanation is present
+        if (responseContext?.explanation) {
+            const footer = AIExplainabilityService.buildExplainabilityFooter(responseContext.explanation);
+            if (footer) {
+                processedResponse = `${processedResponse.trim()}\n\n${footer}`;
+            }
+        }
+
+        return processedResponse;
     }
 };
 
 module.exports = AIOrchestrator;
+

@@ -1,10 +1,11 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { useAIContext } from '../../contexts/AIContext';
 import { useAppStore } from '../../store/useAppStore';
 import { ChatPanel } from '../ChatPanel';
 import { useAIStream } from '../../hooks/useAIStream';
-import { MessageCircle, X, Cpu, MapPin } from 'lucide-react';
+import { MessageCircle, X, Cpu, MapPin, Shield } from 'lucide-react';
 import { ChatMessage, ChatOption } from '../../types';
+import { AIRoleBadge } from './AIRoleBadge';
 
 export const ChatOverlay: React.FC = () => {
     const { isChatOpen, toggleChat, screenContext, pmoContext, globalContext } = useAIContext();
@@ -16,6 +17,29 @@ export const ChatOverlay: React.FC = () => {
 
     const { isStreaming, streamedContent, startStream } = useAIStream();
     const scrollRef = useRef<HTMLDivElement>(null);
+    const [regulatoryModeEnabled, setRegulatoryModeEnabled] = useState(false);
+
+    // Fetch regulatory mode status when project changes
+    useEffect(() => {
+        const fetchRegulatoryStatus = async () => {
+            if (!pmoContext.projectId) {
+                setRegulatoryModeEnabled(false);
+                return;
+            }
+            try {
+                const res = await fetch(`/api/projects/${pmoContext.projectId}/regulatory-mode`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setRegulatoryModeEnabled(data.enabled);
+                }
+            } catch (err) {
+                console.error('Failed to fetch regulatory mode status:', err);
+            }
+        };
+        fetchRegulatoryStatus();
+    }, [pmoContext.projectId]);
 
     // Auto-scroll on new messages
     useEffect(() => {
@@ -77,6 +101,12 @@ export const ChatOverlay: React.FC = () => {
                 {pmoContext.projectId && (
                     <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white dark:border-navy-900 animate-pulse" />
                 )}
+                {/* Regulatory Mode indicator */}
+                {regulatoryModeEnabled && (
+                    <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-amber-500 rounded-full border-2 border-white dark:border-navy-900 flex items-center justify-center">
+                        <Shield size={8} className="text-white" />
+                    </span>
+                )}
             </button>
         );
     }
@@ -91,7 +121,13 @@ export const ChatOverlay: React.FC = () => {
                             <Cpu size={18} />
                         </div>
                         <div>
-                            <div className="text-sm font-bold text-white leading-tight">PMO Assistant</div>
+                            <div className="text-sm font-bold text-white leading-tight flex items-center gap-2">
+                                PMO Assistant
+                                {/* AI Roles Model: Display active role badge */}
+                                {pmoContext.projectId && (
+                                    <AIRoleBadge role={pmoContext.aiRole} size="sm" />
+                                )}
+                            </div>
                             <div className="text-[10px] text-slate-400 flex items-center gap-1">
                                 <MapPin size={8} />
                                 {pmoContext.currentPhase} • {pmoContext.userRole}
@@ -107,12 +143,19 @@ export const ChatOverlay: React.FC = () => {
                         </button>
                     </div>
                 </div>
-                {/* Context Bar */}
+                {/* Context Bar with Regulatory Mode Badge */}
                 {pmoContext.projectId && (
-                    <div className="px-4 pb-2 flex items-center gap-2 text-[10px] text-slate-500">
+                    <div className="px-4 pb-2 flex items-center gap-2 text-[10px] text-slate-500 flex-wrap">
                         <span className="px-2 py-0.5 bg-green-500/20 text-green-400 rounded border border-green-500/30">
                             Context Loaded
                         </span>
+                        {/* Regulatory Mode Badge */}
+                        {regulatoryModeEnabled && (
+                            <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded border border-amber-500/30 flex items-center gap-1">
+                                <Shield size={10} />
+                                Regulatory Mode: Advisor-only
+                            </span>
+                        )}
                         <span className="truncate">{pmoContext.currentScreen}</span>
                     </div>
                 )}
