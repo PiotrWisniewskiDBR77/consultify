@@ -53,7 +53,13 @@ const ActivityService = {
             newValue ? JSON.stringify(newValue) : null,
             ipAddress || null,
             userAgent || null
-        ]);
+        ], (err) => {
+            // Silently handle errors to prevent unhandled exceptions
+            // Activity logging is non-critical and should not break the main flow
+            if (err && process.env.NODE_ENV !== 'production') {
+                console.warn('[ActivityService] Failed to log activity:', err.message);
+            }
+        });
     },
 
     /**

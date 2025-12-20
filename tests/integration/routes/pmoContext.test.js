@@ -74,6 +74,26 @@ describe('PMO Context API', () => {
         }
     });
 
+    afterAll(async () => {
+        // Clean up test data in correct order to avoid FK constraint errors
+        // Delete tasks first (depends on projects)
+        await new Promise((resolve) => {
+            db.run(`DELETE FROM tasks WHERE project_id = ?`, [testProjectId], () => resolve());
+        });
+
+        // Delete projects (depends on users and organizations)
+        await new Promise((resolve) => {
+            db.run(`DELETE FROM projects WHERE id = ?`, [testProjectId], () => resolve());
+        });
+
+        // Delete users (depends on organizations)
+        await new Promise((resolve) => {
+            db.run(`DELETE FROM users WHERE id = ?`, [testUserId], () => resolve());
+        });
+
+        // Small delay to ensure all async DB operations complete
+        await new Promise(resolve => setTimeout(resolve, 100));
+    });
 
     describe('GET /api/pmo-context/:projectId', () => {
         it('should return PMO context with phase information', async () => {
