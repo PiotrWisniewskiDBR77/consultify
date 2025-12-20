@@ -23,7 +23,6 @@ export const RolloutRisksTab: React.FC<RolloutRisksTabProps> = ({ data, initiati
 
     const addItem = () => {
         const newItem: RAIDItem = {
-            // eslint-disable-next-line
             id: Date.now().toString(),
             type: activeType,
             title: 'New ' + activeType,

@@ -12,12 +12,13 @@ describe('PMO Context API', () => {
     let testUserId;
 
     beforeAll(async () => {
+        await db.initPromise;
         // Create test user and get auth token
         testUserId = uuidv4();
         testProjectId = uuidv4();
 
         await new Promise((resolve, reject) => {
-            db.run(`INSERT INTO users (id, email, password_hash, role, organization_id, first_name, last_name, status)
+            db.run(`INSERT INTO users (id, email, password, role, organization_id, first_name, last_name, status)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
                 [testUserId, 'pmo-test@test.com', 'hashedpassword', 'PROJECT_MANAGER', 'test-org', 'PMO', 'Tester', 'active'],
                 (err) => {
@@ -114,9 +115,9 @@ describe('PMO Context API', () => {
             overdueDate.setDate(overdueDate.getDate() - 7);
 
             await new Promise((resolve, reject) => {
-                db.run(`INSERT INTO tasks (id, project_id, title, status, due_date, created_at)
-                        VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-                    [testTaskId, testProjectId, 'Overdue Test Task', 'todo', overdueDate.toISOString().split('T')[0]],
+                db.run(`INSERT INTO tasks (id, project_id, organization_id, title, status, due_date, created_at)
+                        VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+                    [testTaskId, testProjectId, 'test-org', 'Overdue Test Task', 'todo', overdueDate.toISOString().split('T')[0]],
                     (err) => {
                         if (err) reject(err);
                         else resolve();

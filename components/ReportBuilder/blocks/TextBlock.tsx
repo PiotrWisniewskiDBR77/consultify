@@ -12,7 +12,6 @@ export const TextBlock: React.FC<TextBlockProps> = ({ block, onUpdate }) => {
 
     useEffect(() => {
         const newText = block.content?.text || '';
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         if (text !== newText) setText(newText);
     }, [block.content?.text]);
 

@@ -4,6 +4,18 @@ const { v4: uuidv4 } = require('uuid');
 const db = require('../database');
 const verifyToken = require('../middleware/authMiddleware');
 
+// GET /api/llm/providers/public - Get providers visible to users (PUBLIC)
+router.get('/providers/public', async (req, res) => {
+    try {
+        const providers = await dbAll(
+            "SELECT id, name, provider, model_id, endpoint FROM llm_providers WHERE visibility = 'public' AND is_active = 1 ORDER BY name ASC"
+        );
+        res.json(providers);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch public providers' });
+    }
+});
+
 router.use(verifyToken);
 
 // Helper: Run DB Run
@@ -94,17 +106,6 @@ router.delete('/providers/:id', async (req, res) => {
     }
 });
 
-// GET /api/llm/providers/public - Get providers visible to users
-router.get('/providers/public', async (req, res) => {
-    try {
-        const providers = await dbAll(
-            "SELECT id, name, provider, model_id, endpoint FROM llm_providers WHERE visibility = 'public' AND is_active = 1 ORDER BY name ASC"
-        );
-        res.json(providers);
-    } catch (err) {
-        res.status(500).json({ error: 'Failed to fetch public providers' });
-    }
-});
 
 // POST /api/llm/test-ollama - Test Ollama connection (Legacy/Specific)
 router.post('/test-ollama', async (req, res) => {

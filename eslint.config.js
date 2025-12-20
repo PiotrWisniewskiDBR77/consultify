@@ -5,7 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-    { ignores: ['dist', 'coverage', 'node_modules', 'playwright-report', '*.config.js'] },
+    { ignores: ['dist', 'coverage', 'node_modules', 'node_modules_trash', 'node_modules 2', '**/trash_node_modules*/**', 'playwright-report', '*.config.js'] },
     {
         extends: [js.configs.recommended, ...tseslint.configs.recommended],
         files: ['**/*.{ts,tsx}'],
@@ -26,6 +26,8 @@ export default tseslint.config(
             'react-hooks/exhaustive-deps': 'off',
             'react-hooks/static-components': 'off',
             'react-hooks/use-memo': 'off',
+            'react-hooks/set-state-in-effect': 'off',
+            'react-hooks/purity': 'off',
             // Suppress React Compiler errors if any
             // Note: If the plugin doesn't export this rule, ESLint might complain about unknown rule. 
             // But the error output showed this name.

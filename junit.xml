@@ -1,21 +1,185 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="7" failures="0" errors="0" time="0.681057833">
-    <testsuite name="tests/integration/megatrend.test.js" timestamp="2025-12-20T17:20:18.726Z" hostname="MacBook-Pro-Piotr.local" tests="4" failures="0" errors="0" skipped="0" time="0.608882166">
-        <testcase classname="tests/integration/megatrend.test.js" name="Megatrend Integration &gt; should fetch baseline megatrends" time="0.006823334">
+<testsuites name="vitest tests" tests="12" failures="3" errors="0" time="0.369885334">
+    <testsuite name="tests/integration/routes/llm.test.js" timestamp="2025-12-20T17:35:53.329Z" hostname="MacBook-Pro-Piotr.local" tests="7" failures="0" errors="0" skipped="0" time="0.311008042">
+        <testcase classname="tests/integration/routes/llm.test.js" name="Integration Test: LLM Routes &gt; GET /api/llm/providers &gt; should return list of LLM providers" time="0.00271825">
         </testcase>
-        <testcase classname="tests/integration/megatrend.test.js" name="Megatrend Integration &gt; should fetch radar data" time="0.002835334">
+        <testcase classname="tests/integration/routes/llm.test.js" name="Integration Test: LLM Routes &gt; GET /api/llm/providers &gt; should require authentication" time="0.001740209">
         </testcase>
-        <testcase classname="tests/integration/megatrend.test.js" name="Megatrend Integration &gt; should fetch megatrend detail by ID" time="0.003840208">
+        <testcase classname="tests/integration/routes/llm.test.js" name="Integration Test: LLM Routes &gt; GET /api/llm/providers/public &gt; should return public providers" time="0.001156917">
         </testcase>
-        <testcase classname="tests/integration/megatrend.test.js" name="Megatrend Integration &gt; should create and manage custom trend" time="0.003444417">
+        <testcase classname="tests/integration/routes/llm.test.js" name="Integration Test: LLM Routes &gt; POST /api/llm/test &gt; should test provider connection" time="0.224552625">
+            <system-out>
+[AiService] Testing connection for: openai
+
+            </system-out>
+            <system-err>
+Test connection failed: AuthenticationError: 401 Incorrect API key provided: test-key. You can find your API key at https://platform.openai.com/account/api-keys.
+    at APIError.generate [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mopenai[24m/core/error.js:48:20[90m)[39m
+    at OpenAI.makeStatusError [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mopenai[24m/client.js:165:32[90m)[39m
+    at OpenAI.makeRequest [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mopenai[24m/client.js:333:30[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at Object.testProviderConnection [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/aiService.js:1067:36[90m)[39m
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/routes/llm.js:123:24 {
+  status: [33m401[39m,
+  headers: Headers {
+    date: [32m&apos;Sat, 20 Dec 2025 17:35:53 GMT&apos;[39m,
+    [32m&apos;content-type&apos;[39m: [32m&apos;application/json; charset=utf-8&apos;[39m,
+    [32m&apos;content-length&apos;[39m: [32m&apos;258&apos;[39m,
+    connection: [32m&apos;keep-alive&apos;[39m,
+    vary: [32m&apos;Origin&apos;[39m,
+    [32m&apos;x-request-id&apos;[39m: [32m&apos;req_00a19cba54964d8698eee748f83de42c&apos;[39m,
+    [32m&apos;x-envoy-upstream-service-time&apos;[39m: [32m&apos;1&apos;[39m,
+    [32m&apos;x-openai-proxy-wasm&apos;[39m: [32m&apos;v0.1&apos;[39m,
+    [32m&apos;cf-cache-status&apos;[39m: [32m&apos;DYNAMIC&apos;[39m,
+    [32m&apos;set-cookie&apos;[39m: [32m&apos;__cf_bm=RbbYALfITxcoFaB2KEwLmBZSSBT.3XDG0QH3Sb.g6fo-1766252153-1.0.1.1-_ToWXJDOep.vKSsbFxEuw3.VbcaZ25cwV2c2FiNCs9WBEvzAODqOTMZO4UZpiE6k2p9i6lv6qPn6MP913.3J.Tf_xBrkf3ya_FDRXhX2wcs; path=/; expires=Sat, 20-Dec-25 18:05:53 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=KIU5MeQSbvIQzJauLX0CK71oXNH7GP761EdxlT7ZB8E-1766252153330-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None&apos;[39m,
+    [32m&apos;strict-transport-security&apos;[39m: [32m&apos;max-age=31536000; includeSubDomains; preload&apos;[39m,
+    [32m&apos;x-content-type-options&apos;[39m: [32m&apos;nosniff&apos;[39m,
+    server: [32m&apos;cloudflare&apos;[39m,
+    [32m&apos;cf-ray&apos;[39m: [32m&apos;9b10e6155823e77f-WAW&apos;[39m,
+    [32m&apos;alt-svc&apos;[39m: [32m&apos;h3=&quot;:443&quot;; ma=86400&apos;[39m
+  },
+  requestID: [32m&apos;req_00a19cba54964d8698eee748f83de42c&apos;[39m,
+  error: {
+    message: [32m&apos;Incorrect API key provided: test-key. You can find your API key at https://platform.openai.com/account/api-keys.&apos;[39m,
+    type: [32m&apos;invalid_request_error&apos;[39m,
+    param: [1mnull[22m,
+    code: [32m&apos;invalid_api_key&apos;[39m
+  },
+  code: [32m&apos;invalid_api_key&apos;[39m,
+  param: [1mnull[22m,
+  type: [32m&apos;invalid_request_error&apos;[39m
+}
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/integration/routes/llm.test.js" name="Integration Test: LLM Routes &gt; POST /api/llm/test &gt; should handle invalid provider" time="0.002115708">
+            <system-out>
+[AiService] Testing connection for: invalid-provider
+
+            </system-out>
+            <system-err>
+Test connection failed: Error: Provider invalid-provider testing not implemented yet.
+    at Object.testProviderConnection [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/aiService.js:1129:23[90m)[39m
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/routes/llm.js:123:40
+    at Layer.handleRequest [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mrouter[24m/lib/layer.js:152:17[90m)[39m
+    at next [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mrouter[24m/lib/route.js:157:13[90m)[39m
+    at Route.dispatch [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mrouter[24m/lib/route.js:117:3[90m)[39m
+    at handle [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mrouter[24m/index.js:435:11[90m)[39m
+    at Layer.handleRequest [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mrouter[24m/lib/layer.js:152:17[90m)[39m
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mrouter[24m/index.js:295:15
+    at processParams [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mrouter[24m/index.js:582:12[90m)[39m
+    at next [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mrouter[24m/index.js:291:5[90m)[39m
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/integration/routes/llm.test.js" name="Integration Test: LLM Routes &gt; POST /api/llm/test-ollama &gt; should test Ollama connection" time="0.001435917">
+        </testcase>
+        <testcase classname="tests/integration/routes/llm.test.js" name="Integration Test: LLM Routes &gt; GET /api/llm/ollama-models &gt; should return Ollama models" time="0.002149417">
         </testcase>
     </testsuite>
-    <testsuite name="tests/integration/routes/documents.test.js" timestamp="2025-12-20T17:20:18.727Z" hostname="MacBook-Pro-Piotr.local" tests="3" failures="0" errors="0" skipped="0" time="0.072175667">
-        <testcase classname="tests/integration/routes/documents.test.js" name="Integration Test: Documents Routes &gt; GET /api/documents &gt; should return list of documents" time="0.002255375">
+    <testsuite name="tests/integration/routes/pmoContext.test.js" timestamp="2025-12-20T17:35:53.330Z" hostname="MacBook-Pro-Piotr.local" tests="5" failures="3" errors="0" skipped="0" time="0.058877292">
+        <testcase classname="tests/integration/routes/pmoContext.test.js" name="PMO Context API &gt; GET /api/pmo-context/:projectId &gt; should return PMO context with phase information" time="0.0114905">
+            <system-err>
+PMO Context error: Error: SQLITE_ERROR: no such column: i.blocked_reason
+--&gt; in Database#all(&quot;SELECT t.id, t.title, &apos;TASK&apos; as type FROM tasks t\n&quot; +
+  &quot;                    WHERE t.project_id = ? AND t.status IN (&apos;blocked&apos;, &apos;BLOCKED&apos;) AND (t.blocked_reason IS NULL OR t.blocked_reason = &apos;&apos;)\n&quot; +
+  &apos;                    UNION ALL\n&apos; +
+  &quot;                    SELECT i.id, i.name as title, &apos;INITIATIVE&apos; as type FROM initiatives i\n&quot; +
+  &quot;                    WHERE i.project_id = ? AND i.status = &apos;BLOCKED&apos; AND (i.blocked_reason IS NULL OR i.blocked_reason = &apos;&apos;)&quot;, [
+  &apos;84571c46-6af5-416e-863e-260afbdc532c&apos;,
+  &apos;84571c46-6af5-416e-863e-260afbdc532c&apos;
+], [Function (anonymous)])
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/executionMonitorService.js:181:16
+    at new Promise (&lt;anonymous&gt;)
+    at Object._detectSilentBlockers [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/executionMonitorService.js:180:16[90m)[39m
+    at Object.runDailyMonitor [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/executionMonitorService.js:88:62[90m)[39m
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/routes/pmo-context.js:253:31 {
+  errno: [33m1[39m,
+  code: [32m&apos;SQLITE_ERROR&apos;[39m,
+  __augmented: [33mtrue[39m
+}
+
+            </system-err>
+            <failure message="expected 200 &quot;OK&quot;, got 500 &quot;Internal Server Error&quot;" type="Error">
+Error: expected 200 &quot;OK&quot;, got 500 &quot;Internal Server Error&quot;
+ ❯ tests/integration/routes/pmoContext.test.js:65:18
+ ❯ Test._assertStatus node_modules/supertest/lib/test.js:309:14
+ ❯ node_modules/supertest/lib/test.js:365:13
+ ❯ Test._assertFunction node_modules/supertest/lib/test.js:342:13
+ ❯ Test.assert node_modules/supertest/lib/test.js:195:23
+ ❯ localAssert node_modules/supertest/lib/test.js:138:14
+ ❯ Server.&lt;anonymous&gt; node_modules/supertest/lib/test.js:152:11
+            </failure>
         </testcase>
-        <testcase classname="tests/integration/routes/documents.test.js" name="Integration Test: Documents Routes &gt; GET /api/documents &gt; should require authentication" time="0.00135275">
+        <testcase classname="tests/integration/routes/pmoContext.test.js" name="PMO Context API &gt; GET /api/pmo-context/:projectId &gt; should return 404 for non-existent project" time="0.002393875">
         </testcase>
-        <testcase classname="tests/integration/routes/documents.test.js" name="Integration Test: Documents Routes &gt; POST /api/documents/upload &gt; should require file upload" time="0.001179625">
+        <testcase classname="tests/integration/routes/pmoContext.test.js" name="PMO Context API &gt; GET /api/pmo-context/:projectId &gt; should include allowed actions for current phase" time="0.002141792">
+            <system-err>
+PMO Context error: Error: SQLITE_ERROR: no such column: i.blocked_reason
+--&gt; in Database#all(&quot;SELECT t.id, t.title, &apos;TASK&apos; as type FROM tasks t\n&quot; +
+  &quot;                    WHERE t.project_id = ? AND t.status IN (&apos;blocked&apos;, &apos;BLOCKED&apos;) AND (t.blocked_reason IS NULL OR t.blocked_reason = &apos;&apos;)\n&quot; +
+  &apos;                    UNION ALL\n&apos; +
+  &quot;                    SELECT i.id, i.name as title, &apos;INITIATIVE&apos; as type FROM initiatives i\n&quot; +
+  &quot;                    WHERE i.project_id = ? AND i.status = &apos;BLOCKED&apos; AND (i.blocked_reason IS NULL OR i.blocked_reason = &apos;&apos;)&quot;, [
+  &apos;84571c46-6af5-416e-863e-260afbdc532c&apos;,
+  &apos;84571c46-6af5-416e-863e-260afbdc532c&apos;
+], [Function (anonymous)])
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/executionMonitorService.js:181:16
+    at new Promise (&lt;anonymous&gt;)
+    at Object._detectSilentBlockers [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/executionMonitorService.js:180:16[90m)[39m
+    at Object.runDailyMonitor [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/executionMonitorService.js:88:62[90m)[39m
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/routes/pmo-context.js:253:31 {
+  errno: [33m1[39m,
+  code: [32m&apos;SQLITE_ERROR&apos;[39m,
+  __augmented: [33mtrue[39m
+}
+
+            </system-err>
+            <failure message="expected 200 &quot;OK&quot;, got 500 &quot;Internal Server Error&quot;" type="Error">
+Error: expected 200 &quot;OK&quot;, got 500 &quot;Internal Server Error&quot;
+ ❯ tests/integration/routes/pmoContext.test.js:90:18
+ ❯ Test._assertStatus node_modules/supertest/lib/test.js:309:14
+ ❯ node_modules/supertest/lib/test.js:365:13
+ ❯ Test._assertFunction node_modules/supertest/lib/test.js:342:13
+ ❯ Test.assert node_modules/supertest/lib/test.js:195:23
+ ❯ localAssert node_modules/supertest/lib/test.js:138:14
+ ❯ Server.&lt;anonymous&gt; node_modules/supertest/lib/test.js:152:11
+            </failure>
+        </testcase>
+        <testcase classname="tests/integration/routes/pmoContext.test.js" name="PMO Context API &gt; GET /api/pmo-context/:projectId &gt; should include system messages based on phase" time="0.002405042">
+            <system-err>
+PMO Context error: Error: SQLITE_ERROR: no such column: i.blocked_reason
+--&gt; in Database#all(&quot;SELECT t.id, t.title, &apos;TASK&apos; as type FROM tasks t\n&quot; +
+  &quot;                    WHERE t.project_id = ? AND t.status IN (&apos;blocked&apos;, &apos;BLOCKED&apos;) AND (t.blocked_reason IS NULL OR t.blocked_reason = &apos;&apos;)\n&quot; +
+  &apos;                    UNION ALL\n&apos; +
+  &quot;                    SELECT i.id, i.name as title, &apos;INITIATIVE&apos; as type FROM initiatives i\n&quot; +
+  &quot;                    WHERE i.project_id = ? AND i.status = &apos;BLOCKED&apos; AND (i.blocked_reason IS NULL OR i.blocked_reason = &apos;&apos;)&quot;, [
+  &apos;84571c46-6af5-416e-863e-260afbdc532c&apos;,
+  &apos;84571c46-6af5-416e-863e-260afbdc532c&apos;
+], [Function (anonymous)])
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/executionMonitorService.js:181:16
+    at new Promise (&lt;anonymous&gt;)
+    at Object._detectSilentBlockers [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/executionMonitorService.js:180:16[90m)[39m
+    at Object.runDailyMonitor [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/executionMonitorService.js:88:62[90m)[39m
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/routes/pmo-context.js:253:31 {
+  errno: [33m1[39m,
+  code: [32m&apos;SQLITE_ERROR&apos;[39m,
+  __augmented: [33mtrue[39m
+}
+
+            </system-err>
+            <failure message="expected 200 &quot;OK&quot;, got 500 &quot;Internal Server Error&quot;" type="Error">
+Error: expected 200 &quot;OK&quot;, got 500 &quot;Internal Server Error&quot;
+ ❯ tests/integration/routes/pmoContext.test.js:102:18
+ ❯ Test._assertStatus node_modules/supertest/lib/test.js:309:14
+ ❯ node_modules/supertest/lib/test.js:365:13
+ ❯ Test._assertFunction node_modules/supertest/lib/test.js:342:13
+ ❯ Test.assert node_modules/supertest/lib/test.js:195:23
+ ❯ localAssert node_modules/supertest/lib/test.js:138:14
+ ❯ Server.&lt;anonymous&gt; node_modules/supertest/lib/test.js:152:11
+            </failure>
+        </testcase>
+        <testcase classname="tests/integration/routes/pmoContext.test.js" name="PMO Context API &gt; GET /api/pmo-context/:projectId/task-labels &gt; should return task labels with PMO relevance" time="0.001668833">
         </testcase>
     </testsuite>
 </testsuites>
