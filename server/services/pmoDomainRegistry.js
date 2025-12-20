@@ -15,7 +15,7 @@
  * @module pmoDomainRegistry
  */
 
-const db = require('../database');
+let db = require('../database');
 const { v4: uuidv4 } = require('uuid');
 
 /**
@@ -278,9 +278,12 @@ const PMODomainRegistry = {
      * @param {string} objectType - The SCMS object type (e.g., 'Decision', 'Initiative')
      * @returns {Object|null} The domain containing this object
      */
-    getDomainForObject(objectType) {
-        return PMO_DOMAINS.find(d => d.scmsObjects.includes(objectType)) || null;
+    getDomainForObject: (objectType) => {
+        return PMO_DOMAINS.find(d => d.scmsObjects.includes(objectType)) || PMO_DOMAINS.find(d => d.id === 'integration_management');
     },
+
+    // Test helper
+    _setDb: (mockDb) => { db = mockDb; },
 
     /**
      * Get certification notes for a domain

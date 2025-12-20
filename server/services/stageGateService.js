@@ -1,7 +1,7 @@
 // Stage Gate Service - Phase transition control
 // Step 3: PMO Objects, Statuses & Stage Gates
 
-const db = require('../database');
+let db = require('../database');
 const { v4: uuidv4 } = require('uuid');
 
 const GATE_TYPES = {
@@ -260,7 +260,10 @@ const StageGateService = {
                 });
             });
         });
-    }
+    },
+
+    // Test helper to inject mock DB
+    _setDb: (mockDb) => { db = mockDb; }
 };
 
 module.exports = StageGateService;

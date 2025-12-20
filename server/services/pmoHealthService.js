@@ -6,7 +6,7 @@
  * used by both UI and AI context builder to ensure consistency.
  */
 
-const db = require('../database');
+let db = require('../database');
 const StageGateService = require('./stageGateService');
 
 const PMOHealthService = {
@@ -253,7 +253,10 @@ const PMOHealthService = {
                 resolve(row?.current_phase || 'Context');
             });
         });
-    }
+    },
+
+    // Test helper
+    _setDb: (mockDb) => { db = mockDb; }
 };
 
 module.exports = PMOHealthService;

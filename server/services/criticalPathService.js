@@ -1,7 +1,8 @@
+
 // Critical Path Service - Dependency-aware sequencing
 // Step 4: Roadmap, Sequencing & Capacity
 
-const db = require('../database');
+let db = require('../database');
 const DependencyService = require('./dependencyService');
 
 const CriticalPathService = {
@@ -236,7 +237,10 @@ const CriticalPathService = {
             recommendations,
             overallRisk: risks.some(r => r.level === 'HIGH') ? 'HIGH' : (risks.length > 0 ? 'MEDIUM' : 'LOW')
         };
-    }
+    },
+
+    // Test helper to inject mock DB
+    _setDb: (mockDb) => { db = mockDb; }
 };
 
 module.exports = CriticalPathService;

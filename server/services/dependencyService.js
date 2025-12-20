@@ -1,7 +1,7 @@
 // Dependency Service - Initiative dependency management
 // Step 3: PMO Objects, Statuses & Stage Gates
 
-const db = require('../database');
+let db = require('../database');
 const { v4: uuidv4 } = require('uuid');
 
 const DependencyService = {
@@ -179,7 +179,10 @@ const DependencyService = {
                     resolve({ updated: this.changes });
                 });
         });
-    }
+    },
+
+    // Test helper
+    _setDb: (mockDb) => { db = mockDb; }
 };
 
 module.exports = DependencyService;

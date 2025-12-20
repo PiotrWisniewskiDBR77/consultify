@@ -1,7 +1,7 @@
 // My Work Service - Execution hub aggregation
 // Step 5: Execution Control, My Work & Notifications
 
-const db = require('../database');
+let db = require('../database');
 
 const MyWorkService = {
     /**
@@ -215,7 +215,9 @@ const MyWorkService = {
                     resolve(!!row);
                 });
         });
-    }
+    },
+    // Test helper
+    _setDb: (mockDb) => { db = mockDb; }
 };
 
 module.exports = MyWorkService;
