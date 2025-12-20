@@ -33,7 +33,7 @@ server/.env
 *.db
 *.db-journal
 *.db.bak
-data/
+# data/
 
 # Test artifacts
 coverage

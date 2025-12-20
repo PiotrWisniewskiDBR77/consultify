@@ -44,7 +44,7 @@ export const TransformationScenarios: React.FC<TransformationScenariosProps> = (
     const getScenarioText = (id: string, field: 'name' | 'narrative') => {
         const sTexts = t.scenarios[id as keyof typeof t.scenarios];
         if (!sTexts) return '';
-        // @ts-ignore
+
         return sTexts[field];
     };
 
