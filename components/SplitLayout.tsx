@@ -1,6 +1,7 @@
 import React from 'react';
 import { ChatPanel } from './ChatPanel';
 import { useAppStore } from '../store/useAppStore';
+import { usePMOContextAutoFetch } from '../store/usePMOStore';
 import { ChatMessage, ChatOption } from '../types';
 import { useAIStream } from '../hooks/useAIStream';
 import { useAIContext } from '../contexts/AIContext';
@@ -28,8 +29,12 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
         activeChatMessages,
         addChatMessage,
         isBotTyping,
-        setIsBotTyping
+        setIsBotTyping,
+        currentProjectId
     } = useAppStore();
+
+    // CRIT-03: Auto-fetch PMO context when project changes
+    usePMOContextAutoFetch(currentProjectId);
 
     const { screenContext } = useAIContext();
     const { isStreaming, streamedContent, startStream } = useAIStream();
