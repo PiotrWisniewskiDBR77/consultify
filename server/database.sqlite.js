@@ -268,6 +268,31 @@ function initDb() {
             // Ignore error if column already exists
         });
 
+        // GAP-03: Add rag_enabled column to projects
+        db.run(`ALTER TABLE projects ADD COLUMN rag_enabled INTEGER DEFAULT 1`, (err) => {
+            // Ignore error if column already exists
+        });
+
+        // MED-04: Project Notification Settings table
+        db.run(`CREATE TABLE IF NOT EXISTS project_notification_settings (
+            id TEXT PRIMARY KEY,
+            project_id TEXT UNIQUE NOT NULL,
+            task_overdue_enabled INTEGER DEFAULT 1,
+            task_due_today_enabled INTEGER DEFAULT 1,
+            blocker_detected_enabled INTEGER DEFAULT 1,
+            gate_ready_enabled INTEGER DEFAULT 1,
+            decision_required_enabled INTEGER DEFAULT 1,
+            escalation_enabled INTEGER DEFAULT 1,
+            escalation_days INTEGER DEFAULT 3,
+            email_notifications INTEGER DEFAULT 0,
+            in_app_notifications INTEGER DEFAULT 1,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (project_id) REFERENCES projects(id)
+        )`, (err) => {
+            // Table creation - ignore if exists
+        });
+
         // ==========================================
         // PHASE 3: AI EVOLUTION TABLES
         // ==========================================

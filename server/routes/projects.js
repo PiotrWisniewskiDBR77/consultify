@@ -60,4 +60,82 @@ router.delete('/:id', (req, res) => {
     });
 });
 
+// ==========================================
+// MED-04b: Project Notification Settings API
+// ==========================================
+
+// GET Notification Settings for Project
+router.get('/:id/notification-settings', (req, res) => {
+    const { id } = req.params;
+
+    db.get(`SELECT * FROM project_notification_settings WHERE project_id = ?`, [id], (err, row) => {
+        if (err) return res.status(500).json({ error: err.message });
+
+        // Return default settings if none exist
+        if (!row) {
+            return res.json({
+                project_id: id,
+                task_overdue_enabled: true,
+                task_due_today_enabled: true,
+                blocker_detected_enabled: true,
+                gate_ready_enabled: true,
+                decision_required_enabled: true,
+                escalation_enabled: true,
+                escalation_days: 3,
+                email_notifications: false,
+                in_app_notifications: true
+            });
+        }
+
+        res.json(row);
+    });
+});
+
+// PUT (Upsert) Notification Settings for Project
+router.put('/:id/notification-settings', (req, res) => {
+    const { id: projectId } = req.params;
+    const {
+        task_overdue_enabled = 1,
+        task_due_today_enabled = 1,
+        blocker_detected_enabled = 1,
+        gate_ready_enabled = 1,
+        decision_required_enabled = 1,
+        escalation_enabled = 1,
+        escalation_days = 3,
+        email_notifications = 0,
+        in_app_notifications = 1
+    } = req.body;
+
+    const settingsId = uuidv4();
+
+    // Upsert using REPLACE
+    const sql = `
+        INSERT OR REPLACE INTO project_notification_settings 
+        (id, project_id, task_overdue_enabled, task_due_today_enabled, blocker_detected_enabled,
+         gate_ready_enabled, decision_required_enabled, escalation_enabled, escalation_days,
+         email_notifications, in_app_notifications, updated_at)
+        VALUES (
+            COALESCE((SELECT id FROM project_notification_settings WHERE project_id = ?), ?),
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP
+        )
+    `;
+
+    db.run(sql, [
+        projectId, settingsId, projectId,
+        task_overdue_enabled ? 1 : 0,
+        task_due_today_enabled ? 1 : 0,
+        blocker_detected_enabled ? 1 : 0,
+        gate_ready_enabled ? 1 : 0,
+        decision_required_enabled ? 1 : 0,
+        escalation_enabled ? 1 : 0,
+        escalation_days,
+        email_notifications ? 1 : 0,
+        in_app_notifications ? 1 : 0
+    ], function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true, message: 'Notification settings saved' });
+    });
+});
+
 module.exports = router;
+
