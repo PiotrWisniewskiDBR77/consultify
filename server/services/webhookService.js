@@ -1,12 +1,18 @@
-const fetch = require('node-fetch');
+const defaultFetch = require('node-fetch');
 const crypto = require('crypto');
 
 /**
  * Webhook Service - Trigger webhooks for various events
  */
 class WebhookService {
-    constructor(db) {
+    /**
+     * @param {Object} db - Database instance
+     * @param {Object} options - Optional dependencies for testing
+     * @param {Function} options.fetch - Custom fetch implementation
+     */
+    constructor(db, options = {}) {
         this.db = db;
+        this.fetch = options.fetch || defaultFetch;
     }
 
     /**
@@ -65,7 +71,7 @@ class WebhookService {
             .update(JSON.stringify(payload))
             .digest('hex');
 
-        const response = await fetch(webhook.url, {
+        const response = await this.fetch(webhook.url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -92,7 +98,7 @@ class WebhookService {
      */
     async sendSlackNotification(webhookUrl, message) {
         try {
-            const response = await fetch(webhookUrl, {
+            const response = await this.fetch(webhookUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(message)

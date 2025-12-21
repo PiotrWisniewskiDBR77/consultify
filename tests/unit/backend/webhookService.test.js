@@ -11,37 +11,25 @@ import { createMockDb } from '../../helpers/dependencyInjector.js';
 import { testOrganizations } from '../../fixtures/testData.js';
 
 const require = createRequire(import.meta.url);
-
-// Mock fetch at module level
-const mockFetch = vi.fn();
-vi.mock('node-fetch', () => ({
-    default: mockFetch
-}));
+const WebhookServiceClass = require('../../../server/services/webhookService.js');
 
 describe('WebhookService', () => {
     let mockDb;
+    let mockFetch;
     let WebhookService;
 
     beforeEach(() => {
-        vi.resetModules();
         mockDb = createMockDb();
         
-        // Reset fetch mock
-        mockFetch.mockReset();
-        mockFetch.mockResolvedValue({
+        // Create fetch mock
+        mockFetch = vi.fn().mockResolvedValue({
             ok: true,
             status: 200,
             statusText: 'OK'
         });
         
-        // Re-mock node-fetch for this test cycle
-        vi.doMock('node-fetch', () => ({
-            default: mockFetch
-        }));
-        
-        // Import after mocking
-        const WebhookServiceClass = require('../../../server/services/webhookService.js');
-        WebhookService = new WebhookServiceClass(mockDb);
+        // Create service with injected fetch mock
+        WebhookService = new WebhookServiceClass(mockDb, { fetch: mockFetch });
     });
 
     afterEach(() => {
@@ -227,14 +215,14 @@ describe('WebhookService', () => {
             });
 
             await expect(WebhookService.sendWebhook(webhook, 'test', {}))
-                .rejects.toThrow('Webhook failed: 500 Internal Server Error');
+                .rejects.toThrow('Webhook returned 500: Internal Server Error');
         });
     });
 
     describe('sendSlackNotification()', () => {
         it('should send Slack notification', async () => {
             const webhookUrl = 'https://hooks.slack.com/services/xxx';
-            const message = 'Test message';
+            const message = { text: 'Test message' };
 
             await WebhookService.sendSlackNotification(webhookUrl, message);
 
@@ -243,7 +231,7 @@ describe('WebhookService', () => {
                 expect.objectContaining({
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text: message })
+                    body: JSON.stringify(message)
                 })
             );
         });
@@ -257,8 +245,19 @@ describe('WebhookService', () => {
                 statusText: 'Bad Request'
             });
 
-            await expect(WebhookService.sendSlackNotification(webhookUrl, 'test'))
-                .rejects.toThrow();
+            const result = await WebhookService.sendSlackNotification(webhookUrl, { text: 'test' });
+            expect(result.success).toBe(false);
+            expect(result.status).toBe(400);
+        });
+        
+        it('should handle network errors', async () => {
+            const webhookUrl = 'https://hooks.slack.com/services/xxx';
+
+            mockFetch.mockRejectedValueOnce(new Error('Network error'));
+
+            const result = await WebhookService.sendSlackNotification(webhookUrl, { text: 'test' });
+            expect(result.success).toBe(false);
+            expect(result.error).toContain('Network error');
         });
     });
 
@@ -316,7 +315,7 @@ describe('WebhookService', () => {
 
             const callArgs = mockFetch.mock.calls[0];
             const signature = callArgs[1].headers['X-Consultify-Signature'];
-            // Signature should be a hex string
+            // Signature should be a hex string (SHA256 = 64 hex chars)
             expect(signature).toMatch(/^[a-f0-9]{64}$/);
         });
 
@@ -331,6 +330,75 @@ describe('WebhookService', () => {
 
             const callArgs = mockFetch.mock.calls[0];
             expect(callArgs[1].headers['X-Consultify-Event']).toBe('initiative.created');
+        });
+        
+        it('should generate different signatures for different secrets', async () => {
+            const webhook1 = {
+                url: 'https://example.com/webhook1',
+                secret: 'secret-1',
+                events: 'test'
+            };
+            const webhook2 = {
+                url: 'https://example.com/webhook2',
+                secret: 'secret-2',
+                events: 'test'
+            };
+            const data = { same: 'data' };
+
+            await WebhookService.sendWebhook(webhook1, 'test', data);
+            await WebhookService.sendWebhook(webhook2, 'test', data);
+
+            const sig1 = mockFetch.mock.calls[0][1].headers['X-Consultify-Signature'];
+            const sig2 = mockFetch.mock.calls[1][1].headers['X-Consultify-Signature'];
+            
+            expect(sig1).not.toBe(sig2);
+        });
+    });
+
+    describe('formatInitiativeMessage()', () => {
+        it('should format initiative message correctly', () => {
+            const initiative = {
+                name: 'Test Initiative',
+                axis: 'Strategic',
+                priority: 'HIGH',
+                roi: 150,
+                capex: 10000
+            };
+
+            const result = WebhookService.formatInitiativeMessage(initiative, 'Created');
+
+            expect(result.blocks).toHaveLength(2);
+            expect(result.blocks[0].text.text).toContain('Test Initiative');
+            expect(result.blocks[0].text.text).toContain('Strategic');
+            expect(result.blocks[1].elements[0].text).toContain('150%');
+            expect(result.blocks[1].elements[0].text).toContain('$10000');
+        });
+    });
+
+    describe('formatTaskMessage()', () => {
+        it('should format task message with status emoji', () => {
+            const task = {
+                title: 'Test Task',
+                status: 'in_progress'
+            };
+
+            const result = WebhookService.formatTaskMessage(task, 'Updated');
+
+            expect(result.blocks).toHaveLength(1);
+            expect(result.blocks[0].text.text).toContain('🟡');
+            expect(result.blocks[0].text.text).toContain('Test Task');
+            expect(result.blocks[0].text.text).toContain('in_progress');
+        });
+
+        it('should handle completed status', () => {
+            const task = {
+                title: 'Test Task',
+                status: 'completed'
+            };
+
+            const result = WebhookService.formatTaskMessage(task, 'Completed');
+
+            expect(result.blocks[0].text.text).toContain('✅');
         });
     });
 });

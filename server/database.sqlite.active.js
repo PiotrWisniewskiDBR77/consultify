@@ -58,6 +58,7 @@ function initDb() {
             trial_expires_at DATETIME,
             trial_extension_count INTEGER DEFAULT 0,
             trial_warning_sent_at DATETIME,
+            trial_tokens_used INTEGER DEFAULT 0,
             
             created_by_user_id TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -1121,6 +1122,11 @@ function initDb() {
             ai_suggestion TEXT,
             user_decision TEXT, -- ACCEPTED, REJECTED, MODIFIED, IGNORED
             user_feedback TEXT,
+            regulatory_mode INTEGER DEFAULT 0,
+            reasoning_summary TEXT,
+            data_used_json TEXT,
+            constraints_applied_json TEXT,
+            correlation_id TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL,
             FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,

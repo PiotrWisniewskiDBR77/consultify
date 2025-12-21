@@ -7,41 +7,53 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createRequire } from 'module';
-import * as fs from 'fs';
-import * as path from 'path';
 import { testUsers, testOrganizations, testProjects } from '../../fixtures/testData.js';
 
 const require = createRequire(import.meta.url);
 
+// Mock fs module at module level
+const mockFsPromises = {
+    mkdir: vi.fn().mockResolvedValue(undefined),
+    rename: vi.fn().mockResolvedValue(undefined),
+    stat: vi.fn().mockResolvedValue({
+        size: 1024,
+        birthtime: new Date()
+    }),
+    readdir: vi.fn().mockResolvedValue([]),
+    unlink: vi.fn().mockResolvedValue(undefined)
+};
+
+vi.mock('fs', () => ({
+    default: {
+        existsSync: vi.fn(),
+        mkdirSync: vi.fn(),
+        promises: mockFsPromises
+    },
+    existsSync: vi.fn(),
+    mkdirSync: vi.fn(),
+    promises: mockFsPromises
+}));
+
+vi.mock('path', () => ({
+    default: {
+        resolve: (...args) => args.join('/'),
+        join: (...args) => args.join('/'),
+        basename: (p) => p.split('/').pop(),
+        sep: '/'
+    },
+    resolve: (...args) => args.join('/'),
+    join: (...args) => args.join('/'),
+    basename: (p) => p.split('/').pop(),
+    sep: '/'
+}));
+
 describe('StorageService', () => {
     let StorageService;
-    let mockFs;
 
     beforeEach(() => {
-        // Mock fs module
-        mockFs = {
-            existsSync: vi.fn(),
-            mkdirSync: vi.fn(),
-            promises: {
-                mkdir: vi.fn().mockResolvedValue(undefined),
-                rename: vi.fn().mockResolvedValue(undefined),
-                stat: vi.fn().mockResolvedValue({
-                    size: 1024,
-                    birthtime: new Date()
-                }),
-                readdir: vi.fn().mockResolvedValue([]),
-                unlink: vi.fn().mockResolvedValue(undefined)
-            }
-        };
-
-        vi.mock('fs', () => mockFs);
-        vi.mock('path', () => ({
-            resolve: vi.fn((...args) => args.join('/')),
-            join: vi.fn((...args) => args.join('/')),
-            basename: vi.fn((p) => p.split('/').pop()),
-            sep: '/'
-        }));
-
+        vi.resetModules();
+        vi.clearAllMocks();
+        
         StorageService = require('../../../server/services/storageService.js');
     });
 
