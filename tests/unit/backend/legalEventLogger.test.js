@@ -15,18 +15,17 @@ vi.mock('../../../server/database', () => ({
     default: mockDb
 }));
 
-vi.mock('uuid', () => ({
-    v4: mockUuidv4
-}));
-
 import { LegalEventLogger } from '../../../server/services/legalEventLogger.js';
 
 describe('LegalEventLogger', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         
-        // Reset UUID mock
-        mockUuidv4.mockReturnValue('uuid-1234');
+        // Inject mocked dependencies
+        LegalEventLogger._setDependencies({
+            db: mockDb,
+            uuidv4: mockUuidv4
+        });
 
         mockDb.run.mockImplementation(function (...args) {
             const cb = args[args.length - 1];

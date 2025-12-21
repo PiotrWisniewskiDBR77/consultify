@@ -152,4 +152,159 @@ router.post('/:trialId/convert', async (req, res) => {
     }
 });
 
+// POST /api/organizations/:orgId/consultants (Link Consultant)
+router.post('/:orgId/consultants', async (req, res) => {
+    try {
+        const { orgId } = req.params;
+        const userId = req.user?.id;
+        const { consultantId, permissions } = req.body;
+
+        // Security check: Only OWNER or ADMIN
+        const members = await OrganizationService.getMembers(orgId);
+        const currentUserMember = members.find(m => m.user_id === userId);
+
+        if (!currentUserMember || !['OWNER', 'ADMIN'].includes(currentUserMember.role)) {
+            if (req.user?.role !== 'SUPERADMIN') {
+                return res.status(403).json({ error: 'Only Admins can manage consultants' });
+            }
+        }
+
+        // We need ConsultantService for linking
+        const ConsultantService = require('../services/consultantService');
+        const link = await ConsultantService.linkConsultantToOrg(consultantId, orgId, userId, permissions);
+        res.status(201).json(link);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// PATCH /api/organizations/:orgId/settings/ai (Update AI Settings)
+router.patch('/:orgId/settings/ai', async (req, res) => {
+    try {
+        const { orgId } = req.params;
+        const userId = req.user?.id;
+        const { ai_assertiveness_level, ai_autonomy_level } = req.body;
+
+        // Security check: Only OWNER or ADMIN
+        const members = await OrganizationService.getMembers(orgId);
+        const currentUserMember = members.find(m => m.user_id === userId);
+
+        if (!currentUserMember || !['OWNER', 'ADMIN'].includes(currentUserMember.role)) {
+            if (req.user?.role !== 'SUPERADMIN') {
+                return res.status(403).json({ error: 'Only Admins can manage AI settings' });
+            }
+        }
+
+        await OrganizationService.updateAISettings(orgId, {
+            ai_assertiveness_level,
+            ai_autonomy_level
+        });
+
+        res.json({ success: true, message: 'AI settings updated' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ==========================================
+// TOKEN LEDGER ROUTES
+// ==========================================
+
+const TokenBillingService = require('../services/tokenBillingService');
+
+// GET /api/organizations/:orgId/tokens/balance
+router.get('/:orgId/tokens/balance', async (req, res) => {
+    try {
+        const { orgId } = req.params;
+        const userId = req.user?.id;
+
+        // Security check: User must be member
+        const members = await OrganizationService.getMembers(orgId);
+        const isMember = members.some(m => m.user_id === userId);
+        if (!isMember && req.user?.role !== 'SUPERADMIN') {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        const balanceInfo = await TokenBillingService.getOrgBalance(orgId);
+        const summary = await TokenBillingService.getLedgerSummary(orgId);
+
+        // Trial budget config (TODO: move to org config table later)
+        const TRIAL_BUDGET_TOTAL = 50000;
+
+        const isTrial = balanceInfo.billingStatus === 'TRIAL' || balanceInfo.organizationType === 'TRIAL';
+
+        res.json({
+            success: true,
+            balance: balanceInfo.balance,
+            billingStatus: balanceInfo.billingStatus,
+            organizationType: balanceInfo.organizationType,
+            ledgerSummary: summary,
+            // Trial-specific fields (null for non-trial)
+            trialBudgetTotal: isTrial ? TRIAL_BUDGET_TOTAL : null,
+            trialBudgetRemaining: isTrial ? balanceInfo.balance : null,
+            // PAYGO status for UI gating
+            paygoStatus: balanceInfo.billingStatus
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// GET /api/organizations/:orgId/tokens/ledger
+router.get('/:orgId/tokens/ledger', async (req, res) => {
+    try {
+        const { orgId } = req.params;
+        const userId = req.user?.id;
+        const { limit = 50, offset = 0 } = req.query;
+
+        // Security check: User must be OWNER or ADMIN
+        const members = await OrganizationService.getMembers(orgId);
+        const currentUserMember = members.find(m => m.user_id === userId);
+
+        if (!currentUserMember || !['OWNER', 'ADMIN'].includes(currentUserMember.role)) {
+            if (req.user?.role !== 'SUPERADMIN') {
+                return res.status(403).json({ error: 'Only Admins can view ledger' });
+            }
+        }
+
+        const ledger = await TokenBillingService.getLedger(orgId, {
+            limit: parseInt(limit),
+            offset: parseInt(offset)
+        });
+
+        res.json({ success: true, ledger });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// POST /api/organizations/:orgId/tokens/credit (Admin only - for manual credits)
+router.post('/:orgId/tokens/credit', async (req, res) => {
+    try {
+        const { orgId } = req.params;
+        const userId = req.user?.id;
+        const { tokens, reason, refType } = req.body;
+
+        // Security check: Only SUPERADMIN can manually credit
+        if (req.user?.role !== 'SUPERADMIN') {
+            return res.status(403).json({ error: 'Only SuperAdmin can credit tokens' });
+        }
+
+        if (!tokens || tokens <= 0) {
+            return res.status(400).json({ error: 'Invalid token amount' });
+        }
+
+        const result = await TokenBillingService.creditOrganization(orgId, tokens, {
+            userId,
+            reason: reason || 'Manual Credit',
+            refType: refType || 'GRANT'
+        });
+
+        res.json({ success: true, ...result });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 module.exports = router;
+

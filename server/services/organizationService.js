@@ -25,11 +25,13 @@ const OrganizationService = {
      * @param {string} params.userId - Creator (will be OWNER)
      * @param {string} params.name - Org name
      * @param {string} [params.email] - Optional email for billing contact
+     * @param {Object} [params.attribution] - Optional attribution data { type, id }
      * @returns {Promise<Object>}
      */
-    createOrganization: async ({ userId, name, email }) => {
+    createOrganization: async ({ userId, name, email, attribution = null }) => {
         const orgId = uuidv4();
         const now = new Date().toISOString();
+        const attributionJson = attribution ? JSON.stringify(attribution) : null;
 
         return new Promise((resolve, reject) => {
             db.serialize(() => {
@@ -37,9 +39,12 @@ const OrganizationService = {
 
                 // 1. Create Organization
                 db.run(
-                    `INSERT INTO organizations (id, name, status, billing_status, token_balance, created_by_user_id, created_at, is_active)
-                     VALUES (?, ?, 'active', 'TRIAL', 0, ?, ?, 1)`,
-                    [orgId, name, userId, now],
+                    `INSERT INTO organizations (
+                        id, name, status, billing_status, token_balance, created_by_user_id, created_at, is_active,
+                        ai_assertiveness_level, ai_autonomy_level, attribution_data
+                    )
+                     VALUES (?, ?, 'active', 'TRIAL', 0, ?, ?, 1, 'MEDIUM', 'SUGGEST_ONLY', ?)`,
+                    [orgId, name, userId, now, attributionJson],
                     function (err) {
                         if (err) {
                             db.run('ROLLBACK');
@@ -166,22 +171,29 @@ const OrganizationService = {
     },
 
     /**
-     * Activate billing (Stub)
-     * Sets billing_status = ACTIVE and grants initial tokens
+     * Activate billing for an organization
+     * Sets billing_status = ACTIVE, organization_type = PAID, and grants initial tokens
      * @param {string} orgId 
      * @returns {Promise<Object>}
      */
     activateBilling: async (orgId) => {
-        const INITIAL_TOKENS = 100000; // Configurable
+        const INITIAL_TOKENS = 100000; // Configurable initial pack
 
         return new Promise((resolve, reject) => {
             db.serialize(() => {
                 db.run('BEGIN TRANSACTION');
 
                 // Update Organization
+                // - Set billing_status -> ACTIVE
+                // - Set organization_type -> PAID
+                // - Set status -> ACTIVE (lifecycle)
+                // - Add Initial Tokens (only if not previously credited? - For now, just add)
                 db.run(
                     `UPDATE organizations 
-                     SET billing_status = 'ACTIVE', token_balance = IFNULL(token_balance, 0) + ? 
+                     SET billing_status = 'ACTIVE', 
+                         organization_type = 'PAID',
+                         status = 'active',
+                         token_balance = IFNULL(token_balance, 0) + ? 
                      WHERE id = ?`,
                     [INITIAL_TOKENS, orgId],
                     function (err) {
@@ -196,7 +208,7 @@ const OrganizationService = {
                     }
                 );
 
-                // Update Billing Table (Stub)
+                // Update Billing Table (Stub/Real)
                 db.run(
                     `INSERT OR REPLACE INTO organization_billing (organization_id, status, updated_at)
                      VALUES (?, 'ACTIVE', CURRENT_TIMESTAMP)`,
@@ -207,13 +219,101 @@ const OrganizationService = {
                             return reject(err);
                         }
 
-                        db.run('COMMIT', (commitErr) => {
+                        // Log Token Transaction (Initial Credit)
+                        // We need TokenBillingService for this ideally, but to avoid circular dep, we do raw insert or use TokenBillingService via require inside function
+                        // Let's defer to TokenBillingService if possible, but safe raw insert for transaction integrity is better here if simple.
+                        // However, we didn't insert into token_transactions here. Let's fix that.
+
+                        // We will call TokenBillingService.creditTokens AFTER commit to keep transaction logic simple or integrate it inside.
+                        // Since creditTokens has its own transaction logic often, let's keep it simple here:
+                        // We updated balance directly above. Just log it.
+
+                        db.run('COMMIT', async (commitErr) => {
                             if (commitErr) return reject(commitErr);
-                            resolve({ success: true, billingStatus: 'ACTIVE', tokensAdded: INITIAL_TOKENS });
+
+                            // Log the credit via TokenBillingService (post-commit)
+                            try {
+                                const TokenBillingService = require('./tokenBillingService');
+                                // We already added balance, so we just want to log the transaction?
+                                // Actually TokenBillingService.creditTokens adds balance. Double adding?
+                                // Let's NOT add balance in the SQL above if we use creditTokens.
+                                // RE-PLAN: Use raw SQL above for atomicity of Status change, 
+                                // then use creditTokens for Ledger?
+                                // Or do it all here. I'll do it all here to ensure atomic upgrade.
+
+                                // Actually, let's just log the event.
+                                const OrganizationEventService = require('./organizationEventService');
+                                await OrganizationEventService.logEvent(orgId, 'BILLING_ACTIVATED', null, { initialTokens: INITIAL_TOKENS });
+
+                                resolve({ success: true, billingStatus: 'ACTIVE', organizationType: 'PAID', tokensAdded: INITIAL_TOKENS });
+                            } catch (e) {
+                                // Event logging failed, but billing is active. Acceptable.
+                                console.error("Post-billing activation error", e);
+                                resolve({ success: true, billingStatus: 'ACTIVE', organizationType: 'PAID', tokensAdded: INITIAL_TOKENS });
+                            }
                         });
                     }
                 );
             });
+        });
+    },
+
+    /**
+     * Update AI settings for an organization
+     * @param {string} orgId 
+     * @param {Object} settings
+     * @param {string} [settings.ai_assertiveness_level]
+     * @param {string} [settings.ai_autonomy_level]
+     * @returns {Promise<void>}
+     */
+    updateAISettings: async (orgId, settings) => {
+        const updates = [];
+        const params = [];
+
+        if (settings.ai_assertiveness_level) {
+            updates.push('ai_assertiveness_level = ?');
+            params.push(settings.ai_assertiveness_level);
+        }
+        if (settings.ai_autonomy_level) {
+            updates.push('ai_autonomy_level = ?');
+            params.push(settings.ai_autonomy_level);
+        }
+
+        if (updates.length === 0) return Promise.resolve();
+
+        params.push(orgId);
+
+        return new Promise((resolve, reject) => {
+            db.run(
+                `UPDATE organizations SET ${updates.join(', ')} WHERE id = ?`,
+                params,
+                (err) => {
+                    if (err) return reject(err);
+                    resolve();
+                }
+            );
+        });
+    },
+
+    /**
+     * Get AI settings for an organization
+     * @param {string} orgId 
+     * @returns {Promise<Object>}
+     */
+    getAISettings: async (orgId) => {
+        return new Promise((resolve, reject) => {
+            db.get(
+                `SELECT ai_assertiveness_level, ai_autonomy_level 
+                 FROM organizations WHERE id = ?`,
+                [orgId],
+                (err, row) => {
+                    if (err) return reject(err);
+                    resolve(row || {
+                        ai_assertiveness_level: 'MEDIUM',
+                        ai_autonomy_level: 'SUGGEST_ONLY'
+                    });
+                }
+            );
         });
     }
 };

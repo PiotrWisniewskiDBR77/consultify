@@ -1,46 +1,130 @@
-# 6.2. Assessment Functional Specification
+# Phase D – Organization Setup Functional Specification
 
-## 6.2.1. Business Goal
-The Assessment module is the diagnostic engine of Consultify. It establishes the baseline "Digital Readiness Degree" (DRD) by digitizing the consultant's interview process into structured, weighted questionnaires across 5 dimensions.
+---
 
-## 6.2.2. Functional Scope
-*   **5 Dimensions**: Strategy, Technology, Operations, Data, Culture.
-*   **Question Engine**: Support for Single Choice, Multi-Choice, and Likert Scale questions.
-*   **Scoring Algorithm**: Real-time calculation of DRD (0.00 - 5.00).
-*   **Visualization**: Radar Charts comparing Baseline vs Target.
-*   **PDF Export**: Downloadable assessment summary.
+## 1. Purpose of Phase D
 
-## 6.2.3. Users & Roles
-*   **Manager / Org Admin**: Can Submit answers and Finalize the assessment.
-*   **User**: Can View questions and Save drafts (if assigned), but cannot Finalize (lock) the assessment without approval.
+Phase D is the **mental shift moment**. The user stops "testing a tool" and begins "working on their company." This is the single most important cognitive transition in the product — it transforms a trial user into an organizational stakeholder.
 
-## 6.2.4. Process Flow
-1.  **Select Dimension**: User chooses one of 5 dimensions to start.
-2.  **Answer Questions**: User fills out the form. Progress is auto-saved locally.
-3.  **Submission**: User clicks "Submit Section".
-4.  **Calculation**: Backend recalculates the specific Dimension Score.
-5.  **Completion**: When all 5 dimensions are submitted -> Global DRD is calculated.
+**What Phase D is:**
+- The moment of organizational commitment
+- The start of persistent AI context and memory
+- A conscious decision to invest time and focus
 
-## 6.2.5. UI/UX Behavior
-*   **Question Card**: One question per view (wizard style) OR scrollable list (user preference).
-*   **Progress Indicators**: Percentage bars for each dimension.
-*   **Visual Feedback**: Radar chart updates in real-time as sections are completed.
-*   **Locking**: Once finalized, inputs become Read-Only.
+**What Phase D is not:**
+- A payment gate (billing comes later)
+- A bureaucratic form-filling exercise
+- A required step that can be skipped accidentally
 
-## 6.2.6. Business Rules
-*   **Rule 1**: Global DRD cannot be calculated until ALL 5 dimensions are 100% answered.
-*   **Rule 2**: Once an assessment is "Finalized", it creates a permanent versioned snapshot. Re-assessing requires starting a new "Cycle".
-*   **Rule 3**: "Not Applicable" answers exclude that question from the denominator in scoring math.
+---
 
-## 6.2.7. Data Input / Output
-*   **Input**: Form selections (Radio, Checkbox, Text comments).
-*   **Output**: `AssessmentScore` object { global: 3.2, strategy: 4.1, ... }.
+## 2. Entry Conditions
 
-## 6.2.8. Edge Cases & Errors
-*   **Network Loss**: Auto-save must retry on reconnection.
-*   **Version Conflict**: If two users edit the same assessment simultaneously, the last write wins (Optimistic Locking advised for future).
+| Entry Path | Preconditions | Context Transferred |
+|------------|---------------|---------------------|
+| From Trial (Phase C) | Trial active, at least 1 session completed | `trial_id`, user profile, any draft work |
+| From Demo + Trial | Demo completed → Trial started → Ready to commit | Demo insights, trial context |
+| Direct Consultant Invite | Valid consultant invitation code | Consultant attribution, pre-configured org template |
 
-## 6.2.9. Acceptance Criteria (DoD)
-*   [ ] Verify DRD calculation formula accuracy (Sum of weights / Total possible).
-*   [ ] Verify Radar Chart renders correctly with 5 axes.
-*   [ ] Verify "Finalize" button is disabled if progress < 100%.
+---
+
+## 3. The Mental Shift
+
+### Before Phase D (Trial Mindset)
+- "I am testing this tool"
+- "This is my personal exploration"
+- "I can leave anytime"
+
+### After Phase D (Organization Mindset)
+- "We are working on our company"
+- "This is our shared workspace"
+- "We are committing to this process"
+
+### How the System Reinforces This Shift
+
+1. **Language Change**: All UI copy switches from "you" to "your organization" / "your team"
+2. **Naming Ceremony**: User explicitly names their organization (not just an account)
+3. **AI Introduction**: AI introduces itself as the organization's partner, not the user's assistant
+4. **Memory Statement**: System explicitly states "I will remember your organization's context from now on"
+
+---
+
+## 4. Organization Creation Flow
+
+| Step | Action | AI Behavior |
+|------|--------|-------------|
+| 1 | User clicks "Create Organization" | AI: *"You're about to establish your organization's workspace. This is where we'll build your transformation strategy together."* |
+| 2 | User enters organization name | AI validates name, suggests corrections if needed |
+| 3 | User confirms industry/sector (optional) | AI uses this for contextual intelligence |
+| 4 | Organization created | AI: *"Your organization [Name] is now active. I'll remember everything we discuss from this point forward."* |
+
+---
+
+## 5. Data Initialized at Organization Creation
+
+| Data Element | Source | Purpose |
+|--------------|--------|---------|
+| `organization_id` | Generated | Primary key for all org-scoped data |
+| `organization_type` | `'ACTIVE'` (from Trial) or `'PAID'` | Access control |
+| `created_at` | System timestamp | Audit trail |
+| `owner_user_id` | Creating user | RBAC owner role |
+| `ai_context_initialized` | `true` | Signals AI memory start |
+| `onboarding_status` | `'PENDING'` | Ready for Phase E |
+
+---
+
+## 6. What Transfers from Trial
+
+| Data | Transfer Behavior |
+|------|-------------------|
+| Draft initiatives | Migrated to organization scope |
+| Assessment answers | Preserved as baseline snapshot |
+| User preferences | Carried forward |
+| AI conversation history | **NOT transferred** (fresh start for org context) |
+| Token usage | Reset for organization |
+
+---
+
+## 7. AI Behavior in Phase D
+
+### Role: Organizational Partner Introduction
+
+- AI explicitly introduces itself as the organization's cognitive partner
+- AI does NOT make decisions for the organization
+- AI explains its role: "I help you think through complex decisions, surface blind spots, and maintain continuity across your transformation journey"
+
+### Memory Statement
+> *"From this moment, I will build a persistent understanding of [Organization Name]. Every conversation, decision, and insight will contribute to our shared context."*
+
+---
+
+## 8. Exit Conditions (Phase D Complete)
+
+Phase D is complete when:
+- [x] Organization has a name
+- [x] At least one user is OWNER
+- [x] `ai_context_initialized = true`
+- [x] User has seen the "memory start" confirmation
+- [x] System redirects to Phase E (Guided First Value)
+
+---
+
+## 9. Phase Boundaries
+
+- **Hand-off from Phase C**: Trial conversion triggers organization creation flow
+- **Hand-off to Phase E**: Immediately after organization creation, user enters the Onboarding Wizard
+- **No Overlap**: Organization setup never collects payment or detailed business data (that's Phase E)
+
+---
+
+## 10. Acceptance Criteria
+
+- [ ] User cannot accidentally skip organization naming
+- [ ] AI explicitly announces "memory start"
+- [ ] All trial data is correctly migrated or explicitly discarded
+- [ ] RBAC roles are correctly assigned at creation
+- [ ] `onboarding_status` is set to `'PENDING'` for Phase E handoff
+
+---
+
+*Prepared by Antigravity – 2025-12-21*

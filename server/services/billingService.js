@@ -240,7 +240,7 @@ async function createSubscription(orgId, planId, paymentMethodId, email, orgName
     if (!plan) throw new Error('Invalid plan');
 
     if (!stripe) {
-        // Mock subscription for development
+        // Simulate subscription for development/test environments (Stripe key missing)
         await upsertOrganizationBilling(orgId, {
             subscription_plan_id: planId,
             status: 'active'

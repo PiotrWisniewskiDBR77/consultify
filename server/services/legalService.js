@@ -9,10 +9,15 @@
  * - Immutable audit logging via LegalEventLogger
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const crypto = require('crypto');
-const { LegalEventLogger, EVENT_TYPES } = require('./legalEventLogger');
+// Dependency injection for testing
+const deps = {
+    db: require('../database'),
+    uuidv4: require('uuid').v4,
+    crypto: require('crypto'),
+    LegalEventLogger: require('./legalEventLogger').LegalEventLogger
+};
+
+const { EVENT_TYPES } = require('./legalEventLogger');
 
 // Document types that require individual user acceptance
 const USER_REQUIRED_DOC_TYPES = ['TOS', 'PRIVACY', 'COOKIES', 'AUP', 'AI_POLICY'];
@@ -24,6 +29,13 @@ const ORG_REQUIRED_DOC_TYPES = ['DPA'];
 const SCOPE_TYPES = ['global', 'region', 'product', 'license_tier'];
 
 const LegalService = {
+    /**
+     * Allow dependency injection for testing
+     */
+    _setDependencies: (newDeps) => {
+        Object.assign(deps, newDeps);
+    },
+
     /**
      * Get all active legal documents (one per type, metadata only)
      * Respects lifecycle: only returns docs where effective_from <= now AND (expires_at IS NULL OR expires_at > now)
@@ -42,7 +54,7 @@ const LegalService = {
                   AND (expires_at IS NULL OR expires_at > ?)
                 ORDER BY doc_type
             `;
-            db.all(sql, [now, now], (err, rows) => {
+            deps.db.all(sql, [now, now], (err, rows) => {
                 if (err) return reject(err);
 
                 // Apply scope filtering if user context provided
@@ -71,7 +83,7 @@ const LegalService = {
                 WHERE doc_type = ? AND is_active = 1
                 LIMIT 1
             `;
-            db.get(sql, [docType], (err, row) => {
+            deps.db.get(sql, [docType], (err, row) => {
                 if (err) return reject(err);
                 resolve(row || null);
             });
@@ -93,7 +105,7 @@ const LegalService = {
                 WHERE la.user_id = ?
                 ORDER BY la.accepted_at DESC
             `;
-            db.all(sql, [userId], (err, rows) => {
+            deps.db.all(sql, [userId], (err, rows) => {
                 if (err) return reject(err);
                 resolve(rows || []);
             });
@@ -119,7 +131,7 @@ const LegalService = {
                   AND (ld.reaccept_required_from IS NULL OR la.accepted_at >= ld.reaccept_required_from)
                 LIMIT 1
             `;
-            db.get(sql, [orgId], (err, row) => {
+            deps.db.get(sql, [orgId], (err, row) => {
                 if (err) return reject(err);
                 resolve(row || null);
             });
@@ -282,7 +294,7 @@ const LegalService = {
                 }
 
                 // Create evidence hash
-                const evidenceHash = crypto
+                const evidenceHash = deps.crypto
                     .createHash('sha256')
                     .update(`${doc.id}:${doc.version}:${userId}:${Date.now()}`)
                     .digest('hex');
@@ -297,7 +309,7 @@ const LegalService = {
                     userAgent: userAgent
                 };
 
-                const acceptanceId = uuidv4();
+                const acceptanceId = deps.uuidv4();
 
                 await new Promise((resolve, reject) => {
                     const sql = `
@@ -305,7 +317,7 @@ const LegalService = {
                         (id, organization_id, user_id, doc_type, version, accepted_ip, user_agent, acceptance_scope, evidence_json)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                     `;
-                    db.run(sql, [
+                    deps.db.run(sql, [
                         acceptanceId,
                         scope === 'ORG_ADMIN' ? orgId : (orgId || null),
                         userId,
@@ -329,7 +341,7 @@ const LegalService = {
                 });
 
                 // Log acceptance event
-                LegalEventLogger.logAccept(
+                deps.LegalEventLogger.logAccept(
                     doc.id,
                     doc.version,
                     userId,
@@ -353,12 +365,12 @@ const LegalService = {
      * @returns {Promise<Object>} Created document
      */
     publishDocument: async ({ docType, version, title, contentMd, effectiveFrom, createdBy, expiresAt, reacceptRequiredFrom, scopeType, scopeValue, changeSummary, previousVersionId }) => {
-        const docId = uuidv4();
+        const docId = deps.uuidv4();
 
         const result = await new Promise((resolve, reject) => {
-            db.serialize(() => {
+            deps.db.serialize(() => {
                 // Deactivate any existing active document of this type
-                db.run(
+                deps.db.run(
                     `UPDATE legal_documents SET is_active = 0 WHERE doc_type = ? AND is_active = 1`,
                     [docType],
                     (err) => {
@@ -376,7 +388,7 @@ const LegalService = {
                     VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?)
                 `;
 
-                db.run(sql, [
+                deps.db.run(sql, [
                     docId,
                     docType,
                     version,
@@ -406,7 +418,7 @@ const LegalService = {
         });
 
         // Log publish event
-        LegalEventLogger.logPublish(docId, version, createdBy, { docType, title, scopeType, effectiveFrom });
+        deps.LegalEventLogger.logPublish(docId, version, createdBy, { docType, title, scopeType, effectiveFrom });
 
         return result;
     },
@@ -422,7 +434,7 @@ const LegalService = {
                 FROM legal_documents
                 ORDER BY doc_type, created_at DESC
             `;
-            db.all(sql, [], (err, rows) => {
+            deps.db.all(sql, [], (err, rows) => {
                 if (err) return reject(err);
                 resolve(rows || []);
             });
@@ -438,7 +450,7 @@ const LegalService = {
         try {
             // Get all users in org
             const users = await new Promise((resolve, reject) => {
-                db.all(
+                deps.db.all(
                     `SELECT id, email, first_name, last_name, role FROM users WHERE organization_id = ?`,
                     [orgId],
                     (err, rows) => {
@@ -457,7 +469,7 @@ const LegalService = {
 
             const placeholders = userIds.map(() => '?').join(',');
             const acceptances = await new Promise((resolve, reject) => {
-                db.all(
+                deps.db.all(
                     `SELECT user_id, doc_type, version FROM legal_acceptances WHERE user_id IN (${placeholders})`,
                     userIds,
                     (err, rows) => {
@@ -509,19 +521,19 @@ const LegalService = {
      */
     toggleDocumentActive: async (docId, isActive) => {
         return new Promise((resolve, reject) => {
-            db.serialize(() => {
+            deps.db.serialize(() => {
                 // If activating, first deactivate others of same type
                 if (isActive) {
-                    db.get('SELECT doc_type FROM legal_documents WHERE id = ?', [docId], (err, doc) => {
+                    deps.db.get('SELECT doc_type FROM legal_documents WHERE id = ?', [docId], (err, doc) => {
                         if (err) return reject(err);
                         if (!doc) return reject(new Error('Document not found'));
 
-                        db.run(
+                        deps.db.run(
                             'UPDATE legal_documents SET is_active = 0 WHERE doc_type = ? AND id != ?',
                             [doc.doc_type, docId]
                         );
 
-                        db.run(
+                        deps.db.run(
                             'UPDATE legal_documents SET is_active = 1 WHERE id = ?',
                             [docId],
                             function (err) {
@@ -531,7 +543,7 @@ const LegalService = {
                         );
                     });
                 } else {
-                    db.run(
+                    deps.db.run(
                         'UPDATE legal_documents SET is_active = 0 WHERE id = ?',
                         [docId],
                         function (err) {

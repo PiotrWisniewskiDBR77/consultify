@@ -80,7 +80,11 @@ describe('Api Service Unit Tests', () => {
 
     // Test a void method
     it('saveSession: should post data', async () => {
-        fetchMock.mockResolvedValueOnce({ ok: true });
+        fetchMock.mockResolvedValueOnce({
+            ok: true,
+            status: 200,
+            json: async () => ({ success: true })
+        });
         await Api.saveSession('u1', 'session' as any, { foo: 'bar' });
         expect(fetchMock).toHaveBeenCalledWith(
             expect.stringContaining('/sessions'),

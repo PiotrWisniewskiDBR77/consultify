@@ -28,14 +28,120 @@ db.initPromise = new Promise((resolve, reject) => {
 
 function initDb() {
     db.serialize(() => {
-        // Organizations Table (New)
         db.run(`CREATE TABLE IF NOT EXISTS organizations (
             id TEXT PRIMARY KEY,
             name TEXT,
             plan TEXT DEFAULT 'free',
             status TEXT DEFAULT 'active',
+            billing_status TEXT DEFAULT 'PENDING',
+            organization_type TEXT DEFAULT 'TRIAL',
+            token_balance INTEGER DEFAULT 0,
+            is_active INTEGER DEFAULT 1,
+            
+            -- AI Governance Fields
+            ai_assertiveness_level TEXT DEFAULT 'MEDIUM',
+            ai_autonomy_level TEXT DEFAULT 'SUGGEST_ONLY',
+            
+            -- Phase E: Onboarding Context
+            transformation_context TEXT DEFAULT '{}', -- JSON: role, problems, urgency, markets, etc.
+            onboarding_status TEXT DEFAULT 'NOT_STARTED', -- NOT_STARTED | IN_PROGRESS | GENERATED | ACCEPTED
+            onboarding_plan_snapshot TEXT, -- JSON: last generated plan
+            onboarding_plan_version INTEGER DEFAULT 0,
+            onboarding_accepted_at DATETIME,
+            onboarding_accept_idempotency_key TEXT,
+            
+            -- Attribution
+            attribution_data TEXT,
+            
+            -- Trial Fields
+            trial_started_at DATETIME,
+            trial_expires_at DATETIME,
+            trial_extension_count INTEGER DEFAULT 0,
+            trial_warning_sent_at DATETIME,
+            
+            created_by_user_id TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             valid_until DATETIME
+        )`);
+
+        // Token Transactions (Ledger)
+        db.run(`CREATE TABLE IF NOT EXISTS token_transactions (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            user_id TEXT,
+            type TEXT NOT NULL, -- CREDIT, DEBIT, usage, purchase
+            source_type TEXT, -- PLATFORM, CHECKOUT, MANUAL
+            
+            tokens INTEGER NOT NULL, -- "amount" in some contexts, but service calls it "tokens"
+            margin_usd REAL DEFAULT 0,
+            net_revenue_usd REAL DEFAULT 0,
+            
+            llm_provider TEXT,
+            model_used TEXT,
+            description TEXT,
+            metadata TEXT, -- JSON
+            
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+        // Organization Members (RBAC)
+        db.run(`CREATE TABLE IF NOT EXISTS organization_members (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'MEMBER', -- OWNER, ADMIN, MEMBER, CONSULTANT
+            status TEXT DEFAULT 'ACTIVE', -- ACTIVE, INVITED, SUSPENDED
+            invited_by_user_id TEXT,
+            permission_scope TEXT DEFAULT '{}', -- Custom RBAC overrides
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+
+        // Consultants Profile
+        db.run(`CREATE TABLE IF NOT EXISTS consultants (
+            id TEXT PRIMARY KEY,
+            display_name TEXT,
+            status TEXT DEFAULT 'ACTIVE',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+
+        // Consultant Invites
+        db.run(`CREATE TABLE IF NOT EXISTS consultant_invites (
+            id TEXT PRIMARY KEY,
+            consultant_id TEXT NOT NULL,
+            invite_code TEXT UNIQUE NOT NULL,
+            invite_type TEXT NOT NULL, -- 'LINK_TO_ORG' or 'ORG_ADD_CONSULTANT'
+            organization_id TEXT, -- If specific org context
+            target_email TEXT, -- If inviting specific person
+            target_company_name TEXT,
+            max_uses INTEGER DEFAULT 1,
+            uses_count INTEGER DEFAULT 0,
+            expires_at DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(consultant_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+
+        // Invite Usage Log
+        db.run(`CREATE TABLE IF NOT EXISTS invite_usage_log (
+            id TEXT PRIMARY KEY,
+            invite_code TEXT NOT NULL,
+            used_by_user_id TEXT,
+            used_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        // Consultant Links
+        db.run(`CREATE TABLE IF NOT EXISTS consultant_org_links (
+            id TEXT PRIMARY KEY,
+            consultant_id TEXT NOT NULL,
+            organization_id TEXT NOT NULL,
+            status TEXT DEFAULT 'ACTIVE',
+            permission_scope TEXT, -- JSON
+            created_by_user_id TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(consultant_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
         )`);
 
         // Users Table (Updated with organization_id)
@@ -643,6 +749,10 @@ function initDb() {
         db.run(`ALTER TABLE initiatives ADD COLUMN sequence_position INTEGER DEFAULT 0`, (err) => { });
         db.run(`ALTER TABLE initiatives ADD COLUMN is_critical_path INTEGER DEFAULT 0`, (err) => { });
 
+        // Phase E->F Linkage (Fix Pack 1)
+        db.run(`ALTER TABLE initiatives ADD COLUMN created_from TEXT DEFAULT 'MANUAL'`, (err) => { });
+        db.run(`ALTER TABLE initiatives ADD COLUMN created_from_plan_id TEXT`, (err) => { });
+
         // ==========================================
         // STEP 5: EXECUTION CONTROL & NOTIFICATIONS
         // ==========================================
@@ -706,6 +816,29 @@ function initDb() {
         // ==========================================
         // STEP 6: STABILIZATION, REPORTING & ECONOMICS
         // ==========================================
+
+        // Core Audit Events Table (RBAC + Org Context Foundation)
+        db.run(`CREATE TABLE IF NOT EXISTS audit_events (
+            id TEXT PRIMARY KEY,
+            ts DATETIME DEFAULT CURRENT_TIMESTAMP,
+            actor_user_id TEXT,
+            actor_type TEXT NOT NULL DEFAULT 'USER', -- USER, CONSULTANT, SYSTEM, AI
+            org_id TEXT,
+            action_type TEXT NOT NULL,
+            entity_type TEXT,
+            entity_id TEXT,
+            metadata_json TEXT DEFAULT '{}',
+            ip TEXT,
+            user_agent TEXT,
+            FOREIGN KEY(actor_user_id) REFERENCES users(id) ON DELETE SET NULL,
+            FOREIGN KEY(org_id) REFERENCES organizations(id) ON DELETE SET NULL
+        )`);
+
+        // Indexes for audit_events (composite for efficient queries)
+        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_events_org_ts ON audit_events(org_id, ts)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_events_actor_ts ON audit_events(actor_user_id, ts)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_events_action_ts ON audit_events(action_type, ts)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_events_entity ON audit_events(entity_type, entity_id)`);
 
         // Value Hypotheses
         db.run(`CREATE TABLE IF NOT EXISTS value_hypotheses (
@@ -1137,7 +1270,28 @@ function initDb() {
         )`);
 
         // Password Resets Table
-        db.run(`CREATE TABLE IF NOT EXISTS password_resets (
+        db.run(`CREATE TABLE IF NOT EXISTS organization_facilities (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            name TEXT,
+            location TEXT,
+            headcount INTEGER DEFAULT 0,
+            activity_profile TEXT, -- JSON
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+
+        // Client Context
+        db.run(`CREATE TABLE IF NOT EXISTS client_context (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            key TEXT NOT NULL,
+            value TEXT,
+            confidence REAL DEFAULT 1.0,
+            source TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`); db.run(`CREATE TABLE IF NOT EXISTS password_resets (
             id TEXT PRIMARY KEY,
             user_id TEXT NOT NULL,
             token TEXT NOT NULL UNIQUE,
@@ -1625,29 +1779,8 @@ function initDb() {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
 
-        // 2.5 Structured Entity Context (Facilities)
-        db.run(`CREATE TABLE IF NOT EXISTS organization_facilities (
-            id TEXT PRIMARY KEY,
-            organization_id TEXT NOT NULL,
-            name TEXT NOT NULL, -- e.g. "Gdansk Plant"
-            headcount INTEGER DEFAULT 0,
-            location TEXT, -- City, Country
-            activity_profile TEXT, -- e.g. "Assembly Line", "R&D Center"
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
-        )`);
-
-        // 3. Client Context (Persistent Memory per Client)
-        db.run(`CREATE TABLE IF NOT EXISTS client_context (
-            id TEXT PRIMARY KEY,
-            organization_id TEXT NOT NULL,
-            key TEXT NOT NULL,              -- e.g., 'cultural_tone', 'risk_appetite', 'industry_focus'
-            value TEXT,                     -- JSON or Text
-            source TEXT,                    -- 'inferred', 'explicit'
-            confidence REAL,                -- 0.0 - 1.0
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
-        )`);
+        // 2.5 Structured Entity Context (Facilities) - Defined earlier
+        // 3. Client Context (Persistent Memory per Client) - Defined earlier
 
         // Update Knowledge Chunks for Vector Support
         db.run(`ALTER TABLE knowledge_chunks ADD COLUMN embedding TEXT`, (err) => {

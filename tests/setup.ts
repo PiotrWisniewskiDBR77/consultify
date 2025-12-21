@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom';
-import { beforeAll, vi } from 'vitest';
+import { beforeAll, vi, beforeEach } from 'vitest';
 import { createRequire } from 'module';
+import { mockLLMApi } from './__mocks__/llmApi.js';
 
 const require = createRequire(import.meta.url);
 
@@ -9,9 +10,15 @@ if (typeof process !== 'undefined' && process.env) {
     process.env.NODE_ENV = 'test';
     process.env.DB_TYPE = process.env.DB_TYPE || 'sqlite';
     process.env.MOCK_REDIS = process.env.MOCK_REDIS || 'true';
+    process.env.MOCK_DB = process.env.MOCK_DB || 'true';
     // Keep DB in-memory in tests (db chooses :memory: when NODE_ENV === 'test')
     process.env.SQLITE_PATH = process.env.SQLITE_PATH || ':memory:';
 }
+
+// Reset LLM API mocks before each test
+beforeEach(() => {
+    mockLLMApi.reset();
+});
 
 // Ensure DB schema is initialized before any test starts hitting it.
 beforeAll(async () => {

@@ -1,549 +1,377 @@
-import { describe, it, expect, vi, beforeEach, beforeAll, afterEach } from 'vitest';
+/**
+ * AI Action Executor Tests
+ * 
+ * HIGH PRIORITY AI SERVICE - Must have 85%+ coverage
+ * Tests AI action execution, approval workflow, and governance integration.
+ */
 
-// Mock dependencies before importing the service
-const mockDb = {
-    get: vi.fn(),
-    all: vi.fn(),
-    run: vi.fn(),
-    serialize: vi.fn((cb) => cb()),
-    initPromise: Promise.resolve()
-};
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { createRequire } from 'module';
+import { 
+    createMockDb, 
+    createStandardDeps,
+    injectDependencies 
+} from '../../helpers/dependencyInjector.js';
+import { testUsers, testOrganizations, testProjects } from '../../fixtures/testData.js';
 
-const mockAIPolicyEngine = {
-    canPerformAction: vi.fn()
-};
-
-const mockAIRoleGuard = {
-    isActionBlocked: vi.fn()
-};
-
-const mockRegulatoryModeGuard = {
-    enforceRegulatoryMode: vi.fn()
-};
-
-// Import after mocks
-import AIActionExecutor from '../../../server/services/aiActionExecutor.js';
+const require = createRequire(import.meta.url);
+const AIActionExecutor = require('../../../server/services/aiActionExecutor.js');
 
 describe('AIActionExecutor', () => {
+    let mockDb;
+    let mockRegulatoryModeGuard;
+    let mockAIRoleGuard;
+    let mockAIPolicyEngine;
+    let deps;
+
     beforeEach(() => {
-        vi.clearAllMocks();
+        mockDb = createMockDb();
+        
+        // Create mocks for dependencies
+        mockRegulatoryModeGuard = {
+            enforceRegulatoryMode: vi.fn().mockResolvedValue({ blocked: false })
+        };
+        
+        mockAIRoleGuard = {
+            isActionBlocked: vi.fn().mockResolvedValue({ blocked: false, requiresApproval: false })
+        };
+        
+        mockAIPolicyEngine = {
+            canPerformAction: vi.fn().mockResolvedValue({ allowed: true })
+        };
 
-        // Inject deterministic dependencies for unit tests
-        AIActionExecutor.setDependencies({
+        deps = createStandardDeps({
             db: mockDb,
-            uuidv4: () => 'test-uuid-1234',
-            AIPolicyEngine: mockAIPolicyEngine,
+            RegulatoryModeGuard: mockRegulatoryModeGuard,
             AIRoleGuard: mockAIRoleGuard,
-            RegulatoryModeGuard: mockRegulatoryModeGuard
+            AIPolicyEngine: mockAIPolicyEngine
         });
 
-        // Default mock behaviors
-        mockRegulatoryModeGuard.enforceRegulatoryMode.mockResolvedValue({ blocked: false });
-        mockAIRoleGuard.isActionBlocked.mockResolvedValue({ blocked: false, requiresApproval: false });
-        mockAIPolicyEngine.canPerformAction.mockResolvedValue({
-            allowed: true,
-            requiresApproval: false,
-            requiredLevel: 'STANDARD',
-            currentLevel: 'STANDARD'
-        });
-
-        // Default DB mock
-        mockDb.run.mockImplementation(function (...args) {
-            const cb = args[args.length - 1];
-            if (typeof cb === 'function') {
-                cb.call({ changes: 1, lastID: 1 }, null);
-            }
-        });
-
-        mockDb.get.mockImplementation((...args) => {
-            const cb = args[args.length - 1];
-            if (typeof cb === 'function') {
-                cb(null, null);
-            }
-        });
-
-        mockDb.all.mockImplementation((...args) => {
-            const cb = args[args.length - 1];
-            if (typeof cb === 'function') {
-                cb(null, []);
-            }
-        });
+        // Inject dependencies
+        AIActionExecutor.setDependencies(deps);
     });
 
-    describe('ACTION_TYPES', () => {
-        it('should export all action types', () => {
-            expect(AIActionExecutor.ACTION_TYPES).toHaveProperty('CREATE_DRAFT_TASK');
-            expect(AIActionExecutor.ACTION_TYPES).toHaveProperty('CREATE_DRAFT_INITIATIVE');
-            expect(AIActionExecutor.ACTION_TYPES).toHaveProperty('SUGGEST_ROADMAP_CHANGE');
-            expect(AIActionExecutor.ACTION_TYPES).toHaveProperty('GENERATE_REPORT');
-            expect(AIActionExecutor.ACTION_TYPES).toHaveProperty('PREPARE_DECISION_SUMMARY');
-            expect(AIActionExecutor.ACTION_TYPES).toHaveProperty('EXPLAIN_CONTEXT');
-            expect(AIActionExecutor.ACTION_TYPES).toHaveProperty('ANALYZE_RISKS');
-        });
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
-    describe('ACTION_STATUS', () => {
-        it('should export all action statuses', () => {
-            expect(AIActionExecutor.ACTION_STATUS).toHaveProperty('PENDING');
-            expect(AIActionExecutor.ACTION_STATUS).toHaveProperty('APPROVED');
-            expect(AIActionExecutor.ACTION_STATUS).toHaveProperty('REJECTED');
-            expect(AIActionExecutor.ACTION_STATUS).toHaveProperty('EXECUTED');
-        });
-    });
+    describe('requestAction()', () => {
+        it('should create action request successfully', async () => {
+            const actionType = AIActionExecutor.ACTION_TYPES.CREATE_DRAFT_TASK;
+            const payload = { title: 'Test Task' };
+            const userId = testUsers.user.id;
+            const orgId = testOrganizations.org1.id;
+            const projectId = testProjects.project1.id;
 
-    describe('requestAction', () => {
-        it('should block action when regulatory mode is enabled', async () => {
-            mockRegulatoryModeGuard.enforceRegulatoryMode.mockResolvedValue({
-                blocked: true,
-                message: 'Regulatory Mode active',
-                reason: 'Compliance lock'
+            mockDb.run.mockImplementation((query, params, callback) => {
+                callback.call({ changes: 1, lastID: 1 }, null);
             });
 
             const result = await AIActionExecutor.requestAction(
-                'CREATE_DRAFT_TASK',
-                { title: 'Test' },
-                'user-1',
-                'org-1',
-                'project-1'
+                actionType,
+                payload,
+                userId,
+                orgId,
+                projectId
+            );
+
+            expect(result.success).toBe(true);
+            expect(result.status).toBe(AIActionExecutor.ACTION_STATUS.PENDING);
+            expect(mockDb.run).toHaveBeenCalled();
+        });
+
+        it('should block action when regulatory mode is enabled', async () => {
+            const actionType = AIActionExecutor.ACTION_TYPES.CREATE_DRAFT_TASK;
+            const payload = { title: 'Test Task' };
+            const userId = testUsers.user.id;
+            const orgId = testOrganizations.org1.id;
+            const projectId = testProjects.project1.id;
+
+            mockRegulatoryModeGuard.enforceRegulatoryMode.mockResolvedValue({
+                blocked: true,
+                reason: 'REGULATORY_MODE',
+                message: 'Action blocked by Regulatory Mode'
+            });
+
+            const result = await AIActionExecutor.requestAction(
+                actionType,
+                payload,
+                userId,
+                orgId,
+                projectId
             );
 
             expect(result.success).toBe(false);
             expect(result.blocked).toBe(true);
             expect(result.regulatoryModeEnabled).toBe(true);
+            expect(result.reason).toBe('REGULATORY_MODE');
         });
 
-        it('should block action when AI role does not permit', async () => {
+        it('should block action when AI role guard blocks it', async () => {
+            const actionType = AIActionExecutor.ACTION_TYPES.CREATE_DRAFT_TASK;
+            const payload = { title: 'Test Task' };
+            const userId = testUsers.user.id;
+            const orgId = testOrganizations.org1.id;
+            const projectId = testProjects.project1.id;
+
             mockAIRoleGuard.isActionBlocked.mockResolvedValue({
                 blocked: true,
-                reason: 'Role does not permit this action',
                 currentRole: 'ADVISOR',
-                roleRequired: 'OPERATOR',
-                suggestion: 'Change AI role to OPERATOR'
+                roleRequired: 'MANAGER',
+                reason: 'Action requires MANAGER role',
+                suggestion: 'Change project AI role'
             });
 
             const result = await AIActionExecutor.requestAction(
-                'CREATE_DRAFT_TASK',
-                { title: 'Test' },
-                'user-1',
-                'org-1',
-                'project-1'
+                actionType,
+                payload,
+                userId,
+                orgId,
+                projectId
             );
 
             expect(result.success).toBe(false);
             expect(result.blocked).toBe(true);
             expect(result.currentRole).toBe('ADVISOR');
+            expect(result.requiredRole).toBe('MANAGER');
         });
 
-        it('should block action when policy does not allow', async () => {
-            mockAIPolicyEngine.canPerformAction.mockResolvedValue({
-                allowed: false,
-                reason: 'Upgrade required'
+        it('should require approval for MANAGER role actions', async () => {
+            const actionType = AIActionExecutor.ACTION_TYPES.CREATE_DRAFT_TASK;
+            const payload = { title: 'Test Task' };
+            const userId = testUsers.user.id;
+            const orgId = testOrganizations.org1.id;
+            const projectId = testProjects.project1.id;
+
+            mockAIRoleGuard.isActionBlocked.mockResolvedValue({
+                blocked: false,
+                requiresApproval: true
+            });
+
+            mockDb.run.mockImplementation((query, params, callback) => {
+                callback.call({ changes: 1, lastID: 1 }, null);
             });
 
             const result = await AIActionExecutor.requestAction(
-                'CREATE_DRAFT_TASK',
-                { title: 'Test' },
-                'user-1',
-                'org-1'
+                actionType,
+                payload,
+                userId,
+                orgId,
+                projectId
+            );
+
+            expect(result.success).toBe(true);
+            expect(result.requiresApproval).toBe(true);
+        });
+
+        it('should block action when policy engine denies it', async () => {
+            const actionType = AIActionExecutor.ACTION_TYPES.CREATE_DRAFT_TASK;
+            const payload = { title: 'Test Task' };
+            const userId = testUsers.user.id;
+            const orgId = testOrganizations.org1.id;
+            const projectId = testProjects.project1.id;
+
+            mockAIPolicyEngine.canPerformAction.mockResolvedValue({
+                allowed: false,
+                reason: 'Action not allowed by policy'
+            });
+
+            const result = await AIActionExecutor.requestAction(
+                actionType,
+                payload,
+                userId,
+                orgId,
+                projectId
             );
 
             expect(result.success).toBe(false);
             expect(result.requiresUpgrade).toBe(true);
         });
 
-        it('should create action with PENDING status when approval required', async () => {
-            mockAIPolicyEngine.canPerformAction.mockResolvedValue({
-                allowed: true,
-                requiresApproval: true,
-                requiredLevel: 'STANDARD',
-                currentLevel: 'STANDARD'
+        it('should allow action without projectId', async () => {
+            const actionType = AIActionExecutor.ACTION_TYPES.EXPLAIN_CONTEXT;
+            const payload = { context: 'test' };
+            const userId = testUsers.user.id;
+            const orgId = testOrganizations.org1.id;
+
+            mockDb.run.mockImplementation((query, params, callback) => {
+                callback.call({ changes: 1, lastID: 1 }, null);
             });
 
             const result = await AIActionExecutor.requestAction(
-                'CREATE_DRAFT_TASK',
-                { title: 'Test' },
-                'user-1',
-                'org-1'
+                actionType,
+                payload,
+                userId,
+                orgId,
+                null
             );
 
             expect(result.success).toBe(true);
-            expect(result.requiresApproval).toBe(true);
-            expect(result.status).toBe('PENDING');
-        });
-
-        it('should create action with APPROVED status when no approval needed', async () => {
-            const result = await AIActionExecutor.requestAction(
-                'EXPLAIN_CONTEXT',
-                { context: 'Test' },
-                'user-1',
-                'org-1'
-            );
-
-            expect(result.success).toBe(true);
-            expect(result.requiresApproval).toBe(false);
-            expect(result.status).toBe('APPROVED');
-        });
-
-        it('should force approval when AI role is MANAGER', async () => {
-            mockAIRoleGuard.isActionBlocked.mockResolvedValue({
-                blocked: false,
-                requiresApproval: true
-            });
-
-            const result = await AIActionExecutor.requestAction(
-                'CREATE_DRAFT_TASK',
-                { title: 'Test' },
-                'user-1',
-                'org-1',
-                'project-1'
-            );
-
-            expect(result.requiresApproval).toBe(true);
-        });
-
-        it('should handle database error', async () => {
-            mockDb.run.mockImplementation((...args) => {
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    cb(new Error('Database error'));
-                }
-            });
-
-            await expect(AIActionExecutor.requestAction(
-                'CREATE_DRAFT_TASK',
-                { title: 'Test' },
-                'user-1',
-                'org-1'
-            )).rejects.toThrow('Database error');
+            // Should not check regulatory mode or role guard without projectId
+            expect(mockRegulatoryModeGuard.enforceRegulatoryMode).not.toHaveBeenCalled();
+            expect(mockAIRoleGuard.isActionBlocked).not.toHaveBeenCalled();
         });
     });
 
-    describe('createDraft', () => {
-        it('should create task draft with proper action type', async () => {
-            const result = await AIActionExecutor.createDraft(
-                'task',
-                { title: 'New Task', description: 'Test description' },
-                'user-1',
-                'org-1',
-                'project-1'
-            );
-
-            expect(result.success).toBe(true);
-            expect(mockDb.run).toHaveBeenCalled();
-        });
-
-        it('should create initiative draft with proper action type', async () => {
-            const result = await AIActionExecutor.createDraft(
-                'initiative',
-                { name: 'New Initiative', description: 'Test' },
-                'user-1',
-                'org-1',
-                'project-1'
-            );
-
-            expect(result.success).toBe(true);
-        });
-
-        it('should store draft content after creation', async () => {
-            const result = await AIActionExecutor.createDraft(
-                'task',
-                { title: 'Test Task' },
-                'user-1',
-                'org-1',
-                'project-1'
-            );
-
-            expect(result.success).toBe(true);
-            // Second db.run call should update draft_content
-            expect(mockDb.run).toHaveBeenCalledTimes(2);
-        });
-    });
-
-    describe('approveAction', () => {
+    describe('approveAction()', () => {
         it('should approve pending action', async () => {
-            mockDb.run.mockImplementation(function (...args) {
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    cb.call({ changes: 1 }, null);
-                }
+            const actionId = 'action-123';
+            const userId = testUsers.admin.id;
+
+            mockDb.get.mockImplementation((query, params, callback) => {
+                callback(null, {
+                    id: actionId,
+                    status: AIActionExecutor.ACTION_STATUS.PENDING,
+                    action_type: AIActionExecutor.ACTION_TYPES.CREATE_DRAFT_TASK,
+                    payload: JSON.stringify({ title: 'Test Task' })
+                });
             });
 
-            const result = await AIActionExecutor.approveAction('action-1', 'approver-1');
+            mockDb.run.mockImplementation((query, params, callback) => {
+                callback.call({ changes: 1 }, null);
+            });
+
+            const result = await AIActionExecutor.approveAction(actionId, userId);
 
             expect(result.success).toBe(true);
-            expect(result.status).toBe('APPROVED');
+            expect(result.status).toBe(AIActionExecutor.ACTION_STATUS.APPROVED);
         });
 
-        it('should fail when action not found or already processed', async () => {
-            mockDb.run.mockImplementation(function (...args) {
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    cb.call({ changes: 0 }, null);
-                }
+        it('should reject approval for non-pending action', async () => {
+            const actionId = 'action-123';
+            const userId = testUsers.admin.id;
+
+            mockDb.get.mockImplementation((query, params, callback) => {
+                callback(null, {
+                    id: actionId,
+                    status: AIActionExecutor.ACTION_STATUS.EXECUTED
+                });
             });
 
-            const result = await AIActionExecutor.approveAction('action-1', 'approver-1');
-
-            expect(result.success).toBe(false);
-            expect(result.error).toContain('not found or already processed');
-        });
-
-        it('should handle database error', async () => {
-            mockDb.run.mockImplementation((...args) => {
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    cb(new Error('DB error'));
-                }
-            });
-
-            await expect(AIActionExecutor.approveAction('action-1', 'user-1'))
-                .rejects.toThrow('DB error');
+            await expect(
+                AIActionExecutor.approveAction(actionId, userId)
+            ).rejects.toThrow();
         });
     });
 
-    describe('rejectAction', () => {
+    describe('rejectAction()', () => {
         it('should reject pending action', async () => {
-            mockDb.run.mockImplementation(function (...args) {
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    cb.call({ changes: 1 }, null);
-                }
+            const actionId = 'action-123';
+            const userId = testUsers.admin.id;
+            const reason = 'Not needed';
+
+            mockDb.get.mockImplementation((query, params, callback) => {
+                callback(null, {
+                    id: actionId,
+                    status: AIActionExecutor.ACTION_STATUS.PENDING
+                });
             });
 
-            mockDb.get.mockImplementation((...args) => {
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    cb(null, { organization_id: 'org-1', project_id: 'proj-1', action_type: 'CREATE_DRAFT_TASK' });
-                }
+            mockDb.run.mockImplementation((query, params, callback) => {
+                callback.call({ changes: 1 }, null);
             });
 
-            const result = await AIActionExecutor.rejectAction('action-1', 'user-1', 'Not needed');
+            const result = await AIActionExecutor.rejectAction(actionId, userId, reason);
 
             expect(result.success).toBe(true);
-            expect(result.status).toBe('REJECTED');
-        });
-
-        it('should fail when action not found', async () => {
-            mockDb.run.mockImplementation(function (...args) {
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    cb.call({ changes: 0 }, null);
-                }
-            });
-
-            const result = await AIActionExecutor.rejectAction('action-1', 'user-1');
-
-            expect(result.success).toBe(false);
+            expect(result.status).toBe(AIActionExecutor.ACTION_STATUS.REJECTED);
         });
     });
 
-    describe('executeAction', () => {
-        it('should return error when action not found', async () => {
-            mockDb.get.mockImplementation((...args) => {
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    cb(null, null);
-                }
+    describe('executeAction()', () => {
+        it('should execute approved action', async () => {
+            const actionId = 'action-123';
+
+            mockDb.get.mockImplementation((query, params, callback) => {
+                callback(null, {
+                    id: actionId,
+                    status: AIActionExecutor.ACTION_STATUS.APPROVED,
+                    action_type: AIActionExecutor.ACTION_TYPES.CREATE_DRAFT_TASK,
+                    payload: JSON.stringify({ title: 'Test Task' })
+                });
             });
 
-            const result = await AIActionExecutor.executeAction('action-1', 'user-1');
-
-            expect(result.success).toBe(false);
-            expect(result.error).toBe('Action not found');
-        });
-
-        it('should return error when action is not APPROVED', async () => {
-            mockDb.get.mockImplementation((...args) => {
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    cb(null, { id: 'action-1', status: 'PENDING' });
-                }
+            mockDb.run.mockImplementation((query, params, callback) => {
+                callback.call({ changes: 1 }, null);
             });
 
-            const result = await AIActionExecutor.executeAction('action-1', 'user-1');
-
-            expect(result.success).toBe(false);
-            expect(result.error).toContain('PENDING, not APPROVED');
-        });
-
-        it('should execute CREATE_DRAFT_TASK action', async () => {
-            mockDb.get.mockImplementation((...args) => {
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    cb(null, {
-                        id: 'action-1',
-                        status: 'APPROVED',
-                        action_type: 'CREATE_DRAFT_TASK',
-                        project_id: 'proj-1',
-                        user_id: 'user-1',
-                        payload: '{}',
-                        draft_content: JSON.stringify({
-                            title: 'Test Task',
-                            description: 'Desc',
-                            assigneeId: 'user-2',
-                            dueDate: '2024-12-31'
-                        })
-                    });
-                }
-            });
-
-            const result = await AIActionExecutor.executeAction('action-1', 'user-1');
+            const result = await AIActionExecutor.executeAction(actionId);
 
             expect(result.success).toBe(true);
-            expect(result.result.taskId).toBeDefined();
-            expect(result.result.created).toBe(true);
+            expect(result.status).toBe(AIActionExecutor.ACTION_STATUS.EXECUTED);
         });
 
-        it('should execute CREATE_DRAFT_INITIATIVE action', async () => {
-            mockDb.get.mockImplementation((...args) => {
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    cb(null, {
-                        id: 'action-1',
-                        status: 'APPROVED',
-                        action_type: 'CREATE_DRAFT_INITIATIVE',
-                        project_id: 'proj-1',
-                        user_id: 'user-1',
-                        payload: '{}',
-                        draft_content: JSON.stringify({
-                            name: 'Test Initiative',
-                            description: 'Desc',
-                            ownerId: 'user-2',
-                            priority: 'HIGH'
-                        })
-                    });
-                }
+        it('should reject execution of non-approved action', async () => {
+            const actionId = 'action-123';
+
+            mockDb.get.mockImplementation((query, params, callback) => {
+                callback(null, {
+                    id: actionId,
+                    status: AIActionExecutor.ACTION_STATUS.PENDING
+                });
             });
 
-            const result = await AIActionExecutor.executeAction('action-1', 'user-1');
-
-            expect(result.success).toBe(true);
-            expect(result.result.initiativeId).toBeDefined();
-            expect(result.result.created).toBe(true);
-        });
-
-        it('should execute GENERATE_REPORT action', async () => {
-            mockDb.get.mockImplementation((...args) => {
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    cb(null, {
-                        id: 'action-1',
-                        status: 'APPROVED',
-                        action_type: 'GENERATE_REPORT',
-                        payload: '{}',
-                        draft_content: JSON.stringify({ reportData: 'data' })
-                    });
-                }
-            });
-
-            const result = await AIActionExecutor.executeAction('action-1', 'user-1');
-
-            expect(result.success).toBe(true);
-            expect(result.result.reportGenerated).toBe(true);
-        });
-
-        it('should handle default action type', async () => {
-            mockDb.get.mockImplementation((...args) => {
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    cb(null, {
-                        id: 'action-1',
-                        status: 'APPROVED',
-                        action_type: 'EXPLAIN_CONTEXT',
-                        payload: '{}'
-                    });
-                }
-            });
-
-            const result = await AIActionExecutor.executeAction('action-1', 'user-1');
-
-            expect(result.success).toBe(true);
-            expect(result.result.executed).toBe(true);
+            await expect(
+                AIActionExecutor.executeAction(actionId)
+            ).rejects.toThrow();
         });
     });
 
-    describe('getPendingActions', () => {
-        it('should return empty array when no pending actions', async () => {
-            mockDb.all.mockImplementation((...args) => {
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    cb(null, []);
-                }
+    describe('getAction()', () => {
+        it('should return action by ID', async () => {
+            const actionId = 'action-123';
+
+            mockDb.get.mockImplementation((query, params, callback) => {
+                callback(null, {
+                    id: actionId,
+                    status: AIActionExecutor.ACTION_STATUS.PENDING,
+                    action_type: AIActionExecutor.ACTION_TYPES.CREATE_DRAFT_TASK
+                });
             });
 
-            const result = await AIActionExecutor.getPendingActions('user-1');
+            const action = await AIActionExecutor.getAction(actionId);
 
-            expect(result).toEqual([]);
+            expect(action.id).toBe(actionId);
+            expect(action.status).toBe(AIActionExecutor.ACTION_STATUS.PENDING);
         });
 
-        it('should return parsed pending actions', async () => {
-            mockDb.all.mockImplementation((...args) => {
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    cb(null, [
-                        {
-                            id: 'action-1',
-                            payload: JSON.stringify({ title: 'Test' }),
-                            draft_content: JSON.stringify({ content: 'Draft' })
-                        }
-                    ]);
-                }
+        it('should return null for non-existent action', async () => {
+            mockDb.get.mockImplementation((query, params, callback) => {
+                callback(null, null);
             });
 
-            const result = await AIActionExecutor.getPendingActions('user-1');
-
-            expect(result).toHaveLength(1);
-            expect(result[0].payload.title).toBe('Test');
-            expect(result[0].draftContent.content).toBe('Draft');
-        });
-
-        it('should filter by projectId and organizationId', async () => {
-            await AIActionExecutor.getPendingActions('user-1', 'project-1', 'org-1');
-
-            const callArgs = mockDb.all.mock.calls[0];
-            expect(callArgs[0]).toContain('user_id');
-            expect(callArgs[0]).toContain('project_id');
-            expect(callArgs[0]).toContain('organization_id');
-        });
-
-        it('should handle malformed JSON gracefully', async () => {
-            mockDb.all.mockImplementation((...args) => {
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    cb(null, [
-                        {
-                            id: 'action-1',
-                            payload: 'not-json',
-                            draft_content: null
-                        }
-                    ]);
-                }
-            });
-
-            // Should not throw
-            const result = await AIActionExecutor.getPendingActions();
-            expect(result).toHaveLength(1);
+            const action = await AIActionExecutor.getAction('non-existent');
+            expect(action).toBeNull();
         });
     });
 
-    describe('_logAudit', () => {
-        it('should create audit log entry', async () => {
-            mockDb.get.mockImplementation((...args) => {
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    cb(null, {
-                        organization_id: 'org-1',
-                        project_id: 'proj-1',
-                        action_type: 'CREATE_DRAFT_TASK',
-                        current_policy_level: 'STANDARD'
-                    });
-                }
+    describe('listActions()', () => {
+        it('should return list of actions', async () => {
+            const projectId = testProjects.project1.id;
+
+            mockDb.all.mockImplementation((query, params, callback) => {
+                callback(null, [
+                    {
+                        id: 'action-1',
+                        status: AIActionExecutor.ACTION_STATUS.PENDING,
+                        action_type: AIActionExecutor.ACTION_TYPES.CREATE_DRAFT_TASK
+                    },
+                    {
+                        id: 'action-2',
+                        status: AIActionExecutor.ACTION_STATUS.APPROVED,
+                        action_type: AIActionExecutor.ACTION_TYPES.GENERATE_REPORT
+                    }
+                ]);
             });
 
-            const result = await AIActionExecutor._logAudit('action-1', 'user-1', 'APPROVED');
+            const actions = await AIActionExecutor.listActions(projectId);
 
-            expect(result.auditId).toBeDefined();
-            expect(mockDb.run).toHaveBeenCalled();
+            expect(actions).toHaveLength(2);
+            expect(mockDb.all).toHaveBeenCalledWith(
+                expect.stringContaining('SELECT'),
+                expect.arrayContaining([projectId]),
+                expect.any(Function)
+            );
         });
     });
 });

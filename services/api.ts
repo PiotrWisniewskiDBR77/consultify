@@ -22,12 +22,15 @@ const handleResponse = async (res: Response, defaultError: string) => {
     const data = await res.json().catch(() => ({}));
 
     // Check for Demo Block
-    if (res.status === 403 && data.errorCode === 'DEMO_ACTION_BLOCKED') {
+    if (res.status === 403 && (data.code === 'DEMO_BLOCKED' || data.errorCode === 'DEMO_ACTION_BLOCKED')) {
         window.dispatchEvent(new CustomEvent('DEMO_ACTION_BLOCKED', {
-            detail: { message: data.error }
+            detail: {
+                message: data.message || data.error,
+                action: data.action
+            }
         }));
         // We still throw to stop execution, but the UI will handle the modal
-        throw new Error(data.error || 'Action blocked in Demo Mode');
+        throw new Error(data.message || data.error || 'Action blocked in Demo Mode');
     }
 
     throw new Error(data.error || defaultError);
@@ -141,16 +144,16 @@ export const Api = {
     },
 
     saveSession: async (userId: string, type: SessionMode, data: any, projectId?: string): Promise<void> => {
-        if (!userId) return;
+        if (userId && projectId) {
+            // We won't block session saves usually, but if we do:
+            // Actually saveSession might be blocked.
+        }
         const res = await fetch(`${API_URL}/sessions`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ userId, type, data, projectId })
         });
-        if (!res.ok) {
-            const errData = await res.json().catch(() => ({}));
-            throw new Error(errData.error || `Failed to save session: ${res.status}`);
-        }
+        await handleResponse(res, `Failed to save session`);
     },
 
     // --- AI ---
@@ -627,9 +630,7 @@ export const Api = {
             headers: getHeaders(),
             body: JSON.stringify(task)
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to create task');
-        return data;
+        return handleResponse(res, 'Failed to create task');
     },
 
     updateTask: async (id: string, updates: any): Promise<void> => {
@@ -638,7 +639,7 @@ export const Api = {
             headers: getHeaders(),
             body: JSON.stringify(updates)
         });
-        if (!res.ok) throw new Error('Failed to update task');
+        await handleResponse(res, 'Failed to update task');
     },
 
     deleteTask: async (id: string): Promise<void> => {
@@ -646,7 +647,7 @@ export const Api = {
             method: 'DELETE',
             headers: getHeaders()
         });
-        if (!res.ok) throw new Error('Failed to delete task');
+        await handleResponse(res, 'Failed to delete task');
     },
 
     getTaskComments: async (taskId: string): Promise<any[]> => {
@@ -821,9 +822,7 @@ export const Api = {
             headers: getHeaders(),
             body: JSON.stringify(initiative)
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to create initiative');
-        return data;
+        return handleResponse(res, 'Failed to create initiative');
     },
 
     updateInitiative: async (id: string, updates: any): Promise<void> => {
@@ -832,7 +831,7 @@ export const Api = {
             headers: getHeaders(),
             body: JSON.stringify(updates)
         });
-        if (!res.ok) throw new Error('Failed to update initiative');
+        await handleResponse(res, 'Failed to update initiative');
     },
 
     validateInitiative: async (id: string) => {
@@ -1698,5 +1697,102 @@ export const Api = {
             headers: getHeaders()
         });
         return handleResponse(res, 'Failed to activate billing');
+    },
+
+    // Token Ledger API
+    getOrgTokenBalance: async (orgId: string): Promise<any> => {
+        const res = await fetch(`${API_URL}/organizations/${orgId}/tokens/balance`, { headers: getHeaders() });
+        return handleResponse(res, 'Failed to fetch token balance');
+    },
+
+    getOrgTokenLedger: async (orgId: string, limit = 50, offset = 0): Promise<any[]> => {
+        const res = await fetch(`${API_URL}/organizations/${orgId}/tokens/ledger?limit=${limit}&offset=${offset}`, { headers: getHeaders() });
+        return handleResponse(res, 'Failed to fetch token ledger').then(data => data?.ledger || []);
+    },
+
+
+    // ==========================================
+    // PHASE C: CONSULTANT MODE
+    // ==========================================
+    getConsultantOrgs: async (): Promise<any[]> => {
+        const res = await fetch(`${API_URL}/consultants/orgs`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch consultant organizations');
+        return res.json();
+    },
+
+    getConsultantClients: async (orgId?: string): Promise<any[]> => {
+        let url = `${API_URL}/consultants/clients`;
+        if (orgId) url += `?orgId=${orgId}`;
+        const res = await fetch(url, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch consultant clients');
+        return res.json();
+    },
+
+    createConsultantInvite: async (data: { email: string; invitationType: string; firmName?: string; projectName?: string }): Promise<any> => {
+        const res = await fetch(`${API_URL}/consultants/invites`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Failed to create invite');
+        return json;
+    },
+
+    getConsultantInvites: async (): Promise<any[]> => {
+        const res = await fetch(`${API_URL}/consultants/invites`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch invites');
+        return res.json();
+    },
+
+    // Org Admin: Invite a user (Member or Consultant)
+    createOrganizationInvitation: async (email: string, role: string): Promise<any> => {
+        const res = await fetch(`${API_URL}/invitations`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ email, role })
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Failed to send invitation');
+        return json;
+    },
+
+    // ==========================================
+    // PHASE E: ONBOARDING API
+    // ==========================================
+    saveOnboardingContext: async (context: any): Promise<void> => {
+        const res = await fetch(`${API_URL}/onboarding/context`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(context)
+        });
+        await handleResponse(res, 'Failed to save onboarding context');
+    },
+
+    generateFirstValuePlan: async (): Promise<any> => {
+        const res = await fetch(`${API_URL}/onboarding/generate-plan`, {
+            method: 'POST',
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to generate plan');
+    },
+
+    acceptFirstValuePlan: async (acceptedInitiativeIds: string[], idempotencyKey: string): Promise<any> => {
+        const res = await fetch(`${API_URL}/onboarding/accept-plan`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ acceptedInitiativeIds, idempotencyKey })
+        });
+        return handleResponse(res, 'Failed to accept plan');
+    },
+
+    getOnboardingStatus: async (): Promise<any> => {
+        const res = await fetch(`${API_URL}/onboarding/status`, { headers: getHeaders() });
+        return handleResponse(res, 'Failed to get onboarding status');
+    },
+
+    getOnboardingPlan: async (): Promise<any> => {
+        const res = await fetch(`${API_URL}/onboarding/plan`, { headers: getHeaders() });
+        return handleResponse(res, 'Failed to get onboarding plan');
     }
 };

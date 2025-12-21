@@ -11,6 +11,7 @@ import { AdminLLMView } from './AdminLLMView';
 import { AdminKnowledgeView } from './AdminKnowledgeView';
 import { AdminAnalyticsView } from './AdminAnalyticsView';
 import { AdminMetricsDashboardView } from './AdminMetricsDashboardView';
+import { AdminSettingsConsultants } from './AdminSettingsConsultants';
 import { ProjectGovernance } from '../../components/Admin/ProjectGovernance'; // CRIT-02
 import { toast } from 'react-hot-toast';
 
@@ -316,6 +317,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
                 {currentView === AppView.ADMIN_KNOWLEDGE && <AdminKnowledgeView />}
                 {currentView === AppView.ADMIN_ANALYTICS && <AdminAnalyticsView />}
                 {currentView === AppView.ADMIN_METRICS && <AdminMetricsDashboardView />}
+                {currentView === AppView.ADMIN_SETTINGS_CONSULTANTS && <AdminSettingsConsultants />}
             </div>
 
             {/* Add User Modal */}

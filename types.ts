@@ -13,6 +13,7 @@ export enum AppView {
   QUICK_STEP3_EXPECTATIONS = 'QUICK_STEP3_EXPECTATIONS',
 
   // Full Transformation Views
+  ONBOARDING_WIZARD = 'ONBOARDING_WIZARD', // Phase E: Guided First Value
   FULL_STEP1_CONTEXT = 'FULL_STEP1_CONTEXT', // NEW: Senior Consultant Context Gathering
   FULL_STEP1_ASSESSMENT = 'FULL_STEP1_ASSESSMENT', // Parent
   FULL_STEP1_PROCESSES = 'FULL_STEP1_PROCESSES',
@@ -74,10 +75,17 @@ export enum AppView {
   // AI Action Proposals Review
   AI_ACTION_PROPOSALS = 'AI_ACTION_PROPOSALS',
 
+  // Consultant Views
+  CONSULTANT_PANEL = 'CONSULTANT_PANEL',
+  CONSULTANT_INVITES = 'CONSULTANT_INVITES',
+
   // Step 13: Visual Playbook Editor
   SUPERADMIN_PLAYBOOK_TEMPLATES = 'SUPERADMIN_PLAYBOOK_TEMPLATES',
   SUPERADMIN_PLAYBOOK_EDITOR = 'SUPERADMIN_PLAYBOOK_EDITOR',
-  ADMIN_PLAYBOOK_RUNS = 'ADMIN_PLAYBOOK_RUNS'
+  ADMIN_PLAYBOOK_RUNS = 'ADMIN_PLAYBOOK_RUNS',
+
+  // Org Admin Consultant Views
+  ADMIN_SETTINGS_CONSULTANTS = 'ADMIN_SETTINGS_CONSULTANTS'
 }
 
 // SCMS: Canonical Change Lifecycle Phases (System Reframe Step 0)
@@ -110,6 +118,7 @@ export enum UserRole {
   VIEWER = 'VIEWER',            // Stakeholder/Auditor
   CEO = 'CEO',
   MANAGER = 'MANAGER',
+  CONSULTANT = 'CONSULTANT',   // External Advisor
   OTHER = 'OTHER'
 }
 

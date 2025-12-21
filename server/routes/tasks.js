@@ -314,7 +314,7 @@ router.post('/', async (req, res) => {
 
         // Recalculate Initiative Progress if linked
         if (initiativeId) {
-            InitiativeService.recalculateProgress(initiativeId).catch(console.error);
+            InitiativeService.recalculateProgress({ organizationId: orgId, initiativeId }).catch(console.error);
         }
 
         stmt.finalize();
@@ -504,7 +504,7 @@ router.put('/:id', async (req, res) => {
                 // Recalculate Initiative Progress if linked (use old or new initiative ID)
                 const linkedInitiativeId = updates.initiativeId || currentTask.initiative_id;
                 if (linkedInitiativeId) {
-                    InitiativeService.recalculateProgress(linkedInitiativeId).catch(err => console.error("Error recalc:", err));
+                    InitiativeService.recalculateProgress({ organizationId: req.user.organizationId, initiativeId: linkedInitiativeId }).catch(err => console.error("Error recalc:", err));
                 }
 
                 res.json(row);
@@ -538,7 +538,7 @@ router.delete('/:id', (req, res) => {
 
             // EVENT MAP: Recalculate Initiative Progress on Delete
             if (task.initiative_id) {
-                InitiativeService.recalculateProgress(task.initiative_id).catch(console.error);
+                InitiativeService.recalculateProgress({ organizationId: orgId, initiativeId: task.initiative_id }).catch(console.error);
             }
 
             // Log Activity

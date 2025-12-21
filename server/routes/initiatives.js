@@ -127,10 +127,17 @@ router.post('/', (req, res) => {
 
         startDate, pilotEndDate, endDate,
         // New Fields
-        problemStatement, deliverables, successCriteria, scopeIn, scopeOut, keyRisks
+        problemStatement, deliverables, successCriteria, scopeIn, scopeOut, keyRisks,
+        // Phase E->F Linkage (Fix Pack 1)
+        createdFrom, createdFromPlanId
     } = req.body;
 
     if (!name) return res.status(400).json({ error: 'Name is required' });
+
+    // Validate createdFromPlanId length (optional but recommended)
+    if (createdFromPlanId && String(createdFromPlanId).length > 100) {
+        return res.status(400).json({ error: 'createdFromPlanId too long' });
+    }
 
     // CHECK ACCESS POLICY
     AccessPolicyService.checkAccess(orgId, 'create_initiative')
@@ -151,8 +158,9 @@ router.post('/', (req, res) => {
                     owner_business_id, owner_execution_id, sponsor_id,
                     start_date, pilot_end_date, end_date,
                     problem_statement, deliverables, success_criteria, scope_in, scope_out, key_risks,
+                    created_from, created_from_plan_id,
                     created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `;
 
             const params = [
@@ -184,6 +192,8 @@ router.post('/', (req, res) => {
                 JSON.stringify(scopeIn || []),
                 JSON.stringify(scopeOut || []),
                 JSON.stringify(keyRisks || []),
+                createdFrom ?? 'MANUAL',
+                createdFromPlanId ?? null,
                 now,
                 now
             ];
@@ -202,6 +212,7 @@ router.post('/', (req, res) => {
             res.status(500).json({ error: "Failed to verify access permissions" });
         });
 });
+
 
 // ==========================================
 // UPDATE INITIATIVE

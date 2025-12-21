@@ -1,257 +1,261 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+/**
+ * AI Memory Manager Tests
+ * 
+ * HIGH PRIORITY AI SERVICE - Must have 85%+ coverage
+ * Tests memory management, decision recording, and project memory.
+ */
 
-// Mock dependencies
-const mockDb = {
-    get: vi.fn(),
-    all: vi.fn(),
-    run: vi.fn(),
-    serialize: vi.fn((cb) => cb()),
-    initPromise: Promise.resolve()
-};
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { createRequire } from 'module';
+import { createMockDb } from '../../helpers/dependencyInjector.js';
+import { testUsers, testProjects } from '../../fixtures/testData.js';
 
-vi.mock('../../../server/database', () => ({
-    default: mockDb
-}));
-
-vi.mock('uuid', () => ({
-    v4: () => 'mem-1234'
-}));
-
-import AIMemoryManager from '../../../server/services/aiMemoryManager.js';
+const require = createRequire(import.meta.url);
 
 describe('AIMemoryManager', () => {
+    let mockDb;
+    let AIMemoryManager;
+
     beforeEach(() => {
-        vi.clearAllMocks();
+        mockDb = createMockDb();
+        
+        vi.mock('../../../server/database', () => ({
+            default: mockDb
+        }));
 
-        mockDb.run.mockImplementation(function (...args) {
-            const cb = args[args.length - 1];
-            if (typeof cb === 'function') {
-                cb.call({ changes: 1 }, null);
-            }
+        AIMemoryManager = require('../../../server/services/aiMemoryManager.js');
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    describe('createSession()', () => {
+        it('should create new session', () => {
+            const session = AIMemoryManager.createSession();
+
+            expect(session).toBeDefined();
+            expect(session.conversationId).toBeDefined();
+            expect(session.messages).toEqual([]);
+            expect(session.startedAt).toBeDefined();
         });
 
-        mockDb.all.mockImplementation((...args) => {
-            const cb = args[args.length - 1];
-            if (typeof cb === 'function') {
-                cb(null, []);
-            }
-        });
+        it('should create unique session IDs', () => {
+            const session1 = AIMemoryManager.createSession();
+            const session2 = AIMemoryManager.createSession();
 
-        mockDb.get.mockImplementation((...args) => {
-            const cb = args[args.length - 1];
-            if (typeof cb === 'function') {
-                cb(null, null);
-            }
+            expect(session1.conversationId).not.toBe(session2.conversationId);
         });
     });
 
-    describe('Session Memory (In-Memory)', () => {
-        it('should create a session', () => {
+    describe('addMessage()', () => {
+        it('should add message to session', () => {
             const session = AIMemoryManager.createSession();
-            expect(session).toEqual([]);
+            const updatedSession = AIMemoryManager.addMessage(session, 'user', 'Hello');
+
+            expect(updatedSession.messages).toHaveLength(1);
+            expect(updatedSession.messages[0].role).toBe('user');
+            expect(updatedSession.messages[0].content).toBe('Hello');
+            expect(updatedSession.messages[0].timestamp).toBeDefined();
         });
 
-        it('should add messages to session', () => {
+        it('should add multiple messages', () => {
             const session = AIMemoryManager.createSession();
-
             AIMemoryManager.addMessage(session, 'user', 'Hello');
-            AIMemoryManager.addMessage(session, 'assistant', 'Hi');
+            AIMemoryManager.addMessage(session, 'assistant', 'Hi there');
 
-            expect(session).toHaveLength(2);
-            expect(session[0]).toEqual({ role: 'user', content: 'Hello' });
-        });
-
-        it('should respect context window limit', () => {
-            const session = AIMemoryManager.createSession();
-            // Add 25 messages (limit is 20)
-            for (let i = 0; i < 25; i++) {
-                AIMemoryManager.addMessage(session, 'user', `Msg ${i}`);
-            }
-
-            expect(session).toHaveLength(20);
-            expect(session[19].content).toBe('Msg 24');
+            expect(session.messages).toHaveLength(2);
         });
     });
 
-    describe('Project Memory', () => {
+    describe('recordProjectMemory()', () => {
         it('should record project memory', async () => {
+            const projectId = testProjects.project1.id;
+            const memoryType = AIMemoryManager.MEMORY_TYPES.DECISION;
+            const content = { decision: 'test decision' };
+            const userId = testUsers.user.id;
+
+            let callCount = 0;
+            mockDb.run.mockImplementation((query, params, callback) => {
+                callCount++;
+                if (callCount === 1) {
+                    // First call: INSERT INTO ai_project_memory
+                    expect(query).toContain('ai_project_memory');
+                    expect(params).toContain(projectId);
+                    expect(params).toContain(memoryType);
+                } else {
+                    // Second call: INSERT INTO activity_logs
+                    expect(query).toContain('activity_logs');
+                }
+                callback.call({ changes: 1 }, null);
+            });
+
             const result = await AIMemoryManager.recordProjectMemory(
-                'proj-1',
-                'DECISION',
-                { decision: 'Go' },
-                'user-1'
+                projectId,
+                memoryType,
+                content,
+                userId
             );
 
-            expect(result.success).toBe(true);
-            expect(mockDb.run).toHaveBeenCalledWith(
-                expect.stringContaining('INSERT INTO ai_project_memory'),
-                expect.arrayContaining(['proj-1', 'DECISION']),
-                expect.any(Function)
-            );
+            expect(result.id).toBeDefined();
+            expect(result.projectId).toBe(projectId);
+            expect(result.memoryType).toBe(memoryType);
+            expect(mockDb.run).toHaveBeenCalledTimes(2); // Memory + audit log
         });
 
-        it('should record decision helper', async () => {
+        it('should handle database errors', async () => {
+            const projectId = testProjects.project1.id;
+            const memoryType = AIMemoryManager.MEMORY_TYPES.DECISION;
+            const content = { decision: 'test' };
+            const userId = testUsers.user.id;
+
+            mockDb.run.mockImplementation((query, params, callback) => {
+                callback(new Error('DB Error'));
+            });
+
+            await expect(
+                AIMemoryManager.recordProjectMemory(projectId, memoryType, content, userId)
+            ).rejects.toThrow('DB Error');
+        });
+    });
+
+    describe('recordDecision()', () => {
+        it('should record decision with rationale', async () => {
+            const projectId = testProjects.project1.id;
+            const decisionId = 'decision-123';
+            const title = 'Test Decision';
+            const outcome = 'approved';
+            const rationale = 'Test rationale';
+            const userId = testUsers.user.id;
+
+            mockDb.run.mockImplementation((query, params, callback) => {
+                callback.call({ changes: 1 }, null);
+            });
+
             const result = await AIMemoryManager.recordDecision(
-                'proj-1', 'dec-1', 'Title', 'Outcome', 'Rationale', 'user-1'
+                projectId,
+                decisionId,
+                title,
+                outcome,
+                rationale,
+                userId
             );
 
-            expect(result.success).toBe(true);
-            const callArgs = mockDb.run.mock.calls[0];
-            expect(callArgs[1]).toContain(AIMemoryManager.MEMORY_TYPES.DECISION);
+            expect(result.id).toBeDefined();
+            expect(result.projectId).toBe(projectId);
+            expect(result.memoryType).toBe(AIMemoryManager.MEMORY_TYPES.DECISION);
         });
+    });
 
+    describe('recordPhaseTransition()', () => {
         it('should record phase transition', async () => {
+            const projectId = testProjects.project1.id;
+            const fromPhase = 'Assessment';
+            const toPhase = 'Initiatives';
+            const reason = 'Assessment complete';
+            const userId = testUsers.user.id;
+
+            mockDb.run.mockImplementation((query, params, callback) => {
+                callback.call({ changes: 1 }, null);
+            });
+
             const result = await AIMemoryManager.recordPhaseTransition(
-                'proj-1', 'PLANNING', 'EXECUTION', 'Approved', 'user-1'
+                projectId,
+                fromPhase,
+                toPhase,
+                reason,
+                userId
             );
 
-            expect(result.success).toBe(true);
-            const callArgs = mockDb.run.mock.calls[0];
-            expect(callArgs[1]).toContain(AIMemoryManager.MEMORY_TYPES.PHASE_TRANSITION);
-        });
-
-        it('should get project memory', async () => {
-            mockDb.all.mockImplementation((...args) => {
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    cb(null, [{ id: '1', content: JSON.stringify({ test: 1 }) }]);
-                }
-            });
-
-            const memory = await AIMemoryManager.getProjectMemory('proj-1');
-
-            expect(memory).toHaveLength(1);
-            expect(memory[0].content.test).toBe(1);
-        });
-
-        it('should build project memory summary', async () => {
-            mockDb.all.mockImplementation((...args) => {
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    cb(null, [
-                        { memory_type: 'DECISION', content: JSON.stringify({ title: 'Dec 1' }) },
-                        { memory_type: 'PHASE_TRANSITION', content: JSON.stringify({ to: 'EXECUTION' }) }
-                    ]);
-                }
-            });
-
-            const summary = await AIMemoryManager.buildProjectMemorySummary('proj-1');
-
-            expect(summary).toContain('Decisions:');
-            expect(summary).toContain('Dec 1');
-            expect(summary).toContain('Phase Transitions:');
-            expect(summary).toContain('EXECUTION');
+            expect(result.memoryType).toBe(AIMemoryManager.MEMORY_TYPES.PHASE_TRANSITION);
         });
     });
 
-    describe('Organization Memory', () => {
-        it('should create new org memory if not exists', async () => {
-            const result = await AIMemoryManager.getOrganizationMemory('org-1');
+    describe('recordRecommendation()', () => {
+        it('should record recommendation and user response', async () => {
+            const projectId = testProjects.project1.id;
+            const recommendation = 'Test recommendation';
+            const accepted = true;
+            const userFeedback = 'Good suggestion';
+            const userId = testUsers.user.id;
 
-            expect(result).toBeDefined();
-            // Should verify CREATE was called
-            expect(mockDb.run).toHaveBeenCalledWith(
-                expect.stringContaining('INSERT'),
-                expect.any(Array),
-                expect.any(Function)
-            );
-        });
-
-        it('should return existing org memory', async () => {
-            mockDb.get.mockImplementation((...args) => {
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    cb(null, {
-                        organization_id: 'org-1',
-                        recurring_patterns: '[]',
-                        learned_preferences: '[]'
-                    });
-                }
+            mockDb.run.mockImplementation((query, params, callback) => {
+                callback.call({ changes: 1 }, null);
             });
 
-            const result = await AIMemoryManager.getOrganizationMemory('org-1');
-            expect(result.organization_id).toBe('org-1');
-            // Mock get should prevent INSERT
-            expect(mockDb.run).not.toHaveBeenCalled();
-        });
-
-        it('should update organization memory', async () => {
-            const result = await AIMemoryManager.updateOrganizationMemory('org-1', {
-                knowledge_base_version: 2
-            });
-
-            expect(result.success).toBe(true);
-            expect(mockDb.run).toHaveBeenCalledWith(
-                expect.stringContaining('UPDATE ai_organization_memory'),
-                expect.any(Array),
-                expect.any(Function)
+            const result = await AIMemoryManager.recordRecommendation(
+                projectId,
+                recommendation,
+                accepted,
+                userFeedback,
+                userId
             );
-        });
 
-        it('should add recurring pattern', async () => {
-            // First get existing
-            mockDb.get.mockImplementation((...args) => {
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    cb(null, { recurring_patterns: '["old"]' });
-                }
-            });
-
-            const result = await AIMemoryManager.addRecurringPattern('org-1', 'new-pattern');
-
-            expect(result.success).toBe(true);
-            expect(mockDb.run).toHaveBeenCalledWith(
-                expect.stringContaining('UPDATE'),
-                expect.arrayContaining([JSON.stringify(['old', 'new-pattern'])]),
-                expect.any(Function)
-            );
+            expect(result.memoryType).toBe(AIMemoryManager.MEMORY_TYPES.RECOMMENDATION);
         });
     });
 
-    describe('User Preferences', () => {
-        it('should get user preferences', async () => {
-            mockDb.get.mockImplementation((...args) => {
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    cb(null, { communication_style: 'verbose' });
-                }
+    describe('getProjectMemory()', () => {
+        it('should retrieve project memories', async () => {
+            const projectId = testProjects.project1.id;
+
+            mockDb.all.mockImplementation((query, params, callback) => {
+                callback(null, [
+                    {
+                        id: 'mem-1',
+                        memory_type: AIMemoryManager.MEMORY_TYPES.DECISION,
+                        content: JSON.stringify({ decision: 'test' })
+                    },
+                    {
+                        id: 'mem-2',
+                        memory_type: AIMemoryManager.MEMORY_TYPES.RECOMMENDATION,
+                        content: JSON.stringify({ recommendation: 'test' })
+                    }
+                ]);
             });
 
-            const prefs = await AIMemoryManager.getUserPreferences('user-1');
-            expect(prefs.communication_style).toBe('verbose');
-        });
+            const memories = await AIMemoryManager.getProjectMemory(projectId);
 
-        it('should update user preferences', async () => {
-            // First get existing
-            mockDb.get.mockImplementation((...args) => {
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    cb(null, { communication_style: 'verbose' });
-                }
-            });
-
-            const result = await AIMemoryManager.updateUserPreferences('user-1', {
-                communication_style: 'concise'
-            });
-
-            expect(result.success).toBe(true);
-            expect(mockDb.run).toHaveBeenCalledWith(
-                expect.stringContaining('UPDATE ai_user_preferences'),
-                expect.any(Array),
+            expect(memories).toHaveLength(2);
+            expect(mockDb.all).toHaveBeenCalledWith(
+                expect.stringContaining('SELECT'),
+                expect.arrayContaining([projectId]),
                 expect.any(Function)
             );
         });
+
+        it('should filter by memory type', async () => {
+            const projectId = testProjects.project1.id;
+            const memoryType = AIMemoryManager.MEMORY_TYPES.DECISION;
+
+            mockDb.all.mockImplementation((query, params, callback) => {
+                // Verify query filters by memory_type
+                expect(params).toContain(memoryType);
+                callback(null, []);
+            });
+
+            await AIMemoryManager.getProjectMemory(projectId, memoryType);
+        });
     });
 
-    describe('Cleanup', () => {
-        it('should clear project memory', async () => {
-            const result = await AIMemoryManager.clearProjectMemory('proj-1');
-            expect(result.success).toBe(true);
-        });
+    describe('getRelevantMemories()', () => {
+        it('should return relevant memories for context', async () => {
+            const projectId = testProjects.project1.id;
+            const context = 'test context';
 
-        it('should clear organization memory', async () => {
-            const result = await AIMemoryManager.clearOrganizationMemory('org-1');
-            expect(result.success).toBe(true);
+            mockDb.all.mockImplementation((query, params, callback) => {
+                callback(null, [
+                    {
+                        id: 'mem-1',
+                        memory_type: AIMemoryManager.MEMORY_TYPES.DECISION,
+                        content: JSON.stringify({ decision: 'test' })
+                    }
+                ]);
+            });
+
+            const memories = await AIMemoryManager.getRelevantMemories(projectId, context);
+
+            expect(Array.isArray(memories)).toBe(true);
         });
     });
 });

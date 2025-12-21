@@ -53,8 +53,8 @@ const NotificationService = {
         const shouldMute = await NotificationService._checkMuteSettings(userId, type, severity);
         if (shouldMute) return null;
 
-        // Deduplicate - don't create if identical notification exists in last hour
-        const isDupe = await NotificationService._checkDuplicate(userId, type, relatedObjectId);
+        // Deduplicate - don't create if identical notification exists in last hour (org-scoped)
+        const isDupe = await NotificationService._checkDuplicate(userId, organizationId, type, relatedObjectId);
         if (isDupe) return null;
 
         const id = uuidv4();
@@ -190,16 +190,16 @@ const NotificationService = {
     },
 
     /**
-     * Check for duplicate notification
+     * Check for duplicate notification (org-scoped for multi-tenant safety)
      */
-    _checkDuplicate: async (userId, type, relatedObjectId) => {
+    _checkDuplicate: async (userId, organizationId, type, relatedObjectId) => {
         if (!relatedObjectId) return false;
 
         return new Promise((resolve) => {
             db.get(`SELECT id FROM notifications 
-                    WHERE user_id = ? AND type = ? AND related_object_id = ? 
+                    WHERE user_id = ? AND organization_id = ? AND type = ? AND related_object_id = ? 
                     AND created_at > datetime('now', '-1 hour')`,
-                [userId, type, relatedObjectId], (err, row) => {
+                [userId, organizationId, type, relatedObjectId], (err, row) => {
                     resolve(!!row);
                 });
         });

@@ -29,6 +29,29 @@ const demoGuard = (req, res, next) => {
         return next();
     }
 
+    // 1.1 Strict Isolation Check (Before matching paths)
+    // Ensure that if organizationId is passed in Query, Body, or Params, it matches User's Org
+    const userOrg = req.user.organizationId;
+    const requestedOrgs = [
+        (req.query || {}).organizationId,
+        (req.body || {}).organizationId,
+        (req.params || {}).organizationId
+    ];
+
+    for (const reqOrg of requestedOrgs) {
+        if (reqOrg && reqOrg !== userOrg) {
+            console.warn(`[DemoGuard] Blocked cross-tenant access attempt by Demo User ${req.userId} (Target: ${reqOrg}, Actual: ${userOrg})`);
+            return res.status(403).json({
+                code: 'DEMO_BLOCKED',
+                action: 'ISOLATION_VIOLATION',
+                message: 'Cross-tenant access blocked in Demo Mode',
+                error: 'Cross-tenant access blocked in Demo Mode',
+                errorCode: 'DEMO_ACTION_BLOCKED',
+                isDemoRestriction: true
+            });
+        }
+    }
+
     // 2. Allow Safe Methods (GET, OPTIONS, HEAD)
     if (['GET', 'OPTIONS', 'HEAD'].includes(req.method)) {
         return next();
@@ -40,12 +63,20 @@ const demoGuard = (req, res, next) => {
     }
 
     // 4. Block Everything Else
-    console.warn(`[DemoGuard] Blocked ${req.method} ${req.originalUrl} for Demo User ${req.userId}`);
+    const actionContext = req.originalUrl.split('/api/')[1]?.split('/')[0]?.toUpperCase() || 'UNKNOWN';
+    const actionMethod = req.method === 'POST' ? 'CREATE' : req.method === 'PUT' ? 'UPDATE' : req.method === 'DELETE' ? 'DELETE' : 'MODIFY';
+    const derivedAction = `${actionMethod}_${actionContext}`;
+
+    console.warn(`[DemoGuard] Blocked ${req.method} ${req.originalUrl} for Demo User ${req.userId} (Action: ${derivedAction})`);
 
     return res.status(403).json({
-        error: 'This action is disabled in Demo Mode.',
+        code: 'DEMO_BLOCKED',
+        action: derivedAction,
+        message: 'Action not allowed in Demo Mode',
+        // Backward compatibility flags if needed by specific old guards (can remove later)
+        error: 'Action not allowed in Demo Mode',
         errorCode: 'DEMO_ACTION_BLOCKED',
-        isDemoRestriction: true // Frontend can use this to show specific modal
+        isDemoRestriction: true
     });
 };
 

@@ -236,7 +236,201 @@ const ReportingService = {
         }
 
         return lines.join(' ');
+    },
+
+    /**
+     * Generate Organization Overview Report
+     * For shareable reports - contains summary info without sensitive details
+     */
+    generateOrganizationOverviewReport: async (organizationId) => {
+        // Organization details
+        const org = await new Promise((resolve, reject) => {
+            db.get(`SELECT id, name, billing_status, organization_type, created_at FROM organizations WHERE id = ?`,
+                [organizationId], (err, row) => {
+                    if (err) reject(err);
+                    else resolve(row);
+                });
+        });
+
+        if (!org) {
+            throw new Error('Organization not found');
+        }
+
+        // Transformation context
+        const transformationGoals = await new Promise((resolve, reject) => {
+            db.get(`SELECT goals, digital_maturity, transformation_type FROM organization_context WHERE organization_id = ?`,
+                [organizationId], (err, row) => {
+                    if (err) reject(err);
+                    else resolve(row);
+                });
+        });
+
+        // Initiatives summary
+        const initiativesSummary = await new Promise((resolve, reject) => {
+            db.all(`SELECT 
+                        i.id, i.title, i.status, i.priority, i.progress, i.due_date,
+                        u.name as owner_name
+                    FROM initiatives i
+                    LEFT JOIN users u ON i.owner_id = u.id
+                    WHERE i.org_id = ?
+                    ORDER BY 
+                        CASE i.priority WHEN 'critical' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 ELSE 4 END,
+                        i.created_at DESC
+                    LIMIT 20`,
+                [organizationId], (err, rows) => {
+                    if (err) reject(err);
+                    else resolve(rows || []);
+                });
+        });
+
+        // Calculate overall progress
+        const totalProgress = initiativesSummary.length > 0
+            ? Math.round(initiativesSummary.reduce((sum, i) => sum + (i.progress || 0), 0) / initiativesSummary.length)
+            : 0;
+
+        // Blockers
+        const blockers = await new Promise((resolve, reject) => {
+            db.all(`SELECT i.title as initiative, t.title as task, t.blocked_reason
+                    FROM tasks t
+                    JOIN initiatives i ON t.initiative_id = i.id
+                    WHERE i.org_id = ? AND t.status = 'blocked'
+                    LIMIT 10`,
+                [organizationId], (err, rows) => {
+                    if (err) reject(err);
+                    else resolve(rows || []);
+                });
+        });
+
+        // Next steps (upcoming tasks)
+        const nextSteps = await new Promise((resolve, reject) => {
+            db.all(`SELECT t.title, t.due_date, i.title as initiative
+                    FROM tasks t
+                    JOIN initiatives i ON t.initiative_id = i.id
+                    WHERE i.org_id = ? AND t.status IN ('todo', 'in_progress')
+                    ORDER BY t.due_date ASC
+                    LIMIT 10`,
+                [organizationId], (err, rows) => {
+                    if (err) reject(err);
+                    else resolve(rows || []);
+                });
+        });
+
+        return {
+            reportType: 'ORGANIZATION_OVERVIEW',
+            generatedAt: new Date().toISOString(),
+            organization: {
+                name: org.name,
+                type: org.organization_type || 'ORGANIZATION',
+                status: org.billing_status,
+                memberSince: org.created_at
+            },
+            transformationContext: transformationGoals || {},
+            overallProgress: totalProgress,
+            initiativesSummary: initiativesSummary.map(i => ({
+                id: i.id,
+                title: i.title,
+                status: i.status,
+                priority: i.priority,
+                progress: i.progress || 0,
+                dueDate: i.due_date,
+                owner: i.owner_name
+            })),
+            activeBlockers: blockers,
+            upcomingTasks: nextSteps
+        };
+    },
+
+    /**
+     * Generate Initiative Execution Report
+     * Detailed view of a single initiative for sharing
+     */
+    generateInitiativeExecutionReport: async (initiativeId, organizationId) => {
+        // Initiative details
+        const initiative = await new Promise((resolve, reject) => {
+            db.get(`SELECT i.*, u.name as owner_name, u.email as owner_email
+                    FROM initiatives i
+                    LEFT JOIN users u ON i.owner_id = u.id
+                    WHERE i.id = ? AND i.org_id = ?`,
+                [initiativeId, organizationId], (err, row) => {
+                    if (err) reject(err);
+                    else resolve(row);
+                });
+        });
+
+        if (!initiative) {
+            throw new Error('Initiative not found');
+        }
+
+        // Tasks
+        const tasks = await new Promise((resolve, reject) => {
+            db.all(`SELECT t.id, t.title, t.description, t.status, t.priority, 
+                           t.due_date, t.progress, t.blocked_reason,
+                           u.name as assignee_name
+                    FROM tasks t
+                    LEFT JOIN users u ON t.assignee_id = u.id
+                    WHERE t.initiative_id = ?
+                    ORDER BY 
+                        CASE t.status WHEN 'blocked' THEN 1 WHEN 'in_progress' THEN 2 WHEN 'todo' THEN 3 ELSE 4 END,
+                        t.due_date ASC`,
+                [initiativeId], (err, rows) => {
+                    if (err) reject(err);
+                    else resolve(rows || []);
+                });
+        });
+
+        // Calculate stats
+        const taskStats = {
+            total: tasks.length,
+            completed: tasks.filter(t => t.status === 'done').length,
+            inProgress: tasks.filter(t => t.status === 'in_progress').length,
+            blocked: tasks.filter(t => t.status === 'blocked').length,
+            todo: tasks.filter(t => t.status === 'todo').length
+        };
+
+        const progress = taskStats.total > 0
+            ? Math.round((taskStats.completed / taskStats.total) * 100)
+            : 0;
+
+        // Blockers
+        const blockers = tasks
+            .filter(t => t.status === 'blocked')
+            .map(t => ({ task: t.title, reason: t.blocked_reason }));
+
+        // Upcoming deadlines
+        const upcomingDeadlines = tasks
+            .filter(t => t.due_date && t.status !== 'done')
+            .slice(0, 5)
+            .map(t => ({ task: t.title, dueDate: t.due_date, assignee: t.assignee_name }));
+
+        return {
+            reportType: 'INITIATIVE_EXECUTION',
+            generatedAt: new Date().toISOString(),
+            initiative: {
+                id: initiative.id,
+                title: initiative.title,
+                description: initiative.description,
+                status: initiative.status,
+                priority: initiative.priority,
+                dueDate: initiative.due_date,
+                owner: initiative.owner_name
+            },
+            progress,
+            taskStats,
+            tasks: tasks.map(t => ({
+                id: t.id,
+                title: t.title,
+                status: t.status,
+                priority: t.priority,
+                dueDate: t.due_date,
+                progress: t.progress || 0,
+                assignee: t.assignee_name,
+                blockedReason: t.blocked_reason
+            })),
+            blockers,
+            upcomingDeadlines
+        };
     }
 };
 
 module.exports = ReportingService;
+

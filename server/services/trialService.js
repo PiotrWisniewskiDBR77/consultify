@@ -513,6 +513,121 @@ const TrialService = {
         });
     },
 
+    /**
+     * Convert a Trial Organization to a new Permanent Organization (Migration)
+     * 
+     * STRATEGY: MIGRATION (Not Update)
+     * 1. Validate Trial Ownership & Status
+     * 2. Create NEW Organization (Active)
+     * 3. Migrate Context & Data
+     * 4. Freeze Trial Organization
+     * 
+     * @param {string} trialOrgId 
+     * @param {string} userId - Must be OWNER of trial
+     * @param {string} newOrgName 
+     * @returns {Promise<Object>} { newOrganizationId }
+     */
+    convertTrialToOrg: async (trialOrgId, userId, newOrgName) => {
+        const OrganizationService = require('./organizationService');
+
+        // 1. Verify Trial
+        const trialOrg = await AccessPolicyService.getOrganizationType(trialOrgId);
+        if (!trialOrg || trialOrg.organizationType !== AccessPolicyService.ORG_TYPES.TRIAL) {
+            throw new Error("Invalid trial organization");
+        }
+
+        // Verify Ownership
+        const members = await OrganizationService.getMembers(trialOrgId);
+        const owner = members.find(m => m.role === 'OWNER' && m.user_id === userId);
+        if (!owner) {
+            throw new Error("Only the Trial Owner can convert to a permanent organization");
+        }
+
+        return new Promise((resolve, reject) => {
+            db.serialize(async () => {
+                db.run('BEGIN TRANSACTION');
+
+                try {
+                    // 2. Create NEW Organization using Service (Handle standard setup)
+                    // We interpret "Create Organization" as distinct step, but we need transaction safety.
+                    // Since OrganizationService.createOrganization uses its own transaction, we might need to be careful.
+                    // However, SQLite doesn't support nested transactions easily. 
+                    // To stay safe, we will manually insert here to ensure atomicity with migration.
+
+                    const newOrgId = uuidv4();
+                    const now = new Date().toISOString();
+
+                    // Insert New Org
+                    await new Promise((res, rej) => {
+                        db.run(
+                            `INSERT INTO organizations (
+                                id, name, status, billing_status, organization_type, plan,
+                                token_balance, created_by_user_id, created_at, is_active,
+                                ai_assertiveness_level, ai_autonomy_level
+                            ) VALUES (?, ?, 'active', 'PENDING', 'PAID', 'starter', 0, ?, ?, 1, 'MEDIUM', 'SUGGEST_ONLY')`,
+                            [newOrgId, newOrgName, userId, now],
+                            (err) => err ? rej(err) : res()
+                        );
+                    });
+
+                    // Add Owner
+                    await new Promise((res, rej) => {
+                        db.run(
+                            `INSERT INTO organization_members (id, organization_id, user_id, role, status, created_at)
+                             VALUES (?, ?, ?, 'OWNER', 'ACTIVE', ?)`,
+                            [uuidv4(), newOrgId, userId, now],
+                            (err) => err ? rej(err) : res()
+                        );
+                    });
+
+                    // 3. Migrate Context (Direct DB Copy)
+                    // Copy client_context
+                    await new Promise((res, rej) => {
+                        db.run(
+                            `INSERT INTO client_context (id, organization_id, key, value, confidence, source, created_at)
+                             SELECT lower(hex(randomblob(16))), ?, key, value, confidence, source, ?
+                             FROM client_context WHERE organization_id = ?`,
+                            [newOrgId, now, trialOrgId],
+                            (err) => err ? rej(err) : res()
+                        );
+                    });
+
+                    // Copy Facilities
+                    await new Promise((res, rej) => {
+                        db.run(
+                            `INSERT INTO organization_facilities (id, organization_id, name, location, headcount, activity_profile, created_at)
+                             SELECT lower(hex(randomblob(16))), ?, name, location, headcount, activity_profile, ?
+                             FROM organization_facilities WHERE organization_id = ?`,
+                            [newOrgId, now, trialOrgId],
+                            (err) => err ? rej(err) : res()
+                        );
+                    });
+
+                    // 4. Freeze Old Trial
+                    await new Promise((res, rej) => {
+                        db.run(
+                            `UPDATE organizations SET status = 'CONVERTED', is_active = 0, trial_expires_at = ? WHERE id = ?`,
+                            [now, trialOrgId],
+                            (err) => err ? rej(err) : res()
+                        );
+                    });
+
+                    db.run('COMMIT', async (err) => {
+                        if (err) return reject(err);
+
+                        // Log Event (Outside Transaction ok)
+                        await OrganizationEventService.logEvent(trialOrgId, 'TRIAL_CONVERTED', userId, { newOrgId });
+
+                        resolve({ newOrganizationId: newOrgId });
+                    });
+
+                } catch (e) {
+                    db.run('ROLLBACK');
+                    reject(e);
+                }
+            });
+        });
+    },
 };
 
 module.exports = TrialService;

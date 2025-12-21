@@ -47,11 +47,24 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
 
     const loadOrgDetails = async (orgId: string) => {
         try {
-            const [org, orgMembers] = await Promise.all([
+            const [org, orgMembers, tokenData, ledger] = await Promise.all([
                 Api.getOrganization(orgId),
-                Api.getOrganizationMembers(orgId)
+                Api.getOrganizationMembers(orgId),
+                Api.getOrgTokenBalance(orgId).catch(() => null),
+                Api.getOrgTokenLedger(orgId, 20).catch(() => [])
             ]);
-            setSelectedOrg(org);
+            // Merge token data into org object for display
+            setSelectedOrg({
+                ...org,
+                token_balance: tokenData?.balance ?? org.token_balance,
+                billing_status: tokenData?.billingStatus ?? org.billing_status,
+                organization_type: tokenData?.organizationType ?? org.organization_type,
+                // Trial budget from API (no hardcode!)
+                trialBudgetTotal: tokenData?.trialBudgetTotal ?? null,
+                trialBudgetRemaining: tokenData?.trialBudgetRemaining ?? null,
+                paygoStatus: tokenData?.paygoStatus ?? null,
+                ledger
+            });
             setMembers(orgMembers);
         } catch (error) {
             console.error(error);
@@ -181,7 +194,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                 <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 shadow-sm">
                     <h3 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2 mb-4">
                         <Coins size={20} className="text-slate-400" />
-                        Token Balance
+                        Token Balance & Usage
                     </h3>
                     <div className="flex flex-col items-center justify-center py-4">
                         <div className="text-4xl font-bold text-navy-900 dark:text-white mb-1">
@@ -189,9 +202,98 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                         </div>
                         <div className="text-sm text-slate-500 dark:text-slate-400">Available Tokens</div>
                     </div>
+
+                    {/* Trial Usage Bar - uses API values, no hardcode */}
+                    {(selectedOrg?.billing_status === 'TRIAL' || selectedOrg?.organization_type === 'TRIAL') &&
+                        selectedOrg?.trialBudgetTotal && selectedOrg?.trialBudgetRemaining !== null && (
+                            <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/5">
+                                {(() => {
+                                    const total = selectedOrg.trialBudgetTotal;
+                                    const remaining = selectedOrg.trialBudgetRemaining ?? 0;
+                                    const usedPct = Math.min(100, Math.max(0, Math.round((1 - remaining / total) * 100)));
+                                    const lowThreshold = total * 0.1;
+                                    const medThreshold = total * 0.3;
+                                    return (
+                                        <>
+                                            <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mb-2">
+                                                <span>Trial Usage</span>
+                                                <span>{usedPct}% Used</span>
+                                            </div>
+                                            <div className="w-full bg-slate-200 dark:bg-navy-800 rounded-full h-2.5">
+                                                <div
+                                                    className={`h-2.5 rounded-full transition-all ${remaining < lowThreshold ? 'bg-red-500' :
+                                                        remaining < medThreshold ? 'bg-amber-500' : 'bg-green-500'
+                                                        }`}
+                                                    style={{ width: `${usedPct}%` }}
+                                                />
+                                            </div>
+                                            {remaining < lowThreshold && (
+                                                <p className="text-xs text-red-600 dark:text-red-400 mt-2 text-center">
+                                                    ⚠️ Low balance! Upgrade to continue using AI features.
+                                                </p>
+                                            )}
+                                        </>
+                                    );
+                                })()}
+                            </div>
+                        )}
+
                     <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/5 text-xs text-slate-500 dark:text-slate-400 text-center">
-                        Next reset: {new Date(new Date().setDate(new Date().getDate() + 30)).toLocaleDateString()}
+                        {selectedOrg?.billing_status === 'ACTIVE'
+                            ? 'Pay-as-you-go billing active'
+                            : selectedOrg?.paygoStatus === 'PAYGO_PENDING'
+                                ? '⚠️ Payment required - usage exceeds balance'
+                                : 'Trial tokens refresh on upgrade'}
                     </div>
+                </div>
+            </div>
+
+            {/* Token Ledger / Recent Activity */}
+            <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/5">
+                    <h3 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
+                        <Coins size={20} className="text-slate-400" />
+                        Recent Token Activity
+                    </h3>
+                </div>
+                <div className="max-h-64 overflow-y-auto">
+                    {!selectedOrg?.ledger || selectedOrg.ledger.length === 0 ? (
+                        <div className="p-8 text-center text-slate-500 text-sm">No token activity yet.</div>
+                    ) : (
+                        <table className="w-full text-sm">
+                            <thead className="bg-slate-50 dark:bg-navy-950 sticky top-0">
+                                <tr>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Type</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Amount</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Reason</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">When</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                                {selectedOrg.ledger.slice(0, 10).map((entry: any) => (
+                                    <tr key={entry.id} className="hover:bg-slate-50 dark:hover:bg-white/5">
+                                        <td className="px-4 py-2">
+                                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${entry.type === 'CREDIT'
+                                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                                : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                                                }`}>
+                                                {entry.type}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-2 font-mono text-navy-900 dark:text-white">
+                                            {entry.type === 'CREDIT' ? '+' : '-'}{entry.amount?.toLocaleString()}
+                                        </td>
+                                        <td className="px-4 py-2 text-slate-600 dark:text-slate-300 truncate max-w-xs">
+                                            {entry.reason || entry.ref_entity_type || '-'}
+                                        </td>
+                                        <td className="px-4 py-2 text-slate-500 dark:text-slate-400 text-xs">
+                                            {new Date(entry.created_at).toLocaleString()}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
                 </div>
             </div>
 

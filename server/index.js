@@ -150,11 +150,22 @@ app.use('/api/billing', billingRoutes);
 app.use('/api/token-billing', tokenBillingRoutes);
 app.use('/api/token-billing', tokenBillingRoutes);
 app.use('/api/megatrends', megatrendRoutes);
-app.use('/api/organizations', organizationRoutes); // NEW
+app.use('/api/organizations', organizationRoutes);
+
+const onboardingRoutes = require('./routes/onboarding');
+app.use('/api/onboarding', onboardingRoutes);
+
+const consultantRoutes = require('./routes/consultants');
+app.use('/api/consultants', consultantRoutes);
+
+const userOrgsRoutes = require('./routes/userOrgs');
+app.use('/api/users', userOrgsRoutes);
 
 app.use('/api/webhooks', stripeWebhookRoutes);
 const reportRoutes = require('./routes/reports');
 app.use('/api/reports', reportRoutes);
+const trialRoutes = require('./routes/trial');
+app.use('/api/trial', trialRoutes);
 const ssoRoutes = require('./routes/sso');
 app.use('/api/sso', ssoRoutes);
 
@@ -260,7 +271,12 @@ app.use('/api/promo', promoRoutes);
 const partnerRoutes = require('./routes/partners');
 const settlementRoutes = require('./routes/settlements');
 app.use('/api/partners', partnerRoutes);
+app.use('/api/partners', partnerRoutes);
 app.use('/api/settlements', settlementRoutes);
+
+// Access Codes Engine (Unified)
+const accessCodeRoutes = require('./routes/accessCodes');
+app.use('/api/access-codes', accessCodeRoutes);
 
 // Step 6: In-App Help + Training + Playbooks Routes
 const helpRoutes = require('./routes/help');

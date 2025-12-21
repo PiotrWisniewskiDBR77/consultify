@@ -14,9 +14,9 @@ const deps = {
  * Record token usage
  */
 function recordTokenUsage(orgId, userId, tokens, action, metadata = {}) {
-    const id = `usage-${uuidv4()}`;
+    const id = `usage-${deps.uuidv4()}`;
     return new Promise((resolve, reject) => {
-        db.run(
+        deps.db.run(
             `INSERT INTO usage_records (id, organization_id, user_id, type, amount, action, metadata)
              VALUES (?, ?, ?, 'token', ?, ?, ?)`,
             [id, orgId, userId, tokens, action, JSON.stringify(metadata)],
@@ -32,9 +32,9 @@ function recordTokenUsage(orgId, userId, tokens, action, metadata = {}) {
  * Record storage usage
  */
 function recordStorageUsage(orgId, bytes, action, metadata = {}) {
-    const id = `usage-${uuidv4()}`;
+    const id = `usage-${deps.uuidv4()}`;
     return new Promise((resolve, reject) => {
-        db.run(
+        deps.db.run(
             `INSERT INTO usage_records (id, organization_id, user_id, type, amount, action, metadata)
              VALUES (?, ?, NULL, 'storage', ?, ?, ?)`,
             [id, orgId, bytes, action, JSON.stringify(metadata)],
@@ -53,9 +53,9 @@ function recordStorageUsage(orgId, bytes, action, metadata = {}) {
  * Get current period usage for an organization
  */
 async function getCurrentUsage(orgId) {
-    const billing = await billingService.getOrganizationBilling(orgId);
+    const billing = await deps.billingService.getOrganizationBilling(orgId);
     const plan = billing?.subscription_plan_id
-        ? await billingService.getPlanById(billing.subscription_plan_id)
+        ? await deps.billingService.getPlanById(billing.subscription_plan_id)
         : null;
 
     // Default period: current month
@@ -68,7 +68,7 @@ async function getCurrentUsage(orgId) {
         // Fix: Token usage is periodic (monthly), but Storage usage is cumulative (all-time)
         // We sum tokens only since periodStart
         // We sum storage for ALL time (records are +bytes for upload, -bytes for delete)
-        db.get(
+        deps.db.get(
             `SELECT 
                 COALESCE(SUM(CASE WHEN type = 'token' AND recorded_at >= ? THEN amount ELSE 0 END), 0) as tokens_used,
                 COALESCE(SUM(CASE WHEN type = 'storage' THEN amount ELSE 0 END), 0) as storage_bytes
@@ -114,9 +114,9 @@ async function getCurrentUsage(orgId) {
  */
 async function checkQuota(orgId, type = 'token') {
     const usage = await getCurrentUsage(orgId);
-    const billing = await billingService.getOrganizationBilling(orgId);
+    const billing = await deps.billingService.getOrganizationBilling(orgId);
     const plan = billing?.subscription_plan_id
-        ? await billingService.getPlanById(billing.subscription_plan_id)
+        ? await deps.billingService.getPlanById(billing.subscription_plan_id)
         : null;
 
     const quotaData = type === 'token' ? usage.tokens : usage.storage;
@@ -142,15 +142,15 @@ async function checkQuota(orgId, type = 'token') {
  * Calculate overage charges for a billing period
  */
 async function calculateOverage(orgId, periodStart, periodEnd) {
-    const billing = await billingService.getOrganizationBilling(orgId);
+    const billing = await deps.billingService.getOrganizationBilling(orgId);
     const plan = billing?.subscription_plan_id
-        ? await billingService.getPlanById(billing.subscription_plan_id)
+        ? await deps.billingService.getPlanById(billing.subscription_plan_id)
         : null;
 
     if (!plan) return { tokenOverage: 0, storageOverage: 0, totalOverage: 0 };
 
     return new Promise((resolve, reject) => {
-        db.get(
+        deps.db.get(
             `SELECT 
                 COALESCE(SUM(CASE WHEN type = 'token' THEN amount ELSE 0 END), 0) as tokens_used,
                 COALESCE(MAX(CASE WHEN type = 'storage' THEN amount ELSE 0 END), 0) as storage_peak
@@ -194,15 +194,15 @@ async function updateUsageSummary(orgId, periodStart) {
     periodEnd.setMonth(periodEnd.getMonth() + 1);
 
     const overage = await calculateOverage(orgId, periodStart, periodEnd);
-    const billing = await billingService.getOrganizationBilling(orgId);
+    const billing = await deps.billingService.getOrganizationBilling(orgId);
     const plan = billing?.subscription_plan_id
-        ? await billingService.getPlanById(billing.subscription_plan_id)
+        ? await deps.billingService.getPlanById(billing.subscription_plan_id)
         : null;
 
-    const id = `summary-${uuidv4()}`;
+    const id = `summary-${deps.uuidv4()}`;
 
     return new Promise((resolve, reject) => {
-        db.run(
+        deps.db.run(
             `INSERT INTO usage_summaries (id, organization_id, period_start, period_end, tokens_used, tokens_included, tokens_overage, storage_bytes_peak, storage_gb_included, storage_gb_overage, overage_amount)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
              ON CONFLICT(organization_id, period_start) DO UPDATE SET
@@ -227,7 +227,7 @@ async function updateUsageSummary(orgId, periodStart) {
  */
 function getUsageHistory(orgId, limit = 12) {
     return new Promise((resolve, reject) => {
-        db.all(
+        deps.db.all(
             `SELECT * FROM usage_summaries 
              WHERE organization_id = ? 
              ORDER BY period_start DESC 
@@ -249,7 +249,7 @@ function getGlobalUsageStats() {
         const now = new Date();
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-        db.get(
+        deps.db.get(
             `SELECT 
                 COALESCE(SUM(CASE WHEN type = 'token' THEN amount ELSE 0 END), 0) as total_tokens,
                 COALESCE(SUM(CASE WHEN type = 'storage' THEN amount ELSE 0 END), 0) as total_storage,
@@ -278,7 +278,7 @@ function getGlobalUsageStats() {
 function recordProjectStorageUsage(projectId, bytes, action) {
     return new Promise((resolve, reject) => {
         // Increment usage
-        db.run(
+        deps.db.run(
             `UPDATE projects SET storage_used_bytes = storage_used_bytes + ? WHERE id = ?`,
             [bytes, projectId],
             function (err) {
@@ -295,7 +295,7 @@ function recordProjectStorageUsage(projectId, bytes, action) {
  */
 function checkProjectQuota(projectId) {
     return new Promise((resolve, reject) => {
-        db.get(
+        deps.db.get(
             `SELECT storage_limit_gb, storage_used_bytes FROM projects WHERE id = ?`,
             [projectId],
             (err, row) => {
@@ -337,6 +337,13 @@ module.exports = {
     checkProjectQuota,
 
     /**
+     * Allow dependency injection for testing
+     */
+    _setDependencies: (newDeps) => {
+        Object.assign(deps, newDeps);
+    },
+
+    /**
      * Get operational costs grouped by Provider/Model
      */
     getOperationalCosts: async (startDate, endDate) => {
@@ -356,13 +363,13 @@ module.exports = {
                 GROUP BY u.metadata
             `;
 
-            db.all(query, [start.toISOString(), end.toISOString()], async (err, rows) => {
+            deps.db.all(query, [start.toISOString(), end.toISOString()], async (err, rows) => {
                 if (err) return reject(err);
 
                 try {
                     // Fetch current provider costs to calculate estimated spend
                     const providers = await new Promise((res, rej) => {
-                        db.all("SELECT provider, model_id, cost_per_1k FROM llm_providers", (e, r) => e ? rej(e) : res(r));
+                        deps.db.all("SELECT provider, model_id, cost_per_1k FROM llm_providers", (e, r) => e ? rej(e) : res(r));
                     });
 
                     // Create a lookup map for costs: "provider:model" -> cost

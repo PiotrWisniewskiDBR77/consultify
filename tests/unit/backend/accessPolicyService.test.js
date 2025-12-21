@@ -1,238 +1,139 @@
 /**
- * AccessPolicyService Unit Tests
+ * Access Policy Service Tests
  * 
- * Tests for Demo/Trial/Paid access policy enforcement
+ * CRITICAL SECURITY SERVICE - Must have 95%+ coverage
+ * Tests multi-tenant isolation, trial limits, and access control.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { createRequire } from 'module';
+import { 
+    createMockDb, 
+    createStandardDeps, 
+    injectDependencies 
+} from '../../helpers/dependencyInjector.js';
+import { testOrganizations, testUsers } from '../../fixtures/testData.js';
 
-// Create hoisted mocks for proper CJS/ESM interop
-const { mockDb } = vi.hoisted(() => ({
-    mockDb: {
-        get: vi.fn(),
-        run: vi.fn(),
-        all: vi.fn(),
-        serialize: vi.fn(cb => cb()),
-        initPromise: Promise.resolve()
-    }
-}));
+const require = createRequire(import.meta.url);
+const AccessPolicyService = require('../../../server/services/accessPolicyService.js');
 
-// Mock the database before importing AccessPolicyService
-vi.mock('../../../server/database', () => ({
-    default: mockDb,
-    ...mockDb
-}));
+describe('AccessPolicyService', () => {
+    let mockDb;
+    let deps;
 
-import AccessPolicyService from '../../../server/services/accessPolicyService';
-
-// CJS/ESM interop issue: database mock is not properly applied before service import
-// All tests in this file are skipped until mock strategy is fixed
-describe.skip('AccessPolicyService - skipped due to CJS/ESM mock interop', () => {
     beforeEach(() => {
-        vi.clearAllMocks();
+        // Create mock dependencies
+        mockDb = createMockDb();
+        deps = createStandardDeps({ db: mockDb });
+
+        // Inject dependencies if service supports it
+        // Note: accessPolicyService may need refactoring to support DI
+        // For now, we'll mock the database module directly
+        vi.mock('../../../server/database', () => ({
+            default: mockDb
+        }));
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     describe('getOrganizationType', () => {
-        it('should return org info for valid organization', async () => {
-            mockDb.get.mockImplementation((sql, params, callback) => {
-                callback(null, {
-                    id: 'org-123',
-                    name: 'Test Org',
-                    organization_type: 'TRIAL',
-                    trial_started_at: '2024-01-01T00:00:00Z',
-                    trial_expires_at: '2024-01-15T00:00:00Z',
-                    is_active: 1,
-                    plan: 'trial',
-                    status: 'active'
-                });
+        it('should return organization type for valid org', async () => {
+            const orgId = testOrganizations.org1.id;
+            
+            mockDb.get.mockImplementation((query, params, callback) => {
+                if (query.includes('FROM organizations')) {
+                    callback(null, {
+                        id: orgId,
+                        name: 'Test Org',
+                        organization_type: 'TRIAL',
+                        trial_started_at: '2024-01-01',
+                        trial_expires_at: '2024-01-15',
+                        is_active: 1,
+                        plan: 'trial',
+                        status: 'active'
+                    });
+                } else {
+                    callback(null, null);
+                }
             });
 
-            const result = await AccessPolicyService.getOrganizationType('org-123');
-
-            expect(result).toEqual({
-                id: 'org-123',
-                name: 'Test Org',
-                organizationType: 'TRIAL',
-                trialStartedAt: '2024-01-01T00:00:00Z',
-                trialExpiresAt: '2024-01-15T00:00:00Z',
-                isActive: true,
-                plan: 'trial',
-                status: 'active'
-            });
+            const result = await AccessPolicyService.getOrganizationType(orgId);
+            
+            expect(result).toBeDefined();
+            expect(result.id).toBe(orgId);
+            expect(result.organizationType).toBe('TRIAL');
+            expect(result.isActive).toBe(true);
         });
 
-        it('should return null for non-existent organization', async () => {
-            mockDb.get.mockImplementation((sql, params, callback) => {
+        it('should return null for non-existent org', async () => {
+            mockDb.get.mockImplementation((query, params, callback) => {
                 callback(null, null);
             });
 
-            const result = await AccessPolicyService.getOrganizationType('invalid-org');
+            const result = await AccessPolicyService.getOrganizationType('non-existent');
+            
             expect(result).toBeNull();
         });
-    });
 
-    describe('checkTrialStatus', () => {
-        it('should return expired=false for PAID orgs', async () => {
-            mockDb.get.mockImplementation((sql, params, callback) => {
-                callback(null, {
-                    id: 'org-123',
-                    organization_type: 'PAID',
-                    is_active: 1
-                });
+        it('should handle database errors', async () => {
+            mockDb.get.mockImplementation((query, params, callback) => {
+                callback(new Error('DB Error'), null);
             });
 
-            const result = await AccessPolicyService.checkTrialStatus('org-123');
-
-            expect(result.expired).toBe(false);
-            expect(result.daysRemaining).toBe(-1);
-            expect(result.warningLevel).toBe('none');
-        });
-
-        it('should return expired=true for expired TRIAL orgs', async () => {
-            const pastDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-
-            mockDb.get.mockImplementation((sql, params, callback) => {
-                callback(null, {
-                    id: 'org-123',
-                    organization_type: 'TRIAL',
-                    trial_expires_at: pastDate,
-                    is_active: 1
-                });
-            });
-
-            const result = await AccessPolicyService.checkTrialStatus('org-123');
-
-            expect(result.expired).toBe(true);
-            expect(result.daysRemaining).toBe(0);
-            expect(result.warningLevel).toBe('expired');
-        });
-
-        it('should return warning level for trials expiring in 5 days', async () => {
-            const futureDate = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString();
-
-            mockDb.get.mockImplementation((sql, params, callback) => {
-                callback(null, {
-                    id: 'org-123',
-                    organization_type: 'TRIAL',
-                    trial_expires_at: futureDate,
-                    is_active: 1
-                });
-            });
-
-            const result = await AccessPolicyService.checkTrialStatus('org-123');
-
-            expect(result.expired).toBe(false);
-            expect(result.daysRemaining).toBeGreaterThanOrEqual(4);
-            expect(result.warningLevel).toBe('warning');
+            await expect(
+                AccessPolicyService.getOrganizationType('org-123')
+            ).rejects.toThrow('DB Error');
         });
     });
 
-    // CJS/ESM interop issue: database mock is not properly applied before import
-    describe.skip('checkAccess - skipped due to CJS/ESM mock interop', () => {
-        it('should block write actions for DEMO orgs', async () => {
-            mockDb.get.mockImplementation((sql, params, callback) => {
-                if (sql.includes('organizations')) {
+    describe('checkAccess', () => {
+        it('should allow access for active trial org', async () => {
+            const orgId = testOrganizations.org1.id;
+            
+            // Mock org type lookup
+            mockDb.get.mockImplementation((query, params, callback) => {
+                if (query.includes('FROM organizations')) {
                     callback(null, {
-                        id: 'demo-org',
-                        organization_type: 'DEMO',
-                        is_active: 1
-                    });
-                } else {
-                    callback(null, null);
-                }
-            });
-
-            const result = await AccessPolicyService.checkAccess('demo-org', 'create_project');
-
-            expect(result.allowed).toBe(false);
-            expect(result.errorCode).toBe('DEMO_READ_ONLY');
-        });
-
-        it('should allow write actions for PAID orgs', async () => {
-            mockDb.get.mockImplementation((sql, params, callback) => {
-                if (sql.includes('organizations')) {
-                    callback(null, {
-                        id: 'paid-org',
-                        organization_type: 'PAID',
-                        is_active: 1
-                    });
-                } else {
-                    callback(null, null);
-                }
-            });
-
-            const result = await AccessPolicyService.checkAccess('paid-org', 'create_project');
-
-            expect(result.allowed).toBe(true);
-        });
-
-        it('should block when project limit is reached', async () => {
-            mockDb.get.mockImplementation((sql, params, callback) => {
-                if (sql.includes('organizations')) {
-                    callback(null, {
-                        id: 'trial-org',
+                        id: orgId,
                         organization_type: 'TRIAL',
+                        trial_started_at: '2024-01-01',
+                        trial_expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
                         is_active: 1
                     });
-                } else if (sql.includes('organization_limits')) {
-                    callback(null, {
-                        max_projects: 3,
-                        max_users: 5,
-                        max_ai_calls_per_day: 50
-                    });
-                } else if (sql.includes('usage_counters')) {
-                    callback(null, { ai_calls_count: 0 });
-                } else if (sql.includes('COUNT') && sql.includes('projects')) {
-                    callback(null, { count: 3 }); // At limit
+                } else if (query.includes('FROM organization_limits')) {
+                    callback(null, null); // No custom limits
                 } else {
                     callback(null, null);
                 }
             });
 
-            const result = await AccessPolicyService.checkAccess('trial-org', 'create_project');
-
-            expect(result.allowed).toBe(false);
-            expect(result.errorCode).toBe('PROJECT_LIMIT_REACHED');
-        });
-    });
-
-    // CJS/ESM interop issue
-    describe.skip('isAIRoleAllowed - skipped due to CJS/ESM mock interop', () => {
-        it('should allow ADVISOR role in trial mode', async () => {
-            mockDb.get.mockImplementation((sql, params, callback) => {
-                callback(null, {
-                    ai_roles_enabled_json: '["ADVISOR"]'
-                });
+            // Mock count queries
+            mockDb.get.mockImplementation((query, params, callback) => {
+                if (query.includes('COUNT(*)')) {
+                    callback(null, { count: 0 });
+                } else {
+                    callback(null, null);
+                }
             });
 
-            const result = await AccessPolicyService.isAIRoleAllowed('trial-org', 'ADVISOR');
-
+            const result = await AccessPolicyService.checkAccess(orgId, 'ai_call');
+            
             expect(result.allowed).toBe(true);
+            expect(result.reason).toBeUndefined();
         });
 
-        it('should block EXECUTOR role in trial mode', async () => {
-            mockDb.get.mockImplementation((sql, params, callback) => {
-                callback(null, {
-                    ai_roles_enabled_json: '["ADVISOR"]'
-                });
-            });
-
-            const result = await AccessPolicyService.isAIRoleAllowed('trial-org', 'EXECUTOR');
-
-            expect(result.allowed).toBe(false);
-            expect(result.reason).toContain('not available');
-        });
-    });
-
-    // CJS/ESM interop issue
-    describe.skip('getAIAccessContext - skipped due to CJS/ESM mock interop', () => {
-        it('should return correct context for demo org', async () => {
-            mockDb.get.mockImplementation((sql, params, callback) => {
-                if (sql.includes('organizations')) {
+        it('should deny access for expired trial', async () => {
+            const orgId = testOrganizations.org1.id;
+            
+            mockDb.get.mockImplementation((query, params, callback) => {
+                if (query.includes('FROM organizations')) {
                     callback(null, {
-                        id: 'demo-org',
-                        organization_type: 'DEMO',
-                        trial_started_at: new Date().toISOString(),
+                        id: orgId,
+                        organization_type: 'TRIAL',
+                        trial_started_at: '2024-01-01',
+                        trial_expires_at: '2024-01-10', // Expired
                         is_active: 1
                     });
                 } else {
@@ -240,13 +141,136 @@ describe.skip('AccessPolicyService - skipped due to CJS/ESM mock interop', () =>
                 }
             });
 
-            const result = await AccessPolicyService.getAIAccessContext('demo-org');
+            const result = await AccessPolicyService.checkAccess(orgId, 'ai_call');
+            
+            expect(result.allowed).toBe(false);
+            expect(result.reason).toContain('TRIAL_EXPIRED');
+        });
 
-            expect(result.isDemo).toBe(true);
-            expect(result.isTrial).toBe(false);
-            expect(result.isPaid).toBe(false);
-            expect(result.canExecuteAIActions).toBe(false);
-            expect(result.aiResponseBadge).toBe('🎯 Demo AI');
+        it('should deny access when AI limit reached', async () => {
+            const orgId = testOrganizations.org1.id;
+            
+            // Mock org as active trial
+            mockDb.get.mockImplementation((query, params, callback) => {
+                if (query.includes('FROM organizations')) {
+                    callback(null, {
+                        id: orgId,
+                        organization_type: 'TRIAL',
+                        trial_started_at: '2024-01-01',
+                        trial_expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                        is_active: 1
+                    });
+                } else if (query.includes('FROM organization_limits')) {
+                    callback(null, {
+                        max_ai_calls_per_day: 50,
+                        ai_calls_today: 50 // Limit reached
+                    });
+                } else if (query.includes('COUNT(*)')) {
+                    callback(null, { count: 0 });
+                } else {
+                    callback(null, null);
+                }
+            });
+
+            const result = await AccessPolicyService.checkAccess(orgId, 'ai_call');
+            
+            expect(result.allowed).toBe(false);
+            expect(result.reason).toContain('AI_LIMIT_REACHED');
+        });
+
+        it('should deny access for demo mode mutations', async () => {
+            const orgId = testOrganizations.org1.id;
+            
+            mockDb.get.mockImplementation((query, params, callback) => {
+                if (query.includes('FROM organizations')) {
+                    callback(null, {
+                        id: orgId,
+                        organization_type: 'DEMO',
+                        is_active: 1
+                    });
+                } else {
+                    callback(null, null);
+                }
+            });
+
+            const result = await AccessPolicyService.checkAccess(orgId, 'create_project');
+            
+            expect(result.allowed).toBe(false);
+            expect(result.reason).toContain('DEMO_READ_ONLY');
+        });
+    });
+
+    describe('getOrganizationLimits', () => {
+        it('should return default limits for trial org without custom limits', async () => {
+            const orgId = testOrganizations.org1.id;
+            
+            mockDb.get.mockImplementation((query, params, callback) => {
+                if (query.includes('FROM organizations')) {
+                    callback(null, {
+                        id: orgId,
+                        organization_type: 'TRIAL'
+                    });
+                } else if (query.includes('FROM organization_limits')) {
+                    callback(null, null); // No custom limits
+                } else {
+                    callback(null, null);
+                }
+            });
+
+            const result = await AccessPolicyService.getOrganizationLimits(orgId);
+            
+            expect(result).toBeDefined();
+            expect(result.max_projects).toBe(3); // Default trial limit
+            expect(result.max_ai_calls_per_day).toBe(50);
+        });
+
+        it('should return custom limits when set', async () => {
+            const orgId = testOrganizations.org1.id;
+            
+            mockDb.get.mockImplementation((query, params, callback) => {
+                if (query.includes('FROM organization_limits')) {
+                    callback(null, {
+                        organization_id: orgId,
+                        max_projects: 10,
+                        max_ai_calls_per_day: 100
+                    });
+                } else {
+                    callback(null, null);
+                }
+            });
+
+            const result = await AccessPolicyService.getOrganizationLimits(orgId);
+            
+            expect(result.max_projects).toBe(10);
+            expect(result.max_ai_calls_per_day).toBe(100);
+        });
+    });
+
+    describe('Multi-Tenant Isolation', () => {
+        it('should only return limits for specified organization', async () => {
+            const org1Id = testOrganizations.org1.id;
+            const org2Id = testOrganizations.org2.id;
+            
+            let callCount = 0;
+            mockDb.get.mockImplementation((query, params, callback) => {
+                // Verify that queries filter by organization_id
+                expect(params).toContain(org1Id);
+                expect(params).not.toContain(org2Id);
+                
+                if (query.includes('FROM organizations')) {
+                    callback(null, {
+                        id: org1Id,
+                        organization_type: 'TRIAL'
+                    });
+                } else {
+                    callback(null, null);
+                }
+            });
+
+            await AccessPolicyService.getOrganizationLimits(org1Id);
+            
+            // Verify query was called with correct org ID
+            expect(mockDb.get).toHaveBeenCalled();
         });
     });
 });

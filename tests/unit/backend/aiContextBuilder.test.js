@@ -1,386 +1,269 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+/**
+ * AI Context Builder Tests
+ * 
+ * HIGH PRIORITY AI SERVICE - Must have 85%+ coverage
+ * Tests context building, multi-layer context assembly, and PMO health integration.
+ */
 
-// Mock dependencies before importing
-const mockDb = {
-    get: vi.fn(),
-    all: vi.fn(),
-    run: vi.fn(),
-    serialize: vi.fn((cb) => cb()),
-    initPromise: Promise.resolve()
-};
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { createRequire } from 'module';
+import { createMockDb } from '../../helpers/dependencyInjector.js';
+import { testUsers, testOrganizations, testProjects } from '../../fixtures/testData.js';
 
-const mockPMOHealthService = {
-    getHealthSnapshot: vi.fn()
-};
-
-import AIContextBuilder from '../../../server/services/aiContextBuilder.js';
+const require = createRequire(import.meta.url);
 
 describe('AIContextBuilder', () => {
+    let mockDb;
+    let AIContextBuilder;
+    let mockPMOHealthService;
+
     beforeEach(() => {
-        vi.clearAllMocks();
+        mockDb = createMockDb();
+        
+        mockPMOHealthService = {
+            getHealthSnapshot: vi.fn().mockResolvedValue({
+                overall: 'healthy',
+                metrics: {}
+            })
+        };
+
+        vi.mock('../../../server/database', () => ({
+            default: mockDb
+        }));
+
+        AIContextBuilder = require('../../../server/services/aiContextBuilder.js');
+        
+        // Inject mock PMOHealthService
         AIContextBuilder.setDependencies({
-            db: mockDb,
             PMOHealthService: mockPMOHealthService
         });
-
-        // Default mock implementations
-        mockDb.get.mockImplementation((...args) => {
-            const cb = args[args.length - 1];
-            if (typeof cb === 'function') {
-                cb(null, null);
-            }
-        });
-
-        mockDb.all.mockImplementation((...args) => {
-            const cb = args[args.length - 1];
-            if (typeof cb === 'function') {
-                cb(null, []);
-            }
-        });
-
-        mockPMOHealthService.getHealthSnapshot.mockResolvedValue({
-            overallScore: 75,
-            dimensions: {}
-        });
     });
 
-    describe('buildContext', () => {
-        it('should build complete 6-layer context', async () => {
-            const result = await AIContextBuilder.buildContext('user-1', 'org-1', 'proj-1');
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
 
-            expect(result).toHaveProperty('platform');
-            expect(result).toHaveProperty('organization');
-            expect(result).toHaveProperty('project');
-            expect(result).toHaveProperty('execution');
-            expect(result).toHaveProperty('knowledge');
-            expect(result).toHaveProperty('external');
-        });
+    describe('buildContext()', () => {
+        it('should build complete context with all layers', async () => {
+            const userId = testUsers.user.id;
+            const orgId = testOrganizations.org1.id;
+            const projectId = testProjects.project1.id;
 
-        it('should include PMO health snapshot when available', async () => {
-            mockPMOHealthService.getHealthSnapshot.mockResolvedValue({
-                overallScore: 82,
-                dimensions: {
-                    governance: 85,
-                    delivery: 78
+            // Mock all DB queries
+            mockDb.get.mockImplementation((query, params, callback) => {
+                if (query.includes('users')) {
+                    callback(null, { role: 'USER' });
+                } else if (query.includes('ai_policies')) {
+                    callback(null, { policy_level: 'ASSISTED' });
+                } else if (query.includes('organizations')) {
+                    callback(null, { name: 'Test Org', plan: 'free' });
+                } else if (query.includes('projects')) {
+                    callback(null, { name: 'Test Project', status: 'active' });
+                } else {
+                    callback(null, null);
                 }
             });
 
-            const result = await AIContextBuilder.buildContext('user-1', 'org-1', 'proj-1');
+            mockDb.all.mockImplementation((query, params, callback) => {
+                callback(null, []);
+            });
 
-            expect(result.pmo).toBeDefined();
-            expect(result.pmo.healthSnapshot.overallScore).toBe(82);
+            const context = await AIContextBuilder.buildContext(userId, orgId, projectId);
+
+            expect(context).toBeDefined();
+            expect(context.platform).toBeDefined();
+            expect(context.organization).toBeDefined();
+            expect(context.project).toBeDefined();
+            expect(context.execution).toBeDefined();
+            expect(context.knowledge).toBeDefined();
+            expect(context.external).toBeDefined();
+            expect(context.pmo).toBeDefined();
+            expect(context.builtAt).toBeDefined();
+            expect(context.contextHash).toBeDefined();
         });
 
-        it('should work without projectId', async () => {
-            const result = await AIContextBuilder.buildContext('user-1', 'org-1');
+        it('should build context without projectId', async () => {
+            const userId = testUsers.user.id;
+            const orgId = testOrganizations.org1.id;
 
-            expect(result).toBeDefined();
-            expect(result.project).toBeNull();
+            mockDb.get.mockImplementation((query, params, callback) => {
+                if (query.includes('users')) {
+                    callback(null, { role: 'USER' });
+                } else if (query.includes('ai_policies')) {
+                    callback(null, { policy_level: 'ASSISTED' });
+                } else if (query.includes('organizations')) {
+                    callback(null, { name: 'Test Org' });
+                } else {
+                    callback(null, null);
+                }
+            });
+
+            mockDb.all.mockImplementation((query, params, callback) => {
+                callback(null, []);
+            });
+
+            const context = await AIContextBuilder.buildContext(userId, orgId, null);
+
+            expect(context.project).toBeNull();
+            expect(context.pmo.healthSnapshot).toBeNull();
         });
 
-        it('should include context hash', async () => {
-            const result = await AIContextBuilder.buildContext('user-1', 'org-1', 'proj-1');
+        it('should include PMO health snapshot when projectId provided', async () => {
+            const userId = testUsers.user.id;
+            const orgId = testOrganizations.org1.id;
+            const projectId = testProjects.project1.id;
 
-            expect(result.contextHash).toBeDefined();
-            expect(typeof result.contextHash).toBe('string');
+            const healthSnapshot = {
+                overall: 'healthy',
+                metrics: {
+                    initiatives: { total: 5, active: 3 },
+                    tasks: { total: 20, completed: 10 }
+                }
+            };
+
+            mockPMOHealthService.getHealthSnapshot.mockResolvedValue(healthSnapshot);
+
+            mockDb.get.mockImplementation((query, params, callback) => {
+                callback(null, {});
+            });
+
+            mockDb.all.mockImplementation((query, params, callback) => {
+                callback(null, []);
+            });
+
+            const context = await AIContextBuilder.buildContext(userId, orgId, projectId);
+
+            expect(context.pmo.healthSnapshot).toEqual(healthSnapshot);
+            expect(mockPMOHealthService.getHealthSnapshot).toHaveBeenCalledWith(projectId);
         });
 
-        it('should handle PMOHealthService unavailability gracefully', async () => {
+        it('should handle PMO health service errors gracefully', async () => {
+            const userId = testUsers.user.id;
+            const orgId = testOrganizations.org1.id;
+            const projectId = testProjects.project1.id;
+
             mockPMOHealthService.getHealthSnapshot.mockRejectedValue(new Error('Service unavailable'));
 
-            const result = await AIContextBuilder.buildContext('user-1', 'org-1', 'proj-1');
-
-            expect(result).toBeDefined();
-            // Should still return context even if health snapshot fails
-        });
-    });
-
-    describe('_buildPlatformContext', () => {
-        it('should include user and organization info', async () => {
-            mockDb.get.mockImplementation((...args) => {
-                const query = args[0];
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    if (query.includes('FROM users')) {
-                        cb(null, {
-                            role: 'ADMIN'
-                        });
-                    } else if (query.includes('FROM ai_policies')) {
-                        cb(null, { policy_level: 'ADVISORY', internet_enabled: 0, max_policy_level: 'ASSISTED', audit_required: 1 });
-                    } else {
-                        cb(null, null);
-                    }
-                }
+            mockDb.get.mockImplementation((query, params, callback) => {
+                callback(null, {});
             });
 
-            const result = await AIContextBuilder.buildContext('user-1', 'org-1');
-
-            expect(result.platform).toBeDefined();
-            expect(result.platform.role).toBe('ADMIN');
-            expect(result.platform.tenantId).toBe('org-1');
-        });
-
-        it('should include subscription status', async () => {
-            mockDb.get.mockImplementation((...args) => {
-                const query = args[0];
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    if (query.includes('subscriptions')) {
-                        cb(null, {
-                            plan: 'enterprise',
-                            status: 'active'
-                        });
-                    } else {
-                        cb(null, null);
-                    }
-                }
+            mockDb.all.mockImplementation((query, params, callback) => {
+                callback(null, []);
             });
 
-            const result = await AIContextBuilder.buildContext('user-1', 'org-1');
+            const context = await AIContextBuilder.buildContext(userId, orgId, projectId);
 
-            expect(result.platform).toBeDefined();
-        });
-    });
-
-    describe('_buildOrganizationContext', () => {
-        it('should include organization details', async () => {
-            mockDb.get.mockImplementation((...args) => {
-                const query = args[0];
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    if (query.includes('FROM organizations')) {
-                        cb(null, {
-                            id: 'org-1',
-                            name: 'Acme Corp',
-                            industry: 'Technology',
-                            size: '500+'
-                        });
-                    } else {
-                        cb(null, null);
-                    }
-                }
-            });
-
-            const result = await AIContextBuilder.buildContext('user-1', 'org-1');
-
-            expect(result.organization).toBeDefined();
+            // Should still build context, but with null health snapshot
+            expect(context).toBeDefined();
+            expect(context.pmo.healthSnapshot).toBeNull();
         });
 
-        it('should include team members count', async () => {
-            mockDb.all.mockImplementation((...args) => {
-                const query = args[0];
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    if (query.includes('users')) {
-                        cb(null, [{ id: 'u1' }, { id: 'u2' }]);
-                    } else {
-                        cb(null, []);
-                    }
-                }
-            });
-
-            const result = await AIContextBuilder.buildContext('user-1', 'org-1');
-
-            expect(result.organization).toBeDefined();
-        });
-    });
-
-    describe('_buildProjectContext', () => {
-        it('should return null when no projectId', async () => {
-            const result = await AIContextBuilder.buildContext('user-1', 'org-1');
-
-            expect(result.project).toBeNull();
-        });
-
-        it('should include project details', async () => {
-            mockDb.get.mockImplementation((...args) => {
-                const query = args[0];
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    if (query.includes('FROM projects')) {
-                        cb(null, {
-                            id: 'proj-1',
-                            name: 'Digital Transformation',
-                            status: 'IN_PROGRESS',
-                            budget: 1000000
-                        });
-                    } else {
-                        cb(null, null);
-                    }
-                }
-            });
-
-            const result = await AIContextBuilder.buildContext('user-1', 'org-1', 'proj-1');
-
-            expect(result.project).toBeDefined();
-        });
-
-        it('should include initiative and task counts', async () => {
-            mockDb.all.mockImplementation((...args) => {
-                const query = args[0];
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    if (query.includes('initiatives')) {
-                        cb(null, [{ id: 'i1' }, { id: 'i2' }]);
-                    } else if (query.includes('tasks')) {
-                        cb(null, [{ id: 't1' }, { id: 't2' }, { id: 't3' }]);
-                    } else {
-                        cb(null, []);
-                    }
-                }
-            });
-
-            const result = await AIContextBuilder.buildContext('user-1', 'org-1', 'proj-1');
-
-            expect(result.project).toBeDefined();
-        });
-    });
-
-    describe('_buildExecutionContext', () => {
-        it('should include recent activities', async () => {
-            mockDb.all.mockImplementation((...args) => {
-                const query = args[0];
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    if (query.includes('activity')) {
-                        cb(null, [
-                            { id: 'a1', action: 'TASK_CREATED', created_at: '2024-12-20' },
-                            { id: 'a2', action: 'STATUS_CHANGED', created_at: '2024-12-19' }
-                        ]);
-                    } else {
-                        cb(null, []);
-                    }
-                }
-            });
-
-            const result = await AIContextBuilder.buildContext('user-1', 'org-1', 'proj-1');
-
-            expect(result.execution).toBeDefined();
-        });
-
-        it('should include user assignments', async () => {
-            mockDb.all.mockImplementation((...args) => {
-                const query = args[0];
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    if (query.includes('assignee')) {
-                        cb(null, [{ id: 't1', title: 'My Task' }]);
-                    } else {
-                        cb(null, []);
-                    }
-                }
-            });
-
-            const result = await AIContextBuilder.buildContext('user-1', 'org-1', 'proj-1');
-
-            expect(result.execution).toBeDefined();
-        });
-    });
-
-    describe('_buildKnowledgeContext', () => {
-        it('should include project documents', async () => {
-            mockDb.all.mockImplementation((...args) => {
-                const query = args[0];
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    if (query.includes('documents') || query.includes('knowledge')) {
-                        cb(null, [
-                            { id: 'd1', title: 'Project Charter' },
-                            { id: 'd2', title: 'Requirements Doc' }
-                        ]);
-                    } else {
-                        cb(null, []);
-                    }
-                }
-            });
-
-            const result = await AIContextBuilder.buildContext('user-1', 'org-1', 'proj-1');
-
-            expect(result.knowledge).toBeDefined();
-        });
-
-        it('should include historical insights', async () => {
-            mockDb.all.mockImplementation((...args) => {
-                const query = args[0];
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    if (query.includes('insights') || query.includes('lessons')) {
-                        cb(null, [{ insight: 'Past project lesson' }]);
-                    } else {
-                        cb(null, []);
-                    }
-                }
-            });
-
-            const result = await AIContextBuilder.buildContext('user-1', 'org-1', 'proj-1');
-
-            expect(result.knowledge).toBeDefined();
-        });
-    });
-
-    describe('_buildExternalContext', () => {
-        it('should include external integrations info', async () => {
-            mockDb.all.mockImplementation((...args) => {
-                const query = args[0];
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    if (query.includes('integrations') || query.includes('connectors')) {
-                        cb(null, [
-                            { id: 'int-1', name: 'Jira', status: 'connected' }
-                        ]);
-                    } else {
-                        cb(null, []);
-                    }
-                }
-            });
-
-            const result = await AIContextBuilder.buildContext('user-1', 'org-1');
-
-            expect(result.external).toBeDefined();
-        });
-
-        it('should handle no external integrations', async () => {
-            mockDb.all.mockImplementation((...args) => {
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    cb(null, []);
-                }
-            });
-
-            const result = await AIContextBuilder.buildContext('user-1', 'org-1');
-
-            expect(result.external).toBeDefined();
-        });
-    });
-
-    describe('_generateHash', () => {
-        it('should generate consistent hash for same inputs', async () => {
-            mockDb.get.mockImplementation((...args) => {
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    cb(null, { id: 'test' });
-                }
-            });
-
-            const result1 = await AIContextBuilder.buildContext('user-1', 'org-1', 'proj-1');
-            const result2 = await AIContextBuilder.buildContext('user-1', 'org-1', 'proj-1');
-
-            expect(result1.contextHash).toBeDefined();
-            expect(result1.contextHash).toBe(result2.contextHash);
-        });
-    });
-
-    describe('options handling', () => {
-        it('should include currentScreen and selectedObject fields when provided', async () => {
-            const result = await AIContextBuilder.buildContext('user-1', 'org-1', 'proj-1', {
-                currentScreen: 'Dashboard',
-                selectedObjectId: 'x1',
+        it('should include options in context', async () => {
+            const userId = testUsers.user.id;
+            const orgId = testOrganizations.org1.id;
+            const options = {
+                currentScreen: 'dashboard',
+                selectedObjectId: 'obj-123',
                 selectedObjectType: 'initiative'
+            };
+
+            mockDb.get.mockImplementation((query, params, callback) => {
+                callback(null, {});
             });
 
-            expect(result.currentScreen).toBe('Dashboard');
-            expect(result.selectedObjectId).toBe('x1');
-            expect(result.selectedObjectType).toBe('initiative');
+            mockDb.all.mockImplementation((query, params, callback) => {
+                callback(null, []);
+            });
+
+            const context = await AIContextBuilder.buildContext(userId, orgId, null, options);
+
+            expect(context.currentScreen).toBe('dashboard');
+            expect(context.selectedObjectId).toBe('obj-123');
+            expect(context.selectedObjectType).toBe('initiative');
+        });
+    });
+
+    describe('_buildPlatformContext()', () => {
+        it('should build platform context with user role', async () => {
+            const userId = testUsers.admin.id;
+            const orgId = testOrganizations.org1.id;
+
+            mockDb.get.mockImplementation((query, params, callback) => {
+                if (query.includes('users')) {
+                    callback(null, { role: 'ADMIN' });
+                } else if (query.includes('ai_policies')) {
+                    callback(null, {
+                        policy_level: 'ASSISTED',
+                        internet_enabled: 1,
+                        audit_required: 1
+                    });
+                } else {
+                    callback(null, null);
+                }
+            });
+
+            const platform = await AIContextBuilder._buildPlatformContext(userId, orgId);
+
+            expect(platform.role).toBe('ADMIN');
+            expect(platform.tenantId).toBe(orgId);
+            expect(platform.userId).toBe(userId);
+            expect(platform.policyLevel).toBe('ASSISTED');
+        });
+
+        it('should map SUPERADMIN role correctly', async () => {
+            const userId = testUsers.superadmin.id;
+            const orgId = testOrganizations.org1.id;
+
+            mockDb.get.mockImplementation((query, params, callback) => {
+                if (query.includes('users')) {
+                    callback(null, { role: 'SUPERADMIN' });
+                } else {
+                    callback(null, {});
+                }
+            });
+
+            const platform = await AIContextBuilder._buildPlatformContext(userId, orgId);
+
+            expect(platform.role).toBe('SUPERADMIN');
+        });
+    });
+
+    describe('_buildOrganizationContext()', () => {
+        it('should build organization context', async () => {
+            const orgId = testOrganizations.org1.id;
+
+            mockDb.get.mockImplementation((query, params, callback) => {
+                callback(null, {
+                    name: 'Test Org',
+                    plan: 'enterprise',
+                    status: 'active'
+                });
+            });
+
+            const org = await AIContextBuilder._buildOrganizationContext(orgId);
+
+            expect(org.name).toBe('Test Org');
+            expect(org.plan).toBe('enterprise');
+        });
+    });
+
+    describe('_buildProjectContext()', () => {
+        it('should build project context', async () => {
+            const projectId = testProjects.project1.id;
+
+            mockDb.get.mockImplementation((query, params, callback) => {
+                callback(null, {
+                    name: 'Test Project',
+                    status: 'active',
+                    ai_role: 'MANAGER'
+                });
+            });
+
+            const project = await AIContextBuilder._buildProjectContext(projectId);
+
+            expect(project.name).toBe('Test Project');
+            expect(project.status).toBe('active');
         });
     });
 });

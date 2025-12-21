@@ -87,4 +87,83 @@ describe('Auth Integration', () => {
         expect(res.body).toHaveProperty('user');
         expect(res.body.user).toHaveProperty('email', email);
     });
+
+    it('should reject invalid token', async () => {
+        const res = await request(app)
+            .get('/api/auth/me')
+            .set('Authorization', 'Bearer invalid-token');
+
+        expect([401, 403]).toContain(res.status);
+    });
+
+    it('should reject request without token', async () => {
+        const res = await request(app)
+            .get('/api/auth/me');
+
+        expect([401, 403]).toContain(res.status);
+    });
+
+    describe('Multi-Tenant Isolation', () => {
+        let org1Token;
+        let org2Token;
+        const testId2 = Date.now();
+        const org1Id = `auth-org1-${testId2}`;
+        const org2Id = `auth-org2-${testId2}`;
+        const user1Email = `auth-user1-${testId2}@test.com`;
+        const user2Email = `auth-user2-${testId2}@test.com`;
+
+        beforeAll(async () => {
+            const bcrypt = require('bcryptjs');
+            const hash = bcrypt.hashSync('test123', 8);
+
+            await new Promise((resolve) => {
+                db.serialize(() => {
+                    db.run(
+                        'INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)',
+                        [org1Id, 'Auth Org 1', 'free', 'active']
+                    );
+                    db.run(
+                        'INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)',
+                        [org2Id, 'Auth Org 2', 'free', 'active']
+                    );
+                    db.run(
+                        'INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
+                        [`user1-${testId2}`, org1Id, user1Email, hash, 'User1', 'USER'],
+                        () => {}
+                    );
+                    db.run(
+                        'INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
+                        [`user2-${testId2}`, org2Id, user2Email, hash, 'User2', 'USER'],
+                        resolve
+                    );
+                });
+            });
+
+            const res1 = await request(app)
+                .post('/api/auth/login')
+                .send({ email: user1Email, password: 'test123' });
+            org1Token = res1.body.token;
+
+            const res2 = await request(app)
+                .post('/api/auth/login')
+                .send({ email: user2Email, password: 'test123' });
+            org2Token = res2.body.token;
+        });
+
+        it('should return correct organizationId in /me endpoint', async () => {
+            const res1 = await request(app)
+                .get('/api/auth/me')
+                .set('Authorization', `Bearer ${org1Token}`);
+
+            const res2 = await request(app)
+                .get('/api/auth/me')
+                .set('Authorization', `Bearer ${org2Token}`);
+
+            expect(res1.status).toBe(200);
+            expect(res2.status).toBe(200);
+            expect(res1.body.user.organizationId).toBe(org1Id);
+            expect(res2.body.user.organizationId).toBe(org2Id);
+            expect(res1.body.user.organizationId).not.toBe(res2.body.user.organizationId);
+        });
+    });
 });

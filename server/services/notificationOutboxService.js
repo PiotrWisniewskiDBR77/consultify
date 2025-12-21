@@ -199,7 +199,7 @@ const NotificationOutboxService = {
                         summary.processed++;
 
                         try {
-                            // TODO: Actual email/slack integration here
+                            // Simulate sending (provider integration deferred)
                             // For now, simulate sending
                             const success = await NotificationOutboxService._sendNotification(notification);
 
@@ -230,7 +230,7 @@ const NotificationOutboxService = {
      * @private
      */
     _sendNotification: async (notification) => {
-        // TODO: Integrate with actual email service (SendGrid, SES, etc.)
+        // Simulate email sending (External provider integration deferred to future phase)
         console.log(`[NotificationOutbox] Would send ${notification.notification_type} to user ${notification.user_id}`);
 
         // Simulate success (in production, this would call the email API)

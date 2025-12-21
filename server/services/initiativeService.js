@@ -12,26 +12,54 @@ const InitiativeService = {
      * Recalculates the progress of an initiative based on its tasks
      * Formula: Σ(task_progress × priority_weight) / Σ(priority_weight)
      * Weights: Urgent/High=1.5, Medium=1.0, Low=0.5
-     * @param {string} initiativeId 
+     * 
+     * HARDENED: Requires organizationId to ensure multi-tenant isolation.
+     * 
+     * @param {Object|string} params - Either {organizationId, initiativeId} or legacy initiativeId string
      * @returns {Promise<number>} calculated progress
      */
-    recalculateProgress: (initiativeId) => {
+    recalculateProgress: (params) => {
         return new Promise((resolve, reject) => {
+            // Support both new object format and legacy string format for backwards compatibility
+            let organizationId, initiativeId;
+            if (typeof params === 'object' && params !== null) {
+                organizationId = params.organizationId;
+                initiativeId = params.initiativeId;
+            } else {
+                // Legacy: just initiativeId string (DEPRECATED but supported)
+                initiativeId = params;
+                organizationId = null;
+                console.warn('[InitiativeService] DEPRECATION WARNING: recalculateProgress called without organizationId');
+            }
+
             if (!initiativeId) return resolve(0);
 
-            // Fetch all tasks for this initiative
-            deps.db.all(`SELECT progress, priority FROM tasks WHERE initiative_id = ?`, [initiativeId], (err, tasks) => {
+            // Build org-scoped query for multi-tenant safety
+            let taskQuery, taskParams;
+            if (organizationId) {
+                taskQuery = `SELECT progress, priority FROM tasks WHERE organization_id = ? AND initiative_id = ?`;
+                taskParams = [organizationId, initiativeId];
+            } else {
+                // Fallback for legacy callers (less safe, logs warning above)
+                taskQuery = `SELECT progress, priority FROM tasks WHERE initiative_id = ?`;
+                taskParams = [initiativeId];
+            }
+
+            // Fetch all tasks for this initiative (org-scoped)
+            deps.db.all(taskQuery, taskParams, (err, tasks) => {
                 if (err) {
                     console.error("Error fetching tasks for recalculation:", err);
                     return reject(err);
                 }
 
-                // If no tasks, progress is 0 (or keep existing? Spec implies function of tasks, so 0)
+                // If no tasks, progress is 0
                 if (!tasks || tasks.length === 0) {
-                    // Optionally we could set it to 0, but if there are no tasks, maybe we shouldn't overwrite manual progress?
-                    // Spec says: "Progres inicjatywy = funkcja progresu tasków"
-                    // So we update it to 0.
-                    deps.db.run(`UPDATE initiatives SET progress = 0 WHERE id = ?`, [initiativeId], (e) => {
+                    const updateQuery = organizationId
+                        ? `UPDATE initiatives SET progress = 0, updated_at = CURRENT_TIMESTAMP WHERE organization_id = ? AND id = ?`
+                        : `UPDATE initiatives SET progress = 0 WHERE id = ?`;
+                    const updateParams = organizationId ? [organizationId, initiativeId] : [initiativeId];
+
+                    deps.db.run(updateQuery, updateParams, (e) => {
                         if (e) console.error("Error resetting initiative progress:", e);
                         resolve(0);
                     });
@@ -61,8 +89,15 @@ const InitiativeService = {
 
                 const calculatedProgress = totalWeight > 0 ? Math.round(totalWeightedProgress / totalWeight) : 0;
 
-                // Update Initiative
-                deps.db.run(`UPDATE initiatives SET progress = ? WHERE id = ?`, [calculatedProgress, initiativeId], (err) => {
+                // Update Initiative (org-scoped for safety)
+                const updateQuery = organizationId
+                    ? `UPDATE initiatives SET progress = ?, updated_at = CURRENT_TIMESTAMP WHERE organization_id = ? AND id = ?`
+                    : `UPDATE initiatives SET progress = ? WHERE id = ?`;
+                const updateParams = organizationId
+                    ? [calculatedProgress, organizationId, initiativeId]
+                    : [calculatedProgress, initiativeId];
+
+                deps.db.run(updateQuery, updateParams, (err) => {
                     if (err) {
                         console.error("Error updating initiative progress:", err);
                         return reject(err);

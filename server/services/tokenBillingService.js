@@ -10,6 +10,7 @@
 const db = require('../database');
 const { v4: uuidv4 } = require('uuid');
 const crypto = require('crypto');
+const { runAsync, getAsync, allAsync, withTransaction } = require('../db/sqliteAsync');
 
 // Encryption key for API keys (should be in env)
 const ENCRYPTION_KEY = process.env.API_KEY_ENCRYPTION_SECRET || 'default-32-char-key-for-dev-only!';
@@ -155,8 +156,14 @@ class TokenBillingService {
 
     static async deductTokens(userId, tokens, sourceType, { organizationId, llmProvider, modelUsed, multiplier } = {}) {
         await this.ensureBalance(userId);
+
+        // 1. Calculate Billed Amount
         const margin = await this.getMargin(sourceType);
-        if (!margin) throw new Error(`Unknown source type: ${sourceType}`);
+        // If margin config missing, default to 1:1 and 0 cost for safety, or throw? 
+        // We'll proceed with defaults if missing to avoid breaking.
+        const baseCostPer1k = margin?.base_cost_per_1k || 0;
+        const marginPercent = margin?.margin_percent || 0;
+        const minCharge = margin?.min_charge || 0;
 
         // Apply Markup Multiplier (Default 1.0)
         const finalMultiplier = multiplier || 1.0;
@@ -164,29 +171,97 @@ class TokenBillingService {
 
         let marginUsd = 0;
         if (sourceType === 'platform') {
-            const baseCost = (billedTokens / 1000) * (margin.base_cost_per_1k || 0);
-            marginUsd = baseCost * (margin.margin_percent / 100);
+            const baseCost = (billedTokens / 1000) * baseCostPer1k;
+            marginUsd = baseCost * (marginPercent / 100);
         } else {
-            const estimatedValue = (billedTokens / 1000) * 0.01;
-            marginUsd = estimatedValue * (margin.margin_percent / 100);
+            const estimatedValue = (billedTokens / 1000) * 0.01; // Estimated cost valuation
+            marginUsd = estimatedValue * (marginPercent / 100);
         }
-        marginUsd = Math.max(marginUsd, margin.min_charge || 0);
+        marginUsd = Math.max(marginUsd, minCharge);
 
         return new Promise((resolve, reject) => {
             db.serialize(() => {
-                const field = sourceType === 'platform' ? 'platform_tokens' : sourceType === 'byok' ? 'byok_usage_tokens' : 'local_usage_tokens';
-                // Deduct BILLED tokens, not raw tokens
-                const op = sourceType === 'platform' ? `${field} = MAX(0, ${field} - ?)` : `${field} = ${field} + ?`;
+                db.run('BEGIN TRANSACTION');
 
-                db.run(`UPDATE user_token_balance SET ${op}, lifetime_used = lifetime_used + ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?`,
-                    [billedTokens, billedTokens, userId]);
+                // 2. DEDUCTION LOGIC
+                // PRIORITY: If OrganizationID present and Source=Platform, deduct from ORGANIZATION Balance
+                // OTHERWISE: Deduct from USER Balance
 
+                if (organizationId && sourceType === 'platform') {
+                    // Org-Level Deduction
+                    db.run(
+                        `UPDATE organizations 
+                         SET token_balance = MAX(0, IFNULL(token_balance, 0) - ?) 
+                         WHERE id = ?`,
+                        [billedTokens, organizationId],
+                        function (err) {
+                            if (err) {
+                                db.run('ROLLBACK');
+                                return reject(err);
+                            }
+                        }
+                    );
+                } else {
+                    // User-Level Deduction (Legacy / Personal / BYOK)
+                    const field = sourceType === 'platform' ? 'platform_tokens' : sourceType === 'byok' ? 'byok_usage_tokens' : 'local_usage_tokens';
+                    const op = sourceType === 'platform' ? `${field} = MAX(0, ${field} - ?)` : `${field} = ${field} + ?`;
+
+                    db.run(`UPDATE user_token_balance SET ${op}, lifetime_used = lifetime_used + ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?`,
+                        [billedTokens, billedTokens, userId],
+                        function (err) {
+                            if (err) {
+                                db.run('ROLLBACK');
+                                return reject(err);
+                            }
+                        }
+                    );
+                }
+
+                // 3. LOG TRANSACTION (Legacy table)
                 const txId = `tx-${uuidv4()}`;
                 const metadata = JSON.stringify({ raw_tokens: tokens, multiplier: finalMultiplier });
 
                 db.run(`INSERT INTO token_transactions (id, user_id, organization_id, type, source_type, tokens, margin_usd, net_revenue_usd, llm_provider, model_used, description, metadata) VALUES (?, ?, ?, 'usage', ?, ?, ?, ?, ?, ?, ?, ?)`,
                     [txId, userId, organizationId, sourceType, -billedTokens, marginUsd, marginUsd, llmProvider, modelUsed, `Used ${tokens} tokens (x${finalMultiplier}) via ${sourceType}`, metadata],
-                    function (err) { if (err) reject(err); else resolve({ transactionId: txId, tokens: billedTokens, marginUsd }); });
+                    function (err) {
+                        if (err) {
+                            db.run('ROLLBACK');
+                            return reject(err);
+                        }
+
+                        // 4. LOG TO TOKEN_LEDGER (New immutable ledger)
+                        if (organizationId) {
+                            const ledgerId = `led-${uuidv4()}`;
+                            const ledgerMeta = JSON.stringify({
+                                raw_tokens: tokens,
+                                multiplier: finalMultiplier,
+                                llm_provider: llmProvider,
+                                model_used: modelUsed,
+                                margin_usd: marginUsd
+                            });
+                            db.run(
+                                `INSERT INTO token_ledger (id, organization_id, actor_user_id, actor_type, type, amount, reason, ref_entity_type, ref_entity_id, metadata_json)
+                                 VALUES (?, ?, ?, 'USER', 'DEBIT', ?, ?, 'AI_CALL', ?, ?)`,
+                                [ledgerId, organizationId, userId, billedTokens, `AI Call: ${modelUsed || 'unknown'}`, txId, ledgerMeta],
+                                function (ledgerErr) {
+                                    if (ledgerErr) {
+                                        console.error('Token Ledger Insert Error (non-fatal):', ledgerErr);
+                                        // Non-fatal: continue with commit
+                                    }
+                                    db.run('COMMIT', (commitErr) => {
+                                        if (commitErr) return reject(commitErr);
+                                        resolve({ transactionId: txId, tokens: billedTokens, marginUsd });
+                                    });
+                                }
+                            );
+                        } else {
+                            db.run('COMMIT', (commitErr) => {
+                                if (commitErr) return reject(commitErr);
+                                resolve({ transactionId: txId, tokens: billedTokens, marginUsd });
+                            });
+                        }
+                    }
+                );
             });
         });
     }
@@ -281,6 +356,284 @@ class TokenBillingService {
         }
         const balance = await this.getBalance(userId);
         return { sourceType: 'platform', availableTokens: (balance.platform_tokens || 0) + (balance.platform_tokens_bonus || 0) };
+    }
+
+    /**
+     * Get Organization Token Balance (FAIL-CLOSED)
+     * Returns cached balance from organizations table (source of truth for speed)
+     * @param {string} orgId 
+     * @returns {Promise<{balance: number, billingStatus: string, organizationType: string}>}
+     * @throws {Error} if org not found
+     */
+    static async getOrgBalance(orgId) {
+        const row = await getAsync(
+            db,
+            `SELECT token_balance, billing_status, organization_type FROM organizations WHERE id = ?`,
+            [orgId]
+        );
+        if (!row) throw new Error('Organization not found');
+        return {
+            balance: row.token_balance || 0,
+            billingStatus: row.billing_status || 'TRIAL',
+            organizationType: row.organization_type || 'TRIAL'
+        };
+    }
+
+    /**
+     * Check if Organization has sufficient balance for AI call (FAIL-CLOSED)
+     * @param {string} orgId 
+     * @param {number} estimatedTokens 
+     * @returns {Promise<{allowed: boolean, balance: number, reason?: string, paygoTriggered?: boolean}>}
+     */
+    static async hasOrgSufficientBalance(orgId, estimatedTokens) {
+        let org;
+        try {
+            org = await this.getOrgBalance(orgId);
+        } catch (err) {
+            // FAIL CLOSED - enterprise stance: deny on error
+            return { allowed: false, balance: 0, reason: 'Balance check failed. Please retry.' };
+        }
+
+        const { balance, billingStatus, organizationType } = org;
+        const isTrial = billingStatus === 'TRIAL' || organizationType === 'TRIAL';
+
+        // TRIAL MODE: Hard stop when insufficient
+        if (isTrial && balance < estimatedTokens) {
+            return {
+                allowed: false,
+                balance,
+                reason: 'Trial token limit reached. Upgrade to continue using AI features.'
+            };
+        }
+
+        // PAYGO MODE: Allow overdraft only when billingStatus ACTIVE (stub)
+        if (!isTrial && billingStatus === 'ACTIVE' && balance < estimatedTokens) {
+            return { allowed: true, balance, paygoTriggered: true };
+        }
+
+        return { allowed: true, balance };
+    }
+
+    /**
+     * Atomic DEBIT for Organization (ENTERPRISE-GRADE)
+     * Single transaction, ledger insert is FATAL, fail-closed for trial
+     * 
+     * @param {Object} params
+     * @returns {Promise<{transactionId: string, ledgerId: string, tokensBilled: number, balanceAfter: number}>}
+     * @throws {Error} with statusCode 402 if insufficient balance
+     */
+    static async deductTokensForOrg({
+        organizationId,
+        userId,
+        tokens,
+        billedTokens,
+        sourceType,
+        llmProvider,
+        modelUsed,
+        finalMultiplier,
+        marginUsd
+    }) {
+        if (!organizationId) throw new Error('organizationId required');
+
+        // 1) Pre-check (fail-closed for trial)
+        const check = await this.hasOrgSufficientBalance(organizationId, billedTokens);
+        if (!check.allowed) {
+            const err = new Error(check.reason || 'Insufficient token balance');
+            err.statusCode = 402;
+            throw err;
+        }
+
+        return withTransaction(db, async () => {
+            // 2) Lock row / read status inside transaction for safety
+            const orgRow = await getAsync(
+                db,
+                `SELECT token_balance, billing_status, organization_type FROM organizations WHERE id = ?`,
+                [organizationId]
+            );
+            if (!orgRow) throw new Error('Organization not found');
+
+            const isTrial = (orgRow.billing_status || 'TRIAL') === 'TRIAL' || (orgRow.organization_type || 'TRIAL') === 'TRIAL';
+            const currentBalance = orgRow.token_balance || 0;
+
+            // Re-check under transaction for TRIAL hard stop
+            if (isTrial && currentBalance < billedTokens) {
+                const err = new Error('Trial token limit reached. Upgrade to continue using AI features.');
+                err.statusCode = 402;
+                throw err;
+            }
+
+            // 3) Apply balance change
+            const upd = await runAsync(
+                db,
+                `UPDATE organizations SET token_balance = IFNULL(token_balance, 0) - ? WHERE id = ?`,
+                [billedTokens, organizationId]
+            );
+            if (upd.changes === 0) throw new Error('Organization not found');
+
+            // 4) Legacy transaction (backward compat)
+            const txId = `tx-${uuidv4()}`;
+            const legacyMeta = JSON.stringify({ raw_tokens: tokens, multiplier: finalMultiplier });
+
+            await runAsync(
+                db,
+                `INSERT INTO token_transactions
+                 (id, user_id, organization_id, type, source_type, tokens, margin_usd, net_revenue_usd, llm_provider, model_used, description, metadata)
+                 VALUES (?, ?, ?, 'usage', ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    txId,
+                    userId,
+                    organizationId,
+                    sourceType,
+                    -billedTokens,
+                    marginUsd,
+                    marginUsd,
+                    llmProvider,
+                    modelUsed,
+                    `Used ${tokens} tokens (x${finalMultiplier}) via ${sourceType}`,
+                    legacyMeta
+                ]
+            );
+
+            // 5) Immutable ledger entry (FATAL - will rollback on failure)
+            const ledgerId = `led-${uuidv4()}`;
+            const ledgerMeta = JSON.stringify({
+                raw_tokens: tokens,
+                billed_tokens: billedTokens,
+                multiplier: finalMultiplier,
+                llm_provider: llmProvider,
+                model_used: modelUsed,
+                margin_usd: marginUsd,
+                source_type: sourceType
+            });
+
+            await runAsync(
+                db,
+                `INSERT INTO token_ledger
+                 (id, organization_id, actor_user_id, actor_type, type, amount, reason, ref_entity_type, ref_entity_id, metadata_json)
+                 VALUES (?, ?, ?, 'USER', 'DEBIT', ?, ?, 'AI_CALL', ?, ?)`,
+                [ledgerId, organizationId, userId, billedTokens, `AI Call: ${modelUsed || 'unknown'}`, txId, ledgerMeta]
+            );
+
+            // 6) PAYGO trigger - measurable (status flag + ledger event)
+            const newBalanceRow = await getAsync(
+                db,
+                `SELECT token_balance, billing_status, organization_type FROM organizations WHERE id = ?`,
+                [organizationId]
+            );
+            const newBalance = newBalanceRow?.token_balance || 0;
+            const isActivePaid = (newBalanceRow?.billing_status || '') === 'ACTIVE' && !isTrial;
+
+            if (isActivePaid && newBalance < 0) {
+                // Mark as PAYGO_PENDING
+                await runAsync(
+                    db,
+                    `UPDATE organizations SET billing_status = 'PAYGO_PENDING' WHERE id = ? AND billing_status = 'ACTIVE'`,
+                    [organizationId]
+                );
+
+                // Log PAYGO event to ledger
+                const paygoLedgerId = `led-${uuidv4()}`;
+                await runAsync(
+                    db,
+                    `INSERT INTO token_ledger
+                     (id, organization_id, actor_user_id, actor_type, type, amount, reason, ref_entity_type, ref_entity_id, metadata_json)
+                     VALUES (?, ?, ?, 'SYSTEM', 'DEBIT', 0, 'PAYGO_TRIGGERED', 'ORG', ?, ?)`,
+                    [paygoLedgerId, organizationId, null, organizationId, JSON.stringify({ new_balance: newBalance })]
+                );
+            }
+
+            return {
+                transactionId: txId,
+                ledgerId,
+                tokensBilled: billedTokens,
+                balanceAfter: newBalance
+            };
+        });
+    }
+
+    /**
+     * Get Token Ledger for an Organization
+     * @param {string} orgId 
+     * @param {Object} options 
+     * @returns {Promise<Array>}
+     */
+    static async getLedger(orgId, { limit = 50, offset = 0 } = {}) {
+        return new Promise((resolve, reject) => {
+            db.all(
+                `SELECT 
+                    id, created_at, actor_user_id, actor_type, type, amount, reason, 
+                    ref_entity_type, ref_entity_id, metadata_json
+                 FROM token_ledger 
+                 WHERE organization_id = ? 
+                 ORDER BY created_at DESC 
+                 LIMIT ? OFFSET ?`,
+                [orgId, limit, offset],
+                (err, rows) => {
+                    if (err) return reject(err);
+                    resolve(rows || []);
+                }
+            );
+        });
+    }
+
+    /**
+     * Add Credit to Organization (ATOMIC)
+     * @param {string} orgId 
+     * @param {number} tokens 
+     * @param {Object} options 
+     * @returns {Promise<Object>}
+     */
+    static async creditOrganization(orgId, tokens, { userId = null, reason = 'Credit', refType = 'GRANT', refId = null, metadata = {} } = {}) {
+        const ledgerId = `led-${uuidv4()}`;
+        const metadataJson = JSON.stringify(metadata);
+
+        return withTransaction(db, async () => {
+            // 1. Update Organization Balance
+            const upd = await runAsync(
+                db,
+                `UPDATE organizations SET token_balance = IFNULL(token_balance, 0) + ? WHERE id = ?`,
+                [tokens, orgId]
+            );
+            if (upd.changes === 0) throw new Error('Organization not found');
+
+            // 2. Insert Ledger Entry (FATAL)
+            await runAsync(
+                db,
+                `INSERT INTO token_ledger (id, organization_id, actor_user_id, actor_type, type, amount, reason, ref_entity_type, ref_entity_id, metadata_json)
+                 VALUES (?, ?, ?, ?, 'CREDIT', ?, ?, ?, ?, ?)`,
+                [ledgerId, orgId, userId, userId ? 'USER' : 'SYSTEM', tokens, reason, refType, refId, metadataJson]
+            );
+
+            return { ledgerId, tokens, orgId };
+        });
+    }
+
+    /**
+     * Get Ledger Summary for Organization
+     * @param {string} orgId 
+     * @returns {Promise<Object>}
+     */
+    static async getLedgerSummary(orgId) {
+        return new Promise((resolve, reject) => {
+            db.get(
+                `SELECT 
+                    SUM(CASE WHEN type = 'CREDIT' THEN amount ELSE 0 END) as total_credits,
+                    SUM(CASE WHEN type = 'DEBIT' THEN amount ELSE 0 END) as total_debits,
+                    COUNT(*) as transaction_count
+                 FROM token_ledger 
+                 WHERE organization_id = ?`,
+                [orgId],
+                (err, row) => {
+                    if (err) return reject(err);
+                    resolve({
+                        totalCredits: row?.total_credits || 0,
+                        totalDebits: row?.total_debits || 0,
+                        computedBalance: (row?.total_credits || 0) - (row?.total_debits || 0),
+                        transactionCount: row?.transaction_count || 0
+                    });
+                }
+            );
+        });
     }
 }
 

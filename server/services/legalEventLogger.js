@@ -10,8 +10,11 @@
  * - Legal department reviews
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+// Dependency injection for testing
+const deps = {
+    db: require('../database'),
+    uuidv4: require('uuid').v4
+};
 
 /**
  * Legal Event Types
@@ -37,6 +40,13 @@ const EVENT_TYPES = {
 
 const LegalEventLogger = {
     /**
+     * Allow dependency injection for testing
+     */
+    _setDependencies: (newDeps) => {
+        Object.assign(deps, newDeps);
+    },
+
+    /**
      * Log a legal event (append-only)
      * 
      * @param {Object} params - Event parameters
@@ -51,7 +61,7 @@ const LegalEventLogger = {
      */
     log: ({ eventType, documentId, documentVersion, userId, organizationId, performedBy, metadata = {} }) => {
         return new Promise((resolve, reject) => {
-            const eventId = uuidv4();
+            const eventId = deps.uuidv4();
 
             // Validate event type
             if (!Object.values(EVENT_TYPES).includes(eventType)) {
@@ -64,7 +74,7 @@ const LegalEventLogger = {
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             `;
 
-            db.run(sql, [
+            deps.db.run(sql, [
                 eventId,
                 eventType,
                 documentId || null,
@@ -229,7 +239,7 @@ const LegalEventLogger = {
             sql += ' ORDER BY created_at DESC LIMIT ?';
             params.push(limit);
 
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) return reject(err);
                 resolve(rows || []);
             });
@@ -255,7 +265,7 @@ const LegalEventLogger = {
 
             sql += ' GROUP BY event_type';
 
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) return reject(err);
                 resolve(rows || []);
             });

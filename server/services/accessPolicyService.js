@@ -102,7 +102,12 @@ const AccessPolicyService = {
 
                         return resolve({
                             organizationId,
-                            ...defaults,
+                            maxProjects: defaults.max_projects,
+                            maxUsers: defaults.max_users,
+                            maxAICallsPerDay: defaults.max_ai_calls_per_day,
+                            maxInitiatives: defaults.max_initiatives,
+                            maxStorageMb: defaults.max_storage_mb,
+                            maxTotalTokens: defaults.max_total_tokens,
                             aiRolesEnabled: JSON.parse(defaults.ai_roles_enabled_json)
                         });
                     }
@@ -551,11 +556,12 @@ const AccessPolicyService = {
     _countOrgInitiatives: async (organizationId) => {
         return new Promise((resolve, reject) => {
             db.get(
-                `SELECT COUNT(*) as count FROM initiatives WHERE organization_id = ?`,
+                `SELECT count(*) as count FROM initiatives WHERE organization_id = ?`,
                 [organizationId],
                 (err, row) => {
                     if (err) return reject(err);
-                    resolve(row?.count || 0);
+                    const count = row ? row.count : 0;
+                    resolve(count);
                 }
             );
         });

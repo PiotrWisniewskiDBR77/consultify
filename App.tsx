@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { RouterSync } from './components/RouterSync';
+const PublicReportView = React.lazy(() => import('./views/reports/PublicReportView'));
 import { Sidebar } from './components/Sidebar';
 import { useTranslation } from 'react-i18next';
 import { WelcomeView } from './views/WelcomeView';
@@ -57,6 +58,11 @@ const HelpButtonWrapper = () => {
     );
 };
 
+// Lazy load views
+const OnboardingWizard = React.lazy(() => import('./views/OnboardingWizard').then(module => ({ default: module.OnboardingWizard }))); // NEW
+const ConsultantPanelView = React.lazy(() => import('./src/views/consultant/ConsultantPanelView').then(module => ({ default: module.ConsultantPanelView })));
+const ConsultantInviteView = React.lazy(() => import('./src/views/consultant/ConsultantInviteView').then(module => ({ default: module.ConsultantInviteView })));
+
 const AppContent = () => {
     const {
         currentView, setCurrentView,
@@ -70,6 +76,10 @@ const AppContent = () => {
         logout,
         theme, toggleTheme
     } = useAppStore();
+
+    // ... (rest of hook calls)
+
+
 
     // Initialize PMO context for session views
     const pmoContext = usePMOContext();
@@ -322,6 +332,31 @@ const AppContent = () => {
 
         if (currentView === AppView.MY_WORK) {
             return <MyWorkView />;
+        }
+
+        // Consultant Views
+        if (currentView === AppView.CONSULTANT_PANEL) {
+            return (
+                <React.Suspense fallback={<div className="p-8 text-center text-slate-500"><Loader2 className="animate-spin mx-auto mb-2" />Loading Consultant Panel...</div>}>
+                    <ConsultantPanelView />
+                </React.Suspense>
+            );
+        }
+        if (currentView === AppView.CONSULTANT_INVITES) {
+            return (
+                <React.Suspense fallback={<div className="p-8 text-center text-slate-500"><Loader2 className="animate-spin mx-auto mb-2" />Loading Invite Tool...</div>}>
+                    <ConsultantInviteView />
+                </React.Suspense>
+            );
+        }
+
+        // Onboarding Wizard
+        if (currentView === AppView.ONBOARDING_WIZARD) {
+            return (
+                <React.Suspense fallback={<div className="p-8 text-center text-slate-500"><Loader2 className="animate-spin mx-auto mb-2" />Loading Onboarding...</div>}>
+                    <OnboardingWizard />
+                </React.Suspense>
+            );
         }
 
         if (currentView === AppView.AI_ACTION_PROPOSALS) {
@@ -685,15 +720,29 @@ const AppContent = () => {
 
 export const App = () => (
     <BrowserRouter>
-        <AutoSaveProvider>
-            <AIProvider>
-                <HelpProvider>
-                    <TrialProvider>
-                        <RouterSync />
-                        <AppContent />
-                    </TrialProvider>
-                </HelpProvider>
-            </AIProvider>
-        </AutoSaveProvider>
+        <Routes>
+            {/* Public share route - no auth required, minimal shell */}
+            <Route
+                path="/share/:token"
+                element={
+                    <React.Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>}>
+                        <PublicReportView />
+                    </React.Suspense>
+                }
+            />
+            {/* All other routes go through main app */}
+            <Route path="*" element={
+                <AutoSaveProvider>
+                    <AIProvider>
+                        <HelpProvider>
+                            <TrialProvider>
+                                <RouterSync />
+                                <AppContent />
+                            </TrialProvider>
+                        </HelpProvider>
+                    </AIProvider>
+                </AutoSaveProvider>
+            } />
+        </Routes>
     </BrowserRouter>
 );

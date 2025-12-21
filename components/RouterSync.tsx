@@ -72,6 +72,11 @@ export const RouterSync: React.FC = () => {
             if (currentView !== AppView.WELCOME) {
                 setCurrentView(AppView.WELCOME);
             }
+        } else if (path.startsWith('/share/')) {
+            // Public share links - no auth required, handled by App.tsx directly
+            // Just log for debugging, the App component will render PublicReportView
+            console.log('[RouterSync] Public Share Link accessed');
+            // No state change needed - App.tsx will handle this route
         } else if (path === '/' || path === '') {
             // Default to Welcome if we are at root and NOT in a session
             // logic: if user is logged in, useAppStore might retain USER_DASHBOARD

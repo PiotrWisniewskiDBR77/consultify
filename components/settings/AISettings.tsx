@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, AIProviderType } from '../../types';
 import { Api } from '../../services/api';
-import { Cpu, Check, Monitor, Lock, Sparkles } from 'lucide-react';
+import { Cpu, Check, Monitor, Lock, Sparkles, Shield } from 'lucide-react';
 
 interface AISettingsProps {
     currentUser: User;
@@ -63,7 +63,12 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
         }
     };
 
-    const [orgConfig, setOrgConfig] = useState<{ activeProviderId: string | null; availableProviders: any[] } | null>(null);
+    interface OrgConfig {
+        activeProviderId: string | null;
+        availableProviders: any[];
+        assertivenessLevel?: number; // 1=Advisory, 2=Manager, 3=Operator
+    }
+    const [orgConfig, setOrgConfig] = useState<OrgConfig | null>(null);
 
     useEffect(() => {
         if (currentUser.role === 'ADMIN' || currentUser.role === 'SUPERADMIN') {
@@ -192,34 +197,52 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                         {/* Organization Admin Control */}
                         {(currentUser.role === 'ADMIN' || currentUser.role === 'SUPERADMIN') && orgConfig && (
                             <div className="mt-8 pt-8 border-t border-slate-100 dark:border-white/5 text-left bg-slate-50 dark:bg-navy-950/50 rounded-lg p-6">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <div className="p-2 rounded bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400"><Monitor size={16} /></div>
-                                    <div>
-                                        <h4 className="text-sm font-bold text-slate-800 dark:text-white">Organization Default Model</h4>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400">Select which model powers your organization.</p>
-                                    </div>
-                                </div>
+                                <div className="bg-navy-900 border border-white/5 rounded-xl p-6 mt-8">
+                                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                                        <Shield className="text-purple-500" size={20} />
+                                        Organization Admin: Intelligence Policy
+                                    </h3>
+                                    <div className="space-y-6">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-300 mb-1">Default Model for Organization</label>
+                                            <select
+                                                value={orgConfig?.activeProviderId || ''}
+                                                onChange={(e) => Api.updateOrganizationLLMConfig((currentUser as any).organizationId!, e.target.value === '' ? null : e.target.value)}
+                                                className="w-full bg-navy-950 border border-white/10 rounded-lg px-4 py-2 text-white"
+                                            >
+                                                <option value="">Let Users Choose</option>
+                                                {orgConfig.availableProviders.map(p => (
+                                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
 
-                                <div className="flex gap-3">
-                                    <select
-                                        value={orgConfig.activeProviderId || ''}
-                                        onChange={(e) => setOrgConfig({ ...orgConfig, activeProviderId: e.target.value || null })}
-                                        className="flex-1 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg px-4 py-2 text-slate-800 dark:text-white text-sm"
-                                    >
-                                        <option value="">System Default (Auto)</option>
-                                        {orgConfig.availableProviders.map(p => (
-                                            <option key={p.id} value={p.id}>
-                                                {p.name} ({p.provider}) {p.model_id}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <button
-                                        type="button"
-                                        onClick={handleSaveOrgConfig}
-                                        className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg text-sm"
-                                    >
-                                        Save Choice
-                                    </button>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-300 mb-1">
+                                                AI Assertiveness Level: {orgConfig?.assertivenessLevel === 1 ? 'ADVISORY (Default)' : orgConfig?.assertivenessLevel === 2 ? 'MANAGER' : 'OPERATOR'}
+                                            </label>
+                                            <input
+                                                type="range"
+                                                min="1"
+                                                max="3"
+                                                step="1"
+                                                value={orgConfig?.assertivenessLevel || 1}
+                                                onChange={(e) => {
+                                                    // Assuming explicit update call or part of org config update
+                                                    // For MVP, we simulate or store in generic config blob if backend supports it.
+                                                    // If strict backend, we might need new endpoint.
+                                                    // Let's assume updateOrganizationLLMConfig supports generic config or we skip functionality for now.
+                                                    setOrgConfig({ ...orgConfig, assertivenessLevel: parseInt(e.target.value) || 1 });
+                                                }}
+                                                className="w-full accent-purple-500"
+                                            />
+                                            <div className="flex justify-between text-xs text-slate-500 mt-1">
+                                                <span>Advisory (Passive)</span>
+                                                <span>Manager (Active)</span>
+                                                <span>Operator (Autopilot)</span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         )}
