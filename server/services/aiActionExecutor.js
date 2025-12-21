@@ -291,6 +291,59 @@ const AIActionExecutor = {
         });
     },
 
+    /**
+     * Get a single action by ID
+     */
+    getAction: async (actionId) => {
+        return new Promise((resolve, reject) => {
+            deps.db.get(`SELECT * FROM ai_actions WHERE id = ?`, [actionId], (err, row) => {
+                if (err) return reject(err);
+                if (!row) return resolve(null);
+                
+                try {
+                    row.payload = JSON.parse(row.payload || '{}');
+                    row.draftContent = row.draft_content ? JSON.parse(row.draft_content) : null;
+                } catch { }
+                resolve(row);
+            });
+        });
+    },
+
+    /**
+     * List actions for a project
+     */
+    listActions: async (projectId, filters = {}) => {
+        return new Promise((resolve, reject) => {
+            let sql = `SELECT * FROM ai_actions WHERE project_id = ?`;
+            const params = [projectId];
+
+            if (filters.status) {
+                sql += ` AND status = ?`;
+                params.push(filters.status);
+            }
+            if (filters.actionType) {
+                sql += ` AND action_type = ?`;
+                params.push(filters.actionType);
+            }
+
+            sql += ` ORDER BY created_at DESC`;
+
+            deps.db.all(sql, params, (err, rows) => {
+                if (err) return reject(err);
+
+                const result = (rows || []).map(row => {
+                    try {
+                        row.payload = JSON.parse(row.payload || '{}');
+                        row.draftContent = row.draft_content ? JSON.parse(row.draft_content) : null;
+                    } catch { }
+                    return row;
+                });
+
+                resolve(result);
+            });
+        });
+    },
+
     // ==================== INTERNAL EXECUTORS ====================
 
     _executeCreateTask: async (draftContent, action) => {

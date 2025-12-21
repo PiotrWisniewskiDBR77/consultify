@@ -6,7 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const orgContextMiddleware = require('../middleware/orgContextMiddleware');
-const { authenticate } = require('../middleware/authMiddleware');
+const authenticate = require('../middleware/authMiddleware');
 
 /**
  * GET /api/users/me/organizations

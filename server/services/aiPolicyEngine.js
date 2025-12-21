@@ -1,9 +1,12 @@
 // AI Policy Engine - Controls what AI is allowed to do
 // AI Core Layer — Enterprise PMO Brain
 
-const db = require('../database');
-const AIRoleGuard = require('./aiRoleGuard');
-const RegulatoryModeGuard = require('./regulatoryModeGuard');
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db: require('../database'),
+    AIRoleGuard: require('./aiRoleGuard'),
+    RegulatoryModeGuard: require('./regulatoryModeGuard')
+};
 
 const POLICY_LEVELS = {
     ADVISORY: 'ADVISORY',       // Suggest only
@@ -35,6 +38,11 @@ const AIPolicyEngine = {
     POLICY_LEVELS,
     AI_ROLES,
 
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
+
     /**
      * Get effective policy for a context
      */
@@ -42,7 +50,7 @@ const AIPolicyEngine = {
         // 0. REGULATORY MODE CHECK - Highest priority override
         // When enabled, forces ADVISORY-only mode regardless of other settings
         if (projectId) {
-            const regulatoryModeEnabled = await RegulatoryModeGuard.isEnabled(projectId);
+            const regulatoryModeEnabled = await deps.RegulatoryModeGuard.isEnabled(projectId);
             if (regulatoryModeEnabled) {
                 // Return maximally restricted policy
                 return {
@@ -65,14 +73,14 @@ const AIPolicyEngine = {
                     roleDescription: 'Regulatory Mode: Advisory-only',
                     // Regulatory Mode specific flags
                     regulatoryModeEnabled: true,
-                    regulatoryModePrompt: RegulatoryModeGuard.getRegulatoryPrompt()
+                    regulatoryModePrompt: deps.RegulatoryModeGuard.getRegulatoryPrompt()
                 };
             }
         }
 
         // 1. Get organization (tenant) policy
         const orgPolicy = await new Promise((resolve, reject) => {
-            db.get(`SELECT * FROM ai_policies WHERE organization_id = ?`, [organizationId], (err, row) => {
+            deps.db.get(`SELECT * FROM ai_policies WHERE organization_id = ?`, [organizationId], (err, row) => {
                 if (err) reject(err);
                 else resolve(row || {});
             });
@@ -84,7 +92,7 @@ const AIPolicyEngine = {
         // 2. Check project-level override if exists
         if (projectId) {
             const project = await new Promise((resolve, reject) => {
-                db.get(`SELECT governance_settings FROM projects WHERE id = ?`, [projectId], (err, row) => {
+                deps.db.get(`SELECT governance_settings FROM projects WHERE id = ?`, [projectId], (err, row) => {
                     if (err) reject(err);
                     else resolve(row || {});
                 });
@@ -107,7 +115,7 @@ const AIPolicyEngine = {
         let userPreferences = {};
         if (userId) {
             userPreferences = await new Promise((resolve, reject) => {
-                db.get(`SELECT * FROM ai_user_preferences WHERE user_id = ?`, [userId], (err, row) => {
+                deps.db.get(`SELECT * FROM ai_user_preferences WHERE user_id = ?`, [userId], (err, row) => {
                     if (err) reject(err);
                     else resolve(row || {});
                 });
@@ -123,10 +131,10 @@ const AIPolicyEngine = {
 
         // 4. Get project AI role (AI Roles Model)
         let projectAIRole = 'ADVISOR';
-        let roleCapabilities = AIRoleGuard.getRoleCapabilities('ADVISOR');
+        let roleCapabilities = deps.AIRoleGuard.getRoleCapabilities('ADVISOR');
         if (projectId) {
-            projectAIRole = await AIRoleGuard.getProjectRole(projectId);
-            roleCapabilities = AIRoleGuard.getRoleCapabilities(projectAIRole);
+            projectAIRole = await deps.AIRoleGuard.getProjectRole(projectId);
+            roleCapabilities = deps.AIRoleGuard.getRoleCapabilities(projectAIRole);
         }
 
         return {
@@ -141,7 +149,7 @@ const AIPolicyEngine = {
             // AI Roles Model
             projectAIRole,
             roleCapabilities,
-            roleDescription: AIRoleGuard.getRoleDescription(projectAIRole)
+            roleDescription: deps.AIRoleGuard.getRoleDescription(projectAIRole)
         };
     },
 
@@ -159,6 +167,17 @@ const AIPolicyEngine = {
         const requiresApproval = policy.policyLevel !== 'AUTOPILOT' &&
             (actionType.startsWith('CREATE_') || actionType.startsWith('SUGGEST_'));
 
+        // Check for Regulatory Mode blocking
+        if (policy.regulatoryModeEnabled && requiredLevel !== 'ADVISORY') {
+            return {
+                allowed: false,
+                requiresApproval: false,
+                requiredLevel,
+                currentLevel: policy.policyLevel,
+                reason: `Action blocked by Regulatory Mode - only advisory actions allowed`
+            };
+        }
+
         return {
             allowed: isAllowed,
             requiresApproval,
@@ -168,6 +187,15 @@ const AIPolicyEngine = {
                 ? `Action permitted at ${policy.policyLevel} level`
                 : `Action requires ${requiredLevel} policy level, but current is ${policy.policyLevel}`
         };
+    },
+
+    /**
+     * Get the required policy level for an action
+     * @param {string} actionType - Action type
+     * @returns {string} - Required policy level
+     */
+    getPolicyLevelForAction: (actionType) => {
+        return ACTION_POLICY_REQUIREMENTS[actionType] || 'ADVISORY';
     },
 
     /**
@@ -191,7 +219,7 @@ const AIPolicyEngine = {
 
         return new Promise((resolve, reject) => {
             // Upsert
-            db.run(`INSERT INTO ai_policies (organization_id, policy_level, internet_enabled, audit_required, max_policy_level, default_ai_role, active_roles, updated_at)
+            deps.db.run(`INSERT INTO ai_policies (organization_id, policy_level, internet_enabled, audit_required, max_policy_level, default_ai_role, active_roles, updated_at)
                     VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                     ON CONFLICT(organization_id) DO UPDATE SET
                     policy_level = COALESCE(?, policy_level),

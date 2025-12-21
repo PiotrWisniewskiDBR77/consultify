@@ -3,8 +3,11 @@
  * Handles Stripe integration, subscriptions, and invoice management
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db: require('../database'),
+    uuidv4: require('uuid').v4
+};
 
 // Stripe will be initialized when keys are configured
 let stripe = null;
@@ -17,11 +20,18 @@ try {
 }
 
 /**
+ * Set dependencies (for testing)
+ */
+function setDependencies(newDeps = {}) {
+    Object.assign(deps, newDeps);
+}
+
+/**
  * Get all subscription plans
  */
 function getPlans() {
     return new Promise((resolve, reject) => {
-        db.all('SELECT * FROM subscription_plans WHERE is_active = 1 ORDER BY price_monthly ASC', [], (err, rows) => {
+        deps.db.all('SELECT * FROM subscription_plans WHERE is_active = 1 ORDER BY price_monthly ASC', [], (err, rows) => {
             if (err) reject(err);
             else resolve(rows || []);
         });
@@ -33,7 +43,7 @@ function getPlans() {
  */
 function getPlanById(planId) {
     return new Promise((resolve, reject) => {
-        db.get('SELECT * FROM subscription_plans WHERE id = ?', [planId], (err, row) => {
+        deps.db.get('SELECT * FROM subscription_plans WHERE id = ?', [planId], (err, row) => {
             if (err) reject(err);
             else resolve(row);
         });
@@ -44,9 +54,9 @@ function getPlanById(planId) {
  * Create a new subscription plan (Superadmin only)
  */
 function createPlan(planData) {
-    const id = `plan-${uuidv4()}`;
+    const id = `plan-${deps.uuidv4()}`;
     return new Promise((resolve, reject) => {
-        db.run(
+        deps.db.run(
             `INSERT INTO subscription_plans (id, name, price_monthly, token_limit, storage_limit_gb, token_overage_rate, storage_overage_rate, stripe_price_id, features, is_active)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [id, planData.name, planData.price_monthly, planData.token_limit, planData.storage_limit_gb,
@@ -79,7 +89,7 @@ function updatePlan(planId, updates) {
     values.push(planId);
 
     return new Promise((resolve, reject) => {
-        db.run(
+        deps.db.run(
             `UPDATE subscription_plans SET ${fields.join(', ')} WHERE id = ?`,
             values,
             function (err) {
@@ -103,7 +113,7 @@ function deletePlan(planId) {
 
 function getUserPlans() {
     return new Promise((resolve, reject) => {
-        db.all('SELECT * FROM user_license_plans WHERE is_active = 1 ORDER BY price_monthly ASC', [], (err, rows) => {
+        deps.db.all('SELECT * FROM user_license_plans WHERE is_active = 1 ORDER BY price_monthly ASC', [], (err, rows) => {
             if (err) reject(err);
             else resolve(rows || []);
         });
@@ -111,9 +121,9 @@ function getUserPlans() {
 }
 
 function createUserPlan(planData) {
-    const id = `license-${uuidv4()}`;
+    const id = `license-${deps.uuidv4()}`;
     return new Promise((resolve, reject) => {
-        db.run(
+        deps.db.run(
             `INSERT INTO user_license_plans (id, name, price_monthly, features, is_active)
              VALUES (?, ?, ?, ?, ?)`,
             [id, planData.name, planData.price_monthly, JSON.stringify(planData.features || {}), 1],
@@ -146,7 +156,7 @@ function updateUserPlan(planId, updates) {
     values.push(planId);
 
     return new Promise((resolve, reject) => {
-        db.run(
+        deps.db.run(
             `UPDATE user_license_plans SET ${fields.join(', ')} WHERE id = ?`,
             values,
             function (err) {
@@ -166,7 +176,7 @@ function deleteUserPlan(planId) {
  */
 function getOrganizationBilling(orgId) {
     return new Promise((resolve, reject) => {
-        db.get(
+        deps.db.get(
             `SELECT ob.*, sp.name as plan_name, sp.price_monthly, sp.token_limit, sp.storage_limit_gb
              FROM organization_billing ob
              LEFT JOIN subscription_plans sp ON ob.subscription_plan_id = sp.id
@@ -184,9 +194,9 @@ function getOrganizationBilling(orgId) {
  * Create or update organization billing record
  */
 function upsertOrganizationBilling(orgId, billingData) {
-    const id = `billing-${uuidv4()}`;
+    const id = `billing-${deps.uuidv4()}`;
     return new Promise((resolve, reject) => {
-        db.run(
+        deps.db.run(
             `INSERT INTO organization_billing (id, organization_id, subscription_plan_id, stripe_customer_id, stripe_subscription_id, billing_email, status)
              VALUES (?, ?, ?, ?, ?, ?, ?)
              ON CONFLICT(organization_id) DO UPDATE SET
@@ -331,7 +341,7 @@ async function changePlan(orgId, newPlanId) {
  */
 function getInvoices(orgId) {
     return new Promise((resolve, reject) => {
-        db.all(
+        deps.db.all(
             'SELECT * FROM invoices WHERE organization_id = ? ORDER BY created_at DESC',
             [orgId],
             (err, rows) => {
@@ -346,9 +356,9 @@ function getInvoices(orgId) {
  * Record invoice from Stripe webhook
  */
 function recordInvoice(orgId, stripeInvoice) {
-    const id = `inv-${uuidv4()}`;
+    const id = `inv-${deps.uuidv4()}`;
     return new Promise((resolve, reject) => {
-        db.run(
+        deps.db.run(
             `INSERT OR REPLACE INTO invoices (id, organization_id, stripe_invoice_id, amount_due, amount_paid, currency, status, period_start, period_end, pdf_url)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [id, orgId, stripeInvoice.id, stripeInvoice.amount_due / 100, stripeInvoice.amount_paid / 100,
@@ -371,7 +381,7 @@ function getRevenueStats() {
         const stats = {};
 
         // Get MRR (Monthly Recurring Revenue)
-        db.get(
+        deps.db.get(
             `SELECT COALESCE(SUM(sp.price_monthly), 0) as mrr, COUNT(ob.id) as active_subscriptions
              FROM organization_billing ob
              JOIN subscription_plans sp ON ob.subscription_plan_id = sp.id
@@ -384,7 +394,7 @@ function getRevenueStats() {
                 stats.arr = stats.mrr * 12;
 
                 // Get plan distribution
-                db.all(
+                deps.db.all(
                     `SELECT sp.name, sp.price_monthly, COUNT(ob.id) as count
                      FROM subscription_plans sp
                      LEFT JOIN organization_billing ob ON sp.id = ob.subscription_plan_id AND ob.status = 'active'
@@ -403,6 +413,7 @@ function getRevenueStats() {
 }
 
 module.exports = {
+    setDependencies,
     getPlans,
     getPlanById,
     createPlan,

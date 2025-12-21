@@ -258,7 +258,7 @@ const AccessPolicyService = {
 
         return new Promise((resolve, reject) => {
             // Upsert pattern for SQLite
-            db.run(
+            deps.db.run(
                 `INSERT INTO usage_counters (id, organization_id, counter_date, ${column})
                  VALUES (?, ?, ?, ?)
                  ON CONFLICT(organization_id, counter_date) 
@@ -280,7 +280,7 @@ const AccessPolicyService = {
      */
     trackTokenUsage: async (organizationId, tokens) => {
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `UPDATE organizations SET trial_tokens_used = COALESCE(trial_tokens_used, 0) + ? WHERE id = ?`,
                 [tokens, organizationId],
                 (err) => {
@@ -507,7 +507,7 @@ const AccessPolicyService = {
         const defaults = orgType === ORG_TYPES.DEMO ? DEFAULT_DEMO_LIMITS : DEFAULT_TRIAL_LIMITS;
 
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `INSERT OR REPLACE INTO organization_limits 
                  (id, organization_id, max_projects, max_users, max_ai_calls_per_day, max_initiatives, max_storage_mb, ai_roles_enabled_json)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -536,7 +536,7 @@ const AccessPolicyService = {
      */
     removeLimits: async (organizationId) => {
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `DELETE FROM organization_limits WHERE organization_id = ?`,
                 [organizationId],
                 (err) => {

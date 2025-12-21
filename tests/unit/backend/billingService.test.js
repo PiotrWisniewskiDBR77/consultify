@@ -17,41 +17,27 @@ describe('BillingService', () => {
     let BillingService;
 
     beforeEach(() => {
+        vi.resetModules();
+        
         mockDb = createMockDb();
         
-        // Mock database - must be before import
-        vi.mock('../../../server/database', () => ({
+        // Mock database before import
+        vi.doMock('../../../server/database', () => ({
             default: mockDb
         }));
-
-        // Mock Stripe (not configured in tests)
-        vi.mock('stripe', () => {
-            return vi.fn(() => ({
-                customers: {
-                    create: vi.fn(),
-                    retrieve: vi.fn(),
-                    update: vi.fn()
-                },
-                subscriptions: {
-                    create: vi.fn(),
-                    retrieve: vi.fn(),
-                    update: vi.fn()
-                },
-                paymentMethods: {
-                    attach: vi.fn()
-                }
-            }));
-        });
 
         // Clear env to simulate Stripe not configured
         const originalEnv = process.env.STRIPE_SECRET_KEY;
         delete process.env.STRIPE_SECRET_KEY;
-
-        // Clear module cache to ensure fresh import with mocks
-        vi.resetModules();
         
-        // Import service after mocks
+        // Import service after mocking
         BillingService = require('../../../server/services/billingService.js');
+        
+        // Inject mock dependencies
+        BillingService.setDependencies({
+            db: mockDb,
+            uuidv4: () => 'test-uuid-1234'
+        });
 
         // Restore env
         if (originalEnv) {
@@ -61,6 +47,7 @@ describe('BillingService', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+        vi.doUnmock('../../../server/database');
     });
 
     describe('getPlans()', () => {

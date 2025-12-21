@@ -133,5 +133,172 @@ router.get('/templates', async (req, res) => {
     }
 });
 
-module.exports = router;
+// ============================================================
+// PHASE B: DEMO SESSION FLOW ENDPOINTS
+// ============================================================
 
+const DemoSessionService = require('../services/demoSessionService');
+const authMiddleware = require('../middleware/authMiddleware');
+
+/**
+ * GET /api/demo/progress
+ * Get current demo session progress
+ * Requires demo auth token
+ */
+router.get('/progress', authMiddleware, async (req, res) => {
+    try {
+        if (!req.user?.isDemo) {
+            return res.status(403).json({ error: 'Not in demo mode' });
+        }
+
+        const sessionId = req.user.organizationId;
+        const progress = DemoSessionService.getProgress(sessionId);
+
+        if (!progress) {
+            // Initialize session if not exists
+            DemoSessionService.createSession(sessionId);
+            return res.json(DemoSessionService.getProgress(sessionId));
+        }
+
+        res.json(progress);
+    } catch (error) {
+        console.error('[Demo] Error getting progress:', error);
+        res.status(500).json({ error: 'Failed to get demo progress' });
+    }
+});
+
+/**
+ * POST /api/demo/progress
+ * Update demo session step
+ * Body: { step: 'reality' | 'focus' | 'decision' | 'execution' | 'feedback' }
+ */
+router.post('/progress', authMiddleware, async (req, res) => {
+    try {
+        if (!req.user?.isDemo) {
+            return res.status(403).json({ error: 'Not in demo mode' });
+        }
+
+        const { step } = req.body;
+        const validSteps = ['reality', 'focus', 'decision', 'execution', 'feedback'];
+
+        if (!step || !validSteps.includes(step)) {
+            return res.status(400).json({
+                error: 'Invalid step',
+                validSteps
+            });
+        }
+
+        const sessionId = req.user.organizationId;
+        const result = DemoSessionService.updateStep(sessionId, step);
+
+        res.json({
+            success: true,
+            ...result.session,
+            progress: DemoSessionService.getProgress(sessionId),
+            narrativeTrigger: result.narrativeTrigger
+        });
+    } catch (error) {
+        console.error('[Demo] Error updating progress:', error);
+        res.status(500).json({ error: 'Failed to update demo progress' });
+    }
+});
+
+/**
+ * GET /api/demo/narrative/:step
+ * Get AI narrative for a specific step
+ * Query: ?type=intro|insight|limitation
+ */
+router.get('/narrative/:step', authMiddleware, async (req, res) => {
+    try {
+        if (!req.user?.isDemo) {
+            return res.status(403).json({ error: 'Not in demo mode' });
+        }
+
+        const { step } = req.params;
+        const { type = 'intro' } = req.query;
+        const sessionId = req.user.organizationId;
+
+        // Ensure session exists
+        DemoSessionService.getOrCreateSession(sessionId);
+
+        const narrative = DemoSessionService.getNarrative(sessionId, type);
+
+        if (narrative.error) {
+            return res.status(400).json(narrative);
+        }
+
+        res.json({
+            step,
+            narrativeType: type,
+            message: DemoSessionService.STEP_NARRATIVES[step]?.[type] || null,
+            aiRole: 'DEMO_NARRATOR'
+        });
+    } catch (error) {
+        console.error('[Demo] Error getting narrative:', error);
+        res.status(500).json({ error: 'Failed to get narrative' });
+    }
+});
+
+/**
+ * POST /api/demo/event
+ * Record a demo interaction event (for metrics)
+ * Body: { eventType: string, metadata?: object }
+ */
+router.post('/event', authMiddleware, async (req, res) => {
+    try {
+        if (!req.user?.isDemo) {
+            return res.status(403).json({ error: 'Not in demo mode' });
+        }
+
+        const { eventType, metadata = {} } = req.body;
+        const sessionId = req.user.organizationId;
+
+        const event = DemoSessionService.recordEvent(sessionId, eventType, metadata);
+
+        res.json({ success: true, event });
+    } catch (error) {
+        console.error('[Demo] Error recording event:', error);
+        res.status(500).json({ error: 'Failed to record event' });
+    }
+});
+
+/**
+ * POST /api/demo/end
+ * End demo session and get summary
+ */
+router.post('/end', authMiddleware, async (req, res) => {
+    try {
+        if (!req.user?.isDemo) {
+            return res.status(403).json({ error: 'Not in demo mode' });
+        }
+
+        const sessionId = req.user.organizationId;
+        const summary = DemoSessionService.endSession(sessionId);
+
+        res.json({
+            success: true,
+            summary,
+            nextSteps: {
+                trial: '/trial/start',
+                contact: '/contact',
+                home: '/'
+            }
+        });
+    } catch (error) {
+        console.error('[Demo] Error ending session:', error);
+        res.status(500).json({ error: 'Failed to end demo session' });
+    }
+});
+
+/**
+ * GET /api/demo/steps
+ * Get all demo steps configuration
+ */
+router.get('/steps', (req, res) => {
+    res.json({
+        steps: Object.values(DemoSessionService.DEMO_STEPS),
+        narratives: Object.keys(DemoSessionService.STEP_NARRATIVES)
+    });
+});
+
+module.exports = router;

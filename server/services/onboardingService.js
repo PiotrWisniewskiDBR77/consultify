@@ -254,6 +254,95 @@ const OnboardingService = {
     },
 
     /**
+     * Detect "AHA" moment signals for conversion nudges.
+     * Phase E success signals that indicate readiness for Phase F/G.
+     * 
+     * @param {string} organizationId
+     * @returns {Promise<Object>} { hasAHA, signals, recommendedAction }
+     */
+    detectAHAMoment: async (organizationId) => {
+        const org = await getAsync(db,
+            `SELECT onboarding_status, onboarding_plan_version, onboarding_accepted_at,
+                    transformation_context, onboarding_plan_snapshot
+             FROM organizations WHERE id = ?`,
+            [organizationId]
+        );
+
+        if (!org) {
+            return { hasAHA: false, signals: [], recommendedAction: null };
+        }
+
+        const signals = [];
+        let hasAHA = false;
+
+        // Signal 1: DRD Snapshot created (plan generated)
+        if (org.onboarding_plan_snapshot) {
+            signals.push({
+                type: 'SNAPSHOT_CREATED',
+                description: 'First DRD snapshot generated',
+                weight: 0.4
+            });
+        }
+
+        // Signal 2: Plan accepted (initiatives created)
+        if (org.onboarding_status === 'ACCEPTED') {
+            signals.push({
+                type: 'PLAN_ACCEPTED',
+                description: 'User accepted AI-generated plan',
+                weight: 0.3
+            });
+        }
+
+        // Signal 3: Context fully completed
+        if (org.transformation_context) {
+            try {
+                const ctx = JSON.parse(org.transformation_context);
+                const fieldsComplete = ctx.role && ctx.problems && ctx.urgency;
+                if (fieldsComplete) {
+                    signals.push({
+                        type: 'CONTEXT_COMPLETE',
+                        description: 'Transformation context fully provided',
+                        weight: 0.2
+                    });
+                }
+            } catch (e) { /* ignore parse errors */ }
+        }
+
+        // Signal 4: Multiple plan versions (engagement)
+        if (org.onboarding_plan_version >= 2) {
+            signals.push({
+                type: 'REPEATED_ENGAGEMENT',
+                description: 'User regenerated plan multiple times',
+                weight: 0.1
+            });
+        }
+
+        // Calculate total AHA score
+        const totalWeight = signals.reduce((sum, s) => sum + s.weight, 0);
+        hasAHA = totalWeight >= 0.5; // Threshold for AHA moment
+
+        // Determine recommended action
+        let recommendedAction = null;
+        if (hasAHA) {
+            if (org.onboarding_status === 'ACCEPTED') {
+                recommendedAction = 'INVITE_TEAM'; // Phase F
+            } else {
+                recommendedAction = 'ACCEPT_PLAN'; // Complete Phase E
+            }
+        }
+
+        return {
+            hasAHA,
+            signals,
+            totalScore: totalWeight,
+            recommendedAction,
+            message: hasAHA
+                ? 'You\'re making great progress! Your transformation baseline is taking shape.'
+                : null
+        };
+    },
+
+    /**
      * Get onboarding status for an organization.
      */
     getStatus: async (organizationId) => {

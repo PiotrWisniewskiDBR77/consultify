@@ -2,7 +2,10 @@
 // AI Roles Model: ADVISOR < MANAGER < OPERATOR
 // This is the central service for AI role enforcement in SCMS
 
-const db = require('../database');
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db: require('../database')
+};
 
 const AI_PROJECT_ROLES = {
     ADVISOR: 'ADVISOR',
@@ -77,6 +80,11 @@ const AIRoleGuard = {
     ROLE_CAPABILITIES,
     ROLE_HIERARCHY,
 
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
+
     /**
      * Get the active AI role for a project
      * @param {string} projectId - Project ID
@@ -88,7 +96,7 @@ const AIRoleGuard = {
         }
 
         return new Promise((resolve, reject) => {
-            db.get(`SELECT ai_role FROM projects WHERE id = ?`, [projectId], (err, row) => {
+            deps.db.get(`SELECT ai_role FROM projects WHERE id = ?`, [projectId], (err, row) => {
                 if (err) {
                     console.error('[AIRoleGuard] Error fetching project role:', err);
                     return resolve('ADVISOR'); // Fail-safe to ADVISOR
@@ -111,7 +119,7 @@ const AIRoleGuard = {
         }
 
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `UPDATE projects SET ai_role = ? WHERE id = ?`,
                 [role, projectId],
                 function (err) {

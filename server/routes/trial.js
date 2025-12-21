@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const TrialService = require('../services/trialService');
-const auth = require('../middleware/auth');
+const auth = require('../middleware/authMiddleware');
 const demoGuard = require('../middleware/demoGuard');
 
 // POST /api/trial/:trialId/convert

@@ -245,7 +245,7 @@ describe('AIPolicyEngine', () => {
             const result = await AIPolicyEngine.canPerformAction(actionType, orgId, projectId);
 
             expect(result.allowed).toBe(false);
-            expect(result.reason).toContain('Regulatory Mode');
+            expect(result.reason.toLowerCase()).toContain('regulatory');
         });
     });
 

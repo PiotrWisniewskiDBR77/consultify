@@ -155,6 +155,10 @@ app.use('/api/organizations', organizationRoutes);
 const onboardingRoutes = require('./routes/onboarding');
 app.use('/api/onboarding', onboardingRoutes);
 
+// Phase G: Ecosystem Participation - Referrals
+const referralRoutes = require('./routes/referrals');
+app.use('/api/referrals', referralRoutes);
+
 const consultantRoutes = require('./routes/consultants');
 app.use('/api/consultants', consultantRoutes);
 
@@ -168,6 +172,10 @@ const trialRoutes = require('./routes/trial');
 app.use('/api/trial', trialRoutes);
 const ssoRoutes = require('./routes/sso');
 app.use('/api/sso', ssoRoutes);
+
+// OAuth Routes (Google, LinkedIn)
+const oauthRoutes = require('./routes/oauthRoutes');
+app.use('/api/auth', oauthRoutes);
 
 const aiAsyncRoutes = require('./routes/aiAsync');
 app.use('/api/ai-async', aiAsyncRoutes); // New Async Endpoint

@@ -1,8 +1,11 @@
 // Economics Service - Value hypotheses and financial assumptions
 // Step 6: Stabilization, Reporting & Economics
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db: require('../database'),
+    uuidv4: require('uuid').v4
+};
 
 const VALUE_TYPES = {
     COST_REDUCTION: 'COST_REDUCTION',
@@ -15,6 +18,11 @@ const VALUE_TYPES = {
 const EconomicsService = {
     VALUE_TYPES,
 
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
+
     /**
      * Create a value hypothesis
      */
@@ -24,14 +32,14 @@ const EconomicsService = {
             confidenceLevel, ownerId, relatedInitiativeIds
         } = hypothesis;
 
-        const id = uuidv4();
+        const id = deps.uuidv4();
 
         return new Promise((resolve, reject) => {
             const sql = `INSERT INTO value_hypotheses 
                 (id, initiative_id, project_id, description, type, confidence_level, owner_id, related_initiative_ids)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
 
-            db.run(sql, [
+            deps.db.run(sql, [
                 id, initiativeId, projectId, description, type,
                 confidenceLevel || 'MEDIUM', ownerId,
                 JSON.stringify(relatedInitiativeIds || [])
@@ -61,7 +69,7 @@ const EconomicsService = {
 
             sql += ` ORDER BY vh.created_at DESC`;
 
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) return reject(err);
 
                 const result = (rows || []).map(row => {
@@ -81,7 +89,7 @@ const EconomicsService = {
      */
     validateHypothesis: async (hypothesisId, userId) => {
         return new Promise((resolve, reject) => {
-            db.run(`UPDATE value_hypotheses 
+            deps.db.run(`UPDATE value_hypotheses 
                     SET is_validated = 1, validated_at = CURRENT_TIMESTAMP, validated_by = ?, updated_at = CURRENT_TIMESTAMP
                     WHERE id = ?`, [userId, hypothesisId], function (err) {
                 if (err) return reject(err);
@@ -99,14 +107,14 @@ const EconomicsService = {
             highEstimate, currency, timeframe, notes
         } = assumption;
 
-        const id = uuidv4();
+        const id = deps.uuidv4();
 
         return new Promise((resolve, reject) => {
             const sql = `INSERT INTO financial_assumptions 
                 (id, value_hypothesis_id, low_estimate, expected_estimate, high_estimate, currency, timeframe, notes)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
 
-            db.run(sql, [
+            deps.db.run(sql, [
                 id, valueHypothesisId, lowEstimate, expectedEstimate,
                 highEstimate, currency || 'USD', timeframe || 'per year', notes
             ], function (err) {
@@ -121,7 +129,7 @@ const EconomicsService = {
      */
     detectMissingValueHypotheses: async (projectId) => {
         return new Promise((resolve, reject) => {
-            db.all(`SELECT i.id, i.name FROM initiatives i
+            deps.db.all(`SELECT i.id, i.name FROM initiatives i
                     LEFT JOIN value_hypotheses vh ON i.id = vh.initiative_id
                     WHERE i.project_id = ? AND vh.id IS NULL AND i.status NOT IN ('CANCELLED', 'DRAFT')`,
                 [projectId], (err, rows) => {
@@ -142,7 +150,7 @@ const EconomicsService = {
     getValueSummary: async (projectId) => {
         // Get hypotheses by type
         const byType = await new Promise((resolve, reject) => {
-            db.all(`SELECT type, COUNT(*) as count, 
+            deps.db.all(`SELECT type, COUNT(*) as count, 
                     SUM(CASE WHEN is_validated = 1 THEN 1 ELSE 0 END) as validated
                     FROM value_hypotheses WHERE project_id = ? GROUP BY type`,
                 [projectId], (err, rows) => {
@@ -153,7 +161,7 @@ const EconomicsService = {
 
         // Get financial totals
         const financials = await new Promise((resolve, reject) => {
-            db.get(`SELECT 
+            deps.db.get(`SELECT 
                     SUM(fa.low_estimate) as total_low,
                     SUM(fa.expected_estimate) as total_expected,
                     SUM(fa.high_estimate) as total_high

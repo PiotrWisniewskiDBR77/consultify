@@ -13,7 +13,7 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const router = express.Router();
 const AccessCodeService = require('../services/accessCodeService');
-const { authenticateToken } = require('../middleware/auth');
+const authenticateToken = require('../middleware/authMiddleware');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RATE LIMITERS

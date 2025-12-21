@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const ConsultantService = require('../services/consultantService');
-const authMiddleware = require('../middleware/auth'); // Standard auth checks valid token
+const authMiddleware = require('../middleware/authMiddleware'); // Standard auth checks valid token
 
 // Middleware to ensure user is a consultant
 const requireConsultant = async (req, res, next) => {

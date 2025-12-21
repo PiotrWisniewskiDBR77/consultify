@@ -46,6 +46,7 @@ import HelpPanel from './components/HelpPanel';
 import { TrialProvider } from './contexts/TrialContext';
 import { TrialBanner } from './components/Trial/TrialBanner';
 import { TrialExpiredGate } from './components/Trial/TrialExpiredGate';
+import { AccessPolicyProvider } from './contexts/AccessPolicyContext';
 
 // Help system wrapper component
 const HelpButtonWrapper = () => {
@@ -730,15 +731,35 @@ export const App = () => (
                     </React.Suspense>
                 }
             />
+            {/* OAuth Callback route - handles Google/LinkedIn redirects */}
+            <Route
+                path="/auth/callback"
+                element={
+                    <React.Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-purple-500" /></div>}>
+                        {React.createElement(React.lazy(() => import('./views/OAuthCallback')))}
+                    </React.Suspense>
+                }
+            />
+            {/* Phase A: Public Landing Page - dedicated cognitive gateway */}
+            <Route
+                path="/"
+                element={
+                    <React.Suspense fallback={<div className="flex items-center justify-center min-h-screen bg-white dark:bg-navy-950"><Loader2 className="w-8 h-8 animate-spin text-purple-500" /></div>}>
+                        {React.createElement(React.lazy(() => import('./views/PublicLandingPage')))}
+                    </React.Suspense>
+                }
+            />
             {/* All other routes go through main app */}
             <Route path="*" element={
                 <AutoSaveProvider>
                     <AIProvider>
                         <HelpProvider>
-                            <TrialProvider>
-                                <RouterSync />
-                                <AppContent />
-                            </TrialProvider>
+                            <AccessPolicyProvider>
+                                <TrialProvider>
+                                    <RouterSync />
+                                    <AppContent />
+                                </TrialProvider>
+                            </AccessPolicyProvider>
                         </HelpProvider>
                     </AIProvider>
                 </AutoSaveProvider>

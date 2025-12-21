@@ -11,21 +11,31 @@ import { createMockDb } from '../../helpers/dependencyInjector.js';
 import { testProjects } from '../../fixtures/testData.js';
 
 const require = createRequire(import.meta.url);
-const AIRoleGuard = require('../../../server/services/aiRoleGuard.js');
 
 describe('AIRoleGuard', () => {
     let mockDb;
+    let AIRoleGuard;
 
     beforeEach(() => {
+        vi.resetModules();
+        
         mockDb = createMockDb();
         
-        vi.mock('../../../server/database', () => ({
+        // Mock database before importing
+        vi.doMock('../../../server/database', () => ({
             default: mockDb
         }));
+        
+        // Import service after mocking
+        AIRoleGuard = require('../../../server/services/aiRoleGuard.js');
+        
+        // Inject mock dependencies
+        AIRoleGuard.setDependencies({ db: mockDb });
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
+        vi.doUnmock('../../../server/database');
     });
 
     describe('getProjectRole()', () => {

@@ -1,16 +1,24 @@
 // Capacity Service - User workload management
 // Step 4: Roadmap, Sequencing & Capacity
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db: require('../database'),
+    uuidv4: require('uuid').v4
+};
 
 const CapacityService = {
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
+
     /**
      * Get user capacity for a week
      */
     getUserCapacity: async (userId, weekStart) => {
         return new Promise((resolve, reject) => {
-            db.get(`SELECT * FROM user_capacity WHERE user_id = ? AND week_start = ?`,
+            deps.db.get(`SELECT * FROM user_capacity WHERE user_id = ? AND week_start = ?`,
                 [userId, weekStart], (err, row) => {
                     if (err) return reject(err);
                     if (!row) {
@@ -52,7 +60,7 @@ const CapacityService = {
         const params = projectId ? [userId, projectId] : [userId];
 
         return new Promise((resolve, reject) => {
-            db.all(sql, params, (err, tasks) => {
+            deps.db.all(sql, params, (err, tasks) => {
                 if (err) return reject(err);
 
                 // Group by week
@@ -125,7 +133,7 @@ const CapacityService = {
     detectOverloads: async (projectId) => {
         // Get all users with tasks in project
         const usersWithTasks = await new Promise((resolve, reject) => {
-            db.all(`SELECT DISTINCT assignee_id FROM tasks WHERE project_id = ? AND assignee_id IS NOT NULL`,
+            deps.db.all(`SELECT DISTINCT assignee_id FROM tasks WHERE project_id = ? AND assignee_id IS NOT NULL`,
                 [projectId], (err, rows) => {
                     if (err) reject(err);
                     else resolve((rows || []).map(r => r.assignee_id));
@@ -141,7 +149,7 @@ const CapacityService = {
             if (overloadedWeeks.length > 0) {
                 // Get user name
                 const user = await new Promise((resolve, reject) => {
-                    db.get(`SELECT first_name, last_name FROM users WHERE id = ?`, [userId], (err, row) => {
+                    deps.db.get(`SELECT first_name, last_name FROM users WHERE id = ?`, [userId], (err, row) => {
                         if (err) reject(err);
                         else resolve(row);
                     });

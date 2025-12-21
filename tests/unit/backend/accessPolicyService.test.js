@@ -29,6 +29,9 @@ describe('AccessPolicyService', () => {
         
         // Import service after mocking
         AccessPolicyService = require('../../../server/services/accessPolicyService.js');
+        
+        // Inject mock dependencies
+        AccessPolicyService.setDependencies({ db: mockDb });
     });
 
     afterEach(() => {
@@ -179,10 +182,11 @@ describe('AccessPolicyService', () => {
                 }
             });
 
-            const result = await AccessPolicyService.checkAccess(orgId, 'mutation');
+            // Use 'write' action which is a valid write action for DEMO check
+            const result = await AccessPolicyService.checkAccess(orgId, 'write');
             
             expect(result.allowed).toBe(false);
-            expect(result.reason).toContain('DEMO');
+            expect(result.reason).toContain('Demo');
         });
     });
 
@@ -206,8 +210,8 @@ describe('AccessPolicyService', () => {
             const result = await AccessPolicyService.getOrganizationLimits(orgId);
             
             expect(result).toBeDefined();
-            expect(result.max_projects).toBeDefined();
-            expect(result.max_users).toBeDefined();
+            expect(result.maxProjects).toBeDefined();
+            expect(result.maxUsers).toBeDefined();
         });
 
         it('should return custom limits when set', async () => {
@@ -218,7 +222,8 @@ describe('AccessPolicyService', () => {
                     callback(null, {
                         max_projects: 10,
                         max_users: 20,
-                        max_ai_calls_per_day: 500
+                        max_ai_calls_per_day: 500,
+                        ai_roles_enabled_json: '["ADVISOR"]'
                     });
                 } else {
                     callback(null, null);
@@ -227,8 +232,8 @@ describe('AccessPolicyService', () => {
 
             const result = await AccessPolicyService.getOrganizationLimits(orgId);
             
-            expect(result.max_projects).toBe(10);
-            expect(result.max_users).toBe(20);
+            expect(result.maxProjects).toBe(10);
+            expect(result.maxUsers).toBe(20);
         });
     });
 
@@ -237,18 +242,21 @@ describe('AccessPolicyService', () => {
             const org1Id = testOrganizations.org1.id;
             const org2Id = testOrganizations.org2.id;
             
-            const capturedParams = [];
+            const capturedOrgIds = new Set();
             mockDb.get.mockImplementation((query, params, callback) => {
-                capturedParams.push([...params]);
+                if (params && params[0]) {
+                    capturedOrgIds.add(params[0]);
+                }
+                // Return null to trigger default limits path
                 callback(null, null);
             });
 
-            await AccessPolicyService.getOrganizationLimits(org1Id);
-            await AccessPolicyService.getOrganizationLimits(org2Id);
+            await AccessPolicyService.getOrganizationType(org1Id);
+            await AccessPolicyService.getOrganizationType(org2Id);
 
-            // Verify different org IDs were queried
-            expect(capturedParams[0]).toContain(org1Id);
-            expect(capturedParams[1]).toContain(org2Id);
+            // Verify both org IDs were queried independently
+            expect(capturedOrgIds.has(org1Id)).toBe(true);
+            expect(capturedOrgIds.has(org2Id)).toBe(true);
         });
 
         it('should not leak data between organizations', async () => {

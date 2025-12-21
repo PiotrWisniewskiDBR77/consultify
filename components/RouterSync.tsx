@@ -53,10 +53,12 @@ export const RouterSync: React.FC = () => {
 
         // Define Route Map
         if (path === '/demo') {
-            if (currentView !== AppView.FREE_ASSESSMENT_CHAT) {
-                console.log('[RouterSync] Navigating to DEMO');
-                setSessionMode(SessionMode.FREE);
-                setCurrentView(AppView.FREE_ASSESSMENT_CHAT); // Or start of quick flow
+            // Phase B: Demo Session entry
+            if (currentView !== AppView.AUTH) {
+                console.log('[RouterSync] Phase B: Navigating to DEMO');
+                setSessionMode(SessionMode.DEMO);
+                setAuthInitialStep(AuthStep.REGISTER); // Demo requires light auth
+                setCurrentView(AppView.AUTH);
             }
         } else if (path === '/trial/start') {
             if (currentView !== AppView.AUTH) {
@@ -78,12 +80,9 @@ export const RouterSync: React.FC = () => {
             console.log('[RouterSync] Public Share Link accessed');
             // No state change needed - App.tsx will handle this route
         } else if (path === '/' || path === '') {
-            // Default to Welcome if we are at root and NOT in a session
-            // logic: if user is logged in, useAppStore might retain USER_DASHBOARD
-            // Only force Welcome if no user
-            if (!currentUser && currentView !== AppView.WELCOME && currentView !== AppView.AUTH) {
-                setCurrentView(AppView.WELCOME);
-            }
+            // Phase A: Public Landing Page - handled directly by App.tsx Route
+            // No state change needed - the dedicated route renders PublicLandingPage
+            console.log('[RouterSync] Phase A: Public Landing (handled by direct route)');
         }
 
     }, [location, setCurrentView, setSessionMode, setAuthInitialStep, currentUser, currentView]);

@@ -628,6 +628,160 @@ const TrialService = {
             });
         });
     },
+
+    // ==========================================
+    // PHASE C: TRIAL ENTRY (Pre-Organization)
+    // ==========================================
+
+    /**
+     * Enter Trial Phase (Phase C)
+     * Creates a TRIAL_ENTRY user without organization.
+     * User can chat with AI but cannot create initiatives or invite team.
+     * 
+     * @param {string} userId - User entering trial
+     * @param {object} accessCodeData - Data from accepted access code
+     * @returns {Promise<Object>}
+     */
+    enterTrialPhase: async (userId, accessCodeData = {}) => {
+        const now = new Date().toISOString();
+
+        return new Promise((resolve, reject) => {
+            db.run(
+                `UPDATE users 
+                 SET user_status = 'TRIAL_ENTRY',
+                     trial_entry_started_at = ?,
+                     trial_entry_source_code_id = ?
+                 WHERE id = ?`,
+                [now, accessCodeData.codeId || null, userId],
+                async function (err) {
+                    if (err) return reject(err);
+                    if (this.changes === 0) {
+                        return reject(new Error('User not found'));
+                    }
+
+                    try {
+                        // Log audit event
+                        await MetricsCollector.recordEvent('TRIAL_ENTERED', {
+                            userId,
+                            source: accessCodeData.type || 'DIRECT',
+                            codeId: accessCodeData.codeId,
+                            context: {
+                                enteredAt: now,
+                                consultantId: accessCodeData.consultantId
+                            }
+                        });
+
+                        resolve({
+                            success: true,
+                            status: 'TRIAL_ENTRY',
+                            enteredAt: now,
+                            message: 'Witamy w Trial Entry. Możesz rozmawiać z AI i przygotować się do pracy.'
+                        });
+                    } catch (metricsErr) {
+                        console.error('[TrialService] Metrics error (non-fatal):', metricsErr);
+                        resolve({
+                            success: true,
+                            status: 'TRIAL_ENTRY',
+                            enteredAt: now
+                        });
+                    }
+                }
+            );
+        });
+    },
+
+    /**
+     * Get Trial Entry status for a user
+     * @param {string} userId 
+     * @returns {Promise<Object>}
+     */
+    getTrialEntryStatus: async (userId) => {
+        return new Promise((resolve, reject) => {
+            db.get(
+                `SELECT id, user_status, trial_entry_started_at, trial_entry_source_code_id, organization_id
+                 FROM users WHERE id = ?`,
+                [userId],
+                (err, row) => {
+                    if (err) return reject(err);
+                    if (!row) return resolve({ found: false });
+
+                    const isTrialEntry = row.user_status === 'TRIAL_ENTRY';
+                    const hasOrganization = !!row.organization_id;
+
+                    resolve({
+                        found: true,
+                        isTrialEntry,
+                        hasOrganization,
+                        canCreateOrg: isTrialEntry && !hasOrganization,
+                        status: row.user_status,
+                        enteredAt: row.trial_entry_started_at,
+                        sourceCodeId: row.trial_entry_source_code_id
+                    });
+                }
+            );
+        });
+    },
+
+    /**
+     * Promote Trial Entry user to Trial Organization (Phase D transition)
+     * User consciously decides to create an organization.
+     * 
+     * @param {string} userId 
+     * @param {string} orgName 
+     * @returns {Promise<Object>}
+     */
+    promoteToTrialOrg: async (userId, orgName) => {
+        // First check if user is in TRIAL_ENTRY
+        const entryStatus = await TrialService.getTrialEntryStatus(userId);
+
+        if (!entryStatus.found) {
+            throw new Error('User not found');
+        }
+
+        if (!entryStatus.isTrialEntry) {
+            throw new Error('User is not in Trial Entry phase');
+        }
+
+        if (entryStatus.hasOrganization) {
+            throw new Error('User already has an organization');
+        }
+
+        // Create the trial organization
+        const trialResult = await TrialService.createTrialOrganization(userId, orgName);
+
+        // Update user status to TRIAL_ORG
+        await new Promise((resolve, reject) => {
+            db.run(
+                `UPDATE users 
+                 SET user_status = 'TRIAL_ORG',
+                     organization_id = ?
+                 WHERE id = ?`,
+                [trialResult.organizationId, userId],
+                (err) => {
+                    if (err) return reject(err);
+                    resolve();
+                }
+            );
+        });
+
+        // Log the transition
+        await MetricsCollector.recordEvent('TRIAL_ORG_CREATED', {
+            userId,
+            organizationId: trialResult.organizationId,
+            context: {
+                orgName,
+                promotedAt: new Date().toISOString(),
+                previousStatus: 'TRIAL_ENTRY'
+            }
+        });
+
+        return {
+            success: true,
+            organizationId: trialResult.organizationId,
+            status: 'TRIAL_ORG',
+            message: 'Organizacja została utworzona. Witamy w fazie Trial!'
+        };
+    },
 };
 
 module.exports = TrialService;

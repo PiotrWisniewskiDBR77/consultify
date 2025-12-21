@@ -11,7 +11,7 @@
 const express = require('express');
 const router = express.Router();
 
-const authenticate = require('../middleware/authenticate');
+const authenticate = require('../middleware/authMiddleware');
 const orgContextMiddleware = require('../middleware/orgContextMiddleware');
 const { requireOrgAccess } = require('../middleware/rbac');
 const OnboardingService = require('../services/onboardingService');
@@ -59,6 +59,23 @@ router.get('/status',
             res.json(result);
         } catch (err) {
             console.error('Get Status Error:', err);
+            res.status(err.statusCode || 500).json({ error: err.message });
+        }
+    }
+);
+
+/**
+ * GET /aha-signals - Detect AHA moment for conversion nudges
+ * Returns signals indicating user readiness for Phase F (Team Expansion)
+ */
+router.get('/aha-signals',
+    requireOrgAccess({ roles: ['OWNER', 'ADMIN', 'MEMBER'], consultantPermissions: ['can_view'] }),
+    async (req, res) => {
+        try {
+            const result = await OnboardingService.detectAHAMoment(req.org.id);
+            res.json(result);
+        } catch (err) {
+            console.error('AHA Detection Error:', err);
             res.status(err.statusCode || 500).json({ error: err.message });
         }
     }

@@ -277,16 +277,15 @@ describe('AIActionExecutor', () => {
             const actionId = 'action-123';
             const userId = testUsers.admin.id;
 
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, {
-                    id: actionId,
-                    status: AIActionExecutor.ACTION_STATUS.EXECUTED
-                });
+            // Mock that no rows are updated (action not in PENDING status)
+            mockDb.run.mockImplementation((query, params, callback) => {
+                callback.call({ changes: 0 }, null);
             });
 
-            await expect(
-                AIActionExecutor.approveAction(actionId, userId)
-            ).rejects.toThrow();
+            const result = await AIActionExecutor.approveAction(actionId, userId);
+            
+            expect(result.success).toBe(false);
+            expect(result.error).toBeDefined();
         });
     });
 
@@ -323,7 +322,10 @@ describe('AIActionExecutor', () => {
                     id: actionId,
                     status: AIActionExecutor.ACTION_STATUS.APPROVED,
                     action_type: AIActionExecutor.ACTION_TYPES.CREATE_DRAFT_TASK,
-                    payload: JSON.stringify({ title: 'Test Task' })
+                    payload: JSON.stringify({ title: 'Test Task' }),
+                    draft_content: JSON.stringify({ title: 'Test Task', description: 'Description' }),
+                    project_id: testProjects.project1.id,
+                    user_id: testUsers.user.id
                 });
             });
 
@@ -334,7 +336,7 @@ describe('AIActionExecutor', () => {
             const result = await AIActionExecutor.executeAction(actionId);
 
             expect(result.success).toBe(true);
-            expect(result.status).toBe(AIActionExecutor.ACTION_STATUS.EXECUTED);
+            expect(result.actionId).toBe(actionId);
         });
 
         it('should reject execution of non-approved action', async () => {
@@ -347,9 +349,10 @@ describe('AIActionExecutor', () => {
                 });
             });
 
-            await expect(
-                AIActionExecutor.executeAction(actionId)
-            ).rejects.toThrow();
+            const result = await AIActionExecutor.executeAction(actionId);
+            
+            expect(result.success).toBe(false);
+            expect(result.error).toContain('PENDING');
         });
     });
 

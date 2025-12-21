@@ -245,11 +245,16 @@ describe('AIContextBuilder', () => {
                     status: 'active'
                 });
             });
+            
+            mockDb.all.mockImplementation((query, params, callback) => {
+                callback(null, [{ id: 'proj-1' }, { id: 'proj-2' }]);
+            });
 
             const org = await AIContextBuilder._buildOrganizationContext(orgId);
 
-            expect(org.name).toBe('Test Org');
-            expect(org.plan).toBe('enterprise');
+            expect(org.organizationName).toBe('Test Org');
+            expect(org.organizationId).toBe(orgId);
+            expect(org.activeProjectCount).toBe(2);
         });
     });
 
@@ -258,17 +263,27 @@ describe('AIContextBuilder', () => {
             const projectId = testProjects.project1.id;
 
             mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, {
-                    name: 'Test Project',
-                    status: 'active',
-                    ai_role: 'MANAGER'
-                });
+                if (query.includes('SELECT * FROM projects')) {
+                    callback(null, {
+                        id: projectId,
+                        name: 'Test Project',
+                        status: 'active',
+                        current_phase: 'Assessment',
+                        ai_role: 'MANAGER'
+                    });
+                } else if (query.includes('initiatives')) {
+                    callback(null, { total: 5, completed: 2 });
+                } else {
+                    callback(null, null);
+                }
             });
 
             const project = await AIContextBuilder._buildProjectContext(projectId);
 
-            expect(project.name).toBe('Test Project');
-            expect(project.status).toBe('active');
+            expect(project.projectName).toBe('Test Project');
+            expect(project.projectId).toBe(projectId);
+            expect(project.currentPhase).toBe('Assessment');
+            expect(project.initiativeCount).toBe(5);
         });
     });
 });

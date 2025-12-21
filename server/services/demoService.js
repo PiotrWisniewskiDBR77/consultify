@@ -120,91 +120,85 @@ const DemoService = {
     },
 
     /**
-     * Seed default demo data (hardcoded fallback)
+     * Seed default demo data from Legolex Manufacturing template
      * @param {string} organizationId 
      */
     seedDefaultDemoData: async (organizationId) => {
+        const path = require('path');
+        const fs = require('fs');
         const now = new Date().toISOString();
         const projectId = uuidv4();
 
+        // Load comprehensive seed data from JSON
+        let seedData;
+        try {
+            const seedPath = path.join(__dirname, '../seeds/demo_legolex.json');
+            seedData = JSON.parse(fs.readFileSync(seedPath, 'utf-8'));
+        } catch (e) {
+            console.warn('[DemoService] Could not load demo_legolex.json, using minimal fallback');
+            seedData = null;
+        }
+
         return new Promise((resolve, reject) => {
             db.serialize(() => {
+                // Update organization name if seed data available
+                if (seedData?.organization?.name) {
+                    db.run(
+                        `UPDATE organizations SET name = ? WHERE id = ?`,
+                        [seedData.organization.name, organizationId]
+                    );
+                }
+
                 // Create demo project
+                const projectName = seedData?.project?.name || 'Demo Transformation Project';
+                const projectPhase = seedData?.project?.current_phase || 'Context';
                 db.run(
                     `INSERT INTO projects (id, organization_id, name, status, governance_model, current_phase, created_at)
                      VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                    [projectId, organizationId, 'Demo Transformation Project', 'active', 'STANDARD', 'Context', now]
+                    [projectId, organizationId, projectName, 'active', 'STANDARD', projectPhase, now]
                 );
 
-                // Create demo initiatives
-                const initiativeId = uuidv4();
-                db.run(
-                    `INSERT INTO initiatives (id, organization_id, project_id, name, summary, status, priority, created_at)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [
-                        initiativeId,
-                        organizationId,
-                        projectId,
-                        'Digital Process Automation',
-                        'Automate key business processes to improve efficiency and reduce manual errors.',
-                        'IN_PROGRESS',
-                        'HIGH',
-                        now
-                    ]
-                );
+                // Create initiatives from seed data
+                const initiatives = seedData?.initiatives || [
+                    { name: 'Digital Process Automation', summary: 'Automate key business processes.', status: 'IN_PROGRESS', priority: 'HIGH', tasks: [] }
+                ];
 
-                // Create demo tasks
-                db.run(
-                    `INSERT INTO tasks (id, project_id, organization_id, title, description, status, priority, initiative_id, created_at)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [
-                        uuidv4(),
-                        projectId,
-                        organizationId,
-                        'Analyze Current Process',
-                        'Map existing workflows and identify automation opportunities.',
-                        'done',
-                        'high',
-                        initiativeId,
-                        now
-                    ]
-                );
+                const initiativeIds = {};
+                let taskInsertCount = 0;
+                const totalTasks = initiatives.reduce((sum, init) => sum + (init.tasks?.length || 0), 0);
 
-                db.run(
-                    `INSERT INTO tasks (id, project_id, organization_id, title, description, status, priority, initiative_id, created_at)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [
-                        uuidv4(),
-                        projectId,
-                        organizationId,
-                        'Design Automation Solution',
-                        'Create technical design for the automation platform.',
-                        'in_progress',
-                        'high',
-                        initiativeId,
-                        now
-                    ]
-                );
+                for (const init of initiatives) {
+                    const initId = uuidv4();
+                    initiativeIds[init.name] = initId;
 
-                db.run(
-                    `INSERT INTO tasks (id, project_id, organization_id, title, description, status, priority, initiative_id, created_at)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [
-                        uuidv4(),
-                        projectId,
-                        organizationId,
-                        'Pilot Implementation',
-                        'Implement automation in a pilot department.',
-                        'todo',
-                        'medium',
-                        initiativeId,
-                        now
-                    ],
-                    (err) => {
-                        if (err) return reject(err);
-                        resolve();
+                    db.run(
+                        `INSERT INTO initiatives (id, organization_id, project_id, name, summary, status, priority, created_at)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                        [initId, organizationId, projectId, init.name, init.summary || '', init.status || 'DRAFT', init.priority || 'MEDIUM', now]
+                    );
+
+                    // Create tasks for this initiative
+                    if (init.tasks && init.tasks.length > 0) {
+                        for (const task of init.tasks) {
+                            const isLast = taskInsertCount === totalTasks - 1;
+                            db.run(
+                                `INSERT INTO tasks (id, project_id, organization_id, title, description, status, priority, initiative_id, created_at)
+                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                                [uuidv4(), projectId, organizationId, task.title, task.description || '', task.status || 'todo', task.priority || 'medium', initId, now],
+                                isLast ? (err) => {
+                                    if (err) return reject(err);
+                                    resolve();
+                                } : undefined
+                            );
+                            taskInsertCount++;
+                        }
                     }
-                );
+                }
+
+                // If no tasks, resolve immediately
+                if (totalTasks === 0) {
+                    resolve();
+                }
             });
         });
     },

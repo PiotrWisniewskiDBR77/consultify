@@ -196,6 +196,17 @@ function initDb() {
             // Ignore error if column exists
         });
 
+        // Migration: OAuth provider columns
+        db.run(`ALTER TABLE users ADD COLUMN auth_provider TEXT DEFAULT 'local'`, (err) => {
+            // Ignore error if column exists - values: 'local', 'google', 'linkedin'
+        });
+        db.run(`ALTER TABLE users ADD COLUMN google_id TEXT`, (err) => {
+            // Ignore error if column exists - Google OAuth sub ID
+        });
+        db.run(`ALTER TABLE users ADD COLUMN linkedin_id TEXT`, (err) => {
+            // Ignore error if column exists - LinkedIn OAuth ID
+        });
+
         // Sessions Table (Linked to user_id and optionally project_id)
         db.run(`CREATE TABLE IF NOT EXISTS sessions(
                                                         id TEXT PRIMARY KEY,

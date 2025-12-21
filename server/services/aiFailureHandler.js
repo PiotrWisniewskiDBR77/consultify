@@ -7,8 +7,11 @@
  * "Enterprise = predictability in failure"
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db: require('../database'),
+    uuidv4: require('uuid').v4
+};
 
 // Failure scenario types
 const FAILURE_SCENARIOS = {
@@ -45,6 +48,11 @@ const AIFailureHandler = {
     FAILURE_SCENARIOS,
     HEALTH_STATUS,
     FALLBACK_STRATEGIES,
+
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
 
     // ==========================================
     // WRAPPED EXECUTION
@@ -200,7 +208,7 @@ const AIFailureHandler = {
      */
     _getHealthStatus: async () => {
         return new Promise((resolve) => {
-            db.get(`SELECT * FROM ai_health_status WHERE id = 'singleton'`, [], (err, row) => {
+            deps.db.get(`SELECT * FROM ai_health_status WHERE id = 'singleton'`, [], (err, row) => {
                 resolve(row || {
                     overall_status: HEALTH_STATUS.HEALTHY,
                     model_status: 'available',
@@ -220,7 +228,7 @@ const AIFailureHandler = {
         const values = Object.values(updates);
 
         return new Promise((resolve) => {
-            db.run(`
+            deps.db.run(`
                 INSERT INTO ai_health_status (id, ${Object.keys(updates).join(', ')}, updated_at)
                 VALUES ('singleton', ${values.map(() => '?').join(', ')}, CURRENT_TIMESTAMP)
                 ON CONFLICT(id) DO UPDATE SET ${setClauses}, updated_at = CURRENT_TIMESTAMP
@@ -376,11 +384,11 @@ const AIFailureHandler = {
      * Log a failure for monitoring
      */
     logFailure: async (failureType, details = {}) => {
-        const id = uuidv4();
+        const id = deps.uuidv4();
         const { userId, organizationId, projectId, errorMessage, errorCode, fallbackUsed, recoveryAction } = details;
 
         return new Promise((resolve) => {
-            db.run(`
+            deps.db.run(`
                 INSERT INTO ai_failure_log 
                 (id, failure_type, context, user_id, organization_id, project_id, error_message, error_code, fallback_used, recovery_action)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -418,7 +426,7 @@ const AIFailureHandler = {
 
             sql += ` GROUP BY failure_type ORDER BY count DESC`;
 
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) reject(err);
                 else {
                     const summary = {

@@ -1,37 +1,34 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { createRequire } from 'module';
+import { createMockDb } from '../../helpers/dependencyInjector.js';
 
-// Hoisted mocks
-const mockDb = vi.hoisted(() => ({
-    get: vi.fn(),
-    all: vi.fn(),
-    run: vi.fn(),
-    serialize: vi.fn((cb) => cb()),
-    initPromise: Promise.resolve()
-}));
-
-vi.mock('../../../server/database', () => ({
-    default: mockDb
-}));
-
-vi.mock('uuid', () => ({
-    v4: () => 'uuid-1234'
-}));
-
-import CapacityService from '../../../server/services/capacityService.js';
+const require = createRequire(import.meta.url);
 
 describe('CapacityService', () => {
+    let mockDb;
+    let CapacityService;
+    
     beforeEach(() => {
-        vi.clearAllMocks();
-
-        mockDb.get.mockImplementation((sql, params, callback) => {
-            const cb = typeof callback === 'function' ? callback : (typeof params === 'function' ? params : null);
-            if (typeof cb === 'function') cb(null, null);
+        vi.resetModules();
+        
+        mockDb = createMockDb();
+        
+        vi.doMock('../../../server/database', () => ({
+            default: mockDb
+        }));
+        
+        CapacityService = require('../../../server/services/capacityService.js');
+        
+        // Inject mock dependencies
+        CapacityService.setDependencies({
+            db: mockDb,
+            uuidv4: () => 'uuid-1234'
         });
-
-        mockDb.all.mockImplementation((sql, params, callback) => {
-            const cb = typeof callback === 'function' ? callback : (typeof params === 'function' ? params : null);
-            if (typeof cb === 'function') cb(null, []);
-        });
+    });
+    
+    afterEach(() => {
+        vi.restoreAllMocks();
+        vi.doUnmock('../../../server/database');
     });
 
     describe('getUserCapacity', () => {
