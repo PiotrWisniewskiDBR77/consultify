@@ -25,26 +25,26 @@ const getHeaders = () => {
 const trackedFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
     const startTime = Date.now();
     const method = options.method || 'GET';
-    
+
     try {
         const response = await fetch(url, options);
         const duration = Date.now() - startTime;
-        
+
         // Track API call metrics
         frontendMetrics.trackApiCall(url, method, duration, response.status);
-        
+
         return response;
     } catch (error) {
         const duration = Date.now() - startTime;
-        
+
         // Track failed API calls
         frontendMetrics.trackApiCall(url, method, duration, 0);
-        
+
         // Track error
         if (error instanceof Error) {
             frontendMetrics.trackError(error, { url, method });
         }
-        
+
         throw error;
     }
 };
@@ -123,6 +123,20 @@ export const Api = {
             console.warn('Logout API call failed, clearing token anyway:', error);
         }
         localStorage.removeItem('token');
+    },
+
+    // --- DEMO ---
+    startDemo: async (language?: string): Promise<{ token: string; organizationId: string; userId: string; expiresAt: string }> => {
+        const res = await trackedFetch(`${API_URL}/demo/start`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ language: language || 'en' })
+        });
+        const data = await handleResponse(res, 'Failed to start demo');
+        if (data.token) {
+            localStorage.setItem('token', data.token);
+        }
+        return data;
     },
 
     // --- USERS (Admin) ---
@@ -1855,5 +1869,40 @@ export const Api = {
     getOnboardingPlan: async (): Promise<any> => {
         const res = await trackedFetch(`${API_URL}/onboarding/plan`, { headers: getHeaders() });
         return handleResponse(res, 'Failed to get onboarding plan');
+    },
+
+    // --- PHASE G: REFERRALS ---
+    getUserReferrals: async (): Promise<any> => {
+        const res = await trackedFetch(`${API_URL}/referrals/my`, { headers: getHeaders() });
+        return handleResponse(res, 'Failed to fetch user referrals');
+    },
+
+    getEcosystemStats: async (): Promise<any> => {
+        const res = await trackedFetch(`${API_URL}/referrals/stats`, { headers: getHeaders() });
+        return handleResponse(res, 'Failed to fetch ecosystem stats');
+    },
+
+    generateReferralCode: async (expiresInDays: number = 90): Promise<any> => {
+        const res = await trackedFetch(`${API_URL}/referrals/generate`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ expiresInDays })
+        });
+        return handleResponse(res, 'Failed to generate referral code');
+    },
+
+    // --- ACCESS CODES ---
+    validateAccessCode: async (code: string): Promise<{ valid: boolean; type?: string; requiresEmailMatch?: boolean }> => {
+        const res = await trackedFetch(`${API_URL}/access-codes/validate/${code}`);
+        return res.json();
+    },
+
+    acceptAccessCode: async (code: string, email?: string): Promise<{ ok: boolean; type?: string; outcome?: string; organizationId?: string; error?: string }> => {
+        const res = await trackedFetch(`${API_URL}/access-codes/accept`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ code, email })
+        });
+        return res.json();
     }
 };

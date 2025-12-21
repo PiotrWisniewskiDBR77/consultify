@@ -178,6 +178,13 @@ const UserStateMachine = {
             }
         }
 
+        // TEAM_COLLAB → ECOSYSTEM_NODE requires method advocacy or organization success
+        if (fromState === USER_STATES.TEAM_COLLAB && toState === USER_STATES.ECOSYSTEM_NODE) {
+            if (!context.hasMethodAdvocacy && !context.hasOrganizationSuccess) {
+                return { valid: false, reason: 'Method advocacy or organization success required for Ecosystem transition' };
+            }
+        }
+
         return { valid: true };
     },
 

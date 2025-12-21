@@ -68,7 +68,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
 
         const total = strategic + problem + target + execution + value;
         return { total, details: { strategic, problem, target, execution, value } };
-    };
+    }, [initiative]);
 
     const readinessData = calculateReadiness();
     const readiness = readinessData.total;
@@ -107,7 +107,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
         } finally {
             setIsGenerating(false);
         }
-    };
+    }, [initiative, currentUser?.id]);
 
     if (!isOpen) return null;
 

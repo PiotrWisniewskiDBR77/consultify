@@ -1,0 +1,95 @@
+{
+    "organization": {
+        "name": "Legolex Manufacturing"
+    },
+    "project": {
+        "name": "デジタルトランスフォーメーションプログラム",
+        "current_phase": "ロードマップ"
+    },
+    "initiatives": [
+        {
+            "name": "プロセス自動化イニシアチブ",
+            "summary": "反復的なビジネスプロセスを自動化し、効率を改善し、手作業によるエラーを削減します。",
+            "status": "IN_PROGRESS",
+            "priority": "HIGH",
+            "tasks": [
+                {
+                    "title": "現状分析",
+                    "description": "既存のプロセスを文書化し、自動化の機会を特定します。",
+                    "status": "done",
+                    "priority": "high"
+                },
+                {
+                    "title": "技術選定",
+                    "description": "RPAおよびワークフロー自動化ツールを評価します。",
+                    "status": "done",
+                    "priority": "high"
+                },
+                {
+                    "title": "パイロット実装",
+                    "description": "財務部門で自動化を実装します。",
+                    "status": "in_progress",
+                    "priority": "high"
+                },
+                {
+                    "title": "ユーザートレーニング",
+                    "description": "新しい自動化されたワークフローについてスタッフをトレーニングします。",
+                    "status": "todo",
+                    "priority": "medium"
+                },
+                {
+                    "title": "全面展開",
+                    "description": "すべての部門に自動化を拡大します。",
+                    "status": "todo",
+                    "priority": "medium"
+                }
+            ]
+        },
+        {
+            "name": "データ分析プラットフォーム",
+            "summary": "リアルタイムビジネスインテリジェンスのための最新のデータ分析プラットフォームを実装します。",
+            "status": "DRAFT",
+            "priority": "MEDIUM",
+            "tasks": [
+                {
+                    "title": "要件収集",
+                    "description": "ステークホルダーから分析要件を収集します。",
+                    "status": "in_progress",
+                    "priority": "high"
+                },
+                {
+                    "title": "データアーキテクチャ設計",
+                    "description": "データウェアハウスとETLパイプラインを設計します。",
+                    "status": "todo",
+                    "priority": "high"
+                },
+                {
+                    "title": "BIツール選定",
+                    "description": "ビジネスインテリジェンスツールを評価して選択します。",
+                    "status": "todo",
+                    "priority": "medium"
+                }
+            ]
+        },
+        {
+            "name": "顧客体験の向上",
+            "summary": "より良いエンゲージメントと満足度のために、顧客向けデジタルチャネルを改善します。",
+            "status": "DRAFT",
+            "priority": "LOW",
+            "tasks": [
+                {
+                    "title": "カスタマージャーニーマッピング",
+                    "description": "すべてのタッチポイントで現在のカスタマージャーニーをマッピングします。",
+                    "status": "todo",
+                    "priority": "high"
+                },
+                {
+                    "title": "UXリサーチ",
+                    "description": "ユーザーリサーチを実施して課題を特定します。",
+                    "status": "todo",
+                    "priority": "medium"
+                }
+            ]
+        }
+    ]
+}

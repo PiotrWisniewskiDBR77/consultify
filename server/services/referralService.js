@@ -152,6 +152,18 @@ const ReferralService = {
              FROM (SELECT 1)`
         );
 
+        const topReferrers = await allAsync(db,
+            `SELECT u.email, u.first_name, u.last_name, COUNT(ru.id) as total_conversions
+             FROM referral_uses ru
+             JOIN referrals r ON ru.referral_id = r.id
+             JOIN users u ON r.created_by_user_id = u.id
+             WHERE ru.resulted_in_org_id IS NOT NULL
+             GROUP BY u.id
+             ORDER BY total_conversions DESC
+             LIMIT 5`,
+            []
+        );
+
         const conversionRate = stats.total_uses > 0
             ? (stats.conversions / stats.total_uses * 100).toFixed(1)
             : 0;
@@ -161,7 +173,8 @@ const ReferralService = {
             totalUses: stats.total_uses || 0,
             conversions: stats.conversions || 0,
             activeReferrers: stats.active_referrers || 0,
-            conversionRate: parseFloat(conversionRate)
+            conversionRate: parseFloat(conversionRate),
+            topReferrers: topReferrers || []
         };
     }
 };

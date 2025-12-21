@@ -452,15 +452,20 @@ interface AccessCode {
 ```typescript
 interface TrialLimits {
   duration: {
-    days: 30;                    // Fixed, no extensions via self-serve
+    days: 14;                    // Fixed base period (updated from 30)
+    extensions: 2;               // Max trial extensions allowed
+    extensionDays: 14;           // Days per extension
   };
   
   features: {
     drdAxes: 3;                  // Max axes in trial
     positions: 10;               // Max positions per axis
-    initiatives: 1;              // Single initiative allowed
-    teamMembers: 3;              // Limited team size
-    aiQueries: 50;               // Monthly AI interactions
+    initiatives: 5;              // Max initiatives (updated from 1)
+    teamMembers: 4;              // Total users: owner + 3 invites (updated from 3)
+    projects: 3;                 // Max projects
+    aiQueries: 50;               // Daily AI call soft limit
+    aiTokens: 100000;            // Total AI token budget (hard limit)
+    storage: 100;                // Storage limit in MB
     reports: 5;                  // Max generated reports
   };
   
@@ -469,6 +474,7 @@ interface TrialLimits {
     integrations: false;         // No external integrations
     api: false;                  // No API access
     sso: false;                  // No SSO
+    aiRoles: ['ADVISOR'];        // Limited to ADVISOR role only
   };
 }
 ```
@@ -480,11 +486,16 @@ interface TrialLimits {
 │  TRIAL STATUS                                                   │
 │  ─────────────────────────────────────────────────────────────  │
 │                                                                  │
-│  ▓▓▓▓▓▓▓▓░░░░░░░░░░░░  Day 8 of 30                              │
+│  ▓▓▓▓▓▓▓▓░░░░░░░░░░░░  Day 8 of 14                              │
 │                                                                  │
+│  Projects: 1 of 3 used                                          │
 │  Axes: 2 of 3 used                                              │
-│  Team: 1 of 3 members                                           │
-│  AI queries: 12 of 50 used this month                           │
+│  Team: 1 of 4 members                                           │
+│  Initiatives: 2 of 5 active                                     │
+│                                                                  │
+│  AI queries: 12 of 50 today                                     │
+│  AI tokens: 8,450 of 100,000 used                               │
+│  Storage: 23 MB of 100 MB used                                  │
 │                                                                  │
 │  ─────────────────────────────────────────────────────────────  │
 │  Trial limits exist to ensure focused exploration.              │

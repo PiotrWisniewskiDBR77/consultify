@@ -12,6 +12,8 @@ import { PublicLandingPage } from './views/PublicLandingPage';
 import { WelcomeView } from './views/WelcomeView';
 import { ProductEntryPage } from './views/ProductEntryPage';
 import { AuthView } from './views/AuthView';
+import TrialEntryView from './views/TrialEntryView.tsx';
+import AffiliateDashboardView from './views/AffiliateDashboardView.tsx';
 import { FreeAssessmentView } from './views/FreeAssessmentView';
 // OPTIMIZED: Lazy load large views for code splitting
 const FullAssessmentView = React.lazy(() => import('./views/FullAssessmentView').then(m => ({ default: m.FullAssessmentView })));
@@ -315,6 +317,13 @@ const AppContent: React.FC = () => {
             );
         }
 
+        // Trial Entry View (Phase C)
+        if (currentView === AppView.TRIAL_ENTRY) {
+            return (
+                <TrialEntryView onStartTrial={() => setCurrentView(AppView.AUTH)} />
+            );
+        }
+
         // Full Transformation Views
         if (currentView === AppView.FULL_STEP1_CONTEXT) {
             return (
@@ -429,6 +438,13 @@ const AppContent: React.FC = () => {
                 <React.Suspense fallback={<div className="p-8 text-center text-slate-500"><Loader2 className="animate-spin mx-auto mb-2" />Loading Organization Setup...</div>}>
                     <OrgSetupWizard />
                 </React.Suspense>
+            );
+        }
+
+        // Affiliate Dashboard (Phase G)
+        if (currentView === AppView.AFFILIATE_DASHBOARD) {
+            return (
+                <AffiliateDashboardView />
             );
         }
 

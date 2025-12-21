@@ -34,7 +34,7 @@ const DEFAULT_TRIAL_LIMITS = {
     max_ai_calls_per_day: 50, // Soft limit, hard limit is token budget
     max_initiatives: 5,
     max_storage_mb: 100,
-    max_total_tokens: 10000,
+    max_total_tokens: 100000,
     ai_roles_enabled_json: '["ADVISOR"]'
 };
 

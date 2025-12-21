@@ -120,7 +120,14 @@ router.get('/my', authMiddleware, async (req, res) => {
  */
 router.get('/stats', authMiddleware, async (req, res) => {
     try {
-        // TODO: Add admin role check
+        // Only ADMIN or SUPERADMIN can view global stats
+        if (req.userRole !== 'ADMIN' && req.userRole !== 'SUPERADMIN') {
+            return res.status(403).json({
+                success: false,
+                error: 'Unauthorized: Admin access required for ecosystem statistics'
+            });
+        }
+
         const stats = await ReferralService.getEcosystemStats();
 
         res.json({

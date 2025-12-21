@@ -50,7 +50,7 @@ const demoRateLimiter = rateLimit({
  */
 router.post('/start', demoRateLimiter, async (req, res) => {
     try {
-        const { email, templateId, utm_campaign, utm_medium, partner_code } = req.body;
+        const { email, templateId, utm_campaign, utm_medium, partner_code, language } = req.body;
         const clientIp = req.ip || req.connection.remoteAddress;
 
         // Check for existing active demo for this email
@@ -64,8 +64,8 @@ router.post('/start', demoRateLimiter, async (req, res) => {
             }
         }
 
-        // Create demo organization
-        const demo = await DemoService.createDemoOrganization(templateId, email);
+        // Create demo organization with language support
+        const demo = await DemoService.createDemoOrganization(templateId, email, language || 'en');
 
         // Log audit event (organization lifecycle)
         await OrganizationEventService.logEvent(

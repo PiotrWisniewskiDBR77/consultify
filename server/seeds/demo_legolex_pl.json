@@ -1,0 +1,95 @@
+{
+    "organization": {
+        "name": "Legolex Manufacturing"
+    },
+    "project": {
+        "name": "Program Transformacji Cyfrowej",
+        "current_phase": "Mapa Drogowa"
+    },
+    "initiatives": [
+        {
+            "name": "Inicjatywa Automatyzacji Procesów",
+            "summary": "Automatyzacja powtarzalnych procesów biznesowych w celu poprawy wydajności i redukcji błędów manualnych.",
+            "status": "IN_PROGRESS",
+            "priority": "HIGH",
+            "tasks": [
+                {
+                    "title": "Analiza Stanu Obecnego",
+                    "description": "Udokumentowanie istniejących procesów i identyfikacja możliwości automatyzacji.",
+                    "status": "done",
+                    "priority": "high"
+                },
+                {
+                    "title": "Wybór Technologii",
+                    "description": "Ocena narzędzi RPA i automatyzacji przepływów pracy.",
+                    "status": "done",
+                    "priority": "high"
+                },
+                {
+                    "title": "Wdrożenie Pilotażowe",
+                    "description": "Implementacja automatyzacji w dziale finansowym.",
+                    "status": "in_progress",
+                    "priority": "high"
+                },
+                {
+                    "title": "Szkolenie Użytkowników",
+                    "description": "Przeszkolenie personelu w zakresie nowych zautomatyzowanych procesów.",
+                    "status": "todo",
+                    "priority": "medium"
+                },
+                {
+                    "title": "Pełne Wdrożenie",
+                    "description": "Rozszerzenie automatyzacji na wszystkie działy.",
+                    "status": "todo",
+                    "priority": "medium"
+                }
+            ]
+        },
+        {
+            "name": "Platforma Analityki Danych",
+            "summary": "Wdrożenie nowoczesnej platformy analityki danych dla biznesowej inteligencji w czasie rzeczywistym.",
+            "status": "DRAFT",
+            "priority": "MEDIUM",
+            "tasks": [
+                {
+                    "title": "Zbieranie Wymagań",
+                    "description": "Zebranie wymagań analitycznych od interesariuszy.",
+                    "status": "in_progress",
+                    "priority": "high"
+                },
+                {
+                    "title": "Projektowanie Architektury Danych",
+                    "description": "Zaprojektowanie hurtowni danych i procesów ETL.",
+                    "status": "todo",
+                    "priority": "high"
+                },
+                {
+                    "title": "Wybór Narzędzia BI",
+                    "description": "Ocena i wybór narzędzi business intelligence.",
+                    "status": "todo",
+                    "priority": "medium"
+                }
+            ]
+        },
+        {
+            "name": "Poprawa Doświadczenia Klienta",
+            "summary": "Usprawnienie cyfrowych kanałów obsługi klienta dla lepszego zaangażowania i satysfakcji.",
+            "status": "DRAFT",
+            "priority": "LOW",
+            "tasks": [
+                {
+                    "title": "Mapowanie Ścieżki Klienta",
+                    "description": "Zmapowanie obecnych ścieżek klienta we wszystkich punktach kontaktu.",
+                    "status": "todo",
+                    "priority": "high"
+                },
+                {
+                    "title": "Badania UX",
+                    "description": "Przeprowadzenie badań użytkowników w celu identyfikacji problemów.",
+                    "status": "todo",
+                    "priority": "medium"
+                }
+            ]
+        }
+    ]
+}

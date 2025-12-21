@@ -209,6 +209,13 @@ export const Sidebar: React.FC = () => {
       icon: <LayoutDashboard size={20} />,
       viewId: AppView.DASHBOARD_OVERVIEW,
     },
+    // Phase G: Ecosystem Affiliate Dashboard
+    ...(currentUser?.journeyState === 'ECOSYSTEM_NODE' ? [{
+      id: 'AFFILIATE_DASHBOARD',
+      label: t('sidebar.affiliateDashboard', 'Ecosystem Impact'),
+      icon: <TrendingUp size={20} />,
+      viewId: AppView.AFFILIATE_DASHBOARD,
+    }] : []),
 
     {
       id: 'MY_WORK',

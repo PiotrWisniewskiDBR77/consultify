@@ -1,0 +1,95 @@
+{
+    "organization": {
+        "name": "Legolex Manufacturing"
+    },
+    "project": {
+        "name": "Digitales Transformationsprogramm",
+        "current_phase": "Fahrplan"
+    },
+    "initiatives": [
+        {
+            "name": "Prozessautomatisierungs-Initiative",
+            "summary": "Automatisierung wiederkehrender Geschäftsprozesse zur Effizienzsteigerung und Reduzierung manueller Fehler.",
+            "status": "IN_PROGRESS",
+            "priority": "HIGH",
+            "tasks": [
+                {
+                    "title": "Analyse des Ist-Zustands",
+                    "description": "Dokumentation bestehender Prozesse und Identifikation von Automatisierungsmöglichkeiten.",
+                    "status": "done",
+                    "priority": "high"
+                },
+                {
+                    "title": "Technologieauswahl",
+                    "description": "Bewertung von RPA- und Workflow-Automatisierungstools.",
+                    "status": "done",
+                    "priority": "high"
+                },
+                {
+                    "title": "Pilotimplementierung",
+                    "description": "Implementierung der Automatisierung in der Finanzabteilung.",
+                    "status": "in_progress",
+                    "priority": "high"
+                },
+                {
+                    "title": "Benutzerschulung",
+                    "description": "Schulung der Mitarbeiter zu neuen automatisierten Workflows.",
+                    "status": "todo",
+                    "priority": "medium"
+                },
+                {
+                    "title": "Vollständiger Rollout",
+                    "description": "Erweiterung der Automatisierung auf alle Abteilungen.",
+                    "status": "todo",
+                    "priority": "medium"
+                }
+            ]
+        },
+        {
+            "name": "Datenanalyseplattform",
+            "summary": "Implementierung einer modernen Datenanalyseplattform für Echtzeit-Business-Intelligence.",
+            "status": "DRAFT",
+            "priority": "MEDIUM",
+            "tasks": [
+                {
+                    "title": "Anforderungserhebung",
+                    "description": "Sammlung von Analyseanforderungen von Stakeholdern.",
+                    "status": "in_progress",
+                    "priority": "high"
+                },
+                {
+                    "title": "Datenarchitektur-Design",
+                    "description": "Entwurf des Data Warehouse und der ETL-Pipelines.",
+                    "status": "todo",
+                    "priority": "high"
+                },
+                {
+                    "title": "BI-Tool-Auswahl",
+                    "description": "Bewertung und Auswahl von Business-Intelligence-Tools.",
+                    "status": "todo",
+                    "priority": "medium"
+                }
+            ]
+        },
+        {
+            "name": "Verbesserung der Kundenerfahrung",
+            "summary": "Verbesserung kundenorientierter digitaler Kanäle für besseres Engagement und Zufriedenheit.",
+            "status": "DRAFT",
+            "priority": "LOW",
+            "tasks": [
+                {
+                    "title": "Customer Journey Mapping",
+                    "description": "Kartierung aktueller Customer Journeys über alle Touchpoints.",
+                    "status": "todo",
+                    "priority": "high"
+                },
+                {
+                    "title": "UX-Forschung",
+                    "description": "Durchführung von Benutzerforschung zur Identifikation von Schwachstellen.",
+                    "status": "todo",
+                    "priority": "medium"
+                }
+            ]
+        }
+    ]
+}

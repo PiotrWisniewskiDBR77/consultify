@@ -9,7 +9,7 @@ export const TrialBanner: React.FC = () => {
     if (!isTrial || isExpired) return null; // Expired handled by Gate
 
     // Calculate usage percentages
-    const tokenLimit = limits?.maxTotalTokens || 10000;
+    const tokenLimit = limits?.maxTotalTokens || 100000;
     const tokensUsed = usage?.trialTokensUsed || 0;
     const tokenPercent = Math.min(100, (tokensUsed / tokenLimit) * 100);
 

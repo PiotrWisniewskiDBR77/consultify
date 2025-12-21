@@ -1,0 +1,95 @@
+{
+    "organization": {
+        "name": "Legolex Manufacturing"
+    },
+    "project": {
+        "name": "برنامج التحول الرقمي",
+        "current_phase": "خارطة الطريق"
+    },
+    "initiatives": [
+        {
+            "name": "مبادرة أتمتة العمليات",
+            "summary": "أتمتة العمليات التجارية المتكررة لتحسين الكفاءة وتقليل الأخطاء اليدوية.",
+            "status": "IN_PROGRESS",
+            "priority": "HIGH",
+            "tasks": [
+                {
+                    "title": "تحليل الوضع الحالي",
+                    "description": "توثيق العمليات الحالية وتحديد فرص الأتمتة.",
+                    "status": "done",
+                    "priority": "high"
+                },
+                {
+                    "title": "اختيار التكنولوجيا",
+                    "description": "تقييم أدوات RPA وأتمتة سير العمل.",
+                    "status": "done",
+                    "priority": "high"
+                },
+                {
+                    "title": "التنفيذ التجريبي",
+                    "description": "تنفيذ الأتمتة في قسم المالية.",
+                    "status": "in_progress",
+                    "priority": "high"
+                },
+                {
+                    "title": "تدريب المستخدمين",
+                    "description": "تدريب الموظفين على سير العمل الآلي الجديد.",
+                    "status": "todo",
+                    "priority": "medium"
+                },
+                {
+                    "title": "الطرح الكامل",
+                    "description": "توسيع الأتمتة لجميع الأقسام.",
+                    "status": "todo",
+                    "priority": "medium"
+                }
+            ]
+        },
+        {
+            "name": "منصة تحليل البيانات",
+            "summary": "تنفيذ منصة حديثة لتحليل البيانات للحصول على ذكاء الأعمال في الوقت الفعلي.",
+            "status": "DRAFT",
+            "priority": "MEDIUM",
+            "tasks": [
+                {
+                    "title": "جمع المتطلبات",
+                    "description": "جمع متطلبات التحليل من أصحاب المصلحة.",
+                    "status": "in_progress",
+                    "priority": "high"
+                },
+                {
+                    "title": "تصميم بنية البيانات",
+                    "description": "تصميم مستودع البيانات وخطوط ETL.",
+                    "status": "todo",
+                    "priority": "high"
+                },
+                {
+                    "title": "اختيار أداة BI",
+                    "description": "تقييم واختيار أدوات ذكاء الأعمال.",
+                    "status": "todo",
+                    "priority": "medium"
+                }
+            ]
+        },
+        {
+            "name": "تحسين تجربة العملاء",
+            "summary": "تحسين القنوات الرقمية الموجهة للعملاء لتحقيق مشاركة ورضا أفضل.",
+            "status": "DRAFT",
+            "priority": "LOW",
+            "tasks": [
+                {
+                    "title": "رسم رحلة العميل",
+                    "description": "رسم رحلات العملاء الحالية عبر جميع نقاط الاتصال.",
+                    "status": "todo",
+                    "priority": "high"
+                },
+                {
+                    "title": "بحث تجربة المستخدم",
+                    "description": "إجراء بحث المستخدمين لتحديد نقاط الألم.",
+                    "status": "todo",
+                    "priority": "medium"
+                }
+            ]
+        }
+    ]
+}

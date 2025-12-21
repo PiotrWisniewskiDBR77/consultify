@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, X } from 'lucide-react';
+import { useAppStore } from '../../store/useAppStore';
 
 interface HeroSectionProps {
     onDemoClick: () => void;
@@ -16,6 +17,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     onExpertClick
 }) => {
     const [isVideoOpen, setIsVideoOpen] = useState(false);
+    const { theme } = useAppStore();
+    const isDark = theme === 'dark';
 
     const cards = [
         {
@@ -35,7 +38,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             description: 'Use Consultinity on your real organization data and build your roadmap.',
             meta: 'PRIMARY PATH',
             cta: 'Start Trial',
-            image: '/assets/landing/mode_trial_thumb.webp',
+            image: isDark ? '/assets/landing/mode_trial_thumb.webp' : '/assets/landing/mode_strategy_light.png',
             color: 'indigo',
             onClick: onTrialClick,
             primary: true,
@@ -47,7 +50,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             description: 'Guided by Dr. Piotr Wiśniewski',
             meta: 'PRODUCT TOUR',
             cta: 'Watch Video',
-            image: '/assets/landing/hero_abstract_ai.webp',
+            image: isDark ? '/assets/landing/hero_abstract_ai.webp' : '/assets/landing/mode_ai_light.png',
             color: 'black',
             onClick: () => setIsVideoOpen(true),
             isVideo: true,
@@ -158,7 +161,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
                                 {/* Glowing accent for primary */}
                                 {card.primary && (
-                                    <div className="absolute -top-20 -right-20 w-40 h-40 bg-purple-500/20 rounded-full blur-3xl" />
+                                    <div className={`absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl ${isDark ? 'bg-purple-500/20' : 'bg-purple-600/10'}`} />
                                 )}
                             </motion.div>
                         );

@@ -81,7 +81,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(({
         } finally {
             setAiLoading(false);
         }
-    };
+    }, [task, initiative]);
 
     const getRiskColor = (risk?: RiskRating | string) => {
         // Handle RiskRating object or string legacy

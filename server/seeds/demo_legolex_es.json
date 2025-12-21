@@ -1,0 +1,95 @@
+{
+    "organization": {
+        "name": "Legolex Manufacturing"
+    },
+    "project": {
+        "name": "Programa de Transformación Digital",
+        "current_phase": "Hoja de Ruta"
+    },
+    "initiatives": [
+        {
+            "name": "Iniciativa de Automatización de Procesos",
+            "summary": "Automatizar procesos empresariales repetitivos para mejorar la eficiencia y reducir errores manuales.",
+            "status": "IN_PROGRESS",
+            "priority": "HIGH",
+            "tasks": [
+                {
+                    "title": "Análisis del Estado Actual",
+                    "description": "Documentar los procesos existentes e identificar oportunidades de automatización.",
+                    "status": "done",
+                    "priority": "high"
+                },
+                {
+                    "title": "Selección de Tecnología",
+                    "description": "Evaluar herramientas de RPA y automatización de flujos de trabajo.",
+                    "status": "done",
+                    "priority": "high"
+                },
+                {
+                    "title": "Implementación Piloto",
+                    "description": "Implementar la automatización en el departamento financiero.",
+                    "status": "in_progress",
+                    "priority": "high"
+                },
+                {
+                    "title": "Capacitación de Usuarios",
+                    "description": "Capacitar al personal sobre los nuevos flujos de trabajo automatizados.",
+                    "status": "todo",
+                    "priority": "medium"
+                },
+                {
+                    "title": "Despliegue Completo",
+                    "description": "Extender la automatización a todos los departamentos.",
+                    "status": "todo",
+                    "priority": "medium"
+                }
+            ]
+        },
+        {
+            "name": "Plataforma de Análisis de Datos",
+            "summary": "Implementar una plataforma moderna de análisis de datos para inteligencia empresarial en tiempo real.",
+            "status": "DRAFT",
+            "priority": "MEDIUM",
+            "tasks": [
+                {
+                    "title": "Recopilación de Requisitos",
+                    "description": "Recopilar requisitos de análisis de las partes interesadas.",
+                    "status": "in_progress",
+                    "priority": "high"
+                },
+                {
+                    "title": "Diseño de Arquitectura de Datos",
+                    "description": "Diseñar el almacén de datos y las tuberías ETL.",
+                    "status": "todo",
+                    "priority": "high"
+                },
+                {
+                    "title": "Selección de Herramienta BI",
+                    "description": "Evaluar y seleccionar herramientas de inteligencia empresarial.",
+                    "status": "todo",
+                    "priority": "medium"
+                }
+            ]
+        },
+        {
+            "name": "Mejora de la Experiencia del Cliente",
+            "summary": "Mejorar los canales digitales orientados al cliente para una mejor participación y satisfacción.",
+            "status": "DRAFT",
+            "priority": "LOW",
+            "tasks": [
+                {
+                    "title": "Mapeo del Viaje del Cliente",
+                    "description": "Mapear los viajes actuales del cliente en todos los puntos de contacto.",
+                    "status": "todo",
+                    "priority": "high"
+                },
+                {
+                    "title": "Investigación UX",
+                    "description": "Realizar investigación de usuarios para identificar puntos de dolor.",
+                    "status": "todo",
+                    "priority": "medium"
+                }
+            ]
+        }
+    ]
+}

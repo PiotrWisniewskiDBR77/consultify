@@ -15,9 +15,10 @@ const DemoService = {
      * Create a new demo organization with seeded data
      * @param {string} templateId - Optional template ID to seed from
      * @param {string} email - Optional email for lightweight registration
+     * @param {string} language - Language code (en, es, pl, de, ar, ja)
      * @returns {Promise<Object>} - { organizationId, userId, token }
      */
-    createDemoOrganization: async (templateId = null, email = null) => {
+    createDemoOrganization: async (templateId = null, email = null, language = 'en') => {
         const orgId = `demo-${uuidv4().split('-')[0]}`;
         const userId = email ? uuidv4() : `demo-user-${uuidv4().split('-')[0]}`;
         const now = new Date().toISOString();
@@ -67,9 +68,9 @@ const DemoService = {
                     .then(() => {
                         // Seed demo data if template provided
                         if (templateId) {
-                            return DemoService.seedDemoData(orgId, templateId);
+                            return DemoService.seedDemoData(orgId, templateId, language);
                         }
-                        return DemoService.seedDefaultDemoData(orgId);
+                        return DemoService.seedDefaultDemoData(orgId, language);
                     })
                     .then(() => {
                         // Log activity
@@ -97,8 +98,9 @@ const DemoService = {
      * Seed demo data from a template
      * @param {string} organizationId 
      * @param {string} templateId 
+     * @param {string} language - Language code for localized data
      */
-    seedDemoData: async (organizationId, templateId) => {
+    seedDemoData: async (organizationId, templateId, language = 'en') => {
         return new Promise((resolve, reject) => {
             db.get(
                 `SELECT seed_data_json FROM demo_templates WHERE id = ? AND is_active = 1`,
@@ -122,21 +124,33 @@ const DemoService = {
     /**
      * Seed default demo data from Legolex Manufacturing template
      * @param {string} organizationId 
+     * @param {string} language - Language code (en, es, pl, de, ar, ja)
      */
-    seedDefaultDemoData: async (organizationId) => {
+    seedDefaultDemoData: async (organizationId, language = 'en') => {
         const path = require('path');
         const fs = require('fs');
         const now = new Date().toISOString();
         const projectId = uuidv4();
 
-        // Load comprehensive seed data from JSON
+        // Validate and sanitize language code
+        const supportedLanguages = ['en', 'es', 'pl', 'de', 'ar', 'ja'];
+        const lang = supportedLanguages.includes(language) ? language : 'en';
+
+        // Load comprehensive seed data from language-specific JSON
         let seedData;
         try {
-            const seedPath = path.join(__dirname, '../seeds/demo_legolex.json');
+            const seedPath = path.join(__dirname, `../seeds/demo_legolex_${lang}.json`);
             seedData = JSON.parse(fs.readFileSync(seedPath, 'utf-8'));
+            console.log(`[DemoService] Loaded demo data for language: ${lang}`);
         } catch (e) {
-            console.warn('[DemoService] Could not load demo_legolex.json, using minimal fallback');
-            seedData = null;
+            console.warn(`[DemoService] Could not load demo_legolex_${lang}.json, falling back to English`);
+            try {
+                const fallbackPath = path.join(__dirname, '../seeds/demo_legolex_en.json');
+                seedData = JSON.parse(fs.readFileSync(fallbackPath, 'utf-8'));
+            } catch (fallbackErr) {
+                console.error('[DemoService] Could not load any demo data, using minimal fallback');
+                seedData = null;
+            }
         }
 
         return new Promise((resolve, reject) => {

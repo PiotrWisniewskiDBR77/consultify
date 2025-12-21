@@ -11,6 +11,7 @@ export enum AppView {
   QUICK_STEP1_PROFILE = 'QUICK_STEP1_PROFILE',
   QUICK_STEP2_USER_CONTEXT = 'QUICK_STEP2_USER_CONTEXT',
   QUICK_STEP3_EXPECTATIONS = 'QUICK_STEP3_EXPECTATIONS',
+  TRIAL_ENTRY = 'TRIAL_ENTRY', // Phase C: Controlled Trial Selection
 
   // Full Transformation Views
   ONBOARDING_WIZARD = 'ONBOARDING_WIZARD', // Phase E: Guided First Value
@@ -86,7 +87,10 @@ export enum AppView {
   ADMIN_PLAYBOOK_RUNS = 'ADMIN_PLAYBOOK_RUNS',
 
   // Org Admin Consultant Views
-  ADMIN_SETTINGS_CONSULTANTS = 'ADMIN_SETTINGS_CONSULTANTS'
+  ADMIN_SETTINGS_CONSULTANTS = 'ADMIN_SETTINGS_CONSULTANTS',
+
+  // Ecosystem (Phase G)
+  AFFILIATE_DASHBOARD = 'AFFILIATE_DASHBOARD'
 }
 
 // SCMS: Canonical Change Lifecycle Phases (System Reframe Step 0)
@@ -1697,6 +1701,8 @@ export interface User {
   impersonatorId?: string; // ID of the admin impersonating this user
   licensePlanId?: string;
   hasWorkspace?: boolean; // NEW: Indicates if user already has an active workspace
+  journeyState?: string; // Phase G/User Lifecycle State
+  currentPhase?: string; // Phase A-G
 }
 
 export interface FreeSession {
