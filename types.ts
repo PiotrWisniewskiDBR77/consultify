@@ -100,7 +100,8 @@ export enum SCMSPhase {
 
 export enum SessionMode {
   FREE = 'FREE',
-  FULL = 'FULL'
+  FULL = 'FULL',
+  DEMO = 'DEMO'  // Phase B: Read-only demo experience
 }
 
 export enum AuthStep {

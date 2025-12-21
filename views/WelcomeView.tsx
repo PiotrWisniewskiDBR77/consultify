@@ -13,13 +13,24 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({
   onLoginClick
 }) => {
 
+  // North Star positioning
+  const northStar = "The first open consulting ecosystem that teaches leaders to think like Harvard and act in real business — with AI as a partner, not an authority.";
+
   const text = {
     logIn: 'Log In',
     register: 'Register',
-    titleStart: 'Choose Your',
-    titleEnd: 'Transformation Path',
-    subtitle: 'Select the depth of consulting you need today.',
+    titleStart: 'Think Strategically.',
+    titleEnd: 'Act Decisively.',
+    subtitle: 'Learn how to lead transformation with AI as your cognitive partner.',
+    northStarLabel: 'What makes this different?',
 
+    // Primary CTA - low pressure demo path
+    demoTitle: 'See How It Works',
+    demoDesc: 'Watch the system in action. No registration, no pressure. Understand the approach before committing.',
+    demoBtn: 'Explore Demo',
+    demoTime: '~10 minutes',
+
+    // Secondary paths (de-emphasized)
     quickTitle: 'Quick Assessment',
     quickSteps: '3 Steps',
     quickTime: '~5 minutes',
@@ -90,40 +101,60 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({
               <h1 className="text-3xl lg:text-4xl font-bold mb-2 tracking-tight text-navy-950 dark:text-white">
                 {text.titleStart} <span className="text-purple-600 dark:text-purple-500">{text.titleEnd}</span>
               </h1>
-              <p className="text-slate-500 dark:text-slate-400 text-lg">
+              <p className="text-slate-500 dark:text-slate-400 text-lg mb-4">
                 {text.subtitle}
               </p>
+              {/* North Star Statement */}
+              <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-500/20 rounded-lg p-4">
+                <p className="text-xs font-medium text-purple-600 dark:text-purple-400 mb-1">{text.northStarLabel}</p>
+                <p className="text-sm text-slate-700 dark:text-slate-300 italic leading-relaxed">{northStar}</p>
+              </div>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-4">
 
-              {/* OPTION 1: QUICK ASSESSMENT */}
-              <div className="group relative bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 hover:border-purple-500/50 rounded-lg p-6 transition-all duration-300 hover:shadow-lg dark:hover:shadow-glow cursor-pointer"
-                onClick={() => onStartSession(SessionMode.FREE)}>
-                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-100 transition-opacity">
-                  <ArrowRight className="text-purple-500" size={24} />
+              {/* PRIMARY CTA: EXPLORE DEMO (Low Pressure Entry) */}
+              <div className="group relative bg-gradient-to-br from-purple-600 to-indigo-700 border border-purple-500 rounded-lg p-6 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/20 cursor-pointer"
+                onClick={() => onStartSession(SessionMode.DEMO)}>
+                <div className="absolute top-0 right-0 p-4 opacity-50 group-hover:opacity-100 transition-opacity">
+                  <ArrowRight className="text-white" size={24} />
                 </div>
 
                 <div className="flex items-start gap-4 mb-4">
-                  <div className="w-12 h-12 rounded bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center border border-purple-100 dark:border-purple-500/30 group-hover:bg-purple-600 group-hover:border-purple-600 transition-colors">
-                    <Zap className="text-purple-600 dark:text-purple-300 group-hover:text-white" size={24} />
+                  <div className="w-12 h-12 rounded bg-white/10 flex items-center justify-center border border-white/20">
+                    <Zap className="text-white" size={24} />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-navy-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">{text.quickTitle}</h3>
+                    <h3 className="text-xl font-semibold text-white">{text.demoTitle}</h3>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs font-medium px-2 py-0.5 rounded bg-yellow-100 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-500/20">{text.quickSteps}</span>
-                      <span className="text-xs text-slate-500">{text.quickTime}</span>
+                      <span className="text-xs font-medium px-2 py-0.5 rounded bg-white/20 text-white">{text.demoTime}</span>
+                      <span className="text-xs text-white/70">No registration required</span>
                     </div>
                   </div>
                 </div>
 
-                <p className="text-slate-500 dark:text-slate-400 text-sm mb-6 leading-relaxed">
-                  {text.quickDesc}
+                <p className="text-white/80 text-sm mb-6 leading-relaxed">
+                  {text.demoDesc}
                 </p>
 
-                <button className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded transition-colors flex items-center justify-center gap-2">
-                  {text.quickBtn}
+                <button className="w-full py-3 bg-white text-purple-700 font-semibold rounded transition-colors hover:bg-white/90 flex items-center justify-center gap-2">
+                  {text.demoBtn}
                 </button>
+              </div>
+
+              {/* SECONDARY: Quick Assessment */}
+              <div className="group relative bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 hover:border-purple-500/50 rounded-lg p-5 transition-all duration-300 hover:shadow-md cursor-pointer"
+                onClick={() => onStartSession(SessionMode.FREE)}>
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center border border-purple-100 dark:border-purple-500/30">
+                    <Zap className="text-purple-600 dark:text-purple-300" size={20} />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-navy-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">{text.quickTitle}</h3>
+                    <p className="text-xs text-slate-500">{text.quickTime} · {text.quickSteps}</p>
+                  </div>
+                  <ArrowRight className="text-slate-400 group-hover:text-purple-500 transition-colors" size={20} />
+                </div>
               </div>
 
               {/* OPTION 2: FULL TRANSFORMATION */}
