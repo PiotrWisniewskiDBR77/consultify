@@ -6,30 +6,24 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
-import { createMockDb, createMockUuid } from '../../helpers/dependencyInjector.js';
+import { createMockDb } from '../../helpers/dependencyInjector.js';
 import { testUsers, testOrganizations, testProjects } from '../../fixtures/testData.js';
-
-const require = createRequire(import.meta.url);
 
 describe('GovernanceService', () => {
     let mockDb;
     let GovernanceService;
-    let mockUuid;
 
-    beforeEach(() => {
+    beforeEach(async () => {
+        vi.resetModules();
+        
         mockDb = createMockDb();
-        mockUuid = createMockUuid('cr');
 
-        vi.mock('../../../server/database', () => ({
-            default: mockDb
-        }));
-
-        vi.mock('uuid', () => ({
-            v4: mockUuid
-        }));
-
-        GovernanceService = require('../../../server/services/governanceService.js');
+        GovernanceService = (await import('../../../server/services/governanceService.js')).default;
+        
+        GovernanceService.setDependencies({
+            db: mockDb,
+            uuidv4: () => 'cr-1'
+        });
     });
 
     afterEach(() => {
@@ -53,9 +47,9 @@ describe('GovernanceService', () => {
 
             mockDb.run.mockImplementation((query, params, callback) => {
                 expect(query).toContain('INSERT INTO change_requests');
+                expect(query).toContain('DRAFT'); // status is hardcoded in SQL
                 expect(params[0]).toBe('cr-1'); // UUID from mock
                 expect(params[1]).toBe(crData.projectId);
-                expect(params[5]).toBe('DRAFT'); // status
                 callback.call({ changes: 1, lastID: 1 }, null);
             });
 
@@ -78,11 +72,14 @@ describe('GovernanceService', () => {
             };
 
             mockDb.run.mockImplementation((query, params, callback) => {
-                expect(params[6]).toBe('LOW'); // riskAssessment
+                // params[5] is riskAssessment (after id, projectId, title, description, type)
+                expect(params[5]).toBe('LOW');
                 callback.call({ changes: 1 }, null);
             });
 
-            await GovernanceService.createChangeRequest(crData);
+            const result = await GovernanceService.createChangeRequest(crData);
+            
+            expect(result.riskAssessment).toBeUndefined(); // not in input
         });
 
         it('should handle JSON stringification of impactAnalysis', async () => {
@@ -97,7 +94,8 @@ describe('GovernanceService', () => {
             };
 
             mockDb.run.mockImplementation((query, params, callback) => {
-                const impactParam = params[8]; // impact_analysis position
+                // params[7] is impact_analysis (after id, projectId, title, description, type, riskAssessment, rationale)
+                const impactParam = params[7];
                 expect(JSON.parse(impactParam)).toEqual(impactAnalysis);
                 callback.call({ changes: 1 }, null);
             });
@@ -247,7 +245,8 @@ describe('GovernanceService', () => {
             };
 
             mockDb.run.mockImplementation((query, params, callback) => {
-                expect(params[9]).toBe(testUsers.admin.id); // created_by position
+                // created_by is at index 8 (after id, projectId, title, description, type, riskAssessment, rationale, impactAnalysis)
+                expect(params[8]).toBe(testUsers.admin.id);
                 callback.call({ changes: 1 }, null);
             });
 
@@ -267,7 +266,8 @@ describe('GovernanceService', () => {
             };
 
             mockDb.run.mockImplementation((query, params, callback) => {
-                const impactParam = params[8];
+                // impactAnalysis is at index 7 (after id, projectId, title, description, type, riskAssessment, rationale)
+                const impactParam = params[7];
                 expect(JSON.parse(impactParam)).toEqual([]);
                 callback.call({ changes: 1 }, null);
             });

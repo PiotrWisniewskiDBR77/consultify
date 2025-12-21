@@ -15,11 +15,14 @@
  * @module settlementService
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const AttributionService = require('./attributionService');
-const PartnerService = require('./partnerService');
-const MetricsCollector = require('./metricsCollector');
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db: require('../database'),
+    uuidv4: require('uuid').v4,
+    AttributionService: require('./attributionService'),
+    PartnerService: require('./partnerService'),
+    MetricsCollector: require('./metricsCollector')
+};
 
 const PERIOD_STATUS = {
     OPEN: 'OPEN',
@@ -35,6 +38,11 @@ const ENTRY_TYPES = {
 const SettlementService = {
     PERIOD_STATUS,
     ENTRY_TYPES,
+
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
 
     /**
      * Create a new settlement period
@@ -72,10 +80,10 @@ const SettlementService = {
             };
         }
 
-        const id = uuidv4();
+        const id = deps.uuidv4();
 
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `INSERT INTO settlement_periods 
                  (id, period_start, period_end, status)
                  VALUES (?, ?, ?, ?)`,
@@ -110,7 +118,7 @@ const SettlementService = {
      */
     async checkOverlappingPeriod(start, end) {
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT * FROM settlement_periods 
                  WHERE (period_start <= ? AND period_end >= ?)
                     OR (period_start <= ? AND period_end >= ?)
@@ -130,7 +138,7 @@ const SettlementService = {
      */
     async getOpenPeriod() {
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT * FROM settlement_periods WHERE status = ? LIMIT 1`,
                 [PERIOD_STATUS.OPEN],
                 (err, row) => {
@@ -159,7 +167,7 @@ const SettlementService = {
      */
     async getPeriod(periodId) {
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT sp.*, u1.email as calculated_by_email, u2.email as locked_by_email
                  FROM settlement_periods sp
                  LEFT JOIN users u1 ON sp.calculated_by = u1.id
@@ -211,7 +219,7 @@ const SettlementService = {
         params.push(limit, offset);
 
         return new Promise((resolve, reject) => {
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) return reject(err);
 
                 resolve((rows || []).map(row => ({
@@ -265,7 +273,7 @@ const SettlementService = {
         }
 
         // Get attribution events with partner codes in this period
-        const attributions = await AttributionService.exportAttribution({
+        const attributions = await deps.AttributionService.exportAttribution({
             startDate: period.periodStart,
             endDate: period.periodEnd,
             partnerCode: undefined // Get all with partners
@@ -283,7 +291,7 @@ const SettlementService = {
 
         for (const attribution of partnerAttributions) {
             // Find partner by code
-            const partner = await PartnerService.getByPartnerCode(attribution.partnerCode);
+            const partner = await deps.PartnerService.getByPartnerCode(attribution.partnerCode);
 
             if (!partner) {
                 console.warn(`[SettlementService] No partner found for code: ${attribution.partnerCode}`);
@@ -296,7 +304,7 @@ const SettlementService = {
             }
 
             // Get active agreement at attribution time
-            const agreement = await PartnerService.getActiveAgreement(partner.id, attribution.attributedAt);
+            const agreement = await deps.PartnerService.getActiveAgreement(partner.id, attribution.attributedAt);
 
             // Use agreement rate or partner default
             const revenueSharePercent = agreement
@@ -315,7 +323,7 @@ const SettlementService = {
             const settlementAmount = revenueAmount * (revenueSharePercent / 100);
 
             const settlement = {
-                id: uuidv4(),
+                id: deps.uuidv4(),
                 settlementPeriodId: periodId,
                 partnerId: partner.id,
                 organizationId: attribution.organizationId,
@@ -358,9 +366,9 @@ const SettlementService = {
 
         // Step 7: Record metrics event for conversion intelligence
         try {
-            await MetricsCollector.recordEvent(MetricsCollector.EVENT_TYPES.SETTLEMENT_GENERATED, {
+            await deps.MetricsCollector.recordEvent(deps.MetricsCollector.EVENT_TYPES.SETTLEMENT_GENERATED, {
                 userId: calculatedByUserId,
-                source: MetricsCollector.SOURCE_TYPES.PARTNER,
+                source: deps.MetricsCollector.SOURCE_TYPES.PARTNER,
                 context: {
                     periodId,
                     periodStart: period.periodStart,
@@ -400,7 +408,7 @@ const SettlementService = {
 
         // Query organization's paid status and get first payment
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT ob.*, sp.price_monthly
                  FROM organization_billing ob
                  JOIN subscription_plans sp ON ob.subscription_plan_id = sp.id
@@ -422,7 +430,7 @@ const SettlementService = {
      */
     async insertSettlement(settlement) {
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `INSERT INTO partner_settlements 
                  (id, settlement_period_id, partner_id, organization_id, source_attribution_id,
                   revenue_amount, revenue_share_percent, settlement_amount, currency, agreement_id,
@@ -479,7 +487,7 @@ const SettlementService = {
 
         // Get original settlement
         const original = await new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT ps.*, sp.period_start as original_period_start
                  FROM partner_settlements ps
                  JOIN settlement_periods sp ON ps.settlement_period_id = sp.id
@@ -520,7 +528,7 @@ const SettlementService = {
         }
 
         const adjustment = {
-            id: uuidv4(),
+            id: deps.uuidv4(),
             settlementPeriodId: periodId,
             partnerId: original.partner_id,
             organizationId: original.organization_id,
@@ -561,7 +569,7 @@ const SettlementService = {
         }
 
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `DELETE FROM partner_settlements WHERE settlement_period_id = ?`,
                 [periodId],
                 (err) => {
@@ -619,7 +627,7 @@ const SettlementService = {
         params.push(periodId);
 
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `UPDATE settlement_periods SET ${fields.join(', ')} WHERE id = ?`,
                 params,
                 (err) => {
@@ -692,7 +700,7 @@ const SettlementService = {
      */
     async getPeriodSettlements(periodId) {
         return new Promise((resolve, reject) => {
-            db.all(
+            deps.db.all(
                 `SELECT ps.*, p.name as partner_name, o.name as organization_name
                  FROM partner_settlements ps
                  JOIN partners p ON ps.partner_id = p.id
@@ -736,13 +744,13 @@ const SettlementService = {
             throw { errorCode: 'NOT_FOUND', message: 'Settlement period not found' };
         }
 
-        const partner = await PartnerService.getPartner(partnerId);
+        const partner = await deps.PartnerService.getPartner(partnerId);
         if (!partner) {
             throw { errorCode: 'NOT_FOUND', message: 'Partner not found' };
         }
 
         const settlements = await new Promise((resolve, reject) => {
-            db.all(
+            deps.db.all(
                 `SELECT ps.*, o.name as organization_name
                  FROM partner_settlements ps
                  JOIN organizations o ON ps.organization_id = o.id
@@ -798,7 +806,7 @@ const SettlementService = {
      */
     async getPartnerSettlements(partnerId) {
         return new Promise((resolve, reject) => {
-            db.all(
+            deps.db.all(
                 `SELECT ps.*, sp.period_start, sp.period_end, sp.status as period_status, o.name as organization_name
                  FROM partner_settlements ps
                  JOIN settlement_periods sp ON ps.settlement_period_id = sp.id

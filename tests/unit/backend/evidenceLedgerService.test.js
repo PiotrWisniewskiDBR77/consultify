@@ -6,25 +6,24 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
-import { createMockDb, createMockUuid } from '../../helpers/dependencyInjector.js';
+import { createMockDb } from '../../helpers/dependencyInjector.js';
 import { testUsers, testOrganizations, testProjects } from '../../fixtures/testData.js';
-
-const require = createRequire(import.meta.url);
 
 describe('EvidenceLedgerService', () => {
     let mockDb;
     let EvidenceLedgerService;
-    let mockUuid;
+    let uuidCounter = 0;
 
-    beforeEach(() => {
+    beforeEach(async () => {
+        vi.resetModules();
+        uuidCounter = 0;
+        
         mockDb = createMockDb();
-        mockUuid = createMockUuid('evidence');
 
-        EvidenceLedgerService = require('../../../server/services/evidenceLedgerService.js');
+        EvidenceLedgerService = (await import('../../../server/services/evidenceLedgerService.js')).default;
         EvidenceLedgerService.setDependencies({
             db: mockDb,
-            uuidv4: mockUuid
+            uuidv4: () => `evidence-${++uuidCounter}`
         });
     });
 

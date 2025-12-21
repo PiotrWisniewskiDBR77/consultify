@@ -14,22 +14,56 @@ const require = createRequire(import.meta.url);
 
 describe('TokenBillingService', () => {
     let mockDb;
+    let mockCrypto;
     let TokenBillingService;
 
     beforeEach(() => {
-        mockDb = createMockDb();
+        vi.resetModules();
         
-        vi.mock('../../../server/database', () => ({
+        mockDb = createMockDb();
+        mockCrypto = {
+            randomBytes: vi.fn(() => Buffer.from('0123456789abcdef')),
+            createCipheriv: vi.fn(() => ({
+                update: vi.fn(() => Buffer.from('encrypted')),
+                final: vi.fn(() => Buffer.from(''))
+            })),
+            createDecipheriv: vi.fn(() => ({
+                update: vi.fn(() => Buffer.from('decrypted')),
+                final: vi.fn(() => Buffer.from(''))
+            }))
+        };
+        
+        vi.doMock('../../../server/database', () => ({
             default: mockDb
         }));
+        
+        vi.doMock('../../../server/db/sqliteAsync', () => ({
+            runAsync: vi.fn(),
+            getAsync: vi.fn(),
+            allAsync: vi.fn(),
+            withTransaction: vi.fn((fn) => fn(mockDb))
+        }));
 
-        // Clear module cache to ensure fresh import with mocks
-        vi.resetModules();
         TokenBillingService = require('../../../server/services/tokenBillingService.js');
+        
+        // Inject mock dependencies
+        TokenBillingService.setDependencies({
+            db: mockDb,
+            uuidv4: () => 'test-uuid-1234',
+            crypto: mockCrypto,
+            sqliteAsync: {
+                runAsync: vi.fn(),
+                getAsync: vi.fn(),
+                allAsync: vi.fn(),
+                withTransaction: vi.fn((fn) => fn(mockDb))
+            }
+        });
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
+        vi.doUnmock('../../../server/database');
+        vi.doUnmock('../../../server/db/sqliteAsync');
     });
 
     describe('getBalance()', () => {

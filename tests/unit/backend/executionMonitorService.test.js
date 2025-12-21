@@ -6,30 +6,28 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
 import { createMockDb } from '../../helpers/dependencyInjector.js';
 import { testUsers, testOrganizations, testProjects } from '../../fixtures/testData.js';
-
-const require = createRequire(import.meta.url);
 
 describe('ExecutionMonitorService', () => {
     let mockDb;
     let ExecutionMonitorService;
+    let mockNotificationService;
 
-    beforeEach(() => {
+    beforeEach(async () => {
+        vi.resetModules();
+        
         mockDb = createMockDb();
+        mockNotificationService = {
+            create: vi.fn().mockResolvedValue({ id: 'notif-123' })
+        };
 
-        vi.mock('../../../server/database', () => ({
-            default: mockDb
-        }));
-
-        vi.mock('../../../server/services/notificationService', () => ({
-            default: {
-                create: vi.fn().mockResolvedValue({ id: 'notif-123' })
-            }
-        }));
-
-        ExecutionMonitorService = require('../../../server/services/executionMonitorService.js');
+        ExecutionMonitorService = (await import('../../../server/services/executionMonitorService.js')).default;
+        
+        ExecutionMonitorService.setDependencies({
+            db: mockDb,
+            NotificationService: mockNotificationService
+        });
     });
 
     afterEach(() => {
@@ -348,7 +346,8 @@ describe('ExecutionMonitorService', () => {
             const result = await ExecutionMonitorService.generateExecutionSummary(projectId);
 
             expect(result.summaryText).toContain('⚠️');
-            expect(result.summaryText).toContain('STALLED_TASKS');
+            // Summary text uses human-readable text, not type constants
+            expect(result.summaryText).toContain('task(s) have not been updated');
             expect(result.issues).toHaveLength(1);
         });
 
@@ -371,10 +370,11 @@ describe('ExecutionMonitorService', () => {
 
             const result = await ExecutionMonitorService.generateExecutionSummary(projectId);
 
-            expect(result.summaryText).toContain('OVERDUE_TASKS');
-            expect(result.summaryText).toContain('DECISION_INERTIA');
-            expect(result.summaryText).toContain('STALLED_INITIATIVES');
-            expect(result.summaryText).toContain('SILENT_BLOCKERS');
+            // Summary text uses human-readable text
+            expect(result.summaryText).toContain('task(s) are overdue');
+            expect(result.summaryText).toContain('decision(s) have been pending');
+            expect(result.summaryText).toContain('initiative(s) are stalled');
+            expect(result.summaryText).toContain('blocked without explanation');
         });
 
         it('should include generatedAt timestamp', async () => {

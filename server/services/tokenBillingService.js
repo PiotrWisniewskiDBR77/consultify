@@ -7,23 +7,31 @@
  * 3. Local Tokens - Self-hosted LLMs with minimal fee
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const crypto = require('crypto');
-const { runAsync, getAsync, allAsync, withTransaction } = require('../db/sqliteAsync');
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db: require('../database'),
+    uuidv4: require('uuid').v4,
+    crypto: require('crypto'),
+    sqliteAsync: require('../db/sqliteAsync')
+};
 
 // Encryption key for API keys (should be in env)
 const ENCRYPTION_KEY = process.env.API_KEY_ENCRYPTION_SECRET || 'default-32-char-key-for-dev-only!';
 const IV_LENGTH = 16;
 
 class TokenBillingService {
+    // For testing: allow overriding dependencies
+    static setDependencies(newDeps = {}) {
+        Object.assign(deps, newDeps);
+    }
+
     // ==========================================
     // MARGIN MANAGEMENT
     // ==========================================
 
     static async getMargins() {
         return new Promise((resolve, reject) => {
-            db.all('SELECT * FROM billing_margins ORDER BY source_type', [], (err, rows) => {
+            deps.db.all('SELECT * FROM billing_margins ORDER BY source_type', [], (err, rows) => {
                 if (err) reject(err);
                 else resolve(rows || []);
             });
@@ -32,7 +40,7 @@ class TokenBillingService {
 
     static async getMargin(sourceType) {
         return new Promise((resolve, reject) => {
-            db.get('SELECT * FROM billing_margins WHERE source_type = ?', [sourceType], (err, row) => {
+            deps.db.get('SELECT * FROM billing_margins WHERE source_type = ?', [sourceType], (err, row) => {
                 if (err) reject(err);
                 else resolve(row);
             });
@@ -41,7 +49,7 @@ class TokenBillingService {
 
     static async updateMargin(sourceType, { baseCostPer1k, marginPercent, minCharge, isActive }) {
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `UPDATE billing_margins 
                  SET base_cost_per_1k = COALESCE(?, base_cost_per_1k),
                      margin_percent = COALESCE(?, margin_percent),
@@ -64,7 +72,7 @@ class TokenBillingService {
 
     static async getPackages() {
         return new Promise((resolve, reject) => {
-            db.all('SELECT * FROM token_packages WHERE is_active = 1 ORDER BY sort_order', [], (err, rows) => {
+            deps.db.all('SELECT * FROM token_packages WHERE is_active = 1 ORDER BY sort_order', [], (err, rows) => {
                 if (err) reject(err);
                 else resolve(rows || []);
             });
@@ -73,7 +81,7 @@ class TokenBillingService {
 
     static async getPackage(packageId) {
         return new Promise((resolve, reject) => {
-            db.get('SELECT * FROM token_packages WHERE id = ?', [packageId], (err, row) => {
+            deps.db.get('SELECT * FROM token_packages WHERE id = ?', [packageId], (err, row) => {
                 if (err) reject(err);
                 else resolve(row);
             });
@@ -81,9 +89,9 @@ class TokenBillingService {
     }
 
     static async upsertPackage({ id, name, description, tokens, priceUsd, bonusPercent, isPopular, sortOrder, stripePriceId }) {
-        const packageId = id || `pkg-${uuidv4().slice(0, 8)}`;
+        const packageId = id || `pkg-${deps.uuidv4().slice(0, 8)}`;
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `INSERT INTO token_packages (id, name, description, tokens, price_usd, bonus_percent, is_popular, sort_order, stripe_price_id)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                  ON CONFLICT(id) DO UPDATE SET
@@ -105,7 +113,7 @@ class TokenBillingService {
 
     static async getBalance(userId) {
         return new Promise((resolve, reject) => {
-            db.get('SELECT * FROM user_token_balance WHERE user_id = ?', [userId], (err, row) => {
+            deps.db.get('SELECT * FROM user_token_balance WHERE user_id = ?', [userId], (err, row) => {
                 if (err) reject(err);
                 else resolve(row || { user_id: userId, platform_tokens: 0, platform_tokens_bonus: 0, byok_usage_tokens: 0, local_usage_tokens: 0 });
             });
@@ -114,7 +122,7 @@ class TokenBillingService {
 
     static async ensureBalance(userId) {
         return new Promise((resolve, reject) => {
-            db.run(`INSERT OR IGNORE INTO user_token_balance (user_id) VALUES (?)`, [userId], function (err) {
+            deps.db.run(`INSERT OR IGNORE INTO user_token_balance (user_id) VALUES (?)`, [userId], function (err) {
                 if (err) reject(err);
                 else resolve({ userId });
             });
@@ -124,14 +132,14 @@ class TokenBillingService {
     static async creditTokens(userId, tokens, bonusTokens = 0, { packageId, stripePaymentId, organizationId } = {}) {
         await this.ensureBalance(userId);
         return new Promise((resolve, reject) => {
-            db.serialize(() => {
-                db.run(`UPDATE user_token_balance SET platform_tokens = platform_tokens + ?, platform_tokens_bonus = platform_tokens_bonus + ?, lifetime_purchased = lifetime_purchased + ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?`,
+            deps.db.serialize(() => {
+                deps.db.run(`UPDATE user_token_balance SET platform_tokens = platform_tokens + ?, platform_tokens_bonus = platform_tokens_bonus + ?, lifetime_purchased = lifetime_purchased + ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?`,
                     [tokens, bonusTokens, tokens + bonusTokens, userId]);
 
-                const txId = `tx-${uuidv4()}`;
+                const txId = `tx-${deps.uuidv4()}`;
 
                 // 1. Log Transaction
-                db.run(`INSERT INTO token_transactions (id, user_id, organization_id, type, source_type, tokens, package_id, stripe_payment_id, description) VALUES (?, ?, ?, 'purchase', 'platform', ?, ?, ?, ?)`,
+                deps.db.run(`INSERT INTO token_transactions (id, user_id, organization_id, type, source_type, tokens, package_id, stripe_payment_id, description) VALUES (?, ?, ?, 'purchase', 'platform', ?, ?, ?, ?)`,
                     [txId, userId, organizationId, tokens + bonusTokens, packageId, stripePaymentId, `Purchased ${tokens} tokens`],
                     function (err) {
                         if (err) return reject(err);
@@ -139,10 +147,10 @@ class TokenBillingService {
                         // 2. Generate Invoice Record if Organization ID is present
                         if (organizationId) {
                             // Fetch Package Price to log invoice correctly
-                            db.get('SELECT price_usd FROM token_packages WHERE id = ?', [packageId], (err, row) => {
+                            deps.db.get('SELECT price_usd FROM token_packages WHERE id = ?', [packageId], (err, row) => {
                                 if (row && row.price_usd > 0) {
-                                    const invoiceId = `inv-${uuidv4().slice(0, 8)}`;
-                                    db.run(`INSERT INTO billing_invoices (id, organization_id, amount_due, currency, status, stripe_invoice_id, created_at) VALUES (?, ?, ?, 'USD', 'paid', ?, CURRENT_TIMESTAMP)`,
+                                    const invoiceId = `inv-${deps.uuidv4().slice(0, 8)}`;
+                                    deps.db.run(`INSERT INTO billing_invoices (id, organization_id, amount_due, currency, status, stripe_invoice_id, created_at) VALUES (?, ?, ?, 'USD', 'paid', ?, CURRENT_TIMESTAMP)`,
                                         [invoiceId, organizationId, row.price_usd, stripePaymentId || 'manual_credit']);
                                 }
                             });
@@ -180,8 +188,8 @@ class TokenBillingService {
         marginUsd = Math.max(marginUsd, minCharge);
 
         return new Promise((resolve, reject) => {
-            db.serialize(() => {
-                db.run('BEGIN TRANSACTION');
+            deps.db.serialize(() => {
+                deps.db.run('BEGIN TRANSACTION');
 
                 // 2. DEDUCTION LOGIC
                 // PRIORITY: If OrganizationID present and Source=Platform, deduct from ORGANIZATION Balance
@@ -189,14 +197,14 @@ class TokenBillingService {
 
                 if (organizationId && sourceType === 'platform') {
                     // Org-Level Deduction
-                    db.run(
+                    deps.db.run(
                         `UPDATE organizations 
                          SET token_balance = MAX(0, IFNULL(token_balance, 0) - ?) 
                          WHERE id = ?`,
                         [billedTokens, organizationId],
                         function (err) {
                             if (err) {
-                                db.run('ROLLBACK');
+                                deps.db.run('ROLLBACK');
                                 return reject(err);
                             }
                         }
@@ -206,11 +214,11 @@ class TokenBillingService {
                     const field = sourceType === 'platform' ? 'platform_tokens' : sourceType === 'byok' ? 'byok_usage_tokens' : 'local_usage_tokens';
                     const op = sourceType === 'platform' ? `${field} = MAX(0, ${field} - ?)` : `${field} = ${field} + ?`;
 
-                    db.run(`UPDATE user_token_balance SET ${op}, lifetime_used = lifetime_used + ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?`,
+                    deps.db.run(`UPDATE user_token_balance SET ${op}, lifetime_used = lifetime_used + ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?`,
                         [billedTokens, billedTokens, userId],
                         function (err) {
                             if (err) {
-                                db.run('ROLLBACK');
+                                deps.db.run('ROLLBACK');
                                 return reject(err);
                             }
                         }
@@ -218,20 +226,20 @@ class TokenBillingService {
                 }
 
                 // 3. LOG TRANSACTION (Legacy table)
-                const txId = `tx-${uuidv4()}`;
+                const txId = `tx-${deps.uuidv4()}`;
                 const metadata = JSON.stringify({ raw_tokens: tokens, multiplier: finalMultiplier });
 
-                db.run(`INSERT INTO token_transactions (id, user_id, organization_id, type, source_type, tokens, margin_usd, net_revenue_usd, llm_provider, model_used, description, metadata) VALUES (?, ?, ?, 'usage', ?, ?, ?, ?, ?, ?, ?, ?)`,
+                deps.db.run(`INSERT INTO token_transactions (id, user_id, organization_id, type, source_type, tokens, margin_usd, net_revenue_usd, llm_provider, model_used, description, metadata) VALUES (?, ?, ?, 'usage', ?, ?, ?, ?, ?, ?, ?, ?)`,
                     [txId, userId, organizationId, sourceType, -billedTokens, marginUsd, marginUsd, llmProvider, modelUsed, `Used ${tokens} tokens (x${finalMultiplier}) via ${sourceType}`, metadata],
                     function (err) {
                         if (err) {
-                            db.run('ROLLBACK');
+                            deps.db.run('ROLLBACK');
                             return reject(err);
                         }
 
                         // 4. LOG TO TOKEN_LEDGER (New immutable ledger)
                         if (organizationId) {
-                            const ledgerId = `led-${uuidv4()}`;
+                            const ledgerId = `led-${deps.uuidv4()}`;
                             const ledgerMeta = JSON.stringify({
                                 raw_tokens: tokens,
                                 multiplier: finalMultiplier,
@@ -239,7 +247,7 @@ class TokenBillingService {
                                 model_used: modelUsed,
                                 margin_usd: marginUsd
                             });
-                            db.run(
+                            deps.db.run(
                                 `INSERT INTO token_ledger (id, organization_id, actor_user_id, actor_type, type, amount, reason, ref_entity_type, ref_entity_id, metadata_json)
                                  VALUES (?, ?, ?, 'USER', 'DEBIT', ?, ?, 'AI_CALL', ?, ?)`,
                                 [ledgerId, organizationId, userId, billedTokens, `AI Call: ${modelUsed || 'unknown'}`, txId, ledgerMeta],
@@ -248,14 +256,14 @@ class TokenBillingService {
                                         console.error('Token Ledger Insert Error (non-fatal):', ledgerErr);
                                         // Non-fatal: continue with commit
                                     }
-                                    db.run('COMMIT', (commitErr) => {
+                                    deps.db.run('COMMIT', (commitErr) => {
                                         if (commitErr) return reject(commitErr);
                                         resolve({ transactionId: txId, tokens: billedTokens, marginUsd });
                                     });
                                 }
                             );
                         } else {
-                            db.run('COMMIT', (commitErr) => {
+                            deps.db.run('COMMIT', (commitErr) => {
                                 if (commitErr) return reject(commitErr);
                                 resolve({ transactionId: txId, tokens: billedTokens, marginUsd });
                             });
@@ -276,9 +284,9 @@ class TokenBillingService {
     // ==========================================
 
     static encryptApiKey(apiKey) {
-        const iv = crypto.randomBytes(IV_LENGTH);
-        const key = crypto.scryptSync(ENCRYPTION_KEY, 'salt', 32);
-        const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+        const iv = deps.crypto.randomBytes(IV_LENGTH);
+        const key = deps.crypto.scryptSync(ENCRYPTION_KEY, 'salt', 32);
+        const cipher = deps.crypto.createCipheriv('aes-256-cbc', key, iv);
         let encrypted = cipher.update(apiKey, 'utf8', 'hex');
         encrypted += cipher.final('hex');
         return iv.toString('hex') + ':' + encrypted;
@@ -287,18 +295,18 @@ class TokenBillingService {
     static decryptApiKey(encryptedKey) {
         const [ivHex, encrypted] = encryptedKey.split(':');
         const iv = Buffer.from(ivHex, 'hex');
-        const key = crypto.scryptSync(ENCRYPTION_KEY, 'salt', 32);
-        const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+        const key = deps.crypto.scryptSync(ENCRYPTION_KEY, 'salt', 32);
+        const decipher = deps.crypto.createDecipheriv('aes-256-cbc', key, iv);
         let decrypted = decipher.update(encrypted, 'hex', 'utf8');
         decrypted += decipher.final('utf8');
         return decrypted;
     }
 
     static async addUserApiKey(userId, { provider, apiKey, displayName, modelPreference, organizationId }) {
-        const id = `uak-${uuidv4()}`;
+        const id = `uak-${deps.uuidv4()}`;
         const encryptedKey = this.encryptApiKey(apiKey);
         return new Promise((resolve, reject) => {
-            db.run(`INSERT INTO user_api_keys (id, user_id, organization_id, provider, display_name, encrypted_key, model_preference) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            deps.db.run(`INSERT INTO user_api_keys (id, user_id, organization_id, provider, display_name, encrypted_key, model_preference) VALUES (?, ?, ?, ?, ?, ?, ?)`,
                 [id, userId, organizationId, provider, displayName || provider, encryptedKey, modelPreference],
                 function (err) { if (err) reject(err); else resolve({ id, provider }); });
         });
@@ -306,14 +314,14 @@ class TokenBillingService {
 
     static async getUserApiKeys(userId) {
         return new Promise((resolve, reject) => {
-            db.all(`SELECT id, user_id, provider, display_name, model_preference, is_active, is_default, usage_count, last_used_at, created_at FROM user_api_keys WHERE user_id = ? ORDER BY is_default DESC, created_at`, [userId],
+            deps.db.all(`SELECT id, user_id, provider, display_name, model_preference, is_active, is_default, usage_count, last_used_at, created_at FROM user_api_keys WHERE user_id = ? ORDER BY is_default DESC, created_at`, [userId],
                 (err, rows) => { if (err) reject(err); else resolve(rows || []); });
         });
     }
 
     static async getActiveByokKey(userId, provider) {
         return new Promise((resolve, reject) => {
-            db.get(`SELECT * FROM user_api_keys WHERE user_id = ? AND provider = ? AND is_active = 1 ORDER BY is_default DESC LIMIT 1`, [userId, provider],
+            deps.db.get(`SELECT * FROM user_api_keys WHERE user_id = ? AND provider = ? AND is_active = 1 ORDER BY is_default DESC LIMIT 1`, [userId, provider],
                 (err, row) => {
                     if (err) reject(err);
                     else if (!row) resolve(null);
@@ -324,7 +332,7 @@ class TokenBillingService {
 
     static async deleteUserApiKey(keyId, userId) {
         return new Promise((resolve, reject) => {
-            db.run('DELETE FROM user_api_keys WHERE id = ? AND user_id = ?', [keyId, userId],
+            deps.db.run('DELETE FROM user_api_keys WHERE id = ? AND user_id = ?', [keyId, userId],
                 function (err) { if (err) reject(err); else resolve({ deleted: this.changes > 0 }); });
         });
     }
@@ -335,7 +343,7 @@ class TokenBillingService {
 
     static async getTransactions(userId, { limit = 50, offset = 0 } = {}) {
         return new Promise((resolve, reject) => {
-            db.all('SELECT * FROM token_transactions WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?', [userId, limit, offset],
+            deps.db.all('SELECT * FROM token_transactions WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?', [userId, limit, offset],
                 (err, rows) => { if (err) reject(err); else resolve(rows || []); });
         });
     }
@@ -344,7 +352,7 @@ class TokenBillingService {
         const start = startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
         const end = endDate || new Date().toISOString();
         return new Promise((resolve, reject) => {
-            db.all(`SELECT source_type, COUNT(*) as transaction_count, SUM(ABS(tokens)) as total_tokens, SUM(margin_usd) as total_margin, SUM(net_revenue_usd) as total_revenue FROM token_transactions WHERE type = 'usage' AND created_at BETWEEN ? AND ? GROUP BY source_type`, [start, end],
+            deps.db.all(`SELECT source_type, COUNT(*) as transaction_count, SUM(ABS(tokens)) as total_tokens, SUM(margin_usd) as total_margin, SUM(net_revenue_usd) as total_revenue FROM token_transactions WHERE type = 'usage' AND created_at BETWEEN ? AND ? GROUP BY source_type`, [start, end],
                 (err, rows) => { if (err) reject(err); else resolve(rows || []); });
         });
     }
@@ -471,7 +479,7 @@ class TokenBillingService {
             if (upd.changes === 0) throw new Error('Organization not found');
 
             // 4) Legacy transaction (backward compat)
-            const txId = `tx-${uuidv4()}`;
+            const txId = `tx-${deps.uuidv4()}`;
             const legacyMeta = JSON.stringify({ raw_tokens: tokens, multiplier: finalMultiplier });
 
             await runAsync(
@@ -495,7 +503,7 @@ class TokenBillingService {
             );
 
             // 5) Immutable ledger entry (FATAL - will rollback on failure)
-            const ledgerId = `led-${uuidv4()}`;
+            const ledgerId = `led-${deps.uuidv4()}`;
             const ledgerMeta = JSON.stringify({
                 raw_tokens: tokens,
                 billed_tokens: billedTokens,
@@ -532,7 +540,7 @@ class TokenBillingService {
                 );
 
                 // Log PAYGO event to ledger
-                const paygoLedgerId = `led-${uuidv4()}`;
+                const paygoLedgerId = `led-${deps.uuidv4()}`;
                 await runAsync(
                     db,
                     `INSERT INTO token_ledger
@@ -559,7 +567,7 @@ class TokenBillingService {
      */
     static async getLedger(orgId, { limit = 50, offset = 0 } = {}) {
         return new Promise((resolve, reject) => {
-            db.all(
+            deps.db.all(
                 `SELECT 
                     id, created_at, actor_user_id, actor_type, type, amount, reason, 
                     ref_entity_type, ref_entity_id, metadata_json
@@ -584,7 +592,7 @@ class TokenBillingService {
      * @returns {Promise<Object>}
      */
     static async creditOrganization(orgId, tokens, { userId = null, reason = 'Credit', refType = 'GRANT', refId = null, metadata = {} } = {}) {
-        const ledgerId = `led-${uuidv4()}`;
+        const ledgerId = `led-${deps.uuidv4()}`;
         const metadataJson = JSON.stringify(metadata);
 
         return withTransaction(db, async () => {
@@ -615,7 +623,7 @@ class TokenBillingService {
      */
     static async getLedgerSummary(orgId) {
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT 
                     SUM(CASE WHEN type = 'CREDIT' THEN amount ELSE 0 END) as total_credits,
                     SUM(CASE WHEN type = 'DEBIT' THEN amount ELSE 0 END) as total_debits,

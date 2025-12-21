@@ -6,40 +6,29 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
-import { createMockDb, createMockUuid } from '../../helpers/dependencyInjector.js';
+import { createMockDb } from '../../helpers/dependencyInjector.js';
 import { testUsers, testOrganizations, testProjects } from '../../fixtures/testData.js';
-
-const require = createRequire(import.meta.url);
-
-// Mock UUID before imports - must be at module level
-const mockUuid = createMockUuid('escalation');
-vi.mock('uuid', () => ({
-    v4: mockUuid
-}));
 
 describe('EscalationService', () => {
     let mockDb;
     let EscalationService;
     let mockNotificationService;
 
-    beforeEach(() => {
+    beforeEach(async () => {
+        vi.resetModules();
+        
         mockDb = createMockDb();
         mockNotificationService = {
             create: vi.fn().mockResolvedValue({ id: 'notif-123' })
         };
 
-        vi.mock('../../../server/database', () => ({
-            default: mockDb
-        }));
-
-        vi.mock('../../../server/services/notificationService', () => ({
-            default: mockNotificationService
-        }));
-
-        // Clear module cache to ensure fresh import with mocks
-        vi.resetModules();
-        EscalationService = require('../../../server/services/escalationService.js');
+        EscalationService = (await import('../../../server/services/escalationService.js')).default;
+        
+        EscalationService.setDependencies({
+            db: mockDb,
+            uuidv4: () => 'escalation-1',
+            NotificationService: mockNotificationService
+        });
     });
 
     afterEach(() => {

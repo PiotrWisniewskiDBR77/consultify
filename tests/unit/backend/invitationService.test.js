@@ -6,46 +6,69 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
 import { createMockDb } from '../../helpers/dependencyInjector.js';
 import { testUsers, testOrganizations, testProjects } from '../../fixtures/testData.js';
-
-const require = createRequire(import.meta.url);
 
 describe('InvitationService', () => {
     let mockDb;
     let InvitationService;
     let mockAccessPolicyService;
+    let mockAttributionService;
+    let mockMetricsCollector;
+    let mockCrypto;
+    let mockBcrypt;
+    let tokenCounter;
 
-    beforeEach(() => {
+    beforeEach(async () => {
+        vi.resetModules();
+        tokenCounter = 0;
+        
         mockDb = createMockDb();
         
         // Mock AccessPolicyService
         mockAccessPolicyService = {
-            canInviteUsers: vi.fn().mockResolvedValue({ allowed: true })
+            canInviteUsers: vi.fn().mockResolvedValue({ allowed: true }),
+            getSeatAvailability: vi.fn().mockResolvedValue({
+                available: 5,
+                used: 3,
+                total: 8
+            })
         };
 
-        vi.mock('../../../server/database', () => ({
-            default: mockDb
-        }));
+        mockAttributionService = {
+            recordAttribution: vi.fn().mockResolvedValue({})
+        };
 
-        vi.mock('../../../server/services/accessPolicyService', () => ({
-            default: mockAccessPolicyService
-        }));
+        mockMetricsCollector = {
+            record: vi.fn().mockResolvedValue({})
+        };
 
-        vi.mock('../../../server/services/attributionService', () => ({
-            default: {
-                recordAttribution: vi.fn().mockResolvedValue({})
-            }
-        }));
+        // Create unique tokens for each call
+        mockCrypto = {
+            randomBytes: vi.fn().mockImplementation(() => ({ 
+                toString: () => `${String(++tokenCounter).padStart(2, '0')}${'a'.repeat(62)}` 
+            })),
+            createHash: vi.fn().mockImplementation(() => ({
+                update: vi.fn().mockReturnThis(),
+                digest: vi.fn().mockReturnValue('b'.repeat(64))
+            }))
+        };
 
-        vi.mock('../../../server/services/metricsCollector', () => ({
-            default: {
-                record: vi.fn().mockResolvedValue({})
-            }
-        }));
+        mockBcrypt = {
+            hash: vi.fn().mockResolvedValue('hashed-password')
+        };
 
-        InvitationService = require('../../../server/services/invitationService.js');
+        InvitationService = (await import('../../../server/services/invitationService.js')).default;
+        
+        InvitationService.setDependencies({
+            db: mockDb,
+            crypto: mockCrypto,
+            bcrypt: mockBcrypt,
+            uuidv4: () => 'test-invitation-uuid',
+            AccessPolicyService: mockAccessPolicyService,
+            AttributionService: mockAttributionService,
+            MetricsCollector: mockMetricsCollector
+        });
     });
 
     afterEach(() => {

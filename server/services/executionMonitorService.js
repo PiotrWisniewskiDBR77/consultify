@@ -1,10 +1,18 @@
 // Execution Monitor Service - AI-powered execution oversight
 // Step 5: Execution Control, My Work & Notifications
 
-const db = require('../database');
-const NotificationService = require('./notificationService');
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db: require('../database'),
+    NotificationService: require('./notificationService')
+};
 
 const ExecutionMonitorService = {
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
+
     /**
      * Run daily execution monitoring for a project
      */
@@ -110,7 +118,7 @@ const ExecutionMonitorService = {
      */
     _detectStalledTasks: async (projectId) => {
         return new Promise((resolve, reject) => {
-            db.all(`SELECT t.*, u.first_name, u.last_name
+            deps.db.all(`SELECT t.*, u.first_name, u.last_name
                     FROM tasks t
                     LEFT JOIN users u ON t.assignee_id = u.id
                     WHERE t.project_id = ? 
@@ -128,7 +136,7 @@ const ExecutionMonitorService = {
      */
     _detectOverdueTasks: async (projectId) => {
         return new Promise((resolve, reject) => {
-            db.all(`SELECT t.*, u.first_name, u.last_name
+            deps.db.all(`SELECT t.*, u.first_name, u.last_name
                     FROM tasks t
                     LEFT JOIN users u ON t.assignee_id = u.id
                     WHERE t.project_id = ? 
@@ -146,7 +154,7 @@ const ExecutionMonitorService = {
      */
     _detectOverdueDecisions: async (projectId) => {
         return new Promise((resolve, reject) => {
-            db.all(`SELECT * FROM decisions 
+            deps.db.all(`SELECT * FROM decisions 
                     WHERE project_id = ? 
                     AND status = 'PENDING'
                     AND created_at < datetime('now', '-7 days')`,
@@ -162,7 +170,7 @@ const ExecutionMonitorService = {
      */
     _detectStalledInitiatives: async (projectId) => {
         return new Promise((resolve, reject) => {
-            db.all(`SELECT * FROM initiatives
+            deps.db.all(`SELECT * FROM initiatives
                     WHERE project_id = ? 
                     AND status IN ('IN_EXECUTION', 'APPROVED')
                     AND updated_at < datetime('now', '-7 days')`,
@@ -178,7 +186,7 @@ const ExecutionMonitorService = {
      */
     _detectSilentBlockers: async (projectId) => {
         return new Promise((resolve, reject) => {
-            db.all(`SELECT t.id, t.title, 'TASK' as type FROM tasks t
+            deps.db.all(`SELECT t.id, t.title, 'TASK' as type FROM tasks t
                     WHERE t.project_id = ? AND t.status IN ('blocked', 'BLOCKED') AND (t.blocked_reason IS NULL OR t.blocked_reason = '')
                     UNION ALL
                     SELECT i.id, i.name as title, 'INITIATIVE' as type FROM initiatives i

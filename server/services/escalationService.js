@@ -1,11 +1,19 @@
 // Escalation Service - Escalation workflows
 // Step 5: Execution Control, My Work & Notifications
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const NotificationService = require('./notificationService');
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db: require('../database'),
+    uuidv4: require('uuid').v4,
+    NotificationService: require('./notificationService')
+};
 
 const EscalationService = {
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
+
     /**
      * Create an escalation
      */
@@ -15,20 +23,20 @@ const EscalationService = {
             toUserId, toRole, reason, triggerType, daysOverdue
         } = escalation;
 
-        const id = uuidv4();
+        const id = deps.uuidv4();
 
         return new Promise((resolve, reject) => {
             const sql = `INSERT INTO escalations 
                 (id, project_id, source_type, source_id, from_user_id, to_user_id, to_role, reason, trigger_type, days_overdue)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
-            db.run(sql, [id, projectId, sourceType, sourceId, fromUserId, toUserId, toRole, reason, triggerType, daysOverdue || 0],
+            deps.db.run(sql, [id, projectId, sourceType, sourceId, fromUserId, toUserId, toRole, reason, triggerType, daysOverdue || 0],
                 async function (err) {
                     if (err) return reject(err);
 
                     // Notify escalation target
                     const orgId = await EscalationService._getOrgId(projectId);
-                    await NotificationService.create({
+                    await deps.NotificationService.create({
                         userId: toUserId,
                         organizationId: orgId,
                         projectId,
@@ -67,7 +75,7 @@ const EscalationService = {
 
             sql += ` ORDER BY e.created_at DESC`;
 
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) return reject(err);
                 resolve(rows || []);
             });
@@ -79,7 +87,7 @@ const EscalationService = {
      */
     acknowledgeEscalation: async (escalationId, userId) => {
         return new Promise((resolve, reject) => {
-            db.run(`UPDATE escalations SET status = 'ACKNOWLEDGED', acknowledged_at = CURRENT_TIMESTAMP 
+            deps.db.run(`UPDATE escalations SET status = 'ACKNOWLEDGED', acknowledged_at = CURRENT_TIMESTAMP 
                     WHERE id = ? AND to_user_id = ?`, [escalationId, userId], function (err) {
                 if (err) return reject(err);
                 resolve({ updated: this.changes > 0 });
@@ -92,7 +100,7 @@ const EscalationService = {
      */
     resolveEscalation: async (escalationId) => {
         return new Promise((resolve, reject) => {
-            db.run(`UPDATE escalations SET status = 'RESOLVED', resolved_at = CURRENT_TIMESTAMP 
+            deps.db.run(`UPDATE escalations SET status = 'RESOLVED', resolved_at = CURRENT_TIMESTAMP 
                     WHERE id = ?`, [escalationId], function (err) {
                 if (err) return reject(err);
                 resolve({ updated: this.changes > 0 });
@@ -108,7 +116,7 @@ const EscalationService = {
 
         // Get project settings
         const project = await new Promise((resolve, reject) => {
-            db.get(`SELECT p.*, u.id as sponsor_id FROM projects p
+            deps.db.get(`SELECT p.*, u.id as sponsor_id FROM projects p
                     LEFT JOIN users u ON p.sponsor_id = u.id
                     WHERE p.id = ?`, [projectId], (err, row) => {
                 if (err) reject(err);
@@ -120,7 +128,7 @@ const EscalationService = {
 
         // 1. Escalate overdue decisions to sponsor
         const overdueDecisions = await new Promise((resolve, reject) => {
-            db.all(`SELECT * FROM decisions 
+            deps.db.all(`SELECT * FROM decisions 
                     WHERE project_id = ? AND status = 'PENDING'
                     AND created_at < datetime('now', '-14 days')`, [projectId], (err, rows) => {
                 if (err) reject(err);
@@ -132,7 +140,7 @@ const EscalationService = {
             if (project.sponsor_id && decision.decision_owner_id !== project.sponsor_id) {
                 // Check if already escalated
                 const existing = await new Promise((resolve) => {
-                    db.get(`SELECT id FROM escalations WHERE source_id = ? AND status != 'RESOLVED'`,
+                    deps.db.get(`SELECT id FROM escalations WHERE source_id = ? AND status != 'RESOLVED'`,
                         [decision.id], (err, row) => resolve(row));
                 });
 
@@ -155,7 +163,7 @@ const EscalationService = {
 
         // 2. Escalate stalled initiatives
         const stalledInitiatives = await new Promise((resolve, reject) => {
-            db.all(`SELECT * FROM initiatives
+            deps.db.all(`SELECT * FROM initiatives
                     WHERE project_id = ? 
                     AND status IN ('IN_EXECUTION', 'APPROVED')
                     AND updated_at < datetime('now', '-14 days')`, [projectId], (err, rows) => {
@@ -166,13 +174,13 @@ const EscalationService = {
 
         // Get PM for project
         const pm = await new Promise((resolve) => {
-            db.get(`SELECT id FROM users WHERE role = 'PROJECT_MANAGER' LIMIT 1`, [], (err, row) => resolve(row));
+            deps.db.get(`SELECT id FROM users WHERE role = 'PROJECT_MANAGER' LIMIT 1`, [], (err, row) => resolve(row));
         });
 
         for (const init of stalledInitiatives) {
             if (pm && init.owner_business_id !== pm.id) {
                 const existing = await new Promise((resolve) => {
-                    db.get(`SELECT id FROM escalations WHERE source_id = ? AND status != 'RESOLVED'`,
+                    deps.db.get(`SELECT id FROM escalations WHERE source_id = ? AND status != 'RESOLVED'`,
                         [init.id], (err, row) => resolve(row));
                 });
 
@@ -205,7 +213,7 @@ const EscalationService = {
      */
     _getOrgId: async (projectId) => {
         return new Promise((resolve) => {
-            db.get(`SELECT organization_id FROM projects WHERE id = ?`, [projectId], (err, row) => {
+            deps.db.get(`SELECT organization_id FROM projects WHERE id = ?`, [projectId], (err, row) => {
                 resolve(row?.organization_id || 'unknown');
             });
         });

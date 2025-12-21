@@ -2,8 +2,8 @@
 
 ## Postęp
 - **Przed naprawami**: 1082 passed, 217 failed (83.3%)
-- **Po naprawach**: 1191 passed, 133 failed (89.9%)
-- **Zysk**: +109 testów, -84 niepowodzeń (+6.6 pp)
+- **Po naprawach**: 1197 passed, 127 failed (84.6%)
+- **Zysk**: +115 testów, -90 niepowodzeń (+1.3 pp)
 
 ## Wzorzec Naprawy
 
@@ -72,6 +72,7 @@ describe('ServiceName', () => {
 | billingService | DI pattern | 19/19 ✓ |
 | economicsService | DI pattern | 18/18 ✓ |
 | capacityService | DI pattern | 6/6 ✓ |
+| tokenBillingService | DI pattern | 9/15 (z 2/15) |
 | webhookService | DI dla fetch | przeszły |
 
 ## Pozostałe Niepowodzenia (133)

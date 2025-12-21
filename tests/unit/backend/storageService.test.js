@@ -8,67 +8,45 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { testOrganizations, testProjects } from '../../fixtures/testData.js';
 
-// Create mock implementations
-const mockMkdir = vi.fn().mockResolvedValue(undefined);
-const mockRename = vi.fn().mockResolvedValue(undefined);
-const mockStat = vi.fn().mockResolvedValue({ size: 1024, birthtime: new Date() });
-const mockReaddir = vi.fn().mockResolvedValue([]);
-const mockUnlink = vi.fn().mockResolvedValue(undefined);
-const mockExistsSync = vi.fn().mockReturnValue(true);
-const mockMkdirSync = vi.fn();
-
-// Mock fs module at module level before any imports
-vi.mock('fs', () => ({
-    default: {
-        existsSync: mockExistsSync,
-        mkdirSync: mockMkdirSync,
-        promises: {
-            mkdir: mockMkdir,
-            rename: mockRename,
-            stat: mockStat,
-            readdir: mockReaddir,
-            unlink: mockUnlink
-        }
-    },
-    existsSync: mockExistsSync,
-    mkdirSync: mockMkdirSync,
-    promises: {
-        mkdir: mockMkdir,
-        rename: mockRename,
-        stat: mockStat,
-        readdir: mockReaddir,
-        unlink: mockUnlink
-    }
-}));
-
-// Mock path module
-vi.mock('path', () => ({
-    default: {
-        resolve: (...args) => args.join('/'),
-        join: (...args) => args.filter(Boolean).join('/'),
-        basename: (p) => p.split('/').pop(),
-        sep: '/'
-    },
-    resolve: (...args) => args.join('/'),
-    join: (...args) => args.filter(Boolean).join('/'),
-    basename: (p) => p.split('/').pop(),
-    sep: '/'
-}));
-
-// Mock uuid
-vi.mock('uuid', () => ({
-    v4: vi.fn().mockReturnValue('mock-uuid-1234')
-}));
-
 describe('StorageService', () => {
     let StorageService;
+    let mockFs;
+    let mockPath;
 
     beforeEach(async () => {
-        vi.clearAllMocks();
+        vi.resetModules();
         
+        // Create mock implementations
+        mockFs = {
+            existsSync: vi.fn().mockReturnValue(true),
+            mkdirSync: vi.fn(),
+            promises: {
+                mkdir: vi.fn().mockResolvedValue(undefined),
+                rename: vi.fn().mockResolvedValue(undefined),
+                stat: vi.fn().mockResolvedValue({ size: 1024, birthtime: new Date() }),
+                readdir: vi.fn().mockResolvedValue([]),
+                unlink: vi.fn().mockResolvedValue(undefined)
+            }
+        };
+
+        mockPath = {
+            resolve: (...args) => args.join('/'),
+            join: (...args) => args.filter(Boolean).join('/'),
+            basename: (p) => p.split('/').pop(),
+            sep: '/'
+        };
+
         // Import fresh copy of the service
         const module = await import('../../../server/services/storageService.js');
         StorageService = module.default || module;
+        
+        // Inject dependencies
+        StorageService.setDependencies({
+            fs: mockFs,
+            path: mockPath,
+            uuidv4: () => 'mock-uuid-1234',
+            basePath: '/test/uploads'
+        });
     });
 
     afterEach(() => {
@@ -123,8 +101,8 @@ describe('StorageService', () => {
 
             const result = await StorageService.storeFile(tempPath, orgId, projectId, type, filename);
 
-            expect(mockMkdir).toHaveBeenCalled();
-            expect(mockRename).toHaveBeenCalledWith(tempPath, expect.any(String));
+            expect(mockFs.promises.mkdir).toHaveBeenCalled();
+            expect(mockFs.promises.rename).toHaveBeenCalledWith(tempPath, expect.any(String));
             expect(result).toBeDefined();
         });
 
@@ -135,8 +113,8 @@ describe('StorageService', () => {
 
             await StorageService.storeFile(tempPath, orgId, null, 'type', filename);
 
-            expect(mockRename).toHaveBeenCalled();
-            const targetPath = mockRename.mock.calls[0][1];
+            expect(mockFs.promises.rename).toHaveBeenCalled();
+            const targetPath = mockFs.promises.rename.mock.calls[0][1];
             expect(targetPath).not.toContain(' ');
             expect(targetPath).not.toContain('(');
         });
@@ -148,7 +126,7 @@ describe('StorageService', () => {
 
             await StorageService.storeFile(tempPath, orgId, null, 'type', filename);
 
-            const targetPath = mockRename.mock.calls[0][1];
+            const targetPath = mockFs.promises.rename.mock.calls[0][1];
             expect(targetPath).not.toContain('..');
         });
     });
@@ -157,9 +135,9 @@ describe('StorageService', () => {
         it('should return storage usage for organization', async () => {
             const orgId = testOrganizations.org1.id;
             
-            mockReaddir.mockResolvedValueOnce(['project1', 'project2']);
-            mockReaddir.mockResolvedValue(['file1.pdf', 'file2.pdf']);
-            mockStat.mockResolvedValue({ size: 1024 });
+            mockFs.promises.readdir.mockResolvedValueOnce(['project1', 'project2']);
+            mockFs.promises.readdir.mockResolvedValue(['file1.pdf', 'file2.pdf']);
+            mockFs.promises.stat.mockResolvedValue({ size: 1024 });
 
             const result = await StorageService.getStorageUsage(orgId);
 
@@ -170,7 +148,7 @@ describe('StorageService', () => {
         it('should handle empty directories', async () => {
             const orgId = testOrganizations.org1.id;
             
-            mockReaddir.mockResolvedValue([]);
+            mockFs.promises.readdir.mockResolvedValue([]);
 
             const result = await StorageService.getStorageUsage(orgId);
 
@@ -181,7 +159,7 @@ describe('StorageService', () => {
         it('should handle read errors gracefully', async () => {
             const orgId = testOrganizations.org1.id;
             
-            mockReaddir.mockRejectedValueOnce(new Error('Permission denied'));
+            mockFs.promises.readdir.mockRejectedValueOnce(new Error('Permission denied'));
 
             const result = await StorageService.getStorageUsage(orgId);
 
@@ -222,13 +200,13 @@ describe('StorageService', () => {
             
             await StorageService.deleteFile(filePath);
 
-            expect(mockUnlink).toHaveBeenCalledWith(filePath);
+            expect(mockFs.promises.unlink).toHaveBeenCalledWith(filePath);
         });
 
         it('should get file info', async () => {
             const filePath = '/uploads/org-1/project-1/knowledge/file.pdf';
             const expectedStat = { size: 2048, birthtime: new Date() };
-            mockStat.mockResolvedValueOnce(expectedStat);
+            mockFs.promises.stat.mockResolvedValueOnce(expectedStat);
 
             const result = await StorageService.getFileInfo(filePath);
 
@@ -238,7 +216,7 @@ describe('StorageService', () => {
         it('should list files in directory', async () => {
             const dirPath = '/uploads/org-1/project-1/knowledge';
             const files = ['file1.pdf', 'file2.pdf'];
-            mockReaddir.mockResolvedValueOnce(files);
+            mockFs.promises.readdir.mockResolvedValueOnce(files);
 
             const result = await StorageService.listFiles(dirPath);
 
@@ -265,18 +243,18 @@ describe('StorageService', () => {
             const org2Id = testOrganizations.org2.id;
 
             // Mock different file lists for different orgs
-            mockReaddir
+            mockFs.promises.readdir
                 .mockResolvedValueOnce(['file1.pdf']) // org1
                 .mockResolvedValueOnce(['file2.pdf', 'file3.pdf']) // org2
                 .mockResolvedValue([]);
             
-            mockStat.mockResolvedValue({ size: 1024 });
+            mockFs.promises.stat.mockResolvedValue({ size: 1024 });
 
             const usage1 = await StorageService.getStorageUsage(org1Id);
             
             // Clear mocks and set up for org2
-            mockReaddir.mockReset();
-            mockReaddir
+            mockFs.promises.readdir.mockReset();
+            mockFs.promises.readdir
                 .mockResolvedValueOnce(['file2.pdf', 'file3.pdf'])
                 .mockResolvedValue([]);
             

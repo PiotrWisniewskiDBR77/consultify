@@ -6,45 +6,43 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
 import { createMockDb } from '../../helpers/dependencyInjector.js';
-
-const require = createRequire(import.meta.url);
 
 describe('SettlementService', () => {
     let mockDb;
     let SettlementService;
+    let mockAttributionService;
+    let mockPartnerService;
+    let mockMetricsCollector;
 
-    beforeEach(() => {
-        mockDb = createMockDb();
+    beforeEach(async () => {
+        vi.resetModules();
         
-        // Mock database
-        vi.mock('../../../server/database', () => ({
-            default: mockDb
-        }));
+        mockDb = createMockDb();
 
-        // Mock dependencies
-        vi.mock('../../../server/services/attributionService', () => ({
-            default: {
-                exportAttribution: vi.fn().mockResolvedValue([])
-            }
-        }));
+        mockAttributionService = {
+            exportAttribution: vi.fn().mockResolvedValue([])
+        };
 
-        vi.mock('../../../server/services/partnerService', () => ({
-            default: {
-                getAgreementAtTime: vi.fn().mockResolvedValue({
-                    revenue_share_percent: 20
-                })
-            }
-        }));
+        mockPartnerService = {
+            getAgreementAtTime: vi.fn().mockResolvedValue({
+                revenue_share_percent: 20
+            })
+        };
 
-        vi.mock('../../../server/services/metricsCollector', () => ({
-            default: {
-                record: vi.fn().mockResolvedValue({})
-            }
-        }));
+        mockMetricsCollector = {
+            record: vi.fn().mockResolvedValue({})
+        };
 
-        SettlementService = require('../../../server/services/settlementService.js');
+        SettlementService = (await import('../../../server/services/settlementService.js')).default;
+        
+        SettlementService.setDependencies({
+            db: mockDb,
+            uuidv4: () => 'settlement-1',
+            AttributionService: mockAttributionService,
+            PartnerService: mockPartnerService,
+            MetricsCollector: mockMetricsCollector
+        });
     });
 
     afterEach(() => {

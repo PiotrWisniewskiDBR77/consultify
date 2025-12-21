@@ -15,13 +15,16 @@
  * @version 1.0.0
  */
 
-const db = require('../database');
-const crypto = require('crypto');
-const bcrypt = require('bcryptjs');
-const { v4: uuidv4 } = require('uuid');
-const AccessPolicyService = require('./accessPolicyService');
-const AttributionService = require('./attributionService');
-const MetricsCollector = require('./metricsCollector');
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db: require('../database'),
+    crypto: require('crypto'),
+    bcrypt: require('bcryptjs'),
+    uuidv4: require('uuid').v4,
+    AccessPolicyService: require('./accessPolicyService'),
+    AttributionService: require('./attributionService'),
+    MetricsCollector: require('./metricsCollector')
+};
 
 // Constants
 const INVITATION_EXPIRY_DAYS = 7;
@@ -73,12 +76,17 @@ const InvitationService = {
     INVITATION_STATUS,
     INVITATION_EVENT_TYPES,
 
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
+
     /**
      * Generate a cryptographically secure token
      * @returns {string} 64-character hex string
      */
     generateSecureToken: () => {
-        return crypto.randomBytes(TOKEN_LENGTH_BYTES).toString('hex');
+        return deps.crypto.randomBytes(TOKEN_LENGTH_BYTES).toString('hex');
     },
 
     /**
@@ -87,7 +95,7 @@ const InvitationService = {
      * @returns {string} SHA256 hash
      */
     hashToken: (token) => {
-        return crypto.createHash('sha256').update(token).digest('hex');
+        return deps.crypto.createHash('sha256').update(token).digest('hex');
     },
 
     /**
@@ -108,11 +116,11 @@ const InvitationService = {
      * @param {object} requestInfo - { ipAddress, userAgent }
      */
     logEvent: async (invitationId, eventType, performedByUserId = null, metadata = {}, requestInfo = {}) => {
-        const id = uuidv4();
+        const id = deps.uuidv4();
         const { ipAddress, userAgent } = requestInfo;
 
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `INSERT INTO invitation_events 
                  (id, invitation_id, event_type, performed_by_user_id, ip_address, user_agent, metadata) 
                  VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -137,7 +145,7 @@ const InvitationService = {
      */
     checkInvitePermission: async (organizationId, requestingUserId) => {
         // Use AccessPolicyService as single source of truth
-        const policyResult = await AccessPolicyService.canInviteUsers(organizationId, requestingUserId);
+        const policyResult = await deps.AccessPolicyService.canInviteUsers(organizationId, requestingUserId);
 
         if (!policyResult.allowed) {
             // Map reason codes to user-friendly messages
@@ -157,7 +165,7 @@ const InvitationService = {
         }
 
         // Get seat availability for informational purposes
-        const seatInfo = await AccessPolicyService.getSeatAvailability(organizationId);
+        const seatInfo = await deps.AccessPolicyService.getSeatAvailability(organizationId);
 
         return {
             allowed: true,
@@ -176,7 +184,7 @@ const InvitationService = {
      */
     canInviteToOrg: async (userId, organizationId) => {
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT role FROM users WHERE id = ? AND organization_id = ?`,
                 [userId, organizationId],
                 (err, user) => {
@@ -199,7 +207,7 @@ const InvitationService = {
     canInviteToProject: async (userId, projectId) => {
         return new Promise((resolve, reject) => {
             // Check if user is project admin/owner or org admin
-            db.get(
+            deps.db.get(
                 `SELECT pu.role as project_role, u.role as org_role
                  FROM users u
                  LEFT JOIN project_users pu ON pu.user_id = u.id AND pu.project_id = ?
@@ -251,7 +259,7 @@ const InvitationService = {
 
         // Check for existing pending invitation
         const existingInvite = await new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT id FROM invitations 
                  WHERE organization_id = ? AND email = ? AND status = 'pending'`,
                 [organizationId, email.toLowerCase()],
@@ -268,7 +276,7 @@ const InvitationService = {
 
         // Check if user is already a member
         const existingUser = await new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT id FROM users WHERE email = ? AND organization_id = ?`,
                 [email.toLowerCase(), organizationId],
                 (err, row) => {
@@ -283,13 +291,13 @@ const InvitationService = {
         }
 
         // Create invitation
-        const id = uuidv4();
+        const id = deps.uuidv4();
         const token = InvitationService.generateSecureToken();
         const tokenHash = InvitationService.hashToken(token); // Store hash only
         const expiresAt = InvitationService.calculateExpiryDate();
 
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `INSERT INTO invitations 
                  (id, organization_id, email, role, role_to_assign, token_hash, status, invited_by, expires_at, invitation_type, metadata) 
                  VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, 'ORG', ?)`,
@@ -310,10 +318,10 @@ const InvitationService = {
 
                     // Step 7: Record metrics event for conversion intelligence
                     try {
-                        await MetricsCollector.recordEvent(MetricsCollector.EVENT_TYPES.INVITE_SENT, {
+                        await deps.MetricsCollector.recordEvent(deps.MetricsCollector.EVENT_TYPES.INVITE_SENT, {
                             userId: invitedByUserId,
                             organizationId,
-                            source: MetricsCollector.SOURCE_TYPES.INVITATION,
+                            source: deps.MetricsCollector.SOURCE_TYPES.INVITATION,
                             context: { email: email.toLowerCase(), role, invitationType: INVITATION_TYPES.ORG }
                         });
                     } catch (metricsErr) {
@@ -360,7 +368,7 @@ const InvitationService = {
 
         // Verify project exists and belongs to org
         const project = await new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT id, name, organization_id FROM projects WHERE id = ? AND organization_id = ?`,
                 [projectId, organizationId],
                 (err, row) => {
@@ -383,7 +391,7 @@ const InvitationService = {
         }
 
         // Create invitation
-        const id = uuidv4();
+        const id = deps.uuidv4();
         const token = InvitationService.generateSecureToken();
         const tokenHash = InvitationService.hashToken(token); // Store hash only
         const expiresAt = InvitationService.calculateExpiryDate();
@@ -395,7 +403,7 @@ const InvitationService = {
         };
 
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `INSERT INTO invitations 
                  (id, organization_id, project_id, email, role, role_to_assign, token_hash, status, invited_by, expires_at, invitation_type, metadata) 
                  VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, 'PROJECT', ?)`,
@@ -444,7 +452,7 @@ const InvitationService = {
         const tokenHash = InvitationService.hashToken(token);
 
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT i.*, o.name as organization_name, p.name as project_name
                  FROM invitations i
                  LEFT JOIN organizations o ON i.organization_id = o.id
@@ -488,7 +496,7 @@ const InvitationService = {
         if (new Date(invitation.expires_at) < new Date()) {
             // Mark as expired
             await new Promise((resolve, reject) => {
-                db.run(
+                deps.db.run(
                     `UPDATE invitations SET status = 'expired' WHERE id = ?`,
                     [invitation.id],
                     (err) => err ? reject(err) : resolve()
@@ -505,7 +513,7 @@ const InvitationService = {
 
         // Check if user already exists
         const existingUser = await new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT id, organization_id FROM users WHERE email = ?`,
                 [email.toLowerCase()],
                 (err, row) => {
@@ -529,11 +537,11 @@ const InvitationService = {
         } else {
             // Create new user
             isNewUser = true;
-            userId = uuidv4();
-            const hashedPassword = bcrypt.hashSync(password, 10);
+            userId = deps.uuidv4();
+            const hashedPassword = deps.bcrypt.hashSync(password, 10);
 
             await new Promise((resolve, reject) => {
-                db.run(
+                deps.db.run(
                     `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status)
                      VALUES (?, ?, ?, ?, ?, ?, ?, 'active')`,
                     [userId, invitation.organization_id, email.toLowerCase(), hashedPassword, firstName, lastName, invitation.role_to_assign || invitation.role],
@@ -551,7 +559,7 @@ const InvitationService = {
             const projectRole = metadata.projectRole || 'member';
 
             await new Promise((resolve, reject) => {
-                db.run(
+                deps.db.run(
                     `INSERT OR REPLACE INTO project_users (project_id, user_id, role, assigned_at)
                      VALUES (?, ?, ?, datetime('now'))`,
                     [invitation.project_id, userId, projectRole],
@@ -565,7 +573,7 @@ const InvitationService = {
 
         // Mark invitation as accepted (ATOMIC - only if still pending)
         const updateResult = await new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `UPDATE invitations 
                  SET status = 'accepted', accepted_at = datetime('now'), accepted_by_user_id = ?
                  WHERE id = ? AND status = 'pending'`,
@@ -585,7 +593,7 @@ const InvitationService = {
 
         // Update seat counter in AccessPolicyService
         try {
-            await AccessPolicyService.incrementUsage(invitation.organization_id, 'users', 1);
+            await deps.AccessPolicyService.incrementUsage(invitation.organization_id, 'users', 1);
         } catch (counterErr) {
             console.warn('[InvitationService] Failed to increment seat counter:', counterErr);
             // Non-fatal - continue
@@ -594,10 +602,10 @@ const InvitationService = {
         // Step 4: Record attribution event for invitation acceptance
         try {
             const invitationMetadata = JSON.parse(invitation.metadata || '{}');
-            await AttributionService.recordAttribution({
+            await deps.AttributionService.recordAttribution({
                 organizationId: invitation.organization_id,
                 userId: userId,
-                sourceType: AttributionService.SOURCE_TYPES.INVITATION,
+                sourceType: deps.AttributionService.SOURCE_TYPES.INVITATION,
                 sourceId: invitation.id,
                 campaign: invitationMetadata.attribution?.campaign,
                 partnerCode: invitationMetadata.attribution?.partnerCode,
@@ -628,10 +636,10 @@ const InvitationService = {
 
         // Step 7: Record metrics event for conversion intelligence
         try {
-            await MetricsCollector.recordEvent(MetricsCollector.EVENT_TYPES.INVITE_ACCEPTED, {
+            await deps.MetricsCollector.recordEvent(deps.MetricsCollector.EVENT_TYPES.INVITE_ACCEPTED, {
                 userId,
                 organizationId: invitation.organization_id,
-                source: MetricsCollector.SOURCE_TYPES.INVITATION,
+                source: deps.MetricsCollector.SOURCE_TYPES.INVITATION,
                 context: {
                     isNewUser,
                     invitationType: invitation.invitation_type,
@@ -664,7 +672,7 @@ const InvitationService = {
     resendInvitation: async (invitationId, performedByUserId, requestInfo = {}) => {
         // Get current invitation
         const invitation = await new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT * FROM invitations WHERE id = ?`,
                 [invitationId],
                 (err, row) => {
@@ -707,7 +715,7 @@ const InvitationService = {
         const previousTokenHashShort = invitation.token_hash ? invitation.token_hash.substring(0, 16) : 'unknown';
 
         await new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `UPDATE invitations 
                  SET token_hash = ?, expires_at = ?, status = 'pending', 
                      resend_count = COALESCE(resend_count, 0) + 1,
@@ -752,7 +760,7 @@ const InvitationService = {
      */
     revokeInvitation: async (invitationId, performedByUserId, reason = '', requestInfo = {}) => {
         const invitation = await new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT * FROM invitations WHERE id = ?`,
                 [invitationId],
                 (err, row) => {
@@ -771,7 +779,7 @@ const InvitationService = {
         }
 
         await new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `UPDATE invitations SET status = 'revoked' WHERE id = ?`,
                 [invitationId],
                 function (err) {
@@ -826,7 +834,7 @@ const InvitationService = {
         params.push(limit, offset);
 
         return new Promise((resolve, reject) => {
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) return reject(err);
                 resolve(rows || []);
             });
@@ -861,7 +869,7 @@ const InvitationService = {
         params.push(limit, offset);
 
         return new Promise((resolve, reject) => {
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) return reject(err);
                 resolve(rows || []);
             });
@@ -875,7 +883,7 @@ const InvitationService = {
      */
     getPendingForEmail: async (email) => {
         return new Promise((resolve, reject) => {
-            db.all(
+            deps.db.all(
                 `SELECT i.*, o.name as organization_name, p.name as project_name
                  FROM invitations i
                  LEFT JOIN organizations o ON i.organization_id = o.id
@@ -898,7 +906,7 @@ const InvitationService = {
      */
     getAuditTrail: async (invitationId) => {
         return new Promise((resolve, reject) => {
-            db.all(
+            deps.db.all(
                 `SELECT ie.*, u.first_name, u.last_name, u.email
                  FROM invitation_events ie
                  LEFT JOIN users u ON ie.performed_by_user_id = u.id

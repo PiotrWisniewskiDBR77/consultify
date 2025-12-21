@@ -1,7 +1,15 @@
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db: require('../database'),
+    uuidv4: require('uuid').v4
+};
 
 const GovernanceService = {
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
+
 
     /**
      * Create a new Change Request
@@ -10,7 +18,7 @@ const GovernanceService = {
      */
     createChangeRequest: (crData) => {
         return new Promise((resolve, reject) => {
-            const id = uuidv4();
+            const id = deps.uuidv4();
             const {
                 projectId, title, description, type, riskAssessment,
                 rationale, impactAnalysis, createdBy, aiAnalysis, aiRecommendedDecision
@@ -28,7 +36,7 @@ const GovernanceService = {
                 createdBy, aiRecommendedDecision, aiAnalysis
             ];
 
-            db.run(sql, params, function (err) {
+            deps.db.run(sql, params, function (err) {
                 if (err) return reject(err);
                 resolve({ id, ...crData, status: 'DRAFT' });
             });
@@ -51,7 +59,7 @@ const GovernanceService = {
             // Only set approved_by if approved
             const approver = status === 'APPROVED' ? userId : null;
 
-            db.run(sql, [status, approver, reason, id], function (err) {
+            deps.db.run(sql, [status, approver, reason, id], function (err) {
                 if (err) return reject(err);
                 resolve({ id, status, userId });
             });
