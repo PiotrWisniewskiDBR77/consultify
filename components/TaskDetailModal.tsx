@@ -38,8 +38,6 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(({
         setTask({ ...initialTask });
     }, [initialTask, isOpen]);
 
-    if (!isOpen) return null;
-
     // OPTIMIZED: Memoized callbacks to prevent unnecessary re-renders
     const handleSave = useCallback(() => {
         // Validation
@@ -66,7 +64,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(({
 
         onSave(task);
         onClose();
-    }, [task, onSave, onClose]);
+    }, [task, onSave, onClose, setActiveTab]);
 
     const generateAiInsight = useCallback(async () => {
         setAiLoading(true);
@@ -82,6 +80,8 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(({
             setAiLoading(false);
         }
     }, [task, initiative]);
+
+    if (!isOpen) return null;
 
     const getRiskColor = (risk?: RiskRating | string) => {
         // Handle RiskRating object or string legacy

@@ -73,7 +73,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                     {/* Demo Button */}
                     <button
                         onClick={onDemoClick}
-                        className="px-5 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-all"
+                        className="px-5 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-all cursor-pointer"
                     >
                         Demo
                     </button>
@@ -81,7 +81,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                     {/* Trial Button */}
                     <button
                         onClick={onTrialClick}
-                        className="px-5 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-all"
+                        className="px-5 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-all cursor-pointer"
                     >
                         Trial
                     </button>
@@ -92,7 +92,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                     {/* Log in Button */}
                     <button
                         onClick={onLoginClick}
-                        className="px-5 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-all border border-slate-200 dark:border-white/10"
+                        className="px-5 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-all border border-slate-200 dark:border-white/10 cursor-pointer"
                     >
                         Log in
                     </button>
@@ -100,7 +100,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                     {/* Sign up Button */}
                     <button
                         onClick={onTrialClick}
-                        className="px-5 py-2 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-500 rounded-lg transition-all shadow-lg shadow-purple-500/25 dark:shadow-purple-900/25"
+                        className="px-5 py-2 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-500 rounded-lg transition-all shadow-lg shadow-purple-500/25 dark:shadow-purple-900/25 cursor-pointer"
                     >
                         Sign up
                     </button>

@@ -2337,5 +2337,103 @@
       "aggressive": "agresywną",
       "focused": "skoncentrowaną"
     }
+  },
+  "landing": {
+    "hero": {
+      "title": "Myśl Strategicznie. Działaj Zdecydowanie.",
+      "subtitle": "Pierwszy otwarty ekosystem konsultingowy, który uczy liderów myśleć jak Harvard i działać w prawdziwym biznesie — z AI jako Twoim partnerem poznawczym.",
+      "cards": {
+        "demo": {
+          "title": "Poznaj Demo",
+          "description": "Doświadcz środowiska na żywo z fikcyjnymi, realistycznymi danymi.",
+          "meta": "NATYCHMIASTOWY DOSTĘP",
+          "cta": "Poznaj Demo"
+        },
+        "trial": {
+          "title": "Rozpocznij Darmowy Trial",
+          "description": "Użyj Consultinity na prawdziwych danych swojej organizacji i zbuduj mapę drogową.",
+          "meta": "GŁÓWNA ŚCIEŻKA",
+          "cta": "Rozpocznij Trial"
+        },
+        "video": {
+          "title": "Jak To Działa",
+          "description": "Prowadzi dr Piotr Wiśniewski",
+          "meta": "PREZENTACJA PRODUKTU",
+          "cta": "Obejrzyj Wideo"
+        },
+        "expert": {
+          "title": "Porozmawiaj z Ekspertem",
+          "description": "Spersonalizowane podejście do transformacji Enterprise.",
+          "meta": "DEDYKOWANE ROZWIĄZANIE",
+          "cta": "Skontaktuj się"
+        },
+        "login": {
+          "title": "Zaloguj się",
+          "description": "Kontynuuj swoją podróż.",
+          "meta": "POWRACAJĄCY UŻYTKOWNICY",
+          "cta": "Zaloguj się"
+        }
+      }
+    },
+    "methodology": {
+      "badge": "Metodologia",
+      "heading": "Jak AI Staje Się Twoim Partnerem Poznawczym."
+    },
+    "steps": {
+      "diagnostic": {
+        "title": "Diagnostyka AI",
+        "desc": "Zmapuj swoją dojrzałość przez model DRD i zidentyfikuj krytyczne luki natychmiast."
+      },
+      "roadmap": {
+        "title": "Strategiczna Mapa Drogowa",
+        "desc": "AI generuje dostosowany plan wykonawczy z jasnym ROI i ramami czasowymi."
+      },
+      "approval": {
+        "title": "Akceptacja Człowieka",
+        "desc": "Każda decyzja AI jest zatwierdzana przez Twoich liderów, aby zapewnić odpowiedzialność."
+      }
+    },
+    "trust": {
+      "badge": "Integralność Enterprise",
+      "heading": "Inteligencja Kierowana Akceptacją Człowieka.",
+      "description": "AI jest partnerem, nie autorytetem. Consultinity implementuje ścisłą warstwę zarządzania, gdzie każdy strategiczny ruch wymaga wysokopoziomowej walidacji ludzkiej.",
+      "points": [
+        "Pełna odpowiedzialność za każdy punkt mapy drogowej",
+        "Izolacja danych wielodostępna i bezpieczeństwo na poziomie wojskowym",
+        "Logika infrastruktury zgodna z SOC2"
+      ],
+      "cta": "Zobacz Białą Księgę Bezpieczeństwa",
+      "status": {
+        "awaiting": "Oczekuje na Walidację",
+        "approved": "Zatwierdzone"
+      }
+    },
+    "topBar": {
+      "exploreDemo": "Poznaj Demo",
+      "talkToExpert": "Porozmawiaj z Ekspertem",
+      "login": "Zaloguj się",
+      "startTrial": "Rozpocznij Trial",
+      "goToWorkspace": "Przejdź do Workspace"
+    },
+    "footer": {
+      "tagline": "Wspieramy organizacje w nawigacji przez transformację cyfrową ze strategią opartą na AI i zarządzaniem kierowanym przez ludzi.",
+      "copyright": "© 2025 Consultinity. Powered by DBR77 Robotics.",
+      "product": {
+        "title": "Produkt",
+        "demo": "Demo",
+        "trial": "Trial",
+        "login": "Zaloguj się"
+      },
+      "company": {
+        "title": "Firma",
+        "about": "O Nas",
+        "contact": "Kontakt"
+      },
+      "legal": {
+        "title": "Prawne",
+        "privacy": "Prywatność",
+        "terms": "Warunki"
+      }
+    }
   }
 }

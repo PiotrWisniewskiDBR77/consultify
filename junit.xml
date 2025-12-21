@@ -1,2850 +1,544 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="236" failures="57" errors="0" time="6.6087235">
-    <testsuite name="tests/integration/actionDecision.test.js" timestamp="2025-12-21T20:40:52.464Z" hostname="MacBook-Pro-Piotr.local" tests="5" failures="3" errors="0" skipped="0" time="0.141823">
-        <testcase classname="tests/integration/actionDecision.test.js" name="Action Decisions API Integration (Hardened) &gt; POST /api/ai/actions/decide - Access Control &gt; should block non-admin users (no token)" time="0.002859958">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:30.438Z&apos;,
-  method: &apos;POST&apos;,
-  path: &apos;/api/ai/actions/decide&apos;,
-  statusCode: 403,
-  responseTime: 1,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 104304, external: 0, rss: 49152 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;POST&apos;,
-  url: &apos;/api/ai/actions/decide&apos;,
-  status: 403,
-  duration: &apos;1ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
+<testsuites name="vitest tests" tests="156" failures="0" errors="0" time="5.988406041">
+    <testsuite name="tests/components/ActionDecisionDialog.test.tsx" timestamp="2025-12-21T21:46:00.861Z" hostname="MacBook-Pro-Piotr.local" tests="18" failures="0" errors="0" skipped="0" time="0.415044958">
+        <testcase classname="tests/components/ActionDecisionDialog.test.tsx" name="ActionDecisionDialog &gt; Rendering &gt; should not render when isOpen is false" time="0.006216">
         </testcase>
-        <testcase classname="tests/integration/actionDecision.test.js" name="Action Decisions API Integration (Hardened) &gt; POST /api/ai/actions/decide - Access Control &gt; should reject invalid decision types" time="0.004225041">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:30.441Z&apos;,
-  method: &apos;POST&apos;,
-  path: &apos;/api/ai/actions/decide&apos;,
-  statusCode: 401,
-  responseTime: 1,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 194128, external: 0, rss: 131072 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;POST&apos;,
-  url: &apos;/api/ai/actions/decide&apos;,
-  status: 401,
-  duration: &apos;1ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-            <failure message="expected 401 to be 400 // Object.is equality" type="AssertionError">
-AssertionError: expected 401 to be 400 // Object.is equality
-
-- Expected
-+ Received
-
-- 400
-+ 401
-
- ❯ tests/integration/actionDecision.test.js:73:32
-            </failure>
+        <testcase classname="tests/components/ActionDecisionDialog.test.tsx" name="ActionDecisionDialog &gt; Rendering &gt; should render when isOpen is true" time="0.009587125">
         </testcase>
-        <testcase classname="tests/integration/actionDecision.test.js" name="Action Decisions API Integration (Hardened) &gt; POST /api/ai/actions/decide - Access Control &gt; should return 404 for non-existent proposal (server-side snapshot check)" time="0.001692125">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:30.444Z&apos;,
-  method: &apos;POST&apos;,
-  path: &apos;/api/ai/actions/decide&apos;,
-  statusCode: 401,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 42712, external: 0, rss: 16384 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;POST&apos;,
-  url: &apos;/api/ai/actions/decide&apos;,
-  status: 401,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-            <failure message="expected 401 to be 404 // Object.is equality" type="AssertionError">
-AssertionError: expected 401 to be 404 // Object.is equality
-
-- Expected
-+ Received
-
-- 404
-+ 401
-
- ❯ tests/integration/actionDecision.test.js:87:32
-            </failure>
+        <testcase classname="tests/components/ActionDecisionDialog.test.tsx" name="ActionDecisionDialog &gt; Rendering &gt; should display approval dialog correctly" time="0.007053833">
         </testcase>
-        <testcase classname="tests/integration/actionDecision.test.js" name="Action Decisions API Integration (Hardened) &gt; GET /api/ai/actions/audit - Access Control &gt; should block unauthorized users (no token)" time="0.001338584">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:30.446Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/ai/actions/audit&apos;,
-  statusCode: 403,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 473112, external: 0, rss: 16384 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/ai/actions/audit&apos;,
-  status: 403,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
+        <testcase classname="tests/components/ActionDecisionDialog.test.tsx" name="ActionDecisionDialog &gt; Rendering &gt; should display rejection dialog correctly" time="0.104404959">
         </testcase>
-        <testcase classname="tests/integration/actionDecision.test.js" name="Action Decisions API Integration (Hardened) &gt; GET /api/ai/actions/audit - Access Control &gt; should return 200 with empty array for admin with no decisions" time="0.00132825">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:30.447Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/ai/actions/audit&apos;,
-  statusCode: 401,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 391248, external: 0, rss: 0 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/ai/actions/audit&apos;,
-  status: 401,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-            <failure message="expected 401 to be 200 // Object.is equality" type="AssertionError">
-AssertionError: expected 401 to be 200 // Object.is equality
-
-- Expected
-+ Received
-
-- 200
-+ 401
-
- ❯ tests/integration/actionDecision.test.js:105:32
-            </failure>
+        <testcase classname="tests/components/ActionDecisionDialog.test.tsx" name="ActionDecisionDialog &gt; Rendering &gt; should display action title" time="0.002067833">
+        </testcase>
+        <testcase classname="tests/components/ActionDecisionDialog.test.tsx" name="ActionDecisionDialog &gt; User Interactions &gt; should call onClose when cancel button is clicked" time="0.004082792">
+        </testcase>
+        <testcase classname="tests/components/ActionDecisionDialog.test.tsx" name="ActionDecisionDialog &gt; User Interactions &gt; should call onClose when X button is clicked" time="0.02106575">
+        </testcase>
+        <testcase classname="tests/components/ActionDecisionDialog.test.tsx" name="ActionDecisionDialog &gt; User Interactions &gt; should call onClose when backdrop is clicked" time="0.001745875">
+        </testcase>
+        <testcase classname="tests/components/ActionDecisionDialog.test.tsx" name="ActionDecisionDialog &gt; User Interactions &gt; should allow entering reason text" time="0.003119417">
+        </testcase>
+        <testcase classname="tests/components/ActionDecisionDialog.test.tsx" name="ActionDecisionDialog &gt; User Interactions &gt; should call onConfirm with reason when approve button is clicked" time="0.003308541">
+        </testcase>
+        <testcase classname="tests/components/ActionDecisionDialog.test.tsx" name="ActionDecisionDialog &gt; User Interactions &gt; should call onConfirm with reason when reject button is clicked" time="0.009112416">
+        </testcase>
+        <testcase classname="tests/components/ActionDecisionDialog.test.tsx" name="ActionDecisionDialog &gt; Validation &gt; should disable reject button when reason is empty" time="0.00769225">
+        </testcase>
+        <testcase classname="tests/components/ActionDecisionDialog.test.tsx" name="ActionDecisionDialog &gt; Validation &gt; should enable reject button when reason is provided" time="0.008776541">
+        </testcase>
+        <testcase classname="tests/components/ActionDecisionDialog.test.tsx" name="ActionDecisionDialog &gt; Validation &gt; should enable approve button even without reason" time="0.001466667">
+        </testcase>
+        <testcase classname="tests/components/ActionDecisionDialog.test.tsx" name="ActionDecisionDialog &gt; Validation &gt; should disable reject button when reason is only whitespace" time="0.008513875">
+        </testcase>
+        <testcase classname="tests/components/ActionDecisionDialog.test.tsx" name="ActionDecisionDialog &gt; Accessibility &gt; should have proper semantic structure" time="0.005934666">
+        </testcase>
+        <testcase classname="tests/components/ActionDecisionDialog.test.tsx" name="ActionDecisionDialog &gt; Accessibility &gt; should have accessible buttons" time="0.009678667">
+        </testcase>
+        <testcase classname="tests/components/ActionDecisionDialog.test.tsx" name="ActionDecisionDialog &gt; Accessibility &gt; should have accessible textarea" time="0.001365791">
         </testcase>
     </testsuite>
-    <testsuite name="tests/integration/actionExecution.test.js" timestamp="2025-12-21T20:40:52.466Z" hostname="MacBook-Pro-Piotr.local" tests="5" failures="5" errors="0" skipped="0" time="0.141453958">
-        <testcase classname="tests/integration/actionExecution.test.js" name="Action Execution Hardening Integration (Step 9.3) &gt; should successfully execute an APPROVED TASK_CREATE action" time="0.004697917">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:31.105Z&apos;,
-  method: &apos;POST&apos;,
-  path: &apos;/api/ai/actions/decisions/ad-test-task-exec/execute&apos;,
-  statusCode: 401,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 112960, external: 0, rss: 114688 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;POST&apos;,
-  url: &apos;/api/ai/actions/decisions/ad-test-task-exec/execute&apos;,
-  status: 401,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-            <failure message="expected 401 to be 200 // Object.is equality" type="AssertionError">
-AssertionError: expected 401 to be 200 // Object.is equality
-
-- Expected
-+ Received
-
-- 200
-+ 401
-
- ❯ tests/integration/actionExecution.test.js:176:32
-            </failure>
+    <testsuite name="tests/components/ActionProposalList.test.tsx" timestamp="2025-12-21T21:46:00.863Z" hostname="MacBook-Pro-Piotr.local" tests="11" failures="0" errors="0" skipped="0" time="0.328546375">
+        <testcase classname="tests/components/ActionProposalList.test.tsx" name="ActionProposalList &gt; Rendering &gt; should render empty state when no proposals" time="0.012825334">
         </testcase>
-        <testcase classname="tests/integration/actionExecution.test.js" name="Action Execution Hardening Integration (Step 9.3) &gt; should return idempotent_replay: true on second execution" time="0.004401584">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:31.111Z&apos;,
-  method: &apos;POST&apos;,
-  path: &apos;/api/ai/actions/decisions/ad-test-idempotent/execute&apos;,
-  statusCode: 401,
-  responseTime: 1,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: -236288, external: 0, rss: 147456 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;POST&apos;,
-  url: &apos;/api/ai/actions/decisions/ad-test-idempotent/execute&apos;,
-  status: 401,
-  duration: &apos;1ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:31.112Z&apos;,
-  method: &apos;POST&apos;,
-  path: &apos;/api/ai/actions/decisions/ad-test-idempotent/execute&apos;,
-  statusCode: 401,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 548960, external: 0, rss: 16384 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;POST&apos;,
-  url: &apos;/api/ai/actions/decisions/ad-test-idempotent/execute&apos;,
-  status: 401,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-            <failure message="expected 401 to be 200 // Object.is equality" type="AssertionError">
-AssertionError: expected 401 to be 200 // Object.is equality
-
-- Expected
-+ Received
-
-- 200
-+ 401
-
- ❯ tests/integration/actionExecution.test.js:194:33
-            </failure>
+        <testcase classname="tests/components/ActionProposalList.test.tsx" name="ActionProposalList &gt; Rendering &gt; should render list of proposals" time="0.004044084">
         </testcase>
-        <testcase classname="tests/integration/actionExecution.test.js" name="Action Execution Hardening Integration (Step 9.3) &gt; should reject execution of REJECTED decision with 400" time="0.001020916">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:31.113Z&apos;,
-  method: &apos;POST&apos;,
-  path: &apos;/api/ai/actions/decisions/ad-test-rejected/execute&apos;,
-  statusCode: 401,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 38944, external: 0, rss: 0 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;POST&apos;,
-  url: &apos;/api/ai/actions/decisions/ad-test-rejected/execute&apos;,
-  status: 401,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-            <failure message="expected 401 to be 400 // Object.is equality" type="AssertionError">
-AssertionError: expected 401 to be 400 // Object.is equality
-
-- Expected
-+ Received
-
-- 400
-+ 401
-
- ❯ tests/integration/actionExecution.test.js:204:32
-            </failure>
+        <testcase classname="tests/components/ActionProposalList.test.tsx" name="ActionProposalList &gt; Rendering &gt; should display proposal titles" time="0.002703833">
         </testcase>
-        <testcase classname="tests/integration/actionExecution.test.js" name="Action Execution Hardening Integration (Step 9.3) &gt; should block admin from executing decision of another organization (403)" time="0.000926792">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:31.114Z&apos;,
-  method: &apos;POST&apos;,
-  path: &apos;/api/ai/actions/decisions/ad-test-cross-org/execute&apos;,
-  statusCode: 401,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 650144, external: 0, rss: 0 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;POST&apos;,
-  url: &apos;/api/ai/actions/decisions/ad-test-cross-org/execute&apos;,
-  status: 401,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-            <failure message="expected 401 to be 404 // Object.is equality" type="AssertionError">
-AssertionError: expected 401 to be 404 // Object.is equality
-
-- Expected
-+ Received
-
-- 404
-+ 401
-
- ❯ tests/integration/actionExecution.test.js:215:32
-            </failure>
+        <testcase classname="tests/components/ActionProposalList.test.tsx" name="ActionProposalList &gt; Rendering &gt; should display risk levels" time="0.082129">
         </testcase>
-        <testcase classname="tests/integration/actionExecution.test.js" name="Action Execution Hardening Integration (Step 9.3) &gt; should return mock metadata for MEETING_SCHEDULE" time="0.000860541">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:31.115Z&apos;,
-  method: &apos;POST&apos;,
-  path: &apos;/api/ai/actions/decisions/ad-test-meeting/execute&apos;,
-  statusCode: 401,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 29504, external: 0, rss: 0 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;POST&apos;,
-  url: &apos;/api/ai/actions/decisions/ad-test-meeting/execute&apos;,
-  status: 401,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-            <failure message="expected 401 to be 200 // Object.is equality" type="AssertionError">
-AssertionError: expected 401 to be 200 // Object.is equality
-
-- Expected
-+ Received
-
-- 200
-+ 401
-
- ❯ tests/integration/actionExecution.test.js:223:32
-            </failure>
+        <testcase classname="tests/components/ActionProposalList.test.tsx" name="ActionProposalList &gt; Selection &gt; should call onSelect when proposal is clicked" time="0.004323959">
+        </testcase>
+        <testcase classname="tests/components/ActionProposalList.test.tsx" name="ActionProposalList &gt; Selection &gt; should highlight selected proposal" time="0.002249708">
+        </testcase>
+        <testcase classname="tests/components/ActionProposalList.test.tsx" name="ActionProposalList &gt; Selection &gt; should not highlight unselected proposals" time="0.001724708">
+        </testcase>
+        <testcase classname="tests/components/ActionProposalList.test.tsx" name="ActionProposalList &gt; Risk Level Display &gt; should display LOW risk correctly" time="0.000965417">
+        </testcase>
+        <testcase classname="tests/components/ActionProposalList.test.tsx" name="ActionProposalList &gt; Risk Level Display &gt; should display HIGH risk correctly" time="0.000979042">
+        </testcase>
+        <testcase classname="tests/components/ActionProposalList.test.tsx" name="ActionProposalList &gt; Action Type Icons &gt; should render correct icon for TASK_CREATE" time="0.001378375">
+        </testcase>
+        <testcase classname="tests/components/ActionProposalList.test.tsx" name="ActionProposalList &gt; Action Type Icons &gt; should render correct icon for MEETING_SCHEDULE" time="0.001327958">
         </testcase>
     </testsuite>
-    <testsuite name="tests/integration/aiExplainability.test.js" timestamp="2025-12-21T20:40:52.467Z" hostname="MacBook-Pro-Piotr.local" tests="11" failures="8" errors="0" skipped="0" time="0.181468583">
-        <testcase classname="tests/integration/aiExplainability.test.js" name="AI Explainability API Integration &gt; GET /api/ai/explain/:entityType/:id - Access Control &gt; should block unauthorized users (no token)" time="0.002476333">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:31.744Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/ai/explain/decision/test-id&apos;,
-  statusCode: 403,
-  responseTime: 1,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 99704, external: 0, rss: 81920 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/ai/explain/decision/test-id&apos;,
-  status: 403,
-  duration: &apos;1ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
+    <testsuite name="tests/components/AssessmentMatrixCard.test.tsx" timestamp="2025-12-21T21:46:00.864Z" hostname="MacBook-Pro-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.337743">
+        <testcase classname="tests/components/AssessmentMatrixCard.test.tsx" name="AssessmentMatrixCard &gt; Rendering &gt; should render assessment matrix card" time="0.017398292">
         </testcase>
-        <testcase classname="tests/integration/aiExplainability.test.js" name="AI Explainability API Integration &gt; GET /api/ai/explain/:entityType/:id - Access Control &gt; should reject invalid entity types" time="0.00506375">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:31.746Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/ai/explain/invalid_type/test-id&apos;,
-  statusCode: 401,
-  responseTime: 1,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 188968, external: 0, rss: 163840 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/ai/explain/invalid_type/test-id&apos;,
-  status: 401,
-  duration: &apos;1ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-            <failure message="expected 401 to be 400 // Object.is equality" type="AssertionError">
-AssertionError: expected 401 to be 400 // Object.is equality
-
-- Expected
-+ Received
-
-- 400
-+ 401
-
- ❯ tests/integration/aiExplainability.test.js:73:32
-            </failure>
+        <testcase classname="tests/components/AssessmentMatrixCard.test.tsx" name="AssessmentMatrixCard &gt; Rendering &gt; should display actual and target scores" time="0.003796583">
         </testcase>
-        <testcase classname="tests/integration/aiExplainability.test.js" name="AI Explainability API Integration &gt; GET /api/ai/explain/:entityType/:id - Access Control &gt; should return empty explanation for non-existent entity" time="0.002993709">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:31.752Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/ai/explain/decision/non-existent-id&apos;,
-  statusCode: 401,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 266200, external: 0, rss: 16384 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/ai/explain/decision/non-existent-id&apos;,
-  status: 401,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-            <failure message="expected 401 to be 200 // Object.is equality" type="AssertionError">
-AssertionError: expected 401 to be 200 // Object.is equality
-
-- Expected
-+ Received
-
-- 200
-+ 401
-
- ❯ tests/integration/aiExplainability.test.js:82:32
-            </failure>
+        <testcase classname="tests/components/AssessmentMatrixCard.test.tsx" name="AssessmentMatrixCard &gt; Rendering &gt; should display gap points" time="0.003087125">
         </testcase>
-        <testcase classname="tests/integration/aiExplainability.test.js" name="AI Explainability API Integration &gt; GET /api/ai/explain/:entityType/:id/export - Export &gt; should block unauthorized users" time="0.001397292">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:31.754Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/ai/explain/decision/test-id/export&apos;,
-  statusCode: 403,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 58696, external: 0, rss: 49152 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/ai/explain/decision/test-id/export&apos;,
-  status: 403,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
+        <testcase classname="tests/components/AssessmentMatrixCard.test.tsx" name="AssessmentMatrixCard &gt; Rendering &gt; should show &quot;Optimized&quot; when gap is zero" time="0.002993417">
         </testcase>
-        <testcase classname="tests/integration/aiExplainability.test.js" name="AI Explainability API Integration &gt; GET /api/ai/explain/:entityType/:id/export - Export &gt; should reject invalid format" time="0.001209792">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:31.755Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/ai/explain/decision/test-id/export?format=invalid&apos;,
-  statusCode: 401,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 33352, external: 0, rss: 0 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/ai/explain/decision/test-id/export?format=invalid&apos;,
-  status: 401,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-            <failure message="expected 401 to be 400 // Object.is equality" type="AssertionError">
-AssertionError: expected 401 to be 400 // Object.is equality
-
-- Expected
-+ Received
-
-- 400
-+ 401
-
- ❯ tests/integration/aiExplainability.test.js:101:32
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/aiExplainability.test.js" name="AI Explainability API Integration &gt; GET /api/ai/explain/:entityType/:id/export - Export &gt; should return JSON export with correct structure" time="0.000968667">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:31.756Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/ai/explain/decision/test-id/export?format=json&apos;,
-  statusCode: 401,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 31008, external: 0, rss: 0 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/ai/explain/decision/test-id/export?format=json&apos;,
-  status: 401,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-            <failure message="expected 401 to be 200 // Object.is equality" type="AssertionError">
-AssertionError: expected 401 to be 200 // Object.is equality
-
-- Expected
-+ Received
-
-- 200
-+ 401
-
- ❯ tests/integration/aiExplainability.test.js:110:32
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/aiExplainability.test.js" name="AI Explainability API Integration &gt; GET /api/ai/explain/:entityType/:id/export - Export &gt; should include render_options for PDF format" time="0.001155958">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:31.757Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/ai/explain/decision/test-id/export?format=pdf&apos;,
-  statusCode: 401,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 230648, external: 0, rss: 16384 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/ai/explain/decision/test-id/export?format=pdf&apos;,
-  status: 401,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-            <failure message="expected 401 to be 200 // Object.is equality" type="AssertionError">
-AssertionError: expected 401 to be 200 // Object.is equality
-
-- Expected
-+ Received
-
-- 200
-+ 401
-
- ❯ tests/integration/aiExplainability.test.js:123:32
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/aiExplainability.test.js" name="AI Explainability API Integration &gt; POST /api/ai/explain/:entityType/:id/export/pdf - PDF Export &gt; should block unauthorized users" time="0.000985708">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:31.758Z&apos;,
-  method: &apos;POST&apos;,
-  path: &apos;/api/ai/explain/decision/test-id/export/pdf&apos;,
-  statusCode: 403,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 41224, external: 0, rss: 114688 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;POST&apos;,
-  url: &apos;/api/ai/explain/decision/test-id/export/pdf&apos;,
-  status: 403,
-  duration: &apos;1ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-        </testcase>
-        <testcase classname="tests/integration/aiExplainability.test.js" name="AI Explainability API Integration &gt; POST /api/ai/explain/:entityType/:id/export/pdf - PDF Export &gt; should return PDF-ready JSON" time="0.001365584">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:31.760Z&apos;,
-  method: &apos;POST&apos;,
-  path: &apos;/api/ai/explain/decision/test-id/export/pdf&apos;,
-  statusCode: 401,
-  responseTime: 1,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 213904, external: 0, rss: 0 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;POST&apos;,
-  url: &apos;/api/ai/explain/decision/test-id/export/pdf&apos;,
-  status: 401,
-  duration: &apos;1ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-            <failure message="expected 401 to be 200 // Object.is equality" type="AssertionError">
-AssertionError: expected 401 to be 200 // Object.is equality
-
-- Expected
-+ Received
-
-- 200
-+ 401
-
- ❯ tests/integration/aiExplainability.test.js:142:32
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/aiExplainability.test.js" name="AI Explainability API Integration &gt; GET /api/ai/explain/:entityType/:id/has-evidence - Evidence Check &gt; should return has_evidence: false for entity without evidence" time="0.001002709">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:31.761Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/ai/explain/decision/no-evidence-id/has-evidence&apos;,
-  statusCode: 401,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 451296, external: 0, rss: 16384 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/ai/explain/decision/no-evidence-id/has-evidence&apos;,
-  status: 401,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-            <failure message="expected 401 to be 200 // Object.is equality" type="AssertionError">
-AssertionError: expected 401 to be 200 // Object.is equality
-
-- Expected
-+ Received
-
-- 200
-+ 401
-
- ❯ tests/integration/aiExplainability.test.js:154:32
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/aiExplainability.test.js" name="AI Explainability - Organization Isolation &gt; should isolate evidence by organization" time="0.001956042">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:31.808Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/ai/explain/decision/shared-id&apos;,
-  statusCode: 401,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 29208, external: 0, rss: 0 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/ai/explain/decision/shared-id&apos;,
-  status: 401,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:31.809Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/ai/explain/decision/shared-id&apos;,
-  statusCode: 401,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: -667496, external: 0, rss: 16384 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/ai/explain/decision/shared-id&apos;,
-  status: 401,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-            <failure message="expected 401 to be 200 // Object.is equality" type="AssertionError">
-AssertionError: expected 401 to be 200 // Object.is equality
-
-- Expected
-+ Received
-
-- 200
-+ 401
-
- ❯ tests/integration/aiExplainability.test.js:229:29
-            </failure>
+        <testcase classname="tests/components/AssessmentMatrixCard.test.tsx" name="AssessmentMatrixCard &gt; Navigation &gt; should call onNavigate when navigate button clicked" time="0.099590125">
         </testcase>
     </testsuite>
-    <testsuite name="tests/integration/aiFailure.test.js" timestamp="2025-12-21T20:40:52.468Z" hostname="MacBook-Pro-Piotr.local" tests="7" failures="0" errors="0" skipped="0" time="0.120996416">
-        <testcase classname="tests/integration/aiFailure.test.js" name="AI Failure Resilience &gt; PMO Routes Without AI &gt; should return initiatives even when AI service fails" time="0.000608125">
+    <testsuite name="tests/components/AuditLogViewer.test.tsx" timestamp="2025-12-21T21:46:00.864Z" hostname="MacBook-Pro-Piotr.local" tests="17" failures="0" errors="0" skipped="0" time="0.409436334">
+        <testcase classname="tests/components/AuditLogViewer.test.tsx" name="AuditLogViewer &gt; Rendering &gt; should render audit log viewer" time="0.043114375">
         </testcase>
-        <testcase classname="tests/integration/aiFailure.test.js" name="AI Failure Resilience &gt; PMO Routes Without AI &gt; should return tasks when AI context fails" time="0.000128833">
+        <testcase classname="tests/components/AuditLogViewer.test.tsx" name="AuditLogViewer &gt; Rendering &gt; should display audit entries" time="0.010502333">
         </testcase>
-        <testcase classname="tests/integration/aiFailure.test.js" name="AI Failure Resilience &gt; PMO Routes Without AI &gt; should handle stage gate evaluation without AI" time="0.000095375">
+        <testcase classname="tests/components/AuditLogViewer.test.tsx" name="AuditLogViewer &gt; Rendering &gt; should show loading state initially" time="0.014363459">
         </testcase>
-        <testcase classname="tests/integration/aiFailure.test.js" name="AI Failure Resilience &gt; PMO Routes Without AI &gt; should allow status transitions without AI policy check failure" time="0.000066334">
+        <testcase classname="tests/components/AuditLogViewer.test.tsx" name="AuditLogViewer &gt; Filtering &gt; should filter by action type" time="0.01230825">
         </testcase>
-        <testcase classname="tests/integration/aiFailure.test.js" name="AI Failure Resilience &gt; PMO Routes Without AI &gt; should serve My Work aggregation without AI" time="0.000071208">
+        <testcase classname="tests/components/AuditLogViewer.test.tsx" name="AuditLogViewer &gt; Filtering &gt; should filter by resource type" time="0.053589875">
         </testcase>
-        <testcase classname="tests/integration/aiFailure.test.js" name="AI Failure Resilience &gt; Graceful Degradation &gt; should return default context when AI memory fails" time="0.000070209">
+        <testcase classname="tests/components/AuditLogViewer.test.tsx" name="AuditLogViewer &gt; Filtering &gt; should filter by date range" time="0.009123583">
         </testcase>
-        <testcase classname="tests/integration/aiFailure.test.js" name="AI Failure Resilience &gt; Graceful Degradation &gt; should log AI failures for monitoring" time="0.001062667">
+        <testcase classname="tests/components/AuditLogViewer.test.tsx" name="AuditLogViewer &gt; Filtering &gt; should search entries" time="0.010314">
         </testcase>
-    </testsuite>
-    <testsuite name="tests/integration/aiLayersIntegration.test.js" timestamp="2025-12-21T20:40:52.469Z" hostname="MacBook-Pro-Piotr.local" tests="23" failures="0" errors="0" skipped="0" time="0.070593292">
-        <testcase classname="tests/integration/aiLayersIntegration.test.js" name="AI PMO Intelligence Integration &gt; AI-6: Decision Governance &gt; should have decision types defined" time="0.000509583">
+        <testcase classname="tests/components/AuditLogViewer.test.tsx" name="AuditLogViewer &gt; Pagination &gt; should paginate entries" time="0.006216625">
         </testcase>
-        <testcase classname="tests/integration/aiLayersIntegration.test.js" name="AI PMO Intelligence Integration &gt; AI-6: Decision Governance &gt; should have decision status defined" time="0.000085375">
+        <testcase classname="tests/components/AuditLogViewer.test.tsx" name="AuditLogViewer &gt; Pagination &gt; should navigate to next page" time="0.006745916">
         </testcase>
-        <testcase classname="tests/integration/aiLayersIntegration.test.js" name="AI PMO Intelligence Integration &gt; AI-6: Decision Governance &gt; should have core functions exported" time="0.000091333">
+        <testcase classname="tests/components/AuditLogViewer.test.tsx" name="AuditLogViewer &gt; Pagination &gt; should navigate to previous page" time="0.006789291">
         </testcase>
-        <testcase classname="tests/integration/aiLayersIntegration.test.js" name="AI PMO Intelligence Integration &gt; AI-7: Risk &amp; Change Control &gt; should have 5 risk types" time="0.000398375">
+        <testcase classname="tests/components/AuditLogViewer.test.tsx" name="AuditLogViewer &gt; Export Functionality &gt; should export as JSON" time="0.006988">
         </testcase>
-        <testcase classname="tests/integration/aiLayersIntegration.test.js" name="AI PMO Intelligence Integration &gt; AI-7: Risk &amp; Change Control &gt; should track scope changes" time="0.000371708">
+        <testcase classname="tests/components/AuditLogViewer.test.tsx" name="AuditLogViewer &gt; Export Functionality &gt; should export as CSV" time="0.006819958">
         </testcase>
-        <testcase classname="tests/integration/aiLayersIntegration.test.js" name="AI PMO Intelligence Integration &gt; AI-7: Risk &amp; Change Control &gt; should detect uncontrolled changes" time="0.000154459">
+        <testcase classname="tests/components/AuditLogViewer.test.tsx" name="AuditLogViewer &gt; Entry Details &gt; should show entry details when selected" time="0.006625875">
         </testcase>
-        <testcase classname="tests/integration/aiLayersIntegration.test.js" name="AI PMO Intelligence Integration &gt; AI-8: Workload Intelligence &gt; should have correct workload status levels" time="0.000063833">
+        <testcase classname="tests/components/AuditLogViewer.test.tsx" name="AuditLogViewer &gt; Error Handling &gt; should display error when fetch fails" time="0.005544458">
         </testcase>
-        <testcase classname="tests/integration/aiLayersIntegration.test.js" name="AI PMO Intelligence Integration &gt; AI-8: Workload Intelligence &gt; should have burnout risk levels" time="0.000046584">
+        <testcase classname="tests/components/AuditLogViewer.test.tsx" name="AuditLogViewer &gt; Error Handling &gt; should handle API error responses" time="0.005949958">
         </testcase>
-        <testcase classname="tests/integration/aiLayersIntegration.test.js" name="AI PMO Intelligence Integration &gt; AI-8: Workload Intelligence &gt; should suggest rebalancing without auto-reassigning" time="0.00004825">
+        <testcase classname="tests/components/AuditLogViewer.test.tsx" name="AuditLogViewer &gt; Multi-Tenant Isolation &gt; should filter by organizationId when provided" time="0.006665625">
         </testcase>
-        <testcase classname="tests/integration/aiLayersIntegration.test.js" name="AI PMO Intelligence Integration &gt; AI-9: Maturity Monitor &gt; should have 5 maturity dimensions" time="0.000187792">
-        </testcase>
-        <testcase classname="tests/integration/aiLayersIntegration.test.js" name="AI PMO Intelligence Integration &gt; AI-9: Maturity Monitor &gt; should have 5 maturity levels (CMMI-like)" time="0.000053958">
-        </testcase>
-        <testcase classname="tests/integration/aiLayersIntegration.test.js" name="AI PMO Intelligence Integration &gt; AI-9: Maturity Monitor &gt; should log discipline events" time="0.000134666">
-        </testcase>
-        <testcase classname="tests/integration/aiLayersIntegration.test.js" name="AI PMO Intelligence Integration &gt; AI-10: Executive Reporting &gt; should have report types" time="0.000060542">
-        </testcase>
-        <testcase classname="tests/integration/aiLayersIntegration.test.js" name="AI PMO Intelligence Integration &gt; AI-10: Executive Reporting &gt; should have status indicators" time="0.000029917">
-        </testcase>
-        <testcase classname="tests/integration/aiLayersIntegration.test.js" name="AI PMO Intelligence Integration &gt; AI-10: Executive Reporting &gt; should translate data to narrative" time="0.000109625">
-        </testcase>
-        <testcase classname="tests/integration/aiLayersIntegration.test.js" name="AI PMO Intelligence Integration &gt; AI-11: Failure Handler &gt; should have failure scenarios" time="0.000035083">
-        </testcase>
-        <testcase classname="tests/integration/aiLayersIntegration.test.js" name="AI PMO Intelligence Integration &gt; AI-11: Failure Handler &gt; should provide graceful degradation" time="0.000082625">
-        </testcase>
-        <testcase classname="tests/integration/aiLayersIntegration.test.js" name="AI PMO Intelligence Integration &gt; AI-11: Failure Handler &gt; should explain failures user-friendly" time="0.000070167">
-        </testcase>
-        <testcase classname="tests/integration/aiLayersIntegration.test.js" name="AI PMO Intelligence Integration &gt; AI-11: Failure Handler &gt; should check availability" time="0.000120209">
-        </testcase>
-        <testcase classname="tests/integration/aiLayersIntegration.test.js" name="AI PMO Intelligence Integration &gt; AI-11: Failure Handler &gt; should support non-blocking execution" time="0.000057042">
-        </testcase>
-        <testcase classname="tests/integration/aiLayersIntegration.test.js" name="AI PMO Intelligence Integration &gt; AI-11: Failure Handler &gt; should fallback to default on failure" time="0.000191292">
-        </testcase>
-        <testcase classname="tests/integration/aiLayersIntegration.test.js" name="AI PMO Intelligence Integration &gt; Cross-Layer Integration &gt; should have all layers exportable" time="0.000450292">
-        </testcase>
-        <testcase classname="tests/integration/aiLayersIntegration.test.js" name="AI PMO Intelligence Integration &gt; Cross-Layer Integration &gt; should have all database tables exist" time="0.000843083">
+        <testcase classname="tests/components/AuditLogViewer.test.tsx" name="AuditLogViewer &gt; Multi-Tenant Isolation &gt; should allow superadmin to view all entries" time="0.007527584">
         </testcase>
     </testsuite>
-    <testsuite name="tests/integration/aiPlaybookBranching.test.js" timestamp="2025-12-21T20:40:52.470Z" hostname="MacBook-Pro-Piotr.local" tests="6" failures="0" errors="0" skipped="0" time="0.075349292">
-        <testcase classname="tests/integration/aiPlaybookBranching.test.js" name="AI Playbook Branching Integration Tests &gt; BRANCH step execution &gt; should route to correct step based on branch rules" time="0.001149083">
+    <testsuite name="tests/components/Button.test.tsx" timestamp="2025-12-21T21:46:00.865Z" hostname="MacBook-Pro-Piotr.local" tests="3" failures="0" errors="0" skipped="0" time="0.157478209">
+        <testcase classname="tests/components/Button.test.tsx" name="Component Test: Button &gt; renders children correctly" time="0.010743958">
         </testcase>
-        <testcase classname="tests/integration/aiPlaybookBranching.test.js" name="AI Playbook Branching Integration Tests &gt; BRANCH step execution &gt; should fall through to else_goto when no rules match" time="0.000176542">
+        <testcase classname="tests/components/Button.test.tsx" name="Component Test: Button &gt; handles click events" time="0.002420375">
         </testcase>
-        <testcase classname="tests/integration/aiPlaybookBranching.test.js" name="AI Playbook Branching Integration Tests &gt; dry-run-route &gt; should return routing preview without persisting" time="0.000294458">
+        <testcase classname="tests/components/Button.test.tsx" name="Component Test: Button &gt; renders with correct variant class" time="0.00136525">
         </testcase>
-        <testcase classname="tests/integration/aiPlaybookBranching.test.js" name="AI Playbook Branching Integration Tests &gt; dry-run-route &gt; should handle ACTION steps in dry-run" time="0.000120084">
+    </testsuite>
+    <testsuite name="tests/components/DashboardOverview.test.tsx" timestamp="2025-12-21T21:46:00.865Z" hostname="MacBook-Pro-Piotr.local" tests="9" failures="0" errors="0" skipped="0" time="0.212640167">
+        <testcase classname="tests/components/DashboardOverview.test.tsx" name="DashboardOverview &gt; Rendering &gt; should render dashboard layout" time="0.011028083">
         </testcase>
-        <testcase classname="tests/integration/aiPlaybookBranching.test.js" name="AI Playbook Branching Integration Tests &gt; evaluation_trace recording &gt; should record evaluation trace for BRANCH steps" time="0.00097325">
+        <testcase classname="tests/components/DashboardOverview.test.tsx" name="DashboardOverview &gt; Rendering &gt; should render TaskInbox component" time="0.001411792">
         </testcase>
-        <testcase classname="tests/integration/aiPlaybookBranching.test.js" name="AI Playbook Branching Integration Tests &gt; unknown condition fail-safe &gt; should fall back to else_goto for unknown condition" time="0.00019075">
+        <testcase classname="tests/components/DashboardOverview.test.tsx" name="DashboardOverview &gt; Rendering &gt; should render NotificationCenter component" time="0.000970125">
+        </testcase>
+        <testcase classname="tests/components/DashboardOverview.test.tsx" name="DashboardOverview &gt; Rendering &gt; should pass onCreateTask to TaskInbox" time="0.000855375">
+        </testcase>
+        <testcase classname="tests/components/DashboardOverview.test.tsx" name="DashboardOverview &gt; Rendering &gt; should pass onEditTask to TaskInbox" time="0.000883">
+        </testcase>
+        <testcase classname="tests/components/DashboardOverview.test.tsx" name="DashboardOverview &gt; Layout &gt; should have responsive grid layout" time="0.002467292">
+        </testcase>
+        <testcase classname="tests/components/DashboardOverview.test.tsx" name="DashboardOverview &gt; Layout &gt; should have correct column spans for large screens" time="0.000883708">
+        </testcase>
+        <testcase classname="tests/components/DashboardOverview.test.tsx" name="DashboardOverview &gt; Props Handling &gt; should handle optional session prop" time="0.000654875">
+        </testcase>
+        <testcase classname="tests/components/DashboardOverview.test.tsx" name="DashboardOverview &gt; Props Handling &gt; should handle optional refreshTrigger prop" time="0.000594833">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/components/ErrorBoundary.test.tsx" timestamp="2025-12-21T21:46:00.866Z" hostname="MacBook-Pro-Piotr.local" tests="4" failures="0" errors="0" skipped="0" time="0.163817458">
+        <testcase classname="tests/components/ErrorBoundary.test.tsx" name="Component Test: ErrorBoundary &gt; renders children when there is no error" time="0.010595375">
+        </testcase>
+        <testcase classname="tests/components/ErrorBoundary.test.tsx" name="Component Test: ErrorBoundary &gt; displays error UI when child component throws" time="0.005391334">
+        </testcase>
+        <testcase classname="tests/components/ErrorBoundary.test.tsx" name="Component Test: ErrorBoundary &gt; displays error message in error UI" time="0.00148725">
+        </testcase>
+        <testcase classname="tests/components/ErrorBoundary.test.tsx" name="Component Test: ErrorBoundary &gt; has reset button in error UI" time="0.003023167">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/components/FeedbackWidget.test.tsx" timestamp="2025-12-21T21:46:00.866Z" hostname="MacBook-Pro-Piotr.local" tests="8" failures="0" errors="0" skipped="0" time="0.35801875">
+        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; does not render when user is not logged in" time="0.006040375">
+        </testcase>
+        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; renders trigger button when user is logged in" time="0.0061305">
+        </testcase>
+        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; opens modal when trigger button is clicked" time="0.008117041">
+        </testcase>
+        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; closes modal when X button is clicked" time="0.003942667">
+        </testcase>
+        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; allows selecting feedback type" time="0.003783416">
+        </testcase>
+        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; submits feedback successfully" time="0.006337959">
+        </testcase>
+        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; handles submission error" time="0.007579792">
             <system-err>
-[AIPlaybookRoutingEngine] Unknown condition type: unknown_future_condition
-
-            </system-err>
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/integration/api.test.ts" timestamp="2025-12-21T20:40:52.470Z" hostname="MacBook-Pro-Piotr.local" tests="2" failures="0" errors="0" skipped="1" time="0.080556625">
-        <testcase classname="tests/integration/api.test.ts" name="Integration Test: API Health &gt; GET /health should return 200 OK" time="0.008334542">
-        </testcase>
-        <testcase classname="tests/integration/api.test.ts" name="Integration Test: API Health &gt; GET /non-existent-route should return 404 (handled by catchall serving index.html)" time="0">
-            <skipped/>
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/integration/apiFullFlow.test.js" timestamp="2025-12-21T20:40:52.470Z" hostname="MacBook-Pro-Piotr.local" tests="3" failures="0" errors="0" skipped="2" time="0.128474917">
-        <testcase classname="tests/integration/apiFullFlow.test.js" name="Integration Test: Full API Flow &gt; Project Lifecycle &gt; should create, read, update, and delete a project" time="0">
-            <skipped/>
-        </testcase>
-        <testcase classname="tests/integration/apiFullFlow.test.js" name="Integration Test: Full API Flow &gt; Task Lifecycle &gt; should create and manage tasks" time="0">
-            <skipped/>
-        </testcase>
-        <testcase classname="tests/integration/apiFullFlow.test.js" name="Integration Test: Full API Flow &gt; Session Management &gt; should save and retrieve session data" time="0.000432125">
-            <system-out>
-Skipping session test - no auth token
-
-            </system-out>
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/integration/auth.test.js" timestamp="2025-12-21T20:40:52.470Z" hostname="MacBook-Pro-Piotr.local" tests="7" failures="3" errors="0" skipped="0" time="0.410667292">
-        <testcase classname="tests/integration/auth.test.js" name="Auth Integration &gt; should login successfully with valid credentials" time="0.031313166">
-            <system-err>
-[Auth] Login error: Error: SQLITE_ERROR: no such table: refresh_tokens
---&gt; in Database#get(&apos;SELECT COUNT(*) as count FROM refresh_tokens \n&apos; +
-  &quot;             WHERE user_id = ? AND revoked_at IS NULL AND expires_at &gt; datetime(&apos;now&apos;)&quot;, [ &apos;user-auth-1766349633547&apos; ], [Function (anonymous)])
-    at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/services/refreshTokenService.js:36:12
+Error: API Error
+    at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/components/FeedbackWidget.test.tsx:101:53
+    at file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/index.js:145:11
+    at file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/index.js:915:26
+    at file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/index.js:1243:20
     at new Promise (&lt;anonymous&gt;)
-    at dbGet (/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/services/refreshTokenService.js:35:12)
-    at Object._enforceSessionLimit (/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/services/refreshTokenService.js:305:35)
-    at Object.generateTokenPair (/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/services/refreshTokenService.js:77:20)
-    at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/routes/auth.js:140:53 {
-  errno: 1,
-  code: &apos;SQLITE_ERROR&apos;,
-  __augmented: true
-}
-
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:33.896Z&apos;,
-  method: &apos;POST&apos;,
-  path: &apos;/api/auth/login&apos;,
-  statusCode: 500,
-  responseTime: 18,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 578712, external: 13522, rss: 327680 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;POST&apos;,
-  url: &apos;/api/auth/login&apos;,
-  status: 500,
-  duration: &apos;18ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-            <failure message="expected 500 to be 200 // Object.is equality" type="AssertionError">
-AssertionError: expected 500 to be 200 // Object.is equality
-
-- Expected
-+ Received
-
-- 200
-+ 500
-
- ❯ tests/integration/auth.test.js:50:28
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/auth.test.js" name="Auth Integration &gt; should fail with invalid credentials" time="0.016140417">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:33.917Z&apos;,
-  method: &apos;POST&apos;,
-  path: &apos;/api/auth/login&apos;,
-  statusCode: 401,
-  responseTime: 15,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 235144, external: 4168, rss: 0 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;POST&apos;,
-  url: &apos;/api/auth/login&apos;,
-  status: 401,
-  duration: &apos;15ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
+    at runWithTimeout (file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/index.js:1209:10)
+    at file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/index.js:1653:37
+    at Traces.$ (file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/node_modules/vitest/dist/chunks/traces.U4xDYhzZ.js:115:27)
+    at trace (file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/node_modules/vitest/dist/chunks/test.B8ej_ZHS.js:239:21)
+    at runTest (file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/index.js:1653:12)
 
             </system-err>
         </testcase>
-        <testcase classname="tests/integration/auth.test.js" name="Auth Integration &gt; should require email and password" time="0.00146725">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:33.918Z&apos;,
-  method: &apos;POST&apos;,
-  path: &apos;/api/auth/login&apos;,
-  statusCode: 400,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 45296, external: 0, rss: 0 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;POST&apos;,
-  url: &apos;/api/auth/login&apos;,
-  status: 400,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-        </testcase>
-        <testcase classname="tests/integration/auth.test.js" name="Auth Integration &gt; should validate token via /api/auth/me" time="0.016067083">
-            <system-err>
-[Auth] Login error: Error: SQLITE_ERROR: no such table: refresh_tokens
---&gt; in Database#get(&apos;SELECT COUNT(*) as count FROM refresh_tokens \n&apos; +
-  &quot;             WHERE user_id = ? AND revoked_at IS NULL AND expires_at &gt; datetime(&apos;now&apos;)&quot;, [ &apos;user-auth-1766349633547&apos; ], [Function (anonymous)])
-    at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/services/refreshTokenService.js:36:12
-    at new Promise (&lt;anonymous&gt;)
-    at dbGet (/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/services/refreshTokenService.js:35:12)
-    at Object._enforceSessionLimit (/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/services/refreshTokenService.js:305:35)
-    at Object.generateTokenPair (/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/services/refreshTokenService.js:77:20)
-    at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/routes/auth.js:140:53 {
-  errno: 1,
-  code: &apos;SQLITE_ERROR&apos;,
-  __augmented: true
-}
-
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:33.934Z&apos;,
-  method: &apos;POST&apos;,
-  path: &apos;/api/auth/login&apos;,
-  statusCode: 500,
-  responseTime: 15,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 376992, external: 5290, rss: 49152 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;POST&apos;,
-  url: &apos;/api/auth/login&apos;,
-  status: 500,
-  duration: &apos;15ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-            <failure message="expected undefined to be defined" type="AssertionError">
-AssertionError: expected undefined to be defined
- ❯ tests/integration/auth.test.js:79:23
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/auth.test.js" name="Auth Integration &gt; should reject invalid token" time="0.001383542">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:33.936Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/auth/me&apos;,
-  statusCode: 401,
-  responseTime: 1,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 77064, external: 0, rss: 32768 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/auth/me&apos;,
-  status: 401,
-  duration: &apos;1ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-        </testcase>
-        <testcase classname="tests/integration/auth.test.js" name="Auth Integration &gt; should reject request without token" time="0.000882041">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:33.937Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/auth/me&apos;,
-  statusCode: 403,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 33760, external: 0, rss: 0 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/auth/me&apos;,
-  status: 403,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-        </testcase>
-        <testcase classname="tests/integration/auth.test.js" name="Auth Integration &gt; Multi-Tenant Isolation &gt; should return correct organizationId in /me endpoint" time="0.002386708">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:33.984Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/auth/me&apos;,
-  statusCode: 401,
-  responseTime: 1,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 218936, external: 0, rss: 32768 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/auth/me&apos;,
-  status: 401,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:33.985Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/auth/me&apos;,
-  statusCode: 401,
-  responseTime: 1,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 206608, external: 0, rss: 0 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/auth/me&apos;,
-  status: 401,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-            <failure message="expected 401 to be 200 // Object.is equality" type="AssertionError">
-AssertionError: expected 401 to be 200 // Object.is equality
-
-- Expected
-+ Received
-
-- 200
-+ 401
-
- ❯ tests/integration/auth.test.js:162:33
-            </failure>
+        <testcase classname="tests/components/FeedbackWidget.test.tsx" name="Component Test: FeedbackWidget &gt; disables submit button when message is empty" time="0.002624">
         </testcase>
     </testsuite>
-    <testsuite name="tests/integration/databaseHealth.test.js" timestamp="2025-12-21T20:40:52.471Z" hostname="MacBook-Pro-Piotr.local" tests="11" failures="0" errors="0" skipped="4" time="0.070601167">
-        <testcase classname="tests/integration/databaseHealth.test.js" name="Integration Test: Database Health &gt; Connection Health &gt; should connect to database successfully" time="0.000605792">
+    <testsuite name="tests/components/InitiativeCard.test.tsx" timestamp="2025-12-21T21:46:00.867Z" hostname="MacBook-Pro-Piotr.local" tests="6" failures="0" errors="0" skipped="0" time="0.298713708">
+        <testcase classname="tests/components/InitiativeCard.test.tsx" name="Component Test: InitiativeCard &gt; renders initiative name and description" time="0.018532833">
         </testcase>
-        <testcase classname="tests/integration/databaseHealth.test.js" name="Integration Test: Database Health &gt; Connection Health &gt; should have all required tables" time="0.000876292">
+        <testcase classname="tests/components/InitiativeCard.test.tsx" name="Component Test: InitiativeCard &gt; calls onClick when card is clicked" time="0.011158666">
         </testcase>
-        <testcase classname="tests/integration/databaseHealth.test.js" name="Integration Test: Database Health &gt; Referential Integrity &gt; should enforce foreign key constraints" time="0">
-            <skipped/>
+        <testcase classname="tests/components/InitiativeCard.test.tsx" name="Component Test: InitiativeCard &gt; displays status badge" time="0.005127625">
         </testcase>
-        <testcase classname="tests/integration/databaseHealth.test.js" name="Integration Test: Database Health &gt; Referential Integrity &gt; should cascade delete correctly" time="0">
-            <skipped/>
+        <testcase classname="tests/components/InitiativeCard.test.tsx" name="Component Test: InitiativeCard &gt; displays axis badge when present" time="0.007550167">
         </testcase>
-        <testcase classname="tests/integration/databaseHealth.test.js" name="Integration Test: Database Health &gt; Query Performance &gt; should execute simple SELECT queries quickly" time="0.000194833">
+        <testcase classname="tests/components/InitiativeCard.test.tsx" name="Component Test: InitiativeCard &gt; calls onEnrich when enrich button is clicked" time="0.006964083">
         </testcase>
-        <testcase classname="tests/integration/databaseHealth.test.js" name="Integration Test: Database Health &gt; Query Performance &gt; should execute JOIN queries efficiently" time="0.000182375">
-        </testcase>
-        <testcase classname="tests/integration/databaseHealth.test.js" name="Integration Test: Database Health &gt; Query Performance &gt; should handle concurrent queries" time="0.000347459">
-        </testcase>
-        <testcase classname="tests/integration/databaseHealth.test.js" name="Integration Test: Database Health &gt; Transaction Integrity &gt; should commit transactions successfully" time="0">
-            <skipped/>
-        </testcase>
-        <testcase classname="tests/integration/databaseHealth.test.js" name="Integration Test: Database Health &gt; Transaction Integrity &gt; should rollback transactions on error" time="0">
-            <skipped/>
-        </testcase>
-        <testcase classname="tests/integration/databaseHealth.test.js" name="Integration Test: Database Health &gt; Data Consistency &gt; should prevent duplicate emails" time="0.000693584">
-        </testcase>
-        <testcase classname="tests/integration/databaseHealth.test.js" name="Integration Test: Database Health &gt; Data Consistency &gt; should maintain referential integrity on updates" time="0.00030125">
+        <testcase classname="tests/components/InitiativeCard.test.tsx" name="Component Test: InitiativeCard &gt; handles different status values" time="0.010490167">
         </testcase>
     </testsuite>
-    <testsuite name="tests/integration/helpPlaybooks.test.js" timestamp="2025-12-21T20:40:52.472Z" hostname="MacBook-Pro-Piotr.local" tests="10" failures="0" errors="0" skipped="0" time="0.06665475">
-        <testcase classname="tests/integration/helpPlaybooks.test.js" name="Help Playbooks Integration Tests &gt; Playbook Resolver - resolveRecommended &gt; Demo org → recommended = start_trial_from_demo" time="0.000518">
+    <testsuite name="tests/components/LLMSelector.test.tsx" timestamp="2025-12-21T21:46:00.867Z" hostname="MacBook-Pro-Piotr.local" tests="6" failures="0" errors="0" skipped="0" time="0.410233">
+        <testcase classname="tests/components/LLMSelector.test.tsx" name="Component Test: LLMSelector &gt; renders selector button" time="0.013608542">
         </testcase>
-        <testcase classname="tests/integration/helpPlaybooks.test.js" name="Help Playbooks Integration Tests &gt; Playbook Resolver - resolveRecommended &gt; Trial expired → recommended = trial_expired_upgrade" time="0.000083583">
+        <testcase classname="tests/components/LLMSelector.test.tsx" name="Component Test: LLMSelector &gt; opens dropdown when clicked" time="0.009658334">
         </testcase>
-        <testcase classname="tests/integration/helpPlaybooks.test.js" name="Help Playbooks Integration Tests &gt; Playbook Resolver - resolveRecommended &gt; Trial &lt;= 7 days → recommended = trial_last_week_upgrade" time="0.000078708">
+        <testcase classname="tests/components/LLMSelector.test.tsx" name="Component Test: LLMSelector &gt; displays models in dropdown" time="0.009681667">
         </testcase>
-        <testcase classname="tests/integration/helpPlaybooks.test.js" name="Help Playbooks Integration Tests &gt; Playbook Resolver - resolveRecommended &gt; Invites blocked → recommended = invite_blocked_explained" time="0.000067041">
+        <testcase classname="tests/components/LLMSelector.test.tsx" name="Component Test: LLMSelector &gt; filters models by search query" time="0.010679209">
         </testcase>
-        <testcase classname="tests/integration/helpPlaybooks.test.js" name="Help Playbooks Integration Tests &gt; Playbook Resolver - resolveRecommended &gt; Route-based: billing route → recommended = billing_upgrade_howto" time="0.000061709">
+        <testcase classname="tests/components/LLMSelector.test.tsx" name="Component Test: LLMSelector &gt; selects model when clicked" time="0.007945833">
         </testcase>
-        <testcase classname="tests/integration/helpPlaybooks.test.js" name="Help Playbooks Integration Tests &gt; Playbook Resolver - resolveRecommended &gt; Default (paid, no issues) → recommended = first_value_checklist" time="0.000041834">
-        </testcase>
-        <testcase classname="tests/integration/helpPlaybooks.test.js" name="Help Playbooks Integration Tests &gt; Playbook Resolver - resolveRecommended &gt; Empty playbooks → returns null" time="0.000047375">
-        </testcase>
-        <testcase classname="tests/integration/helpPlaybooks.test.js" name="Help Playbooks Integration Tests &gt; Playbook Resolver - resolveRecommended &gt; Null policy snapshot → returns null" time="0.000031459">
-        </testcase>
-        <testcase classname="tests/integration/helpPlaybooks.test.js" name="Help Playbooks Integration Tests &gt; Priority Rules Order &gt; Trial expired takes priority over Demo" time="0.000047083">
-        </testcase>
-        <testcase classname="tests/integration/helpPlaybooks.test.js" name="Help Playbooks Integration Tests &gt; Priority Rules Order &gt; Demo takes priority over trial last week" time="0.000055334">
+        <testcase classname="tests/components/LLMSelector.test.tsx" name="Component Test: LLMSelector &gt; toggles auto mode" time="0.003806125">
+            <system-err>
+An update to LLMSelector inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to LLMSelector inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+            </system-err>
         </testcase>
     </testsuite>
-    <testsuite name="tests/integration/initiatives.test.js" timestamp="2025-12-21T20:40:52.472Z" hostname="MacBook-Pro-Piotr.local" tests="2" failures="0" errors="0" skipped="0" time="0.33808325">
-        <testcase classname="tests/integration/initiatives.test.js" name="Initiatives Integration &gt; should list initiatives" time="0.000492916">
+    <testsuite name="tests/components/LoadingScreen.test.tsx" timestamp="2025-12-21T21:46:00.867Z" hostname="MacBook-Pro-Piotr.local" tests="2" failures="0" errors="0" skipped="0" time="0.311315041">
+        <testcase classname="tests/components/LoadingScreen.test.tsx" name="Component Test: LoadingScreen &gt; renders loading spinner" time="0.09352675">
+        </testcase>
+        <testcase classname="tests/components/LoadingScreen.test.tsx" name="Component Test: LoadingScreen &gt; has correct styling classes" time="0.00164375">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/components/MegatrendScanner.test.tsx" timestamp="2025-12-21T21:46:00.868Z" hostname="MacBook-Pro-Piotr.local" tests="7" failures="0" errors="0" skipped="0" time="0.341740209">
+        <testcase classname="tests/components/MegatrendScanner.test.tsx" name="Component Test: TrendDetailCard &gt; renders trend details when data is provided" time="0.02092275">
+        </testcase>
+        <testcase classname="tests/components/MegatrendScanner.test.tsx" name="Component Test: TrendDetailCard &gt; renders loading state" time="0.002349">
+        </testcase>
+        <testcase classname="tests/components/MegatrendScanner.test.tsx" name="Component Test: TrendDetailCard &gt; renders error state and handles close/back" time="0.008773042">
+        </testcase>
+        <testcase classname="tests/components/MegatrendScanner.test.tsx" name="Component Test: TrendDetailCard &gt; calls onClose when close button is clicked" time="0.097456833">
+        </testcase>
+        <testcase classname="tests/components/MegatrendScanner.test.tsx" name="Component Test: IndustryBaselineCard &gt; renders list of trends" time="0.003173084">
+        </testcase>
+        <testcase classname="tests/components/MegatrendScanner.test.tsx" name="Component Test: IndustryBaselineCard &gt; renders loading state" time="0.001008542">
+        </testcase>
+        <testcase classname="tests/components/MegatrendScanner.test.tsx" name="Component Test: IndustryBaselineCard &gt; calls onTrendSelect when a trend is clicked" time="0.017649208">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/components/PermissionManager.test.tsx" timestamp="2025-12-21T21:46:00.868Z" hostname="MacBook-Pro-Piotr.local" tests="13" failures="0" errors="0" skipped="0" time="0.345139292">
+        <testcase classname="tests/components/PermissionManager.test.tsx" name="PermissionManager &gt; Rendering &gt; should render permission manager" time="0.024421709">
+            <system-err>
+An update to PermissionManager inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to PermissionManager inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to PermissionManager inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/components/PermissionManager.test.tsx" name="PermissionManager &gt; Rendering &gt; should render search input" time="0.003760334">
+            <system-err>
+An update to PermissionManager inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to PermissionManager inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to PermissionManager inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/components/PermissionManager.test.tsx" name="PermissionManager &gt; Rendering &gt; should display user role when permissions loaded" time="0.012563792">
+        </testcase>
+        <testcase classname="tests/components/PermissionManager.test.tsx" name="PermissionManager &gt; Search Functionality &gt; should filter permissions by search term" time="0.032866542">
+        </testcase>
+        <testcase classname="tests/components/PermissionManager.test.tsx" name="PermissionManager &gt; Search Functionality &gt; should search by permission key" time="0.004666708">
+        </testcase>
+        <testcase classname="tests/components/PermissionManager.test.tsx" name="PermissionManager &gt; Category Expansion &gt; should toggle category expansion" time="0.020430708">
+        </testcase>
+        <testcase classname="tests/components/PermissionManager.test.tsx" name="PermissionManager &gt; Permission Toggling &gt; should toggle permission status" time="0.0094005">
+        </testcase>
+        <testcase classname="tests/components/PermissionManager.test.tsx" name="PermissionManager &gt; Save Functionality &gt; should show save button when changes pending" time="0.003353125">
+        </testcase>
+        <testcase classname="tests/components/PermissionManager.test.tsx" name="PermissionManager &gt; Save Functionality &gt; should call onSave callback after saving" time="0.003423">
+        </testcase>
+        <testcase classname="tests/components/PermissionManager.test.tsx" name="PermissionManager &gt; Error Handling &gt; should display error when fetch fails" time="0.003686125">
+        </testcase>
+        <testcase classname="tests/components/PermissionManager.test.tsx" name="PermissionManager &gt; Error Handling &gt; should handle API error responses" time="0.007084083">
+        </testcase>
+        <testcase classname="tests/components/PermissionManager.test.tsx" name="PermissionManager &gt; Accessibility &gt; should have accessible search input" time="0.001984209">
+            <system-err>
+An update to PermissionManager inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to PermissionManager inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to PermissionManager inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/components/PermissionManager.test.tsx" name="PermissionManager &gt; Accessibility &gt; should have accessible buttons" time="0.003817459">
+            <system-err>
+An update to PermissionManager inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to PermissionManager inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to PermissionManager inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+            </system-err>
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/components/PlanCard.test.tsx" timestamp="2025-12-21T21:46:00.869Z" hostname="MacBook-Pro-Piotr.local" tests="7" failures="0" errors="0" skipped="0" time="0.173322458">
+        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; renders plan name and price" time="0.017137708">
+        </testcase>
+        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; displays current plan badge when isCurrentPlan is true" time="0.00334425">
+        </testcase>
+        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; displays popular badge when isPopular is true" time="0.002565875">
+        </testcase>
+        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; calls onSelect when select button is clicked" time="0.004491667">
+        </testcase>
+        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; disables select button when disabled is true" time="0.002449208">
+        </testcase>
+        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; displays features list" time="0.004655541">
+        </testcase>
+        <testcase classname="tests/components/PlanCard.test.tsx" name="Component Test: PlanCard &gt; shows API access for premium plans" time="0.00195825">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/components/QuotaWarningBanner.test.tsx" timestamp="2025-12-21T21:46:00.869Z" hostname="MacBook-Pro-Piotr.local" tests="7" failures="0" errors="0" skipped="0" time="0.303552875">
+        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; does not render when usage is below threshold" time="0.005493792">
+        </testcase>
+        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; renders warning when token usage is high" time="0.007058083">
+        </testcase>
+        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; renders warning when storage usage is high" time="0.001444">
+        </testcase>
+        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; displays critical message when usage is very high" time="0.0014305">
+        </testcase>
+        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; calls onUpgrade when upgrade button is clicked" time="0.002948">
+        </testcase>
+        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; calls onDismiss when dismiss button is clicked" time="0.081427917">
+        </testcase>
+        <testcase classname="tests/components/QuotaWarningBanner.test.tsx" name="Component Test: QuotaWarningBanner &gt; handles both token and storage warnings" time="0.00112925">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/components/RouterSync.test.tsx" timestamp="2025-12-21T21:46:00.870Z" hostname="MacBook-Pro-Piotr.local" tests="4" failures="0" errors="0" skipped="0" time="0.254604375">
+        <testcase classname="tests/components/RouterSync.test.tsx" name="RouterSync &gt; navigates to Demo on /demo route" time="0.010037958">
             <system-out>
-Init: Skipping - no token
+[RouterSync] Phase B: Navigating to DEMO
 
             </system-out>
         </testcase>
-        <testcase classname="tests/integration/initiatives.test.js" name="Initiatives Integration &gt; should create an initiative" time="0.000119167">
+        <testcase classname="tests/components/RouterSync.test.tsx" name="RouterSync &gt; navigates to Trial Start on /trial/start route" time="0.001145458">
             <system-out>
-Init: Skipping - no token
+[RouterSync] Navigating to TRIAL START
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/components/RouterSync.test.tsx" name="RouterSync &gt; captures attribution parameters" time="0.001007834">
+            <system-out>
+[RouterSync] Captured Referral: TEST_REF
+[RouterSync] Captured Invite: TEST_INVITE
+[RouterSync] Phase A: Product Entry Page
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/components/RouterSync.test.tsx" name="RouterSync &gt; navigates to Welcome on /consulting" time="0.000706459">
+            <system-out>
+[RouterSync] Navigating to CONSULTING
 
             </system-out>
         </testcase>
     </testsuite>
-    <testsuite name="tests/integration/legal.test.ts" timestamp="2025-12-21T20:40:52.472Z" hostname="MacBook-Pro-Piotr.local" tests="1" failures="1" errors="0" skipped="0" time="0">
-        <testcase classname="tests/integration/legal.test.ts" name="tests/integration/legal.test.ts" time="0">
-            <failure message="Cannot find module &apos;../../../server/index&apos;
-Require stack:
-- /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/integration/legal.test.ts" type="Error">
-Error: Cannot find module &apos;../../../server/index&apos;
-Require stack:
-- /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/integration/legal.test.ts
- ❯ tests/integration/legal.test.ts:9:13
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
-Serialized Error: { code: &apos;MODULE_NOT_FOUND&apos;, requireStack: [ &apos;/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/integration/legal.test.ts&apos; ] }
-            </failure>
+    <testsuite name="tests/components/SystemHealth.test.tsx" timestamp="2025-12-21T21:46:00.870Z" hostname="MacBook-Pro-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.165737042">
+        <testcase classname="tests/components/SystemHealth.test.tsx" name="Component Test: SystemHealth &gt; does not render while loading" time="0.006556042">
+        </testcase>
+        <testcase classname="tests/components/SystemHealth.test.tsx" name="Component Test: SystemHealth &gt; displays online status when system is healthy" time="0.010632667">
+        </testcase>
+        <testcase classname="tests/components/SystemHealth.test.tsx" name="Component Test: SystemHealth &gt; displays latency when online" time="0.003258416">
+        </testcase>
+        <testcase classname="tests/components/SystemHealth.test.tsx" name="Component Test: SystemHealth &gt; displays offline status when system is down" time="0.002854667">
+        </testcase>
+        <testcase classname="tests/components/SystemHealth.test.tsx" name="Component Test: SystemHealth &gt; polls health status periodically" time="0.002018167">
         </testcase>
     </testsuite>
-    <testsuite name="tests/integration/llmHealth.test.js" timestamp="2025-12-21T20:40:52.473Z" hostname="MacBook-Pro-Piotr.local" tests="11" failures="0" errors="0" skipped="7" time="0.6184655">
-        <testcase classname="tests/integration/llmHealth.test.js" name="Integration Test: LLM Health &gt; Connection Tests &gt; should test provider connection successfully" time="0">
-            <skipped/>
+    <testsuite name="tests/components/TaskCard.test.tsx" timestamp="2025-12-21T21:46:00.871Z" hostname="MacBook-Pro-Piotr.local" tests="10" failures="0" errors="0" skipped="0" time="0.284820583">
+        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; renders task title" time="0.013781125">
         </testcase>
-        <testcase classname="tests/integration/llmHealth.test.js" name="Integration Test: LLM Health &gt; Connection Tests &gt; should handle connection timeout gracefully" time="0">
-            <skipped/>
+        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; calls onClick when card is clicked" time="0.003181708">
         </testcase>
-        <testcase classname="tests/integration/llmHealth.test.js" name="Integration Test: LLM Health &gt; Connection Tests &gt; should handle invalid provider gracefully" time="0">
-            <skipped/>
+        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; displays status badge" time="0.001443792">
         </testcase>
-        <testcase classname="tests/integration/llmHealth.test.js" name="Integration Test: LLM Health &gt; Latency Tests &gt; should measure LLM call latency" time="0">
-            <skipped/>
+        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; displays priority badge" time="0.00134525">
         </testcase>
-        <testcase classname="tests/integration/llmHealth.test.js" name="Integration Test: LLM Health &gt; Latency Tests &gt; should handle concurrent LLM calls" time="0">
-            <skipped/>
+        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; displays why text when present" time="0.004386709">
         </testcase>
-        <testcase classname="tests/integration/llmHealth.test.js" name="Integration Test: LLM Health &gt; Quality Tests &gt; should respect system instructions" time="0">
-            <skipped/>
+        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; displays assignee when present" time="0.001227208">
         </testcase>
-        <testcase classname="tests/integration/llmHealth.test.js" name="Integration Test: LLM Health &gt; Quality Tests &gt; should handle context history correctly" time="0">
-            <skipped/>
+        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; displays unassigned when no assignee" time="0.002383959">
         </testcase>
-        <testcase classname="tests/integration/llmHealth.test.js" name="Integration Test: LLM Health &gt; Error Handling &gt; should handle API errors gracefully" time="0.322963042">
-            <system-out>
-[AiService] Testing connection for: openai
-
-            </system-out>
-            <system-err>
-Test connection failed: AuthenticationError: 401 Incorrect API key provided: invalid-*****2345. You can find your API key at https://platform.openai.com/account/api-keys.
-    at APIError.generate (/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/node_modules/openai/core/error.js:48:20)
-    at OpenAI.makeStatusError (/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/node_modules/openai/client.js:165:32)
-    at OpenAI.makeRequest (/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/node_modules/openai/client.js:333:30)
-    at processTicksAndRejections (node:internal/process/task_queues:103:5)
-    at Object.testProviderConnection (/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/services/aiService.js:1205:36)
-    at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/integration/llmHealth.test.js:238:28
-    at file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/index.js:915:20 {
-  status: 401,
-  headers: Headers {
-    date: &apos;Sun, 21 Dec 2025 20:40:49 GMT&apos;,
-    &apos;content-type&apos;: &apos;application/json; charset=utf-8&apos;,
-    &apos;content-length&apos;: &apos;267&apos;,
-    connection: &apos;keep-alive&apos;,
-    vary: &apos;Origin&apos;,
-    &apos;x-request-id&apos;: &apos;req_5e1a37a3346d42fb931fe8513401b40b&apos;,
-    &apos;x-envoy-upstream-service-time&apos;: &apos;2&apos;,
-    &apos;x-openai-proxy-wasm&apos;: &apos;v0.1&apos;,
-    &apos;cf-cache-status&apos;: &apos;DYNAMIC&apos;,
-    &apos;set-cookie&apos;: &apos;__cf_bm=DltB1fVU1mO6bj9X2IxbioSoG8TRBWqBRpqaNs5jXsg-1766349649-1.0.1.1-ZTfg7j9Rcj2uztF7fl0fa6zADytOFawpQ2ryfrZ2s5XR8_Oqhbqs0MOSt4O642ezUvm_3.VtlkOw8eDWTgILTMw6blprFdEBcgUnQkSdYFM; path=/; expires=Sun, 21-Dec-25 21:10:49 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=hNNthKcpzA9gDKxfSMWbmZJssLye7YC1fSNZF1WwIzI-1766349649853-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None&apos;,
-    &apos;strict-transport-security&apos;: &apos;max-age=31536000; includeSubDomains; preload&apos;,
-    &apos;x-content-type-options&apos;: &apos;nosniff&apos;,
-    server: &apos;cloudflare&apos;,
-    &apos;cf-ray&apos;: &apos;9b1a325e8f4cbf51-WAW&apos;,
-    &apos;alt-svc&apos;: &apos;h3=&quot;:443&quot;; ma=86400&apos;
-  },
-  requestID: &apos;req_5e1a37a3346d42fb931fe8513401b40b&apos;,
-  error: {
-    message: &apos;Incorrect API key provided: invalid-*****2345. You can find your API key at https://platform.openai.com/account/api-keys.&apos;,
-    type: &apos;invalid_request_error&apos;,
-    param: null,
-    code: &apos;invalid_api_key&apos;
-  },
-  code: &apos;invalid_api_key&apos;,
-  param: null,
-  type: &apos;invalid_request_error&apos;
-}
-
-            </system-err>
+        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; displays due date when present" time="0.010350208">
         </testcase>
-        <testcase classname="tests/integration/llmHealth.test.js" name="Integration Test: LLM Health &gt; Error Handling &gt; should handle rate limiting" time="0.222884083">
-            <system-out>
-[AiService] Testing connection for: openai
-
-            </system-out>
-            <system-err>
-Test connection failed: AuthenticationError: 401 Incorrect API key provided: test-key. You can find your API key at https://platform.openai.com/account/api-keys.
-    at APIError.generate (/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/node_modules/openai/core/error.js:48:20)
-    at OpenAI.makeStatusError (/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/node_modules/openai/client.js:165:32)
-    at OpenAI.makeRequest (/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/node_modules/openai/client.js:333:30)
-    at processTicksAndRejections (node:internal/process/task_queues:103:5)
-    at Object.testProviderConnection (/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/services/aiService.js:1205:36)
-    at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/integration/llmHealth.test.js:255:17
-    at file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/index.js:915:20 {
-  status: 401,
-  headers: Headers {
-    date: &apos;Sun, 21 Dec 2025 20:40:50 GMT&apos;,
-    &apos;content-type&apos;: &apos;application/json; charset=utf-8&apos;,
-    &apos;content-length&apos;: &apos;258&apos;,
-    connection: &apos;keep-alive&apos;,
-    vary: &apos;Origin&apos;,
-    &apos;x-request-id&apos;: &apos;req_de907ef7b0124f58b074ec72cb0e9241&apos;,
-    &apos;x-envoy-upstream-service-time&apos;: &apos;1&apos;,
-    &apos;x-openai-proxy-wasm&apos;: &apos;v0.1&apos;,
-    &apos;cf-cache-status&apos;: &apos;DYNAMIC&apos;,
-    &apos;set-cookie&apos;: &apos;__cf_bm=u5VY_dAmR9V41P7pRIwchxPYd0Jn9IU7HbnMCgf_Kuo-1766349650-1.0.1.1-ZTJe4lpalk23VsLsOizRUfre07jyZkgd8L8KaWxNHcdAIYkqohEkLZkm5OdjtbkSnmQ8l9YXGYTnyWoKqwPXDsQEmvV_TJa2065QaJxf0sI; path=/; expires=Sun, 21-Dec-25 21:10:50 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=4ItoEfFrPSLkh9xsaBPm7Z5xTY_AaGXh0KFRArHU5hQ-1766349650082-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None&apos;,
-    &apos;strict-transport-security&apos;: &apos;max-age=31536000; includeSubDomains; preload&apos;,
-    &apos;x-content-type-options&apos;: &apos;nosniff&apos;,
-    server: &apos;cloudflare&apos;,
-    &apos;cf-ray&apos;: &apos;9b1a325fe9711ae9-WAW&apos;,
-    &apos;alt-svc&apos;: &apos;h3=&quot;:443&quot;; ma=86400&apos;
-  },
-  requestID: &apos;req_de907ef7b0124f58b074ec72cb0e9241&apos;,
-  error: {
-    message: &apos;Incorrect API key provided: test-key. You can find your API key at https://platform.openai.com/account/api-keys.&apos;,
-    type: &apos;invalid_request_error&apos;,
-    param: null,
-    code: &apos;invalid_api_key&apos;
-  },
-  code: &apos;invalid_api_key&apos;,
-  param: null,
-  type: &apos;invalid_request_error&apos;
-}
-
-            </system-err>
+        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; displays checklist progress when present" time="0.004924125">
         </testcase>
-        <testcase classname="tests/integration/llmHealth.test.js" name="Integration Test: LLM Health &gt; Provider Configuration &gt; should retrieve provider from database" time="0.001362291">
-        </testcase>
-        <testcase classname="tests/integration/llmHealth.test.js" name="Integration Test: LLM Health &gt; Provider Configuration &gt; should handle missing provider gracefully" time="0.000607583">
+        <testcase classname="tests/components/TaskCard.test.tsx" name="Component Test: TaskCard &gt; handles different status values" time="0.02194475">
         </testcase>
     </testsuite>
-    <testsuite name="tests/integration/megatrend.test.js" timestamp="2025-12-21T20:40:52.474Z" hostname="MacBook-Pro-Piotr.local" tests="4" failures="4" errors="0" skipped="0" time="0.635895042">
-        <testcase classname="tests/integration/megatrend.test.js" name="Megatrend Integration &gt; should fetch baseline megatrends" time="0.006147334">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:36.389Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/megatrends/baseline?industry=general&apos;,
-  statusCode: 401,
-  responseTime: 1,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 58856, external: 0, rss: 0 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/megatrends/baseline?industry=general&apos;,
-  status: 401,
-  duration: &apos;1ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-            <failure message="expected 401 to be 200 // Object.is equality" type="AssertionError">
-AssertionError: expected 401 to be 200 // Object.is equality
-
-- Expected
-+ Received
-
-- 200
-+ 401
-
- ❯ tests/integration/megatrend.test.js:61:28
-            </failure>
+    <testsuite name="tests/components/TaskInbox.test.tsx" timestamp="2025-12-21T21:46:00.871Z" hostname="MacBook-Pro-Piotr.local" tests="4" failures="0" errors="0" skipped="0" time="0.380588333">
+        <testcase classname="tests/components/TaskInbox.test.tsx" name="TaskInbox &gt; Rendering &gt; should render task inbox" time="0.018860916">
         </testcase>
-        <testcase classname="tests/integration/megatrend.test.js" name="Megatrend Integration &gt; should fetch radar data" time="0.00191525">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:36.394Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/megatrends/radar?industry=general&apos;,
-  statusCode: 401,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 74032, external: 0, rss: 32768 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/megatrends/radar?industry=general&apos;,
-  status: 401,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-            <failure message="expected 401 to be 200 // Object.is equality" type="AssertionError">
-AssertionError: expected 401 to be 200 // Object.is equality
-
-- Expected
-+ Received
-
-- 200
-+ 401
-
- ❯ tests/integration/megatrend.test.js:73:28
-            </failure>
+        <testcase classname="tests/components/TaskInbox.test.tsx" name="TaskInbox &gt; Rendering &gt; should display tasks when loaded" time="0.004429084">
         </testcase>
-        <testcase classname="tests/integration/megatrend.test.js" name="Megatrend Integration &gt; should fetch megatrend detail by ID" time="0.001154583">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:36.396Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/megatrends/baseline&apos;,
-  statusCode: 401,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 370496, external: 0, rss: 0 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/megatrends/baseline&apos;,
-  status: 401,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-            <failure message="Cannot read properties of undefined (reading &apos;id&apos;)" type="TypeError">
-TypeError: Cannot read properties of undefined (reading &apos;id&apos;)
- ❯ tests/integration/megatrend.test.js:85:41
-            </failure>
+        <testcase classname="tests/components/TaskInbox.test.tsx" name="TaskInbox &gt; Filtering &gt; should filter by priority" time="0.003557875">
         </testcase>
-        <testcase classname="tests/integration/megatrend.test.js" name="Megatrend Integration &gt; should create and manage custom trend" time="0.001290042">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:36.397Z&apos;,
-  method: &apos;POST&apos;,
-  path: &apos;/api/megatrends/custom&apos;,
-  statusCode: 401,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 115160, external: 0, rss: 16384 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;POST&apos;,
-  url: &apos;/api/megatrends/custom&apos;,
-  status: 401,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-            <failure message="expected 401 to be 201 // Object.is equality" type="AssertionError">
-AssertionError: expected 401 to be 201 // Object.is equality
-
-- Expected
-+ Received
-
-- 201
-+ 401
-
- ❯ tests/integration/megatrend.test.js:111:34
-            </failure>
+        <testcase classname="tests/components/TaskInbox.test.tsx" name="TaskInbox &gt; Filtering &gt; should filter by status" time="0.003257125">
         </testcase>
     </testsuite>
-    <testsuite name="tests/integration/metricsFullFlow.test.js" timestamp="2025-12-21T20:40:52.475Z" hostname="MacBook-Pro-Piotr.local" tests="2" failures="0" errors="0" skipped="0" time="0.071156917">
-        <testcase classname="tests/integration/metricsFullFlow.test.js" name="Metrics &amp; Conversion Full Flow Integration &gt; should record full conversion funnel and show consistent data in aggregator" time="0.003456875">
-            <system-out>
-[OrgEventService] Event logged: trial_started for org 91b386a0-5cbc-45ea-b5c8-80d9f9235368
-
-[MetricsCollector] Recorded event: trial_started (ff022ad8-74f3-4011-9372-b57f59f8053f)
-
-[MetricsCollector] Recorded event: help_started (0ef2ef3b-8a28-46a6-b6b6-4c0cad1f8709)
-
-[MetricsCollector] Recorded event: help_completed (e2840b23-bb2d-49fd-9f06-bc3c4c04f246)
-
-[MetricsCollector] Recorded event: invite_sent (a18d60b7-6205-4a88-a3dd-968612bf95a7)
-
-[MetricsCollector] Recorded event: invite_accepted (37f20234-fb5a-4799-868d-e5cecead846d)
-
-[MetricsCollector] Recorded event: invite_sent (6c67980c-d624-45c5-99b6-df7583856396)
-
-[OrgEventService] Event logged: trial_upgraded for org 91b386a0-5cbc-45ea-b5c8-80d9f9235368
-
-[MetricsCollector] Recorded event: upgraded_to_paid (1bc78327-8cc7-41a4-87d3-786a8b387915)
-
-            </system-out>
+    <testsuite name="tests/components/UsageMeters.test.tsx" timestamp="2025-12-21T21:46:00.872Z" hostname="MacBook-Pro-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.176201583">
+        <testcase classname="tests/components/UsageMeters.test.tsx" name="Component Test: UsageMeters &gt; renders token and storage meters" time="0.018138709">
         </testcase>
-        <testcase classname="tests/integration/metricsFullFlow.test.js" name="Metrics &amp; Conversion Full Flow Integration &gt; should generate early warnings correctly" time="0.000815208">
-            <system-out>
-[MetricsCollector] Recorded event: help_started (c0535f76-c356-4905-a6d9-5a796d934069)
-
-            </system-out>
+        <testcase classname="tests/components/UsageMeters.test.tsx" name="Component Test: UsageMeters &gt; displays usage percentages" time="0.003471166">
+        </testcase>
+        <testcase classname="tests/components/UsageMeters.test.tsx" name="Component Test: UsageMeters &gt; renders compact version" time="0.00318325">
+        </testcase>
+        <testcase classname="tests/components/UsageMeters.test.tsx" name="Component Test: UsageMeters &gt; displays warning when usage is high" time="0.0025485">
+        </testcase>
+        <testcase classname="tests/components/UsageMeters.test.tsx" name="Component Test: UsageMeters &gt; displays critical warning when usage is very high" time="0.002385333">
         </testcase>
     </testsuite>
-    <testsuite name="tests/integration/projects.test.js" timestamp="2025-12-21T20:40:52.475Z" hostname="MacBook-Pro-Piotr.local" tests="2" failures="0" errors="0" skipped="0" time="0.311219541">
-        <testcase classname="tests/integration/projects.test.js" name="Projects Integration &gt; should create a new project" time="0.000340208">
-            <system-out>
-Projects: Skipping - no token
-
-            </system-out>
+    <testsuite name="tests/components/a11y.test.tsx" timestamp="2025-12-21T21:46:00.872Z" hostname="MacBook-Pro-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.159712291">
+        <testcase classname="tests/components/a11y.test.tsx" name="Component Test: Accessibility (a11y) &gt; Button should be keyboard accessible" time="0.00929025">
         </testcase>
-        <testcase classname="tests/integration/projects.test.js" name="Projects Integration &gt; should list projects" time="0.000085708">
-            <system-out>
-Projects: Skipping - no token
-
-            </system-out>
+        <testcase classname="tests/components/a11y.test.tsx" name="Component Test: Accessibility (a11y) &gt; Button should have proper semantic HTML" time="0.001292833">
         </testcase>
-    </testsuite>
-    <testsuite name="tests/integration/settlementService.test.js" timestamp="2025-12-21T20:40:52.475Z" hostname="MacBook-Pro-Piotr.local" tests="21" failures="0" errors="0" skipped="0" time="0.124985291">
-        <testcase classname="tests/integration/settlementService.test.js" name="SettlementService Business Rules &gt; Period Lifecycle &gt; should prevent overlapping periods" time="0.000420458">
+        <testcase classname="tests/components/a11y.test.tsx" name="Component Test: Accessibility (a11y) &gt; ErrorBoundary should have accessible error message" time="0.001195792">
         </testcase>
-        <testcase classname="tests/integration/settlementService.test.js" name="SettlementService Business Rules &gt; Period Lifecycle &gt; should enforce status transitions: OPEN → CALCULATED → LOCKED" time="0.000114917">
+        <testcase classname="tests/components/a11y.test.tsx" name="Component Test: Accessibility (a11y) &gt; LoadingScreen should have accessible structure" time="0.00204525">
         </testcase>
-        <testcase classname="tests/integration/settlementService.test.js" name="SettlementService Business Rules &gt; Period Lifecycle &gt; should reject calculate on LOCKED period" time="0.000084541">
-        </testcase>
-        <testcase classname="tests/integration/settlementService.test.js" name="SettlementService Business Rules &gt; Period Lifecycle &gt; should only allow locking CALCULATED periods" time="0.000064417">
-        </testcase>
-        <testcase classname="tests/integration/settlementService.test.js" name="SettlementService Business Rules &gt; Settlement Calculation &gt; should calculate settlement amount correctly" time="0.000056666">
-        </testcase>
-        <testcase classname="tests/integration/settlementService.test.js" name="SettlementService Business Rules &gt; Settlement Calculation &gt; should use agreement rate over default rate" time="0.000038834">
-        </testcase>
-        <testcase classname="tests/integration/settlementService.test.js" name="SettlementService Business Rules &gt; Settlement Calculation &gt; should use default rate when no agreement exists" time="0.000032083">
-        </testcase>
-        <testcase classname="tests/integration/settlementService.test.js" name="SettlementService Business Rules &gt; Settlement Calculation &gt; should skip revenue &lt;= 0" time="0.000051166">
-        </testcase>
-        <testcase classname="tests/integration/settlementService.test.js" name="SettlementService Business Rules &gt; Agreement Selection &gt; should select agreement valid at attribution date" time="0.000090334">
-        </testcase>
-        <testcase classname="tests/integration/settlementService.test.js" name="SettlementService Business Rules &gt; Agreement Selection &gt; should prefer most recent agreement when multiple match" time="0.005213709">
-        </testcase>
-        <testcase classname="tests/integration/settlementService.test.js" name="SettlementService Business Rules &gt; Adjustments Model &gt; should not allow adjustment in same period as original" time="0.000034917">
-        </testcase>
-        <testcase classname="tests/integration/settlementService.test.js" name="SettlementService Business Rules &gt; Adjustments Model &gt; should allow adjustment in different period" time="0.00002625">
-        </testcase>
-        <testcase classname="tests/integration/settlementService.test.js" name="SettlementService Business Rules &gt; Adjustments Model &gt; should not allow adjustment in LOCKED period" time="0.000032542">
-        </testcase>
-        <testcase classname="tests/integration/settlementService.test.js" name="SettlementService Business Rules &gt; Adjustments Model &gt; should create negative adjustment to reverse payment" time="0.000023042">
-        </testcase>
-        <testcase classname="tests/integration/settlementService.test.js" name="SettlementService Business Rules &gt; Recalculation Rules &gt; should clear settlements before recalculation in CALCULATED status" time="0.000031292">
-        </testcase>
-        <testcase classname="tests/integration/settlementService.test.js" name="SettlementService Business Rules &gt; Recalculation Rules &gt; should not clear settlements from LOCKED period" time="0.000030958">
-        </testcase>
-        <testcase classname="tests/integration/settlementService.test.js" name="SettlementService Business Rules &gt; CSV Export Format &gt; should escape CSV values with commas" time="0.00005575">
-        </testcase>
-        <testcase classname="tests/integration/settlementService.test.js" name="SettlementService Business Rules &gt; CSV Export Format &gt; should include CFO-required columns" time="0.000025542">
-        </testcase>
-        <testcase classname="tests/integration/settlementService.test.js" name="HTTP Status Code Compliance &gt; should return 409 for PERIOD_OVERLAP" time="0.000030541">
-        </testcase>
-        <testcase classname="tests/integration/settlementService.test.js" name="HTTP Status Code Compliance &gt; should return 409 for PERIOD_LOCKED" time="0.000020291">
-        </testcase>
-        <testcase classname="tests/integration/settlementService.test.js" name="HTTP Status Code Compliance &gt; should return 409 for NOT_CALCULATED (lock from OPEN)" time="0.000019917">
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/integration/storage_security.test.js" timestamp="2025-12-21T20:40:52.476Z" hostname="MacBook-Pro-Piotr.local" tests="5" failures="1" errors="0" skipped="4" time="0.332908458">
-        <testcase classname="tests/integration/storage_security.test.js" name="Storage Security &amp; Isolation Integration &gt; should NOT allow User B to see files uploaded by User A" time="0">
-            <skipped/>
-        </testcase>
-        <testcase classname="tests/integration/storage_security.test.js" name="Storage Security &amp; Isolation Integration &gt; should block upload if project storage limit is exceeded" time="0">
-            <skipped/>
-        </testcase>
-        <testcase classname="tests/integration/storage_security.test.js" name="Storage Security &amp; Isolation Integration &gt; should sanitize filenames preventing directory traversal" time="0">
-            <skipped/>
-        </testcase>
-        <testcase classname="tests/integration/storage_security.test.js" name="Storage Security &amp; Isolation Integration &gt; should soft delete files instead of removing them immediately" time="0">
-            <skipped/>
-        </testcase>
-        <testcase classname="tests/integration/storage_security.test.js" name="Storage Security &amp; Isolation Integration" time="0.263252792">
-            <system-err>
-[Auth] Login error: Error: SQLITE_ERROR: no such table: refresh_tokens
---&gt; in Database#get(&apos;SELECT COUNT(*) as count FROM refresh_tokens \n&apos; +
-  &quot;             WHERE user_id = ? AND revoked_at IS NULL AND expires_at &gt; datetime(&apos;now&apos;)&quot;, [ &apos;user-storage-a-1766349637595&apos; ], [Function (anonymous)])
-    at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/services/refreshTokenService.js:36:12
-    at new Promise (&lt;anonymous&gt;)
-    at dbGet (/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/services/refreshTokenService.js:35:12)
-    at Object._enforceSessionLimit (/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/services/refreshTokenService.js:305:35)
-    at Object.generateTokenPair (/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/services/refreshTokenService.js:77:20)
-    at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/routes/auth.js:140:53 {
-  errno: 1,
-  code: &apos;SQLITE_ERROR&apos;,
-  __augmented: true
-}
-
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:37.951Z&apos;,
-  method: &apos;POST&apos;,
-  path: &apos;/api/auth/login&apos;,
-  statusCode: 500,
-  responseTime: 16,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 500104, external: 13525, rss: 491520 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;POST&apos;,
-  url: &apos;/api/auth/login&apos;,
-  status: 500,
-  duration: &apos;17ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-Login A Failed Body: { error: &apos;Server error&apos; }
-
-            </system-err>
-            <failure message="Login A Failed" type="Error">
-Error: Login A Failed
- ❯ tests/integration/storage_security.test.js:76:19
-            </failure>
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/integration/tasks.test.js" timestamp="2025-12-21T20:40:52.477Z" hostname="MacBook-Pro-Piotr.local" tests="2" failures="0" errors="0" skipped="0" time="0.430624709">
-        <testcase classname="tests/integration/tasks.test.js" name="Tasks Integration &gt; should list tasks" time="0.000351042">
-            <system-out>
-Tasks: Skipping - no token
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/integration/tasks.test.js" name="Tasks Integration &gt; should create a task" time="0.000091958">
-            <system-out>
-Tasks: Skipping - no token
-
-            </system-out>
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/integration/transaction.test.js" timestamp="2025-12-21T20:40:52.477Z" hostname="MacBook-Pro-Piotr.local" tests="4" failures="0" errors="0" skipped="0" time="0.121050667">
-        <testcase classname="tests/integration/transaction.test.js" name="Integration Test: Database Transactions &gt; Transaction Commit &gt; should commit multi-step transaction successfully" time="0.000973625">
-        </testcase>
-        <testcase classname="tests/integration/transaction.test.js" name="Integration Test: Database Transactions &gt; Transaction Rollback &gt; should rollback transaction on error" time="0.051196375">
-        </testcase>
-        <testcase classname="tests/integration/transaction.test.js" name="Integration Test: Database Transactions &gt; Nested Transactions &gt; should handle savepoints correctly" time="0.000644042">
-        </testcase>
-        <testcase classname="tests/integration/transaction.test.js" name="Integration Test: Database Transactions &gt; Concurrent Transactions &gt; should handle concurrent transactions without deadlock" time="0.000595917">
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/integration/trialDemoIntegration.test.js" timestamp="2025-12-21T20:40:52.477Z" hostname="MacBook-Pro-Piotr.local" tests="1" failures="1" errors="0" skipped="0" time="0">
-        <testcase classname="tests/integration/trialDemoIntegration.test.js" name="tests/integration/trialDemoIntegration.test.js" time="0">
-            <system-out>
-[Database] Selected: SQLite
-
-[DB:gwg5jf] Initializing database at :memory:
-Connected to the SQLite database.
-Created billing tables and seeded default subscription plans.
-Seeded SuperAdmin and DBR77 Users.
-
-            </system-out>
-            <failure message="jest is not defined" type="ReferenceError">
-ReferenceError: jest is not defined
- ❯ tests/integration/trialDemoIntegration.test.js:20:1
-            </failure>
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/integration/backend/planLimits.test.js" timestamp="2025-12-21T20:40:52.477Z" hostname="MacBook-Pro-Piotr.local" tests="2" failures="0" errors="0" skipped="0" time="0.089242209">
-        <testcase classname="tests/integration/backend/planLimits.test.js" name="Plan Limits Integration &gt; should prevent creating more projects than allowed by Free plan" time="0.013169625">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:40.136Z&apos;,
-  method: &apos;POST&apos;,
-  path: &apos;/api/projects&apos;,
-  statusCode: 403,
-  responseTime: 1,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 84480, external: 0, rss: 0 },
-  userId: &apos;69811a6b-a0d0-453d-b2d3-21c2383d497a&apos;,
-  organizationId: &apos;499dbba3-4367-44a5-bb37-d44f7d5248e2&apos;,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;POST&apos;,
-  url: &apos;/api/projects&apos;,
-  status: 403,
-  duration: &apos;1ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-        </testcase>
-        <testcase classname="tests/integration/backend/planLimits.test.js" name="Plan Limits Integration &gt; should allow creating more projects after upgrade" time="0.00134175">
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/integration/routes/access-control.test.js" timestamp="2025-12-21T20:40:52.477Z" hostname="MacBook-Pro-Piotr.local" tests="9" failures="2" errors="0" skipped="0" time="0.157921958">
-        <testcase classname="tests/integration/routes/access-control.test.js" name="Integration Test: Access Control Routes &gt; POST /api/access-control/requests &gt; should allow anyone to submit access request" time="0.001893458">
-        </testcase>
-        <testcase classname="tests/integration/routes/access-control.test.js" name="Integration Test: Access Control Routes &gt; POST /api/access-control/requests &gt; should reject duplicate pending requests" time="0.003526834">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:40.750Z&apos;,
-  method: &apos;POST&apos;,
-  path: &apos;/api/access-control/requests&apos;,
-  statusCode: 400,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 39576, external: 0, rss: 0 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;POST&apos;,
-  url: &apos;/api/access-control/requests&apos;,
-  status: 400,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-        </testcase>
-        <testcase classname="tests/integration/routes/access-control.test.js" name="Integration Test: Access Control Routes &gt; GET /api/access-control/requests &gt; should require SUPERADMIN role" time="0.003524333">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:40.751Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/access-control/requests&apos;,
-  statusCode: 401,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 37624, external: 0, rss: 16384 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/access-control/requests&apos;,
-  status: 401,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-            <failure message="expected 401 to be 403 // Object.is equality" type="AssertionError">
-AssertionError: expected 401 to be 403 // Object.is equality
-
-- Expected
-+ Received
-
-- 403
-+ 401
-
- ❯ tests/integration/routes/access-control.test.js:136:32
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/routes/access-control.test.js" name="Integration Test: Access Control Routes &gt; GET /api/access-control/requests &gt; should allow SUPERADMIN to view requests" time="0.000113167">
-            <system-out>
-Skipping - no superadmin token
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/integration/routes/access-control.test.js" name="Integration Test: Access Control Routes &gt; GET /api/access-control/requests &gt; should filter by status" time="0.000070125">
-            <system-out>
-Skipping - no superadmin token
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/integration/routes/access-control.test.js" name="Integration Test: Access Control Routes &gt; Multi-Tenant Isolation &gt; should not allow user from org1 to access org2 data" time="0.004338208">
-        </testcase>
-        <testcase classname="tests/integration/routes/access-control.test.js" name="Integration Test: Access Control Routes &gt; Multi-Tenant Isolation &gt; should require authentication for protected routes" time="0.001074792">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:40.759Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/access-control/requests&apos;,
-  statusCode: 403,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 35984, external: 0, rss: 49152 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/access-control/requests&apos;,
-  status: 403,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-        </testcase>
-        <testcase classname="tests/integration/routes/access-control.test.js" name="Integration Test: Access Control Routes &gt; Permission Enforcement &gt; should enforce ADMIN role for admin routes" time="0.002009458">
-        </testcase>
-        <testcase classname="tests/integration/routes/access-control.test.js" name="Integration Test: Access Control Routes &gt; Permission Enforcement &gt; should enforce SUPERADMIN role for superadmin routes" time="0.001041167">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:40.762Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/access-control/requests&apos;,
-  statusCode: 401,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 669584, external: 0, rss: 16384 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/access-control/requests&apos;,
-  status: 401,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-            <failure message="expected 401 to be 403 // Object.is equality" type="AssertionError">
-AssertionError: expected 401 to be 403 // Object.is equality
-
-- Expected
-+ Received
-
-- 403
-+ 401
-
- ❯ tests/integration/routes/access-control.test.js:219:32
-            </failure>
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/integration/routes/aiAnalytics.test.js" timestamp="2025-12-21T20:40:52.478Z" hostname="MacBook-Pro-Piotr.local" tests="1" failures="1" errors="0" skipped="0" time="0">
-        <testcase classname="tests/integration/routes/aiAnalytics.test.js" name="tests/integration/routes/aiAnalytics.test.js" time="0">
-            <failure message="Cannot find module &apos;../../server/index&apos;
-Require stack:
-- /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/integration/routes/aiAnalytics.test.js" type="Error">
-Error: Cannot find module &apos;../../server/index&apos;
-Require stack:
-- /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/integration/routes/aiAnalytics.test.js
- ❯ tests/integration/routes/aiAnalytics.test.js:9:13
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
-Serialized Error: { code: &apos;MODULE_NOT_FOUND&apos;, requireStack: [ &apos;/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/integration/routes/aiAnalytics.test.js&apos; ] }
-            </failure>
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/integration/routes/analytics.test.js" timestamp="2025-12-21T20:40:52.478Z" hostname="MacBook-Pro-Piotr.local" tests="4" failures="0" errors="0" skipped="0" time="0.126576583">
-        <testcase classname="tests/integration/routes/analytics.test.js" name="Integration Test: Analytics Routes &gt; GET /api/analytics/stats &gt; should return analytics statistics" time="0.000410833">
-            <system-out>
-Skipping stats test - no auth token
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/integration/routes/analytics.test.js" name="Integration Test: Analytics Routes &gt; GET /api/analytics/stats &gt; should require authentication" time="0.002242958">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:41.706Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/analytics/health&apos;,
-  statusCode: 403,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 45520, external: 0, rss: 65536 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/analytics/health&apos;,
-  status: 403,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-        </testcase>
-        <testcase classname="tests/integration/routes/analytics.test.js" name="Integration Test: Analytics Routes &gt; GET /api/analytics/usage &gt; should return usage analytics" time="0.000100125">
-            <system-out>
-Skipping usage analytics test - no auth token
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/integration/routes/analytics.test.js" name="Integration Test: Analytics Routes &gt; GET /api/analytics/maturity &gt; should return maturity scores" time="0.000076791">
-            <system-out>
-Skipping maturity test - no auth token
-
-            </system-out>
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/integration/routes/billing.test.js" timestamp="2025-12-21T20:40:52.479Z" hostname="MacBook-Pro-Piotr.local" tests="5" failures="3" errors="0" skipped="0" time="0.124028208">
-        <testcase classname="tests/integration/routes/billing.test.js" name="Integration Test: Billing Routes &gt; GET /api/billing/plans &gt; should return list of subscription plans" time="0.006484916">
-            <failure message="expected false to be true // Object.is equality" type="AssertionError">
-AssertionError: expected false to be true // Object.is equality
-
-- Expected
-+ Received
-
-- true
-+ false
-
- ❯ tests/integration/routes/billing.test.js:62:78
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/routes/billing.test.js" name="Integration Test: Billing Routes &gt; GET /api/billing/plans &gt; should return plans without authentication" time="0.002608333">
-            <failure message="expected false to be true // Object.is equality" type="AssertionError">
-AssertionError: expected false to be true // Object.is equality
-
-- Expected
-+ Received
-
-- true
-+ false
-
- ❯ tests/integration/routes/billing.test.js:70:78
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/routes/billing.test.js" name="Integration Test: Billing Routes &gt; GET /api/billing/user-plans &gt; should return user license plans" time="0.002716125">
-            <failure message="expected false to be true // Object.is equality" type="AssertionError">
-AssertionError: expected false to be true // Object.is equality
-
-- Expected
-+ Received
-
-- true
-+ false
-
- ❯ tests/integration/routes/billing.test.js:81:78
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/routes/billing.test.js" name="Integration Test: Billing Routes &gt; GET /api/billing/usage &gt; should return usage statistics" time="0.000150541">
-            <system-out>
-Skipping usage test - no auth token
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/integration/routes/billing.test.js" name="Integration Test: Billing Routes &gt; GET /api/billing/invoices &gt; should return invoices list" time="0.000072625">
-            <system-out>
-Skipping invoices test - no auth token
-
-            </system-out>
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/integration/routes/documents.test.js" timestamp="2025-12-21T20:40:52.479Z" hostname="MacBook-Pro-Piotr.local" tests="3" failures="0" errors="0" skipped="0" time="0.125644083">
-        <testcase classname="tests/integration/routes/documents.test.js" name="Integration Test: Documents Routes &gt; GET /api/documents &gt; should return list of documents" time="0.00039">
-            <system-out>
-Skipping docs list test - no auth token
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/integration/routes/documents.test.js" name="Integration Test: Documents Routes &gt; GET /api/documents &gt; should require authentication" time="0.002052208">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:42.904Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/documents&apos;,
-  statusCode: 403,
-  responseTime: 1,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 41416, external: 0, rss: 49152 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/documents&apos;,
-  status: 403,
-  duration: &apos;1ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-        </testcase>
-        <testcase classname="tests/integration/routes/documents.test.js" name="Integration Test: Documents Routes &gt; POST /api/documents/upload &gt; should require file upload" time="0.000062667">
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/integration/routes/feedback.test.js" timestamp="2025-12-21T20:40:52.479Z" hostname="MacBook-Pro-Piotr.local" tests="3" failures="0" errors="0" skipped="0" time="0.126353333">
-        <testcase classname="tests/integration/routes/feedback.test.js" name="Integration Test: Feedback Routes &gt; POST /api/feedback &gt; should submit feedback" time="0.000400459">
-            <system-out>
-Skipping submit feedback test - no auth token
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/integration/routes/feedback.test.js" name="Integration Test: Feedback Routes &gt; POST /api/feedback &gt; should require authentication" time="0.002046167">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:43.573Z&apos;,
-  method: &apos;POST&apos;,
-  path: &apos;/api/feedback&apos;,
-  statusCode: 400,
-  responseTime: 1,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 53656, external: 0, rss: 65536 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;POST&apos;,
-  url: &apos;/api/feedback&apos;,
-  status: 400,
-  duration: &apos;1ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-        </testcase>
-        <testcase classname="tests/integration/routes/feedback.test.js" name="Integration Test: Feedback Routes &gt; GET /api/feedback &gt; should return feedback list (admin only)" time="0.000084042">
-            <system-out>
-Skipping feedback list test - no auth token
-
-            </system-out>
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/integration/routes/invitations.test.js" timestamp="2025-12-21T20:40:52.480Z" hostname="MacBook-Pro-Piotr.local" tests="25" failures="20" errors="0" skipped="5" time="0.350106167">
-        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; POST /api/invitations/org &gt; should create an organization invitation" time="0.0080345">
-            <failure message="expected 200 to be 201 // Object.is equality" type="AssertionError">
-AssertionError: expected 200 to be 201 // Object.is equality
-
-- Expected
-+ Received
-
-- 201
-+ 200
-
- ❯ tests/integration/routes/invitations.test.js:105:36
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; POST /api/invitations/org &gt; should reject duplicate invitation for same email" time="0.002878334">
-            <failure message="expected 200 to be 400 // Object.is equality" type="AssertionError">
-AssertionError: expected 200 to be 400 // Object.is equality
-
-- Expected
-+ Received
-
-- 400
-+ 200
-
- ❯ tests/integration/routes/invitations.test.js:124:36
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; POST /api/invitations/org &gt; should reject invalid email format" time="0.001720916">
-            <failure message="expected 200 to be 400 // Object.is equality" type="AssertionError">
-AssertionError: expected 200 to be 400 // Object.is equality
-
-- Expected
-+ Received
-
-- 400
-+ 200
-
- ❯ tests/integration/routes/invitations.test.js:137:36
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; POST /api/invitations/org &gt; should require authentication" time="0.001624959">
-            <failure message="expected 200 to be 401 // Object.is equality" type="AssertionError">
-AssertionError: expected 200 to be 401 // Object.is equality
-
-- Expected
-+ Received
-
-- 401
-+ 200
-
- ❯ tests/integration/routes/invitations.test.js:149:36
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; GET /api/invitations/org &gt; should list organization invitations" time="0.001654875">
-            <failure message="expected false to be true // Object.is equality" type="AssertionError">
-AssertionError: expected false to be true // Object.is equality
-
-- Expected
-+ Received
-
-- true
-+ false
-
- ❯ tests/integration/routes/invitations.test.js:164:45
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; GET /api/invitations/org &gt; should filter by status" time="0.001339541">
-            <failure message="expected false to be true // Object.is equality" type="AssertionError">
-AssertionError: expected false to be true // Object.is equality
-
-- Expected
-+ Received
-
-- true
-+ false
-
- ❯ tests/integration/routes/invitations.test.js:174:45
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; GET /api/invitations/validate/:token &gt; should validate a valid token" time="0.001279291">
-            <failure message="expected undefined to be true // Object.is equality" type="AssertionError">
-AssertionError: expected undefined to be true // Object.is equality
-
-- Expected: 
-true
-
-+ Received: 
-undefined
-
- ❯ tests/integration/routes/invitations.test.js:206:36
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; GET /api/invitations/validate/:token &gt; should reject invalid token" time="0.001866875">
-            <failure message="expected 200 to be 404 // Object.is equality" type="AssertionError">
-AssertionError: expected 200 to be 404 // Object.is equality
-
-- Expected
-+ Received
-
-- 404
-+ 200
-
- ❯ tests/integration/routes/invitations.test.js:215:36
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; POST /api/invitations/accept &gt; should reject acceptance with wrong email" time="0.001684208">
-            <failure message="expected 200 to be 400 // Object.is equality" type="AssertionError">
-AssertionError: expected 200 to be 400 // Object.is equality
-
-- Expected
-+ Received
-
-- 400
-+ 200
-
- ❯ tests/integration/routes/invitations.test.js:236:36
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; POST /api/invitations/accept &gt; should reject acceptance with short password" time="0.001205291">
-            <failure message="expected 200 to be 400 // Object.is equality" type="AssertionError">
-AssertionError: expected 200 to be 400 // Object.is equality
-
-- Expected
-+ Received
-
-- 400
-+ 200
-
- ❯ tests/integration/routes/invitations.test.js:251:36
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; POST /api/invitations/accept &gt; should accept valid invitation" time="0.001079958">
-            <failure message="expected undefined to be true // Object.is equality" type="AssertionError">
-AssertionError: expected undefined to be true // Object.is equality
-
-- Expected: 
-true
-
-+ Received: 
-undefined
-
- ❯ tests/integration/routes/invitations.test.js:267:38
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; POST /api/invitations/accept &gt; should reject reusing the same token" time="0.001125667">
-            <failure message="expected 200 to be 400 // Object.is equality" type="AssertionError">
-AssertionError: expected 200 to be 400 // Object.is equality
-
-- Expected
-+ Received
-
-- 400
-+ 200
-
- ❯ tests/integration/routes/invitations.test.js:283:36
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; POST /api/invitations/:id/resend &gt; should resend an invitation" time="0">
-            <skipped/>
-        </testcase>
-        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; POST /api/invitations/:id/revoke &gt; should revoke an invitation" time="0">
-            <skipped/>
-        </testcase>
-        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; POST /api/invitations/:id/revoke &gt; should not revoke an already revoked invitation" time="0">
-            <skipped/>
-        </testcase>
-        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; GET /api/invitations/:id/audit &gt; should return audit trail for invitation" time="0.000966333">
-            <failure message="expected false to be true // Object.is equality" type="AssertionError">
-AssertionError: expected false to be true // Object.is equality
-
-- Expected
-+ Received
-
-- true
-+ false
-
- ❯ tests/integration/routes/invitations.test.js:378:45
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; POST /api/invitations/project &gt; should create a project invitation" time="0.000997375">
-            <failure message="expected 200 to be 201 // Object.is equality" type="AssertionError">
-AssertionError: expected 200 to be 201 // Object.is equality
-
-- Expected
-+ Received
-
-- 201
-+ 200
-
- ❯ tests/integration/routes/invitations.test.js:404:36
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; POST /api/invitations/project &gt; should require project ID" time="0.000930167">
-            <failure message="expected 200 to be 400 // Object.is equality" type="AssertionError">
-AssertionError: expected 200 to be 400 // Object.is equality
-
-- Expected
-+ Received
-
-- 400
-+ 200
-
- ❯ tests/integration/routes/invitations.test.js:418:36
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; Enterprise+ Security - DEMO Org Blocking &gt; should block invitations from DEMO organizations" time="0.0013085">
-            <failure message="expected 200 to be 400 // Object.is equality" type="AssertionError">
-AssertionError: expected 200 to be 400 // Object.is equality
-
-- Expected
-+ Received
-
-- 400
-+ 200
-
- ❯ tests/integration/routes/invitations.test.js:481:36
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; Enterprise+ Security - Resend Limits &gt; should track resend count" time="0">
-            <skipped/>
-        </testcase>
-        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; Enterprise+ Security - Race Condition Protection &gt; should return 409 on double acceptance attempt" time="0">
-            <skipped/>
-        </testcase>
-        <testcase classname="tests/integration/routes/invitations.test.js" name="POST /api/invitations/:id/resend" time="0.001119209">
-            <failure message="Cannot read properties of undefined (reading &apos;id&apos;)" type="TypeError">
-TypeError: Cannot read properties of undefined (reading &apos;id&apos;)
- ❯ tests/integration/routes/invitations.test.js:304:54
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/routes/invitations.test.js" name="POST /api/invitations/:id/revoke" time="0.000962667">
-            <failure message="Cannot read properties of undefined (reading &apos;id&apos;)" type="TypeError">
-TypeError: Cannot read properties of undefined (reading &apos;id&apos;)
- ❯ tests/integration/routes/invitations.test.js:344:54
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/routes/invitations.test.js" name="Enterprise+ Security - Resend Limits" time="0.001021333">
-            <failure message="Cannot read properties of undefined (reading &apos;id&apos;)" type="TypeError">
-TypeError: Cannot read properties of undefined (reading &apos;id&apos;)
- ❯ tests/integration/routes/invitations.test.js:498:59
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/routes/invitations.test.js" name="Enterprise+ Security - Race Condition Protection" time="0.0008975">
-            <failure message="Cannot read properties of undefined (reading &apos;id&apos;)" type="TypeError">
-TypeError: Cannot read properties of undefined (reading &apos;id&apos;)
- ❯ tests/integration/routes/invitations.test.js:529:52
-            </failure>
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/integration/routes/llm.test.js" timestamp="2025-12-21T20:40:52.482Z" hostname="MacBook-Pro-Piotr.local" tests="7" failures="0" errors="0" skipped="0" time="0.108571375">
-        <testcase classname="tests/integration/routes/llm.test.js" name="Integration Test: LLM Routes &gt; GET /api/llm/providers &gt; should return list of LLM providers" time="0.000334666">
-            <system-out>
-Skipping providers test - no auth token
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/integration/routes/llm.test.js" name="Integration Test: LLM Routes &gt; GET /api/llm/providers &gt; should require authentication" time="0.001722167">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:45.050Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/llm/providers&apos;,
-  statusCode: 403,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 43416, external: 0, rss: 49152 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/llm/providers&apos;,
-  status: 403,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-        </testcase>
-        <testcase classname="tests/integration/routes/llm.test.js" name="Integration Test: LLM Routes &gt; GET /api/llm/providers/public &gt; should return public providers" time="0.001085042">
-        </testcase>
-        <testcase classname="tests/integration/routes/llm.test.js" name="Integration Test: LLM Routes &gt; POST /api/llm/test &gt; should test provider connection" time="0.000095625">
-            <system-out>
-Skipping test connection - no auth token
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/integration/routes/llm.test.js" name="Integration Test: LLM Routes &gt; POST /api/llm/test &gt; should handle invalid provider" time="0.000077042">
-            <system-out>
-Skipping invalid provider test - no auth token
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/integration/routes/llm.test.js" name="Integration Test: LLM Routes &gt; POST /api/llm/test-ollama &gt; should test Ollama connection" time="0.000057792">
-            <system-out>
-Skipping Ollama test - no auth token
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/integration/routes/llm.test.js" name="Integration Test: LLM Routes &gt; GET /api/llm/ollama-models &gt; should return Ollama models" time="0.00005125">
-            <system-out>
-Skipping Ollama models test - no auth token
-
-            </system-out>
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/integration/routes/notifications.test.js" timestamp="2025-12-21T20:40:52.483Z" hostname="MacBook-Pro-Piotr.local" tests="6" failures="0" errors="0" skipped="0" time="0.112473917">
-        <testcase classname="tests/integration/routes/notifications.test.js" name="Integration Test: Notifications Routes &gt; GET /api/notifications &gt; should return user notifications" time="0.00035675">
-            <system-out>
-Skipping notifications test - no auth token
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/integration/routes/notifications.test.js" name="Integration Test: Notifications Routes &gt; GET /api/notifications &gt; should require authentication" time="0.00175575">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:45.607Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/notifications&apos;,
-  statusCode: 403,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 45224, external: 0, rss: 32768 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/notifications&apos;,
-  status: 403,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-        </testcase>
-        <testcase classname="tests/integration/routes/notifications.test.js" name="Integration Test: Notifications Routes &gt; GET /api/notifications/counts &gt; should return notification counts" time="0.000084833">
-            <system-out>
-Skipping counts test - no auth token
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/integration/routes/notifications.test.js" name="Integration Test: Notifications Routes &gt; PATCH /api/notifications/:id/read &gt; should mark notification as read" time="0.000081958">
-            <system-out>
-Skipping mark read test - no auth token
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/integration/routes/notifications.test.js" name="Integration Test: Notifications Routes &gt; POST /api/notifications/mark-all-read &gt; should mark all notifications as read" time="0.000078708">
-            <system-out>
-Skipping mark all read test - no auth token
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/integration/routes/notifications.test.js" name="Integration Test: Notifications Routes &gt; DELETE /api/notifications/:id &gt; should delete notification" time="0.000063542">
-            <system-out>
-Skipping delete test - no auth token
-
-            </system-out>
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/integration/routes/pmoContext.test.js" timestamp="2025-12-21T20:40:52.483Z" hostname="MacBook-Pro-Piotr.local" tests="5" failures="5" errors="0" skipped="0" time="0.247342292">
-        <testcase classname="tests/integration/routes/pmoContext.test.js" name="PMO Context API &gt; GET /api/pmo-context/:projectId &gt; should return PMO context with phase information" time="0.003189833">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:46.282Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/pmo-context/78018c08-3e94-4a58-993b-821359a3c978&apos;,
-  statusCode: 401,
-  responseTime: 1,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 80128, external: 0, rss: 16384 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/pmo-context/78018c08-3e94-4a58-993b-821359a3c978&apos;,
-  status: 401,
-  duration: &apos;1ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-            <failure message="expected 200 &quot;OK&quot;, got 401 &quot;Unauthorized&quot;" type="Error">
-Error: expected 200 &quot;OK&quot;, got 401 &quot;Unauthorized&quot;
- ❯ tests/integration/routes/pmoContext.test.js:103:18
- ❯ Test._assertStatus node_modules/supertest/lib/test.js:309:14
- ❯ node_modules/supertest/lib/test.js:365:13
- ❯ Test._assertFunction node_modules/supertest/lib/test.js:342:13
- ❯ Test.assert node_modules/supertest/lib/test.js:195:23
- ❯ localAssert node_modules/supertest/lib/test.js:138:14
- ❯ Server.&lt;anonymous&gt; node_modules/supertest/lib/test.js:152:11
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/routes/pmoContext.test.js" name="PMO Context API &gt; GET /api/pmo-context/:projectId &gt; should return 404 for non-existent project" time="0.001387375">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:46.284Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/pmo-context/non-existent-id&apos;,
-  statusCode: 401,
-  responseTime: 1,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 370608, external: 0, rss: 65536 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/pmo-context/non-existent-id&apos;,
-  status: 401,
-  duration: &apos;1ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-            <failure message="expected 404 &quot;Not Found&quot;, got 401 &quot;Unauthorized&quot;" type="Error">
-Error: expected 404 &quot;Not Found&quot;, got 401 &quot;Unauthorized&quot;
- ❯ tests/integration/routes/pmoContext.test.js:119:18
- ❯ Test._assertStatus node_modules/supertest/lib/test.js:309:14
- ❯ node_modules/supertest/lib/test.js:365:13
- ❯ Test._assertFunction node_modules/supertest/lib/test.js:342:13
- ❯ Test.assert node_modules/supertest/lib/test.js:195:23
- ❯ localAssert node_modules/supertest/lib/test.js:138:14
- ❯ Server.&lt;anonymous&gt; node_modules/supertest/lib/test.js:152:11
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/routes/pmoContext.test.js" name="PMO Context API &gt; GET /api/pmo-context/:projectId &gt; should include allowed actions for current phase" time="0.000937791">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:46.285Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/pmo-context/78018c08-3e94-4a58-993b-821359a3c978&apos;,
-  statusCode: 401,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 379552, external: 0, rss: 0 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/pmo-context/78018c08-3e94-4a58-993b-821359a3c978&apos;,
-  status: 401,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-            <failure message="expected 200 &quot;OK&quot;, got 401 &quot;Unauthorized&quot;" type="Error">
-Error: expected 200 &quot;OK&quot;, got 401 &quot;Unauthorized&quot;
- ❯ tests/integration/routes/pmoContext.test.js:128:18
- ❯ Test._assertStatus node_modules/supertest/lib/test.js:309:14
- ❯ node_modules/supertest/lib/test.js:365:13
- ❯ Test._assertFunction node_modules/supertest/lib/test.js:342:13
- ❯ Test.assert node_modules/supertest/lib/test.js:195:23
- ❯ localAssert node_modules/supertest/lib/test.js:138:14
- ❯ Server.&lt;anonymous&gt; node_modules/supertest/lib/test.js:152:11
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/routes/pmoContext.test.js" name="PMO Context API &gt; GET /api/pmo-context/:projectId &gt; should include system messages based on phase" time="0.000965417">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:46.286Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/pmo-context/78018c08-3e94-4a58-993b-821359a3c978&apos;,
-  statusCode: 401,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 185168, external: 0, rss: 16384 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/pmo-context/78018c08-3e94-4a58-993b-821359a3c978&apos;,
-  status: 401,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-            <failure message="expected 200 &quot;OK&quot;, got 401 &quot;Unauthorized&quot;" type="Error">
-Error: expected 200 &quot;OK&quot;, got 401 &quot;Unauthorized&quot;
- ❯ tests/integration/routes/pmoContext.test.js:140:18
- ❯ Test._assertStatus node_modules/supertest/lib/test.js:309:14
- ❯ node_modules/supertest/lib/test.js:365:13
- ❯ Test._assertFunction node_modules/supertest/lib/test.js:342:13
- ❯ Test.assert node_modules/supertest/lib/test.js:195:23
- ❯ localAssert node_modules/supertest/lib/test.js:138:14
- ❯ Server.&lt;anonymous&gt; node_modules/supertest/lib/test.js:152:11
-            </failure>
-        </testcase>
-        <testcase classname="tests/integration/routes/pmoContext.test.js" name="PMO Context API &gt; GET /api/pmo-context/:projectId/task-labels &gt; should return task labels with PMO relevance" time="0.001044125">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:46.287Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/pmo-context/78018c08-3e94-4a58-993b-821359a3c978/task-labels&apos;,
-  statusCode: 401,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 31344, external: 0, rss: 0 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/pmo-context/78018c08-3e94-4a58-993b-821359a3c978/task-labels&apos;,
-  status: 401,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-            <failure message="expected 200 &quot;OK&quot;, got 401 &quot;Unauthorized&quot;" type="Error">
-Error: expected 200 &quot;OK&quot;, got 401 &quot;Unauthorized&quot;
- ❯ tests/integration/routes/pmoContext.test.js:171:18
- ❯ Test._assertStatus node_modules/supertest/lib/test.js:309:14
- ❯ node_modules/supertest/lib/test.js:365:13
- ❯ Test._assertFunction node_modules/supertest/lib/test.js:342:13
- ❯ Test.assert node_modules/supertest/lib/test.js:195:23
- ❯ localAssert node_modules/supertest/lib/test.js:138:14
- ❯ Server.&lt;anonymous&gt; node_modules/supertest/lib/test.js:152:11
-            </failure>
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/integration/routes/sessions.test.js" timestamp="2025-12-21T20:40:52.484Z" hostname="MacBook-Pro-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.10830425">
-        <testcase classname="tests/integration/routes/sessions.test.js" name="Integration Test: Sessions Routes &gt; GET /api/sessions &gt; should return user sessions" time="0.000350625">
-            <system-out>
-Skipping sessions test - no auth token
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/integration/routes/sessions.test.js" name="Integration Test: Sessions Routes &gt; GET /api/sessions &gt; should require authentication" time="0.001686708">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:46.940Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/sessions/sessions-user-1766349646807?type=free&apos;,
-  statusCode: 403,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 46816, external: 0, rss: 65536 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/sessions/sessions-user-1766349646807?type=free&apos;,
-  status: 403,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-        </testcase>
-        <testcase classname="tests/integration/routes/sessions.test.js" name="Integration Test: Sessions Routes &gt; POST /api/sessions &gt; should create a new session" time="0.000078584">
-            <system-out>
-Skipping create session test - no auth token
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/integration/routes/sessions.test.js" name="Integration Test: Sessions Routes &gt; GET /api/sessions/:userId &gt; should return session by user id" time="0.000065833">
-            <system-out>
-Skipping session by user test - no auth token
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/integration/routes/sessions.test.js" name="Integration Test: Sessions Routes &gt; PUT /api/sessions/:id &gt; should update session" time="0.000090542">
-            <system-out>
-Skipping update session test - no auth token
-
-            </system-out>
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/integration/routes/settings.test.js" timestamp="2025-12-21T20:40:52.485Z" hostname="MacBook-Pro-Piotr.local" tests="3" failures="0" errors="0" skipped="0" time="0.111581125">
-        <testcase classname="tests/integration/routes/settings.test.js" name="Integration Test: Settings Routes &gt; GET /api/settings &gt; should return user settings" time="0.000354041">
-            <system-out>
-Skipping settings test - no auth token
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/integration/routes/settings.test.js" name="Integration Test: Settings Routes &gt; GET /api/settings &gt; should require authentication" time="0.00184125">
-        </testcase>
-        <testcase classname="tests/integration/routes/settings.test.js" name="Integration Test: Settings Routes &gt; PUT /api/settings &gt; should update user settings" time="0.000117125">
-            <system-out>
-Skipping update settings test - no auth token
-
-            </system-out>
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/integration/routes/teams.test.js" timestamp="2025-12-21T20:40:52.485Z" hostname="MacBook-Pro-Piotr.local" tests="3" failures="0" errors="0" skipped="0" time="0.115554959">
-        <testcase classname="tests/integration/routes/teams.test.js" name="Integration Test: Teams Routes &gt; GET /api/teams &gt; should return list of teams" time="0.000355833">
-            <system-out>
-Skipping teams list test - no auth token
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/integration/routes/teams.test.js" name="Integration Test: Teams Routes &gt; GET /api/teams &gt; should require authentication" time="0.002106">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:48.083Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/teams&apos;,
-  statusCode: 403,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 43560, external: 0, rss: 16384 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/teams&apos;,
-  status: 403,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-        </testcase>
-        <testcase classname="tests/integration/routes/teams.test.js" name="Integration Test: Teams Routes &gt; POST /api/teams &gt; should create a new team" time="0.000084833">
-            <system-out>
-Skipping create team test - no auth token
-
-            </system-out>
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/integration/routes/tokenBilling.test.js" timestamp="2025-12-21T20:40:52.485Z" hostname="MacBook-Pro-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.113745291">
-        <testcase classname="tests/integration/routes/tokenBilling.test.js" name="Integration Test: Token Billing Routes &gt; GET /api/token-billing/balance &gt; should return user token balance" time="0.000363416">
-            <system-out>
-Skipping balance test - no auth token
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/integration/routes/tokenBilling.test.js" name="Integration Test: Token Billing Routes &gt; GET /api/token-billing/balance &gt; should require authentication" time="0.001847625">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:48.658Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/token-billing/balance&apos;,
-  statusCode: 403,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 49400, external: 0, rss: 49152 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/token-billing/balance&apos;,
-  status: 403,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-        </testcase>
-        <testcase classname="tests/integration/routes/tokenBilling.test.js" name="Integration Test: Token Billing Routes &gt; GET /api/token-billing/packages &gt; should return available token packages" time="0.000084459">
-            <system-out>
-Skipping packages test - no auth token
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/integration/routes/tokenBilling.test.js" name="Integration Test: Token Billing Routes &gt; GET /api/token-billing/transactions &gt; should return token usage history" time="0.000073875">
-            <system-out>
-Skipping transactions test - no auth token
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/integration/routes/tokenBilling.test.js" name="Integration Test: Token Billing Routes &gt; GET /api/token-billing/margins &gt; should return margins (admin only)" time="0.000075292">
-            <system-out>
-Skipping margins test - no auth token
-
-            </system-out>
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/integration/routes/users.test.js" timestamp="2025-12-21T20:40:52.486Z" hostname="MacBook-Pro-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.118249083">
-        <testcase classname="tests/integration/routes/users.test.js" name="Integration Test: Users Routes &gt; GET /api/users &gt; should return list of users" time="0.000373416">
-            <system-out>
-Skipping users list test - no auth token
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/integration/routes/users.test.js" name="Integration Test: Users Routes &gt; GET /api/users &gt; should require authentication" time="0.001974875">
-            <system-err>
-[WARN] Performance metric {
-  timestamp: &apos;2025-12-21T20:40:49.244Z&apos;,
-  method: &apos;GET&apos;,
-  path: &apos;/api/users&apos;,
-  statusCode: 403,
-  responseTime: 0,
-  dbQueryCount: 0,
-  dbQueryTime: 0,
-  memoryDelta: { heapUsed: 39128, external: 0, rss: 49152 },
-  userId: null,
-  organizationId: null,
-  isSlow: false,
-  isError: true
-}
-[WARN] Request failed {
-  method: &apos;GET&apos;,
-  url: &apos;/api/users&apos;,
-  status: 403,
-  duration: &apos;0ms&apos;,
-  ip: &apos;::ffff:127.0.0.1&apos;,
-  userAgent: undefined
-}
-
-            </system-err>
-        </testcase>
-        <testcase classname="tests/integration/routes/users.test.js" name="Integration Test: Users Routes &gt; GET /api/auth/me &gt; should return current user" time="0.000100709">
-            <system-out>
-Skipping me test - no auth token
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/integration/routes/users.test.js" name="Integration Test: Users Routes &gt; GET /api/users/:id &gt; should return user by id" time="0.00007225">
-            <system-out>
-Skipping user by id test - no auth token
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/integration/routes/users.test.js" name="Integration Test: Users Routes &gt; PUT /api/users/:id &gt; should update user" time="0.000231625">
-            <system-out>
-Skipping update test - no auth token
-
-            </system-out>
+        <testcase classname="tests/components/a11y.test.tsx" name="Component Test: Accessibility (a11y) &gt; components should have proper ARIA labels when needed" time="0.001159">
         </testcase>
     </testsuite>
 </testsuites>

@@ -557,5 +557,103 @@
         }
       }
     }
+  },
+  "landing": {
+    "hero": {
+      "title": "Strategisch Denken. Entschlossen Handeln.",
+      "subtitle": "Das erste offene Beratungsökosystem, das Führungskräfte lehrt, wie Harvard zu denken und in der realen Geschäftswelt zu handeln — mit KI als kognitivem Partner.",
+      "cards": {
+        "demo": {
+          "title": "Demo Erkunden",
+          "description": "Erleben Sie eine Live-Umgebung mit fiktiven, realistischen Daten.",
+          "meta": "SOFORTIGER ZUGANG",
+          "cta": "Demo Erkunden"
+        },
+        "trial": {
+          "title": "Kostenlose Testversion Starten",
+          "description": "Verwenden Sie Consultinity mit echten Daten Ihrer Organisation und erstellen Sie Ihre Roadmap.",
+          "meta": "HAUPTWEG",
+          "cta": "Testversion Starten"
+        },
+        "video": {
+          "title": "Wie Es Funktioniert",
+          "description": "Geleitet von Dr. Piotr Wiśniewski",
+          "meta": "PRODUKTTOUR",
+          "cta": "Video Ansehen"
+        },
+        "expert": {
+          "title": "Mit Experten Sprechen",
+          "description": "Maßgeschneiderter Enterprise-Transformationsansatz.",
+          "meta": "MASSGESCHNEIDERT",
+          "cta": "Kontakt Aufnehmen"
+        },
+        "login": {
+          "title": "Anmelden",
+          "description": "Setzen Sie Ihre Reise fort.",
+          "meta": "WIEDERKEHRENDE BENUTZER",
+          "cta": "Anmelden"
+        }
+      }
+    },
+    "methodology": {
+      "badge": "Die Methodologie",
+      "heading": "Wie KI Ihr Kognitiver Partner Wird."
+    },
+    "steps": {
+      "diagnostic": {
+        "title": "Diagnostische KI",
+        "desc": "Kartieren Sie Ihre Reife durch das DRD-Modell und identifizieren Sie sofort kritische Lücken."
+      },
+      "roadmap": {
+        "title": "Strategische Roadmap",
+        "desc": "KI generiert einen maßgeschneiderten Ausführungsplan mit klarem ROI und Zeitrahmen."
+      },
+      "approval": {
+        "title": "Menschliche Genehmigung",
+        "desc": "Jede KI-Entscheidung wird von Ihren Führungskräften genehmigt, um Verantwortlichkeit zu gewährleisten."
+      }
+    },
+    "trust": {
+      "badge": "Enterprise-Integrität",
+      "heading": "Intelligenz Geleitet durch Menschliche Genehmigung.",
+      "description": "KI ist ein Partner, keine Autorität. Consultinity implementiert eine strenge Governance-Ebene, bei der jeder strategische Schritt eine hochrangige menschliche Validierung erfordert.",
+      "points": [
+        "Volle Verantwortlichkeit für jeden Roadmap-Punkt",
+        "Multi-Tenant-Datenisolation & militärische Sicherheit",
+        "SOC2-konforme Infrastrukturlogik"
+      ],
+      "cta": "Sicherheits-Whitepaper Ansehen",
+      "status": {
+        "awaiting": "Wartet auf Validierung",
+        "approved": "Genehmigt"
+      }
+    },
+    "topBar": {
+      "exploreDemo": "Demo Erkunden",
+      "talkToExpert": "Mit Experten Sprechen",
+      "login": "Anmelden",
+      "startTrial": "Testversion Starten",
+      "goToWorkspace": "Zum Workspace"
+    },
+    "footer": {
+      "tagline": "Wir befähigen Organisationen, die digitale Transformation mit KI-gesteuerter Strategie und menschlicher Führung zu navigieren.",
+      "copyright": "© 2025 Consultinity. Powered by DBR77 Robotics.",
+      "product": {
+        "title": "Produkt",
+        "demo": "Demo",
+        "trial": "Testversion",
+        "login": "Anmelden"
+      },
+      "company": {
+        "title": "Unternehmen",
+        "about": "Über Uns",
+        "contact": "Kontakt"
+      },
+      "legal": {
+        "title": "Rechtliches",
+        "privacy": "Datenschutz",
+        "terms": "Bedingungen"
+      }
+    }
   }
 }

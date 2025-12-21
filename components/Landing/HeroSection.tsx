@@ -29,7 +29,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             description: t('landing.hero.cards.demo.description'),
             meta: t('landing.hero.cards.demo.meta'),
             cta: t('landing.hero.cards.demo.cta'),
-            image: '/assets/landing/card_demo.png',
+            image: '/assets/landing/demo_legolex.jpg',
             color: 'purple',
             onClick: onDemoClick,
             className: 'lg:col-span-1 lg:row-span-1'
@@ -40,7 +40,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             description: t('landing.hero.cards.trial.description'),
             meta: t('landing.hero.cards.trial.meta'),
             cta: t('landing.hero.cards.trial.cta'),
-            image: '/assets/landing/card_trial.png',
+            image: '/assets/landing/trial_drive.jpg',
             color: 'indigo',
             onClick: onTrialClick,
             primary: true,
@@ -52,7 +52,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             description: t('landing.hero.cards.video.description'),
             meta: t('landing.hero.cards.video.meta'),
             cta: t('landing.hero.cards.video.cta'),
-            image: '/assets/landing/card_video.png',
+            image: '/assets/landing/video_presentation.jpg',
             color: 'black',
             onClick: () => setIsVideoOpen(true),
             isVideo: true,
@@ -64,7 +64,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             description: t('landing.hero.cards.expert.description'),
             meta: t('landing.hero.cards.expert.meta'),
             cta: t('landing.hero.cards.expert.cta'),
-            image: '/assets/landing/card_expert.png',
+            image: '/assets/landing/expert_consultation.jpg',
             color: 'emerald',
             onClick: onExpertClick,
             className: 'lg:col-span-1 lg:row-span-1'
@@ -75,7 +75,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             description: t('landing.hero.cards.login.description'),
             meta: t('landing.hero.cards.login.meta'),
             cta: t('landing.hero.cards.login.cta'),
-            image: '/assets/landing/card_login.png',
+            image: '/assets/landing/login_keyhole.jpg',
             color: 'navy',
             onClick: onLoginClick,
             className: 'lg:col-span-1 lg:row-span-1'
@@ -109,22 +109,40 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 {/* Bento Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 auto-rows-[240px]">
                     {cards.map((card, idx) => {
+                        // Define border and glow colors for each card type
+                        const colorMap: Record<string, { border: string; glow: string; hoverBorder: string }> = {
+                            'purple': { border: 'ring-purple-500/40', glow: 'shadow-purple-500/20', hoverBorder: 'group-hover:ring-purple-400/60' },
+                            'indigo': { border: 'ring-indigo-500/40', glow: 'shadow-indigo-500/20', hoverBorder: 'group-hover:ring-indigo-400/60' },
+                            'black': { border: 'ring-slate-400/40', glow: 'shadow-slate-400/20', hoverBorder: 'group-hover:ring-slate-300/60' },
+                            'emerald': { border: 'ring-emerald-500/40', glow: 'shadow-emerald-500/20', hoverBorder: 'group-hover:ring-emerald-400/60' },
+                            'navy': { border: 'ring-blue-500/40', glow: 'shadow-blue-500/20', hoverBorder: 'group-hover:ring-blue-400/60' }
+                        };
+                        const colors = colorMap[card.color] || colorMap['purple'];
+
                         return (
                             <motion.div
                                 key={card.id}
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ duration: 0.5, delay: idx * 0.05 }}
-                                onClick={card.onClick}
+                                whileHover={{ scale: 1.02, y: -4 }}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    if (card.onClick) {
+                                        card.onClick();
+                                    }
+                                }}
                                 className={`
-                                    group relative rounded-3xl overflow-hidden border border-slate-200/50 dark:border-white/5 
-                                    shadow-sm hover:shadow-2xl transition-all duration-500 cursor-pointer
+                                    group relative rounded-3xl overflow-hidden 
+                                    shadow-lg hover:shadow-2xl ${colors.glow} hover:shadow-xl
+                                    transition-all duration-500 cursor-pointer select-none
                                     ${card.className}
                                     ${card.primary ? 'ring-2 ring-purple-600 ring-offset-4 dark:ring-offset-navy-950' : ''}
                                 `}
                             >
                                 {/* Background Image */}
-                                <div className="absolute inset-0">
+                                <div className={`absolute inset-0 rounded-3xl ring-2 ${colors.border} ${colors.hoverBorder} ring-inset transition-all duration-500 pointer-events-none`}>
                                     <img
                                         src={card.image}
                                         alt={card.title}
@@ -134,15 +152,21 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                                 </div>
 
                                 {/* Content Overlay */}
-                                <div className="absolute inset-0 p-6 flex flex-col justify-end">
+                                <div className="absolute inset-0 p-6 flex flex-col justify-end items-end pointer-events-none">
                                     {card.isVideo && (
-                                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-white/10 backdrop-blur-md rounded-full border border-white/20 flex items-center justify-center group-hover:scale-110 transition-transform shadow-2xl">
-                                            <Play size={24} fill="white" className="text-white ml-1" />
+                                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
+                                            <motion.div
+                                                animate={{ scale: [1, 1.05, 1] }}
+                                                transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                                                className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-full border-2 border-white/40 flex items-center justify-center group-hover:scale-110 transition-transform shadow-2xl"
+                                            >
+                                                <Play size={32} fill="white" className="text-white ml-1" />
+                                            </motion.div>
                                         </div>
                                     )}
 
-                                    <div className="space-y-2 relative z-10 transition-transform duration-300 group-hover:-translate-y-2">
-                                        <span className="text-[10px] font-black tracking-[0.2em] text-white/50 uppercase">
+                                    <div className="space-y-2 relative z-10 transition-transform duration-300 group-hover:-translate-y-2 text-right">
+                                        <span className="text-[10px] font-black tracking-[0.2em] text-white/50 uppercase block">
                                             {card.meta}
                                         </span>
                                         <h3 className="text-xl lg:text-2xl font-bold text-white tracking-tight">
@@ -152,7 +176,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                                             {card.description}
                                         </p>
 
-                                        <div className="pt-4 flex items-center gap-2 text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity translate-y-4 group-hover:translate-y-0 duration-300">
+                                        <div className="pt-4 flex items-center gap-2 justify-end text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity translate-y-4 group-hover:translate-y-0 duration-300">
                                             {card.cta}
                                             <motion.span animate={{ x: [0, 4, 0] }} transition={{ repeat: Infinity, duration: 1.5 }}>
                                                 →
@@ -163,7 +187,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
                                 {/* Glowing accent for primary */}
                                 {card.primary && (
-                                    <div className={`absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl ${isDark ? 'bg-purple-500/20' : 'bg-purple-600/10'}`} />
+                                    <div className={`absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl pointer-events-none ${isDark ? 'bg-purple-500/20' : 'bg-purple-600/10'}`} />
                                 )}
                             </motion.div>
                         );

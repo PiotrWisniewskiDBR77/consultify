@@ -92,6 +92,22 @@ export const TourProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     }, [completedTours]);
 
+    const endTour = useCallback((completed = false) => {
+        if (activeTour && completed) {
+            saveCompletedTour(activeTour.id);
+            setCompletedTours(prev => [...prev, activeTour.id]);
+
+            // Track completion event (if analytics available)
+            try {
+                // @ts-expect-error - optional analytics
+                window.journeyAnalytics?.trackMilestone?.('tour_completed', { tourId: activeTour.id });
+            } catch { /* ignore */ }
+        }
+
+        setActiveTour(null);
+        setCurrentStepIndex(0);
+    }, [activeTour]);
+
     const nextStep = useCallback(async () => {
         if (!activeTour) return;
 
@@ -114,33 +130,17 @@ export const TourProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Tour completed
             endTour(true);
         }
-    }, [activeTour, currentStepIndex]);
+    }, [activeTour, currentStepIndex, endTour]);
 
     const prevStep = useCallback(() => {
         if (!activeTour || currentStepIndex <= 0) return;
         setCurrentStepIndex(currentStepIndex - 1);
     }, [activeTour, currentStepIndex]);
 
-    const endTour = useCallback((completed = false) => {
-        if (activeTour && completed) {
-            saveCompletedTour(activeTour.id);
-            setCompletedTours(prev => [...prev, activeTour.id]);
-
-            // Track completion event (if analytics available)
-            try {
-                // @ts-ignore - optional analytics
-                window.journeyAnalytics?.trackMilestone?.('tour_completed', { tourId: activeTour.id });
-            } catch { /* ignore */ }
-        }
-
-        setActiveTour(null);
-        setCurrentStepIndex(0);
-    }, [activeTour]);
-
     const skipTour = useCallback(() => {
         // Track skip event
         try {
-            // @ts-ignore - optional analytics
+            // @ts-expect-error - optional analytics
             window.journeyAnalytics?.trackMilestone?.('tour_skipped', {
                 tourId: activeTour?.id,
                 stoppedAt: currentStepIndex

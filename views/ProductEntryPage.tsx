@@ -96,6 +96,32 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
             </main>
 
             <EntryFooter />
+
+            {/* Tagline Badge - Bottom Right */}
+            <div className="fixed bottom-12 right-12 z-40 animate-fade-in">
+                <div className="relative group">
+                    {/* Glow effect */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-purple-600/30 to-indigo-600/30 rounded-2xl blur-2xl opacity-50 group-hover:opacity-80 transition-opacity duration-500"></div>
+
+                    {/* Content */}
+                    <div className="relative px-8 py-6 rounded-2xl border border-white/20 backdrop-blur-xl bg-black/60 shadow-2xl">
+                        <div className="text-right space-y-1">
+                            <p className="text-2xl font-black text-white tracking-tight leading-tight">
+                                AI consulting.
+                            </p>
+                            <p className="text-2xl font-black bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent tracking-tight leading-tight">
+                                No slides.
+                            </p>
+                            <p className="text-2xl font-black text-white tracking-tight leading-tight">
+                                Just decisions.
+                            </p>
+                        </div>
+
+                        {/* Accent line */}
+                        <div className="mt-3 h-1 w-16 ml-auto bg-gradient-to-r from-purple-600 to-pink-600 rounded-full"></div>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };
