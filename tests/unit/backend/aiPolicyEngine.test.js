@@ -19,6 +19,8 @@ describe('AIPolicyEngine', () => {
     let mockAIRoleGuard;
 
     beforeEach(() => {
+        vi.resetModules();
+        
         mockDb = createMockDb();
         
         // Mock dependencies
@@ -37,23 +39,36 @@ describe('AIPolicyEngine', () => {
             getRoleDescription: vi.fn().mockReturnValue('Advisor role')
         };
 
-        vi.mock('../../../server/database', () => ({
+        // Mock database before importing
+        vi.doMock('../../../server/database', () => ({
             default: mockDb
         }));
 
-        vi.mock('../../../server/services/regulatoryModeGuard', () => ({
+        vi.doMock('../../../server/services/regulatoryModeGuard', () => ({
             default: mockRegulatoryModeGuard
         }));
 
-        vi.mock('../../../server/services/aiRoleGuard', () => ({
+        vi.doMock('../../../server/services/aiRoleGuard', () => ({
             default: mockAIRoleGuard
         }));
 
         AIPolicyEngine = require('../../../server/services/aiPolicyEngine.js');
+        
+        // Inject dependencies if supported
+        if (AIPolicyEngine.setDependencies) {
+            AIPolicyEngine.setDependencies({
+                db: mockDb,
+                RegulatoryModeGuard: mockRegulatoryModeGuard,
+                AIRoleGuard: mockAIRoleGuard
+            });
+        }
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
+        vi.doUnmock('../../../server/database');
+        vi.doUnmock('../../../server/services/regulatoryModeGuard');
+        vi.doUnmock('../../../server/services/aiRoleGuard');
     });
 
     describe('getEffectivePolicy()', () => {

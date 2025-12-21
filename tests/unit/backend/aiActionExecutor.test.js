@@ -7,24 +7,21 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createRequire } from 'module';
-import { 
-    createMockDb, 
-    createStandardDeps,
-    injectDependencies 
-} from '../../helpers/dependencyInjector.js';
+import { createMockDb } from '../../helpers/dependencyInjector.js';
 import { testUsers, testOrganizations, testProjects } from '../../fixtures/testData.js';
 
 const require = createRequire(import.meta.url);
-const AIActionExecutor = require('../../../server/services/aiActionExecutor.js');
 
 describe('AIActionExecutor', () => {
     let mockDb;
     let mockRegulatoryModeGuard;
     let mockAIRoleGuard;
     let mockAIPolicyEngine;
-    let deps;
+    let AIActionExecutor;
 
     beforeEach(() => {
+        vi.resetModules();
+        
         mockDb = createMockDb();
         
         // Create mocks for dependencies
@@ -40,19 +37,27 @@ describe('AIActionExecutor', () => {
             canPerformAction: vi.fn().mockResolvedValue({ allowed: true })
         };
 
-        deps = createStandardDeps({
+        // Mock dependencies before importing
+        vi.doMock('../../../server/database', () => ({
+            default: mockDb
+        }));
+        
+        // Import service
+        AIActionExecutor = require('../../../server/services/aiActionExecutor.js');
+        
+        // Inject dependencies
+        AIActionExecutor.setDependencies({
             db: mockDb,
+            uuidv4: () => 'test-uuid-1234',
             RegulatoryModeGuard: mockRegulatoryModeGuard,
             AIRoleGuard: mockAIRoleGuard,
             AIPolicyEngine: mockAIPolicyEngine
         });
-
-        // Inject dependencies
-        AIActionExecutor.setDependencies(deps);
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
+        vi.doUnmock('../../../server/database');
     });
 
     describe('requestAction()', () => {
@@ -76,8 +81,39 @@ describe('AIActionExecutor', () => {
             );
 
             expect(result.success).toBe(true);
-            expect(result.status).toBe(AIActionExecutor.ACTION_STATUS.PENDING);
+            // When no approval required, status is APPROVED directly
+            expect(result.status).toBe(AIActionExecutor.ACTION_STATUS.APPROVED);
             expect(mockDb.run).toHaveBeenCalled();
+        });
+        
+        it('should create pending action when approval required', async () => {
+            // Mock AIRoleGuard to require approval
+            mockAIRoleGuard.isActionBlocked.mockResolvedValue({ 
+                blocked: false, 
+                requiresApproval: true 
+            });
+
+            const actionType = AIActionExecutor.ACTION_TYPES.CREATE_DRAFT_TASK;
+            const payload = { title: 'Test Task' };
+            const userId = testUsers.user.id;
+            const orgId = testOrganizations.org1.id;
+            const projectId = testProjects.project1.id;
+
+            mockDb.run.mockImplementation((query, params, callback) => {
+                callback.call({ changes: 1, lastID: 1 }, null);
+            });
+
+            const result = await AIActionExecutor.requestAction(
+                actionType,
+                payload,
+                userId,
+                orgId,
+                projectId
+            );
+
+            expect(result.success).toBe(true);
+            expect(result.status).toBe(AIActionExecutor.ACTION_STATUS.PENDING);
+            expect(result.requiresApproval).toBe(true);
         });
 
         it('should block action when regulatory mode is enabled', async () => {

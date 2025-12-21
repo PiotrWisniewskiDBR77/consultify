@@ -17,18 +17,27 @@ describe('AIFailureHandler', () => {
     let AIFailureHandler;
 
     beforeEach(() => {
+        vi.resetModules();
+        
         mockDb = createMockDb();
         
-        vi.mock('../../../server/database', () => ({
+        // Mock database before importing
+        vi.doMock('../../../server/database', () => ({
             default: mockDb
         }));
 
         AIFailureHandler = require('../../../server/services/aiFailureHandler.js');
+        
+        // Inject dependencies if the service supports it
+        if (AIFailureHandler.setDependencies) {
+            AIFailureHandler.setDependencies({ db: mockDb });
+        }
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
         vi.useRealTimers();
+        vi.doUnmock('../../../server/database');
     });
 
     describe('withFallback()', () => {

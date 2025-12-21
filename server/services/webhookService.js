@@ -1,5 +1,6 @@
-const defaultFetch = require('node-fetch');
 const crypto = require('crypto');
+
+// Use native fetch (Node 18+) - no import needed, globally available
 
 /**
  * Webhook Service - Trigger webhooks for various events
@@ -12,7 +13,7 @@ class WebhookService {
      */
     constructor(db, options = {}) {
         this.db = db;
-        this.fetch = options.fetch || defaultFetch;
+        this.fetch = options.fetch || globalThis.fetch;
     }
 
     /**

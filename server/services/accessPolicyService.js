@@ -14,8 +14,11 @@
  * - DEMO_READ_ONLY: Demo mode is read-only
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db: require('../database'),
+    uuidv4: require('uuid').v4
+};
 
 // Organization types
 const ORG_TYPES = {
@@ -49,6 +52,11 @@ const DEFAULT_DEMO_LIMITS = {
 const TRIAL_DURATION_DAYS = 14;
 
 const AccessPolicyService = {
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
+
     /**
      * Get organization type and basic info
      * @param {string} organizationId 
@@ -56,7 +64,7 @@ const AccessPolicyService = {
      */
     getOrganizationType: async (organizationId) => {
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT id, name, organization_type, trial_started_at, trial_expires_at, is_active, plan, status 
                  FROM organizations WHERE id = ?`,
                 [organizationId],
@@ -85,7 +93,7 @@ const AccessPolicyService = {
      */
     getOrganizationLimits: async (organizationId) => {
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT * FROM organization_limits WHERE organization_id = ?`,
                 [organizationId],
                 async (err, row) => {
@@ -195,7 +203,7 @@ const AccessPolicyService = {
         const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT * FROM usage_counters WHERE organization_id = ? AND counter_date = ?`,
                 [organizationId, today],
                 (err, row) => {
@@ -290,7 +298,7 @@ const AccessPolicyService = {
      */
     getTrialUsage: async (organizationId) => {
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT trial_tokens_used FROM organizations WHERE id = ?`,
                 [organizationId],
                 (err, row) => {
@@ -542,7 +550,7 @@ const AccessPolicyService = {
     // Private helper methods
     _countOrgProjects: async (organizationId) => {
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT COUNT(*) as count FROM projects WHERE organization_id = ?`,
                 [organizationId],
                 (err, row) => {
@@ -555,7 +563,7 @@ const AccessPolicyService = {
 
     _countOrgInitiatives: async (organizationId) => {
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT count(*) as count FROM initiatives WHERE organization_id = ?`,
                 [organizationId],
                 (err, row) => {
@@ -569,7 +577,7 @@ const AccessPolicyService = {
 
     _countOrgUsers: async (organizationId) => {
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT COUNT(*) as count FROM users WHERE organization_id = ?`,
                 [organizationId],
                 (err, row) => {

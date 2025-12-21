@@ -18,6 +18,8 @@ describe('AIContextBuilder', () => {
     let mockPMOHealthService;
 
     beforeEach(() => {
+        vi.resetModules();
+        
         mockDb = createMockDb();
         
         mockPMOHealthService = {
@@ -27,20 +29,23 @@ describe('AIContextBuilder', () => {
             })
         };
 
-        vi.mock('../../../server/database', () => ({
+        // Mock database before importing
+        vi.doMock('../../../server/database', () => ({
             default: mockDb
         }));
 
         AIContextBuilder = require('../../../server/services/aiContextBuilder.js');
         
-        // Inject mock PMOHealthService
+        // Inject mock dependencies
         AIContextBuilder.setDependencies({
+            db: mockDb,
             PMOHealthService: mockPMOHealthService
         });
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
+        vi.doUnmock('../../../server/database');
     });
 
     describe('buildContext()', () => {
