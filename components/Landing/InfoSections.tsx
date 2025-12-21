@@ -1,23 +1,26 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle, ShieldCheck, Cpu, BarChart3, Users, Zap } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export const InfoSections: React.FC = () => {
+    const { t } = useTranslation();
+
     const steps = [
         {
             icon: Cpu,
-            title: 'Diagnostic AI',
-            desc: 'Map your maturity through the DRD model and identify critical gaps instantly.'
+            title: t('landing.steps.diagnostic.title'),
+            desc: t('landing.steps.diagnostic.desc')
         },
         {
             icon: BarChart3,
-            title: 'Strategic Roadmap',
-            desc: 'AI generates a tailored execution plan with clear ROI and timeframes.'
+            title: t('landing.steps.roadmap.title'),
+            desc: t('landing.steps.roadmap.desc')
         },
         {
             icon: Users,
-            title: 'Human Approval',
-            desc: 'Every AI decision is approved by your leaders to ensure accountability.'
+            title: t('landing.steps.approval.title'),
+            desc: t('landing.steps.approval.desc')
         }
     ];
 
@@ -32,10 +35,10 @@ export const InfoSections: React.FC = () => {
                             whileInView={{ opacity: 1 }}
                             className="text-xs font-black text-purple-600 uppercase tracking-[0.3em] mb-6"
                         >
-                            The Methodology
+                            {t('landing.methodology.badge')}
                         </motion.h2>
                         <h3 className="text-4xl lg:text-5xl font-black text-navy-950 dark:text-white tracking-tight">
-                            How AI Becomes Your <span className="italic font-serif">Cognitive Partner</span>.
+                            {t('landing.methodology.heading')}
                         </h3>
                     </div>
 
@@ -78,21 +81,17 @@ export const InfoSections: React.FC = () => {
                         <div className="space-y-8">
                             <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 text-[10px] font-black text-white uppercase tracking-[0.2em]">
                                 <ShieldCheck size={16} className="text-emerald-400" />
-                                Enterprise Integrity
+                                {t('landing.trust.badge')}
                             </div>
                             <h3 className="text-4xl lg:text-5xl font-black text-white leading-[1.1] tracking-tight">
-                                Intelligence Guided by <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">Human Approval</span>.
+                                {t('landing.trust.heading')}
                             </h3>
                             <p className="text-lg text-slate-400 leading-relaxed font-medium">
-                                AI is a partner, not an authority. Consultinity implements a strict governance layer where every strategic move requires high-level human validation.
+                                {t('landing.trust.description')}
                             </p>
 
                             <ul className="space-y-4">
-                                {[
-                                    'Full accountability for every roadmap item',
-                                    'Multi-tenant data isolation & military-grade security',
-                                    'SOC2 compliant infrastructure logic'
-                                ].map((item, i) => (
+                                {(t('landing.trust.points', { returnObjects: true }) as string[]).map((item: string, i: number) => (
                                     <li key={i} className="flex items-center gap-4 text-base font-bold text-slate-200">
                                         <div className="w-6 h-6 rounded-full bg-purple-600/20 flex items-center justify-center">
                                             <CheckCircle size={16} className="text-purple-400" />
@@ -104,7 +103,7 @@ export const InfoSections: React.FC = () => {
 
                             <div className="pt-4">
                                 <button className="px-8 py-4 bg-white text-navy-950 rounded-full text-sm font-black uppercase tracking-widest hover:bg-slate-100 transition-all shadow-xl shadow-white/5 active:scale-95">
-                                    View Security Whitepaper
+                                    {t('landing.trust.cta')}
                                 </button>
                             </div>
                         </div>
@@ -144,8 +143,8 @@ export const InfoSections: React.FC = () => {
                                         ))}
                                     </div>
                                     <div className="flex items-center justify-between">
-                                        <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Awaiting Validation</span>
-                                        <div className="px-6 py-3 bg-emerald-500 text-navy-950 text-[10px] font-black uppercase rounded-2xl shadow-lg shadow-emerald-500/20">Approved</div>
+                                        <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest">{t('landing.trust.status.awaiting')}</span>
+                                        <div className="px-6 py-3 bg-emerald-500 text-navy-950 text-[10px] font-black uppercase rounded-2xl shadow-lg shadow-emerald-500/20">{t('landing.trust.status.approved')}</div>
                                     </div>
                                 </div>
                             </div>

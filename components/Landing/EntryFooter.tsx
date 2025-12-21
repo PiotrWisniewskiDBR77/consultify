@@ -1,27 +1,30 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export const EntryFooter: React.FC = () => {
+    const { t } = useTranslation();
+
     const sections = [
         {
-            title: 'Product',
+            title: t('landing.footer.product.title'),
             links: [
-                { label: 'Demo', href: '/demo' },
-                { label: 'Trial', href: '#' },
-                { label: 'Log in', href: '#' }
+                { label: t('landing.footer.product.demo'), href: '/demo' },
+                { label: t('landing.footer.product.trial'), href: '#' },
+                { label: t('landing.footer.product.login'), href: '#' }
             ]
         },
         {
-            title: 'Company',
+            title: t('landing.footer.company.title'),
             links: [
-                { label: 'About', href: '#' },
-                { label: 'Contact', href: '#' }
+                { label: t('landing.footer.company.about'), href: '#' },
+                { label: t('landing.footer.company.contact'), href: '#' }
             ]
         },
         {
-            title: 'Legal',
+            title: t('landing.footer.legal.title'),
             links: [
-                { label: 'Privacy', href: '#' },
-                { label: 'Terms', href: '#' }
+                { label: t('landing.footer.legal.privacy'), href: '#' },
+                { label: t('landing.footer.legal.terms'), href: '#' }
             ]
         }
     ];
@@ -40,7 +43,7 @@ export const EntryFooter: React.FC = () => {
                             </span>
                         </div>
                         <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed max-w-xs">
-                            Empowering organizations to navigate digital transformation with AI-driven strategy and human-led governance.
+                            {t('landing.footer.tagline')}
                         </p>
                     </div>
 
@@ -62,7 +65,7 @@ export const EntryFooter: React.FC = () => {
 
                 <div className="mt-20 pt-8 border-t border-slate-100 dark:border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
                     <p className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">
-                        © 2025 Consultinity. Powered by DBR77 Robotics.
+                        {t('landing.footer.copyright')}
                     </p>
                     <div className="flex gap-6">
                         {['LinkedIn', 'Twitter', 'YouTube'].map(social => (

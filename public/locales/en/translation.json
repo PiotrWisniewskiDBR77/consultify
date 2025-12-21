@@ -2337,5 +2337,103 @@
       "save": "Save",
       "ai": "AI"
     }
+  },
+  "landing": {
+    "hero": {
+      "title": "Think Strategically. Act Decisively.",
+      "subtitle": "The first open consulting ecosystem that teaches leaders to think like Harvard and act in real business — with AI as your cognitive partner.",
+      "cards": {
+        "demo": {
+          "title": "Explore Demo",
+          "description": "Experience a live environment with fictional, realistic data.",
+          "meta": "INSTANT ACCESS",
+          "cta": "Explore Demo"
+        },
+        "trial": {
+          "title": "Start Free Trial",
+          "description": "Use Consultinity on your real organization data and build your roadmap.",
+          "meta": "PRIMARY PATH",
+          "cta": "Start Trial"
+        },
+        "video": {
+          "title": "How It Works",
+          "description": "Guided by Dr. Piotr Wiśniewski",
+          "meta": "PRODUCT TOUR",
+          "cta": "Watch Video"
+        },
+        "expert": {
+          "title": "Talk to Expert",
+          "description": "Custom Enterprise transformation approach.",
+          "meta": "BESPOKE HUB",
+          "cta": "Talk to Expert"
+        },
+        "login": {
+          "title": "Log In",
+          "description": "Continue your journey.",
+          "meta": "RETURNING USERS",
+          "cta": "Log In"
+        }
+      }
+    },
+    "methodology": {
+      "badge": "The Methodology",
+      "heading": "How AI Becomes Your Cognitive Partner."
+    },
+    "steps": {
+      "diagnostic": {
+        "title": "Diagnostic AI",
+        "desc": "Map your maturity through the DRD model and identify critical gaps instantly."
+      },
+      "roadmap": {
+        "title": "Strategic Roadmap",
+        "desc": "AI generates a tailored execution plan with clear ROI and timeframes."
+      },
+      "approval": {
+        "title": "Human Approval",
+        "desc": "Every AI decision is approved by your leaders to ensure accountability."
+      }
+    },
+    "trust": {
+      "badge": "Enterprise Integrity",
+      "heading": "Intelligence Guided by Human Approval.",
+      "description": "AI is a partner, not an authority. Consultinity implements a strict governance layer where every strategic move requires high-level human validation.",
+      "points": [
+        "Full accountability for every roadmap item",
+        "Multi-tenant data isolation & military-grade security",
+        "SOC2 compliant infrastructure logic"
+      ],
+      "cta": "View Security Whitepaper",
+      "status": {
+        "awaiting": "Awaiting Validation",
+        "approved": "Approved"
+      }
+    },
+    "topBar": {
+      "exploreDemo": "Explore Demo",
+      "talkToExpert": "Talk to Expert",
+      "login": "Log in",
+      "startTrial": "Start Trial",
+      "goToWorkspace": "Go to Workspace"
+    },
+    "footer": {
+      "tagline": "Empowering organizations to navigate digital transformation with AI-driven strategy and human-led governance.",
+      "copyright": "© 2025 Consultinity. Powered by DBR77 Robotics.",
+      "product": {
+        "title": "Product",
+        "demo": "Demo",
+        "trial": "Trial",
+        "login": "Log in"
+      },
+      "company": {
+        "title": "Company",
+        "about": "About",
+        "contact": "Contact"
+      },
+      "legal": {
+        "title": "Legal",
+        "privacy": "Privacy",
+        "terms": "Terms"
+      }
+    }
   }
 }

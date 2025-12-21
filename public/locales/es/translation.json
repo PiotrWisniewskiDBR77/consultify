@@ -255,5 +255,103 @@
         "notFound": "No encontrado.",
         "validation": "Error de validación. Por favor, verifica tu entrada.",
         "server": "Error del servidor. Por favor, intenta más tarde."
+    },
+    "landing": {
+        "hero": {
+            "title": "Piensa Estratégicamente. Actúa Decisivamente.",
+            "subtitle": "El primer ecosistema de consultoría abierto que enseña a los líderes a pensar como Harvard y actuar en negocios reales — con IA como tu socio cognitivo.",
+            "cards": {
+                "demo": {
+                    "title": "Explorar Demo",
+                    "description": "Experimenta un entorno en vivo con datos ficticios y realistas.",
+                    "meta": "ACCESO INSTANTÁNEO",
+                    "cta": "Explorar Demo"
+                },
+                "trial": {
+                    "title": "Iniciar Prueba Gratuita",
+                    "description": "Usa Consultinity con los datos reales de tu organización y construye tu hoja de ruta.",
+                    "meta": "RUTA PRINCIPAL",
+                    "cta": "Iniciar Prueba"
+                },
+                "video": {
+                    "title": "Cómo Funciona",
+                    "description": "Guiado por el Dr. Piotr Wiśniewski",
+                    "meta": "TOUR DEL PRODUCTO",
+                    "cta": "Ver Video"
+                },
+                "expert": {
+                    "title": "Hablar con Experto",
+                    "description": "Enfoque de transformación empresarial personalizado.",
+                    "meta": "HUB BESPOKE",
+                    "cta": "Hablar con Experto"
+                },
+                "login": {
+                    "title": "Iniciar Sesión",
+                    "description": "Continúa tu viaje.",
+                    "meta": "USUARIOS RECURRENTES",
+                    "cta": "Iniciar Sesión"
+                }
+            }
+        },
+        "methodology": {
+            "badge": "La Metodología",
+            "heading": "Cómo la IA se convierte en tu Socio Cognitivo."
+        },
+        "steps": {
+            "diagnostic": {
+                "title": "IA Diagnóstica",
+                "desc": "Mapea tu madurez a través del modelo DRD e identifica brechas críticas al instante."
+            },
+            "roadmap": {
+                "title": "Hoja de Ruta Estratégica",
+                "desc": "La IA genera un plan de ejecución personalizado con ROI y plazos claros."
+            },
+            "approval": {
+                "title": "Aprobación Humana",
+                "desc": "Cada decisión de IA es aprobada por tus líderes para garantizar la responsabilidad."
+            }
+        },
+        "trust": {
+            "badge": "Integridad Empresarial",
+            "heading": "Inteligencia Guiada por Aprobación Humana.",
+            "description": "La IA es un socio, no una autoridad. Consultinity implementa una capa de gobernanza estricta donde cada movimiento estratégico requiere validación humana de alto nivel.",
+            "points": [
+                "Responsabilidad total para cada elemento de la hoja de ruta",
+                "Aislamiento de datos multi-tenant y seguridad de grado militar",
+                "Lógica de infraestructura conforme a SOC2"
+            ],
+            "cta": "Ver Documento de Seguridad",
+            "status": {
+                "awaiting": "Esperando Validación",
+                "approved": "Aprobado"
+            }
+        },
+        "topBar": {
+            "exploreDemo": "Explorar Demo",
+            "talkToExpert": "Hablar con Experto",
+            "login": "Iniciar sesión",
+            "startTrial": "Iniciar Prueba",
+            "goToWorkspace": "Ir al Espacio de Trabajo"
+        },
+        "footer": {
+            "tagline": "Empoderando a las organizaciones para navegar la transformación digital con estrategia impulsada por IA y gobernanza liderada por humanos.",
+            "copyright": "© 2025 Consultinity. Desarrollado por DBR77 Robotics.",
+            "product": {
+                "title": "Producto",
+                "demo": "Demo",
+                "trial": "Prueba",
+                "login": "Iniciar sesión"
+            },
+            "company": {
+                "title": "Compañía",
+                "about": "Acerca de",
+                "contact": "Contacto"
+            },
+            "legal": {
+                "title": "Legal",
+                "privacy": "Privacidad",
+                "terms": "Términos"
+            }
+        }
     }
 }

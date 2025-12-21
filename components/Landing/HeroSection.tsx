@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, X } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
+import { useTranslation } from 'react-i18next';
 
 interface HeroSectionProps {
     onDemoClick: () => void;
@@ -18,27 +19,28 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 }) => {
     const [isVideoOpen, setIsVideoOpen] = useState(false);
     const { theme } = useAppStore();
+    const { t } = useTranslation();
     const isDark = theme === 'dark';
 
     const cards = [
         {
             id: 'demo',
-            title: 'Explore Demo',
-            description: 'Experience a live environment with fictional, realistic data.',
-            meta: 'INSTANT ACCESS',
-            cta: 'Explore Demo',
-            image: '/assets/landing/mode_demo_thumb.webp',
+            title: t('landing.hero.cards.demo.title'),
+            description: t('landing.hero.cards.demo.description'),
+            meta: t('landing.hero.cards.demo.meta'),
+            cta: t('landing.hero.cards.demo.cta'),
+            image: '/assets/landing/card_demo.png',
             color: 'purple',
             onClick: onDemoClick,
             className: 'lg:col-span-1 lg:row-span-1'
         },
         {
             id: 'trial',
-            title: 'Start Free Trial',
-            description: 'Use Consultinity on your real organization data and build your roadmap.',
-            meta: 'PRIMARY PATH',
-            cta: 'Start Trial',
-            image: isDark ? '/assets/landing/mode_trial_thumb.webp' : '/assets/landing/mode_strategy_light.png',
+            title: t('landing.hero.cards.trial.title'),
+            description: t('landing.hero.cards.trial.description'),
+            meta: t('landing.hero.cards.trial.meta'),
+            cta: t('landing.hero.cards.trial.cta'),
+            image: '/assets/landing/card_trial.png',
             color: 'indigo',
             onClick: onTrialClick,
             primary: true,
@@ -46,11 +48,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         },
         {
             id: 'video',
-            title: 'How It Works',
-            description: 'Guided by Dr. Piotr Wiśniewski',
-            meta: 'PRODUCT TOUR',
-            cta: 'Watch Video',
-            image: isDark ? '/assets/landing/hero_abstract_ai.webp' : '/assets/landing/mode_ai_light.png',
+            title: t('landing.hero.cards.video.title'),
+            description: t('landing.hero.cards.video.description'),
+            meta: t('landing.hero.cards.video.meta'),
+            cta: t('landing.hero.cards.video.cta'),
+            image: '/assets/landing/card_video.png',
             color: 'black',
             onClick: () => setIsVideoOpen(true),
             isVideo: true,
@@ -58,22 +60,22 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         },
         {
             id: 'expert',
-            title: 'Talk to Expert',
-            description: 'Custom Enterprise transformation approach.',
-            meta: 'BESPOKE HUB',
-            cta: 'Talk to Expert',
-            image: '/assets/landing/mode_expert_thumb.webp',
+            title: t('landing.hero.cards.expert.title'),
+            description: t('landing.hero.cards.expert.description'),
+            meta: t('landing.hero.cards.expert.meta'),
+            cta: t('landing.hero.cards.expert.cta'),
+            image: '/assets/landing/card_expert.png',
             color: 'emerald',
             onClick: onExpertClick,
             className: 'lg:col-span-1 lg:row-span-1'
         },
         {
             id: 'login',
-            title: 'Log In',
-            description: 'Continue your journey.',
-            meta: 'RETURNING USERS',
-            cta: 'Log In',
-            image: '/assets/landing/mode_login_thumb.webp',
+            title: t('landing.hero.cards.login.title'),
+            description: t('landing.hero.cards.login.description'),
+            meta: t('landing.hero.cards.login.meta'),
+            cta: t('landing.hero.cards.login.cta'),
+            image: '/assets/landing/card_login.png',
             color: 'navy',
             onClick: onLoginClick,
             className: 'lg:col-span-1 lg:row-span-1'
@@ -91,8 +93,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                         transition={{ duration: 0.6 }}
                         className="text-5xl lg:text-7xl font-black text-navy-950 dark:text-white leading-[1.05] tracking-tight mb-8"
                     >
-                        Think <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-indigo-600">Strategically</span>.<br />
-                        Act Decisively.
+                        {t('landing.hero.title').split('.')[0]}.<br />
+                        {t('landing.hero.title').split('.')[1]}.
                     </motion.h1>
                     <motion.p
                         initial={{ opacity: 0, y: 20 }}
@@ -100,7 +102,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                         transition={{ duration: 0.6, delay: 0.1 }}
                         className="text-lg lg:text-xl text-slate-500 dark:text-slate-400 leading-relaxed font-light"
                     >
-                        The first open consulting ecosystem that teaches leaders to think like Harvard and act in real business — with AI as your cognitive partner.
+                        {t('landing.hero.subtitle')}
                     </motion.p>
                 </div>
 

@@ -77,10 +77,9 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
             </div>
 
             <EntryTopBar
-                onLoginClick={onLoginClick}
                 onTrialClick={handleTrialRedirect}
                 onDemoClick={handleDemoRedirect}
-                onExpertClick={handleExpertRedirect}
+                onLoginClick={onLoginClick}
                 isLoggedIn={!!currentUser}
                 hasWorkspace={!!currentUser?.hasWorkspace}
             />
