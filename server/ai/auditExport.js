@@ -1,5 +1,7 @@
 const db = require('../database');
 
+const PIIRedactor = require('../utils/piiRedactor');
+
 /**
  * Audit Export Service
  * Step 9.7: Export audit logs for compliance (CSV/JSON).
@@ -45,11 +47,19 @@ const AuditExportService = {
             });
         });
 
+        // Redact PII
+        const redactedRows = rows.map(row => ({
+            ...row,
+            user_email: PIIRedactor.redact(row.user_email),
+            first_name: PIIRedactor.redact(row.first_name),
+            last_name: PIIRedactor.redact(row.last_name)
+        }));
+
         if (format === 'csv') {
-            return { data: AuditExportService._toCSV(rows), format: 'csv' };
+            return { data: AuditExportService._toCSV(redactedRows), format: 'csv' };
         }
 
-        return { data: rows, format: 'json' };
+        return { data: redactedRows, format: 'json' };
     },
 
     /**
@@ -89,11 +99,14 @@ const AuditExportService = {
             });
         });
 
+        // Redact PII (safe-guard for error messages or other fields)
+        const redactedRows = rows.map(row => PIIRedactor.redact(row));
+
         if (format === 'csv') {
-            return { data: AuditExportService._toCSV(rows), format: 'csv' };
+            return { data: AuditExportService._toCSV(redactedRows), format: 'csv' };
         }
 
-        return { data: rows, format: 'json' };
+        return { data: redactedRows, format: 'json' };
     },
 
     /**

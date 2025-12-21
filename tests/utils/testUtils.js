@@ -11,6 +11,7 @@
 const { v4: uuidv4 } = require('uuid');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { vi } = require('vitest');
 
 // ============================================
 // Test Data Factories
@@ -272,24 +273,24 @@ function createLLMMock(provider = 'openai') {
 function createStripeMock() {
     return {
         customers: {
-            create: jest.fn().mockResolvedValue({ id: 'cus_test123' }),
-            retrieve: jest.fn().mockResolvedValue({ id: 'cus_test123', email: 'test@test.com' }),
+            create: vi.fn().mockResolvedValue({ id: 'cus_test123' }),
+            retrieve: vi.fn().mockResolvedValue({ id: 'cus_test123', email: 'test@test.com' }),
         },
         subscriptions: {
-            create: jest.fn().mockResolvedValue({ id: 'sub_test123', status: 'active' }),
-            retrieve: jest.fn().mockResolvedValue({ id: 'sub_test123', status: 'active' }),
-            update: jest.fn().mockResolvedValue({ id: 'sub_test123', status: 'active' }),
-            cancel: jest.fn().mockResolvedValue({ id: 'sub_test123', status: 'canceled' }),
+            create: vi.fn().mockResolvedValue({ id: 'sub_test123', status: 'active' }),
+            retrieve: vi.fn().mockResolvedValue({ id: 'sub_test123', status: 'active' }),
+            update: vi.fn().mockResolvedValue({ id: 'sub_test123', status: 'active' }),
+            cancel: vi.fn().mockResolvedValue({ id: 'sub_test123', status: 'canceled' }),
         },
         invoices: {
-            list: jest.fn().mockResolvedValue({ data: [] }),
-            retrieve: jest.fn().mockResolvedValue({ id: 'inv_test123', status: 'paid' }),
+            list: vi.fn().mockResolvedValue({ data: [] }),
+            retrieve: vi.fn().mockResolvedValue({ id: 'inv_test123', status: 'paid' }),
         },
         paymentIntents: {
-            create: jest.fn().mockResolvedValue({ id: 'pi_test123', status: 'succeeded' }),
+            create: vi.fn().mockResolvedValue({ id: 'pi_test123', status: 'succeeded' }),
         },
         webhooks: {
-            constructEvent: jest.fn().mockReturnValue({ type: 'test.event', data: {} }),
+            constructEvent: vi.fn().mockReturnValue({ type: 'test.event', data: {} }),
         },
     };
 }

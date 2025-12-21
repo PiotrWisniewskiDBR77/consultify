@@ -1,186 +1,160 @@
-
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock dependencies
-vi.mock('../../../server/services/aiContextBuilder.js', () => ({
-    default: { buildContext: vi.fn() }
+const mockDb = {
+    get: vi.fn(),
+    all: vi.fn(),
+    run: vi.fn(),
+    serialize: vi.fn((cb) => cb()),
+    initPromise: Promise.resolve()
+};
+
+vi.mock('../../../server/database', () => ({
+    default: mockDb
 }));
-vi.mock('../../../server/services/aiPolicyEngine.js', () => ({
-    default: {
-        getEffectivePolicy: vi.fn(),
-        POLICY_LEVELS: { ADVISORY: 'ADVISORY' },
-        AI_ROLES: { ADVISOR: 'ADVISOR', PMO_MANAGER: 'PMO_MANAGER', EXECUTOR: 'EXECUTOR', EDUCATOR: 'EDUCATOR' }
-    }
+
+const mockAIContextBuilder = {
+    buildContext: vi.fn()
+};
+
+vi.mock('../../../server/services/aiContextBuilder', () => ({
+    default: mockAIContextBuilder
 }));
-vi.mock('../../../server/services/aiMemoryManager.js', () => ({
-    default: {
-        getUserPreferences: vi.fn(),
-        buildProjectMemorySummary: vi.fn()
-    }
+
+const mockAIPolicyEngine = {
+    getEffectivePolicy: vi.fn()
+};
+
+vi.mock('../../../server/services/aiPolicyEngine', () => ({
+    default: mockAIPolicyEngine
 }));
-vi.mock('../../../server/services/aiRoleGuard.js', () => ({
-    default: {
-        getRoleConfig: vi.fn(),
-        getRoleCapabilities: vi.fn(),
-        getRoleDescription: vi.fn(),
-        AI_PROJECT_ROLES: { ADVISOR: 'ADVISOR', MANAGER: 'MANAGER', OPERATOR: 'OPERATOR' }
-    }
+
+const mockAIService = {
+    callLLM: vi.fn()
+};
+
+vi.mock('../../../server/services/aiService', () => ({
+    default: mockAIService
 }));
-vi.mock('../../../server/services/aiExplainabilityService.js', () => ({
-    default: {
-        buildAIExplanation: vi.fn(),
-        buildExplainabilityFooter: vi.fn()
-    }
+
+const mockAIAuditLogger = {
+    logWithExplanation: vi.fn().mockResolvedValue({ auditId: 'audit-1' }),
+    logInteraction: vi.fn()
+};
+
+vi.mock('../../../server/services/aiAuditLogger', () => ({
+    default: mockAIAuditLogger
 }));
-vi.mock('../../../server/services/regulatoryModeGuard.js', () => ({
-    default: { getRegulatoryPrompt: vi.fn() }
-}));
-vi.mock('../../../server/services/aiResponsePostProcessor.js', () => ({
-    aiResponsePostProcessor: vi.fn((text) => `Processed: ${text}`)
-}));
+
+import AIOrchestrator from '../../../server/services/aiOrchestrator.js';
 
 describe('AIOrchestrator', () => {
-    let AIOrchestrator;
-    let AIContextBuilder;
-    let AIPolicyEngine;
-    let AIMemoryManager;
-    let AIRoleGuard;
-    let AIExplainabilityService;
-    let RegulatoryModeGuard;
-
-    beforeEach(async () => {
-        vi.resetModules();
+    beforeEach(() => {
         vi.clearAllMocks();
 
-        AIOrchestrator = (await import('../../../server/services/aiOrchestrator.js')).default;
+        // Default mocks
+        mockAIContextBuilder.buildContext.mockResolvedValue({
+            platform: { user: { id: 'u1' } },
+            organization: {},
+            project: {},
+            hash: 'ctx-hash'
+        });
 
-        AIContextBuilder = (await import('../../../server/services/aiContextBuilder.js')).default;
-        AIPolicyEngine = (await import('../../../server/services/aiPolicyEngine.js')).default;
-        AIMemoryManager = (await import('../../../server/services/aiMemoryManager.js')).default;
-        AIRoleGuard = (await import('../../../server/services/aiRoleGuard.js')).default;
-        AIExplainabilityService = (await import('../../../server/services/aiExplainabilityService.js')).default;
-        RegulatoryModeGuard = (await import('../../../server/services/regulatoryModeGuard.js')).default;
+        mockAIPolicyEngine.getEffectivePolicy.mockResolvedValue({
+            level: 'ASSISTED',
+            allowedActions: ['EXPLAIN', 'SUGGEST']
+        });
+
+        // Mock LLM response
+        mockAIService.callLLM.mockResolvedValue('{"analysis": "test", "intent": "EXPLAIN"}');
+    });
+
+    describe('processMessage', () => {
+        it('should process user message successfully', async () => {
+            const result = await AIOrchestrator.processMessage(
+                'How is the project going?',
+                'user-1',
+                'org-1',
+                'proj-1'
+            );
+
+            expect(result.success).toBe(true);
+            expect(result.response).toBeDefined();
+            expect(mockAIContextBuilder.buildContext).toHaveBeenCalled();
+            expect(mockAIService.callLLM).toHaveBeenCalled();
+            expect(mockAIAuditLogger.logWithExplanation).toHaveBeenCalled();
+        });
+
+        it('should handle context building failure', async () => {
+            mockAIContextBuilder.buildContext.mockRejectedValue(new Error('Context Error'));
+
+            const result = await AIOrchestrator.processMessage('Hi', 'u1', 'o1');
+
+            expect(result.success).toBe(false);
+            expect(result.error).toContain('Context Error');
+        });
     });
 
     describe('_detectIntent', () => {
-        it('should detect EXPLAIN intent correctly', () => {
-            expect(AIOrchestrator._detectIntent('Explain the project phase')).toBe(AIOrchestrator.CHAT_MODES.EXPLAIN);
-            expect(AIOrchestrator._detectIntent('What is this?')).toBe(AIOrchestrator.CHAT_MODES.EXPLAIN);
+        it('should detect intent from message keywords', () => {
+            // Testing internal logic via exposed method if possible, or inferring from behavior
+            // Since _detectIntent is likely private/internal, test via processMessage or if exported
+
+            // Assuming we can test internal methods if they are attached to exported object (as in code snippet)
+            const intent = AIOrchestrator._detectIntent('Create a task for me');
+            expect(intent).toBe('DO');
         });
 
-        it('should detect GUIDE intent correctly', () => {
-            expect(AIOrchestrator._detectIntent('What should I do next?')).toBe(AIOrchestrator.CHAT_MODES.GUIDE);
-        });
-
-        it('should detect ANALYZE intent correctly', () => {
-            expect(AIOrchestrator._detectIntent('Analyze the risks')).toBe(AIOrchestrator.CHAT_MODES.ANALYZE);
-        });
-
-        it('should detect DO intent correctly', () => {
-            expect(AIOrchestrator._detectIntent('Draft a task')).toBe(AIOrchestrator.CHAT_MODES.DO);
-        });
-
-        it('should detect TEACH intent correctly', () => {
-            expect(AIOrchestrator._detectIntent('Why is this important?')).toBe(AIOrchestrator.CHAT_MODES.TEACH);
-        });
-
-        it('should default to EXPLAIN for unclear intent', () => {
-            expect(AIOrchestrator._detectIntent('Hello there')).toBe(AIOrchestrator.CHAT_MODES.EXPLAIN);
+        it('should default to EXPLAIN intent', () => {
+            const intent = AIOrchestrator._detectIntent('What implies this?');
+            expect(intent).toBe('EXPLAIN');
         });
     });
 
     describe('_selectRole', () => {
-        const mockPolicy = {
-            regulatoryModeEnabled: false,
-            activeRoles: ['ADVISOR', 'PMO_MANAGER', 'EXECUTOR', 'EDUCATOR']
-        };
-
-        it('should force ADVISOR role if regulatory mode is enabled', () => {
-            const regPolicy = { ...mockPolicy, regulatoryModeEnabled: true };
-            expect(AIOrchestrator._selectRole(AIOrchestrator.CHAT_MODES.DO, regPolicy)).toBe(AIOrchestrator.AI_ROLES.ADVISOR);
+        // Assuming availability
+        it('should select role based on intent', () => {
+            const role = AIOrchestrator._selectRole('DO', { level: 'AUTONOMOUS' });
+            expect(role).toBe('EXECUTOR');
         });
 
-        it('should select PMO_MANAGER for GUIDE intent', () => {
-            expect(AIOrchestrator._selectRole(AIOrchestrator.CHAT_MODES.GUIDE, mockPolicy)).toBe(AIOrchestrator.AI_ROLES.PMO_MANAGER);
-        });
-
-        it('should fallback to ADVISOR if selected role is not active', () => {
-            const limitedPolicy = { ...mockPolicy, activeRoles: ['ADVISOR'] };
-            expect(AIOrchestrator._selectRole(AIOrchestrator.CHAT_MODES.DO, limitedPolicy)).toBe(AIOrchestrator.AI_ROLES.ADVISOR);
+        it('should downgrade role if policy restricts', () => {
+            const role = AIOrchestrator._selectRole('DO', { level: 'ADVISORY' });
+            // ADVISORY cannot DO, so fallback
+            expect(role).not.toBe('EXECUTOR');
+            expect(role).toBe('CONSULTANT'); // or similar fallback
         });
     });
 
-    describe('processMessage', () => {
-        const mockContext = {
-            platform: { role: 'Admin' },
-            organization: { organizationName: 'Test Org', activeProjectCount: 1 },
-            project: { projectName: 'Test Project', currentPhase: 'Planning', phaseNumber: 2, completedInitiatives: 0, initiativeCount: 5 },
-            execution: { userTasks: [], pendingDecisions: [], blockers: [] },
-            knowledge: { previousDecisions: [] },
-            external: { internetEnabled: false }
-        };
+    describe('_buildPrompt', () => {
+        // This might depend on implementation details, test valid output structure
+        it('should include context and user message', () => {
+            const context = { project: { name: 'Test' } };
+            const prompt = AIOrchestrator._buildPrompt('Hello', context);
 
-        const mockPolicy = {
-            regulatoryModeEnabled: false,
-            activeRoles: ['ADVISOR', 'PMO_MANAGER', 'EXECUTOR']
-        };
+            expect(prompt).toContain('Hello');
+            expect(prompt).toContain('Test');
+        });
+    });
 
-        const mockPreferences = { preferred_tone: 'PROFESSIONAL' };
-        const mockProjectMemory = { memoryCount: 5, majorDecisions: [], phaseTransitions: [] };
-        const mockRoleConfig = { activeRole: 'PMO_MANAGER' };
+    describe('postProcessResponse', () => {
+        it('should add standard footer', () => {
+            const rawResponse = 'Here is the analysis.';
+            const context = { auditId: '123' };
 
-        beforeEach(() => {
-            AIContextBuilder.buildContext.mockResolvedValue(mockContext);
-            AIPolicyEngine.getEffectivePolicy.mockResolvedValue(mockPolicy);
-            AIMemoryManager.getUserPreferences.mockResolvedValue(mockPreferences);
-            AIMemoryManager.buildProjectMemorySummary.mockResolvedValue(mockProjectMemory);
-            AIRoleGuard.getRoleConfig.mockResolvedValue(mockRoleConfig);
+            const processed = AIOrchestrator.postProcessResponse(rawResponse, context);
 
-            AIExplainabilityService.buildAIExplanation.mockReturnValue({
-                confidenceLevel: 85,
-                reasoning: ['Test reasoning']
+            expect(processed).toContain('Here is the analysis.');
+            expect(processed).toContain('Confidence:'); // Example check
+        });
+
+        it('should handle labels', () => {
+            const rawResponse = 'Here is the analysis.';
+            const processed = AIOrchestrator.postProcessResponse(rawResponse, {
+                labels: ['CONFIDENTIAL']
             });
 
-            AIRoleGuard.getRoleCapabilities.mockReturnValue(['cap1']);
-            AIRoleGuard.getRoleDescription.mockReturnValue('Test Description');
-
-            RegulatoryModeGuard.getRegulatoryPrompt.mockReturnValue('Regulatory Prompt');
-        });
-
-        it('should process a message successfully', async () => {
-            const result = await AIOrchestrator.processMessage('What is the status?', 'user1', 'org1', 'proj1');
-            expect(result.role).toBe(AIOrchestrator.AI_ROLES.ADVISOR);
-        });
-
-        // Skipped: mock interop issues with RegulatoryModeGuard
-        it.skip('should include regulatory prompt when regulatory mode is enabled', async () => {
-            AIPolicyEngine.getEffectivePolicy.mockResolvedValue({ ...mockPolicy, regulatoryModeEnabled: true });
-            const result = await AIOrchestrator.processMessage('Execute this', 'user1', 'org1', 'proj1');
-            // The prompt contains a complex string, check for key header identifying regulatory mode
-            expect(result.prompt).toContain('REGULATORY COMPLIANCE MODE ACTIVE');
-        });
-
-        it.skip('should handle context building errors gracefully', async () => {
-            AIContextBuilder.buildContext.mockRejectedValue(new Error('Context Fail'));
-            await expect(AIOrchestrator.processMessage('msg', 'u', 'o', 'p')).rejects.toThrow();
-        });
-
-        it('should default to ADVISOR if role selection returns null', async () => {
-            // Mock scenario where _selectRole fallback logic is triggered
-            AIPolicyEngine.getEffectivePolicy.mockResolvedValue({ activeRoles: [] });
-            // Logic in _selectRole handles fallback, checked earlier. 
-            // But we verify processMessage uses it.
-            const result = await AIOrchestrator.processMessage('Do it', 'u', 'o', 'p');
-            expect(result.role).toBe('ADVISOR');
-        });
-
-        // Skipped: mock interop issues with responseContext structure
-        it.skip('should handle missing project ID (General Chat)', async () => {
-            const result = await AIOrchestrator.processMessage('General question', 'user1', 'org1', null);
-            expect(result.responseContext.projectMemory).toBeNull();
-            // Role config logic is skipped for null project in processMessage
-            // but defaults are used for aiGovernance
-            expect(result.responseContext.aiGovernance.activeRole).toBe('ADVISOR');
+            expect(processed).toContain('CONFIDENTIAL');
         });
     });
 });

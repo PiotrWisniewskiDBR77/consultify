@@ -2,7 +2,7 @@
 // AI Core Layer — Enterprise PMO Brain
 // Extended for AI Trust & Explainability Layer
 
-const db = require('../database');
+let db = require('../database');
 const { v4: uuidv4 } = require('uuid');
 
 const AIAuditLogger = {
@@ -24,7 +24,9 @@ const AIAuditLogger = {
             regulatoryMode,
             reasoningSummary,
             dataUsed,
-            constraintsApplied
+            constraintsApplied,
+            // Observability
+            correlationId
         } = entry;
 
         const id = uuidv4();
@@ -35,8 +37,8 @@ const AIAuditLogger = {
                  context_snapshot, data_sources_used, ai_role, policy_level, confidence_level,
                  ai_suggestion, user_decision, user_feedback,
                  ai_project_role, justification, approving_user,
-                 regulatory_mode, reasoning_summary, data_used_json, constraints_applied_json)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                 regulatory_mode, reasoning_summary, data_used_json, constraints_applied_json, correlation_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     id, userId, organizationId, projectId,
                     actionType, actionDescription,
@@ -52,7 +54,8 @@ const AIAuditLogger = {
                     regulatoryMode ? 1 : 0,
                     reasoningSummary || null,
                     dataUsed ? JSON.stringify(dataUsed) : null,
-                    constraintsApplied ? JSON.stringify(constraintsApplied) : null
+                    constraintsApplied ? JSON.stringify(constraintsApplied) : null,
+                    correlationId || null
                 ], function (err) {
                     if (err) return reject(err);
                     resolve({ id, actionType, aiProjectRole: aiProjectRole || 'ADVISOR' });
@@ -71,9 +74,10 @@ const AIAuditLogger = {
      * @param {Object} params.explanation - AIExplanation object
      * @param {string} params.aiResponse - The AI response text
      * @param {string} params.actionType - Type of action (SUGGESTION, ACTION, etc.)
+     * @param {string} [params.correlationId] - Optional correlation ID for tracing
      * @returns {Promise<Object>} - Result with audit log ID
      */
-    logWithExplanation: async ({ userId, organizationId, projectId, explanation, aiResponse, actionType = 'AI_RESPONSE' }) => {
+    logWithExplanation: async ({ userId, organizationId, projectId, explanation, aiResponse, actionType = 'AI_RESPONSE', correlationId }) => {
         if (!explanation) {
             console.warn('[AIAuditLogger] logWithExplanation called without explanation object');
         }
@@ -94,7 +98,8 @@ const AIAuditLogger = {
             regulatoryMode: explanation?.regulatoryMode || false,
             reasoningSummary: explanation?.reasoningSummary || null,
             dataUsed: explanation?.dataUsed || null,
-            constraintsApplied: explanation?.constraintsApplied || []
+            constraintsApplied: explanation?.constraintsApplied || [],
+            correlationId
         });
     },
 
@@ -258,7 +263,9 @@ const AIAuditLogger = {
                     resolve({ deleted: this.changes });
                 });
         });
-    }
+    },
+    // For testing purposes
+    _setDb: (mockDb) => { db = mockDb; }
 };
 
 module.exports = AIAuditLogger;

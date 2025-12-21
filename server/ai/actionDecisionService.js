@@ -4,6 +4,8 @@ const ActionProposalEngine = require('./actionProposalEngine');
 const PolicyEngine = require('./policyEngine');
 const auditLogger = require('../utils/auditLogger');
 const { ACTION_ERROR_CODES, classifyError } = require('./actionErrors');
+const EvidenceLedgerService = require('../services/evidenceLedgerService');
+
 
 /**
  * ActionDecisionService
@@ -88,7 +90,8 @@ const ActionDecisionService = {
         }
 
         const id = `ad-${uuidv4()}`;
-        const correlationId = `corr-${uuidv4()}`;
+        // Propagate correlation_id from proposal, or generate new if missing
+        const correlationId = proposal.correlation_id || `corr-${uuidv4()}`;
         const snapshotStr = JSON.stringify(proposal);
         const modifiedPayloadStr = finalModifiedPayload ? JSON.stringify(finalModifiedPayload) : null;
 
@@ -130,6 +133,56 @@ const ActionDecisionService = {
                         status: decision
                     });
 
+                    // Step 15: Record evidence and reasoning for this decision
+                    (async () => {
+                        try {
+                            // Create evidence object from proposal snapshot
+                            const evidence = await EvidenceLedgerService.createEvidenceObject(
+                                organization_id,
+                                EvidenceLedgerService.EVIDENCE_TYPES.SIGNAL,
+                                'actionDecisionService',
+                                {
+                                    proposal_id,
+                                    action_type: proposal.action_type,
+                                    scope: proposal.scope,
+                                    signal_type: proposal.signal_type,
+                                    risk_level: proposal.risk_level,
+                                    confidence: proposal.confidence,
+                                    context_snapshot: proposal.context_snapshot
+                                }
+                            );
+
+                            // Link evidence to decision
+                            await EvidenceLedgerService.linkEvidence(
+                                EvidenceLedgerService.ENTITY_TYPES.DECISION,
+                                id,
+                                evidence.id,
+                                1.0,
+                                `Proposal snapshot at decision time`
+                            );
+
+                            // Record reasoning entry
+                            const assumptions = [];
+                            if (proposal.simulation) {
+                                assumptions.push(`Impact simulation: ${proposal.simulation.impact_summary || 'analyzed'}`);
+                            }
+                            if (policyRuleId) {
+                                assumptions.push(`Policy rule ${policyRuleId} was applied`);
+                            }
+
+                            await EvidenceLedgerService.recordReasoning(
+                                'decision',
+                                id,
+                                proposal.reasoning || `Decision ${decision} for ${proposal.action_type} action`,
+                                assumptions,
+                                proposal.confidence || 0.5
+                            );
+                        } catch (evidenceErr) {
+                            // Non-blocking: log but don't fail the decision
+                            console.warn('[ActionDecisionService] Evidence recording failed:', evidenceErr.message);
+                        }
+                    })();
+
                     resolve({
                         id,
                         proposal_id,
@@ -149,6 +202,7 @@ const ActionDecisionService = {
             );
         });
     },
+
 
     /**
      * Gets all decisions for a specific proposal.

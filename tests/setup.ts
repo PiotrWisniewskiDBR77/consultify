@@ -1,5 +1,31 @@
 import '@testing-library/jest-dom';
-import { vi } from 'vitest';
+import { beforeAll, vi } from 'vitest';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+
+// Ensure consistent test-mode behavior across backend + frontend tests
+if (typeof process !== 'undefined' && process.env) {
+    process.env.NODE_ENV = 'test';
+    process.env.DB_TYPE = process.env.DB_TYPE || 'sqlite';
+    process.env.MOCK_REDIS = process.env.MOCK_REDIS || 'true';
+    // Keep DB in-memory in tests (db chooses :memory: when NODE_ENV === 'test')
+    process.env.SQLITE_PATH = process.env.SQLITE_PATH || ':memory:';
+}
+
+// Ensure DB schema is initialized before any test starts hitting it.
+beforeAll(async () => {
+    try {
+        const db = require('../server/database');
+        if (db?.initPromise) {
+            await db.initPromise;
+        }
+    } catch (err) {
+        // If a given test-suite doesn't touch backend DB, do not fail it here.
+        // Real failures should surface in the tests that use the DB.
+        console.warn('[Test Setup] DB init wait skipped:', err?.message || err);
+    }
+});
 
 if (typeof window !== 'undefined') {
     global.ResizeObserver = class ResizeObserver {

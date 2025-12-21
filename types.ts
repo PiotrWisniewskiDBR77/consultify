@@ -71,7 +71,12 @@ export enum AppView {
   EXECUTIVE_VIEW = 'EXECUTIVE_VIEW',
 
   // AI Action Proposals Review
-  AI_ACTION_PROPOSALS = 'AI_ACTION_PROPOSALS'
+  AI_ACTION_PROPOSALS = 'AI_ACTION_PROPOSALS',
+
+  // Step 13: Visual Playbook Editor
+  SUPERADMIN_PLAYBOOK_TEMPLATES = 'SUPERADMIN_PLAYBOOK_TEMPLATES',
+  SUPERADMIN_PLAYBOOK_EDITOR = 'SUPERADMIN_PLAYBOOK_EDITOR',
+  ADMIN_PLAYBOOK_RUNS = 'ADMIN_PLAYBOOK_RUNS'
 }
 
 // SCMS: Canonical Change Lifecycle Phases (System Reframe Step 0)
@@ -2598,3 +2603,114 @@ export interface UserAcceptanceStatus {
   }>;
 }
 
+// ==========================================
+// STEP 13: VISUAL PLAYBOOK EDITOR TYPES
+// ==========================================
+
+/** Node types in playbook graph */
+export enum PlaybookNodeType {
+  START = 'START',
+  ACTION = 'ACTION',
+  BRANCH = 'BRANCH',
+  CHECK = 'CHECK',
+  END = 'END'
+}
+
+/** Single node in playbook graph */
+export interface PlaybookNode {
+  id: string;
+  type: PlaybookNodeType;
+  title: string;
+  data: {
+    actionType?: string;
+    description?: string;
+    payloadTemplate?: Record<string, unknown>;
+    condition?: string;
+    isOptional?: boolean;
+    waitForPrevious?: boolean;
+  };
+  position: { x: number; y: number };
+}
+
+/** Edge connecting nodes in playbook graph */
+export interface PlaybookEdge {
+  id: string;
+  from: string;
+  to: string;
+  label?: string;
+}
+
+/** Complete playbook graph structure */
+export interface TemplateGraph {
+  nodes: PlaybookNode[];
+  edges: PlaybookEdge[];
+  meta: {
+    trigger_signal: string;
+  };
+}
+
+/** Template status enum */
+export enum TemplateStatus {
+  DRAFT = 'DRAFT',
+  PUBLISHED = 'PUBLISHED',
+  DEPRECATED = 'DEPRECATED'
+}
+
+/** Playbook template with versioning */
+export interface PlaybookTemplateVersion {
+  id: string;
+  key: string;
+  title: string;
+  description: string;
+  triggerSignal: string;
+  version: number;
+  status: TemplateStatus;
+  templateGraph: TemplateGraph | null;
+  estimatedDurationMins: number;
+  publishedAt?: string;
+  publishedByUserId?: string;
+  parentTemplateId?: string;
+  isActive: boolean;
+  createdAt?: string;
+  steps?: PlaybookTemplateStep[];
+}
+
+/** Template step (for legacy linear format) */
+export interface PlaybookTemplateStep {
+  id: string;
+  stepOrder: number;
+  actionType: string;
+  title: string;
+  description?: string;
+  payloadTemplate: Record<string, unknown>;
+  isOptional: boolean;
+  waitForPrevious: boolean;
+}
+
+/** Validation error from template validation */
+export interface TemplateValidationError {
+  code: string;
+  message: string;
+  nodeId?: string | null;
+}
+
+/** Validation result */
+export interface TemplateValidationResult {
+  ok: boolean;
+  errors: TemplateValidationError[];
+}
+
+/** Export format for templates */
+export interface PlaybookTemplateExport {
+  exportVersion: string;
+  exportedAt: string;
+  template: {
+    key: string;
+    title: string;
+    description: string;
+    triggerSignal: string;
+    estimatedDurationMins: number;
+    templateGraph: TemplateGraph | null;
+    steps?: PlaybookTemplateStep[];
+  };
+}

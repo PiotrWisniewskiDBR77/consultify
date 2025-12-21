@@ -1,165 +1,286 @@
 
-[1m[46m RUN [49m[22m [36mv4.0.15 [39m[90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify[39m
+[1m[46m RUN [49m[22m [36mv4.0.16 [39m[90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify[39m
 
-[90mstdout[2m | tests/integration/storage_security.test.js
-[22m[39mConnected to the SQLite database.
-Created billing tables and seeded default subscription plans.
-
-[90mstderr[2m | tests/integration/storage_security.test.js
-[22m[39mWarning: Cannot access the `require` function: "TypeError [ERR_INVALID_ARG_VALUE]: The argument 'filename' must be a file URL object, file URL string, or absolute path string. Received 'http://localhost:3000/index.cjs'".
-Warning: Cannot polyfill `ImageData`, rendering may be broken.
-Warning: Cannot polyfill `Path2D`, rendering may be broken.
-
-[90mstdout[2m | tests/integration/storage_security.test.js
-[22m[39m[dotenv@17.2.3] injecting env (0) from .env -- tip: 👥 sync secrets across teammates & machines: https://dotenvx.com/ops
-[Scheduler] Initializing Cron Jobs...
-[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM)
-[Redis] Initializing client...
-[Redis] Using Mock Client
-
-[90mstdout[2m | tests/integration/storage_security.test.js[2m > [22m[2mStorage Security & Isolation Integration
-[22m[39mConnected to the SQLite database.
-Created billing tables and seeded default subscription plans.
-
-[90mstderr[2m | tests/integration/storage_security.test.js[2m > [22m[2mStorage Security & Isolation Integration
-[22m[39mAggregateError: 
-[90m    at internalConnectMultiple (node:net:1134:18)[39m
-[90m    at afterConnectMultiple (node:net:1715:7)[39m {
-  code: [32m'ECONNREFUSED'[39m,
-  [errors]: [
-    Error: connect ECONNREFUSED ::1:6379
-    [90m    at createConnectionError (node:net:1678:14)[39m
-    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
-      errno: [33m-61[39m,
-      code: [32m'ECONNREFUSED'[39m,
-      syscall: [32m'connect'[39m,
-      address: [32m'::1'[39m,
-      port: [33m6379[39m
-    },
-    Error: connect ECONNREFUSED 127.0.0.1:6379
-    [90m    at createConnectionError (node:net:1678:14)[39m
-    [90m    at afterConnectMultiple (node:net:1708:16)[39m {
-      errno: [33m-61[39m,
-      code: [32m'ECONNREFUSED'[39m,
-      syscall: [32m'connect'[39m,
-      address: [32m'127.0.0.1'[39m,
-      port: [33m6379[39m
-    }
-  ]
+[90mstdout[2m | tests/unit/backend/aiAuditLogger.test.js
+[22m[39m[Database] Selected: SQLite
+DEBUG: db in aiAuditLogger is: {
+  "initPromise": {}
 }
 
-[90mstderr[2m | tests/integration/storage_security.test.js[2m > [22m[2mStorage Security & Isolation Integration
-[22m[39mValidationError: The hit count for ::/56 was incremented more than once for a single request. See https://express-rate-limit.github.io/ERR_ERL_DOUBLE_COUNT/ for more information.
-    at Object.singleCount [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mexpress-rate-limit[24m/dist/index.cjs:436:13[90m)[39m
-    at Object.wrappedValidations.<computed> [as singleCount] [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mexpress-rate-limit[24m/dist/index.cjs:680:22[90m)[39m
-    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mexpress-rate-limit[24m/dist/index.cjs:863:26
-[90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
-    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mexpress-rate-limit[24m/dist/index.cjs:825:5 {
-  code: [32m'ERR_ERL_DOUBLE_COUNT'[39m,
-  help: [32m'https://express-rate-limit.github.io/ERR_ERL_DOUBLE_COUNT/'[39m
-}
+[90mstdout[2m | tests/unit/backend/aiAuditLogger.test.js
+[22m[39m[DB:fxgp5l] Initializing database at :memory:
+Connected to the SQLite database.
+Created billing tables and seeded default subscription plans.
+Seeded SuperAdmin and DBR77 Users.
 
-[90mstderr[2m | tests/integration/storage_security.test.js[2m > [22m[2mStorage Security & Isolation Integration
-[22m[39m[AuditLog] Error processing log: TypeError: Cannot read properties of undefined (reading 'catch')
-    at ServerResponse.res.end [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/middleware/auditLog.js:55:19[90m)[39m
-    at ServerResponse.send [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mexpress[24m/lib/response.js:221:10[90m)[39m
-    at ServerResponse.json [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mexpress[24m/lib/response.js:252:15[90m)[39m
-    at Statement.<anonymous> [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/routes/auth.js:73:17[90m)[39m
-    at Statement.replacement [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4msqlite3[24m/lib/trace.js:25:27[90m)[39m
-    at Statement.replacement [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4msqlite3[24m/lib/trace.js:25:27[90m)[39m
+[90mstdout[2m | tests/unit/backend/aiAuditLogger.test.js[2m > [22m[2mAIAuditLogger[2m > [22m[2mlogInteraction[2m > [22m[2mshould handle optional fields
+[22m[39mProjects table created successfully (or already exists).
 
-[90mstderr[2m | tests/integration/storage_security.test.js[2m > [22m[2mStorage Security & Isolation Integration
-[22m[39m[AuditLog] Error processing log: TypeError: Cannot read properties of undefined (reading 'catch')
-    at ServerResponse.res.end [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/middleware/auditLog.js:55:19[90m)[39m
-    at ServerResponse.send [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mexpress[24m/lib/response.js:221:10[90m)[39m
-    at ServerResponse.json [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4mexpress[24m/lib/response.js:252:15[90m)[39m
-    at Statement.<anonymous> [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/routes/auth.js:73:17[90m)[39m
-    at Statement.replacement [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4msqlite3[24m/lib/trace.js:25:27[90m)[39m
-    at Statement.replacement [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/node_modules/[4msqlite3[24m/lib/trace.js:25:27[90m)[39m
+[90mstdout[2m | tests/unit/backend/aiAuditLogger.test.js[2m > [22m[2mAIAuditLogger[2m > [22m[2mlogInteraction[2m > [22m[2mshould handle optional fields
+[22m[39mDatabase initialization complete.
 
-[90mstderr[2m | tests/integration/storage_security.test.js[2m > [22m[2mStorage Security & Isolation Integration[2m > [22m[2mshould soft delete files instead of removing them immediately
-[22m[39m[AuditLog] Error processing log: TypeError: Cannot read properties of undefined (reading 'organizationId')
-    at ServerResponse.res.end [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/middleware/auditLog.js:28:79[90m)[39m
-[90m    at ReadStream.onend (node:internal/streams/readable:946:10)[39m
-[90m    at Object.onceWrapper (node:events:622:28)[39m
-[90m    at ReadStream.emit (node:events:520:35)[39m
-[90m    at endReadableNT (node:internal/streams/readable:1701:12)[39m
-[90m    at processTicksAndRejections (node:internal/process/task_queues:90:21)[39m
+ [31m❯[39m tests/unit/backend/aiAuditLogger.test.js [2m([22m[2m24 tests[22m[2m | [22m[31m22 failed[39m[2m)[22m[32m 66[2mms[22m[39m
+[31m       [31m×[31m should log a basic AI interaction[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should store correlation_id if provided[39m[32m 0[2mms[22m[39m
+[31m       [31m×[31m should handle optional fields[39m[32m 56[2mms[22m[39m
+[31m       [31m×[31m should store explanation data if provided[39m[32m 0[2mms[22m[39m
+[31m       [31m×[31m should handle database error[39m[32m 3[2mms[22m[39m
+[31m       [31m×[31m should log interaction with full explanation object[39m[32m 0[2mms[22m[39m
+[31m       [31m×[31m should default actionType to AI_RESPONSE[39m[32m 0[2mms[22m[39m
+[31m       [31m×[31m should log AI suggestion[39m[32m 0[2mms[22m[39m
+[31m       [31m×[31m should handle minimal parameters[39m[32m 0[2mms[22m[39m
+[31m       [31m×[31m should update user decision on logged suggestion[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should record rejection without feedback[39m[32m 0[2mms[22m[39m
+       [32m✓[39m should handle non-existent audit entry[32m 0[2mms[22m[39m
+[31m       [31m×[31m should return audit logs for organization[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should filter by project if provided[39m[32m 0[2mms[22m[39m
+[31m       [31m×[31m should filter by date range[39m[32m 0[2mms[22m[39m
+[31m       [31m×[31m should limit results[39m[32m 0[2mms[22m[39m
+[31m       [31m×[31m should filter by action type[39m[32m 0[2mms[22m[39m
+[31m       [31m×[31m should return empty array on database error[39m[32m 1[2mms[22m[39m
+       [32m✓[39m should return statistics for organization[32m 0[2mms[22m[39m
+[31m       [31m×[31m should filter by project if provided[39m[32m 0[2mms[22m[39m
+[31m       [31m×[31m should return role distribution[39m[32m 0[2mms[22m[39m
+[31m       [31m×[31m should clear logs older than specified days[39m[32m 0[2mms[22m[39m
+[31m       [31m×[31m should use default retention period of 90 days[39m[32m 0[2mms[22m[39m
+[31m       [31m×[31m should respect custom retention period[39m[32m 0[2mms[22m[39m
 
- [31m❯[39m tests/integration/storage_security.test.js [2m([22m[2m4 tests[22m[2m | [22m[31m4 failed[39m[2m)[22m[33m 348[2mms[22m[39m
-[31m     [31m×[31m should NOT allow User B to see files uploaded by User A[39m[32m 6[2mms[22m[39m
-[31m     [31m×[31m should block upload if project storage limit is exceeded[39m[32m 54[2mms[22m[39m
-[31m     [31m×[31m should sanitize filenames preventing directory traversal[39m[32m 1[2mms[22m[39m
-[31m     [31m×[31m should soft delete files instead of removing them immediately[39m[32m 58[2mms[22m[39m
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 22 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
 
-[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 4 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+[41m[1m FAIL [22m[49m tests/unit/backend/aiAuditLogger.test.js[2m > [22mAIAuditLogger[2m > [22mlogInteraction[2m > [22mshould log a basic AI interaction
+[41m[1m FAIL [22m[49m tests/unit/backend/aiAuditLogger.test.js[2m > [22mAIAuditLogger[2m > [22mlogInteraction[2m > [22mshould store correlation_id if provided
+[31m[1mError[22m: SQLITE_ERROR: no such table: ai_audit_logs[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/22]⎯[22m[39m
 
-[41m[1m FAIL [22m[49m tests/integration/storage_security.test.js[2m > [22mStorage Security & Isolation Integration[2m > [22mshould NOT allow User B to see files uploaded by User A
-[31m[1mAssertionError[22m: expected 403 to be 200 // Object.is equality[39m
+[41m[1m FAIL [22m[49m tests/unit/backend/aiAuditLogger.test.js[2m > [22mAIAuditLogger[2m > [22mlogInteraction[2m > [22mshould handle optional fields
+[41m[1m FAIL [22m[49m tests/unit/backend/aiAuditLogger.test.js[2m > [22mAIAuditLogger[2m > [22mlogInteraction[2m > [22mshould store explanation data if provided
+[41m[1m FAIL [22m[49m tests/unit/backend/aiAuditLogger.test.js[2m > [22mAIAuditLogger[2m > [22mlogWithExplanation[2m > [22mshould log interaction with full explanation object
+[41m[1m FAIL [22m[49m tests/unit/backend/aiAuditLogger.test.js[2m > [22mAIAuditLogger[2m > [22mlogWithExplanation[2m > [22mshould default actionType to AI_RESPONSE
+[41m[1m FAIL [22m[49m tests/unit/backend/aiAuditLogger.test.js[2m > [22mAIAuditLogger[2m > [22mlogSuggestion[2m > [22mshould log AI suggestion
+[41m[1m FAIL [22m[49m tests/unit/backend/aiAuditLogger.test.js[2m > [22mAIAuditLogger[2m > [22mlogSuggestion[2m > [22mshould handle minimal parameters
+[31m[1mError[22m: SQLITE_ERROR: table ai_audit_logs has no column named regulatory_mode[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/22]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/unit/backend/aiAuditLogger.test.js[2m > [22mAIAuditLogger[2m > [22mlogInteraction[2m > [22mshould handle database error
+[31m[1mAssertionError[22m: expected [Function] to throw error including 'Database write failed' but got 'SQLITE_ERROR: table ai_audit_logs has…'[39m
+
+Expected: [32m"Database write failed"[39m
+Received: [31m"SQLITE_ERROR: table ai_audit_logs has no column named regulatory_mode"[39m
+
+[36m [2m❯[22m tests/unit/backend/aiAuditLogger.test.js:[2m137:13[22m[39m
+    [90m135| [39m            }[33m;[39m
+    [90m136| [39m
+    [90m137| [39m            await expect(AIAuditLogger.logInteraction(entry)).rejects.…
+    [90m   | [39m            [31m^[39m
+    [90m138| [39m        })[33m;[39m
+    [90m139| [39m    })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/22]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/unit/backend/aiAuditLogger.test.js[2m > [22mAIAuditLogger[2m > [22mrecordUserDecision[2m > [22mshould update user decision on logged suggestion
+[31m[1mAssertionError[22m: expected undefined to be true // Object.is equality[39m
+
+[32m- Expected:[39m 
+true
+
+[31m+ Received:[39m 
+undefined
+
+[36m [2m❯[22m tests/unit/backend/aiAuditLogger.test.js:[2m212:36[22m[39m
+    [90m210| [39m            )[33m;[39m
+    [90m211| [39m
+    [90m212| [39m            [34mexpect[39m(result[33m.[39msuccess)[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+    [90m   | [39m                                   [31m^[39m
+    [90m213| [39m            [34mexpect[39m(mockDb[33m.[39mrun)[33m.[39m[34mtoHaveBeenCalled[39m()[33m;[39m
+    [90m214| [39m        })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/22]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/unit/backend/aiAuditLogger.test.js[2m > [22mAIAuditLogger[2m > [22mrecordUserDecision[2m > [22mshould record rejection without feedback
+[31m[1mAssertionError[22m: expected undefined to be true // Object.is equality[39m
+
+[32m- Expected:[39m 
+true
+
+[31m+ Received:[39m 
+undefined
+
+[36m [2m❯[22m tests/unit/backend/aiAuditLogger.test.js:[2m222:36[22m[39m
+    [90m220| [39m            )[33m;[39m
+    [90m221| [39m
+    [90m222| [39m            [34mexpect[39m(result[33m.[39msuccess)[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+    [90m   | [39m                                   [31m^[39m
+    [90m223| [39m        })[33m;[39m
+    [90m224| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/22]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/unit/backend/aiAuditLogger.test.js[2m > [22mAIAuditLogger[2m > [22mgetAuditLogs[2m > [22mshould return audit logs for organization
+[31m[1mAssertionError[22m: expected [] to have a length of 2 but got +0[39m
 
 [32m- Expected[39m
 [31m+ Received[39m
 
-[32m- 200[39m
-[31m+ 403[39m
+[32m- 2[39m
+[31m+ 0[39m
 
-[36m [2m❯[22m tests/integration/storage_security.test.js:[2m85:34[22m[39m
-    [90m 83| [39m            [33m.[39m[34mattach[39m([32m'file'[39m[33m,[39m testFilePath)[33m;[39m
-    [90m 84| [39m
-    [90m 85| [39m        [34mexpect[39m(uploadRes[33m.[39mstatus)[33m.[39m[34mtoBe[39m([34m200[39m)[33m;[39m
-    [90m   | [39m                                 [31m^[39m
-    [90m 86| [39m        [35mconst[39m docId [33m=[39m uploadRes[33m.[39mbody[33m.[39mdocId[33m;[39m
-    [90m 87| [39m        [34mexpect[39m(docId)[33m.[39m[34mtoBeDefined[39m()[33m;[39m
-
-[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯[22m[39m
-
-[41m[1m FAIL [22m[49m tests/integration/storage_security.test.js[2m > [22mStorage Security & Isolation Integration[2m > [22mshould block upload if project storage limit is exceeded
-[31m[1mAssertionError[22m: expected 403 to be 429 // Object.is equality[39m
-
-[32m- Expected[39m
-[31m+ Received[39m
-
-[32m- 429[39m
-[31m+ 403[39m
-
-[36m [2m❯[22m tests/integration/storage_security.test.js:[2m119:28[22m[39m
-    [90m117| [39m            [33m.[39m[34mattach[39m([32m'file'[39m[33m,[39m testFilePath)[33m;[39m [90m// ~20 bytes[39m
-    [90m118| [39m
-    [90m119| [39m        [34mexpect[39m(res[33m.[39mstatus)[33m.[39m[34mtoBe[39m([34m429[39m)[33m;[39m
+[36m [2m❯[22m tests/unit/backend/aiAuditLogger.test.js:[2m264:28[22m[39m
+    [90m262| [39m            [35mconst[39m result [33m=[39m [35mawait[39m [33mAIAuditLogger[39m[33m.[39m[34mgetAuditLogs[39m([32m'org-1'[39m)[33m;[39m
+    [90m263| [39m
+    [90m264| [39m            [34mexpect[39m(result)[33m.[39m[34mtoHaveLength[39m([34m2[39m)[33m;[39m
     [90m   | [39m                           [31m^[39m
-    [90m120| [39m        [34mexpect[39m(res[33m.[39mbody[33m.[39merror)[33m.[39m[34mtoMatch[39m([36m/quota exceeded/i[39m)[33m;[39m
-    [90m121| [39m    })[33m;[39m
+    [90m265| [39m            [34mexpect[39m(result[[34m0[39m][33m.[39mid)[33m.[39m[34mtoBe[39m([32m'audit-1'[39m)[33m;[39m
+    [90m266| [39m        })[33m;[39m
 
-[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯[22m[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/22]⎯[22m[39m
 
-[41m[1m FAIL [22m[49m tests/integration/storage_security.test.js[2m > [22mStorage Security & Isolation Integration[2m > [22mshould sanitize filenames preventing directory traversal
-[31m[1mAssertionError[22m: expected undefined to be defined[39m
-[36m [2m❯[22m tests/integration/storage_security.test.js:[2m142:21[22m[39m
-    [90m140| [39m        })[33m;[39m
-    [90m141| [39m
-    [90m142| [39m        [34mexpect[39m(doc)[33m.[39m[34mtoBeDefined[39m()[33m;[39m
-    [90m   | [39m                    [31m^[39m
-    [90m143| [39m        [90m// Path should include orgId and ProjectId[39m
-    [90m144| [39m        [34mexpect[39m(doc[33m.[39mfilepath)[33m.[39m[34mtoContain[39m(orgAId)[33m;[39m
+[41m[1m FAIL [22m[49m tests/unit/backend/aiAuditLogger.test.js[2m > [22mAIAuditLogger[2m > [22mgetAuditLogs[2m > [22mshould filter by project if provided
+[31m[1mTypeError[22m: Cannot read properties of undefined (reading '0')[39m
+[36m [2m❯[22m tests/unit/backend/aiAuditLogger.test.js:[2m272:28[22m[39m
+    [90m270| [39m
+    [90m271| [39m            [35mconst[39m callArgs [33m=[39m mockDb[33m.[39mall[33m.[39mmock[33m.[39mcalls[[34m0[39m][33m;[39m
+    [90m272| [39m            [34mexpect[39m(callArgs[[34m0[39m])[33m.[39m[34mtoContain[39m([32m'project_id'[39m)[33m;[39m
+    [90m   | [39m                           [31m^[39m
+    [90m273| [39m        })[33m;[39m
+    [90m274| [39m
 
-[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯[22m[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/22]⎯[22m[39m
 
-[41m[1m FAIL [22m[49m tests/integration/storage_security.test.js[2m > [22mStorage Security & Isolation Integration[2m > [22mshould soft delete files instead of removing them immediately
-[31m[1mTypeError[22m: Cannot read properties of undefined (reading 'deleted_at')[39m
-[36m [2m❯[22m tests/integration/storage_security.test.js:[2m187:24[22m[39m
-    [90m185| [39m                db.get("SELECT * FROM knowledge_docs WHERE id = ?", [d…
-    [90m186| [39m            })[33m;[39m
-    [90m187| [39m            [34mexpect[39m(doc[33m.[39mdeleted_at)[33m.[39mnot[33m.[39m[34mtoBeNull[39m()[33m;[39m
-    [90m   | [39m                       [31m^[39m
-    [90m188| [39m        }
-    [90m189| [39m    })[33m;[39m
+[41m[1m FAIL [22m[49m tests/unit/backend/aiAuditLogger.test.js[2m > [22mAIAuditLogger[2m > [22mgetAuditLogs[2m > [22mshould filter by date range
+[31m[1mTypeError[22m: Cannot read properties of undefined (reading '0')[39m
+[36m [2m❯[22m tests/unit/backend/aiAuditLogger.test.js:[2m282:28[22m[39m
+    [90m280| [39m
+    [90m281| [39m            [35mconst[39m callArgs [33m=[39m mockDb[33m.[39mall[33m.[39mmock[33m.[39mcalls[[34m0[39m][33m;[39m
+    [90m282| [39m            [34mexpect[39m(callArgs[[34m0[39m])[33m.[39m[34mtoContain[39m([32m'created_at'[39m)[33m;[39m
+    [90m   | [39m                           [31m^[39m
+    [90m283| [39m        })[33m;[39m
+    [90m284| [39m
 
-[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯[22m[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/22]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/unit/backend/aiAuditLogger.test.js[2m > [22mAIAuditLogger[2m > [22mgetAuditLogs[2m > [22mshould limit results
+[31m[1mTypeError[22m: Cannot read properties of undefined (reading '0')[39m
+[36m [2m❯[22m tests/unit/backend/aiAuditLogger.test.js:[2m289:28[22m[39m
+    [90m287| [39m
+    [90m288| [39m            [35mconst[39m callArgs [33m=[39m mockDb[33m.[39mall[33m.[39mmock[33m.[39mcalls[[34m0[39m][33m;[39m
+    [90m289| [39m            [34mexpect[39m(callArgs[[34m0[39m])[33m.[39m[34mtoContain[39m([32m'LIMIT'[39m)[33m;[39m
+    [90m   | [39m                           [31m^[39m
+    [90m290| [39m        })[33m;[39m
+    [90m291| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/22]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/unit/backend/aiAuditLogger.test.js[2m > [22mAIAuditLogger[2m > [22mgetAuditLogs[2m > [22mshould filter by action type
+[31m[1mTypeError[22m: Cannot read properties of undefined (reading '0')[39m
+[36m [2m❯[22m tests/unit/backend/aiAuditLogger.test.js:[2m296:28[22m[39m
+    [90m294| [39m
+    [90m295| [39m            [35mconst[39m callArgs [33m=[39m mockDb[33m.[39mall[33m.[39mmock[33m.[39mcalls[[34m0[39m][33m;[39m
+    [90m296| [39m            [34mexpect[39m(callArgs[[34m0[39m])[33m.[39m[34mtoContain[39m([32m'action_type'[39m)[33m;[39m
+    [90m   | [39m                           [31m^[39m
+    [90m297| [39m        })[33m;[39m
+    [90m298| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/22]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/unit/backend/aiAuditLogger.test.js[2m > [22mAIAuditLogger[2m > [22mgetAuditLogs[2m > [22mshould return empty array on database error
+[31m[1mAssertionError[22m: promise resolved "[]" instead of rejecting[39m
+
+[32m- Expected:[39m 
+Error {
+  "message": "rejected promise",
+}
+
+[31m+ Received:[39m 
+[]
+
+[36m [2m❯[22m tests/unit/backend/aiAuditLogger.test.js:[2m307:62[22m[39m
+    [90m305| [39m            })[33m;[39m
+    [90m306| [39m
+    [90m307| [39m            await expect(AIAuditLogger.getAuditLogs('org-1')).rejects.…
+    [90m   | [39m                                                             [31m^[39m
+    [90m308| [39m        })[33m;[39m
+    [90m309| [39m    })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/22]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/unit/backend/aiAuditLogger.test.js[2m > [22mAIAuditLogger[2m > [22mgetAuditStats[2m > [22mshould filter by project if provided
+[31m[1mTypeError[22m: Cannot read properties of undefined (reading '1')[39m
+[36m [2m❯[22m tests/unit/backend/aiAuditLogger.test.js:[2m334:28[22m[39m
+    [90m332| [39m
+    [90m333| [39m            [35mconst[39m callArgs [33m=[39m mockDb[33m.[39mall[33m.[39mmock[33m.[39mcalls[[34m0[39m][33m;[39m
+    [90m334| [39m            [34mexpect[39m(callArgs[[34m1[39m])[33m.[39m[34mtoContain[39m([32m'proj-1'[39m)[33m;[39m
+    [90m   | [39m                           [31m^[39m
+    [90m335| [39m        })[33m;[39m
+    [90m336| [39m    })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/22]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/unit/backend/aiAuditLogger.test.js[2m > [22mAIAuditLogger[2m > [22mgetRoleDistribution[2m > [22mshould return role distribution
+[31m[1mAssertionError[22m: expected [] to have a length of 3 but got +0[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 3[39m
+[31m+ 0[39m
+
+[36m [2m❯[22m tests/unit/backend/aiAuditLogger.test.js:[2m353:28[22m[39m
+    [90m351| [39m            const result = await AIAuditLogger.getRoleDistribution('or…
+    [90m352| [39m
+    [90m353| [39m            [34mexpect[39m(result)[33m.[39m[34mtoHaveLength[39m([34m3[39m)[33m;[39m
+    [90m   | [39m                           [31m^[39m
+    [90m354| [39m            [34mexpect[39m(result[[34m0[39m][33m.[39mai_role)[33m.[39m[34mtoBe[39m([32m'CONSULTANT'[39m)[33m;[39m
+    [90m355| [39m        })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/22]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/unit/backend/aiAuditLogger.test.js[2m > [22mAIAuditLogger[2m > [22mclearOldLogs[2m > [22mshould clear logs older than specified days
+[31m[1mAssertionError[22m: expected +0 to be 50 // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 50[39m
+[31m+ 0[39m
+
+[36m [2m❯[22m tests/unit/backend/aiAuditLogger.test.js:[2m369:36[22m[39m
+    [90m367| [39m            const result = await AIAuditLogger.clearOldLogs('org-1', 9…
+    [90m368| [39m
+    [90m369| [39m            [34mexpect[39m(result[33m.[39mdeleted)[33m.[39m[34mtoBe[39m([34m50[39m)[33m;[39m
+    [90m   | [39m                                   [31m^[39m
+    [90m370| [39m            [34mexpect[39m(mockDb[33m.[39mrun)[33m.[39m[34mtoHaveBeenCalled[39m()[33m;[39m
+    [90m371| [39m        })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/22]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/unit/backend/aiAuditLogger.test.js[2m > [22mAIAuditLogger[2m > [22mclearOldLogs[2m > [22mshould use default retention period of 90 days
+[31m[1mAssertionError[22m: expected "vi.fn()" to be called at least once[39m
+[36m [2m❯[22m tests/unit/backend/aiAuditLogger.test.js:[2m377:32[22m[39m
+    [90m375| [39m
+    [90m376| [39m            [90m// Check that the SQL contains the retention period logic[39m
+    [90m377| [39m            [34mexpect[39m(mockDb[33m.[39mrun)[33m.[39m[34mtoHaveBeenCalled[39m()[33m;[39m
+    [90m   | [39m                               [31m^[39m
+    [90m378| [39m        })[33m;[39m
+    [90m379| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/22]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/unit/backend/aiAuditLogger.test.js[2m > [22mAIAuditLogger[2m > [22mclearOldLogs[2m > [22mshould respect custom retention period
+[31m[1mAssertionError[22m: expected "vi.fn()" to be called at least once[39m
+[36m [2m❯[22m tests/unit/backend/aiAuditLogger.test.js:[2m383:32[22m[39m
+    [90m381| [39m            [35mawait[39m [33mAIAuditLogger[39m[33m.[39m[34mclearOldLogs[39m([32m'org-1'[39m[33m,[39m [34m30[39m)[33m;[39m
+    [90m382| [39m
+    [90m383| [39m            [34mexpect[39m(mockDb[33m.[39mrun)[33m.[39m[34mtoHaveBeenCalled[39m()[33m;[39m
+    [90m   | [39m                               [31m^[39m
+    [90m384| [39m        })[33m;[39m
+    [90m385| [39m    })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/22]⎯[22m[39m
 
 
 [2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
-[2m      Tests [22m [1m[31m4 failed[39m[22m[90m (4)[39m
-[2m   Start at [22m 13:07:40
-[2m   Duration [22m 1.73s[2m (transform 53ms, setup 88ms, import 537ms, tests 348ms, environment 673ms)[22m
+[2m      Tests [22m [1m[31m22 failed[39m[22m[2m | [22m[1m[32m2 passed[39m[22m[90m (24)[39m
+[2m   Start at [22m 00:06:33
+[2m   Duration [22m 376ms[2m (transform 27ms, setup 34ms, import 26ms, tests 66ms, environment 171ms)[22m
 
 JUNIT report written to /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/junit.xml

@@ -25,12 +25,13 @@ async function getApp() {
     process.env.NODE_ENV = 'test';
     process.env.DB_TYPE = 'sqlite';
     process.env.JWT_SECRET = 'test-secret-key-for-testing';
+    process.env.MOCK_REDIS = process.env.MOCK_REDIS || 'true';
 
     // Import app after setting env vars
-    const { app } = require('../../server/index.js');
+    const app = require('../../server/index.js');
     cachedApp = app;
 
-    return app;
+    return cachedApp;
 }
 
 /**

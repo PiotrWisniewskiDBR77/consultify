@@ -79,6 +79,77 @@ router.post('/notifications', (req, res) => {
 });
 
 // ==========================================
+// STEP 16: USER NOTIFICATION PREFERENCES (Workflow Events)
+// ==========================================
+
+const auth = require('../middleware/authMiddleware');
+const NotificationOutboxService = require('../services/notificationOutboxService');
+
+/**
+ * @route GET /api/settings/workflow-notifications
+ * @desc Get user notification preferences for workflow events
+ * @access Private
+ */
+router.get('/workflow-notifications', auth, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const orgId = req.user.organizationId;
+
+        const prefs = await NotificationOutboxService.getUserPreferences(userId, orgId);
+
+        // Return defaults if no preferences set
+        if (!prefs) {
+            return res.json({
+                channel_email: true,
+                channel_slack: false,
+                channel_teams: false,
+                event_approval_due: true,
+                event_playbook_stuck: true,
+                event_dead_letter: true,
+                event_escalation: true,
+                isDefault: true
+            });
+        }
+
+        res.json({
+            channel_email: !!prefs.channel_email,
+            channel_slack: !!prefs.channel_slack,
+            channel_teams: !!prefs.channel_teams,
+            event_approval_due: !!prefs.event_approval_due,
+            event_playbook_stuck: !!prefs.event_playbook_stuck,
+            event_dead_letter: !!prefs.event_dead_letter,
+            event_escalation: !!prefs.event_escalation
+        });
+    } catch (err) {
+        console.error('[SettingsRoute] Error getting workflow notification preferences:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
+ * @route PUT /api/settings/workflow-notifications
+ * @desc Update user notification preferences for workflow events
+ * @access Private
+ */
+router.put('/workflow-notifications', auth, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const orgId = req.user.organizationId;
+
+        const result = await NotificationOutboxService.updateUserPreferences(userId, orgId, req.body);
+
+        res.json({
+            success: true,
+            message: 'Workflow notification preferences updated',
+            preferences: result
+        });
+    } catch (err) {
+        console.error('[SettingsRoute] Error updating workflow notification preferences:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ==========================================
 // INTEGRATIONS
 // ==========================================
 

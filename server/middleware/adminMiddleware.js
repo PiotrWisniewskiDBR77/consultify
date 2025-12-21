@@ -41,14 +41,16 @@ const checkPermission = (requiredPermission) => {
                 'project:create', 'project:read', 'project:update', 'project:delete',
                 'task:create', 'task:read', 'task:update', 'task:delete', 'task:assign',
                 'team:create', 'team:read', 'team:update', 'team:delete',
-                'settings:global', 'analytics:global'
+                'settings:global', 'analytics:global',
+                'connectors:manage' // Step 17: Connector management
             ],
             ADMIN: [
                 'user:create', 'user:read', 'user:update', 'user:delete',
                 'project:create', 'project:read', 'project:update', 'project:delete',
                 'task:create', 'task:read', 'task:update', 'task:delete', 'task:assign',
                 'team:create', 'team:read', 'team:update', 'team:delete',
-                'settings:org', 'analytics:org'
+                'settings:org', 'analytics:org',
+                'connectors:manage' // Step 17: Connector management
             ],
             USER: [
                 'project:read',

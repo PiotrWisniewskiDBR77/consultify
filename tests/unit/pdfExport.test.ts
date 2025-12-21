@@ -1,85 +1,95 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { exportReportToPDF, exportDashboardToPDF } from '../../services/pdf/pdfExport';
 import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 
+// Hoist the MockJsPDF class and mock setup
+const { MockJsPDF } = vi.hoisted(() => {
+    class MockJsPDF {
+        internal = {
+            pageSize: {
+                getWidth: () => 210,
+                getHeight: () => 297,
+            },
+        };
+        getImageProperties = vi.fn(() => ({ width: 100, height: 200 }));
+        getNumberOfPages = vi.fn(() => 1);
+        setPage = vi.fn();
+        addImage = vi.fn();
+        addPage = vi.fn();
+        save = vi.fn();
+        setFontSize = vi.fn();
+        setTextColor = vi.fn();
+        text = vi.fn();
+        setDrawColor = vi.fn();
+        setLineWidth = vi.fn();
+        line = vi.fn();
+        setProperties = vi.fn();
+    }
+    return { MockJsPDF };
+});
+
+// Mock modules
 vi.mock('html2canvas');
-vi.mock('jspdf');
+vi.mock('jspdf', () => {
+    return {
+        default: vi.fn(function () {
+            return new MockJsPDF();
+        })
+    };
+});
+
+// Import jsPDF after mocking
+import jsPDF from 'jspdf';
 
 describe('Service Test: pdfExport', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        
-        // Mock document.getElementById
+
+        // Mock document behavior
         const mockElement = document.createElement('div');
         mockElement.id = 'test-element';
-        document.getElementById = vi.fn(() => mockElement);
-        
-        // Mock canvas
+
+        // We'll spy on document.getElementById instead of assigning to it directly 
+        // if possible, but since it's a global, assignment is often the way in jsdom.
+        // However, restoring it is crucial.
+        vi.spyOn(document, 'getElementById').mockReturnValue(mockElement);
+
+        // Mock canvas result
         const mockCanvas = {
             toDataURL: vi.fn(() => 'data:image/png;base64,test'),
-        } as any;
-        
+        };
+
         (html2canvas as any).mockResolvedValue(mockCanvas);
-        
-        // Mock jsPDF constructor
-        class MockJsPDF {
-            internal = {
-                pageSize: {
-                    getWidth: () => 210,
-                    getHeight: () => 297,
-                },
-            };
-            getImageProperties = vi.fn(() => ({ width: 100, height: 200 }));
-            addImage = vi.fn();
-            addPage = vi.fn();
-            save = vi.fn();
-            setFontSize = vi.fn();
-            setTextColor = vi.fn();
-            text = vi.fn();
-            setDrawColor = vi.fn();
-            setLineWidth = vi.fn();
-            line = vi.fn();
-            setProperties = vi.fn();
-        }
-        
-        (jsPDF as any).mockImplementation(() => new MockJsPDF());
+    });
+
+    // Explicit cleaning
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     describe('exportReportToPDF', () => {
         it('returns false when element is not found', async () => {
-            const originalGetElementById = document.getElementById;
-            document.getElementById = vi.fn(() => null);
-            
+            vi.mocked(document.getElementById).mockReturnValue(null);
+
             const result = await exportReportToPDF('non-existent', 'test.pdf');
-            
+
             expect(result).toBe(false);
-            document.getElementById = originalGetElementById;
         });
 
         it('exports PDF successfully', async () => {
-            const mockElement = document.createElement('div');
-            mockElement.id = 'test-element';
-            const originalGetElementById = document.getElementById;
-            document.getElementById = vi.fn(() => mockElement);
-            
-            const resultPromise = exportReportToPDF('test-element', 'test.pdf');
-            
-            // Wait for async operations
-            await new Promise(resolve => setTimeout(resolve, 200));
-            const result = await resultPromise;
-            
+            const result = await exportReportToPDF('test-element', 'test.pdf');
+
             expect(html2canvas).toHaveBeenCalled();
-            // Result might be true or false depending on implementation
+            // Assuming the function returns true on success, but valid check based on previous test saying "boolean"
             expect(typeof result).toBe('boolean');
-            document.getElementById = originalGetElementById;
+            expect(jsPDF).toHaveBeenCalled();
         });
 
         it('handles errors gracefully', async () => {
             (html2canvas as any).mockRejectedValue(new Error('Canvas error'));
-            
+
             const result = await exportReportToPDF('test-element', 'test.pdf');
-            
+
             expect(result).toBe(false);
         });
     });
@@ -92,7 +102,7 @@ describe('Service Test: pdfExport', () => {
                 author: 'Test Author',
                 subject: 'Test Subject',
             });
-            
+
             expect(jsPDF).toHaveBeenCalled();
         });
 
@@ -100,9 +110,8 @@ describe('Service Test: pdfExport', () => {
             await exportDashboardToPDF({
                 filename: 'dashboard.pdf',
             });
-            
+
             expect(jsPDF).toHaveBeenCalled();
         });
     });
 });
-

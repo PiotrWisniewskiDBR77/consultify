@@ -1,0 +1,291 @@
+
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;34mA. PLATFORM CORE: RBAC & PERMISSIONS[0m
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;31m❌[0m [A1] Auth middleware
+   → MISSING: server/middleware/auth.js
+[0;31m❌[0m [A1] RequireAuth middleware
+   → MISSING: server/middleware/requireAuth.js
+[0;32m✅[0m [A2] Governance migration
+   → server/migrations/014_governance_enterprise.sql
+[0;32m✅[0m [A2] Permission service
+   → server/services/permissionService.js
+[0;32m✅[0m [A3] PermissionManager UI
+   → components/governance/PermissionManager.tsx
+[0;32m✅[0m [A3] AuditLogViewer UI
+   → components/governance/AuditLogViewer.tsx
+
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;34mB. STEP 9.1 — ACTION PROPOSAL ENGINE[0m
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;32m✅[0m [B1] Action Proposal Mapper
+   → server/ai/actionProposalMapper.js
+[0;32m✅[0m [B1] Action Proposal Engine
+   → server/ai/actionProposalEngine.js
+[0;32m✅[0m [B4] Proposal Engine Tests
+   → tests/unit/actionProposalEngine.test.js
+[0;32m✅[0m [B3] Endpoint: GET /api/ai/actions/proposals
+
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;34mC. STEP 9.2 — APPROVAL & AUDIT LAYER[0m
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;32m✅[0m [C2] Action Decision Service
+   → server/ai/actionDecisionService.js
+[0;32m✅[0m [C3] Action Decisions Routes
+   → server/routes/actionDecisions.js
+[0;32m✅[0m [C4] Decision Integration Tests
+   → tests/integration/actionDecision.test.js
+[0;32m✅[0m [C1] DB Table: action_decisions
+[0;32m✅[0m [C2] proposal_snapshot field
+
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;34mD. STEP 9.3 — EXECUTION ADAPTER[0m
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;32m✅[0m [D1] Execution Adapter
+   → server/ai/actionExecutionAdapter.js
+[0;32m✅[0m [D3] Task Executor
+   → server/ai/actionExecutors/taskExecutor.js
+[0;32m✅[0m [D3] Playbook Executor
+   → server/ai/actionExecutors/playbookExecutor.js
+[0;32m✅[0m [D3] Meeting Executor
+   → server/ai/actionExecutors/meetingExecutor.js
+[0;32m✅[0m [D5] Execution Integration Tests
+   → tests/integration/actionExecution.test.js
+[0;32m✅[0m [D1] DB Table: action_executions
+[0;32m✅[0m [D2] Idempotency logic
+
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;34mE. STEP 9.4 — AI ACTION PROPOSALS UI[0m
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;32m✅[0m [E1] ActionProposalDetail
+   → components/ai/ActionProposalDetail.tsx
+[0;32m✅[0m [E1] ActionProposalList
+   → components/ai/ActionProposalList.tsx
+[0;32m✅[0m [E2] ActionDecisionDialog
+   → components/ai/ActionDecisionDialog.tsx
+[0;32m✅[0m [E3] ActionAuditTrail
+   → components/ai/ActionAuditTrail.tsx
+
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;34mF. STEP 9.5 — OBSERVABILITY & ERROR CATALOG[0m
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;32m✅[0m [F1] Action Errors Catalog
+   → server/ai/actionErrors.js
+[0;32m✅[0m [F2] AI Audit Logger
+   → server/services/aiAuditLogger.js
+[0;32m✅[0m [F1] Error codes
+[0;31m❌[0m [F3] Correlation ID
+   → Pattern 'correlation_id' not found in server/services/aiAuditLogger.js
+
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;34mG. STEP 9.6 — DRY-RUN EXECUTION[0m
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;32m✅[0m [G] Endpoint: Dry-run endpoint
+[0;32m✅[0m [G] Dry-run logic
+
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;34mH. STEP 9.7 — RETENTION + EXPORT[0m
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;32m✅[0m [H1] Audit Export Service
+   → server/ai/auditExport.js
+[0;32m✅[0m [H2] Retention Policy Service
+   → server/services/retentionPolicyService.js
+[0;32m✅[0m [H1] CSV/JSON export
+
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;34mI. STEP 9.8 — POLICY ENGINE[0m
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;32m✅[0m [I2] Policy Engine
+   → server/ai/policyEngine.js
+[0;32m✅[0m [I4] Policy Engine Tests
+   → tests/unit/policyEngine.test.js
+[0;32m✅[0m [I1] DB Table: ai_policy_rules
+[0;32m✅[0m [I1] DB Table: ai_policy_settings
+[0;32m✅[0m [I2] Risk-based approval
+
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;34mJ. STEPS 10-12 — AI PLAYBOOKS + BRANCHING[0m
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;32m✅[0m [J1] Playbook Service
+   → server/ai/aiPlaybookService.js
+[0;32m✅[0m [J1] Playbook Executor
+   → server/ai/aiPlaybookExecutor.js
+[0;32m✅[0m [J3] Routing Engine
+   → server/ai/aiPlaybookRoutingEngine.js
+[0;32m✅[0m [J4] Playbooks Routes
+   → server/routes/aiPlaybooks.js
+[0;32m✅[0m [J6] Routing Tests
+   → tests/unit/aiPlaybookRoutingEngine.test.js
+[0;32m✅[0m [J6] Branching Tests
+   → tests/integration/aiPlaybookBranching.test.js
+[0;32m✅[0m [J1] DB Table: ai_playbook_templates
+[0;32m✅[0m [J1] DB Table: ai_playbook_runs
+[0;32m✅[0m [J2] Step types
+
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;34mK. STEP 11 — ASYNC / QUEUE / SAGA[0m
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;32m✅[0m [K1] Async Job Service
+   → server/ai/asyncJobService.js
+[0;32m✅[0m [K2] Async Job Processor
+   → server/workers/asyncJobProcessor.js
+[0;32m✅[0m [K] Async Job Tests
+   → tests/unit/asyncJobService.test.js
+[0;32m✅[0m [K3] Async Routes
+   → server/routes/aiAsync.js
+[0;32m✅[0m [K1] DB Table: async_jobs
+[0;32m✅[0m [K2] Task types
+
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;34mL. STEP 13 — VISUAL PLAYBOOK EDITOR[0m
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;32m✅[0m [L2] Template Graph Service
+   → server/ai/templateGraphService.js
+[0;32m✅[0m [L3] Template Validation Service
+   → server/ai/templateValidationService.js
+[0;32m✅[0m [L6] Graph Service Tests
+   → tests/unit/templateGraphService.test.js
+[0;32m✅[0m [L6] Validation Tests
+   → tests/unit/templateValidationService.test.js
+[0;32m✅[0m [L5] Playbook Canvas
+   → components/PlaybookEditor/PlaybookCanvas.tsx
+[0;32m✅[0m [L5] Playbook Node
+   → components/PlaybookEditor/PlaybookNode.tsx
+[0;32m✅[0m [L5] Properties Panel
+   → components/PlaybookEditor/PlaybookPropertiesPanel.tsx
+[0;32m✅[0m [L5] Toolbar
+   → components/PlaybookEditor/PlaybookToolbar.tsx
+[0;32m✅[0m [L2] Graph functions
+[0;32m✅[0m [L2] Validation functions
+
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;34mM. STEP 14 — GOVERNANCE & SECURITY[0m
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;32m✅[0m [M2] Governance Audit Service
+   → server/services/governanceAuditService.js
+[0;32m✅[0m [M3] Break Glass Service
+   → server/services/breakGlassService.js
+[0;32m✅[0m [M3] Break Glass Tests
+   → tests/unit/breakGlassService.test.js
+[0;32m✅[0m [M2] Governance Audit Tests
+   → tests/unit/governanceAudit.test.js
+[0;32m✅[0m [M5] Break Glass Banner
+   → components/governance/BreakGlassBanner.tsx
+[0;32m✅[0m [M3] Governance Admin Routes
+   → server/routes/governanceAdmin.js
+[0;32m✅[0m [M2] Hash chain
+[0;32m✅[0m [M1] PII Redactor
+   → server/utils/piiRedactor.js
+[0;32m✅[0m [M1] PII Redactor Tests
+   → tests/unit/piiRedactor.test.js
+
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;34mN. STEP 15 — EXPLAINABILITY LEDGER[0m
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;32m✅[0m [N2] Evidence Ledger Service
+   → server/services/evidenceLedgerService.js
+[0;32m✅[0m [N3] AI Explain Routes
+   → server/routes/aiExplain.js
+[0;32m✅[0m [N1] Explainability Migration
+   → server/migrations/005_ai_explainability.sql
+[0;32m✅[0m [N1] Evidence Ledger Migration
+   → server/migrations/006_ai_evidence_ledger.sql
+[0;32m✅[0m [N] Explainability Tests
+   → tests/integration/aiExplainability.test.js
+[0;32m✅[0m [N5] Evidence Panel UI
+   → components/ai/EvidencePanel.tsx
+[0;32m✅[0m [N5] Confidence Badge UI
+   → components/ai/ConfidenceBadge.tsx
+[0;32m✅[0m [N5] Playbook Step Evidence
+   → components/ai/PlaybookStepEvidence.tsx
+[0;32m✅[0m [N1] DB Table: ai_evidence_objects
+[0;32m✅[0m [N2] Evidence functions
+
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;34mO. STEP 16 — HUMAN WORKFLOW + SLA[0m
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;32m✅[0m [O2] Workqueue Service
+   → server/services/workqueueService.js
+[0;32m✅[0m [O2] SLA Service
+   → server/services/slaService.js
+[0;32m✅[0m [O2] Notification Outbox Service
+   → server/services/notificationOutboxService.js
+[0;32m✅[0m [O4] Workqueue Routes
+   → server/routes/workqueue.js
+[0;32m✅[0m [O4] Notification Settings Routes
+   → server/routes/notificationSettings.js
+[0;32m✅[0m [O3] Cron Scheduler
+   → server/cron/scheduler.js
+[0;32m✅[0m [O] Workqueue Tests
+   → tests/unit/workqueueService.test.js
+[0;32m✅[0m [O] SLA Tests
+   → tests/unit/slaService.test.js
+[0;32m✅[0m [O] Notification Outbox Tests
+   → tests/unit/notificationOutboxService.test.js
+[0;32m✅[0m [O1] DB Table: approval_assignments
+[0;32m✅[0m [O1] DB Table: notification_outbox
+
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;34mP. STEP 17 — INTEGRATIONS & SECRETS[0m
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;32m✅[0m [P1] Connector Service
+   → server/services/connectorService.js
+[0;32m✅[0m [P1] Connector Registry
+   → server/services/connectorRegistry.js
+[0;32m✅[0m [P1] Connector Health Service
+   → server/services/connectorHealthService.js
+[0;32m✅[0m [P2] Secrets Vault
+   → server/services/secretsVault.js
+[0;32m✅[0m [P4] Connector Adapter
+   → server/ai/connectorAdapter.js
+[0;32m✅[0m [P3] Connectors Routes
+   → server/routes/connectors.js
+[0;32m✅[0m [P2] Secrets Vault Tests
+   → tests/unit/secretsVault.test.js
+[0;32m✅[0m [P] Connector Registry Tests
+   → tests/unit/connectorRegistry.test.js
+[0;32m✅[0m [P4] Connector Adapter Tests
+   → tests/unit/connectorAdapter.test.js
+[0;32m✅[0m [P1] DB Table: connectors
+[0;32m✅[0m [P1] DB Table: org_connector_configs
+[0;32m✅[0m [P1] DB Table: connector_health
+[0;32m✅[0m [P2] AES-256 encryption
+
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;34mQ. STEP 18 — OUTCOMES, ROI & ANALYTICS[0m
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;32m✅[0m [Q2] Outcome Service
+   → server/services/outcomeService.js
+[0;32m✅[0m [Q2] ROI Service
+   → server/services/roiService.js
+[0;32m✅[0m [Q2] AI Analytics Service
+   → server/services/aiAnalyticsService.js
+[0;32m✅[0m [Q3] AI Analytics Routes
+   → server/routes/aiAnalytics.js
+[0;32m✅[0m [Q4] Analytics Dashboard UI
+   → components/AIAnalyticsDashboard.tsx
+[0;32m✅[0m [Q1] DB Table: outcome_definitions
+[0;32m✅[0m [Q1] DB Table: outcome_measurements
+[0;32m✅[0m [Q1] DB Table: roi_models
+
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;34mR. CROSS-CUTTING ENTERPRISE CHECKS[0m
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;32m✅[0m [R4] Correlation ID found in codebase
+[1;33m⚠️[0m [R5] PII redaction in exports needs verification
+
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;34mSUMMARY[0m
+[0;34m═══════════════════════════════════════════════════════════════[0m
+
+[0;32m✅ PASSED:[0m   114
+[0;31m❌ FAILED:[0m   3
+[1;33m⚠️  WARNINGS:[0m 1
+
+Total checks: 118
+Pass rate: 96%
+
+[0;31m⚠️  3 critical items need attention.[0m
+Run with --full for detailed org isolation checks.
+
+See docs/MASTER_CHECKLIST_AI_ACTIONS.md for the full checklist.

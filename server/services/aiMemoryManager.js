@@ -53,7 +53,7 @@ const AIMemoryManager = {
                         ? content.substring(0, 100)
                         : JSON.stringify(content).substring(0, 100);
 
-                    db.run(`INSERT INTO activity_log (id, user_id, action, entity_type, entity_id, new_value, created_at)
+                    db.run(`INSERT INTO activity_logs (id, user_id, action, entity_type, entity_id, new_value, created_at)
                             VALUES (?, ?, 'ai_memory_write', 'ai_memory', ?, ?, CURRENT_TIMESTAMP)`,
                         [uuidv4(), userId, id, JSON.stringify({ memoryType, snippet: contentSnippet })]
                     );

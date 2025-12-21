@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ActionProposal } from './ActionProposalList';
-import { Brain, Target, Shield, AlertTriangle, TrendingUp, CheckCircle2, XCircle, Terminal, HelpCircle, Activity, Info } from 'lucide-react';
+import { Brain, Target, Shield, AlertTriangle, TrendingUp, CheckCircle2, XCircle, Terminal, HelpCircle, Activity, Info, FileText, Layers } from 'lucide-react';
+import EvidencePanel from './EvidencePanel';
 
 interface PolicyEvaluation {
     matched: boolean;
@@ -15,9 +16,21 @@ interface ActionProposalDetailProps {
     onReject: () => void;
     onModify?: () => void;
     policyEvaluation?: PolicyEvaluation | null;
+    token?: string; // Auth token for API calls
 }
 
-export const ActionProposalDetail: React.FC<ActionProposalDetailProps> = ({ proposal, onApprove, onReject, onModify, policyEvaluation }) => {
+type TabType = 'details' | 'simulation' | 'payload' | 'evidence';
+
+export const ActionProposalDetail: React.FC<ActionProposalDetailProps> = ({
+    proposal,
+    onApprove,
+    onReject,
+    onModify,
+    policyEvaluation,
+    token
+}) => {
+    const [activeTab, setActiveTab] = useState<TabType>('details');
+
     if (!proposal) {
         return (
             <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-400 bg-slate-50/50 dark:bg-navy-950/30 rounded-2xl border border-dashed border-slate-200 dark:border-white/5">
@@ -27,6 +40,13 @@ export const ActionProposalDetail: React.FC<ActionProposalDetailProps> = ({ prop
             </div>
         );
     }
+
+    const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
+        { id: 'details', label: 'Details', icon: <Info size={16} /> },
+        { id: 'simulation', label: 'Simulation', icon: <TrendingUp size={16} /> },
+        { id: 'payload', label: 'Payload', icon: <Terminal size={16} /> },
+        { id: 'evidence', label: 'Evidence', icon: <FileText size={16} /> },
+    ];
 
     return (
         <div className="bg-white dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm overflow-hidden flex flex-col h-full">
@@ -52,134 +72,170 @@ export const ActionProposalDetail: React.FC<ActionProposalDetailProps> = ({ prop
                         <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">Scope: {proposal.scope}</span>
                     </div>
                 </div>
+
+                {/* Tab Navigation */}
+                <div className="flex gap-1 mt-6 border-b border-slate-200 dark:border-white/10 -mx-6 px-6">
+                    {tabs.map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative
+                                ${activeTab === tab.id
+                                    ? 'text-indigo-600 dark:text-indigo-400'
+                                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                                }
+                            `}
+                        >
+                            {tab.icon}
+                            {tab.label}
+                            {activeTab === tab.id && (
+                                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 dark:bg-indigo-400" />
+                            )}
+                        </button>
+                    ))}
+                </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-8">
-                {/* Reasoning Section */}
-                <section>
-                    <h3 className="flex items-center gap-2 text-sm font-bold text-navy-900 dark:text-white uppercase tracking-wider mb-4">
-                        <Brain size={16} className="text-indigo-500" />
-                        Reasoning & Recommendation
-                    </h3>
-                    <div className="p-4 bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-500/20 rounded-xl">
-                        <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed italic border-l-2 border-indigo-400 pl-4 mb-4">
-                            "{proposal.origin_recommendation}"
-                        </p>
-                        <div className="bg-white dark:bg-navy-950 p-3 rounded-lg border border-indigo-100 dark:border-indigo-500/10 flex items-start gap-3">
-                            <Info size={16} className="text-indigo-400 mt-0.5 shrink-0" />
-                            <div>
-                                <h4 className="text-xs font-bold text-indigo-600 dark:text-indigo-400 mb-1 uppercase">Origin Signal</h4>
-                                <p className="text-xs text-slate-500 dark:text-slate-400">{proposal.origin_signal}: Detected organization friction patterns.</p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Policy Evaluation Section */}
-                {policyEvaluation && (
-                    <section className="bg-violet-50/50 dark:bg-violet-900/10 border border-violet-100 dark:border-violet-500/20 rounded-xl p-5">
-                        <h3 className="flex items-center gap-2 text-sm font-bold text-navy-900 dark:text-white uppercase tracking-wider mb-4">
-                            <Shield size={16} className="text-violet-500" />
-                            Policy Evaluation
-                        </h3>
-                        <div className="space-y-3">
-                            <div className="flex items-center gap-4">
-                                <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${policyEvaluation.matched
-                                        ? 'bg-emerald-100 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400'
-                                        : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
-                                    }`}>
-                                    {policyEvaluation.matched ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
-                                    <span className="text-xs font-bold uppercase">
-                                        {policyEvaluation.matched ? 'Policy Match' : 'No Policy Match'}
-                                    </span>
-                                </div>
-                                {policyEvaluation.matched && policyEvaluation.decision && (
-                                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-100 dark:bg-violet-900/30 border border-violet-200 dark:border-violet-500/30 text-violet-700 dark:text-violet-400">
-                                        <span className="text-xs font-bold">{policyEvaluation.decision}</span>
+            <div className="flex-1 overflow-y-auto p-6">
+                {/* Details Tab */}
+                {activeTab === 'details' && (
+                    <div className="space-y-8">
+                        {/* Reasoning Section */}
+                        <section>
+                            <h3 className="flex items-center gap-2 text-sm font-bold text-navy-900 dark:text-white uppercase tracking-wider mb-4">
+                                <Brain size={16} className="text-indigo-500" />
+                                Reasoning & Recommendation
+                            </h3>
+                            <div className="p-4 bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-500/20 rounded-xl">
+                                <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed italic border-l-2 border-indigo-400 pl-4 mb-4">
+                                    "{proposal.origin_recommendation}"
+                                </p>
+                                <div className="bg-white dark:bg-navy-950 p-3 rounded-lg border border-indigo-100 dark:border-indigo-500/10 flex items-start gap-3">
+                                    <Info size={16} className="text-indigo-400 mt-0.5 shrink-0" />
+                                    <div>
+                                        <h4 className="text-xs font-bold text-indigo-600 dark:text-indigo-400 mb-1 uppercase">Origin Signal</h4>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">{proposal.origin_signal}: Detected organization friction patterns.</p>
                                     </div>
-                                )}
+                                </div>
                             </div>
-                            {policyEvaluation.reason && (
-                                <p className="text-xs text-slate-600 dark:text-slate-400 italic">
-                                    "{policyEvaluation.reason}"
-                                </p>
-                            )}
-                            {policyEvaluation.rule_id && (
-                                <p className="text-[10px] text-violet-500 font-mono">
-                                    RULE ID: {policyEvaluation.rule_id}
-                                </p>
-                            )}
-                        </div>
-                    </section>
+                        </section>
+
+                        {/* Policy Evaluation Section */}
+                        {policyEvaluation && (
+                            <section className="bg-violet-50/50 dark:bg-violet-900/10 border border-violet-100 dark:border-violet-500/20 rounded-xl p-5">
+                                <h3 className="flex items-center gap-2 text-sm font-bold text-navy-900 dark:text-white uppercase tracking-wider mb-4">
+                                    <Shield size={16} className="text-violet-500" />
+                                    Policy Evaluation
+                                </h3>
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-4">
+                                        <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${policyEvaluation.matched
+                                            ? 'bg-emerald-100 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400'
+                                            : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                                            }`}>
+                                            {policyEvaluation.matched ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
+                                            <span className="text-xs font-bold uppercase">
+                                                {policyEvaluation.matched ? 'Policy Match' : 'No Policy Match'}
+                                            </span>
+                                        </div>
+                                        {policyEvaluation.matched && policyEvaluation.decision && (
+                                            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-100 dark:bg-violet-900/30 border border-violet-200 dark:border-violet-500/30 text-violet-700 dark:text-violet-400">
+                                                <span className="text-xs font-bold">{policyEvaluation.decision}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    {policyEvaluation.reason && (
+                                        <p className="text-xs text-slate-600 dark:text-slate-400 italic">
+                                            "{policyEvaluation.reason}"
+                                        </p>
+                                    )}
+                                    {policyEvaluation.rule_id && (
+                                        <p className="text-[10px] text-violet-500 font-mono">
+                                            RULE ID: {policyEvaluation.rule_id}
+                                        </p>
+                                    )}
+                                </div>
+                            </section>
+                        )}
+
+                        {/* Narrative Summary */}
+                        <section className="bg-emerald-500/5 dark:bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-5">
+                            <h4 className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-2">Narrative Projection</h4>
+                            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                                {proposal.expected_impact}
+                            </p>
+                        </section>
+                    </div>
                 )}
 
-                {/* Simulation & Impact */}
-                <section>
-                    <h3 className="flex items-center gap-2 text-sm font-bold text-navy-900 dark:text-white uppercase tracking-wider mb-4">
-                        <TrendingUp size={16} className="text-emerald-500" />
-                        Simulation Strategy
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="p-4 bg-slate-50 dark:bg-navy-950 border border-slate-100 dark:border-white/5 rounded-xl">
-                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                                <Activity size={14} /> Expected Direction
-                            </h4>
-                            <div className="flex items-center gap-3">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${proposal.simulation.expected_direction === 'positive' ? 'bg-emerald-500/20 text-emerald-500' : 'bg-slate-500/20 text-slate-500'
-                                    }`}>
-                                    <TrendingUp size={20} />
-                                </div>
-                                <div>
-                                    <span className={`text-sm font-bold capitalize ${proposal.simulation.expected_direction === 'positive' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-400'
+                {/* Simulation Tab */}
+                {activeTab === 'simulation' && (
+                    <div className="space-y-6">
+                        <h3 className="flex items-center gap-2 text-sm font-bold text-navy-900 dark:text-white uppercase tracking-wider mb-4">
+                            <TrendingUp size={16} className="text-emerald-500" />
+                            Simulation Strategy
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="p-4 bg-slate-50 dark:bg-navy-950 border border-slate-100 dark:border-white/5 rounded-xl">
+                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                    <Activity size={14} /> Expected Direction
+                                </h4>
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${proposal.simulation.expected_direction === 'positive' ? 'bg-emerald-500/20 text-emerald-500' : 'bg-slate-500/20 text-slate-500'
                                         }`}>
-                                        {proposal.simulation.expected_direction} Impact
-                                    </span>
-                                    <p className="text-xs text-slate-500">Based on algorithmic projection</p>
+                                        <TrendingUp size={20} />
+                                    </div>
+                                    <div>
+                                        <span className={`text-sm font-bold capitalize ${proposal.simulation.expected_direction === 'positive' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-400'
+                                            }`}>
+                                            {proposal.simulation.expected_direction} Impact
+                                        </span>
+                                        <p className="text-xs text-slate-500">Based on algorithmic projection</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div className="p-4 bg-slate-50 dark:bg-navy-950 border border-slate-100 dark:border-white/5 rounded-xl">
-                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                                <Terminal size={14} /> Execution Assumptions
-                            </h4>
-                            <ul className="space-y-2">
-                                {proposal.simulation.assumptions.length > 0 ? (
-                                    proposal.simulation.assumptions.map((item, i) => (
-                                        <li key={i} className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-400">
-                                            <div className="w-1 h-1 rounded-full bg-slate-400 mt-1.5 shrink-0" />
-                                            {item}
-                                        </li>
-                                    ))
-                                ) : (
-                                    <li className="text-xs text-slate-400 italic">No explicit assumptions provided.</li>
-                                )}
-                            </ul>
+                            <div className="p-4 bg-slate-50 dark:bg-navy-950 border border-slate-100 dark:border-white/5 rounded-xl">
+                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                    <Terminal size={14} /> Execution Assumptions
+                                </h4>
+                                <ul className="space-y-2">
+                                    {proposal.simulation.assumptions.length > 0 ? (
+                                        proposal.simulation.assumptions.map((item, i) => (
+                                            <li key={i} className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-400">
+                                                <div className="w-1 h-1 rounded-full bg-slate-400 mt-1.5 shrink-0" />
+                                                {item}
+                                            </li>
+                                        ))
+                                    ) : (
+                                        <li className="text-xs text-slate-400 italic">No explicit assumptions provided.</li>
+                                    )}
+                                </ul>
+                            </div>
                         </div>
                     </div>
-                </section>
+                )}
 
-                {/* Narrative Summary */}
-                <section className="bg-emerald-500/5 dark:bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-5">
-                    <h4 className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-2">Narrative Projection</h4>
-                    <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                        {proposal.expected_impact}
-                    </p>
-                </section>
-
-                {/* Technical Payload (Hidden by default or in a collapse) */}
-                <section>
-                    <details className="group border border-slate-100 dark:border-white/5 rounded-xl overflow-hidden">
-                        <summary className="p-3 bg-slate-50 dark:bg-navy-950 cursor-pointer list-none flex items-center justify-between group-open:bg-white dark:group-open:bg-navy-900 transition-colors">
-                            <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter flex items-center gap-2">
-                                <Terminal size={14} /> Technical Payload Preview
-                            </span>
-                            <ChevronRight size={14} className="text-slate-400 transition-transform group-open:rotate-90" />
-                        </summary>
-                        <div className="p-4 bg-navy-950 text-emerald-400/90 font-mono text-xs overflow-x-auto">
+                {/* Payload Tab */}
+                {activeTab === 'payload' && (
+                    <div className="space-y-4">
+                        <h3 className="flex items-center gap-2 text-sm font-bold text-navy-900 dark:text-white uppercase tracking-wider mb-4">
+                            <Terminal size={16} className="text-slate-500" />
+                            Technical Payload
+                        </h3>
+                        <div className="p-4 bg-navy-950 text-emerald-400/90 font-mono text-xs overflow-x-auto rounded-xl">
                             <pre>{JSON.stringify(proposal.payload_preview, null, 2)}</pre>
                         </div>
-                    </details>
-                </section>
+                    </div>
+                )}
+
+                {/* Evidence Tab */}
+                {activeTab === 'evidence' && (
+                    <EvidencePanel
+                        entityType="proposal"
+                        entityId={proposal.proposal_id}
+                        token={token || ''}
+                    />
+                )}
             </div>
 
             {/* Footer Actions */}
@@ -213,19 +269,4 @@ export const ActionProposalDetail: React.FC<ActionProposalDetailProps> = ({ prop
     );
 };
 
-// Internal icon component if needed, otherwise use Chevron from lucide-react
-const ChevronRight = ({ size, className }: { size?: number, className?: string }) => (
-    <svg
-        width={size}
-        height={size}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className={className}
-    >
-        <path d="m9 18 6-6-6-6" />
-    </svg>
-);
+export default ActionProposalDetail;

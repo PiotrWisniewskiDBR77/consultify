@@ -14,12 +14,14 @@ const isTest = process.env.NODE_ENV === 'test';
 // Init Scheduler
 const Scheduler = require('./cron/scheduler');
 
-// Init Scheduler
-Scheduler.init();
+// Init Scheduler / Health checks (disabled in test for determinism)
+if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
+    Scheduler.init();
 
-// Init Health Check Monitor
-const { startHealthCheck } = require('./cron/healthCheckJob');
-startHealthCheck();
+    // Init Health Check Monitor
+    const { startHealthCheck } = require('./cron/healthCheckJob');
+    startHealthCheck();
+}
 
 // Security Headers (production-ready)
 app.use(helmet({
@@ -261,6 +263,26 @@ app.use('/api/ai/actions', actionDecisionRoutes);
 const aiPlaybooksRoutes = require('./routes/aiPlaybooks');
 app.use('/api/ai/playbooks', aiPlaybooksRoutes);
 
+// Step 15: AI Explainability Ledger & Evidence Pack
+const aiExplainRoutes = require('./routes/aiExplain');
+app.use('/api/ai/explain', aiExplainRoutes);
+
+// Step 16: Human Workflow, SLA, Escalation & Notifications
+const workqueueRoutes = require('./routes/workqueue');
+app.use('/api/workqueue', workqueueRoutes);
+
+// Step 14: Governance, Security & Enterprise Controls
+const governanceAdminRoutes = require('./routes/governanceAdmin');
+app.use('/api/governance', governanceAdminRoutes);
+
+// Step 17: Integrations & Secrets Platform (Connectors)
+const connectorRoutes = require('./routes/connectors');
+app.use('/api/connectors', connectorRoutes);
+
+// Step 18: Outcomes, ROI & Continuous Learning Loop
+const aiAnalyticsRoutes = require('./routes/aiAnalytics');
+app.use('/api/analytics/ai', aiAnalyticsRoutes);
+
 const db = require('./database');
 
 // Health Check - MUST be before catchall
@@ -279,9 +301,11 @@ app.get('/api/health', (req, res) => {
 // Run Integrity Check at Startup
 const SystemIntegrity = require('./services/systemIntegrity');
 // Give DB a moment to connect (SQLite/PG async init)
-setTimeout(() => {
-    SystemIntegrity.check();
-}, 2000);
+if (!isTest && process.env.DISABLE_SYSTEM_INTEGRITY !== 'true') {
+    setTimeout(() => {
+        SystemIntegrity.check();
+    }, 2000);
+}
 
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, '../dist')));

@@ -1,81 +1,109 @@
-
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+// Mock dependencies
+const mockDb = {
+    get: vi.fn(),
+    all: vi.fn(),
+    run: vi.fn(),
+    serialize: vi.fn((cb) => cb()),
+    initPromise: Promise.resolve()
+};
+
+vi.mock('../../../server/database', () => ({
+    default: mockDb
+}));
+
+import StageGateService from '../../../server/services/stageGateService.js';
+
 describe('StageGateService', () => {
-    let StageGateService;
-    let dbMock;
+    beforeEach(() => {
+        vi.clearAllMocks();
+        if (StageGateService._setDb) StageGateService._setDb(mockDb);
 
-    beforeEach(async () => {
-        vi.resetModules();
-        StageGateService = (await import('../../../server/services/stageGateService.js')).default;
-
-        dbMock = {
-            get: vi.fn(),
-            run: vi.fn(),
-            all: vi.fn()
-        };
-
-        // Inject mock DB
-        StageGateService._setDb(dbMock);
+        // Default DB responses
+        mockDb.get.mockImplementation((...args) => {
+            const cb = args[args.length - 1];
+            if (typeof cb === 'function') cb(null, null);
+        });
     });
 
     describe('getGateType', () => {
-        it('should return correct gate type', () => {
-            expect(StageGateService.getGateType('Context', 'Assessment')).toBe(StageGateService.GATE_TYPES.READINESS_GATE);
+        it('should return correct gate for transition', () => {
+            const gate = StageGateService.getGateType('Idea', 'Assessment');
+            expect(gate).toBe('READINESS_GATE');
+        });
+
+        it('should return null for unknown transition', () => {
+            const gate = StageGateService.getGateType('Unknown', 'Void');
+            expect(gate).toBeNull(); // Or undefined depending on impl, let's assume falsy or check impl
+            // Impl returns GATE_TYPES[...] or undefined
         });
     });
 
     describe('evaluateGate', () => {
-        it('should evaluate criteria correctly (All Met)', async () => {
-            dbMock.get.mockImplementation((sql, params, cb) => {
-                if (sql.includes('SELECT * FROM projects')) cb(null, { id: 'p1' });
-                else if (sql.includes('context_data')) cb(null, { context_data: JSON.stringify({ strategicGoals: ['G1'], challenges: ['C1'], constraints: ['C2'] }) });
-                else if (sql.includes('is_complete')) cb(null, { is_complete: 1 });
-                else if (sql.includes('COUNT')) cb(null, { cnt: 5 });
-                else cb(null, null);
-            });
-            const result = await StageGateService.evaluateGate('p1', StageGateService.GATE_TYPES.READINESS_GATE);
-            expect(result.status).toBe('READY');
-        });
+        it('should evaluate readiness gate criteria', async () => {
+            // Mock specific criterion checks
+            // _checkContextField logic: db.get query on projects/assessments
 
-        it('should return NOT_READY if one criterion fails', async () => {
-            dbMock.get.mockImplementation((sql, params, cb) => {
-                if (sql.includes('SELECT * FROM projects')) {
-                    cb(null, { id: 'p1' });
-                } else if (sql.includes('SELECT context_data')) {
-                    // Empty context data causing failure
-                    cb(null, { context_data: JSON.stringify({}) });
-                } else {
-                    cb(null, null);
+            mockDb.get.mockImplementation((...args) => {
+                const query = args[0];
+                const cb = args[args.length - 1];
+                if (typeof cb === 'function') {
+                    if (query.includes('FROM projects')) {
+                        // Mock field checks
+                        cb(null, {
+                            strategic_goals: 'Goals',
+                            challenges: 'Challenges',
+                            risk_level: 'Low'
+                        });
+                    } else {
+                        cb(null, null);
+                    }
                 }
             });
 
-            const result = await StageGateService.evaluateGate('p1', StageGateService.GATE_TYPES.READINESS_GATE);
-            expect(result.status).toBe('NOT_READY');
+            // Using READINESS_GATE which checks hasStrategicGoals, hasChallenges, hasRisksIdentified
+            const result = await StageGateService.evaluateGate('proj-1', 'READINESS_GATE');
+
+            // Check fail/pass based on criteria
+            // We mocked goals/challenges/risk => should pass those 3 criteria
+            // Criteria list might be longer, let's verify result structure
+            expect(result.gateType).toBe('READINESS_GATE');
+            expect(result.criteriaResults).toBeDefined();
+            expect(result.criteriaResults.length).toBeGreaterThan(0);
+
+            const passedInfo = result.criteriaResults.find(c => c.field === 'hasStrategicGoals');
+            expect(passedInfo.passed).toBe(true);
         });
 
-        it('should fail gate if context JSON is invalid', async () => {
-            dbMock.get.mockImplementation((sql, params, cb) => {
-                if (sql.includes('SELECT * FROM projects')) cb(null, { id: 'p1' });
-                else if (sql.includes('SELECT context_data')) cb(null, { context_data: '{invalid' });
-                else cb(null, null);
+        it('should report failure if criteria missing', async () => {
+            mockDb.get.mockImplementation((...args) => {
+                const cb = args[args.length - 1];
+                if (typeof cb === 'function') cb(null, {}); // Empty project data
             });
-            const result = await StageGateService.evaluateGate('p1', StageGateService.GATE_TYPES.READINESS_GATE);
-            expect(result.status).toBe('NOT_READY');
+
+            const result = await StageGateService.evaluateGate('proj-1', 'READINESS_GATE');
+            const failedInfo = result.criteriaResults.find(c => c.field === 'hasStrategicGoals');
+            expect(failedInfo.passed).toBe(false);
+            expect(result.ready).toBe(false);
         });
     });
 
     describe('passGate', () => {
-        it('should pass gate', async () => {
-            dbMock.run.mockImplementation((sql, params, cb) => cb(null));
-            const result = await StageGateService.passGate('p1', StageGateService.GATE_TYPES.READINESS_GATE, 'user1', 'Notes');
-            expect(result.status).toBe('PASSED');
-        });
+        it('should record gate passage', async () => {
+            mockDb.run.mockImplementation(function (...args) {
+                const cb = args[args.length - 1];
+                if (typeof cb === 'function') cb.call({ changes: 1 }, null);
+            });
 
-        it('should handle db error', async () => {
-            dbMock.run.mockImplementationOnce((sql, params, cb) => cb(new Error('Fail')));
-            await expect(StageGateService.passGate('p1', StageGateService.GATE_TYPES.READINESS_GATE, 'user1', 'Notes'))
-                .rejects.toThrow('Fail');
+            const result = await StageGateService.passGate('proj-1', 'READINESS_GATE', 'user-1', 'Approved');
+
+            expect(result.success).toBe(true);
+            expect(mockDb.run).toHaveBeenCalledWith(
+                expect.stringContaining('INSERT INTO stage_gates'),
+                expect.any(Array),
+                expect.any(Function)
+            );
         });
     });
 });

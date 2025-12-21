@@ -7,6 +7,7 @@ const { classifyError } = require('../ai/actionErrors');
 /**
  * Async Job Processor
  * Step 11: Processes async jobs from the queue.
+ * Step 11.1: Enterprise hardening with optimistic locking and retry classification.
  * 
  * Handles EXECUTE_DECISION and ADVANCE_PLAYBOOK_STEP job types.
  */
@@ -22,8 +23,18 @@ const AsyncJobProcessor = {
         const { decisionId, organizationId, correlationId } = payload;
 
         try {
-            // Update job status to RUNNING
-            await AsyncJobService.updateJobStatus(jobId, AsyncJobService.JOB_STATUSES.RUNNING);
+            // Step 11.1 - Optimistic locking: Claim the job atomically
+            const claimed = await AsyncJobService.claimJob(jobId);
+            if (!claimed) {
+                // Job was already picked up by another worker
+                auditLogger.info('ASYNC_JOB_ALREADY_CLAIMED', {
+                    job_id: jobId,
+                    correlation_id: correlationId,
+                    organization_id: organizationId
+                });
+                return { skipped: true, reason: 'Job already claimed by another worker' };
+            }
+
             await AsyncJobService.incrementAttempts(jobId);
 
             auditLogger.info('ASYNC_JOB_STARTED', {
@@ -71,6 +82,12 @@ const AsyncJobProcessor = {
                 const errorCode = execResult.error_code || 'EXECUTION_ERROR';
                 const errorMessage = execResult.error || 'Execution failed';
 
+                // Step 11.1 - Non-retryable errors go straight to dead-letter
+                if (!AsyncJobService.isRetryable(errorCode)) {
+                    await AsyncJobService.markDeadLetter(jobId, errorCode, errorMessage);
+                    return execResult;
+                }
+
                 // Check if max attempts reached
                 const dbJob = await AsyncJobService.getJob(jobId, 'SUPERADMIN_BYPASS');
                 if (dbJob && dbJob.attempts >= dbJob.max_attempts) {
@@ -88,7 +105,8 @@ const AsyncJobProcessor = {
                         job_type: AsyncJobService.JOB_TYPES.EXECUTE_DECISION,
                         entity_id: decisionId,
                         error_code: errorCode,
-                        error_message: errorMessage
+                        error_message: errorMessage,
+                        retryable: true
                     });
 
                     // Throw to trigger BullMQ retry
@@ -100,6 +118,12 @@ const AsyncJobProcessor = {
         } catch (err) {
             const errorCode = classifyError(err);
             const errorMessage = err.message;
+
+            // Step 11.1 - Non-retryable errors go straight to dead-letter
+            if (!AsyncJobService.isRetryable(errorCode)) {
+                await AsyncJobService.markDeadLetter(jobId, errorCode, errorMessage);
+                return { success: false, error: errorMessage, error_code: errorCode };
+            }
 
             // Check if max attempts reached
             const dbJob = await AsyncJobService.getJob(jobId, 'SUPERADMIN_BYPASS');
@@ -118,7 +142,8 @@ const AsyncJobProcessor = {
                     job_type: AsyncJobService.JOB_TYPES.EXECUTE_DECISION,
                     entity_id: decisionId,
                     error_code: errorCode,
-                    error_message: errorMessage
+                    error_message: errorMessage,
+                    retryable: true
                 });
             }
 
@@ -136,8 +161,17 @@ const AsyncJobProcessor = {
         const { runId, stepId, organizationId, correlationId } = payload;
 
         try {
-            // Update job status to RUNNING
-            await AsyncJobService.updateJobStatus(jobId, AsyncJobService.JOB_STATUSES.RUNNING);
+            // Step 11.1 - Optimistic locking
+            const claimed = await AsyncJobService.claimJob(jobId);
+            if (!claimed) {
+                auditLogger.info('ASYNC_JOB_ALREADY_CLAIMED', {
+                    job_id: jobId,
+                    correlation_id: correlationId,
+                    organization_id: organizationId
+                });
+                return { skipped: true, reason: 'Job already claimed by another worker' };
+            }
+
             await AsyncJobService.incrementAttempts(jobId);
 
             auditLogger.info('ASYNC_JOB_STARTED', {
@@ -184,6 +218,12 @@ const AsyncJobProcessor = {
                 const errorCode = 'PLAYBOOK_ADVANCE_FAILED';
                 const errorMessage = advanceResult.error || 'Playbook advance failed';
 
+                // Step 11.1 - Non-retryable check
+                if (!AsyncJobService.isRetryable(errorCode)) {
+                    await AsyncJobService.markDeadLetter(jobId, errorCode, errorMessage);
+                    return advanceResult;
+                }
+
                 const dbJob = await AsyncJobService.getJob(jobId, 'SUPERADMIN_BYPASS');
                 if (dbJob && dbJob.attempts >= dbJob.max_attempts) {
                     await AsyncJobService.markDeadLetter(jobId, errorCode, errorMessage);
@@ -200,7 +240,8 @@ const AsyncJobProcessor = {
                         job_type: AsyncJobService.JOB_TYPES.ADVANCE_PLAYBOOK_STEP,
                         entity_id: runId,
                         error_code: errorCode,
-                        error_message: errorMessage
+                        error_message: errorMessage,
+                        retryable: true
                     });
 
                     throw new Error(errorMessage);
@@ -211,6 +252,12 @@ const AsyncJobProcessor = {
         } catch (err) {
             const errorCode = classifyError(err);
             const errorMessage = err.message;
+
+            // Step 11.1 - Non-retryable check
+            if (!AsyncJobService.isRetryable(errorCode)) {
+                await AsyncJobService.markDeadLetter(jobId, errorCode, errorMessage);
+                return { success: false, error: errorMessage, error_code: errorCode };
+            }
 
             const dbJob = await AsyncJobService.getJob(jobId, 'SUPERADMIN_BYPASS');
             if (dbJob && dbJob.attempts >= dbJob.max_attempts) {
@@ -228,7 +275,8 @@ const AsyncJobProcessor = {
                     job_type: AsyncJobService.JOB_TYPES.ADVANCE_PLAYBOOK_STEP,
                     entity_id: runId,
                     error_code: errorCode,
-                    error_message: errorMessage
+                    error_message: errorMessage,
+                    retryable: true
                 });
             }
 

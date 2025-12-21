@@ -10,8 +10,8 @@
  */
 
 const request = require('supertest');
-const app = require('../../server/server');
-const db = require('../../server/database');
+const app = require('../../../server/index.js');
+const db = require('../../../server/database');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 

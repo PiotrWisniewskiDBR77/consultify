@@ -546,5 +546,53 @@ router.post('/jobs/:jobId/cancel', async (req, res) => {
     }
 });
 
+/**
+ * @route GET /api/ai/actions/jobs/dead-letter
+ * @desc List dead-letter jobs for UI visibility
+ * @access Private (Admin / SuperAdmin)
+ */
+router.get('/jobs/dead-letter', async (req, res) => {
+    try {
+        if (!req.user || (req.user.role !== 'ADMIN' && req.user.role !== 'SUPERADMIN')) {
+            return res.status(403).json({ error: 'Forbidden: Admin access required' });
+        }
+
+        const orgId = req.user.role === 'SUPERADMIN' ? 'SUPERADMIN_BYPASS' : req.organizationId;
+        const { limit = 50, offset = 0 } = req.query;
+
+        const jobs = await AsyncJobService.listJobs(orgId, {
+            deadLetterOnly: true,
+            limit: parseInt(limit),
+            offset: parseInt(offset)
+        });
+
+        res.json({ jobs, count: jobs.length });
+    } catch (err) {
+        console.error('[DeadLetterListRoute] Error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
+ * @route GET /api/ai/actions/jobs/stats
+ * @desc Get dead-letter and job statistics for dashboard
+ * @access Private (Admin / SuperAdmin)
+ */
+router.get('/jobs/stats', async (req, res) => {
+    try {
+        if (!req.user || (req.user.role !== 'ADMIN' && req.user.role !== 'SUPERADMIN')) {
+            return res.status(403).json({ error: 'Forbidden: Admin access required' });
+        }
+
+        const orgId = req.organizationId;
+        const stats = await AsyncJobService.getDeadLetterStats(orgId);
+
+        res.json(stats);
+    } catch (err) {
+        console.error('[JobStatsRoute] Error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 module.exports = router;
 

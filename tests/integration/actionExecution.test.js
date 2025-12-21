@@ -10,7 +10,9 @@ const bcrypt = require('bcryptjs');
 /**
  * Action Execution Hardening Integration Tests (Step 9.3)
  * 
- * These tests focus on the EXECUTION ADAPTER functionality:
+ * These tests focus on/**
+ * @vitest-environment node
+ * ACTION EXECUTION INTEGRATION TESTSR functionality:
  * - Idempotency (idempotent_replay)
  * - Cross-org RBAC guards
  * - REJECTED decision handling
@@ -129,6 +131,20 @@ describe('Action Execution Hardening Integration (Step 9.3)', () => {
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
                 [decisionIds.meeting, 'prop-meeting-1', orgId, 'MEETING_SCHEDULE', 'initiative', 'APPROVED', adminId, meetingSnapshot], resolve);
         });
+
+        // Seed Connector and Config for Google Calendar
+        await new Promise((resolve) => {
+            db.run(`INSERT OR IGNORE INTO connectors (key, name, category, auth_type, capabilities_json) 
+                VALUES (?, ?, ?, ?, ?)`,
+                ['google_calendar', 'Google Calendar', 'productivity', 'oauth2', JSON.stringify(['event_create'])], resolve);
+        });
+
+        await new Promise((resolve) => {
+            db.run(`INSERT OR IGNORE INTO org_connector_configs 
+                (id, org_id, connector_key, status, sandbox_mode)
+                VALUES (?, ?, ?, ?, ?)`,
+                ['conf-gcal-1', orgId, 'google_calendar', 'CONNECTED', 1], resolve);
+        });
     });
 
     afterAll(async () => {
@@ -206,6 +222,7 @@ describe('Action Execution Hardening Integration (Step 9.3)', () => {
 
         expect(execRes.status).toBe(200);
         expect(execRes.body.success).toBe(true);
-        expect(execRes.body.result.metadata.mock).toBe(true);
+        expect(execRes.body.result.dry_run).toBe(true);
+        expect(execRes.body.result.would_do).toBeDefined();
     });
 });

@@ -1,66 +1,93 @@
-
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+// Mock dependencies
+const mockDb = {
+    get: vi.fn(),
+    all: vi.fn(),
+    run: vi.fn(),
+    serialize: vi.fn((cb) => cb()),
+    initPromise: Promise.resolve()
+};
+
+vi.mock('../../../server/database', () => ({
+    default: mockDb
+}));
+
+const mockDependencyService = {
+    buildDependencyGraph: vi.fn(),
+};
+
+vi.mock('../../../server/services/dependencyService', () => ({
+    default: mockDependencyService
+}));
+
+import CriticalPathService from '../../../server/services/criticalPathService.js';
+
 describe('CriticalPathService', () => {
-    let CriticalPathService;
-    let dbMock;
-    let DependencyServiceMock;
-
-    beforeEach(async () => {
-        vi.resetModules();
-
-        dbMock = {
-            all: vi.fn(),
-            run: vi.fn()
-        };
-
-        // Mock database module globally for this test
-        vi.doMock('../../../server/database', () => dbMock);
-
-        // Mock DependencyService (CJS mock via doMock)
-        DependencyServiceMock = {
-            buildDependencyGraph: vi.fn(),
-            detectDeadlocks: vi.fn(),
-            // Ensure other methods are present if needed, but these are main ones used
-            addDependency: vi.fn(),
-            removeDependency: vi.fn(),
-            canStart: vi.fn()
-        };
-
-        // Mock both with and without extension to be safe
-        vi.doMock('../../../server/services/dependencyService', () => ({
-            default: DependencyServiceMock,
-            ...DependencyServiceMock
-        }));
-        vi.doMock('../../../server/services/dependencyService.js', () => ({
-            default: DependencyServiceMock,
-            ...DependencyServiceMock
-        }));
-
-        CriticalPathService = (await import('../../../server/services/criticalPathService.js')).default;
-
-        // We mocked database globally, so _setDb might be redundant but harmless
-        if (CriticalPathService._setDb) CriticalPathService._setDb(dbMock);
+    beforeEach(() => {
+        vi.clearAllMocks();
+        // Inject mocks if helper exists
+        if (CriticalPathService._setDb) CriticalPathService._setDb(mockDb);
     });
 
     describe('calculateCriticalPath', () => {
-        it('should calculate path', async () => {
-            dbMock.all.mockImplementation((sql, params, cb) => cb(null, []));
-            DependencyServiceMock.buildDependencyGraph.mockResolvedValue({ edges: [] });
+        it('should identify critical path correctly', async () => {
+            // Setup simple linear dependency A (5d) -> B (10d) -> C (2d)
+            // Path: A, B, C. Duration: 17d.
 
-            const result = await CriticalPathService.calculateCriticalPath('proj1');
-            expect(result.criticalPath).toEqual([]);
+            mockDependencyService.buildDependencyGraph.mockResolvedValue({
+                nodes: ['A', 'B', 'C'],
+                graph: {
+                    'A': [{ to: 'B' }],
+                    'B': [{ to: 'C' }]
+                },
+                edges: []
+            });
+
+            mockDb.all.mockImplementation((...args) => {
+                const cb = args[args.length - 1];
+                if (typeof cb === 'function') {
+                    // Mock fetching initiatives with duration
+                    cb(null, [
+                        { id: 'A', name: 'Init A', duration_days: 5 },
+                        { id: 'B', name: 'Init B', duration_days: 10 },
+                        { id: 'C', name: 'Init C', duration_days: 2 }
+                    ]);
+                }
+            });
+
+            const result = await CriticalPathService.calculateCriticalPath('proj-1');
+
+            expect(result.nodes).toEqual(['A', 'B', 'C']);
+            expect(result.totalDuration).toBe(17);
         });
-    });
 
-    describe('detectSchedulingConflicts', () => {
-        it.skip('should detect conflicts', async () => {
-            DependencyServiceMock.buildDependencyGraph.mockResolvedValue({ edges: [] });
-            dbMock.all.mockImplementation((sql, params, cb) => cb(null, [])); // no inits
-            DependencyServiceMock.detectDeadlocks.mockResolvedValue({ hasDeadlocks: false });
+        it('should handle disjoint paths logic', async () => {
+            // A -> B (10)
+            // C (5)
+            // Longest path is A->B
 
-            const result = await CriticalPathService.detectSchedulingConflicts('proj1');
-            expect(result.hasConflicts).toBe(false);
+            mockDependencyService.buildDependencyGraph.mockResolvedValue({
+                nodes: ['A', 'B', 'C'],
+                graph: { 'A': [{ to: 'B' }] },
+                edges: []
+            });
+
+            mockDb.all.mockImplementation((...args) => {
+                const cb = args[args.length - 1];
+                if (typeof cb === 'function') {
+                    cb(null, [
+                        { id: 'A', duration_days: 5 },
+                        { id: 'B', duration_days: 10 },
+                        { id: 'C', duration_days: 5 }
+                    ]);
+                }
+            });
+
+            const result = await CriticalPathService.calculateCriticalPath('proj-1');
+            // Assuming implementation returns nodes on the critical path
+            expect(result.nodes).toEqual(['A', 'B']); // Order might vary implementation dependent if just set of nodes
+            expect(result.totalDuration).toBe(15);
         });
     });
 });

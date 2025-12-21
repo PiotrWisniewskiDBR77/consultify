@@ -3038,6 +3038,422 @@ function initDb() {
         db.run(`ALTER TABLE ai_playbook_run_steps ADD COLUMN selected_next_step_id TEXT`, () => { });
         db.run(`ALTER TABLE ai_playbook_run_steps ADD COLUMN evaluation_trace TEXT DEFAULT '{}'`, () => { });
 
+        // ==========================================
+        // STEP 17: INTEGRATIONS & SECRETS PLATFORM
+        // Connector framework with encrypted secrets vault
+        // ==========================================
+
+        /**
+         * Connectors Catalog (Reference Table)
+         * Stores available integration connectors with capabilities.
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS connectors (
+            key TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            category TEXT NOT NULL,
+            capabilities_json TEXT NOT NULL DEFAULT '[]',
+            icon_url TEXT,
+            documentation_url TEXT,
+            required_scopes_json TEXT DEFAULT '[]',
+            is_available INTEGER DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        /**
+         * Organization Connector Configurations
+         * Stores per-org connector configs with encrypted secrets (AES-256-GCM).
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS org_connector_configs (
+            id TEXT PRIMARY KEY,
+            org_id TEXT NOT NULL,
+            connector_key TEXT NOT NULL,
+            status TEXT DEFAULT 'DISCONNECTED',
+            encrypted_secrets TEXT,
+            scopes_json TEXT DEFAULT '[]',
+            sandbox_mode INTEGER DEFAULT 0,
+            configured_by TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(org_id, connector_key),
+            FOREIGN KEY(org_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(connector_key) REFERENCES connectors(key),
+            FOREIGN KEY(configured_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_org_connector_configs_org ON org_connector_configs(org_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_org_connector_configs_status ON org_connector_configs(status)`);
+
+        /**
+         * Connector Health Monitoring
+         * Tracks health status of each org's connector configuration.
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS connector_health (
+            id TEXT PRIMARY KEY,
+            org_id TEXT NOT NULL,
+            connector_key TEXT NOT NULL,
+            last_check_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            last_ok_at DATETIME,
+            last_error_code TEXT,
+            last_error_message TEXT,
+            consecutive_failures INTEGER DEFAULT 0,
+            UNIQUE(org_id, connector_key),
+            FOREIGN KEY(org_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(connector_key) REFERENCES connectors(key)
+        )`);
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_connector_health_org ON connector_health(org_id)`);
+
+        // Seed default connectors catalog
+        const connectorsCatalog = [
+            { key: 'jira', name: 'Jira Cloud', category: 'project_management', capabilities: ['issue_create', 'issue_update', 'issue_read', 'webhook'] },
+            { key: 'google_calendar', name: 'Google Calendar', category: 'calendar', capabilities: ['event_create', 'event_update', 'event_read'] },
+            { key: 'slack', name: 'Slack', category: 'communication', capabilities: ['message_send', 'channel_read', 'webhook'] },
+            { key: 'teams', name: 'Microsoft Teams', category: 'communication', capabilities: ['message_send', 'channel_read'] },
+            { key: 'hubspot', name: 'HubSpot', category: 'crm', capabilities: ['contact_create', 'contact_update', 'deal_create', 'deal_update'] }
+        ];
+
+        const insertConnector = db.prepare(`INSERT OR IGNORE INTO connectors (key, name, category, capabilities_json) VALUES (?, ?, ?, ?)`);
+        connectorsCatalog.forEach(c => {
+            insertConnector.run(c.key, c.name, c.category, JSON.stringify(c.capabilities));
+        });
+        insertConnector.finalize();
+
+        // ==========================================
+        // STEP 18: OUTCOMES, ROI & CONTINUOUS LEARNING LOOP
+        // Outcome tracking, ROI dashboards, effectiveness measurement
+        // ==========================================
+
+        /**
+         * Outcome Definitions Table
+         * Defines what metrics to track per action type or playbook template.
+         * Each org can customize their outcome tracking criteria.
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS outcome_definitions (
+            id TEXT PRIMARY KEY,
+            org_id TEXT NOT NULL,
+            entity_type TEXT NOT NULL,               -- ACTION_TYPE | PLAYBOOK_TEMPLATE
+            entity_key TEXT NOT NULL,                -- e.g., 'TASK_CREATE' or playbook template key
+            metrics_tracked TEXT NOT NULL DEFAULT '{}', -- JSON: { "tasks_completed": true, "time_saved_mins": true }
+            measurement_window_days INTEGER DEFAULT 7,
+            baseline_query TEXT,                      -- Optional custom SQL for baseline
+            success_criteria TEXT DEFAULT '{}',       -- JSON: { "tasks_completed_delta": "> 0" }
+            is_active INTEGER DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(org_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_outcome_definitions_org ON outcome_definitions(org_id, entity_type)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_outcome_definitions_entity ON outcome_definitions(entity_type, entity_key)`);
+
+        /**
+         * Outcome Measurements Table (APPEND-ONLY for Audit)
+         * Stores before/after snapshots for each action/playbook execution.
+         * Delta is computed after measurement window.
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS outcome_measurements (
+            id TEXT PRIMARY KEY,
+            org_id TEXT NOT NULL,
+            definition_id TEXT NOT NULL,
+            run_id TEXT,                              -- Link to ai_playbook_runs (nullable)
+            execution_id TEXT,                        -- Link to action_executions (nullable)
+            entity_type TEXT NOT NULL,
+            entity_key TEXT NOT NULL,
+            baseline_json TEXT NOT NULL DEFAULT '{}',
+            after_json TEXT DEFAULT '{}',
+            delta_json TEXT DEFAULT '{}',
+            is_success INTEGER,                       -- Computed based on success_criteria
+            baseline_captured_at DATETIME NOT NULL,
+            after_captured_at DATETIME,
+            computed_at DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(org_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(definition_id) REFERENCES outcome_definitions(id) ON DELETE SET NULL
+        )`);
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_outcome_measurements_org ON outcome_measurements(org_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_outcome_measurements_run ON outcome_measurements(run_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_outcome_measurements_exec ON outcome_measurements(execution_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_outcome_measurements_computed ON outcome_measurements(computed_at)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_outcome_measurements_success ON outcome_measurements(org_id, is_success)`);
+
+        /**
+         * ROI Models Table
+         * Defines assumptions and formulas for ROI calculations.
+         * Each org can have multiple models, one is default.
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS roi_models (
+            id TEXT PRIMARY KEY,
+            org_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT,
+            assumptions TEXT NOT NULL DEFAULT '{}',   -- JSON: { "hourly_cost": 75, "downtime_cost_per_hour": 500 }
+            metric_mappings TEXT NOT NULL DEFAULT '{}', -- JSON: { "time_saved_mins": { "formula": "value * (hourly_cost/60)" } }
+            is_default INTEGER DEFAULT 0,
+            created_by TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(org_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_roi_models_org ON roi_models(org_id, is_default)`);
+
+        // ==========================================
+        // STEP 16: HUMAN WORKFLOW, SLA, ESCALATION & NOTIFICATIONS
+        // Assignment tracking, SLA timers, escalations, notification outbox
+        // ==========================================
+
+        /**
+         * Approval Assignments Table
+         * 
+         * Tracks assignment of proposals to specific users with SLA deadlines.
+         * Status flow: PENDING → ACKED → DONE | EXPIRED
+         * Supports escalation when SLA expires.
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS approval_assignments (
+            id TEXT PRIMARY KEY,
+            org_id TEXT NOT NULL,
+            proposal_id TEXT NOT NULL,
+            assigned_to_user_id TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'PENDING', -- PENDING|ACKED|DONE|EXPIRED
+            sla_due_at DATETIME NOT NULL,
+            escalated_to_user_id TEXT,
+            escalated_at DATETIME,
+            escalation_reason TEXT,
+            acked_at DATETIME,
+            completed_at DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(org_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(assigned_to_user_id) REFERENCES users(id) ON DELETE SET NULL,
+            FOREIGN KEY(escalated_to_user_id) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_approval_assignments_org ON approval_assignments(org_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_approval_assignments_user ON approval_assignments(assigned_to_user_id, status)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_approval_assignments_proposal ON approval_assignments(proposal_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_approval_assignments_sla ON approval_assignments(sla_due_at, status)`);
+
+        /**
+         * User Notification Preferences Table
+         * 
+         * Per-user notification settings covering channels and event types.
+         * Unique constraint per user/org combination.
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS user_notification_preferences (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            org_id TEXT NOT NULL,
+            channel_email INTEGER DEFAULT 1,
+            channel_slack INTEGER DEFAULT 0,
+            channel_teams INTEGER DEFAULT 0,
+            event_approval_due INTEGER DEFAULT 1,
+            event_playbook_stuck INTEGER DEFAULT 1,
+            event_dead_letter INTEGER DEFAULT 1,
+            event_escalation INTEGER DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY(org_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            UNIQUE(user_id, org_id)
+        )`);
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_user_notification_prefs_user ON user_notification_preferences(user_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_user_notification_prefs_org ON user_notification_preferences(org_id)`);
+
+        /**
+         * Notification Outbox Table (APPEND-ONLY)
+         * 
+         * CRITICAL: This table is APPEND-ONLY for reliability.
+         * Implements outbox pattern for async notification delivery.
+         * Status flow: QUEUED → SENT | FAILED
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS notification_outbox (
+            id TEXT PRIMARY KEY,
+            org_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            notification_type TEXT NOT NULL, -- APPROVAL_DUE|PLAYBOOK_STUCK|DEAD_LETTER|ESCALATION
+            payload_json TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'QUEUED', -- QUEUED|SENT|FAILED
+            channel TEXT NOT NULL DEFAULT 'email',
+            attempts INTEGER DEFAULT 0,
+            last_attempt_at DATETIME,
+            sent_at DATETIME,
+            error_message TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(org_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_notification_outbox_status ON notification_outbox(status)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_notification_outbox_user ON notification_outbox(user_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_notification_outbox_org ON notification_outbox(org_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_notification_outbox_created ON notification_outbox(created_at)`);
+
+        // ==========================================
+        // STEP 15: EXPLAINABILITY LEDGER & EVIDENCE PACK
+        // Evidence objects, explainability links, and reasoning ledger
+        // ==========================================
+
+        /**
+         * AI Evidence Objects Table
+         * 
+         * Stores raw evidence (metrics, signals, docs, events) used for AI decisions.
+         * Payloads are redacted before storage to prevent PII exposure.
+         * Types: METRIC_SNAPSHOT | SIGNAL | DOC_REF | USER_EVENT | SYSTEM_EVENT
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS ai_evidence_objects (
+            id TEXT PRIMARY KEY,
+            org_id TEXT NOT NULL,
+            type TEXT NOT NULL,
+            source TEXT NOT NULL,
+            payload_json TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(org_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_ai_evidence_objects_org ON ai_evidence_objects(org_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_ai_evidence_objects_type ON ai_evidence_objects(type, created_at)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_ai_evidence_objects_source ON ai_evidence_objects(source)`);
+
+        /**
+         * AI Explainability Links Table
+         * 
+         * Links evidence objects to AI entities (proposals, decisions, executions, run_steps).
+         * Many-to-many relationship with weight (0-1) for importance scoring.
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS ai_explainability_links (
+            id TEXT PRIMARY KEY,
+            from_type TEXT NOT NULL,
+            from_id TEXT NOT NULL,
+            evidence_id TEXT NOT NULL,
+            weight REAL DEFAULT 1.0,
+            note TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(evidence_id) REFERENCES ai_evidence_objects(id) ON DELETE CASCADE
+        )`);
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_ai_explainability_links_from ON ai_explainability_links(from_type, from_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_ai_explainability_links_evidence ON ai_explainability_links(evidence_id)`);
+
+        /**
+         * AI Reasoning Ledger Table (IMMUTABLE)
+         * 
+         * Server-generated reasoning summaries. CRITICAL: No client input allowed.
+         * Each entry is immutable - corrections require new entries.
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS ai_reasoning_ledger (
+            id TEXT PRIMARY KEY,
+            entity_type TEXT NOT NULL,
+            entity_id TEXT NOT NULL,
+            reasoning_summary TEXT NOT NULL,
+            assumptions_json TEXT DEFAULT '[]',
+            confidence REAL NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_ai_reasoning_ledger_entity ON ai_reasoning_ledger(entity_type, entity_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_ai_reasoning_ledger_confidence ON ai_reasoning_ledger(confidence)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_ai_reasoning_ledger_created ON ai_reasoning_ledger(created_at)`);
+
+        // ==========================================
+        // STEP 19: ENTERPRISE GOVERNANCE LAYER
+        // ==========================================
+
+        /**
+         * Permissions Table (PBAC)
+         * Granular permissions that can be assigned to roles.
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS permissions (
+            id TEXT PRIMARY KEY,
+            scope TEXT NOT NULL,         -- global, organization, project
+            resource TEXT NOT NULL,      -- e.g. 'financials', 'settings', 'ai_ops'
+            action TEXT NOT NULL,        -- create, read, update, delete, approve
+            name TEXT NOT NULL,
+            description TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(scope, resource, action)
+        )`);
+
+        /**
+         * Role Permissions Table
+         * Maps defined roles (e.g. 'ORG_ADMIN', 'PMO_MANAGER') to specific permissions.
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS role_permissions (
+            role_key TEXT NOT NULL,      -- e.g. 'ORG_ADMIN'
+            permission_id TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY(role_key, permission_id),
+            FOREIGN KEY(permission_id) REFERENCES permissions(id) ON DELETE CASCADE
+        )`);
+
+        /**
+         * Organization User Permissions (Overrides)
+         * Specific permissions granted to a user within an org, independent of their role.
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS org_user_permissions (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            permission_id TEXT NOT NULL,
+            is_granted INTEGER DEFAULT 1, -- 1=grant, 0=deny (explicit deny)
+            granted_by TEXT,
+            granted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY(permission_id) REFERENCES permissions(id) ON DELETE CASCADE
+        )`);
+
+        /**
+         * Governance Audit Log (Immutable)
+         * High-fidelity audit trail for all governance actions.
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS governance_audit_log (
+            id TEXT PRIMARY KEY,
+            event_type TEXT NOT NULL,
+            actor_id TEXT NOT NULL,
+            organization_id TEXT,
+            project_id TEXT,
+            resource_type TEXT NOT NULL,
+            resource_id TEXT NOT NULL,
+            previous_state TEXT,    -- JSON snapshot
+            new_state TEXT,         -- JSON snapshot
+            metadata TEXT,          -- JSON: ip, user_agent, correlation_id
+            hash TEXT,              -- Tamper-evident hash
+            prev_hash TEXT,         -- Link to previous record
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_gov_audit_org ON governance_audit_log(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_gov_audit_actor ON governance_audit_log(actor_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_gov_audit_resource ON governance_audit_log(resource_type, resource_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_gov_audit_created ON governance_audit_log(created_at)`);
+
+        /**
+         * Break Glass Sessions
+         * Tracks emergency administrative access.
+         */
+        // Align schema with Step 14 governance controls (see migrations/014_governance_enterprise.sql)
+        // NOTE: Keep fields compatible with BreakGlassService expectations.
+        db.run(`CREATE TABLE IF NOT EXISTS break_glass_sessions (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            actor_id TEXT NOT NULL,
+            reason TEXT NOT NULL,
+            scope TEXT NOT NULL,
+            expires_at DATETIME NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            closed_at DATETIME,
+            -- Legacy/compat fields (safe to keep, optional)
+            ticket_ref TEXT,
+            permissions_granted TEXT,
+            started_at DATETIME,
+            ended_at DATETIME,
+            is_active INTEGER DEFAULT 1,
+            FOREIGN KEY(actor_id) REFERENCES users(id),
+            FOREIGN KEY(organization_id) REFERENCES organizations(id)
+        )`);
+
         // Seed Super Admin & Default Organization
         const superAdminOrgId = 'org-dbr77-system';
         const superAdminId = 'admin-001';

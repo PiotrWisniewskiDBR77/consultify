@@ -40,7 +40,25 @@ const Scheduler = {
             });
         });
 
-        console.log('[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM)');
+        // 6. SLA Check & Escalation - Run every 10 minutes
+        cron.schedule('*/10 * * * *', () => {
+            console.log('[Scheduler] Running SLA Check & Escalation');
+            const SLAService = require('../services/slaService');
+            SLAService.runSlaCheck().catch(err => {
+                console.error('[Scheduler] SLA Check failed:', err.message);
+            });
+        });
+
+        // 7. Notification Queue Processing - Run every 10 minutes
+        cron.schedule('*/10 * * * *', () => {
+            console.log('[Scheduler] Processing Notification Queue');
+            const NotificationOutboxService = require('../services/notificationOutboxService');
+            NotificationOutboxService.processQueue().catch(err => {
+                console.error('[Scheduler] Notification Queue Processing failed:', err.message);
+            });
+        });
+
+        console.log('[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min)');
     }
 };
 
