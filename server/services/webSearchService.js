@@ -1,5 +1,21 @@
 const db = require('../database');
-const fetch = require('node-fetch'); // Ensure node-fetch is available (built-in in newer node or needs install)
+
+// Use native fetch (Node.js 18+) or fallback to node-fetch if available
+let fetch;
+try {
+    // Node.js 18+ has native fetch
+    fetch = global.fetch || globalThis.fetch;
+    if (!fetch) {
+        // Try to load node-fetch as fallback
+        fetch = require('node-fetch');
+    }
+} catch (err) {
+    console.warn('[WebSearch] No fetch implementation available. Web search will be disabled.');
+    // Create a dummy fetch that returns error
+    fetch = async () => {
+        throw new Error('Fetch not available - web search disabled');
+    };
+}
 
 // Helper to get API Key
 const getSearchProvider = () => {
