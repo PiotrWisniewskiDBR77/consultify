@@ -9,37 +9,17 @@ const mockDb = {
     initPromise: Promise.resolve()
 };
 
-vi.mock('../../../server/database', () => ({
-    default: mockDb
-}));
-
 const mockAIPolicyEngine = {
     canPerformAction: vi.fn()
 };
-
-vi.mock('../../../server/services/aiPolicyEngine', () => ({
-    default: mockAIPolicyEngine
-}));
 
 const mockAIRoleGuard = {
     isActionBlocked: vi.fn()
 };
 
-vi.mock('../../../server/services/aiRoleGuard', () => ({
-    default: mockAIRoleGuard
-}));
-
 const mockRegulatoryModeGuard = {
     enforceRegulatoryMode: vi.fn()
 };
-
-vi.mock('../../../server/services/regulatoryModeGuard', () => ({
-    default: mockRegulatoryModeGuard
-}));
-
-vi.mock('uuid', () => ({
-    v4: () => 'test-uuid-1234'
-}));
 
 // Import after mocks
 import AIActionExecutor from '../../../server/services/aiActionExecutor.js';
@@ -47,6 +27,15 @@ import AIActionExecutor from '../../../server/services/aiActionExecutor.js';
 describe('AIActionExecutor', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+
+        // Inject deterministic dependencies for unit tests
+        AIActionExecutor.setDependencies({
+            db: mockDb,
+            uuidv4: () => 'test-uuid-1234',
+            AIPolicyEngine: mockAIPolicyEngine,
+            AIRoleGuard: mockAIRoleGuard,
+            RegulatoryModeGuard: mockRegulatoryModeGuard
+        });
 
         // Default mock behaviors
         mockRegulatoryModeGuard.enforceRegulatoryMode.mockResolvedValue({ blocked: false });

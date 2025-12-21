@@ -10,6 +10,13 @@ const db = require('../database');
 const { v4: uuidv4 } = require('uuid');
 const GovernanceAuditService = require('./governanceAuditService');
 
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db,
+    uuidv4,
+    GovernanceAuditService
+};
+
 // Allowed break-glass scopes
 const BREAK_GLASS_SCOPES = {
     POLICY_ENGINE_DISABLED: 'policy_engine_disabled',
@@ -29,6 +36,11 @@ const BreakGlassService = {
     SCOPES: BREAK_GLASS_SCOPES,
     DEFAULT_DURATION_MINUTES,
     MAX_DURATION_MINUTES,
+
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
 
     /**
      * Start a break-glass session
@@ -68,12 +80,12 @@ const BreakGlassService = {
             throw new Error(`Active break-glass session already exists for scope: ${scope}`);
         }
 
-        const sessionId = uuidv4();
+        const sessionId = deps.uuidv4();
         const createdAt = new Date();
         const expiresAt = new Date(createdAt.getTime() + duration * 60 * 1000);
 
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `INSERT INTO break_glass_sessions 
                  (id, organization_id, actor_id, reason, scope, expires_at, created_at)
                  VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -86,12 +98,12 @@ const BreakGlassService = {
 
                     // Log to governance audit
                     try {
-                        await GovernanceAuditService.logAudit({
+                        await deps.GovernanceAuditService.logAudit({
                             actorId,
                             actorRole,
                             orgId,
-                            action: GovernanceAuditService.AUDIT_ACTIONS.BREAK_GLASS_START,
-                            resourceType: GovernanceAuditService.RESOURCE_TYPES.BREAK_GLASS_SESSION,
+                            action: deps.GovernanceAuditService.AUDIT_ACTIONS.BREAK_GLASS_START,
+                            resourceType: deps.GovernanceAuditService.RESOURCE_TYPES.BREAK_GLASS_SESSION,
                             resourceId: sessionId,
                             after: { sessionId, scope, reason, expiresAt: expiresAt.toISOString() }
                         });
@@ -124,7 +136,7 @@ const BreakGlassService = {
      */
     closeSession: async (sessionId, actorId, actorRole) => {
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT * FROM break_glass_sessions WHERE id = ?`,
                 [sessionId],
                 async (err, session) => {
@@ -143,7 +155,7 @@ const BreakGlassService = {
 
                     const closedAt = new Date().toISOString();
 
-                    db.run(
+                    deps.db.run(
                         `UPDATE break_glass_sessions SET closed_at = ? WHERE id = ?`,
                         [closedAt, sessionId],
                         async function (updateErr) {
@@ -151,12 +163,12 @@ const BreakGlassService = {
 
                             // Log to governance audit
                             try {
-                                await GovernanceAuditService.logAudit({
+                                await deps.GovernanceAuditService.logAudit({
                                     actorId,
                                     actorRole,
                                     orgId: session.organization_id,
-                                    action: GovernanceAuditService.AUDIT_ACTIONS.BREAK_GLASS_CLOSE,
-                                    resourceType: GovernanceAuditService.RESOURCE_TYPES.BREAK_GLASS_SESSION,
+                                    action: deps.GovernanceAuditService.AUDIT_ACTIONS.BREAK_GLASS_CLOSE,
+                                    resourceType: deps.GovernanceAuditService.RESOURCE_TYPES.BREAK_GLASS_SESSION,
                                     resourceId: sessionId,
                                     before: { sessionId, scope: session.scope, closedAt: null },
                                     after: { sessionId, scope: session.scope, closedAt }
@@ -189,7 +201,7 @@ const BreakGlassService = {
         const now = new Date().toISOString();
 
         return new Promise((resolve, reject) => {
-            db.all(
+            deps.db.all(
                 `SELECT * FROM break_glass_sessions 
                  WHERE organization_id = ? 
                  AND expires_at > ? 
@@ -223,7 +235,7 @@ const BreakGlassService = {
         const now = new Date().toISOString();
 
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT * FROM break_glass_sessions 
                  WHERE organization_id = ? 
                  AND scope = ?
@@ -267,7 +279,7 @@ const BreakGlassService = {
         const now = new Date().toISOString();
 
         return new Promise((resolve, reject) => {
-            db.all(
+            deps.db.all(
                 `SELECT bgs.*, o.name as organization_name, u.email as actor_email
                  FROM break_glass_sessions bgs
                  LEFT JOIN organizations o ON o.id = bgs.organization_id

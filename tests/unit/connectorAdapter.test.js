@@ -1,7 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
 
 // Mock database
 const mockDb = {
@@ -16,8 +13,21 @@ const mockConnectorService = {
     getConfig: vi.fn()
 };
 
-vi.mock('../../server/database', () => mockDb);
-vi.mock('../../server/services/connectorService', () => mockConnectorService);
+const mockConnectorRegistry = {
+    getConnector: vi.fn((key) => {
+        const catalog = {
+            slack: { key: 'slack', capabilities: ['message_send'] },
+            jira: { key: 'jira', capabilities: ['issue_create'] },
+            google_calendar: { key: 'google_calendar', capabilities: ['event_create'] }
+        };
+        return catalog[key] || null;
+    })
+};
+
+const mockAuditLogger = {
+    info: vi.fn(),
+    error: vi.fn()
+};
 
 describe('ConnectorAdapter', () => {
     let connectorAdapter;
@@ -26,8 +36,15 @@ describe('ConnectorAdapter', () => {
         vi.resetModules();
         vi.clearAllMocks();
 
-        // Re-require after mocks
-        connectorAdapter = require('../../server/ai/connectorAdapter');
+        // Re-import after mocks (ensures vi.mock applies reliably)
+        const mod = await import('../../server/ai/connectorAdapter.js');
+        connectorAdapter = mod.default || mod;
+
+        connectorAdapter.setDependencies({
+            connectorService: mockConnectorService,
+            connectorRegistry: mockConnectorRegistry,
+            auditLogger: mockAuditLogger
+        });
     });
 
     describe('Dry-run Mode', () => {

@@ -10,7 +10,18 @@ const connectorService = require('../services/connectorService');
 const connectorRegistry = require('../services/connectorRegistry');
 const auditLogger = require('../utils/auditLogger');
 
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    connectorService,
+    connectorRegistry,
+    auditLogger
+};
+
 const ConnectorAdapter = {
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
     /**
      * Execute an action through a connector.
      * @param {string} orgId - Organization ID
@@ -26,7 +37,7 @@ const ConnectorAdapter = {
         const startTime = Date.now();
 
         // Validate connector exists
-        const connector = connectorRegistry.getConnector(connectorKey);
+        const connector = deps.connectorRegistry.getConnector(connectorKey);
         if (!connector) {
             return {
                 success: false,
@@ -45,7 +56,7 @@ const ConnectorAdapter = {
         }
 
         // Get org config
-        const config = await connectorService.getConfig(orgId, connectorKey);
+        const config = await deps.connectorService.getConfig(orgId, connectorKey);
 
         if (!config || config.status !== 'CONNECTED') {
             return {
@@ -62,7 +73,7 @@ const ConnectorAdapter = {
             // Return dry-run plan
             const plan = ConnectorAdapter._generatePlan(connectorKey, action, payload);
 
-            auditLogger.info('CONNECTOR_DRY_RUN', {
+            deps.auditLogger.info('CONNECTOR_DRY_RUN', {
                 org_id: orgId,
                 connector_key: connectorKey,
                 action,
@@ -83,10 +94,10 @@ const ConnectorAdapter = {
 
         // Execute real action
         try {
-            const secrets = await connectorService.getSecrets(orgId, connectorKey);
+            const secrets = await deps.connectorService.getSecrets(orgId, connectorKey);
             const result = await ConnectorAdapter._executeAction(connectorKey, action, payload, secrets);
 
-            auditLogger.info('CONNECTOR_EXECUTED', {
+            deps.auditLogger.info('CONNECTOR_EXECUTED', {
                 org_id: orgId,
                 connector_key: connectorKey,
                 action,
@@ -101,7 +112,7 @@ const ConnectorAdapter = {
                 duration_ms: Date.now() - startTime
             };
         } catch (error) {
-            auditLogger.error('CONNECTOR_EXECUTION_ERROR', {
+            deps.auditLogger.error('CONNECTOR_EXECUTION_ERROR', {
                 org_id: orgId,
                 connector_key: connectorKey,
                 action,

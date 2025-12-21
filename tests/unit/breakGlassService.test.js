@@ -5,42 +5,35 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Create hoisted mocks
-const { mockDb } = vi.hoisted(() => ({
-    mockDb: {
-        get: vi.fn(),
-        run: vi.fn(),
-        all: vi.fn(),
-        serialize: vi.fn(cb => cb()),
-        initPromise: Promise.resolve()
-    }
-}));
+const mockDb = {
+    get: vi.fn(),
+    run: vi.fn(),
+    all: vi.fn(),
+    serialize: vi.fn(cb => cb()),
+    initPromise: Promise.resolve()
+};
 
-// Mock database
-vi.mock('../../server/database', () => ({
-    default: mockDb,
-    ...mockDb
-}));
-
-// Mock governance audit service
-vi.mock('../../server/services/governanceAuditService', () => ({
-    default: {
-        logAudit: vi.fn().mockResolvedValue({ id: 'audit-1' }),
-        AUDIT_ACTIONS: {
-            BREAK_GLASS_START: 'BREAK_GLASS_START',
-            BREAK_GLASS_CLOSE: 'BREAK_GLASS_CLOSE'
-        },
-        RESOURCE_TYPES: {
-            BREAK_GLASS_SESSION: 'BREAK_GLASS_SESSION'
-        }
+const mockGovernanceAuditService = {
+    logAudit: vi.fn().mockResolvedValue({ id: 'audit-1' }),
+    AUDIT_ACTIONS: {
+        BREAK_GLASS_START: 'BREAK_GLASS_START',
+        BREAK_GLASS_CLOSE: 'BREAK_GLASS_CLOSE'
+    },
+    RESOURCE_TYPES: {
+        BREAK_GLASS_SESSION: 'BREAK_GLASS_SESSION'
     }
-}));
+};
 
 const BreakGlassService = require('../../server/services/breakGlassService');
 
 describe('BreakGlassService', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        BreakGlassService.setDependencies({
+            db: mockDb,
+            GovernanceAuditService: mockGovernanceAuditService,
+            uuidv4: () => 'test-uuid-1234'
+        });
         mockDb.get.mockImplementation((sql, params, cb) => cb(null, null));
         mockDb.run.mockImplementation((sql, params, cb) => cb.call({ changes: 1 }, null));
         mockDb.all.mockImplementation((sql, params, cb) => cb(null, []));

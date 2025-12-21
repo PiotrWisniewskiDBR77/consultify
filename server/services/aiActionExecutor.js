@@ -7,6 +7,15 @@ const AIPolicyEngine = require('./aiPolicyEngine');
 const AIRoleGuard = require('./aiRoleGuard');
 const RegulatoryModeGuard = require('./regulatoryModeGuard');
 
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db,
+    uuidv4,
+    AIPolicyEngine,
+    AIRoleGuard,
+    RegulatoryModeGuard
+};
+
 const ACTION_TYPES = {
     CREATE_DRAFT_TASK: 'CREATE_DRAFT_TASK',
     CREATE_DRAFT_INITIATIVE: 'CREATE_DRAFT_INITIATIVE',
@@ -28,13 +37,18 @@ const AIActionExecutor = {
     ACTION_TYPES,
     ACTION_STATUS,
 
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
+
     /**
      * Request an AI action
      */
     requestAction: async (actionType, payload, userId, organizationId, projectId = null) => {
         // 0. REGULATORY MODE: Block ALL mutation actions (highest priority)
         if (projectId) {
-            const regulatoryCheck = await RegulatoryModeGuard.enforceRegulatoryMode(
+            const regulatoryCheck = await deps.RegulatoryModeGuard.enforceRegulatoryMode(
                 { userId, organizationId, projectId },
                 actionType
             );
@@ -53,7 +67,7 @@ const AIActionExecutor = {
 
         // AI Roles Model: Check if action is blocked by project role
         if (projectId) {
-            const roleCheck = await AIRoleGuard.isActionBlocked(projectId, actionType);
+            const roleCheck = await deps.AIRoleGuard.isActionBlocked(projectId, actionType);
             if (roleCheck.blocked) {
                 return {
                     success: false,
@@ -72,7 +86,7 @@ const AIActionExecutor = {
         }
 
         // Check if action is allowed by policy level
-        const permission = await AIPolicyEngine.canPerformAction(actionType, organizationId, projectId, userId);
+        const permission = await deps.AIPolicyEngine.canPerformAction(actionType, organizationId, projectId, userId);
 
         if (!permission.allowed) {
             return {
@@ -83,12 +97,13 @@ const AIActionExecutor = {
         }
 
         // AI Roles Model: MANAGER role always requires approval for draft actions
-        const requiresApproval = permission.requiresApproval || payload._forceApproval;
+        // Normalize to boolean (avoid `false || undefined` => undefined)
+        const requiresApproval = Boolean(permission.requiresApproval || payload._forceApproval);
 
-        const id = uuidv4();
+        const id = deps.uuidv4();
 
         return new Promise((resolve, reject) => {
-            db.run(`INSERT INTO ai_actions 
+            deps.db.run(`INSERT INTO ai_actions 
                 (id, user_id, organization_id, project_id, action_type, payload, 
                  required_policy_level, current_policy_level, requires_approval, status)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -128,7 +143,7 @@ const AIActionExecutor = {
         if (result.success) {
             // Store draft content
             await new Promise((resolve, reject) => {
-                db.run(`UPDATE ai_actions SET draft_content = ? WHERE id = ?`,
+                deps.db.run(`UPDATE ai_actions SET draft_content = ? WHERE id = ?`,
                     [JSON.stringify(draftContent), result.actionId], (err) => {
                         if (err) reject(err);
                         else resolve();
@@ -144,7 +159,7 @@ const AIActionExecutor = {
      */
     approveAction: async (actionId, userId) => {
         return new Promise((resolve, reject) => {
-            db.run(`UPDATE ai_actions 
+            deps.db.run(`UPDATE ai_actions 
                     SET status = 'APPROVED', approved_at = CURRENT_TIMESTAMP, approved_by = ?
                     WHERE id = ? AND status = 'PENDING'`,
                 [userId, actionId], function (err) {
@@ -164,7 +179,7 @@ const AIActionExecutor = {
      */
     rejectAction: async (actionId, userId, reason = null) => {
         return new Promise((resolve, reject) => {
-            db.run(`UPDATE ai_actions 
+            deps.db.run(`UPDATE ai_actions 
                     SET status = 'REJECTED', approved_at = CURRENT_TIMESTAMP, approved_by = ?
                     WHERE id = ? AND status = 'PENDING'`,
                 [userId, actionId], function (err) {
@@ -188,7 +203,7 @@ const AIActionExecutor = {
     executeAction: async (actionId, userId) => {
         // Get action
         const action = await new Promise((resolve, reject) => {
-            db.get(`SELECT * FROM ai_actions WHERE id = ?`, [actionId], (err, row) => {
+            deps.db.get(`SELECT * FROM ai_actions WHERE id = ?`, [actionId], (err, row) => {
                 if (err) reject(err);
                 else resolve(row);
             });
@@ -224,7 +239,7 @@ const AIActionExecutor = {
 
             // Mark as executed
             await new Promise((resolve, reject) => {
-                db.run(`UPDATE ai_actions SET status = 'EXECUTED', executed_at = CURRENT_TIMESTAMP WHERE id = ?`,
+                deps.db.run(`UPDATE ai_actions SET status = 'EXECUTED', executed_at = CURRENT_TIMESTAMP WHERE id = ?`,
                     [actionId], (err) => {
                         if (err) reject(err);
                         else resolve();
@@ -260,7 +275,7 @@ const AIActionExecutor = {
 
             sql += ` ORDER BY created_at DESC`;
 
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) return reject(err);
 
                 const result = (rows || []).map(row => {
@@ -279,11 +294,11 @@ const AIActionExecutor = {
     // ==================== INTERNAL EXECUTORS ====================
 
     _executeCreateTask: async (draftContent, action) => {
-        const taskId = uuidv4();
+        const taskId = deps.uuidv4();
         const { title, description, assigneeId, dueDate } = draftContent;
 
         await new Promise((resolve, reject) => {
-            db.run(`INSERT INTO tasks (id, project_id, title, description, assignee_id, due_date, status, created_by)
+            deps.db.run(`INSERT INTO tasks (id, project_id, title, description, assignee_id, due_date, status, created_by)
                     VALUES (?, ?, ?, ?, ?, ?, 'TODO', ?)`,
                 [taskId, action.project_id, title, description, assigneeId, dueDate, action.user_id], (err) => {
                     if (err) reject(err);
@@ -295,11 +310,11 @@ const AIActionExecutor = {
     },
 
     _executeCreateInitiative: async (draftContent, action) => {
-        const initiativeId = uuidv4();
+        const initiativeId = deps.uuidv4();
         const { name, description, ownerId, priority } = draftContent;
 
         await new Promise((resolve, reject) => {
-            db.run(`INSERT INTO initiatives (id, project_id, name, description, owner_business_id, priority, status)
+            deps.db.run(`INSERT INTO initiatives (id, project_id, name, description, owner_business_id, priority, status)
                     VALUES (?, ?, ?, ?, ?, ?, 'DRAFT')`,
                 [initiativeId, action.project_id, name, description, ownerId, priority || 'MEDIUM'], (err) => {
                     if (err) reject(err);
@@ -313,16 +328,16 @@ const AIActionExecutor = {
     _logAudit: async (actionId, userId, decision, feedback = null) => {
         // Get action for context
         const action = await new Promise((resolve, reject) => {
-            db.get(`SELECT * FROM ai_actions WHERE id = ?`, [actionId], (err, row) => {
+            deps.db.get(`SELECT * FROM ai_actions WHERE id = ?`, [actionId], (err, row) => {
                 if (err) reject(err);
                 else resolve(row || {});
             });
         });
 
-        const auditId = uuidv4();
+        const auditId = deps.uuidv4();
 
         return new Promise((resolve, reject) => {
-            db.run(`INSERT INTO ai_audit_logs 
+            deps.db.run(`INSERT INTO ai_audit_logs 
                 (id, user_id, organization_id, project_id, action_type, action_description, 
                  ai_role, policy_level, user_decision, user_feedback)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
