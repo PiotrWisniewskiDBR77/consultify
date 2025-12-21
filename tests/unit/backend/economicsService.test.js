@@ -12,23 +12,25 @@ import { testUsers, testOrganizations, testProjects } from '../../fixtures/testD
 
 const require = createRequire(import.meta.url);
 
+// Mock UUID before imports - must be at module level
+const mockUuid = createMockUuid('hypothesis');
+vi.mock('uuid', () => ({
+    v4: mockUuid
+}));
+
 describe('EconomicsService', () => {
     let mockDb;
     let EconomicsService;
-    let mockUuid;
 
     beforeEach(() => {
         mockDb = createMockDb();
-        mockUuid = createMockUuid('hypothesis');
 
         vi.mock('../../../server/database', () => ({
             default: mockDb
         }));
 
-        vi.mock('uuid', () => ({
-            v4: mockUuid
-        }));
-
+        // Clear module cache to ensure fresh import with mocks
+        vi.resetModules();
         EconomicsService = require('../../../server/services/economicsService.js');
     });
 

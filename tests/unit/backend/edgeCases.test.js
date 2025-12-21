@@ -128,11 +128,14 @@ describe('Edge Cases and Error Scenarios', () => {
         it('should reject invalid email format in invitations', async () => {
             const InvitationService = require('../../../server/services/invitationService.js');
             
+            // Mock database for InvitationService
+            InvitationService.setDependencies({ db: mockDb });
+            
             await expect(
                 InvitationService.createOrganizationInvitation({
                     organizationId: testOrganizations.org1.id,
                     email: 'invalid-email',
-                    orgRole: 'USER',
+                    role: 'USER',
                     invitedByUserId: testUsers.admin.id
                 })
             ).rejects.toThrow();

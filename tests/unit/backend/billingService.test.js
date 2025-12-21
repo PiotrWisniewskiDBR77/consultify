@@ -19,7 +19,7 @@ describe('BillingService', () => {
     beforeEach(() => {
         mockDb = createMockDb();
         
-        // Mock database
+        // Mock database - must be before import
         vi.mock('../../../server/database', () => ({
             default: mockDb
         }));
@@ -47,6 +47,9 @@ describe('BillingService', () => {
         const originalEnv = process.env.STRIPE_SECRET_KEY;
         delete process.env.STRIPE_SECRET_KEY;
 
+        // Clear module cache to ensure fresh import with mocks
+        vi.resetModules();
+        
         // Import service after mocks
         BillingService = require('../../../server/services/billingService.js');
 

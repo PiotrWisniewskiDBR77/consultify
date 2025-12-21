@@ -84,6 +84,28 @@ function initDb() {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
         )`);
+
+        // Token Ledger (Immutable ledger for AI cost tracking and metering)
+        db.run(`CREATE TABLE IF NOT EXISTS token_ledger (
+            id TEXT PRIMARY KEY,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            organization_id TEXT NOT NULL,
+            actor_user_id TEXT,
+            actor_type TEXT DEFAULT 'USER' CHECK(actor_type IN ('USER', 'SYSTEM', 'API')),
+            type TEXT NOT NULL CHECK(type IN ('CREDIT', 'DEBIT')),
+            amount INTEGER NOT NULL CHECK(amount > 0),
+            reason TEXT,
+            ref_entity_type TEXT CHECK(ref_entity_type IN ('AI_CALL', 'PURCHASE', 'GRANT', 'TRIAL_BONUS', 'ADJUSTMENT', 'REFUND')),
+            ref_entity_id TEXT,
+            metadata_json TEXT,
+            FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY (actor_user_id) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        // Indexes for token_ledger
+        db.run(`CREATE INDEX IF NOT EXISTS idx_token_ledger_org_id ON token_ledger(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_token_ledger_org_created ON token_ledger(organization_id, created_at DESC)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_token_ledger_type ON token_ledger(type)`);
         // Organization Members (RBAC)
         db.run(`CREATE TABLE IF NOT EXISTS organization_members (
             id TEXT PRIMARY KEY,
@@ -3528,19 +3550,23 @@ function initDb() {
         /**
          * Organization User Permissions (Overrides)
          * Specific permissions granted to a user within an org, independent of their role.
+         * Uses permission_key (string) instead of permission_id for compatibility with permissionService.
          */
         db.run(`CREATE TABLE IF NOT EXISTS org_user_permissions (
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL,
             user_id TEXT NOT NULL,
-            permission_id TEXT NOT NULL,
-            is_granted INTEGER DEFAULT 1, -- 1=grant, 0=deny (explicit deny)
+            permission_key TEXT NOT NULL,
+            grant_type TEXT NOT NULL CHECK(grant_type IN ('GRANT', 'REVOKE')),
             granted_by TEXT,
-            granted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(user_id, organization_id, permission_key),
             FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
-            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
-            FOREIGN KEY(permission_id) REFERENCES permissions(id) ON DELETE CASCADE
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
         )`);
+
+        // Index for org_user_permissions
+        db.run(`CREATE INDEX IF NOT EXISTS idx_org_user_perms_user ON org_user_permissions(user_id, organization_id)`);
 
         /**
          * Governance Audit Log (Immutable)

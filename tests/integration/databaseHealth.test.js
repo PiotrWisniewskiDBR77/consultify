@@ -41,6 +41,8 @@ describe('Integration Test: Database Health', () => {
                 'llm_providers',
                 'subscription_plans',
                 'organization_billing',
+                'token_ledger',
+                'org_user_permissions',
             ];
 
             for (const table of requiredTables) {

@@ -11,11 +11,16 @@ import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
 
-describe('Concurrent Operations Performance', () => {
-    let mockDb;
+// Mock database at module level before any imports
+const mockDb = createMockDb();
+vi.mock('../../../server/database', () => ({
+    default: mockDb
+}));
 
+describe('Concurrent Operations Performance', () => {
     beforeEach(() => {
-        mockDb = createMockDb();
+        // Reset mocks before each test
+        vi.clearAllMocks();
     });
 
     describe('Concurrent Database Operations', () => {
@@ -132,11 +137,17 @@ describe('Concurrent Operations Performance', () => {
         });
 
         it('should handle concurrent permission checks', async () => {
+            // Reset modules to ensure fresh import with mocks
+            vi.resetModules();
             const PermissionService = require('../../server/services/permissionService.js');
+            
             const concurrentChecks = 50;
             
+            // Mock responses for permission checks
             mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { has_permission: 1 });
+                // Return null for org_user_permissions (no override)
+                // Return null for role_permissions (no role permission)
+                callback(null, null);
             });
 
             const start = Date.now();

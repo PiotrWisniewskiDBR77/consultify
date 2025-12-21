@@ -12,15 +12,19 @@ import { testUsers, testOrganizations, testProjects } from '../../fixtures/testD
 
 const require = createRequire(import.meta.url);
 
+// Mock UUID before imports - must be at module level
+const mockUuid = createMockUuid('escalation');
+vi.mock('uuid', () => ({
+    v4: mockUuid
+}));
+
 describe('EscalationService', () => {
     let mockDb;
     let EscalationService;
-    let mockUuid;
     let mockNotificationService;
 
     beforeEach(() => {
         mockDb = createMockDb();
-        mockUuid = createMockUuid('escalation');
         mockNotificationService = {
             create: vi.fn().mockResolvedValue({ id: 'notif-123' })
         };
@@ -29,14 +33,12 @@ describe('EscalationService', () => {
             default: mockDb
         }));
 
-        vi.mock('uuid', () => ({
-            v4: mockUuid
-        }));
-
         vi.mock('../../../server/services/notificationService', () => ({
             default: mockNotificationService
         }));
 
+        // Clear module cache to ensure fresh import with mocks
+        vi.resetModules();
         EscalationService = require('../../../server/services/escalationService.js');
     });
 

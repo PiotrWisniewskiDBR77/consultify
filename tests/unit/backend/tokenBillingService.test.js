@@ -11,10 +11,10 @@ import { createMockDb } from '../../helpers/dependencyInjector.js';
 import { testUsers, testOrganizations } from '../../fixtures/testData.js';
 
 const require = createRequire(import.meta.url);
-const TokenBillingService = require('../../../server/services/tokenBillingService.js');
 
 describe('TokenBillingService', () => {
     let mockDb;
+    let TokenBillingService;
 
     beforeEach(() => {
         mockDb = createMockDb();
@@ -22,6 +22,10 @@ describe('TokenBillingService', () => {
         vi.mock('../../../server/database', () => ({
             default: mockDb
         }));
+
+        // Clear module cache to ensure fresh import with mocks
+        vi.resetModules();
+        TokenBillingService = require('../../../server/services/tokenBillingService.js');
     });
 
     afterEach(() => {
@@ -349,3 +353,4 @@ describe('TokenBillingService', () => {
         });
     });
 });
+

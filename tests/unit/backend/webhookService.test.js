@@ -12,29 +12,44 @@ import { testUsers, testOrganizations } from '../../fixtures/testData.js';
 
 const require = createRequire(import.meta.url);
 
+// Mock node-fetch before imports
+const mockFetch = vi.fn();
+vi.mock('node-fetch', () => ({
+    default: mockFetch
+}));
+
+// Mock crypto before imports
+const mockCrypto = {
+    createHmac: vi.fn(() => ({
+        update: vi.fn().mockReturnThis(),
+        digest: vi.fn().mockReturnValue('mock-signature-hash')
+    }))
+};
+vi.mock('crypto', () => mockCrypto);
+
 describe('WebhookService', () => {
     let mockDb;
     let WebhookService;
-    let mockFetch;
-    let crypto;
 
     beforeEach(() => {
         mockDb = createMockDb();
-        mockFetch = vi.fn();
+        
+        // Reset mocks
+        mockFetch.mockClear();
+        mockCrypto.createHmac.mockClear();
+        
+        // Setup default fetch response
+        mockFetch.mockResolvedValue({
+            ok: true,
+            status: 200,
+            statusText: 'OK'
+        });
 
-        // Mock node-fetch
-        vi.mock('node-fetch', () => ({
-            default: mockFetch
-        }));
-
-        // Mock crypto
-        crypto = require('crypto');
-        vi.mock('crypto', () => ({
-            createHmac: vi.fn(() => ({
-                update: vi.fn().mockReturnThis(),
-                digest: vi.fn().mockReturnValue('mock-signature-hash')
-            }))
-        }));
+        // Setup crypto mock
+        mockCrypto.createHmac.mockReturnValue({
+            update: vi.fn().mockReturnThis(),
+            digest: vi.fn().mockReturnValue('mock-signature-hash')
+        });
 
         WebhookService = require('../../../server/services/webhookService.js');
         // WebhookService requires db in constructor
@@ -71,17 +86,12 @@ describe('WebhookService', () => {
                 callback(null, mockWebhooks);
             });
 
-            mockFetch.mockResolvedValue({
-                ok: true,
-                status: 200,
-                statusText: 'OK'
-            });
-
             const result = await WebhookService.trigger(orgId, eventType, data);
 
             expect(result.triggered).toBe(1);
             expect(result.results).toHaveLength(1);
             expect(result.results[0].success).toBe(true);
+            expect(mockFetch).toHaveBeenCalled();
         });
 
         it('should return zero triggered when no webhooks match', async () => {
@@ -266,7 +276,7 @@ describe('WebhookService', () => {
             await WebhookService.sendWebhook(webhook, 'test', {});
 
             // Verify crypto.createHmac was called with correct algorithm and secret
-            expect(require('crypto').createHmac).toHaveBeenCalledWith('sha256', webhook.secret);
+            expect(mockCrypto.createHmac).toHaveBeenCalledWith('sha256', webhook.secret);
         });
     });
 
