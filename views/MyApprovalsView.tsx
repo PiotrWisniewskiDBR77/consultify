@@ -2,13 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useStore } from '../store';
 import { useTranslation } from 'react-i18next';
 import {
-    ClipboardDocumentListIcon,
-    CheckCircleIcon,
-    ClockIcon,
-    ExclamationTriangleIcon,
-    ArrowPathIcon,
-    FunnelIcon
-} from '@heroicons/react/24/outline';
+    ClipboardList,
+    CheckCircle2,
+    Clock,
+    AlertTriangle,
+    RefreshCw,
+    Filter
+} from 'lucide-react';
 
 interface Approval {
     id: string;
@@ -29,11 +29,13 @@ interface MyApprovalsViewProps {
 
 const MyApprovalsView: React.FC<MyApprovalsViewProps> = ({ onSelectProposal }) => {
     const { t } = useTranslation();
-    const { currentUser, token } = useStore();
+    const { currentUser } = useStore();
     const [approvals, setApprovals] = useState<Approval[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [statusFilter, setStatusFilter] = useState<string>('PENDING');
+
+    const token = localStorage.getItem('token');
 
     const fetchApprovals = useCallback(async () => {
         if (!token) return;
@@ -112,16 +114,16 @@ const MyApprovalsView: React.FC<MyApprovalsViewProps> = ({ onSelectProposal }) =
         if (isOverdue && (status === 'PENDING' || status === 'ACKED')) {
             return (
                 <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
-                    <ExclamationTriangleIcon className="w-3 h-3 inline mr-1" />
+                    <AlertTriangle className="w-3 h-3 inline mr-1" />
                     Overdue
                 </span>
             );
         }
 
         const configs: Record<string, { bg: string; text: string; icon?: React.ElementType }> = {
-            PENDING: { bg: 'bg-yellow-100 dark:bg-yellow-900/30', text: 'text-yellow-800 dark:text-yellow-400', icon: ClockIcon },
+            PENDING: { bg: 'bg-yellow-100 dark:bg-yellow-900/30', text: 'text-yellow-800 dark:text-yellow-400', icon: Clock },
             ACKED: { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-800 dark:text-blue-400' },
-            DONE: { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-800 dark:text-green-400', icon: CheckCircleIcon },
+            DONE: { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-800 dark:text-green-400', icon: CheckCircle2 },
             EXPIRED: { bg: 'bg-gray-100 dark:bg-gray-800', text: 'text-gray-600 dark:text-gray-400' }
         };
 
@@ -156,7 +158,7 @@ const MyApprovalsView: React.FC<MyApprovalsViewProps> = ({ onSelectProposal }) =
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                    <ClipboardDocumentListIcon className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+                    <ClipboardList className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                             My Approvals
@@ -171,7 +173,7 @@ const MyApprovalsView: React.FC<MyApprovalsViewProps> = ({ onSelectProposal }) =
                     onClick={fetchApprovals}
                     className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
-                    <ArrowPathIcon className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                    <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                     Refresh
                 </button>
             </div>
@@ -179,7 +181,7 @@ const MyApprovalsView: React.FC<MyApprovalsViewProps> = ({ onSelectProposal }) =
             {/* Filters */}
             <div className="flex items-center gap-4 mb-6">
                 <div className="flex items-center gap-2">
-                    <FunnelIcon className="w-4 h-4 text-gray-500" />
+                    <Filter className="w-4 h-4 text-gray-500" />
                     <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
@@ -204,14 +206,14 @@ const MyApprovalsView: React.FC<MyApprovalsViewProps> = ({ onSelectProposal }) =
             {/* Loading State */}
             {loading && (
                 <div className="flex items-center justify-center py-12">
-                    <ArrowPathIcon className="w-8 h-8 animate-spin text-indigo-600" />
+                    <RefreshCw className="w-8 h-8 animate-spin text-indigo-600" />
                 </div>
             )}
 
             {/* Empty State */}
             {!loading && approvals.length === 0 && (
                 <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                    <ClipboardDocumentListIcon className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                    <ClipboardList className="w-12 h-12 mx-auto text-gray-400 mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
                         No approvals found
                     </h3>
@@ -230,8 +232,8 @@ const MyApprovalsView: React.FC<MyApprovalsViewProps> = ({ onSelectProposal }) =
                         <div
                             key={approval.id}
                             className={`p-4 bg-white dark:bg-gray-800 rounded-xl border ${approval.isOverdue
-                                    ? 'border-red-300 dark:border-red-700'
-                                    : 'border-gray-200 dark:border-gray-700'
+                                ? 'border-red-300 dark:border-red-700'
+                                : 'border-gray-200 dark:border-gray-700'
                                 } hover:shadow-md transition-shadow`}
                         >
                             <div className="flex items-start justify-between">
@@ -249,7 +251,7 @@ const MyApprovalsView: React.FC<MyApprovalsViewProps> = ({ onSelectProposal }) =
                                     </h3>
                                     <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                                         <span className="flex items-center gap-1">
-                                            <ClockIcon className="w-4 h-4" />
+                                            <Clock className="w-4 h-4" />
                                             Due: {formatDueDate(approval.sla_due_at)}
                                         </span>
                                         {approval.scope && (

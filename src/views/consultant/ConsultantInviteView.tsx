@@ -34,18 +34,11 @@ export const ConsultantInviteView = () => {
 
     const loadInvites = async () => {
         try {
-            const response = await Api.getConsultantInvites(); // Replaced fetch call
-            if (response.ok) {
-                const data = await response.json();
-                setInvites(data);
-            } else {
-                const errorData = await response.json();
-                console.error('Failed to load invites:', errorData);
-                toast.error(errorData.error || 'Failed to load invites');
-            }
-        } catch (error) {
-            console.error(error);
-            toast.error('Network error while loading invites');
+            const data = await Api.getConsultantInvites();
+            setInvites(data);
+        } catch (error: unknown) {
+            console.error('Failed to load invites:', error);
+            toast.error(error instanceof Error ? error.message : 'Failed to load invites');
         } finally {
             setIsLoading(false);
         }
@@ -55,28 +48,23 @@ export const ConsultantInviteView = () => {
         e.preventDefault();
         setIsCreating(true);
         try {
-            const res = await Api.createConsultantInvite({
-                email: targetEmail || undefined, // Mapping targetEmail to email
-                invitationType: type, // Mapping type to invitationType
-                firmName: targetCompany || undefined, // Mapping targetCompany to firmName
-                // projectName is not available in the current form, assuming it's not required or will be added later
+            const result = await Api.createConsultantInvite({
+                email: targetEmail || '',
+                invitationType: type,
+                firmName: targetCompany || undefined,
             });
 
-            setLink(res.link); // Assuming res.link exists
-
-            if (res.ok) { // Corrected from 'se.ok)' to 'if (res.ok)' for syntactical correctness
-                toast.success('Invite Created Successfully');
-                setTargetEmail('');
-                setTargetCompany('');
-                loadInvites(); // Refresh list
-            } else {
-                // Assuming the API response structure for errors is similar to fetch
-                const err = await res.json(); // Assuming res has a .json() method if it's a Response object or similar
-                toast.error(err.error || 'Failed to create invite');
+            if (result.link) {
+                setLink(result.link);
             }
-        } catch (error) {
+
+            toast.success('Invite Created Successfully');
+            setTargetEmail('');
+            setTargetCompany('');
+            loadInvites();
+        } catch (error: unknown) {
             console.error(error);
-            toast.error('Network error');
+            toast.error(error instanceof Error ? error.message : 'Failed to create invite');
         } finally {
             setIsCreating(false);
         }

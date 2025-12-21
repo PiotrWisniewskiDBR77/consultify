@@ -2,11 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useStore } from '../../store';
 import { useTranslation } from 'react-i18next';
 import {
-    BellIcon,
-    EnvelopeIcon,
-    CheckCircleIcon,
-    ArrowPathIcon
-} from '@heroicons/react/24/outline';
+    Bell,
+    Mail,
+    CheckCircle,
+    RefreshCw
+} from 'lucide-react';
 
 interface NotificationPreferences {
     channel_email: boolean;
@@ -21,7 +21,7 @@ interface NotificationPreferences {
 
 const NotificationSettingsPage: React.FC = () => {
     const { t } = useTranslation();
-    const { token } = useStore();
+    const token = localStorage.getItem('token');
     const [prefs, setPrefs] = useState<NotificationPreferences | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -117,7 +117,7 @@ const NotificationSettingsPage: React.FC = () => {
         <div className="p-6 max-w-2xl mx-auto">
             {/* Header */}
             <div className="flex items-center gap-3 mb-6">
-                <BellIcon className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+                <Bell className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                         Notification Settings
@@ -138,7 +138,7 @@ const NotificationSettingsPage: React.FC = () => {
             {/* Success */}
             {success && (
                 <div className="p-4 mb-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-green-700 dark:text-green-400 flex items-center gap-2">
-                    <CheckCircleIcon className="w-5 h-5" />
+                    <CheckCircle className="w-5 h-5" />
                     Settings saved successfully
                 </div>
             )}
@@ -146,7 +146,7 @@ const NotificationSettingsPage: React.FC = () => {
             {/* Loading */}
             {loading && (
                 <div className="flex items-center justify-center py-12">
-                    <ArrowPathIcon className="w-8 h-8 animate-spin text-indigo-600" />
+                    <RefreshCw className="w-8 h-8 animate-spin text-indigo-600" />
                 </div>
             )}
 
@@ -155,7 +155,7 @@ const NotificationSettingsPage: React.FC = () => {
                     {/* Channels Section */}
                     <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
                         <div className="flex items-center gap-2 mb-4">
-                            <EnvelopeIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                            <Mail className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                                 Notification Channels
                             </h2>
@@ -224,7 +224,7 @@ const NotificationSettingsPage: React.FC = () => {
                         >
                             {saving ? (
                                 <>
-                                    <ArrowPathIcon className="w-4 h-4 animate-spin" />
+                                    <RefreshCw className="w-4 h-4 animate-spin" />
                                     Saving...
                                 </>
                             ) : (

@@ -88,13 +88,12 @@ export const AIAnalyticsDashboard: React.FC = () => {
         try {
             setLoading(true);
             setError(null);
-            const response = await Api.get('/analytics/ai/dashboard', {
-                params: { from: dateRange.from, to: dateRange.to }
-            });
-            setData(response.data);
-        } catch (err: any) {
+            const params = new URLSearchParams({ from: dateRange.from, to: dateRange.to });
+            const response = await Api.get(`/analytics/ai/dashboard?${params.toString()}`);
+            setData(response);
+        } catch (err: unknown) {
             console.error('Failed to load AI analytics:', err);
-            setError(err.message || 'Failed to load analytics');
+            setError(err instanceof Error ? err.message : 'Failed to load analytics');
         } finally {
             setLoading(false);
         }
@@ -103,13 +102,11 @@ export const AIAnalyticsDashboard: React.FC = () => {
     const handleExport = async (format: 'csv' | 'json') => {
         try {
             setExporting(true);
-            const response = await Api.get('/analytics/ai/export', {
-                params: { format, from: dateRange.from, to: dateRange.to },
-                responseType: format === 'csv' ? 'blob' : 'json'
-            });
+            const params = new URLSearchParams({ format, from: dateRange.from, to: dateRange.to });
+            const response = await Api.get(`/analytics/ai/export?${params.toString()}`);
 
-            if (format === 'csv') {
-                const blob = new Blob([response.data], { type: 'text/csv' });
+            if (format === 'csv' && typeof response === 'string') {
+                const blob = new Blob([response], { type: 'text/csv' });
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
@@ -117,7 +114,7 @@ export const AIAnalyticsDashboard: React.FC = () => {
                 a.click();
                 window.URL.revokeObjectURL(url);
             } else {
-                const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' });
+                const blob = new Blob([JSON.stringify(response, null, 2)], { type: 'application/json' });
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
@@ -327,7 +324,7 @@ export const AIAnalyticsDashboard: React.FC = () => {
                                         outerRadius={80}
                                         paddingAngle={5}
                                         dataKey="value"
-                                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                        label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
                                     >
                                         {approvalPieData.map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={entry.color} />

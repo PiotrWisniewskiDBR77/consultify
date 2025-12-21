@@ -2,14 +2,14 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useStore } from '../../store';
 import { useTranslation } from 'react-i18next';
 import {
-    ChartBarIcon,
-    ExclamationTriangleIcon,
-    ClockIcon,
-    XCircleIcon,
-    ArrowPathIcon,
-    CheckCircleIcon,
-    BellAlertIcon
-} from '@heroicons/react/24/outline';
+    BarChart2,
+    AlertTriangle,
+    Clock,
+    XCircle,
+    RefreshCw,
+    CheckCircle,
+    Bell
+} from 'lucide-react';
 
 interface AlertSummary {
     overdueApprovals: number;
@@ -46,7 +46,8 @@ interface DashboardData {
 
 const OperationsDashboardView: React.FC = () => {
     const { t } = useTranslation();
-    const { token, currentUser } = useStore();
+    const { currentUser } = useStore();
+    const token = localStorage.getItem('token');
     const [data, setData] = useState<DashboardData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -114,7 +115,7 @@ const OperationsDashboardView: React.FC = () => {
         return (
             <div className="p-6 max-w-7xl mx-auto">
                 <div className="p-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl text-center">
-                    <ExclamationTriangleIcon className="w-12 h-12 mx-auto text-yellow-500 mb-4" />
+                    <AlertTriangle className="w-12 h-12 mx-auto text-yellow-500 mb-4" />
                     <h2 className="text-lg font-semibold text-yellow-800 dark:text-yellow-300 mb-2">
                         Admin Access Required
                     </h2>
@@ -131,7 +132,7 @@ const OperationsDashboardView: React.FC = () => {
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                    <ChartBarIcon className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+                    <BarChart2 className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                             Operations Dashboard
@@ -152,7 +153,7 @@ const OperationsDashboardView: React.FC = () => {
                         onClick={fetchDashboard}
                         className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
                     >
-                        <ArrowPathIcon className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                        <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                         Refresh
                     </button>
                 </div>
@@ -168,7 +169,7 @@ const OperationsDashboardView: React.FC = () => {
             {/* Loading State */}
             {loading && !data && (
                 <div className="flex items-center justify-center py-12">
-                    <ArrowPathIcon className="w-8 h-8 animate-spin text-indigo-600" />
+                    <RefreshCw className="w-8 h-8 animate-spin text-indigo-600" />
                 </div>
             )}
 
@@ -184,9 +185,9 @@ const OperationsDashboardView: React.FC = () => {
                             <div className={`p-4 mb-6 rounded-xl border ${colors.bg} ${colors.border}`}>
                                 <div className="flex items-center gap-3">
                                     {level === 'healthy' ? (
-                                        <CheckCircleIcon className={`w-6 h-6 ${colors.text}`} />
+                                        <CheckCircle className={`w-6 h-6 ${colors.text}`} />
                                     ) : (
-                                        <ExclamationTriangleIcon className={`w-6 h-6 ${colors.text}`} />
+                                        <AlertTriangle className={`w-6 h-6 ${colors.text}`} />
                                     )}
                                     <span className={`font-medium ${colors.text}`}>
                                         {level === 'healthy'
@@ -203,21 +204,21 @@ const OperationsDashboardView: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                         {/* Overdue Approvals */}
                         <div className={`p-4 rounded-xl border ${data.alerts.overdueApprovals > 0
-                                ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
-                                : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+                            ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
+                            : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
                             }`}>
                             <div className="flex items-center gap-3 mb-2">
-                                <ClockIcon className={`w-5 h-5 ${data.alerts.overdueApprovals > 0
-                                        ? 'text-yellow-600 dark:text-yellow-400'
-                                        : 'text-gray-400'
+                                <Clock className={`w-5 h-5 ${data.alerts.overdueApprovals > 0
+                                    ? 'text-yellow-600 dark:text-yellow-400'
+                                    : 'text-gray-400'
                                     }`} />
                                 <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
                                     Overdue Approvals
                                 </span>
                             </div>
                             <div className={`text-3xl font-bold ${data.alerts.overdueApprovals > 0
-                                    ? 'text-yellow-700 dark:text-yellow-400'
-                                    : 'text-gray-900 dark:text-white'
+                                ? 'text-yellow-700 dark:text-yellow-400'
+                                : 'text-gray-900 dark:text-white'
                                 }`}>
                                 {data.alerts.overdueApprovals}
                             </div>
@@ -225,21 +226,21 @@ const OperationsDashboardView: React.FC = () => {
 
                         {/* Dead Letter Jobs */}
                         <div className={`p-4 rounded-xl border ${data.alerts.deadLetterJobs > 0
-                                ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
-                                : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+                            ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                            : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
                             }`}>
                             <div className="flex items-center gap-3 mb-2">
-                                <XCircleIcon className={`w-5 h-5 ${data.alerts.deadLetterJobs > 0
-                                        ? 'text-red-600 dark:text-red-400'
-                                        : 'text-gray-400'
+                                <XCircle className={`w-5 h-5 ${data.alerts.deadLetterJobs > 0
+                                    ? 'text-red-600 dark:text-red-400'
+                                    : 'text-gray-400'
                                     }`} />
                                 <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
                                     Dead Letter Jobs
                                 </span>
                             </div>
                             <div className={`text-3xl font-bold ${data.alerts.deadLetterJobs > 0
-                                    ? 'text-red-700 dark:text-red-400'
-                                    : 'text-gray-900 dark:text-white'
+                                ? 'text-red-700 dark:text-red-400'
+                                : 'text-gray-900 dark:text-white'
                                 }`}>
                                 {data.alerts.deadLetterJobs}
                             </div>
@@ -247,21 +248,21 @@ const OperationsDashboardView: React.FC = () => {
 
                         {/* Stuck Playbooks */}
                         <div className={`p-4 rounded-xl border ${data.alerts.stuckPlaybooks > 0
-                                ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800'
-                                : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+                            ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800'
+                            : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
                             }`}>
                             <div className="flex items-center gap-3 mb-2">
-                                <ExclamationTriangleIcon className={`w-5 h-5 ${data.alerts.stuckPlaybooks > 0
-                                        ? 'text-orange-600 dark:text-orange-400'
-                                        : 'text-gray-400'
+                                <AlertTriangle className={`w-5 h-5 ${data.alerts.stuckPlaybooks > 0
+                                    ? 'text-orange-600 dark:text-orange-400'
+                                    : 'text-gray-400'
                                     }`} />
                                 <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
                                     Stuck Playbooks
                                 </span>
                             </div>
                             <div className={`text-3xl font-bold ${data.alerts.stuckPlaybooks > 0
-                                    ? 'text-orange-700 dark:text-orange-400'
-                                    : 'text-gray-900 dark:text-white'
+                                ? 'text-orange-700 dark:text-orange-400'
+                                : 'text-gray-900 dark:text-white'
                                 }`}>
                                 {data.alerts.stuckPlaybooks}
                             </div>
@@ -290,7 +291,7 @@ const OperationsDashboardView: React.FC = () => {
                     {/* Notification Outbox */}
                     <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
                         <div className="flex items-center gap-2 mb-4">
-                            <BellAlertIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                            <Bell className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                                 Notification Outbox (7 days)
                             </h2>

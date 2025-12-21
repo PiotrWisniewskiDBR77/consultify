@@ -3538,13 +3538,15 @@ function initDb() {
         /**
          * Role Permissions Table
          * Maps defined roles (e.g. 'ORG_ADMIN', 'PMO_MANAGER') to specific permissions.
+         * Compatible with permissionService.js which uses 'role' and 'permission_key'.
          */
         db.run(`CREATE TABLE IF NOT EXISTS role_permissions (
-            role_key TEXT NOT NULL,      -- e.g. 'ORG_ADMIN'
-            permission_id TEXT NOT NULL,
+            id TEXT PRIMARY KEY,
+            role TEXT NOT NULL,
+            permission_key TEXT NOT NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY(role_key, permission_id),
-            FOREIGN KEY(permission_id) REFERENCES permissions(id) ON DELETE CASCADE
+            UNIQUE(role, permission_key),
+            FOREIGN KEY(permission_key) REFERENCES permissions(key) ON DELETE CASCADE
         )`);
 
         /**

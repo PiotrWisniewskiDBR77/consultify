@@ -31,7 +31,7 @@ interface PlaybookRun {
  * Admin view for monitoring playbook runs.
  */
 export const PlaybookRunsView: React.FC = () => {
-    const { token } = useStore();
+    const token = localStorage.getItem('token');
     const [templates, setTemplates] = useState<PlaybookTemplateVersion[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);

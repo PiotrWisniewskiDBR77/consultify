@@ -28,7 +28,7 @@ export const PlaybookEditorView: React.FC<PlaybookEditorViewProps> = ({
     templateId,
     onBack
 }) => {
-    const { token } = useStore();
+    const token = localStorage.getItem('token');
     const [template, setTemplate] = useState<PlaybookTemplateVersion | null>(null);
     const [nodes, setNodes] = useState<PlaybookNode[]>([]);
     const [edges, setEdges] = useState<PlaybookEdge[]>([]);

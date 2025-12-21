@@ -22,7 +22,7 @@ import toast from 'react-hot-toast';
  * Lists all templates with status badges and action buttons.
  */
 export const PlaybookTemplatesListView: React.FC = () => {
-    const { token } = useStore();
+    const token = localStorage.getItem('token');
     const [templates, setTemplates] = useState<PlaybookTemplateVersion[]>([]);
     const [loading, setLoading] = useState(true);
     const [statusFilter, setStatusFilter] = useState<string>('');

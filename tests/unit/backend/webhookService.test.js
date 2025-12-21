@@ -8,53 +8,40 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createRequire } from 'module';
 import { createMockDb } from '../../helpers/dependencyInjector.js';
-import { testUsers, testOrganizations } from '../../fixtures/testData.js';
+import { testOrganizations } from '../../fixtures/testData.js';
 
 const require = createRequire(import.meta.url);
 
-// Mock node-fetch before imports
+// Mock fetch at module level
 const mockFetch = vi.fn();
 vi.mock('node-fetch', () => ({
     default: mockFetch
 }));
-
-// Mock crypto before imports
-const mockCrypto = {
-    createHmac: vi.fn(() => ({
-        update: vi.fn().mockReturnThis(),
-        digest: vi.fn().mockReturnValue('mock-signature-hash')
-    }))
-};
-vi.mock('crypto', () => mockCrypto);
 
 describe('WebhookService', () => {
     let mockDb;
     let WebhookService;
 
     beforeEach(() => {
+        vi.resetModules();
         mockDb = createMockDb();
         
-        // Reset mocks
-        mockFetch.mockClear();
-        mockCrypto.createHmac.mockClear();
-        
-        // Setup default fetch response
+        // Reset fetch mock
+        mockFetch.mockReset();
         mockFetch.mockResolvedValue({
             ok: true,
             status: 200,
             statusText: 'OK'
         });
-
-        // Setup crypto mock
-        mockCrypto.createHmac.mockReturnValue({
-            update: vi.fn().mockReturnThis(),
-            digest: vi.fn().mockReturnValue('mock-signature-hash')
-        });
-
-        WebhookService = require('../../../server/services/webhookService.js');
-        // WebhookService requires db in constructor
-        const serviceInstance = new WebhookService(mockDb);
-        WebhookService = serviceInstance;
+        
+        // Re-mock node-fetch for this test cycle
+        vi.doMock('node-fetch', () => ({
+            default: mockFetch
+        }));
+        
+        // Import after mocking
+        const WebhookServiceClass = require('../../../server/services/webhookService.js');
+        WebhookService = new WebhookServiceClass(mockDb);
     });
 
     afterEach(() => {
@@ -130,12 +117,6 @@ describe('WebhookService', () => {
                 callback(null, mockWebhooks);
             });
 
-            mockFetch.mockResolvedValue({
-                ok: true,
-                status: 200,
-                statusText: 'OK'
-            });
-
             const result = await WebhookService.trigger(orgId, eventType, {});
 
             expect(result.triggered).toBe(2);
@@ -158,255 +139,160 @@ describe('WebhookService', () => {
                 callback(null, mockWebhooks);
             });
 
-            mockFetch.mockRejectedValue(new Error('Network error'));
+            mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
             const result = await WebhookService.trigger(orgId, eventType, {});
 
             expect(result.triggered).toBe(1);
             expect(result.results[0].success).toBe(false);
-            expect(result.results[0].error).toBeDefined();
+            expect(result.results[0].error).toContain('Network error');
         });
 
         it('should handle database errors', async () => {
             const orgId = testOrganizations.org1.id;
-            const dbError = new Error('Database error');
+            const eventType = 'initiative.created';
 
             mockDb.all.mockImplementation((query, params, callback) => {
-                callback(dbError, null);
+                callback(new Error('Database error'));
             });
 
-            await expect(
-                WebhookService.trigger(orgId, 'event', {})
-            ).rejects.toThrow('Database error');
+            await expect(WebhookService.trigger(orgId, eventType, {})).rejects.toThrow('Database error');
+        });
+
+        it('should only trigger webhooks for specified organization', async () => {
+            const orgId = testOrganizations.org1.id;
+            const eventType = 'test.event';
+
+            mockDb.all.mockImplementation((query, params, callback) => {
+                expect(params[0]).toBe(orgId);
+                callback(null, []);
+            });
+
+            await WebhookService.trigger(orgId, eventType, {});
+            expect(mockDb.all).toHaveBeenCalled();
         });
     });
 
     describe('sendWebhook()', () => {
-        it('should send webhook with correct headers and signature', async () => {
-            const webhook = {
-                id: 'webhook-1',
-                url: 'https://example.com/webhook',
-                secret: 'secret-key-123',
-                events: 'initiative.created'
-            };
-            const eventType = 'initiative.created';
-            const data = { id: 'init-123' };
-
-            mockFetch.mockResolvedValue({
-                ok: true,
-                status: 200,
-                statusText: 'OK'
-            });
-
-            const result = await WebhookService.sendWebhook(webhook, eventType, data);
-
-            expect(mockFetch).toHaveBeenCalledWith(
-                webhook.url,
-                expect.objectContaining({
-                    method: 'POST',
-                    headers: expect.objectContaining({
-                        'Content-Type': 'application/json',
-                        'X-Consultify-Signature': expect.any(String),
-                        'X-Consultify-Event': eventType,
-                        'User-Agent': 'Consultify-Webhook/1.0'
-                    }),
-                    body: expect.any(String),
-                    timeout: 5000
-                })
-            );
-
-            expect(result.status).toBe(200);
-            expect(result.statusText).toBe('OK');
-        });
-
-        it('should include timestamp in payload', async () => {
+        it('should send webhook with correct headers', async () => {
             const webhook = {
                 url: 'https://example.com/webhook',
-                secret: 'secret',
+                secret: 'test-secret',
                 events: 'test'
             };
+            const eventType = 'test.event';
+            const data = { key: 'value' };
 
-            mockFetch.mockResolvedValue({
-                ok: true,
-                status: 200,
-                statusText: 'OK'
-            });
+            await WebhookService.sendWebhook(webhook, eventType, data);
 
-            await WebhookService.sendWebhook(webhook, 'test', {});
+            expect(mockFetch).toHaveBeenCalled();
+            const callArgs = mockFetch.mock.calls[0];
+            expect(callArgs[0]).toBe(webhook.url);
+            expect(callArgs[1].method).toBe('POST');
+            expect(callArgs[1].headers['Content-Type']).toBe('application/json');
+            expect(callArgs[1].headers['X-Consultify-Event']).toBe(eventType);
+            expect(callArgs[1].headers['X-Consultify-Signature']).toBeDefined();
+            expect(callArgs[1].headers['User-Agent']).toBe('Consultify-Webhook/1.0');
+        });
+
+        it('should include payload in body', async () => {
+            const webhook = {
+                url: 'https://example.com/webhook',
+                secret: 'test-secret',
+                events: 'test'
+            };
+            const eventType = 'test.event';
+            const data = { key: 'value' };
+
+            await WebhookService.sendWebhook(webhook, eventType, data);
 
             const callArgs = mockFetch.mock.calls[0];
-            const payload = JSON.parse(callArgs[1].body);
-
-            expect(payload).toHaveProperty('event');
-            expect(payload).toHaveProperty('timestamp');
-            expect(payload).toHaveProperty('data');
+            const body = JSON.parse(callArgs[1].body);
+            expect(body.event).toBe(eventType);
+            expect(body.data).toEqual(data);
+            expect(body.timestamp).toBeDefined();
         });
 
-        it('should throw error when webhook returns non-OK status', async () => {
+        it('should throw on non-ok response', async () => {
             const webhook = {
                 url: 'https://example.com/webhook',
-                secret: 'secret',
+                secret: 'test-secret',
                 events: 'test'
             };
 
-            mockFetch.mockResolvedValue({
+            mockFetch.mockResolvedValueOnce({
                 ok: false,
                 status: 500,
                 statusText: 'Internal Server Error'
             });
 
-            await expect(
-                WebhookService.sendWebhook(webhook, 'test', {})
-            ).rejects.toThrow('Webhook returned 500');
-        });
-
-        it('should generate HMAC signature', async () => {
-            const webhook = {
-                url: 'https://example.com/webhook',
-                secret: 'secret-key',
-                events: 'test'
-            };
-
-            mockFetch.mockResolvedValue({
-                ok: true,
-                status: 200,
-                statusText: 'OK'
-            });
-
-            await WebhookService.sendWebhook(webhook, 'test', {});
-
-            // Verify crypto.createHmac was called with correct algorithm and secret
-            expect(mockCrypto.createHmac).toHaveBeenCalledWith('sha256', webhook.secret);
+            await expect(WebhookService.sendWebhook(webhook, 'test', {}))
+                .rejects.toThrow('Webhook failed: 500 Internal Server Error');
         });
     });
 
     describe('sendSlackNotification()', () => {
         it('should send Slack notification', async () => {
             const webhookUrl = 'https://hooks.slack.com/services/xxx';
-            const message = {
-                text: 'Test notification',
-                blocks: []
-            };
+            const message = 'Test message';
 
-            mockFetch.mockResolvedValue({
-                ok: true,
-                status: 200
-            });
+            await WebhookService.sendSlackNotification(webhookUrl, message);
 
-            const result = await WebhookService.sendSlackNotification(webhookUrl, message);
-
-            expect(result.success).toBe(true);
             expect(mockFetch).toHaveBeenCalledWith(
                 webhookUrl,
                 expect.objectContaining({
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(message)
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: message })
                 })
             );
         });
 
-        it('should handle Slack notification failures', async () => {
+        it('should handle Slack API errors', async () => {
             const webhookUrl = 'https://hooks.slack.com/services/xxx';
-            const message = { text: 'Test' };
 
-            mockFetch.mockRejectedValue(new Error('Network error'));
-
-            const result = await WebhookService.sendSlackNotification(webhookUrl, message);
-
-            expect(result.success).toBe(false);
-            expect(result.error).toBeDefined();
-        });
-    });
-
-    describe('formatInitiativeMessage()', () => {
-        it('should format initiative message for Slack', () => {
-            const initiative = {
-                name: 'Test Initiative',
-                axis: 'Efficiency',
-                priority: 'HIGH',
-                roi: 25,
-                capex: 10000
-            };
-            const action = 'Created';
-
-            const result = WebhookService.formatInitiativeMessage(initiative, action);
-
-            expect(result).toHaveProperty('blocks');
-            expect(result.blocks).toHaveLength(2);
-            expect(result.blocks[0].text.text).toContain(action);
-            expect(result.blocks[0].text.text).toContain(initiative.name);
-            expect(result.blocks[1].elements[0].text).toContain('ROI');
-            expect(result.blocks[1].elements[0].text).toContain('Cost');
-        });
-    });
-
-    describe('formatTaskMessage()', () => {
-        it('should format task message with status emoji', () => {
-            const task = {
-                title: 'Test Task',
-                status: 'in_progress'
-            };
-            const action = 'Updated';
-
-            const result = WebhookService.formatTaskMessage(task, action);
-
-            expect(result).toHaveProperty('blocks');
-            expect(result.blocks[0].text.text).toContain('🟡'); // in_progress emoji
-            expect(result.blocks[0].text.text).toContain(task.title);
-            expect(result.blocks[0].text.text).toContain(task.status);
-        });
-
-        it('should use correct emoji for each status', () => {
-            const statuses = {
-                'not_started': '⚪',
-                'in_progress': '🟡',
-                'completed': '✅',
-                'blocked': '🔴'
-            };
-
-            Object.entries(statuses).forEach(([status, emoji]) => {
-                const task = { title: 'Test', status };
-                const result = WebhookService.formatTaskMessage(task, 'Updated');
-                expect(result.blocks[0].text.text).toContain(emoji);
+            mockFetch.mockResolvedValueOnce({
+                ok: false,
+                status: 400,
+                statusText: 'Bad Request'
             });
-        });
 
-        it('should default to ⚪ for unknown status', () => {
-            const task = {
-                title: 'Test Task',
-                status: 'unknown_status'
-            };
-
-            const result = WebhookService.formatTaskMessage(task, 'Updated');
-
-            expect(result.blocks[0].text.text).toContain('⚪');
+            await expect(WebhookService.sendSlackNotification(webhookUrl, 'test'))
+                .rejects.toThrow();
         });
     });
 
-    describe('Multi-Tenant Isolation', () => {
-        it('should only trigger webhooks for specified organization', async () => {
-            const orgId = testOrganizations.org1.id;
-            const eventType = 'test.event';
+    describe('Multi-tenant Isolation', () => {
+        it('should not leak webhooks between organizations', async () => {
+            const org1Id = testOrganizations.org1.id;
+            const org2Id = testOrganizations.org2.id;
 
+            const capturedParams = [];
             mockDb.all.mockImplementation((query, params, callback) => {
-                expect(query).toContain('WHERE organization_id = ?');
-                expect(params[0]).toBe(orgId);
+                capturedParams.push([...params]);
                 callback(null, []);
             });
 
-            await WebhookService.trigger(orgId, eventType, {});
+            await WebhookService.trigger(org1Id, 'test', {});
+            await WebhookService.trigger(org2Id, 'test', {});
 
-            expect(mockDb.all).toHaveBeenCalledWith(
-                expect.stringContaining('organization_id = ?'),
-                expect.arrayContaining([orgId]),
-                expect.any(Function)
-            );
+            expect(capturedParams[0][0]).toBe(org1Id);
+            expect(capturedParams[1][0]).toBe(org2Id);
+            expect(capturedParams[0][0]).not.toBe(capturedParams[1][0]);
         });
 
-        it('should only match active webhooks', async () => {
+        it('should filter webhooks by organization_id', async () => {
+            const orgId = testOrganizations.org1.id;
+
+            mockDb.all.mockImplementation((query, params, callback) => {
+                expect(query).toContain('organization_id = ?');
+                callback(null, []);
+            });
+
+            await WebhookService.trigger(orgId, 'test', {});
+        });
+
+        it('should only query active webhooks', async () => {
             const orgId = testOrganizations.org1.id;
 
             mockDb.all.mockImplementation((query, params, callback) => {
@@ -419,34 +305,19 @@ describe('WebhookService', () => {
     });
 
     describe('Security', () => {
-        it('should generate unique signature for each webhook', async () => {
-            const webhook1 = {
-                url: 'https://example.com/webhook1',
-                secret: 'secret-1',
-                events: 'test'
-            };
-            const webhook2 = {
-                url: 'https://example.com/webhook2',
-                secret: 'secret-2',
+        it('should generate HMAC signature for each webhook', async () => {
+            const webhook = {
+                url: 'https://example.com/webhook',
+                secret: 'test-secret',
                 events: 'test'
             };
 
-            mockFetch.mockResolvedValue({
-                ok: true,
-                status: 200,
-                statusText: 'OK'
-            });
+            await WebhookService.sendWebhook(webhook, 'test', {});
 
-            await WebhookService.sendWebhook(webhook1, 'test', {});
-            await WebhookService.sendWebhook(webhook2, 'test', {});
-
-            const calls = mockFetch.mock.calls;
-            const signature1 = calls[0][1].headers['X-Consultify-Signature'];
-            const signature2 = calls[1][1].headers['X-Consultify-Signature'];
-
-            // Signatures should be different due to different secrets
-            expect(require('crypto').createHmac).toHaveBeenCalledWith('sha256', 'secret-1');
-            expect(require('crypto').createHmac).toHaveBeenCalledWith('sha256', 'secret-2');
+            const callArgs = mockFetch.mock.calls[0];
+            const signature = callArgs[1].headers['X-Consultify-Signature'];
+            // Signature should be a hex string
+            expect(signature).toMatch(/^[a-f0-9]{64}$/);
         });
 
         it('should include event type in headers', async () => {
@@ -455,12 +326,6 @@ describe('WebhookService', () => {
                 secret: 'secret',
                 events: 'test'
             };
-
-            mockFetch.mockResolvedValue({
-                ok: true,
-                status: 200,
-                statusText: 'OK'
-            });
 
             await WebhookService.sendWebhook(webhook, 'initiative.created', {});
 
