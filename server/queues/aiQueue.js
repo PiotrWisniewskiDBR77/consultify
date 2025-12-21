@@ -1,17 +1,31 @@
-const { Queue } = require('bullmq');
+// Try to load BullMQ, fallback to mock if not available
+let Queue;
+let bullmqAvailable = false;
+
+try {
+    ({ Queue } = require('bullmq'));
+    bullmqAvailable = true;
+} catch (err) {
+    console.log('[Queue] BullMQ not available, using mock queue');
+    bullmqAvailable = false;
+}
+
 const redisConfig = require('../config/queue.config');
 
 let aiQueue;
 
-if (process.env.MOCK_REDIS === 'true') {
+// Create mock queue
+const createMockQueue = () => ({
+    add: async () => ({ id: 'mock-job-id', name: 'mock-job' }),
+    getJob: async () => null,
+    defaultJobOptions: {},
+    on: () => { },
+    close: async () => { },
+});
+
+if (process.env.MOCK_REDIS === 'true' || !bullmqAvailable) {
     console.log('[Queue] Using Mock Queue for ai-tasks');
-    aiQueue = {
-        add: async () => ({ id: 'mock-job-id', name: 'mock-job' }),
-        getJob: async () => null,
-        defaultJobOptions: {},
-        on: () => { },
-        close: async () => { },
-    };
+    aiQueue = createMockQueue();
 } else {
     aiQueue = new Queue('ai-tasks', redisConfig);
 
