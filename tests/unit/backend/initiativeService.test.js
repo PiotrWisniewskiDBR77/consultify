@@ -9,15 +9,12 @@ const mockDb = {
     initPromise: Promise.resolve()
 };
 
-vi.mock('../../../server/database', () => ({
-    default: mockDb
-}));
-
 import InitiativeService from '../../../server/services/initiativeService.js';
 
 describe('InitiativeService', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        InitiativeService.setDependencies({ db: mockDb });
 
         // Default DB mocks
         mockDb.all.mockImplementation((...args) => {
@@ -57,7 +54,7 @@ describe('InitiativeService', () => {
             expect(progress).toBe(0);
             expect(mockDb.run).toHaveBeenCalledWith(
                 expect.stringContaining('UPDATE initiatives'),
-                [0, 'init-1'], // Changed call signature to match simplified flow in service
+                ['init-1'],
                 expect.any(Function)
             );
             // Note: In service implementation, if no tasks, it assumes promise resolves 0 

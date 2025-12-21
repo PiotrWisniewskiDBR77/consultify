@@ -105,9 +105,25 @@ const stripeWebhookRoutes = require('./routes/webhooks/stripe');
 const tokenBillingRoutes = require('./routes/tokenBilling');
 const documentRoutes = require('./routes/documents');
 const megatrendRoutes = require('./routes/megatrend');
+const organizationRoutes = require('./routes/organizations'); // NEW
+
 
 
 app.use('/api/auth', authRoutes);
+
+// Apply Demo Guard to all authenticated API routes
+// It relies on req.user, so strictly speaking it should be applied within routes that use auth check, 
+// OR we rely on the fact that if req.user is missing, guard passes.
+// Best place is global middleware if we trust auth middleware runs first on protected routes.
+// However, since we have specific route files, let's add it securely.
+const demoGuard = require('./middleware/demoGuard');
+// We want this to run for all subsequent routes.
+// Note: auth middleware is inside specific routes usually, but if we have global auth...
+// Consultify seems to use auth middleware per route or router. 
+// Let's protect specific state-changing routers globally here if they generally require auth.
+// Or better: Use it as a global middleware that checks req.user *if present*.
+app.use(demoGuard);
+
 app.use('/api/users', userRoutes);
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/ai', aiRoutes);
@@ -134,6 +150,8 @@ app.use('/api/billing', billingRoutes);
 app.use('/api/token-billing', tokenBillingRoutes);
 app.use('/api/token-billing', tokenBillingRoutes);
 app.use('/api/megatrends', megatrendRoutes);
+app.use('/api/organizations', organizationRoutes); // NEW
+
 app.use('/api/webhooks', stripeWebhookRoutes);
 const reportRoutes = require('./routes/reports');
 app.use('/api/reports', reportRoutes);

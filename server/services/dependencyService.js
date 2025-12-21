@@ -4,7 +4,18 @@
 let db = require('../database');
 const { v4: uuidv4 } = require('uuid');
 
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db,
+    uuidv4
+};
+
 const DependencyService = {
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+        if (newDeps.db) db = newDeps.db; // keep _setDb behavior consistent
+    },
     /**
      * Add a dependency between initiatives
      * @param {string} fromInitiativeId - The initiative that must complete first
@@ -14,11 +25,11 @@ const DependencyService = {
     addDependency: (fromInitiativeId, toInitiativeId, type = 'FINISH_TO_START') => {
         if (fromInitiativeId === toInitiativeId) return Promise.reject(new Error('Self-dependency not allowed'));
         return new Promise((resolve, reject) => {
-            const id = uuidv4();
+            const id = deps.uuidv4();
             const sql = `INSERT INTO initiative_dependencies (id, from_initiative_id, to_initiative_id, type, is_satisfied, created_at)
                          VALUES (?, ?, ?, ?, 0, CURRENT_TIMESTAMP)`;
 
-            db.run(sql, [id, fromInitiativeId, toInitiativeId, type], function (err) {
+            deps.db.run(sql, [id, fromInitiativeId, toInitiativeId, type], function (err) {
                 if (err) return reject(err);
                 resolve({ id, fromInitiativeId, toInitiativeId, type });
             });
@@ -30,7 +41,7 @@ const DependencyService = {
      */
     removeDependency: (dependencyId) => {
         return new Promise((resolve, reject) => {
-            db.run(`DELETE FROM initiative_dependencies WHERE id = ?`, [dependencyId], function (err) {
+            deps.db.run(`DELETE FROM initiative_dependencies WHERE id = ?`, [dependencyId], function (err) {
                 if (err) return reject(err);
                 resolve({ deleted: this.changes > 0 });
             });
@@ -52,7 +63,7 @@ const DependencyService = {
                 WHERE d.from_initiative_id = ? OR d.to_initiative_id = ?
             `;
 
-            db.all(sql, [initiativeId, initiativeId], (err, rows) => {
+            deps.db.all(sql, [initiativeId, initiativeId], (err, rows) => {
                 if (err) return reject(err);
                 resolve(rows || []);
             });
@@ -74,7 +85,7 @@ const DependencyService = {
                 WHERE i1.project_id = ?
             `;
 
-            db.all(sql, [projectId], (err, rows) => {
+            deps.db.all(sql, [projectId], (err, rows) => {
                 if (err) return reject(err);
 
                 // Build adjacency list
@@ -156,7 +167,7 @@ const DependencyService = {
                   AND i.status NOT IN ('COMPLETED', 'CANCELLED')
             `;
 
-            db.all(sql, [initiativeId], (err, rows) => {
+            deps.db.all(sql, [initiativeId], (err, rows) => {
                 if (err) return reject(err);
 
                 const blockers = rows || [];
@@ -173,7 +184,7 @@ const DependencyService = {
      */
     updateSatisfaction: async (fromInitiativeId) => {
         return new Promise((resolve, reject) => {
-            db.run(`UPDATE initiative_dependencies SET is_satisfied = 1 
+            deps.db.run(`UPDATE initiative_dependencies SET is_satisfied = 1 
                     WHERE from_initiative_id = ? AND type = 'FINISH_TO_START'`,
                 [fromInitiativeId], function (err) {
                     if (err) return reject(err);

@@ -1,20 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock dependencies
-const mockDb = {
+// Hoisted mocks for dependency injection
+const mockUuidv4 = vi.hoisted(() => vi.fn(() => 'uuid-1234'));
+
+const mockDb = vi.hoisted(() => ({
     get: vi.fn(),
     all: vi.fn(),
     run: vi.fn(),
     serialize: vi.fn((cb) => cb()),
     initPromise: Promise.resolve()
-};
+}));
 
 vi.mock('../../../server/database', () => ({
     default: mockDb
 }));
 
 vi.mock('uuid', () => ({
-    v4: () => 'uuid-1234'
+    v4: mockUuidv4
 }));
 
 import { LegalEventLogger } from '../../../server/services/legalEventLogger.js';
@@ -22,6 +24,9 @@ import { LegalEventLogger } from '../../../server/services/legalEventLogger.js';
 describe('LegalEventLogger', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        
+        // Reset UUID mock
+        mockUuidv4.mockReturnValue('uuid-1234');
 
         mockDb.run.mockImplementation(function (...args) {
             const cb = args[args.length - 1];

@@ -1,13 +1,23 @@
 const db = require('../database');
 const { v4: uuidv4 } = require('uuid');
 
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db,
+    uuidv4
+};
+
 const RoadmapService = {
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
     /**
      * Get all waves for a project
      */
     getWaves: (projectId) => {
         return new Promise((resolve, reject) => {
-            db.all(`SELECT * FROM roadmap_waves WHERE project_id = ? ORDER BY sort_order`, [projectId], (err, rows) => {
+            deps.db.all(`SELECT * FROM roadmap_waves WHERE project_id = ? ORDER BY sort_order`, [projectId], (err, rows) => {
                 if (err) return reject(err);
                 resolve(rows || []);
             });
@@ -19,13 +29,13 @@ const RoadmapService = {
      */
     createWave: (projectId, waveData) => {
         return new Promise((resolve, reject) => {
-            const id = uuidv4();
+            const id = deps.uuidv4();
             const { name, description, startDate, endDate, sortOrder } = waveData;
 
             const sql = `INSERT INTO roadmap_waves (id, project_id, name, description, start_date, end_date, sort_order)
                          VALUES (?, ?, ?, ?, ?, ?, ?)`;
 
-            db.run(sql, [id, projectId, name, description, startDate, endDate, sortOrder || 0], function (err) {
+            deps.db.run(sql, [id, projectId, name, description, startDate, endDate, sortOrder || 0], function (err) {
                 if (err) return reject(err);
                 resolve({ id, projectId, name, ...waveData });
             });
@@ -37,7 +47,7 @@ const RoadmapService = {
      */
     assignToWave: (initiativeId, waveId) => {
         return new Promise((resolve, reject) => {
-            db.run(`UPDATE initiatives SET wave_id = ? WHERE id = ?`, [waveId, initiativeId], function (err) {
+            deps.db.run(`UPDATE initiatives SET wave_id = ? WHERE id = ?`, [waveId, initiativeId], function (err) {
                 if (err) return reject(err);
                 resolve({ initiativeId, waveId, success: true });
             });
@@ -50,12 +60,12 @@ const RoadmapService = {
     baselineRoadmap: (projectId) => {
         return new Promise((resolve, reject) => {
             // Mark all waves as baselined
-            db.run(`UPDATE roadmap_waves SET is_baselined = 1 WHERE project_id = ?`, [projectId], (err) => {
+            deps.db.run(`UPDATE roadmap_waves SET is_baselined = 1 WHERE project_id = ?`, [projectId], (err) => {
                 if (err) return reject(err);
             });
 
             // Increment baseline version on all initiatives in this project
-            db.run(`UPDATE initiatives SET baseline_version = baseline_version + 1 WHERE project_id = ?`, [projectId], function (err) {
+            deps.db.run(`UPDATE initiatives SET baseline_version = baseline_version + 1 WHERE project_id = ?`, [projectId], function (err) {
                 if (err) return reject(err);
                 resolve({ projectId, baselineVersion: this.changes, success: true });
             });
@@ -77,7 +87,7 @@ const RoadmapService = {
                 ORDER BY w.sort_order, i.priority DESC
             `;
 
-            db.all(sql, [projectId], (err, rows) => {
+            deps.db.all(sql, [projectId], (err, rows) => {
                 if (err) return reject(err);
 
                 // Group by wave
@@ -113,11 +123,9 @@ const RoadmapService = {
      * If roadmap is baselined and governance requires CR, create one instead of direct update
      */
     updateInitiativeSchedule: async (initiativeId, updates, userId, projectId) => {
-        const db = require('../database');
-
         // Check if initiative's wave is baselined
         const initiative = await new Promise((resolve) => {
-            db.get(`SELECT i.wave_id, w.is_baselined, p.governance_settings
+            deps.db.get(`SELECT i.wave_id, w.is_baselined, p.governance_settings
                     FROM initiatives i
                     LEFT JOIN roadmap_waves w ON i.wave_id = w.id
                     LEFT JOIN projects p ON i.project_id = p.id
@@ -135,7 +143,7 @@ const RoadmapService = {
         // If baselined and governance requires CR for schedule changes
         if (isBaselined && governanceSettings.requireChangeRequestForSchedule) {
             // Create Change Request instead of direct update
-            const crId = uuidv4();
+            const crId = deps.uuidv4();
             const auditTrail = JSON.stringify([{
                 action: 'CREATED',
                 by: userId,
@@ -143,7 +151,7 @@ const RoadmapService = {
             }]);
 
             await new Promise((resolve, reject) => {
-                db.run(`INSERT INTO decisions (
+                deps.db.run(`INSERT INTO decisions (
                     id, project_id, decision_type, related_object_type, related_object_id,
                     decision_owner_id, required, title, description, audit_trail, status
                 ) VALUES (?, ?, 'SCHEDULE_CHANGE', 'INITIATIVE', ?, ?, 1, ?, ?, ?, 'PENDING')`,
@@ -193,7 +201,7 @@ const RoadmapService = {
         params.push(initiativeId);
 
         await new Promise((resolve, reject) => {
-            db.run(`UPDATE initiatives SET ${setClauses.join(', ')} WHERE id = ?`, params, (err) => {
+            deps.db.run(`UPDATE initiatives SET ${setClauses.join(', ')} WHERE id = ?`, params, (err) => {
                 if (err) reject(err);
                 else resolve();
             });

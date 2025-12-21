@@ -8,6 +8,12 @@
 const db = require('../database');
 const { v4: uuidv4 } = require('uuid');
 
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db,
+    uuidv4
+};
+
 // Model cost estimates (per 1K tokens, in USD)
 const MODEL_COSTS = {
     // Premium tier (reasoning)
@@ -67,6 +73,11 @@ const AICostControlService = {
     ROLE_TO_CATEGORY,
     ACTION_TO_CATEGORY,
 
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
+
     // ==========================================
     // BUDGET MANAGEMENT
     // ==========================================
@@ -77,7 +88,7 @@ const AICostControlService = {
     setGlobalBudget: async (monthlyLimitUsd, autoDowngrade = true) => {
         const id = 'budget-global';
         return new Promise((resolve, reject) => {
-            db.run(`
+            deps.db.run(`
                 INSERT INTO ai_budgets (id, scope_type, scope_id, monthly_limit_usd, auto_downgrade)
                 VALUES (?, 'global', NULL, ?, ?)
                 ON CONFLICT(scope_type, scope_id) 
@@ -95,7 +106,7 @@ const AICostControlService = {
     setTenantBudget: async (organizationId, monthlyLimitUsd, autoDowngrade = true) => {
         const id = `budget-tenant-${organizationId}`;
         return new Promise((resolve, reject) => {
-            db.run(`
+            deps.db.run(`
                 INSERT INTO ai_budgets (id, scope_type, scope_id, monthly_limit_usd, auto_downgrade)
                 VALUES (?, 'tenant', ?, ?, ?)
                 ON CONFLICT(scope_type, scope_id) 
@@ -113,7 +124,7 @@ const AICostControlService = {
     setProjectBudget: async (projectId, monthlyLimitUsd, autoDowngrade = true) => {
         const id = `budget-project-${projectId}`;
         return new Promise((resolve, reject) => {
-            db.run(`
+            deps.db.run(`
                 INSERT INTO ai_budgets (id, scope_type, scope_id, monthly_limit_usd, auto_downgrade)
                 VALUES (?, 'project', ?, ?, ?)
                 ON CONFLICT(scope_type, scope_id) 
@@ -135,7 +146,7 @@ const AICostControlService = {
                 : `SELECT * FROM ai_budgets WHERE scope_type = ? AND scope_id IS NULL`;
             const params = scopeId ? [scopeType, scopeId] : [scopeType];
 
-            db.get(sql, params, (err, row) => {
+            deps.db.get(sql, params, (err, row) => {
                 if (err) reject(err);
                 else resolve(row || null);
             });
@@ -192,7 +203,7 @@ const AICostControlService = {
         const percentUsed = (mostRestrictive.current_month_usage / mostRestrictive.monthly_limit_usd) * 100;
 
         return {
-            allowed: remaining >= estimatedCost || mostRestrictive.auto_downgrade,
+            allowed: remaining >= estimatedCost || mostRestrictive.auto_downgrade === 1,
             remainingBudget: Math.max(0, remaining),
             shouldDowngrade: percentUsed >= 80, // Start downgrading at 80%
             currentUsage: mostRestrictive.current_month_usage,
@@ -229,11 +240,11 @@ const AICostControlService = {
         wasDowngraded = false,
         downgradeReason = null
     }) => {
-        const id = uuidv4();
+        const id = deps.uuidv4();
         const estimatedCost = AICostControlService.estimateCost(modelUsed, inputTokens, outputTokens);
 
         return new Promise((resolve, reject) => {
-            db.run(`
+            deps.db.run(`
                 INSERT INTO ai_usage_log 
                 (id, organization_id, project_id, user_id, model_used, model_category, action_type, 
                  input_tokens, output_tokens, estimated_cost_usd, was_downgraded, downgrade_reason)
@@ -269,9 +280,9 @@ const AICostControlService = {
     _updateBudgetUsage: async (organizationId, projectId, cost) => {
         // Update all applicable budgets
         return new Promise((resolve) => {
-            db.serialize(() => {
+            deps.db.serialize(() => {
                 // Global
-                db.run(`
+                deps.db.run(`
                     UPDATE ai_budgets 
                     SET current_month_usage = current_month_usage + ?, updated_at = CURRENT_TIMESTAMP
                     WHERE scope_type = 'global'
@@ -279,7 +290,7 @@ const AICostControlService = {
 
                 // Tenant
                 if (organizationId) {
-                    db.run(`
+                    deps.db.run(`
                         UPDATE ai_budgets 
                         SET current_month_usage = current_month_usage + ?, updated_at = CURRENT_TIMESTAMP
                         WHERE scope_type = 'tenant' AND scope_id = ?
@@ -288,7 +299,7 @@ const AICostControlService = {
 
                 // Project
                 if (projectId) {
-                    db.run(`
+                    deps.db.run(`
                         UPDATE ai_budgets 
                         SET current_month_usage = current_month_usage + ?, updated_at = CURRENT_TIMESTAMP
                         WHERE scope_type = 'project' AND scope_id = ?
@@ -310,7 +321,7 @@ const AICostControlService = {
                 : `UPDATE ai_budgets SET current_month_usage = 0, updated_at = CURRENT_TIMESTAMP`;
             const params = scopeType ? [scopeType] : [];
 
-            db.run(sql, params, function (err) {
+            deps.db.run(sql, params, function (err) {
                 if (err) reject(err);
                 else resolve({ resetCount: this.changes });
             });
@@ -394,7 +405,7 @@ const AICostControlService = {
 
             sql += ` GROUP BY model_category, model_used`;
 
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) reject(err);
                 else {
                     const summary = {
@@ -434,7 +445,7 @@ const AICostControlService = {
      */
     getUserUsage: async (userId, organizationId, days = 30) => {
         return new Promise((resolve, reject) => {
-            db.all(`
+            deps.db.all(`
                 SELECT 
                     DATE(created_at) as date,
                     COUNT(*) as requests,
@@ -457,7 +468,7 @@ const AICostControlService = {
      */
     getAllBudgets: async () => {
         return new Promise((resolve, reject) => {
-            db.all(`
+            deps.db.all(`
                 SELECT * FROM ai_budgets
                 ORDER BY scope_type, scope_id
             `, [], (err, rows) => {

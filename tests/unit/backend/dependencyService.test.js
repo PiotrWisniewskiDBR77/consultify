@@ -9,19 +9,15 @@ const mockDb = {
     initPromise: Promise.resolve()
 };
 
-vi.mock('../../../server/database', () => ({
-    default: mockDb
-}));
-
-vi.mock('uuid', () => ({
-    v4: () => 'uuid-1234'
-}));
-
 import DependencyService from '../../../server/services/dependencyService.js';
 
 describe('DependencyService', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        DependencyService.setDependencies({
+            db: mockDb,
+            uuidv4: () => 'uuid-1234'
+        });
 
         mockDb.all.mockImplementation((...args) => {
             const cb = args[args.length - 1];
@@ -30,10 +26,10 @@ describe('DependencyService', () => {
 
         mockDb.run.mockImplementation((...args) => {
             const cb = args[args.length - 1];
-            if (typeof cb === 'function') cb(null, { changes: 1 });
+            if (typeof cb === 'function') cb.call({ changes: 1 }, null);
         });
 
-        // Reset internal DB reference if _setDb exists (it does)
+        // Keep compatibility for legacy tests
         if (DependencyService._setDb) DependencyService._setDb(mockDb);
     });
 

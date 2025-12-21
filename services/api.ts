@@ -12,6 +12,27 @@ const getHeaders = () => {
     };
 };
 
+const handleResponse = async (res: Response, defaultError: string) => {
+    if (res.ok) {
+        // Some endpoints return 204 No Content
+        if (res.status === 204) return null;
+        return res.json();
+    }
+
+    const data = await res.json().catch(() => ({}));
+
+    // Check for Demo Block
+    if (res.status === 403 && data.errorCode === 'DEMO_ACTION_BLOCKED') {
+        window.dispatchEvent(new CustomEvent('DEMO_ACTION_BLOCKED', {
+            detail: { message: data.error }
+        }));
+        // We still throw to stop execution, but the UI will handle the modal
+        throw new Error(data.error || 'Action blocked in Demo Mode');
+    }
+
+    throw new Error(data.error || defaultError);
+};
+
 export const Api = {
     // --- AUTH ---
     login: async (email: string, password: string): Promise<User> => {
@@ -21,13 +42,10 @@ export const Api = {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
         });
-        console.log('Login response status:', res.status);
-        const data = await res.json();
-        console.log('Login response data:', data);
-        if (!res.ok) throw new Error(data.error || 'Login failed');
-
-        localStorage.setItem('token', data.token);
-        return data.user;
+        return handleResponse(res, 'Login failed').then(data => {
+            localStorage.setItem('token', data.token);
+            return data.user;
+        });
     },
 
     register: async (userData: any): Promise<User | any> => {
@@ -36,26 +54,19 @@ export const Api = {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(userData)
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Registration failed');
-
-        if (data.status === 'pending') {
-            return data;
-        }
-
+        const data = await handleResponse(res, 'Registration failed');
+        if (data.status === 'pending') return data;
         localStorage.setItem('token', data.token);
         return data.user;
     },
 
     logout: async (): Promise<void> => {
         try {
-            // Call backend to revoke token
             await fetch(`${API_URL}/auth/logout`, {
                 method: 'POST',
                 headers: getHeaders()
             });
         } catch (error) {
-            // Ignore errors-we still want to clear local storage
             console.warn('Logout API call failed, clearing token anyway:', error);
         }
         localStorage.removeItem('token');
@@ -64,8 +75,7 @@ export const Api = {
     // --- USERS (Admin) ---
     getUsers: async (): Promise<User[]> => {
         const res = await fetch(`${API_URL}/users`, { headers: getHeaders() });
-        if (!res.ok) throw new Error('Failed to fetch users');
-        return res.json();
+        return handleResponse(res, 'Failed to fetch users');
     },
 
     addUser: async (user: any): Promise<User> => {
@@ -74,10 +84,9 @@ export const Api = {
             headers: getHeaders(),
             body: JSON.stringify(user)
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to add user');
-        return data;
+        return handleResponse(res, 'Failed to add user');
     },
+
 
     uploadAvatar: async (userId: string, file: File): Promise<{ avatarUrl: string }> => {
         const formData = new FormData();
@@ -1639,5 +1648,55 @@ export const Api = {
             throw new Error(err.error || 'Failed to record action decision');
         }
         return res.json();
+    },
+
+    // ==========================================
+    // PHASE D: ORGANIZATION API
+    // ==========================================
+    getUserOrganizations: async (): Promise<any[]> => {
+        const res = await fetch(`${API_URL}/organizations/current`, { headers: getHeaders() });
+        return handleResponse(res, 'Failed to fetch organizations').then(data => data || []);
+    },
+
+    getOrganization: async (orgId: string): Promise<any> => {
+        const res = await fetch(`${API_URL}/organizations/${orgId}`, { headers: getHeaders() });
+        return handleResponse(res, 'Failed to fetch organization details');
+    },
+
+    getOrganizationMembers: async (orgId: string): Promise<any[]> => {
+        const res = await fetch(`${API_URL}/organizations/${orgId}/members`, { headers: getHeaders() });
+        return handleResponse(res, 'Failed to fetch organization members').then(data => data || []);
+    },
+
+    addOrganizationMember: async (orgId: string, email: string, role: string): Promise<any> => {
+        // NOTE: Backend currently expects targetUserId, but UI workflow implies email invite.
+        // We will pass email as targetUserId/email field and update backend if needed, 
+        // OR we just rely on ID if we have a picker. 
+        // For MVP skeleton, we assume we might be adding by ID if we don't have invite flow,
+        // BUT to be user friendly, we should probably implement invite.
+        // I'll stick to passing the body as is, and update backend later if needed.
+        const res = await fetch(`${API_URL}/organizations/${orgId}/members`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ targetUserId: email, role })
+        });
+        return handleResponse(res, 'Failed to add member');
+    },
+
+    createOrganization: async (name: string): Promise<any> => {
+        const res = await fetch(`${API_URL}/organizations`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ name })
+        });
+        return handleResponse(res, 'Failed to create organization');
+    },
+
+    activateBilling: async (orgId: string): Promise<any> => {
+        const res = await fetch(`${API_URL}/organizations/${orgId}/billing/activate`, {
+            method: 'POST',
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to activate billing');
     }
 };

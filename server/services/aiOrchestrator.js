@@ -3,14 +3,17 @@
 // Extended for AI Trust & Explainability Layer
 // Extended for Demo/Trial Access Model
 
-const AIContextBuilder = require('./aiContextBuilder');
-const AIPolicyEngine = require('./aiPolicyEngine');
-const AIMemoryManager = require('./aiMemoryManager');
-const AIRoleGuard = require('./aiRoleGuard');
-const RegulatoryModeGuard = require('./regulatoryModeGuard');
-const AIExplainabilityService = require('./aiExplainabilityService');
-const AccessPolicyService = require('./accessPolicyService');
-const { v4: uuidv4 } = require('uuid');
+// Dependency injection for testing
+const deps = {
+    AIContextBuilder: require('./aiContextBuilder'),
+    AIPolicyEngine: require('./aiPolicyEngine'),
+    AIMemoryManager: require('./aiMemoryManager'),
+    AIRoleGuard: require('./aiRoleGuard'),
+    RegulatoryModeGuard: require('./regulatoryModeGuard'),
+    AIExplainabilityService: require('./aiExplainabilityService'),
+    AccessPolicyService: require('./accessPolicyService'),
+    uuidv4: require('uuid').v4
+};
 
 const AI_ROLES = {
     ADVISOR: 'ADVISOR',
@@ -32,11 +35,18 @@ const AIOrchestrator = {
     CHAT_MODES,
 
     /**
+     * Allow dependency injection for testing
+     */
+    _setDependencies: (newDeps) => {
+        Object.assign(deps, newDeps);
+    },
+
+    /**
      * Process a chat message
      */
     processMessage: async (message, userId, organizationId, projectId = null, options = {}) => {
         // 0. Check Demo/Trial access policy
-        const accessContext = await AccessPolicyService.getAIAccessContext(organizationId);
+        const accessContext = await deps.AccessPolicyService.getAIAccessContext(organizationId);
 
         // Block if trial expired
         if (accessContext.trialStatus?.expired && !accessContext.isPaid) {
@@ -61,13 +71,13 @@ const AIOrchestrator = {
         }
 
         // 1. Build context
-        const context = await AIContextBuilder.buildContext(userId, organizationId, projectId, options);
+        const context = await deps.AIContextBuilder.buildContext(userId, organizationId, projectId, options);
 
         // 2. Get policy
-        const policy = await AIPolicyEngine.getEffectivePolicy(organizationId, projectId, userId);
+        const policy = await deps.AIPolicyEngine.getEffectivePolicy(organizationId, projectId, userId);
 
         // 3. Get user preferences
-        const preferences = await AIMemoryManager.getUserPreferences(userId);
+        const preferences = await deps.AIMemoryManager.getUserPreferences(userId);
 
         // 4. Determine intent and role
         const intent = AIOrchestrator._detectIntent(message);
@@ -93,18 +103,18 @@ const AIOrchestrator = {
         // 5. Get project memory for context
         let projectMemory = null;
         if (projectId) {
-            projectMemory = await AIMemoryManager.buildProjectMemorySummary(projectId);
+            projectMemory = await deps.AIMemoryManager.buildProjectMemorySummary(projectId);
         }
 
         // 6. Get AI Role configuration for the project (AI Roles Model)
         let roleConfig = null;
         if (projectId) {
-            roleConfig = await AIRoleGuard.getRoleConfig(projectId);
+            roleConfig = await deps.AIRoleGuard.getRoleConfig(projectId);
         }
 
         // 7. Build response context
         const responseContext = {
-            id: uuidv4(),
+            id: deps.uuidv4(),
             role,
             intent,
             context,
@@ -117,8 +127,8 @@ const AIOrchestrator = {
             // AI Roles Model
             aiGovernance: {
                 activeRole: roleConfig?.activeRole || 'ADVISOR',
-                capabilities: roleConfig?.capabilities || AIRoleGuard.getRoleCapabilities('ADVISOR'),
-                roleDescription: roleConfig?.roleDescription || AIRoleGuard.getRoleDescription('ADVISOR')
+                capabilities: roleConfig?.capabilities || deps.AIRoleGuard.getRoleCapabilities('ADVISOR'),
+                roleDescription: roleConfig?.roleDescription || deps.AIRoleGuard.getRoleDescription('ADVISOR')
             },
             // Demo/Trial Access Context
             accessContext: {
@@ -133,14 +143,14 @@ const AIOrchestrator = {
 
         // 8. Generate AI Explanation (deterministic, not LLM-dependent)
         // This ensures every AI response has an explanation object
-        responseContext.explanation = AIExplainabilityService.buildAIExplanation(responseContext);
+        responseContext.explanation = deps.AIExplainabilityService.buildAIExplanation(responseContext);
         responseContext.confidenceLevel = responseContext.explanation.confidenceLevel;
 
         // 9. Generate response prompt (for LLM)
         const prompt = AIOrchestrator._buildPrompt(message, responseContext);
 
         // 10. Increment daily AI usage counter (non-blocking)
-        AccessPolicyService.incrementUsage(organizationId, 'ai_calls', 1).catch(err => {
+        deps.AccessPolicyService.incrementUsage(organizationId, 'ai_calls', 1).catch(err => {
             console.error('[AIOrchestrator] Failed to increment AI usage counter:', err);
         });
 
@@ -222,7 +232,7 @@ const AIOrchestrator = {
         // REGULATORY MODE: Inject compliance prompt FIRST if enabled
         let regulatoryPrefix = '';
         if (policy?.regulatoryModeEnabled) {
-            regulatoryPrefix = RegulatoryModeGuard.getRegulatoryPrompt() + '\n\n';
+            regulatoryPrefix = deps.RegulatoryModeGuard.getRegulatoryPrompt() + '\n\n';
         }
 
         let systemPrompt = `You are an AI ${role} for an Enterprise Strategic Change Management System (SCMS).
@@ -427,7 +437,7 @@ USER MESSAGE: ${userMessage}`;
 
         // Inject explainability footer if explanation is present
         if (responseContext?.explanation) {
-            const footer = AIExplainabilityService.buildExplainabilityFooter(responseContext.explanation);
+            const footer = deps.AIExplainabilityService.buildExplainabilityFooter(responseContext.explanation);
             if (footer) {
                 processedResponse = `${processedResponse.trim()}\n\n${footer}`;
             }

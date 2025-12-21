@@ -9,19 +9,15 @@ const mockDb = {
     initPromise: Promise.resolve()
 };
 
-vi.mock('../../../server/database', () => ({
-    default: mockDb
-}));
-
-vi.mock('uuid', () => ({
-    v4: () => 'uuid-1234'
-}));
-
 import MetricsCollector from '../../../server/services/metricsCollector.js';
 
 describe('MetricsCollector', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        MetricsCollector.setDependencies({
+            db: mockDb,
+            uuidv4: () => 'uuid-1234'
+        });
 
         mockDb.run.mockImplementation(function (...args) {
             const cb = args[args.length - 1];

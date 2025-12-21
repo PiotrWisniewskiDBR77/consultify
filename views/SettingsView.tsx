@@ -9,6 +9,9 @@ import { NotificationSettings } from '../components/settings/NotificationSetting
 import { IntegrationSettings } from '../components/settings/IntegrationSettings';
 import { RegionalSettings } from '../components/settings/RegionalSettings';
 import { LegalSettings } from '../components/settings/LegalSettings';
+import { OrganizationSettings } from '../components/settings/OrganizationSettings';
+import { Building2 } from 'lucide-react';
+
 
 interface SettingsViewProps {
     currentUser: User;
@@ -19,7 +22,8 @@ interface SettingsViewProps {
 
 export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdateUser, theme, toggleTheme }) => {
     const { t } = useTranslation();
-    const [activeTab, setActiveTab] = useState<'PROFILE' | 'BILLING' | 'AI' | 'NOTIFICATIONS' | 'INTEGRATIONS' | 'REGIONAL' | 'LEGAL'>('PROFILE');
+    const [activeTab, setActiveTab] = useState<'PROFILE' | 'ORGANIZATION' | 'BILLING' | 'AI' | 'NOTIFICATIONS' | 'INTEGRATIONS' | 'REGIONAL' | 'LEGAL'>('PROFILE');
+
 
     return (
         <div className="flex h-full bg-slate-50 dark:bg-navy-950 transition-colors duration-300">
@@ -34,6 +38,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
                     <UserCircle size={18} />
                     {t('settings.menu.myProfile')}
                 </button>
+
+                <button
+                    onClick={() => setActiveTab('ORGANIZATION')}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-left transition-colors ${activeTab === 'ORGANIZATION' ? 'bg-slate-100 dark:bg-navy-800 text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'}`}
+                >
+                    <Building2 size={18} />
+                    Organization
+                </button>
+
                 <button
                     onClick={() => setActiveTab('BILLING')}
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-left transition-colors ${activeTab === 'BILLING' ? 'bg-slate-100 dark:bg-navy-800 text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'}`}
@@ -93,6 +106,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
                         toggleTheme={toggleTheme}
                     />
                 )}
+                {activeTab === 'ORGANIZATION' && <OrganizationSettings currentUser={currentUser} />}
+
                 {activeTab === 'BILLING' && <BillingSettings currentUser={currentUser} />}
                 {activeTab === 'AI' && <AISettings currentUser={currentUser} onUpdateUser={onUpdateUser} />}
                 {activeTab === 'NOTIFICATIONS' && <NotificationSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />}

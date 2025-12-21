@@ -161,6 +161,33 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({
                 </button>
               </div>
 
+
+
+              {/* OPTION 3: CONSULTING (New) */}
+              <div className="group relative bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 hover:border-emerald-500/50 rounded-lg p-6 transition-all duration-300 cursor-pointer hover:shadow-lg"
+                onClick={() => window.location.href = '/consulting'}>
+
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="w-12 h-12 rounded bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center border border-emerald-100 dark:border-emerald-500/30 group-hover:border-emerald-600 transition-colors">
+                    <CheckCircle2 className="text-emerald-600 dark:text-emerald-300 group-hover:text-emerald-500" size={24} />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold text-navy-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Talk to Consulting</h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs text-slate-500">Custom Engagement</span>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-slate-500 dark:text-slate-400 text-sm mb-6 leading-relaxed">
+                  Need a bespoke approach? Schedule a call with our senior consultants to discuss your specific transformation needs.
+                </p>
+
+                <button className="w-full py-3 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/20 text-navy-900 dark:text-white font-medium rounded hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors flex items-center justify-center gap-2">
+                  Contact Us
+                </button>
+              </div>
+
             </div>
 
           </div>

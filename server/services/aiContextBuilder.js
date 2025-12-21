@@ -10,7 +10,17 @@ try {
     console.warn('[AIContextBuilder] PMOHealthService not available, pmo.healthSnapshot will be null');
 }
 
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db,
+    PMOHealthService
+};
+
 const AIContextBuilder = {
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
     /**
      * Build complete 6-layer context + PMO health snapshot
      */
@@ -24,9 +34,9 @@ const AIContextBuilder = {
 
         // Step A: Fetch PMOHealthSnapshot for AI context (same data as UI sees)
         let pmo = { healthSnapshot: null };
-        if (projectId && PMOHealthService) {
+        if (projectId && deps.PMOHealthService) {
             try {
-                pmo.healthSnapshot = await PMOHealthService.getHealthSnapshot(projectId);
+                pmo.healthSnapshot = await deps.PMOHealthService.getHealthSnapshot(projectId);
             } catch (err) {
                 console.warn('[AIContextBuilder] Failed to get PMO health snapshot:', err.message);
             }
@@ -56,7 +66,7 @@ const AIContextBuilder = {
     _buildPlatformContext: async (userId, organizationId) => {
         // Get user role
         const user = await new Promise((resolve, reject) => {
-            db.get(`SELECT role FROM users WHERE id = ?`, [userId], (err, row) => {
+            deps.db.get(`SELECT role FROM users WHERE id = ?`, [userId], (err, row) => {
                 if (err) reject(err);
                 else resolve(row || {});
             });
@@ -64,7 +74,7 @@ const AIContextBuilder = {
 
         // Get AI policies
         const policies = await new Promise((resolve, reject) => {
-            db.get(`SELECT * FROM ai_policies WHERE organization_id = ?`, [organizationId], (err, row) => {
+            deps.db.get(`SELECT * FROM ai_policies WHERE organization_id = ?`, [organizationId], (err, row) => {
                 if (err) reject(err);
                 else resolve(row || {});
             });
@@ -93,14 +103,14 @@ const AIContextBuilder = {
      */
     _buildOrganizationContext: async (organizationId) => {
         const org = await new Promise((resolve, reject) => {
-            db.get(`SELECT * FROM organizations WHERE id = ?`, [organizationId], (err, row) => {
+            deps.db.get(`SELECT * FROM organizations WHERE id = ?`, [organizationId], (err, row) => {
                 if (err) reject(err);
                 else resolve(row || {});
             });
         });
 
         const projects = await new Promise((resolve, reject) => {
-            db.all(`SELECT id FROM projects WHERE organization_id = ? AND is_closed = 0`,
+            deps.db.all(`SELECT id FROM projects WHERE organization_id = ? AND is_closed = 0`,
                 [organizationId], (err, rows) => {
                     if (err) reject(err);
                     else resolve(rows || []);
@@ -108,7 +118,7 @@ const AIContextBuilder = {
         });
 
         const memory = await new Promise((resolve, reject) => {
-            db.get(`SELECT * FROM ai_organization_memory WHERE organization_id = ?`,
+            deps.db.get(`SELECT * FROM ai_organization_memory WHERE organization_id = ?`,
                 [organizationId], (err, row) => {
                     if (err) reject(err);
                     else resolve(row || {});
@@ -130,7 +140,7 @@ const AIContextBuilder = {
      */
     _buildProjectContext: async (projectId) => {
         const project = await new Promise((resolve, reject) => {
-            db.get(`SELECT * FROM projects WHERE id = ?`, [projectId], (err, row) => {
+            deps.db.get(`SELECT * FROM projects WHERE id = ?`, [projectId], (err, row) => {
                 if (err) reject(err);
                 else resolve(row || {});
             });
@@ -139,7 +149,7 @@ const AIContextBuilder = {
         if (!project) return null;
 
         const initiatives = await new Promise((resolve, reject) => {
-            db.get(`SELECT 
+            deps.db.get(`SELECT 
                     COUNT(*) as total,
                     SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) as completed
                     FROM initiatives WHERE project_id = ?`,
@@ -188,7 +198,7 @@ const AIContextBuilder = {
                 params.push(projectId);
             }
             sql += ` ORDER BY due_date ASC LIMIT 10`;
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) reject(err);
                 else resolve(rows || []);
             });
@@ -203,7 +213,7 @@ const AIContextBuilder = {
                 params.push(projectId);
             }
             sql += ` LIMIT 10`;
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) reject(err);
                 else resolve(rows || []);
             });
@@ -218,7 +228,7 @@ const AIContextBuilder = {
                 params.push(projectId);
             }
             sql += ` LIMIT 10`;
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) reject(err);
                 else resolve(rows || []);
             });
@@ -233,7 +243,7 @@ const AIContextBuilder = {
                 sql += ` AND project_id = ?`;
                 params.push(projectId);
             }
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) reject(err);
                 else resolve(rows || []);
             });
@@ -271,7 +281,7 @@ const AIContextBuilder = {
 
         // GAP-03: Check if RAG is enabled for project
         const project = await new Promise((resolve) => {
-            db.get(`SELECT rag_enabled FROM projects WHERE id = ?`, [projectId], (err, row) => {
+            deps.db.get(`SELECT rag_enabled FROM projects WHERE id = ?`, [projectId], (err, row) => {
                 resolve(row || { rag_enabled: 1 });
             });
         });
@@ -290,7 +300,7 @@ const AIContextBuilder = {
 
         // Previous decisions
         const decisions = await new Promise((resolve, reject) => {
-            db.all(`SELECT id, title, outcome FROM decisions 
+            deps.db.all(`SELECT id, title, outcome FROM decisions 
                     WHERE project_id = ? AND status != 'PENDING' 
                     ORDER BY decided_at DESC LIMIT 10`,
                 [projectId], (err, rows) => {
@@ -301,7 +311,7 @@ const AIContextBuilder = {
 
         // Phase history from project
         const projectInfo = await new Promise((resolve, reject) => {
-            db.get(`SELECT phase_history FROM projects WHERE id = ?`, [projectId], (err, row) => {
+            deps.db.get(`SELECT phase_history FROM projects WHERE id = ?`, [projectId], (err, row) => {
                 if (err) reject(err);
                 else resolve(row || {});
             });
@@ -330,7 +340,7 @@ const AIContextBuilder = {
      */
     _buildExternalContext: async (organizationId) => {
         const policies = await new Promise((resolve, reject) => {
-            db.get(`SELECT internet_enabled FROM ai_policies WHERE organization_id = ?`,
+            deps.db.get(`SELECT internet_enabled FROM ai_policies WHERE organization_id = ?`,
                 [organizationId], (err, row) => {
                     if (err) reject(err);
                     else resolve(row || {});
@@ -347,8 +357,16 @@ const AIContextBuilder = {
      * Generate context hash for caching/comparison
      */
     _generateHash: (platform, organization, project) => {
-        const data = `${platform.tenantId}-${organization.organizationId}-${project?.projectId || 'none'}-${Date.now()}`;
-        return Buffer.from(data).toString('base64').substring(0, 16);
+        // Deterministic hash (no time component) for caching/comparison
+        const crypto = require('crypto');
+        const data = JSON.stringify({
+            tenantId: platform?.tenantId,
+            organizationId: organization?.organizationId,
+            projectId: project?.projectId || null,
+            role: platform?.role,
+            policyLevel: platform?.policyLevel
+        });
+        return crypto.createHash('sha256').update(data).digest('hex').slice(0, 16);
     }
 };
 

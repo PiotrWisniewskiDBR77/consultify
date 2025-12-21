@@ -1,140 +1,20 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="54" failures="1" errors="0" time="0.263149374">
-    <testsuite name="tests/unit/breakGlassService.test.js" timestamp="2025-12-21T08:38:59.866Z" hostname="MacBook-Pro-Piotr.local" tests="15" failures="0" errors="0" skipped="0" time="0.075036958">
-        <testcase classname="tests/unit/breakGlassService.test.js" name="BreakGlassService &gt; SCOPES &gt; should define all break-glass scopes" time="0.000643666">
-        </testcase>
-        <testcase classname="tests/unit/breakGlassService.test.js" name="BreakGlassService &gt; DEFAULT_DURATION_MINUTES &gt; should be 2 hours (120 minutes)" time="0.000112">
-        </testcase>
-        <testcase classname="tests/unit/breakGlassService.test.js" name="BreakGlassService &gt; MAX_DURATION_MINUTES &gt; should be 24 hours (1440 minutes)" time="0.000067125">
-        </testcase>
-        <testcase classname="tests/unit/breakGlassService.test.js" name="BreakGlassService &gt; startSession &gt; should throw error for missing required parameters" time="0.00074925">
-        </testcase>
-        <testcase classname="tests/unit/breakGlassService.test.js" name="BreakGlassService &gt; startSession &gt; should throw error for invalid scope" time="0.00023775">
-        </testcase>
-        <testcase classname="tests/unit/breakGlassService.test.js" name="BreakGlassService &gt; startSession &gt; should throw error if session already exists for scope" time="0.000321167">
-        </testcase>
-        <testcase classname="tests/unit/breakGlassService.test.js" name="BreakGlassService &gt; startSession &gt; should create session successfully" time="0.000223833">
+<testsuites name="vitest tests" tests="1" failures="1" errors="0" time="0">
+    <testsuite name="tests/backend/trial_limits.test.js" timestamp="2025-12-21T09:27:30.778Z" hostname="MacBook-Pro-Piotr.local" tests="1" failures="1" errors="0" skipped="0" time="0">
+        <testcase classname="tests/backend/trial_limits.test.js" name="tests/backend/trial_limits.test.js" time="0">
             <system-out>
-[BreakGlass] Session started: test-uuid-1234 (scope: policy_engine_disabled) by user-1
+[Database] Selected: SQLite
+
+[DB:ra4w5r] Initializing database at :memory:
+Connected to the SQLite database.
+Created billing tables and seeded default subscription plans.
+Seeded SuperAdmin and DBR77 Users.
 
             </system-out>
-        </testcase>
-        <testcase classname="tests/unit/breakGlassService.test.js" name="BreakGlassService &gt; startSession &gt; should cap duration at MAX_DURATION_MINUTES" time="0.000141416">
-            <system-out>
-[BreakGlass] Session started: test-uuid-1234 (scope: emergency_access) by user-1
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/unit/breakGlassService.test.js" name="BreakGlassService &gt; closeSession &gt; should throw error for non-existent session" time="0.000146916">
-        </testcase>
-        <testcase classname="tests/unit/breakGlassService.test.js" name="BreakGlassService &gt; closeSession &gt; should throw error for already closed session" time="0.000115792">
-        </testcase>
-        <testcase classname="tests/unit/breakGlassService.test.js" name="BreakGlassService &gt; closeSession &gt; should close session successfully" time="0.000226625">
-            <system-out>
-[BreakGlass] Session closed: session-1 by user-1
-
-            </system-out>
-        </testcase>
-        <testcase classname="tests/unit/breakGlassService.test.js" name="BreakGlassService &gt; isBreakGlassActive &gt; should return false when no active session" time="0.000045875">
-        </testcase>
-        <testcase classname="tests/unit/breakGlassService.test.js" name="BreakGlassService &gt; isBreakGlassActive &gt; should return true when active session exists" time="0.000033083">
-        </testcase>
-        <testcase classname="tests/unit/breakGlassService.test.js" name="BreakGlassService &gt; getActiveSessions &gt; should return empty array when no sessions" time="0.000253459">
-        </testcase>
-        <testcase classname="tests/unit/breakGlassService.test.js" name="BreakGlassService &gt; getActiveSessions &gt; should return active sessions" time="0.000263792">
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/unit/connectorAdapter.test.js" timestamp="2025-12-21T08:38:59.868Z" hostname="MacBook-Pro-Piotr.local" tests="11" failures="0" errors="0" skipped="0" time="0.109918291">
-        <testcase classname="tests/unit/connectorAdapter.test.js" name="ConnectorAdapter &gt; Dry-run Mode &gt; should return plan without execution in dry-run mode" time="0.005452666">
-        </testcase>
-        <testcase classname="tests/unit/connectorAdapter.test.js" name="ConnectorAdapter &gt; Dry-run Mode &gt; should respect sandbox_mode flag on config" time="0.000265416">
-        </testcase>
-        <testcase classname="tests/unit/connectorAdapter.test.js" name="ConnectorAdapter &gt; Error Handling &gt; should return error for unknown connector" time="0.000186583">
-        </testcase>
-        <testcase classname="tests/unit/connectorAdapter.test.js" name="ConnectorAdapter &gt; Error Handling &gt; should return error for unsupported action" time="0.000151083">
-        </testcase>
-        <testcase classname="tests/unit/connectorAdapter.test.js" name="ConnectorAdapter &gt; Error Handling &gt; should return error when connector not configured" time="0.000157334">
-        </testcase>
-        <testcase classname="tests/unit/connectorAdapter.test.js" name="ConnectorAdapter &gt; Error Handling &gt; should return error when connector disconnected" time="0.000130916">
-        </testcase>
-        <testcase classname="tests/unit/connectorAdapter.test.js" name="ConnectorAdapter &gt; Plan Generation &gt; should generate Jira plan for issue_create" time="0.000430417">
-        </testcase>
-        <testcase classname="tests/unit/connectorAdapter.test.js" name="ConnectorAdapter &gt; Plan Generation &gt; should generate Slack plan for message_send" time="0.000179125">
-        </testcase>
-        <testcase classname="tests/unit/connectorAdapter.test.js" name="ConnectorAdapter &gt; Plan Generation &gt; should generate Google Calendar plan for event_create" time="0.000147542">
-        </testcase>
-        <testcase classname="tests/unit/connectorAdapter.test.js" name="ConnectorAdapter &gt; Execution (Mock) &gt; should execute Slack message_send successfully" time="0.000186458">
-        </testcase>
-        <testcase classname="tests/unit/connectorAdapter.test.js" name="ConnectorAdapter &gt; Execution (Mock) &gt; should include duration_ms in result" time="0.0002265">
-        </testcase>
-    </testsuite>
-    <testsuite name="tests/unit/backend/aiActionExecutor.test.js" timestamp="2025-12-21T08:38:59.868Z" hostname="MacBook-Pro-Piotr.local" tests="28" failures="1" errors="0" skipped="0" time="0.078194125">
-        <testcase classname="tests/unit/backend/aiActionExecutor.test.js" name="AIActionExecutor &gt; ACTION_TYPES &gt; should export all action types" time="0.000643541">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiActionExecutor.test.js" name="AIActionExecutor &gt; ACTION_STATUS &gt; should export all action statuses" time="0.000129125">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiActionExecutor.test.js" name="AIActionExecutor &gt; requestAction &gt; should block action when regulatory mode is enabled" time="0.000231667">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiActionExecutor.test.js" name="AIActionExecutor &gt; requestAction &gt; should block action when AI role does not permit" time="0.000127042">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiActionExecutor.test.js" name="AIActionExecutor &gt; requestAction &gt; should block action when policy does not allow" time="0.000082084">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiActionExecutor.test.js" name="AIActionExecutor &gt; requestAction &gt; should create action with PENDING status when approval required" time="0.000120792">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiActionExecutor.test.js" name="AIActionExecutor &gt; requestAction &gt; should create action with APPROVED status when no approval needed" time="0.003007459">
-            <failure message="expected undefined to be false // Object.is equality" type="AssertionError">
-AssertionError: expected undefined to be false // Object.is equality
-
-- Expected: 
-false
-
-+ Received: 
-undefined
-
- ❯ tests/unit/backend/aiActionExecutor.test.js:183:45
+            <failure message="jest is not defined" type="ReferenceError">
+ReferenceError: jest is not defined
+ ❯ tests/backend/trial_limits.test.js:4:1
             </failure>
-        </testcase>
-        <testcase classname="tests/unit/backend/aiActionExecutor.test.js" name="AIActionExecutor &gt; requestAction &gt; should force approval when AI role is MANAGER" time="0.000103625">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiActionExecutor.test.js" name="AIActionExecutor &gt; requestAction &gt; should handle database error" time="0.000656042">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiActionExecutor.test.js" name="AIActionExecutor &gt; createDraft &gt; should create task draft with proper action type" time="0.000181458">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiActionExecutor.test.js" name="AIActionExecutor &gt; createDraft &gt; should create initiative draft with proper action type" time="0.000054">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiActionExecutor.test.js" name="AIActionExecutor &gt; createDraft &gt; should store draft content after creation" time="0.000053667">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiActionExecutor.test.js" name="AIActionExecutor &gt; approveAction &gt; should approve pending action" time="0.000075">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiActionExecutor.test.js" name="AIActionExecutor &gt; approveAction &gt; should fail when action not found or already processed" time="0.000079708">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiActionExecutor.test.js" name="AIActionExecutor &gt; approveAction &gt; should handle database error" time="0.000081167">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiActionExecutor.test.js" name="AIActionExecutor &gt; rejectAction &gt; should reject pending action" time="0.000119416">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiActionExecutor.test.js" name="AIActionExecutor &gt; rejectAction &gt; should fail when action not found" time="0.000030917">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiActionExecutor.test.js" name="AIActionExecutor &gt; executeAction &gt; should return error when action not found" time="0.000075666">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiActionExecutor.test.js" name="AIActionExecutor &gt; executeAction &gt; should return error when action is not APPROVED" time="0.000040333">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiActionExecutor.test.js" name="AIActionExecutor &gt; executeAction &gt; should execute CREATE_DRAFT_TASK action" time="0.000100125">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiActionExecutor.test.js" name="AIActionExecutor &gt; executeAction &gt; should execute CREATE_DRAFT_INITIATIVE action" time="0.000073042">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiActionExecutor.test.js" name="AIActionExecutor &gt; executeAction &gt; should execute GENERATE_REPORT action" time="0.000043167">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiActionExecutor.test.js" name="AIActionExecutor &gt; executeAction &gt; should handle default action type" time="0.000037708">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiActionExecutor.test.js" name="AIActionExecutor &gt; getPendingActions &gt; should return empty array when no pending actions" time="0.000094125">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiActionExecutor.test.js" name="AIActionExecutor &gt; getPendingActions &gt; should return parsed pending actions" time="0.000198958">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiActionExecutor.test.js" name="AIActionExecutor &gt; getPendingActions &gt; should filter by projectId and organizationId" time="0.000046084">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiActionExecutor.test.js" name="AIActionExecutor &gt; getPendingActions &gt; should handle malformed JSON gracefully" time="0.000059542">
-        </testcase>
-        <testcase classname="tests/unit/backend/aiActionExecutor.test.js" name="AIActionExecutor &gt; _logAudit &gt; should create audit log entry" time="0.000045542">
         </testcase>
     </testsuite>
 </testsuites>

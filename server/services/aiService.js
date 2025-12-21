@@ -15,6 +15,7 @@ const PromptService = require('./promptService');
 const ModelRouter = require('./modelRouter');
 // Step B: Import post-processor for deterministic labeling
 const { aiResponsePostProcessor } = require('./aiResponsePostProcessor');
+const AccessPolicyService = require('./accessPolicyService');
 
 // Helper to clean JSON
 const cleanJSON = (text) => {
@@ -129,6 +130,14 @@ const AiService = {
                 // if (!hasBalance) {
                 //    throw new Error("Insufficient token balance. Please top up.");
                 // }
+            }
+
+            // CHECK ACCESS POLICY (TRIAL LIMITS)
+            if (orgId) {
+                const accessCheck = await AccessPolicyService.checkAccess(orgId, 'ai_call');
+                if (!accessCheck.allowed) {
+                    throw new Error(accessCheck.reason || "AI Access Denied");
+                }
             }
 
             let responseText = '';
@@ -334,6 +343,11 @@ const AiService = {
                 multiplier: providerConfig?.markup_multiplier || 1.0
             }).catch(e => console.error("Billing Error", e));
 
+            // TRACK TRIAL USAGE
+            if (orgId) {
+                AccessPolicyService.trackTokenUsage(orgId, totalTokens).catch(e => console.error("Trial Tracking Error", e));
+            }
+
             return responseText;
         } catch (error) {
             console.error("LLM Call Error", error);
@@ -369,6 +383,14 @@ const AiService = {
                 // if (!hasBalance) {
                 //     throw new Error("Insufficient token balance.");
                 // }
+            }
+
+            // CHECK ACCESS POLICY (TRIAL LIMITS)
+            if (orgId) {
+                const accessCheck = await AccessPolicyService.checkAccess(orgId, 'ai_call');
+                if (!accessCheck.allowed) {
+                    throw new Error(accessCheck.reason || "AI Access Denied");
+                }
             }
 
             // Helper Helpers (duplicated for closure)
@@ -519,6 +541,11 @@ const AiService = {
                 multiplier: providerConfig?.markup_multiplier || 1.0
             }).catch(e => console.error("Billing Error", e));
 
+            // TRACK TRIAL USAGE
+            if (orgId) {
+                AccessPolicyService.trackTokenUsage(orgId, totalTokens).catch(e => console.error("Trial Tracking Error", e));
+            }
+
         } catch (error) {
             console.error("Stream LLM Error", error);
             yield " [Error generating response]";
@@ -548,40 +575,65 @@ const AiService = {
         }
 
         // 3. Inject "Client Context" (Memory)
-        // 3. Inject "Client Context" (Memory)
         if (organizationId) {
-            // A. Hard Facts (Name, Facilities)
-            const getOrgDetails = () => new Promise((resolve) => {
-                deps.db.get("SELECT name, industry FROM organizations WHERE id = ?", [organizationId], (err, row) => resolve(row));
-            });
-            const getFacilities = () => new Promise((resolve) => {
-                deps.db.all("SELECT name, headcount, location, activity_profile FROM organization_facilities WHERE organization_id = ?", [organizationId], (err, rows) => resolve(rows || []));
-            });
-            const getContext = () => new Promise((resolve) => {
-                deps.db.all("SELECT key, value FROM client_context WHERE organization_id = ? AND confidence > 0.6", [organizationId], (err, rows) => resolve(rows || []));
-            });
+            // CHECK FOR DEMO MODE
+            const DemoService = require('./demoService');
+            const isDemo = await DemoService.isDemoOrg(organizationId);
 
-            const [orgDetails, facilities, clientContext] = await Promise.all([
-                getOrgDetails(),
-                getFacilities(),
-                getContext()
-            ]);
+            if (isDemo) {
+                // *** DEMO MODE INJECTION ***
+                systemPrompt += `
+                
+### DEMO MODE ACTIVE - NARRATOR PERSONA ENGAGED
+You are operating in a **DEMO / SIMULATION** environment for a potential client.
+Your goal is to **GUIDE** and **SELL** the value of the platform, not just analyze.
 
-            if (orgDetails) {
-                systemPrompt += `\n\n### CLIENT PROFILE:\nName: ${orgDetails.name}\nIndustry: ${orgDetails.industry || 'General'}\n`;
-            }
+**CRITICAL BEHAVIORS:**
+1. **NARRATE YOUR ACTIONS**: Explain *why* you are showing this data. E.g., "I'm analyzing this to show you how quickly we can identify bottlenecks."
+2. **NO LONG-TERM MEMORY**: Do not reference "previous sessions" or "long-term history" as this is a fresh demo.
+3. **CALL TO ACTION**: Frequently suggest: "In a real implementation, we would connect this to your ERP." or "Try this on your own company data by starting a Trial."
+4. **SAFETY**: Do not suggest destructive actions (like firing people or selling assets) in a demo. Keep it constructive.
+5. **TONE**: Enthusiastic, professional, demonstrative.
 
-            if (facilities.length > 0) {
-                systemPrompt += `\n### FACILITIES / SITES:\n`;
-                facilities.forEach(f => {
-                    systemPrompt += `- ${f.name} (${f.location}): ${f.headcount} employees. Profile: ${f.activity_profile}\n`;
+**Example suffix for responses**:
+> *"Notice how the AI automatically detected that risk? In your live environment, this would save hours of manual analysis. [Start Free Trial] to see this on your real data."*
+### END DEMO CONTEXT
+`;
+            } else {
+                // NORMAL MODE CONTEXT
+                // A. Hard Facts (Name, Facilities)
+                const getOrgDetails = () => new Promise((resolve) => {
+                    deps.db.get("SELECT name, industry FROM organizations WHERE id = ?", [organizationId], (err, row) => resolve(row));
                 });
-            }
+                const getFacilities = () => new Promise((resolve) => {
+                    deps.db.all("SELECT name, headcount, location, activity_profile FROM organization_facilities WHERE organization_id = ?", [organizationId], (err, rows) => resolve(rows || []));
+                });
+                const getContext = () => new Promise((resolve) => {
+                    deps.db.all("SELECT key, value FROM client_context WHERE organization_id = ? AND confidence > 0.6", [organizationId], (err, rows) => resolve(rows || []));
+                });
 
-            if (clientContext.length > 0) {
-                systemPrompt += `\n### CLIENT SPECIFIC CONTEXT (SOFT FACTS):\n`;
-                clientContext.forEach(c => systemPrompt += `- ${c.key}: ${c.value}\n`);
-                systemPrompt += `### END CLIENT CONTEXT\n`;
+                const [orgDetails, facilities, clientContext] = await Promise.all([
+                    getOrgDetails(),
+                    getFacilities(),
+                    getContext()
+                ]);
+
+                if (orgDetails) {
+                    systemPrompt += `\n\n### CLIENT PROFILE:\nName: ${orgDetails.name}\nIndustry: ${orgDetails.industry || 'General'}\n`;
+                }
+
+                if (facilities.length > 0) {
+                    systemPrompt += `\n### FACILITIES / SITES:\n`;
+                    facilities.forEach(f => {
+                        systemPrompt += `- ${f.name} (${f.location}): ${f.headcount} employees. Profile: ${f.activity_profile}\n`;
+                    });
+                }
+
+                if (clientContext.length > 0) {
+                    systemPrompt += `\n### CLIENT SPECIFIC CONTEXT (SOFT FACTS):\n`;
+                    clientContext.forEach(c => systemPrompt += `- ${c.key}: ${c.value}\n`);
+                    systemPrompt += `### END CLIENT CONTEXT\n`;
+                }
             }
         }
 

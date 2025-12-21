@@ -5,7 +5,18 @@
 let db = require('../database');
 const DependencyService = require('./dependencyService');
 
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db,
+    DependencyService
+};
+
 const CriticalPathService = {
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+        if (newDeps.db) db = newDeps.db; // keep _setDb behavior consistent
+    },
     /**
      * Calculate critical path for a project
      * Critical path = longest sequence of dependent initiatives
@@ -13,7 +24,7 @@ const CriticalPathService = {
     calculateCriticalPath: async (projectId) => {
         // Get all initiatives with dates
         const initiatives = await new Promise((resolve, reject) => {
-            db.all(`SELECT id, name, planned_start_date, planned_end_date, status
+            deps.db.all(`SELECT id, name, planned_start_date, planned_end_date, status
                     FROM initiatives WHERE project_id = ? AND status != 'CANCELLED'`,
                 [projectId], (err, rows) => {
                     if (err) reject(err);
@@ -26,7 +37,7 @@ const CriticalPathService = {
         }
 
         // Get dependency graph
-        const deps = await DependencyService.buildDependencyGraph(projectId);
+        const depGraph = await deps.DependencyService.buildDependencyGraph(projectId);
 
         // Build adjacency list and in-degree
         const adj = {};
@@ -41,79 +52,71 @@ const CriticalPathService = {
             durations[init.id] = Math.max(1, Math.round((end - start) / (1000 * 60 * 60 * 24)));
         });
 
-        deps.edges.forEach(edge => {
+        depGraph.edges.forEach(edge => {
             if (edge.type === 'FINISH_TO_START' && adj[edge.from_initiative_id] && inDegree[edge.to_initiative_id] !== undefined) {
                 adj[edge.from_initiative_id].push(edge.to_initiative_id);
                 inDegree[edge.to_initiative_id]++;
             }
         });
 
-        // Topological sort with longest path
-        const earliestStart = {};
-        const earliestFinish = {};
-        const queue = [];
-
-        initiatives.forEach(init => {
-            if (inDegree[init.id] === 0) {
-                queue.push(init.id);
-                earliestStart[init.id] = 0;
-            }
-        });
+        // Topological sort + longest path DP (true critical path)
+        const topo = [];
+        const queue = Object.keys(inDegree).filter(k => inDegree[k] === 0);
 
         while (queue.length > 0) {
-            const current = queue.shift();
-            earliestFinish[current] = (earliestStart[current] || 0) + durations[current];
-
-            for (const next of adj[current]) {
-                earliestStart[next] = Math.max(earliestStart[next] || 0, earliestFinish[current]);
-                inDegree[next]--;
-                if (inDegree[next] === 0) {
-                    queue.push(next);
-                }
+            const n = queue.shift();
+            topo.push(n);
+            for (const m of adj[n]) {
+                inDegree[m]--;
+                if (inDegree[m] === 0) queue.push(m);
             }
         }
 
-        // Find longest path (critical path)
+        const dist = {};
+        const prev = {};
+        topo.forEach(id => { dist[id] = durations[id]; prev[id] = null; });
+
+        topo.forEach(u => {
+            for (const v of adj[u]) {
+                const cand = dist[u] + durations[v];
+                if (cand > (dist[v] || 0)) {
+                    dist[v] = cand;
+                    prev[v] = u;
+                }
+            }
+        });
+
         let maxFinish = 0;
-        let criticalEnd = null;
-
-        initiatives.forEach(init => {
-            if ((earliestFinish[init.id] || 0) > maxFinish) {
-                maxFinish = earliestFinish[init.id];
-                criticalEnd = init.id;
-            }
+        let endNode = null;
+        Object.entries(dist).forEach(([id, d]) => {
+            if (d > maxFinish) { maxFinish = d; endNode = id; }
         });
 
-        // Trace back critical path
-        const criticalPath = [];
-        const onCriticalPath = new Set();
+        const criticalIds = [];
+        while (endNode) {
+            criticalIds.unshift(endNode);
+            endNode = prev[endNode];
+        }
 
-        // Mark initiatives with maximum slack = 0 as critical
-        initiatives.forEach(init => {
-            const latestFinish = maxFinish;
-            const latestStart = latestFinish - durations[init.id];
-            const slack = latestStart - (earliestStart[init.id] || 0);
-
-            if (slack <= 0) {
-                onCriticalPath.add(init.id);
-                criticalPath.push({
-                    id: init.id,
-                    name: init.name,
-                    duration: durations[init.id],
-                    earliestStart: earliestStart[init.id] || 0,
-                    earliestFinish: earliestFinish[init.id] || 0
-                });
-            }
+        const initById = Object.fromEntries(initiatives.map(i => [i.id, i]));
+        const criticalPath = criticalIds.map((id, idx) => {
+            const init = initById[id] || { id, name: id };
+            const earliestStart = criticalIds.slice(0, idx).reduce((sum, pid) => sum + durations[pid], 0);
+            return {
+                id,
+                name: init.name,
+                duration: durations[id],
+                earliestStart,
+                earliestFinish: earliestStart + durations[id]
+            };
         });
-
-        // Sort by earliest start
-        criticalPath.sort((a, b) => a.earliestStart - b.earliestStart);
+        const onCriticalPath = new Set(criticalIds);
 
         // Update DB to mark critical path
         for (const init of initiatives) {
             const isCritical = onCriticalPath.has(init.id) ? 1 : 0;
             await new Promise((resolve) => {
-                db.run(`UPDATE initiatives SET is_critical_path = ? WHERE id = ?`, [isCritical, init.id], resolve);
+                deps.db.run(`UPDATE initiatives SET is_critical_path = ? WHERE id = ?`, [isCritical, init.id], resolve);
             });
         }
 
@@ -132,11 +135,11 @@ const CriticalPathService = {
         const conflicts = [];
 
         // Get dependencies
-        const deps = await DependencyService.buildDependencyGraph(projectId);
+        const depGraph = await deps.DependencyService.buildDependencyGraph(projectId);
 
         // Get initiatives
         const initiatives = await new Promise((resolve, reject) => {
-            db.all(`SELECT id, name, planned_start_date, planned_end_date FROM initiatives 
+            deps.db.all(`SELECT id, name, planned_start_date, planned_end_date FROM initiatives 
                     WHERE project_id = ? AND status != 'CANCELLED'`, [projectId], (err, rows) => {
                 if (err) reject(err);
                 else resolve(rows || []);
@@ -147,7 +150,7 @@ const CriticalPathService = {
         initiatives.forEach(i => { initMap[i.id] = i; });
 
         // Check each hard dependency
-        for (const edge of deps.edges) {
+        for (const edge of depGraph.edges) {
             if (edge.type !== 'FINISH_TO_START') continue;
 
             const predecessor = initMap[edge.from_initiative_id];
@@ -172,7 +175,7 @@ const CriticalPathService = {
         }
 
         // Check for circular dependencies
-        const deadlocks = await DependencyService.detectDeadlocks(projectId);
+        const deadlocks = await deps.DependencyService.detectDeadlocks(projectId);
         if (deadlocks.hasDeadlocks) {
             conflicts.push({
                 type: 'CIRCULAR_DEPENDENCY',

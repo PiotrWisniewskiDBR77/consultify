@@ -1,6 +1,13 @@
 const db = require('../database');
 
+// Dependency injection container (for deterministic unit tests)
+const deps = { db };
+
 const InitiativeService = {
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
     /**
      * Recalculates the progress of an initiative based on its tasks
      * Formula: Σ(task_progress × priority_weight) / Σ(priority_weight)
@@ -13,7 +20,7 @@ const InitiativeService = {
             if (!initiativeId) return resolve(0);
 
             // Fetch all tasks for this initiative
-            db.all(`SELECT progress, priority FROM tasks WHERE initiative_id = ?`, [initiativeId], (err, tasks) => {
+            deps.db.all(`SELECT progress, priority FROM tasks WHERE initiative_id = ?`, [initiativeId], (err, tasks) => {
                 if (err) {
                     console.error("Error fetching tasks for recalculation:", err);
                     return reject(err);
@@ -24,7 +31,7 @@ const InitiativeService = {
                     // Optionally we could set it to 0, but if there are no tasks, maybe we shouldn't overwrite manual progress?
                     // Spec says: "Progres inicjatywy = funkcja progresu tasków"
                     // So we update it to 0.
-                    db.run(`UPDATE initiatives SET progress = 0 WHERE id = ?`, [initiativeId], (e) => {
+                    deps.db.run(`UPDATE initiatives SET progress = 0 WHERE id = ?`, [initiativeId], (e) => {
                         if (e) console.error("Error resetting initiative progress:", e);
                         resolve(0);
                     });
@@ -55,7 +62,7 @@ const InitiativeService = {
                 const calculatedProgress = totalWeight > 0 ? Math.round(totalWeightedProgress / totalWeight) : 0;
 
                 // Update Initiative
-                db.run(`UPDATE initiatives SET progress = ? WHERE id = ?`, [calculatedProgress, initiativeId], (err) => {
+                deps.db.run(`UPDATE initiatives SET progress = ? WHERE id = ?`, [calculatedProgress, initiativeId], (err) => {
                     if (err) {
                         console.error("Error updating initiative progress:", err);
                         return reject(err);

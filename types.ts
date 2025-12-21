@@ -55,6 +55,7 @@ export enum AppView {
   SETTINGS_NOTIFICATIONS = 'SETTINGS_NOTIFICATIONS',
   SETTINGS_INTEGRATIONS = 'SETTINGS_INTEGRATIONS',
   SETTINGS_REGIONALIZATION = 'SETTINGS_REGIONALIZATION',
+  SETTINGS_ORGANIZATION = 'SETTINGS_ORGANIZATION', // NEW
 
   // Context Builder (Renamed directly or used as parent)
   CONTEXT_BUILDER = 'CONTEXT_BUILDER',
@@ -2467,6 +2468,8 @@ export interface User {
   preferredLanguage?: Language;
   organizationId?: string;
   avatarUrl?: string;
+  isDemo?: boolean;
+  impersonatorId?: string;
   tokenUsage?: number;
   tokenLimit?: number;
   tokenResetAt?: string;

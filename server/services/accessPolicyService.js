@@ -27,10 +27,11 @@ const ORG_TYPES = {
 // Default limits for Trial organizations
 const DEFAULT_TRIAL_LIMITS = {
     max_projects: 3,
-    max_users: 5,
-    max_ai_calls_per_day: 50,
-    max_initiatives: 10,
+    max_users: 4, // Owner + 3 invites
+    max_ai_calls_per_day: 50, // Soft limit, hard limit is token budget
+    max_initiatives: 5,
     max_storage_mb: 100,
+    max_total_tokens: 10000,
     ai_roles_enabled_json: '["ADVISOR"]'
 };
 
@@ -114,6 +115,7 @@ const AccessPolicyService = {
                         maxAICallsPerDay: row.max_ai_calls_per_day,
                         maxInitiatives: row.max_initiatives,
                         maxStorageMb: row.max_storage_mb,
+                        maxTotalTokens: row.max_total_tokens || DEFAULT_TRIAL_LIMITS.max_total_tokens,
                         aiRolesEnabled: JSON.parse(row.ai_roles_enabled_json || '["ADVISOR"]')
                     });
                 }
@@ -258,6 +260,43 @@ const AccessPolicyService = {
     },
 
     /**
+     * Track token usage for trial budget
+     * @param {string} organizationId
+     * @param {number} tokens
+     * @returns {Promise<void>}
+     */
+    trackTokenUsage: async (organizationId, tokens) => {
+        return new Promise((resolve, reject) => {
+            db.run(
+                `UPDATE organizations SET trial_tokens_used = COALESCE(trial_tokens_used, 0) + ? WHERE id = ?`,
+                [tokens, organizationId],
+                (err) => {
+                    if (err) return reject(err);
+                    resolve();
+                }
+            );
+        });
+    },
+
+    /**
+     * Get trial usage stats
+     * @param {string} organizationId
+     * @returns {Promise<{tokensUsed: number}>}
+     */
+    getTrialUsage: async (organizationId) => {
+        return new Promise((resolve, reject) => {
+            db.get(
+                `SELECT trial_tokens_used FROM organizations WHERE id = ?`,
+                [organizationId],
+                (err, row) => {
+                    if (err) return reject(err);
+                    resolve({ tokensUsed: row?.trial_tokens_used || 0 });
+                }
+            );
+        });
+    },
+
+    /**
      * Check if an action is allowed based on organization type and limits
      * @param {string} organizationId 
      * @param {string} action - 'create_project' | 'create_initiative' | 'invite_user' | 'ai_call' | 'upload' | 'write'
@@ -266,11 +305,12 @@ const AccessPolicyService = {
     checkAccess: async (organizationId, action) => {
         try {
             // Get org info and trial status
-            const [orgInfo, trialStatus, limits, usage] = await Promise.all([
+            const [orgInfo, trialStatus, limits, usage, trialUsage] = await Promise.all([
                 AccessPolicyService.getOrganizationType(organizationId),
                 AccessPolicyService.checkTrialStatus(organizationId),
                 AccessPolicyService.getOrganizationLimits(organizationId),
-                AccessPolicyService.getDailyUsage(organizationId)
+                AccessPolicyService.getDailyUsage(organizationId),
+                AccessPolicyService.getTrialUsage(organizationId)
             ]);
 
             if (!orgInfo) {
@@ -349,11 +389,20 @@ const AccessPolicyService = {
                     break;
 
                 case 'ai_call':
+                    // Check daily limit (soft limiter for velocity)
                     if (usage.aiCallsCount >= limits.maxAICallsPerDay) {
                         return {
                             allowed: false,
                             reason: `Daily AI call limit reached (${limits.maxAICallsPerDay}). Upgrade for unlimited AI access.`,
                             errorCode: 'AI_LIMIT_REACHED'
+                        };
+                    }
+                    // Check Total Token Budget (Hard Limit for Phase C)
+                    if (limits.maxTotalTokens && trialUsage.tokensUsed >= limits.maxTotalTokens) {
+                        return {
+                            allowed: false,
+                            reason: `Trial AI token budget exceeded (${limits.maxTotalTokens}). Upgrade to continue using AI features.`,
+                            errorCode: 'AI_TOKEN_BUDGET_EXCEEDED'
                         };
                     }
                     break;

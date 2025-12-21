@@ -22,6 +22,12 @@
 const db = require('../database');
 const { v4: uuidv4 } = require('uuid');
 
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db,
+    uuidv4
+};
+
 /**
  * Event type constants
  */
@@ -64,6 +70,11 @@ const MetricsCollector = {
     EVENT_TYPES,
     SOURCE_TYPES,
 
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
+
     /**
      * Record a metric event (APPEND-ONLY - no updates or deletes)
      * 
@@ -81,7 +92,7 @@ const MetricsCollector = {
             console.warn(`[MetricsCollector] Unknown event type: ${eventType}`);
         }
 
-        const eventId = uuidv4();
+        const eventId = deps.uuidv4();
         const { userId = null, organizationId = null, source = null, context = {} } = payload;
 
         return new Promise((resolve, reject) => {
@@ -90,7 +101,7 @@ const MetricsCollector = {
                 VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
             `;
 
-            db.run(sql, [
+            deps.db.run(sql, [
                 eventId,
                 eventType,
                 userId,
@@ -152,7 +163,7 @@ const MetricsCollector = {
         params.push(limit, offset);
 
         return new Promise((resolve, reject) => {
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) {
                     reject(err);
                 } else {
@@ -201,7 +212,7 @@ const MetricsCollector = {
         params.push(limit);
 
         return new Promise((resolve, reject) => {
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) {
                     reject(err);
                 } else {
@@ -248,7 +259,7 @@ const MetricsCollector = {
         }
 
         return new Promise((resolve, reject) => {
-            db.get(sql, params, (err, row) => {
+            deps.db.get(sql, params, (err, row) => {
                 if (err) {
                     reject(err);
                 } else {
@@ -281,7 +292,7 @@ const MetricsCollector = {
         `;
 
         return new Promise((resolve, reject) => {
-            db.all(sql, [eventType, `-${days} days`], (err, rows) => {
+            deps.db.all(sql, [eventType, `-${days} days`], (err, rows) => {
                 if (err) {
                     reject(err);
                 } else {
@@ -325,7 +336,7 @@ const MetricsCollector = {
         }
 
         return new Promise((resolve, reject) => {
-            db.get(sql, params, (err, row) => {
+            deps.db.get(sql, params, (err, row) => {
                 if (err) {
                     reject(err);
                 } else {

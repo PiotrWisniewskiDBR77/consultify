@@ -31,7 +31,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
     phone: '',
     companyName: '',
     password: '',
-    accessCode: ''
+    accessCode: sessionStorage.getItem('attribution_invite') || ''
   });
 
   const handleCodeChange = (index: number, value: string) => {
@@ -73,7 +73,9 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
         password: formData.password,
         accessCode: formData.accessCode,
         role: UserRole.CEO,
-        accessLevel: targetMode === SessionMode.FULL ? 'full' : 'free'
+        accessLevel: targetMode === SessionMode.FULL ? 'full' : 'free',
+        partner_code: sessionStorage.getItem('attribution_ref') || undefined,
+        utm_medium: 'web_app_flow'
       });
 
       // Check if the user status or a specific message implies pending

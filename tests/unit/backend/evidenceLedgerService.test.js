@@ -9,19 +9,15 @@ const mockDb = {
     initPromise: Promise.resolve()
 };
 
-vi.mock('../../../server/database', () => ({
-    default: mockDb
-}));
-
-vi.mock('uuid', () => ({
-    v4: () => 'uuid-1234'
-}));
-
 import EvidenceLedgerService from '../../../server/services/evidenceLedgerService.js';
 
 describe('EvidenceLedgerService', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        EvidenceLedgerService.setDependencies({
+            db: mockDb,
+            uuidv4: () => 'uuid-1234'
+        });
 
         mockDb.run.mockImplementation(function (...args) {
             const cb = args[args.length - 1];
@@ -70,14 +66,13 @@ describe('EvidenceLedgerService', () => {
     describe('createEvidenceObject', () => {
         it('should create and redact evidence', async () => {
             const payload = { secret: 'hidden' };
-            const result = await EvidenceLedgerService.createEvidenceObject('org-1', 'METRIC', 'source', payload);
+            const result = await EvidenceLedgerService.createEvidenceObject('org-1', 'METRIC_SNAPSHOT', 'source', payload);
 
             expect(result.id).toBe('uuid-1234');
-            expect(mockDb.run).toHaveBeenCalledWith(
-                expect.stringContaining('INSERT INTO evidence_objects'),
-                expect.arrayContaining([expect.stringContaining('[REDACTED]')]), // Checking payload stored redacted
-                expect.any(Function)
-            );
+            expect(mockDb.run).toHaveBeenCalled();
+            const params = mockDb.run.mock.calls[0][1];
+            expect(params[4]).toContain('[REDACTED]');
+            expect(mockDb.run.mock.calls[0][0]).toContain('INSERT INTO ai_evidence_objects');
         });
     });
 
@@ -85,12 +80,8 @@ describe('EvidenceLedgerService', () => {
         it('should link evidence to entity', async () => {
             const result = await EvidenceLedgerService.linkEvidence('proposal', 'p1', 'e1');
 
-            expect(result.linkId).toBe('uuid-1234');
-            expect(mockDb.run).toHaveBeenCalledWith(
-                expect.stringContaining('INSERT INTO evidence_links'),
-                expect.any(Array),
-                expect.any(Function)
-            );
+            expect(result.id).toBe('uuid-1234');
+            expect(mockDb.run.mock.calls[0][0]).toContain('INSERT INTO ai_explainability_links');
         });
     });
 
@@ -99,11 +90,7 @@ describe('EvidenceLedgerService', () => {
             const result = await EvidenceLedgerService.recordReasoning('decision', 'd1', 'Reason', ['A1']);
 
             expect(result.id).toBe('uuid-1234');
-            expect(mockDb.run).toHaveBeenCalledWith(
-                expect.stringContaining('INSERT INTO reasoning_ledger'),
-                expect.any(Array),
-                expect.any(Function)
-            );
+            expect(mockDb.run.mock.calls[0][0]).toContain('INSERT INTO ai_reasoning_ledger');
         });
     });
 });

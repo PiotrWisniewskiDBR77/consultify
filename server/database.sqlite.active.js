@@ -1772,6 +1772,11 @@ function initDb() {
             });
         });
 
+        // Add effort_estimate column (alias for estimated_hours for capacity service)
+        db.run(`ALTER TABLE tasks ADD COLUMN effort_estimate REAL DEFAULT NULL`, (err) => {
+            // Ignore error if column already exists
+        });
+
         // ==========================================
         // PHASE: ENTERPRISE SAAS BILLING
         // ==========================================

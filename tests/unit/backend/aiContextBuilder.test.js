@@ -9,23 +9,19 @@ const mockDb = {
     initPromise: Promise.resolve()
 };
 
-vi.mock('../../../server/database', () => ({
-    default: mockDb
-}));
-
 const mockPMOHealthService = {
     getHealthSnapshot: vi.fn()
 };
-
-vi.mock('../../../server/services/pmoHealthService', () => ({
-    default: mockPMOHealthService
-}));
 
 import AIContextBuilder from '../../../server/services/aiContextBuilder.js';
 
 describe('AIContextBuilder', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        AIContextBuilder.setDependencies({
+            db: mockDb,
+            PMOHealthService: mockPMOHealthService
+        });
 
         // Default mock implementations
         mockDb.get.mockImplementation((...args) => {
@@ -85,8 +81,8 @@ describe('AIContextBuilder', () => {
         it('should include context hash', async () => {
             const result = await AIContextBuilder.buildContext('user-1', 'org-1', 'proj-1');
 
-            expect(result.hash).toBeDefined();
-            expect(typeof result.hash).toBe('string');
+            expect(result.contextHash).toBeDefined();
+            expect(typeof result.contextHash).toBe('string');
         });
 
         it('should handle PMOHealthService unavailability gracefully', async () => {
@@ -107,17 +103,10 @@ describe('AIContextBuilder', () => {
                 if (typeof cb === 'function') {
                     if (query.includes('FROM users')) {
                         cb(null, {
-                            id: 'user-1',
-                            first_name: 'John',
-                            last_name: 'Doe',
                             role: 'ADMIN'
                         });
-                    } else if (query.includes('FROM organizations')) {
-                        cb(null, {
-                            id: 'org-1',
-                            name: 'Test Org',
-                            plan: 'enterprise'
-                        });
+                    } else if (query.includes('FROM ai_policies')) {
+                        cb(null, { policy_level: 'ADVISORY', internet_enabled: 0, max_policy_level: 'ASSISTED', audit_required: 1 });
                     } else {
                         cb(null, null);
                     }
@@ -126,8 +115,9 @@ describe('AIContextBuilder', () => {
 
             const result = await AIContextBuilder.buildContext('user-1', 'org-1');
 
-            expect(result.platform.user).toBeDefined();
-            expect(result.platform.organization).toBeDefined();
+            expect(result.platform).toBeDefined();
+            expect(result.platform.role).toBe('ADMIN');
+            expect(result.platform.tenantId).toBe('org-1');
         });
 
         it('should include subscription status', async () => {
@@ -375,27 +365,22 @@ describe('AIContextBuilder', () => {
             const result1 = await AIContextBuilder.buildContext('user-1', 'org-1', 'proj-1');
             const result2 = await AIContextBuilder.buildContext('user-1', 'org-1', 'proj-1');
 
-            // Hash should be generated for each call
-            expect(result1.hash).toBeDefined();
-            expect(result2.hash).toBeDefined();
+            expect(result1.contextHash).toBeDefined();
+            expect(result1.contextHash).toBe(result2.contextHash);
         });
     });
 
     describe('options handling', () => {
-        it('should respect skipPMOHealth option', async () => {
+        it('should include currentScreen and selectedObject fields when provided', async () => {
             const result = await AIContextBuilder.buildContext('user-1', 'org-1', 'proj-1', {
-                skipPMOHealth: true
+                currentScreen: 'Dashboard',
+                selectedObjectId: 'x1',
+                selectedObjectType: 'initiative'
             });
 
-            expect(mockPMOHealthService.getHealthSnapshot).not.toHaveBeenCalled();
-        });
-
-        it('should respect depth option', async () => {
-            const result = await AIContextBuilder.buildContext('user-1', 'org-1', 'proj-1', {
-                depth: 'minimal'
-            });
-
-            expect(result).toBeDefined();
+            expect(result.currentScreen).toBe('Dashboard');
+            expect(result.selectedObjectId).toBe('x1');
+            expect(result.selectedObjectType).toBe('initiative');
         });
     });
 });

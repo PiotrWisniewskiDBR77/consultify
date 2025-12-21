@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const AccessPolicyService = require('../services/accessPolicyService');
 const db = require('../database');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
@@ -109,17 +110,33 @@ router.post('/', (req, res) => {
     const hashedPassword = bcrypt.hashSync(finalPassword, 8);
     const id = uuidv4();
 
-    const sql = `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`;
-
-    db.run(sql, [id, organizationId, email, hashedPassword, firstName, lastName, role || 'USER', status || 'active'], function (err) {
-        if (err) {
-            if (err.message.includes('UNIQUE constraint failed')) {
-                return res.status(400).json({ error: 'Email already exists' });
+    // CHECK ACCESS POLICY
+    AccessPolicyService.checkAccess(orgId, 'invite_user')
+        .then(accessCheck => {
+            if (!accessCheck.allowed) {
+                return res.status(403).json({ error: accessCheck.reason, errorCode: accessCheck.errorCode });
             }
-            return res.status(500).json({ error: err.message });
-        }
-        res.json({ id, email, firstName, lastName, role, status });
-    });
+
+            const sql = `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`;
+
+            db.run(sql, [id, organizationId, email, hashedPassword, firstName, lastName, role || 'USER', status || 'active'], function (err) {
+                if (err) {
+                    if (err.message.includes('UNIQUE constraint failed')) {
+                        return res.status(400).json({ error: 'Email already exists' });
+                    }
+                    return res.status(500).json({ error: err.message });
+                }
+
+                // Track Usage
+                AccessPolicyService.incrementUsage(orgId, 'users').catch(console.error);
+
+                res.json({ id, email, firstName, lastName, role, status });
+            });
+        })
+        .catch(err => {
+            console.error(err);
+            res.status(500).json({ error: 'Failed to verify invite permissions' });
+        });
 });
 
 // UPDATE USER

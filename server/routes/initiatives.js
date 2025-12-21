@@ -1,4 +1,5 @@
 const AiService = require('../services/aiService');
+const AccessPolicyService = require('../services/accessPolicyService');
 const express = require('express');
 const router = express.Router();
 const db = require('../database');
@@ -131,59 +132,75 @@ router.post('/', (req, res) => {
 
     if (!name) return res.status(400).json({ error: 'Name is required' });
 
-    const id = uuidv4();
-    const now = new Date().toISOString();
+    // CHECK ACCESS POLICY
+    AccessPolicyService.checkAccess(orgId, 'create_initiative')
+        .then(accessCheck => {
+            if (!accessCheck.allowed) {
+                return res.status(403).json({ error: accessCheck.reason, errorCode: accessCheck.errorCode });
+            }
 
-    const sql = `
-        INSERT INTO initiatives (
-            id, organization_id, name, axis, area, summary, hypothesis,
-            business_value, competencies_required,
-            cost_capex, cost_opex, expected_roi, social_impact,
-            value_driver, confidence_level, value_timing,
-            owner_business_id, owner_execution_id, sponsor_id,
-            start_date, pilot_end_date, end_date,
-            problem_statement, deliverables, success_criteria, scope_in, scope_out, key_risks,
-            created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
+            const id = uuidv4();
+            const now = new Date().toISOString();
 
-    const params = [
-        id,
-        orgId,
-        name,
-        axis ?? null,
-        area ?? null,
-        summary ?? null,
-        hypothesis ?? null,
-        businessValue ?? null,
-        JSON.stringify(competenciesRequired || []),
-        costCapex ?? null,
-        costOpex ?? null,
-        expectedRoi ?? null,
-        socialImpact ?? null,
-        valueDriver ?? null,
-        confidenceLevel ?? null,
-        valueTiming ?? null,
-        ownerBusinessId ?? null,
-        ownerExecutionId ?? null,
-        sponsorId ?? null,
-        startDate ?? null,
-        pilotEndDate ?? null,
-        endDate ?? null,
-        problemStatement ?? null,
-        JSON.stringify(deliverables || []),
-        JSON.stringify(successCriteria || []),
-        JSON.stringify(scopeIn || []),
-        JSON.stringify(scopeOut || []),
-        JSON.stringify(keyRisks || []),
-        now,
-        now
-    ];
+            const sql = `
+                INSERT INTO initiatives (
+                    id, organization_id, name, axis, area, summary, hypothesis,
+                    business_value, competencies_required,
+                    cost_capex, cost_opex, expected_roi, social_impact,
+                    value_driver, confidence_level, value_timing,
+                    owner_business_id, owner_execution_id, sponsor_id,
+                    start_date, pilot_end_date, end_date,
+                    problem_statement, deliverables, success_criteria, scope_in, scope_out, key_risks,
+                    created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `;
 
-    db.run(sql, params, function (err) {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ id, name, message: 'Initiative created' });
-    });
+            const params = [
+                id,
+                orgId,
+                name,
+                axis ?? null,
+                area ?? null,
+                summary ?? null,
+                hypothesis ?? null,
+                businessValue ?? null,
+                JSON.stringify(competenciesRequired || []),
+                costCapex ?? null,
+                costOpex ?? null,
+                expectedRoi ?? null,
+                socialImpact ?? null,
+                valueDriver ?? null,
+                confidenceLevel ?? null,
+                valueTiming ?? null,
+                ownerBusinessId ?? null,
+                ownerExecutionId ?? null,
+                sponsorId ?? null,
+                startDate ?? null,
+                pilotEndDate ?? null,
+                endDate ?? null,
+                problemStatement ?? null,
+                JSON.stringify(deliverables || []),
+                JSON.stringify(successCriteria || []),
+                JSON.stringify(scopeIn || []),
+                JSON.stringify(scopeOut || []),
+                JSON.stringify(keyRisks || []),
+                now,
+                now
+            ];
+
+            db.run(sql, params, function (err) {
+                if (err) return res.status(500).json({ error: err.message });
+
+                // Track Usage
+                AccessPolicyService.incrementUsage(orgId, 'initiatives').catch(console.error);
+
+                res.json({ id, name, message: 'Initiative created' });
+            });
+        })
+        .catch(err => {
+            console.error("Access Check Error", err);
+            res.status(500).json({ error: "Failed to verify access permissions" });
+        });
 });
 
 // ==========================================

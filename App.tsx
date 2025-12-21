@@ -1,4 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { BrowserRouter } from 'react-router-dom';
+import { RouterSync } from './components/RouterSync';
 import { Sidebar } from './components/Sidebar';
 import { useTranslation } from 'react-i18next';
 import { WelcomeView } from './views/WelcomeView';
@@ -40,6 +42,9 @@ import { usePMOContext } from './hooks/usePMOContext';
 import { HelpProvider, useHelpPanel } from './contexts/HelpContext';
 import HelpButton from './components/HelpButton';
 import HelpPanel from './components/HelpPanel';
+import { TrialProvider } from './contexts/TrialContext';
+import { TrialBanner } from './components/Trial/TrialBanner';
+import { TrialExpiredGate } from './components/Trial/TrialExpiredGate';
 
 // Help system wrapper component
 const HelpButtonWrapper = () => {
@@ -110,7 +115,7 @@ const AppContent = () => {
 
     // FIX: Reset to WELCOME if user is not authenticated but current view requires auth
     useEffect(() => {
-        const publicViews = [AppView.WELCOME, AppView.AUTH];
+        const publicViews = [AppView.WELCOME, AppView.AUTH, AppView.FREE_ASSESSMENT_CHAT, AppView.QUICK_STEP1_PROFILE, AppView.QUICK_STEP2_USER_CONTEXT, AppView.QUICK_STEP3_EXPECTATIONS];
         const isPublicView = publicViews.includes(currentView);
 
         if (!currentUser && !isPublicView) {
@@ -130,9 +135,11 @@ const AppContent = () => {
         }
 
         if (mode === SessionMode.FREE) {
+            window.history.pushState({}, '', '/demo');
             setAuthInitialStep(AuthStep.REGISTER);
             setCurrentView(AppView.AUTH);
         } else {
+            window.history.pushState({}, '', '/trial/start');
             setAuthInitialStep(AuthStep.CODE_ENTRY);
             setCurrentView(AppView.AUTH);
         }
@@ -142,6 +149,7 @@ const AppContent = () => {
         setSessionMode(SessionMode.FREE);
         setAuthInitialStep(AuthStep.LOGIN);
         setCurrentView(AppView.AUTH);
+        // Login doesn't necessarily have a specific URL requirement, but we could do /login
     };
 
     const handleAuthSuccess = (user: User) => {
@@ -345,17 +353,75 @@ const AppContent = () => {
         );
     };
 
+    // --- DEMO MODE LOGIC ---
+    const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
+    const [demoTriggerReason, setDemoTriggerReason] = useState<'time_limit' | 'action_blocked' | 'manual'>('manual');
+    const [demoBlockMessage, setDemoBlockMessage] = useState<string | undefined>(undefined);
+
+    // Listen for Demo Blocks from API
+    useEffect(() => {
+        const handleDemoBlock = (event: CustomEvent) => {
+            setDemoTriggerReason('action_blocked');
+            setDemoBlockMessage(event.detail?.message);
+            setIsDemoModalOpen(true);
+        };
+
+        window.addEventListener('DEMO_ACTION_BLOCKED' as any, handleDemoBlock);
+        return () => window.removeEventListener('DEMO_ACTION_BLOCKED' as any, handleDemoBlock);
+    }, []);
+
+    // Demo Timer (e.g., 10 minutes)
+    useEffect(() => {
+        if (currentUser?.isDemo) {
+            const timer = setTimeout(() => {
+                setDemoTriggerReason('time_limit');
+                setIsDemoModalOpen(true);
+            }, 10 * 60 * 1000); // 10 minutes
+
+            return () => clearTimeout(timer);
+        }
+    }, [currentUser]);
+
     return (
         <ErrorBoundary>
             <div className="flex h-screen w-full bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white font-sans overflow-hidden">
                 <Toaster position="bottom-right" />
                 <ChatOverlay />
 
+                {/* Demo Conversion Modal */}
+                {currentUser?.isDemo && (
+                    <React.Suspense fallback={null}>
+                        {import('./components/ConversionModal').then(mod => ({ default: mod.default })).then(Component => (
+                            <Component.default
+                                isOpen={isDemoModalOpen}
+                                onClose={() => setIsDemoModalOpen(false)}
+                                triggerReason={demoTriggerReason}
+                                message={demoBlockMessage}
+                            />
+                        )) as any}
+                    </React.Suspense>
+                )}
+
+                {/* Lazy load to avoid circular deps if any, though standard import is fine usually. 
+                   Using standard import at top is better. Let's assume standard import.
+                */}
+
                 {/* Help System - Global floating button + panel */}
                 {isSessionView && (
                     <>
                         <HelpButtonWrapper />
                     </>
+                )}
+
+                {/* Demo Banner */}
+                {currentUser?.isDemo && (
+                    <div className="fixed top-0 left-0 right-0 z-[60]">
+                        <React.Suspense fallback={null}>
+                            {import('./components/DemoBanner').then(mod => ({ default: mod.default })).then(Component => (
+                                <Component.default />
+                            )) as any}
+                        </React.Suspense>
+                    </div>
                 )}
 
                 {/* Impersonation Banner */}
@@ -375,7 +441,9 @@ const AppContent = () => {
                 )}
 
                 {isSessionView && (
-                    <Sidebar />
+                    <div className={currentUser?.isDemo ? "pt-10" : ""}>
+                        <Sidebar />
+                    </div>
                 )}
 
                 {/* 
@@ -389,228 +457,243 @@ const AppContent = () => {
                     className={`
                         flex-1 flex flex-col overflow-hidden relative w-full h-full transition-all duration-300
                         ${isSessionView ? (isSidebarCollapsed ? 'lg:ltr:pl-16 lg:rtl:pr-16' : 'lg:ltr:pl-64 lg:rtl:pr-64') : ''}
+                        ${currentUser?.isDemo ? 'mt-10' : ''} 
                     `}
                 >
                     {/* Top Bar for Session Views */}
                     {isSessionView && (
-                        <div className="h-12 border-b border-slate-200 dark:border-white/5 bg-white dark:bg-navy-950 flex items-center justify-between px-3 shrink-0 z-50 transition-colors duration-300">
-                            <div className="flex items-center gap-3">
-                                <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden text-navy-700 dark:text-white mr-2">
-                                    <Menu />
-                                </button>
-                                <div className="flex items-center text-sm font-medium text-slate-400">
-                                    <span className="hover:text-navy-900 dark:hover:text-white cursor-pointer transition-colors">{breadcrumbs[0]}</span>
-                                    <ChevronRight size={14} className="mx-2 rtl:rotate-180" />
-                                    <span className="text-navy-900 dark:text-white">{breadcrumbs[1]}</span>
-                                </div>
-                            </div>
+                        <div className="flex flex-col z-50 shrink-0">
+                            {/* Trial Banner */}
+                            <TrialBanner />
 
-                            <div className="flex items-center gap-4">
-                                {/* Auto-save status removed */}
-                                <SystemHealth />
-                                <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
-                                <LLMSelector />
-                                <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
-                                <TaskDropdown />
-                                <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
-                                <NotificationDropdown />
-
-                                <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
-
-                                <div className="relative" ref={profileRef}>
-                                    <button
-                                        onClick={() => setIsProfileOpen(!isProfileOpen)}
-                                        className="flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-white/5 rounded-lg p-1 transition-colors cursor-pointer text-left"
-                                    >
-                                        <div className="text-right hidden md:block">
-                                            <div className="text-xs font-semibold text-navy-900 dark:text-white">{currentUser?.firstName} {currentUser?.lastName}</div>
-                                            <div className="text-[10px] text-purple-600 dark:text-purple-400 uppercase tracking-wider">{currentUser?.companyName}</div>
-                                        </div>
-                                        <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-white/10 flex items-center justify-center">
-                                            {currentUser?.avatarUrl ? (
-                                                <img src={currentUser.avatarUrl} alt="Profile" className="w-full h-full rounded-full object-cover" />
-                                            ) : (
-                                                <UserCircle size={20} className="text-slate-400" />
-                                            )}
-                                        </div>
+                            <div className="h-12 border-b border-slate-200 dark:border-white/5 bg-white dark:bg-navy-950 flex items-center justify-between px-3 transition-colors duration-300">
+                                {/* ... existing top bar content ... */}
+                                <div className="flex items-center gap-3">
+                                    <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden text-navy-700 dark:text-white mr-2">
+                                        <Menu />
                                     </button>
+                                    <div className="flex items-center text-sm font-medium text-slate-400">
+                                        <span className="hover:text-navy-900 dark:hover:text-white cursor-pointer transition-colors">{breadcrumbs[0]}</span>
+                                        <ChevronRight size={14} className="mx-2 rtl:rotate-180" />
+                                        <span className="text-navy-900 dark:text-white">{breadcrumbs[1]}</span>
+                                    </div>
+                                </div>
 
-                                    {/* Profile Dropdown */}
-                                    {isProfileOpen && (
-                                        <div className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl shadow-xl z-50 animate-in fade-in zoom-in-95 duration-100 overflow-hidden">
+                                <div className="flex items-center gap-4">
+                                    {/* Auto-save status removed */}
+                                    <SystemHealth />
+                                    <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
+                                    <LLMSelector />
+                                    <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
+                                    <TaskDropdown />
+                                    <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
+                                    <NotificationDropdown />
 
-                                            {/* Header with User Info */}
-                                            <div className="px-4 py-4 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-navy-700 flex items-center justify-center text-slate-500 overflow-hidden shrink-0 border border-slate-200 dark:border-white/10">
-                                                        {currentUser?.avatarUrl ? (
-                                                            <img src={currentUser.avatarUrl} alt="Profile" className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <UserCircle size={24} />
-                                                        )}
-                                                    </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="text-sm font-bold text-navy-900 dark:text-white truncate">
-                                                            {currentUser?.firstName} {currentUser?.lastName}
+                                    <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
+
+                                    <div className="relative" ref={profileRef}>
+                                        <button
+                                            onClick={() => setIsProfileOpen(!isProfileOpen)}
+                                            className="flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-white/5 rounded-lg p-1 transition-colors cursor-pointer text-left"
+                                        >
+                                            <div className="text-right hidden md:block">
+                                                <div className="text-xs font-semibold text-navy-900 dark:text-white">{currentUser?.firstName} {currentUser?.lastName}</div>
+                                                <div className="text-[10px] text-purple-600 dark:text-purple-400 uppercase tracking-wider">{currentUser?.companyName}</div>
+                                            </div>
+                                            <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-white/10 flex items-center justify-center">
+                                                {currentUser?.avatarUrl ? (
+                                                    <img src={currentUser.avatarUrl} alt="Profile" className="w-full h-full rounded-full object-cover" />
+                                                ) : (
+                                                    <UserCircle size={20} className="text-slate-400" />
+                                                )}
+                                            </div>
+                                        </button>
+
+                                        {/* Profile Dropdown */}
+                                        {isProfileOpen && (
+                                            <div className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl shadow-xl z-50 animate-in fade-in zoom-in-95 duration-100 overflow-hidden">
+                                                {/* ... existing profile dropdown ... */}
+                                                {/* Header with User Info */}
+                                                <div className="px-4 py-4 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-navy-700 flex items-center justify-center text-slate-500 overflow-hidden shrink-0 border border-slate-200 dark:border-white/10">
+                                                            {currentUser?.avatarUrl ? (
+                                                                <img src={currentUser.avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <UserCircle size={24} />
+                                                            )}
                                                         </div>
-                                                        <div className="text-xs text-slate-500 dark:text-slate-400 truncate mb-1">
-                                                            {currentUser?.email}
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="text-sm font-bold text-navy-900 dark:text-white truncate">
+                                                                {currentUser?.firstName} {currentUser?.lastName}
+                                                            </div>
+                                                            <div className="text-xs text-slate-500 dark:text-slate-400 truncate mb-1">
+                                                                {currentUser?.email}
+                                                            </div>
+                                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 capitalize border border-purple-200 dark:border-purple-500/20">
+                                                                {currentUser?.role?.toLowerCase()}
+                                                            </span>
                                                         </div>
-                                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 capitalize border border-purple-200 dark:border-purple-500/20">
-                                                            {currentUser?.role?.toLowerCase()}
-                                                        </span>
                                                     </div>
+                                                </div>
+
+                                                {/* Settings Section */}
+                                                <div className="p-2 border-b border-slate-100 dark:border-white/5">
+                                                    <div className="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                                                        Preferences
+                                                    </div>
+
+                                                    {/* Theme Toggle */}
+                                                    <div className="flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
+                                                        <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                                                            <Sun size={16} className="hidden dark:block" />
+                                                            <Moon size={16} className="dark:hidden" />
+                                                            <span>Theme</span>
+                                                        </div>
+                                                        <div className="flex bg-slate-100 dark:bg-navy-950 rounded-lg p-1 border border-slate-200 dark:border-white/10">
+                                                            {(['light', 'system', 'dark'] as const).map((tMode) => (
+                                                                <button
+                                                                    key={tMode}
+                                                                    onClick={(e) => { e.stopPropagation(); toggleTheme(tMode); }}
+                                                                    className={`p-1.5 rounded-md transition-all ${theme === tMode
+                                                                        ? 'bg-white dark:bg-navy-800 shadow-sm text-purple-600 dark:text-purple-400'
+                                                                        : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                                                                    title={tMode.charAt(0).toUpperCase() + tMode.slice(1)}
+                                                                >
+                                                                    {tMode === 'light' && <Sun size={14} />}
+                                                                    {tMode === 'dark' && <Moon size={14} />}
+                                                                    {tMode === 'system' && <Monitor size={14} />}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Language Toggle */}
+                                                    <div className="flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                                        <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                                                            <Languages size={16} />
+                                                            <span>Language</span>
+                                                        </div>
+                                                        <div className="flex gap-1">
+                                                            {['en', 'pl'].map((lang) => (
+                                                                <button
+                                                                    key={lang}
+                                                                    onClick={(e) => { e.stopPropagation(); i18n.changeLanguage(lang); }}
+                                                                    className={`text-[10px] px-2 py-1 rounded border transition-colors font-medium uppercase min-w-[32px] ${i18n.language?.startsWith(lang)
+                                                                        ? 'bg-purple-50 border-purple-200 text-purple-700 dark:bg-purple-900/20 dark:border-purple-500/30 dark:text-purple-300'
+                                                                        : 'border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5 dark:text-slate-400'}`}
+                                                                >
+                                                                    {lang}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Navigation Links */}
+                                                <div className="p-2 space-y-0.5">
+                                                    <button
+                                                        onClick={() => {
+                                                            setCurrentView(AppView.SETTINGS_PROFILE);
+                                                            setIsProfileOpen(false);
+                                                        }}
+                                                        className="w-full text-left px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 flex items-center gap-2 rounded-lg transition-colors"
+                                                    >
+                                                        <UserCircle size={16} />
+                                                        My Profile
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setCurrentView(AppView.SETTINGS_BILLING);
+                                                            setIsProfileOpen(false);
+                                                        }}
+                                                        className="w-full text-left px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 flex items-center gap-2 rounded-lg transition-colors"
+                                                    >
+                                                        <CreditCard size={16} />
+                                                        Billing & Plans
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setCurrentView(AppView.SETTINGS_AI);
+                                                            setIsProfileOpen(false);
+                                                        }}
+                                                        className="w-full text-left px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 flex items-center gap-2 rounded-lg transition-colors"
+                                                    >
+                                                        <Cpu size={16} />
+                                                        AI Configuration
+                                                    </button>
+
+                                                    <div className="my-1 border-t border-slate-100 dark:border-white/5 opacity-50"></div>
+
+                                                    <button
+                                                        onClick={() => {
+                                                            logout();
+                                                            setIsProfileOpen(false);
+                                                            setCurrentView(AppView.WELCOME);
+                                                        }}
+                                                        className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center gap-2 rounded-lg transition-colors"
+                                                    >
+                                                        <LogOut size={16} />
+                                                        Log Out
+                                                    </button>
                                                 </div>
                                             </div>
-
-                                            {/* Settings Section */}
-                                            <div className="p-2 border-b border-slate-100 dark:border-white/5">
-                                                <div className="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                                                    Preferences
-                                                </div>
-
-                                                {/* Theme Toggle */}
-                                                <div className="flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
-                                                    <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                                                        <Sun size={16} className="hidden dark:block" />
-                                                        <Moon size={16} className="dark:hidden" />
-                                                        <span>Theme</span>
-                                                    </div>
-                                                    <div className="flex bg-slate-100 dark:bg-navy-950 rounded-lg p-1 border border-slate-200 dark:border-white/10">
-                                                        {(['light', 'system', 'dark'] as const).map((tMode) => (
-                                                            <button
-                                                                key={tMode}
-                                                                onClick={(e) => { e.stopPropagation(); toggleTheme(tMode); }}
-                                                                className={`p-1.5 rounded-md transition-all ${theme === tMode
-                                                                    ? 'bg-white dark:bg-navy-800 shadow-sm text-purple-600 dark:text-purple-400'
-                                                                    : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                                                                title={tMode.charAt(0).toUpperCase() + tMode.slice(1)}
-                                                            >
-                                                                {tMode === 'light' && <Sun size={14} />}
-                                                                {tMode === 'dark' && <Moon size={14} />}
-                                                                {tMode === 'system' && <Monitor size={14} />}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-
-                                                {/* Language Toggle */}
-                                                <div className="flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                                                    <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                                                        <Languages size={16} />
-                                                        <span>Language</span>
-                                                    </div>
-                                                    <div className="flex gap-1">
-                                                        {['en', 'pl'].map((lang) => (
-                                                            <button
-                                                                key={lang}
-                                                                onClick={(e) => { e.stopPropagation(); i18n.changeLanguage(lang); }}
-                                                                className={`text-[10px] px-2 py-1 rounded border transition-colors font-medium uppercase min-w-[32px] ${i18n.language?.startsWith(lang)
-                                                                    ? 'bg-purple-50 border-purple-200 text-purple-700 dark:bg-purple-900/20 dark:border-purple-500/30 dark:text-purple-300'
-                                                                    : 'border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5 dark:text-slate-400'}`}
-                                                            >
-                                                                {lang}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Navigation Links */}
-                                            <div className="p-2 space-y-0.5">
-                                                <button
-                                                    onClick={() => {
-                                                        setCurrentView(AppView.SETTINGS_PROFILE);
-                                                        setIsProfileOpen(false);
-                                                    }}
-                                                    className="w-full text-left px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 flex items-center gap-2 rounded-lg transition-colors"
-                                                >
-                                                    <UserCircle size={16} />
-                                                    My Profile
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                        setCurrentView(AppView.SETTINGS_BILLING);
-                                                        setIsProfileOpen(false);
-                                                    }}
-                                                    className="w-full text-left px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 flex items-center gap-2 rounded-lg transition-colors"
-                                                >
-                                                    <CreditCard size={16} />
-                                                    Billing & Plans
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                        setCurrentView(AppView.SETTINGS_AI);
-                                                        setIsProfileOpen(false);
-                                                    }}
-                                                    className="w-full text-left px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 flex items-center gap-2 rounded-lg transition-colors"
-                                                >
-                                                    <Cpu size={16} />
-                                                    AI Configuration
-                                                </button>
-
-                                                <div className="my-1 border-t border-slate-100 dark:border-white/5 opacity-50"></div>
-
-                                                <button
-                                                    onClick={() => {
-                                                        logout();
-                                                        setIsProfileOpen(false);
-                                                        setCurrentView(AppView.WELCOME);
-                                                    }}
-                                                    className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center gap-2 rounded-lg transition-colors"
-                                                >
-                                                    <LogOut size={16} />
-                                                    Log Out
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    {/* PMO Status Bar - Shows phase, gate status, blocking issues */}
-                    {isSessionView && (
-                        <PMOStatusBar />
-                    )}
+                    <TrialExpiredGate>
+                        {/* PMO Status Bar - Shows phase, gate status, blocking issues */}
+                        {isSessionView && (
+                            <PMOStatusBar />
+                        )}
 
-                    {/* If SuperAdmin, simple full screen container logic is handled inside SuperAdminView which expects full height */}
-                    {currentUser?.role === 'SUPERADMIN' ? (
-                        renderContent()
-                    ) : (
-                        <div className="flex-1 overflow-hidden relative flex flex-col">
-                            {currentView === AppView.WELCOME && (
-                                <WelcomeView
-                                    onStartSession={handleStartSession}
-                                    onLoginClick={handleLoginRequest}
-                                />
-                            )}
+                        {/* If SuperAdmin, simple full screen container logic is handled inside SuperAdminView which expects full height */}
+                        {currentUser?.role === 'SUPERADMIN' ? (
+                            renderContent()
+                        ) : (
+                            <div className="flex-1 overflow-hidden relative flex flex-col">
+                                {/* ... Content ... */}
+                                {currentView === AppView.WELCOME && (
+                                    <WelcomeView
+                                        onStartSession={handleStartSession}
+                                        onLoginClick={handleLoginRequest}
+                                    />
+                                )}
 
-                            {currentView === AppView.AUTH && (
-                                <AuthView
-                                    initialStep={authInitialStep}
-                                    targetMode={sessionMode}
-                                    onAuthSuccess={handleAuthSuccess}
-                                    onBack={() => setCurrentView(AppView.WELCOME)}
-                                />
-                            )}
+                                {currentView === AppView.AUTH && (
+                                    <AuthView
+                                        initialStep={authInitialStep}
+                                        targetMode={sessionMode}
+                                        onAuthSuccess={handleAuthSuccess}
+                                        onBack={() => setCurrentView(AppView.WELCOME)}
+                                    />
+                                )}
 
-                            {(currentView !== AppView.WELCOME && currentView !== AppView.AUTH) && renderContent()}
-                        </div>
-                    )}
+                                {(currentView !== AppView.WELCOME && currentView !== AppView.AUTH) && renderContent()}
+                            </div>
+                        )}
+                    </TrialExpiredGate>
                 </main>
-            </div>
-        </ErrorBoundary>
+            </div >
+        </ErrorBoundary >
     );
 };
 
 export const App = () => (
-    <AutoSaveProvider>
-        <AIProvider>
-            <HelpProvider>
-                <AppContent />
-            </HelpProvider>
-        </AIProvider>
-    </AutoSaveProvider>
+    <BrowserRouter>
+        <AutoSaveProvider>
+            <AIProvider>
+                <HelpProvider>
+                    <TrialProvider>
+                        <RouterSync />
+                        <AppContent />
+                    </TrialProvider>
+                </HelpProvider>
+            </AIProvider>
+        </AutoSaveProvider>
+    </BrowserRouter>
 );

@@ -51,6 +51,7 @@
     "react-dom": "^19.2.1",
     "react-hot-toast": "^2.6.0",
     "react-i18next": "^16.4.1",
+    "react-router-dom": "^7.11.0",
     "recharts": "^3.5.1",
     "redis": "^5.10.0",
     "sqlite3": "^5.1.7",

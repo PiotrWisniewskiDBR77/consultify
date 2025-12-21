@@ -9,19 +9,15 @@ const mockDb = {
     initPromise: Promise.resolve()
 };
 
-vi.mock('../../../server/database', () => ({
-    default: mockDb
-}));
-
-vi.mock('uuid', () => ({
-    v4: () => 'uuid-1234'
-}));
-
 import RoadmapService from '../../../server/services/roadmapService.js';
 
 describe('RoadmapService', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        RoadmapService.setDependencies({
+            db: mockDb,
+            uuidv4: () => 'uuid-1234'
+        });
 
         mockDb.get.mockImplementation((...args) => {
             const cb = args[args.length - 1];

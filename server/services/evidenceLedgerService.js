@@ -13,6 +13,12 @@
 const db = require('../database');
 const { v4: uuidv4 } = require('uuid');
 
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db,
+    uuidv4
+};
+
 // Evidence types enum
 const EVIDENCE_TYPES = {
     METRIC_SNAPSHOT: 'METRIC_SNAPSHOT',
@@ -103,11 +109,11 @@ const createEvidenceObject = (orgId, type, source, payload) => {
             return reject(new Error(`Invalid evidence type: ${type}`));
         }
 
-        const id = uuidv4();
+        const id = deps.uuidv4();
         const redactedPayload = redactPayload(payload);
         const payloadJson = JSON.stringify(redactedPayload);
 
-        db.run(
+        deps.db.run(
             `INSERT INTO ai_evidence_objects (id, org_id, type, source, payload_json)
              VALUES (?, ?, ?, ?, ?)`,
             [id, orgId, type, source, payloadJson],
@@ -150,9 +156,9 @@ const linkEvidence = (fromType, fromId, evidenceId, weight = 1.0, note = null) =
         }
 
         const normalizedWeight = Math.max(0, Math.min(1, weight));
-        const id = uuidv4();
+        const id = deps.uuidv4();
 
-        db.run(
+        deps.db.run(
             `INSERT INTO ai_explainability_links (id, from_type, from_id, evidence_id, weight, note)
              VALUES (?, ?, ?, ?, ?, ?)`,
             [id, fromType, fromId, evidenceId, normalizedWeight, note],
@@ -195,10 +201,10 @@ const recordReasoning = (entityType, entityId, summary, assumptions = [], confid
         }
 
         const normalizedConfidence = Math.max(0, Math.min(1, confidence));
-        const id = uuidv4();
+        const id = deps.uuidv4();
         const assumptionsJson = JSON.stringify(assumptions);
 
-        db.run(
+        deps.db.run(
             `INSERT INTO ai_reasoning_ledger (id, entity_type, entity_id, reasoning_summary, assumptions_json, confidence)
              VALUES (?, ?, ?, ?, ?, ?)`,
             [id, entityType, entityId, summary, assumptionsJson, normalizedConfidence],
@@ -447,6 +453,10 @@ const hasEvidence = (entityType, entityId) => {
 };
 
 module.exports = {
+    // For testing
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
     // Enums
     EVIDENCE_TYPES,
     ENTITY_TYPES,

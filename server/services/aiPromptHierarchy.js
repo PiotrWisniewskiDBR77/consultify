@@ -7,8 +7,11 @@
  * CRITICAL: User layer CANNOT override system constraints.
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+// Dependency injection for testing
+const deps = {
+    db: require('../database'),
+    uuidv4: require('uuid').v4
+};
 
 // Prompt layer priority (lower = higher priority, cannot be overridden)
 const PROMPT_LAYERS = {
@@ -139,6 +142,13 @@ const ALLOWED_USER_PREFERENCES = {
 const AIPromptHierarchy = {
     PROMPT_LAYERS,
 
+    /**
+     * Allow dependency injection for testing
+     */
+    _setDependencies: (newDeps) => {
+        Object.assign(deps, newDeps);
+    },
+
     // ==========================================
     // PROMPT BUILDING
     // ==========================================
@@ -212,7 +222,7 @@ const AIPromptHierarchy = {
      */
     getSystemPrompt: async () => {
         return new Promise((resolve) => {
-            db.get(`
+            deps.db.get(`
                 SELECT content FROM ai_system_prompts 
                 WHERE prompt_type = 'system' AND prompt_key = 'GLOBAL' AND is_active = 1
                 ORDER BY version DESC LIMIT 1
@@ -227,7 +237,7 @@ const AIPromptHierarchy = {
      */
     getRolePrompt: async (roleKey) => {
         return new Promise((resolve) => {
-            db.get(`
+            deps.db.get(`
                 SELECT content FROM ai_system_prompts 
                 WHERE prompt_type = 'role' AND prompt_key = ? AND is_active = 1
                 ORDER BY version DESC LIMIT 1
@@ -242,7 +252,7 @@ const AIPromptHierarchy = {
      */
     getPhasePrompt: async (phaseKey) => {
         return new Promise((resolve) => {
-            db.get(`
+            deps.db.get(`
                 SELECT content FROM ai_system_prompts 
                 WHERE prompt_type = 'phase' AND prompt_key = ? AND is_active = 1
                 ORDER BY version DESC LIMIT 1
@@ -257,7 +267,7 @@ const AIPromptHierarchy = {
      */
     getUserOverlay: async (userId) => {
         return new Promise((resolve) => {
-            db.get(`
+            deps.db.get(`
                 SELECT * FROM ai_user_prompt_prefs WHERE user_id = ?
             `, [userId], (err, row) => {
                 if (!row) {
@@ -356,7 +366,7 @@ const AIPromptHierarchy = {
     upsertPrompt: async (promptType, promptKey, content, createdBy) => {
         // Get current max version
         const currentVersion = await new Promise((resolve) => {
-            db.get(`
+            deps.db.get(`
                 SELECT MAX(version) as max_version FROM ai_system_prompts
                 WHERE prompt_type = ? AND prompt_key = ?
             `, [promptType, promptKey], (err, row) => {
@@ -365,18 +375,18 @@ const AIPromptHierarchy = {
         });
 
         const newVersion = currentVersion + 1;
-        const id = uuidv4();
+        const id = deps.uuidv4();
 
         return new Promise((resolve, reject) => {
-            db.serialize(() => {
+            deps.db.serialize(() => {
                 // Deactivate previous versions
-                db.run(`
+                deps.db.run(`
                     UPDATE ai_system_prompts SET is_active = 0
                     WHERE prompt_type = ? AND prompt_key = ?
                 `, [promptType, promptKey]);
 
                 // Insert new version
-                db.run(`
+                deps.db.run(`
                     INSERT INTO ai_system_prompts 
                     (id, prompt_type, prompt_key, content, version, is_active, created_by)
                     VALUES (?, ?, ?, ?, ?, 1, ?)
@@ -397,7 +407,7 @@ const AIPromptHierarchy = {
                 ? `SELECT * FROM ai_system_prompts ORDER BY prompt_type, prompt_key, version DESC`
                 : `SELECT * FROM ai_system_prompts WHERE is_active = 1 ORDER BY prompt_type, prompt_key`;
 
-            db.all(sql, [], (err, rows) => {
+            deps.db.all(sql, [], (err, rows) => {
                 if (err) reject(err);
                 else resolve(rows || []);
             });
@@ -409,15 +419,15 @@ const AIPromptHierarchy = {
      */
     rollbackToVersion: async (promptType, promptKey, version) => {
         return new Promise((resolve, reject) => {
-            db.serialize(() => {
+            deps.db.serialize(() => {
                 // Deactivate all versions
-                db.run(`
+                deps.db.run(`
                     UPDATE ai_system_prompts SET is_active = 0
                     WHERE prompt_type = ? AND prompt_key = ?
                 `, [promptType, promptKey]);
 
                 // Activate specified version
-                db.run(`
+                deps.db.run(`
                     UPDATE ai_system_prompts SET is_active = 1
                     WHERE prompt_type = ? AND prompt_key = ? AND version = ?
                 `, [promptType, promptKey, version], function (err) {
@@ -437,7 +447,7 @@ const AIPromptHierarchy = {
      */
     getUserPreferences: async (userId) => {
         return new Promise((resolve, reject) => {
-            db.get(`SELECT * FROM ai_user_prompt_prefs WHERE user_id = ?`, [userId], (err, row) => {
+            deps.db.get(`SELECT * FROM ai_user_prompt_prefs WHERE user_id = ?`, [userId], (err, row) => {
                 if (err) reject(err);
                 else resolve(row || null);
             });
@@ -459,7 +469,7 @@ const AIPromptHierarchy = {
         }
 
         return new Promise((resolve, reject) => {
-            db.run(`
+            deps.db.run(`
                 INSERT INTO ai_user_prompt_prefs 
                 (user_id, preferred_tone, education_mode, language_preference, max_response_length, custom_instructions)
                 VALUES (?, ?, ?, ?, ?, ?)
@@ -490,7 +500,7 @@ const AIPromptHierarchy = {
     seedDefaults: async () => {
         // Check if prompts exist
         const existing = await new Promise((resolve) => {
-            db.get(`SELECT COUNT(*) as count FROM ai_system_prompts`, [], (err, row) => {
+            deps.db.get(`SELECT COUNT(*) as count FROM ai_system_prompts`, [], (err, row) => {
                 resolve(row?.count || 0);
             });
         });

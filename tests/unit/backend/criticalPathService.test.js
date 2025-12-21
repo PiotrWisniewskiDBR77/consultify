@@ -9,25 +9,25 @@ const mockDb = {
     initPromise: Promise.resolve()
 };
 
-vi.mock('../../../server/database', () => ({
-    default: mockDb
-}));
-
 const mockDependencyService = {
     buildDependencyGraph: vi.fn(),
+    detectDeadlocks: vi.fn()
 };
-
-vi.mock('../../../server/services/dependencyService', () => ({
-    default: mockDependencyService
-}));
 
 import CriticalPathService from '../../../server/services/criticalPathService.js';
 
 describe('CriticalPathService', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        // Inject mocks if helper exists
-        if (CriticalPathService._setDb) CriticalPathService._setDb(mockDb);
+        CriticalPathService.setDependencies({
+            db: mockDb,
+            DependencyService: mockDependencyService
+        });
+
+        mockDb.run.mockImplementation((...args) => {
+            const cb = args[args.length - 1];
+            if (typeof cb === 'function') cb(null);
+        });
     });
 
     describe('calculateCriticalPath', () => {
@@ -36,12 +36,10 @@ describe('CriticalPathService', () => {
             // Path: A, B, C. Duration: 17d.
 
             mockDependencyService.buildDependencyGraph.mockResolvedValue({
-                nodes: ['A', 'B', 'C'],
-                graph: {
-                    'A': [{ to: 'B' }],
-                    'B': [{ to: 'C' }]
-                },
-                edges: []
+                edges: [
+                    { type: 'FINISH_TO_START', from_initiative_id: 'A', to_initiative_id: 'B' },
+                    { type: 'FINISH_TO_START', from_initiative_id: 'B', to_initiative_id: 'C' }
+                ]
             });
 
             mockDb.all.mockImplementation((...args) => {
@@ -49,16 +47,16 @@ describe('CriticalPathService', () => {
                 if (typeof cb === 'function') {
                     // Mock fetching initiatives with duration
                     cb(null, [
-                        { id: 'A', name: 'Init A', duration_days: 5 },
-                        { id: 'B', name: 'Init B', duration_days: 10 },
-                        { id: 'C', name: 'Init C', duration_days: 2 }
+                        { id: 'A', name: 'Init A', planned_start_date: '2024-01-01', planned_end_date: '2024-01-06', status: 'active' },
+                        { id: 'B', name: 'Init B', planned_start_date: '2024-01-06', planned_end_date: '2024-01-16', status: 'active' },
+                        { id: 'C', name: 'Init C', planned_start_date: '2024-01-16', planned_end_date: '2024-01-18', status: 'active' }
                     ]);
                 }
             });
 
             const result = await CriticalPathService.calculateCriticalPath('proj-1');
 
-            expect(result.nodes).toEqual(['A', 'B', 'C']);
+            expect(result.criticalPath.map(n => n.id)).toEqual(['A', 'B', 'C']);
             expect(result.totalDuration).toBe(17);
         });
 
@@ -68,25 +66,24 @@ describe('CriticalPathService', () => {
             // Longest path is A->B
 
             mockDependencyService.buildDependencyGraph.mockResolvedValue({
-                nodes: ['A', 'B', 'C'],
-                graph: { 'A': [{ to: 'B' }] },
-                edges: []
+                edges: [
+                    { type: 'FINISH_TO_START', from_initiative_id: 'A', to_initiative_id: 'B' }
+                ]
             });
 
             mockDb.all.mockImplementation((...args) => {
                 const cb = args[args.length - 1];
                 if (typeof cb === 'function') {
                     cb(null, [
-                        { id: 'A', duration_days: 5 },
-                        { id: 'B', duration_days: 10 },
-                        { id: 'C', duration_days: 5 }
+                        { id: 'A', name: 'Init A', planned_start_date: '2024-01-01', planned_end_date: '2024-01-06', status: 'active' },
+                        { id: 'B', name: 'Init B', planned_start_date: '2024-01-06', planned_end_date: '2024-01-16', status: 'active' },
+                        { id: 'C', name: 'Init C', planned_start_date: '2024-01-01', planned_end_date: '2024-01-06', status: 'active' }
                     ]);
                 }
             });
 
             const result = await CriticalPathService.calculateCriticalPath('proj-1');
-            // Assuming implementation returns nodes on the critical path
-            expect(result.nodes).toEqual(['A', 'B']); // Order might vary implementation dependent if just set of nodes
+            expect(result.criticalPath.map(n => n.id)).toEqual(['A', 'B']);
             expect(result.totalDuration).toBe(15);
         });
     });

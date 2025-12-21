@@ -59,7 +59,9 @@ const StageGateService = {
      * Get the gate type for a phase transition
      */
     getGateType: (fromPhase, toPhase) => {
-        const key = `${fromPhase}_${toPhase}`;
+        // Support legacy/UI naming: "Idea" is treated as "Context"
+        const normalize = (p) => (p === 'Idea' ? 'Context' : p);
+        const key = `${normalize(fromPhase)}_${normalize(toPhase)}`;
         return GATE_MAP[key] || null;
     },
 

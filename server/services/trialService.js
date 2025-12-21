@@ -54,6 +54,19 @@ const TrialService = {
                         if (err) return reject(err);
 
                         try {
+                            // Add creator as OWNER
+                            await new Promise((resolveMember, rejectMember) => {
+                                db.run(
+                                    `INSERT INTO organization_members (id, organization_id, user_id, role, status, created_at)
+                                     VALUES (?, ?, ?, 'OWNER', 'ACTIVE', ?)`,
+                                    [uuidv4(), orgId, userId, now.toISOString()],
+                                    (memberErr) => {
+                                        if (memberErr) rejectMember(memberErr);
+                                        else resolveMember();
+                                    }
+                                );
+                            });
+
                             // Create default trial limits
                             await AccessPolicyService.createDefaultLimits(orgId, AccessPolicyService.ORG_TYPES.TRIAL);
 

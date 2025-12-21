@@ -3,9 +3,12 @@
  * Handles token and storage usage tracking, quota enforcement, and overage calculation
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const billingService = require('./billingService');
+// Dependency injection for testing
+const deps = {
+    db: require('../database'),
+    uuidv4: require('uuid').v4,
+    billingService: require('./billingService')
+};
 
 /**
  * Record token usage
