@@ -6,44 +6,35 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
 import { createMockDb } from '../../helpers/dependencyInjector.js';
 import { testUsers, testOrganizations } from '../../fixtures/testData.js';
-
-const require = createRequire(import.meta.url);
 
 describe('LegalService', () => {
     let mockDb;
     let LegalService;
     let mockLegalEventLogger;
 
-    beforeEach(() => {
+    beforeEach(async () => {
+        vi.resetModules();
+        
         mockDb = createMockDb();
         
         mockLegalEventLogger = {
-            logEvent: vi.fn().mockResolvedValue({ success: true })
+            logAccept: vi.fn().mockResolvedValue({ success: true }),
+            logEvent: vi.fn().mockResolvedValue({ success: true }),
+            EVENT_TYPES: {
+                ACCEPTED: 'accepted',
+                REJECTED: 'rejected',
+                VIEWED: 'viewed'
+            }
         };
 
-vi.mock('../../../server/database', () => ({
-    default: mockDb
-}));
-
-vi.mock('../../../server/services/legalEventLogger', () => ({
-            default: {
-    LegalEventLogger: mockLegalEventLogger,
-                EVENT_TYPES: {
-                    ACCEPTED: 'accepted',
-                    REJECTED: 'rejected',
-                    VIEWED: 'viewed'
-                }
-            }
-        }));
-
-        LegalService = require('../../../server/services/legalService.js');
+        LegalService = (await import('../../../server/services/legalService.js')).default;
         
         // Inject mock dependencies
         LegalService._setDependencies({
             db: mockDb,
+            uuidv4: () => 'legal-uuid-1',
             LegalEventLogger: mockLegalEventLogger
         });
     });
@@ -199,7 +190,7 @@ vi.mock('../../../server/services/legalEventLogger', () => ({
         });
     });
 
-    describe('acceptDocument()', () => {
+    describe('acceptDocuments()', () => {
         it('should record user acceptance', async () => {
             const userId = testUsers.user.id;
             const orgId = testOrganizations.org1.id;
@@ -211,7 +202,8 @@ vi.mock('../../../server/services/legalEventLogger', () => ({
                     callback(null, {
                         id: 'doc-1',
                         doc_type: docType,
-                        version
+                        version,
+                        effective_from: new Date().toISOString()
                     });
                 } else {
                     callback(null, null);
@@ -222,10 +214,17 @@ vi.mock('../../../server/services/legalEventLogger', () => ({
                 callback.call({ changes: 1 }, null);
             });
 
-            const result = await LegalService.acceptDocument(userId, docType, orgId);
+            const result = await LegalService.acceptDocuments({
+                userId,
+                orgId,
+                docTypes: [docType],
+                scope: 'USER',
+                ip: '127.0.0.1',
+                userAgent: 'test-agent'
+            });
 
-            expect(result.success).toBe(true);
-            expect(mockLegalEventLogger.logEvent).toHaveBeenCalled();
+            expect(result.created).toBeDefined();
+            expect(result.created.length).toBeGreaterThan(0);
         });
 
         it('should reject when document not found', async () => {
@@ -236,9 +235,15 @@ vi.mock('../../../server/services/legalEventLogger', () => ({
                 callback(null, null);
             });
 
-            await expect(
-                LegalService.acceptDocument(userId, docType)
-            ).rejects.toThrow('Document not found');
+            const result = await LegalService.acceptDocuments({
+                userId,
+                docTypes: [docType],
+                scope: 'USER'
+            });
+
+            expect(result.errors).toBeDefined();
+            expect(result.errors.length).toBeGreaterThan(0);
+            expect(result.errors[0].error).toBe('Document not found');
         });
     });
 
@@ -314,14 +319,18 @@ vi.mock('../../../server/services/legalEventLogger', () => ({
                         doc_type: docType,
                         version: '1.0'
                     });
-                    } else {
-                    // Acceptance found
-                    callback(null, {
-                        doc_type: docType,
-                        version: '1.0',
-                        accepted_at: new Date().toISOString()
-                    });
+                } else {
+                    callback(null, null);
                 }
+            });
+
+            mockDb.all.mockImplementation((query, params, callback) => {
+                // getUserAcceptances returns acceptance
+                callback(null, [{
+                    doc_type: docType,
+                    version: '1.0',
+                    accepted_at: new Date().toISOString()
+                }]);
             });
 
             const result = await LegalService.checkAcceptanceRequired(userId, docType);

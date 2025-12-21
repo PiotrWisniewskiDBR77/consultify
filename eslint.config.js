@@ -20,10 +20,14 @@ export default tseslint.config(
         rules: {
             ...reactHooks.configs.recommended.rules,
             'react-refresh/only-export-components': 'off',
-            '@typescript-eslint/no-explicit-any': 'off',
-            '@typescript-eslint/no-unused-vars': 'off',
-            // Suppress set-state-in-effect errors as we have legacy patterns doing this
-            'react-hooks/exhaustive-deps': 'off',
+            // FAZA 4: Włączone reguły dla lepszej jakości kodu
+            '@typescript-eslint/no-explicit-any': 'warn', // Ostrzeżenia zamiast błędów
+            '@typescript-eslint/no-unused-vars': ['warn', { 
+                argsIgnorePattern: '^_',
+                varsIgnorePattern: '^_'
+            }],
+            // React Hooks - włączone z ostrzeżeniami
+            'react-hooks/exhaustive-deps': 'warn', // Ostrzeżenia dla brakujących zależności
             'react-hooks/static-components': 'off',
             'react-hooks/use-memo': 'off',
             'react-hooks/set-state-in-effect': 'off',

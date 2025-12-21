@@ -1,30 +1,35 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { RouterSync } from './components/RouterSync';
 const PublicReportView = React.lazy(() => import('./views/reports/PublicReportView'));
 import { Sidebar } from './components/Sidebar';
+import { LoadingScreen } from './components/LoadingScreen';
 import { useTranslation } from 'react-i18next';
+// FAZA 5: Frontend Metrics
+import { frontendMetrics } from './utils/frontendMetrics';
+import { PublicLandingPage } from './views/PublicLandingPage';
 import { WelcomeView } from './views/WelcomeView';
+import { ProductEntryPage } from './views/ProductEntryPage';
 import { AuthView } from './views/AuthView';
 import { FreeAssessmentView } from './views/FreeAssessmentView';
-import { FullAssessmentView } from './views/FullAssessmentView';
-import { FullInitiativesView } from './views/FullInitiativesView';
-import { FullRoadmapView } from './views/FullRoadmapView';
-import { FullROIView } from './views/FullROIView';
-
-import { FullExecutionView } from './views/FullExecutionView';
-import { FullPilotView } from './views/FullPilotView';
-import { FullRolloutView } from './views/FullRolloutView';
-import { FullReportsView } from './views/FullReportsView';
-
-import { AdminView } from './views/admin/AdminView';
-import { SettingsView } from './views/SettingsView';
-import { SuperAdminView } from './views/superadmin/SuperAdminView';
-import { UserDashboardView } from './views/UserDashboardView';
-import { Module1ContextView } from './views/Module1ContextView';
-import { ContextBuilderView } from './views/ContextBuilder/ContextBuilderView';
-import { MyWorkView } from './views/MyWorkView';
-import { ActionProposalView } from './views/ActionProposalView';
+// OPTIMIZED: Lazy load large views for code splitting
+const FullAssessmentView = React.lazy(() => import('./views/FullAssessmentView').then(m => ({ default: m.FullAssessmentView })));
+const FullInitiativesView = React.lazy(() => import('./views/FullInitiativesView').then(m => ({ default: m.FullInitiativesView })));
+const FullRoadmapView = React.lazy(() => import('./views/FullRoadmapView').then(m => ({ default: m.FullRoadmapView })));
+const FullROIView = React.lazy(() => import('./views/FullROIView').then(m => ({ default: m.FullROIView })));
+const FullExecutionView = React.lazy(() => import('./views/FullExecutionView').then(m => ({ default: m.FullExecutionView })));
+const FullPilotView = React.lazy(() => import('./views/FullPilotView').then(m => ({ default: m.FullPilotView })));
+const FullRolloutView = React.lazy(() => import('./views/FullRolloutView').then(m => ({ default: m.FullRolloutView })));
+const FullReportsView = React.lazy(() => import('./views/FullReportsView').then(m => ({ default: m.FullReportsView })));
+const AdminView = React.lazy(() => import('./views/admin/AdminView').then(m => ({ default: m.AdminView })));
+const SettingsView = React.lazy(() => import('./views/SettingsView').then(m => ({ default: m.SettingsView })));
+const SuperAdminView = React.lazy(() => import('./views/superadmin/SuperAdminView').then(m => ({ default: m.SuperAdminView })));
+const UserDashboardView = React.lazy(() => import('./views/UserDashboardView').then(m => ({ default: m.UserDashboardView })));
+const Module1ContextView = React.lazy(() => import('./views/Module1ContextView').then(m => ({ default: m.Module1ContextView })));
+const ContextBuilderView = React.lazy(() => import('./views/ContextBuilder/ContextBuilderView').then(m => ({ default: m.ContextBuilderView })));
+const MyWorkView = React.lazy(() => import('./views/MyWorkView').then(m => ({ default: m.MyWorkView })));
+const ActionProposalView = React.lazy(() => import('./views/ActionProposalView').then(m => ({ default: m.ActionProposalView })));
 import { AppView, SessionMode, AuthStep, User, UserRole } from './types';
 import { Menu, UserCircle, ChevronRight, CheckCircle, CheckSquare, Loader2, AlertCircle, LogOut, Settings, CreditCard, Cpu, Sun, Moon, Monitor, Languages } from 'lucide-react';
 import { useAppStore } from './store/useAppStore';
@@ -47,6 +52,9 @@ import { TrialProvider } from './contexts/TrialContext';
 import { TrialBanner } from './components/Trial/TrialBanner';
 import { TrialExpiredGate } from './components/Trial/TrialExpiredGate';
 import { AccessPolicyProvider } from './contexts/AccessPolicyContext';
+import { TourProvider } from './components/Onboarding/TourProvider';
+import { AIFreezeBanner } from './components/AIFreezeBanner';
+
 
 // Help system wrapper component
 const HelpButtonWrapper = () => {
@@ -61,10 +69,24 @@ const HelpButtonWrapper = () => {
 
 // Lazy load views
 const OnboardingWizard = React.lazy(() => import('./views/OnboardingWizard').then(module => ({ default: module.OnboardingWizard }))); // NEW
+const OrgSetupWizard = React.lazy(() => import('./views/OrgSetupWizard').then(module => ({ default: module.OrgSetupWizard }))); // Phase D
 const ConsultantPanelView = React.lazy(() => import('./src/views/consultant/ConsultantPanelView').then(module => ({ default: module.ConsultantPanelView })));
 const ConsultantInviteView = React.lazy(() => import('./src/views/consultant/ConsultantInviteView').then(module => ({ default: module.ConsultantInviteView })));
 
-const AppContent = () => {
+const PageTransition: React.FC<{ children: React.ReactNode, id: string }> = ({ children, id }) => (
+    <motion.div
+        key={id}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+        className="h-full w-full"
+    >
+        {children}
+    </motion.div>
+);
+
+const AppContent: React.FC = () => {
     const {
         currentView, setCurrentView,
         sessionMode, setSessionMode,
@@ -123,6 +145,14 @@ const AppContent = () => {
             // Force rendering SuperAdminView
         }
     }, [currentUser]);
+
+    // FAZA 5: Initialize frontend metrics tracking
+    useEffect(() => {
+        // Web Vitals are auto-initialized, but we can track component renders here
+        if (process.env.NODE_ENV === 'development') {
+            console.log('[Metrics] Frontend metrics initialized');
+        }
+    }, []);
 
     // FIX: Reset to WELCOME if user is not authenticated but current view requires auth
     useEffect(() => {
@@ -247,17 +277,19 @@ const AppContent = () => {
         // --- SUPER ADMIN INTERCEPT ---
         if (currentUser.role === 'SUPERADMIN') {
             return (
-                <SuperAdminView
-                    currentUser={currentUser}
-                    onNavigate={(view) => {
-                        if (view === AppView.WELCOME) {
-                            logout();
-                            setCurrentView(AppView.WELCOME);
-                        } else {
-                            setCurrentView(view);
-                        }
-                    }}
-                />
+                <React.Suspense fallback={<LoadingScreen />}>
+                    <SuperAdminView
+                        currentUser={currentUser}
+                        onNavigate={(view: AppView) => {
+                            if (view === AppView.WELCOME) {
+                                logout();
+                                setCurrentView(AppView.WELCOME);
+                            } else {
+                                setCurrentView(view);
+                            }
+                        }}
+                    />
+                </React.Suspense>
             );
         }
 
@@ -285,7 +317,11 @@ const AppContent = () => {
 
         // Full Transformation Views
         if (currentView === AppView.FULL_STEP1_CONTEXT) {
-            return <Module1ContextView currentUser={currentUser} fullSession={fullSessionData} setFullSession={setFullSessionData} onNavigate={setCurrentView} />;
+            return (
+                <React.Suspense fallback={<LoadingScreen />}>
+                    <Module1ContextView currentUser={currentUser} fullSession={fullSessionData} setFullSession={setFullSessionData} onNavigate={setCurrentView} />
+                </React.Suspense>
+            );
         }
         if (
             currentView === AppView.CONTEXT_BUILDER ||
@@ -307,32 +343,68 @@ const AppContent = () => {
             return <ContextBuilderView initialTab={initialTab} />;
         }
         if (currentView === AppView.FULL_STEP1_ASSESSMENT || currentView.startsWith('FULL_STEP1_')) {
-            return <FullAssessmentView />;
+            return (
+                <React.Suspense fallback={<LoadingScreen />}>
+                    <FullAssessmentView />
+                </React.Suspense>
+            );
         }
         if (currentView === AppView.FULL_STEP2_INITIATIVES) {
-            return <FullInitiativesView />;
+            return (
+                <React.Suspense fallback={<LoadingScreen />}>
+                    <FullInitiativesView />
+                </React.Suspense>
+            );
         }
         if (currentView === AppView.FULL_STEP3_ROADMAP) {
-            return <FullRoadmapView />;
+            return (
+                <React.Suspense fallback={<LoadingScreen />}>
+                    <FullRoadmapView />
+                </React.Suspense>
+            );
         }
         if (currentView === AppView.FULL_STEP4_ROI) {
-            return <FullROIView />;
+            return (
+                <React.Suspense fallback={<LoadingScreen />}>
+                    <FullROIView />
+                </React.Suspense>
+            );
         }
         if (currentView === AppView.FULL_STEP5_EXECUTION) {
-            return <FullExecutionView />;
+            return (
+                <React.Suspense fallback={<LoadingScreen />}>
+                    <FullExecutionView />
+                </React.Suspense>
+            );
         }
         if (currentView === AppView.FULL_PILOT_EXECUTION) {
-            return <FullPilotView />;
+            return (
+                <React.Suspense fallback={<LoadingScreen />}>
+                    <FullPilotView />
+                </React.Suspense>
+            );
         }
         if (currentView === AppView.FULL_ROLLOUT) {
-            return <FullRolloutView />;
+            return (
+                <React.Suspense fallback={<LoadingScreen />}>
+                    <FullRolloutView />
+                </React.Suspense>
+            );
         }
         if (currentView === AppView.FULL_STEP6_REPORTS) {
-            return <FullReportsView />;
+            return (
+                <React.Suspense fallback={<LoadingScreen />}>
+                    <FullReportsView />
+                </React.Suspense>
+            );
         }
 
         if (currentView === AppView.MY_WORK) {
-            return <MyWorkView />;
+            return (
+                <React.Suspense fallback={<LoadingScreen />}>
+                    <MyWorkView />
+                </React.Suspense>
+            );
         }
 
         // Consultant Views
@@ -351,7 +423,16 @@ const AppContent = () => {
             );
         }
 
-        // Onboarding Wizard
+        // Phase D: Organization Setup Wizard
+        if (currentView === AppView.ORG_SETUP_WIZARD) {
+            return (
+                <React.Suspense fallback={<div className="p-8 text-center text-slate-500"><Loader2 className="animate-spin mx-auto mb-2" />Loading Organization Setup...</div>}>
+                    <OrgSetupWizard />
+                </React.Suspense>
+            );
+        }
+
+        // Phase E: Onboarding Wizard
         if (currentView === AppView.ONBOARDING_WIZARD) {
             return (
                 <React.Suspense fallback={<div className="p-8 text-center text-slate-500"><Loader2 className="animate-spin mx-auto mb-2" />Loading Onboarding...</div>}>
@@ -361,23 +442,33 @@ const AppContent = () => {
         }
 
         if (currentView === AppView.AI_ACTION_PROPOSALS) {
-            return <ActionProposalView />;
+            return (
+                <React.Suspense fallback={<LoadingScreen />}>
+                    <ActionProposalView />
+                </React.Suspense>
+            );
         }
 
         // Admin Views
         if (currentView.startsWith('ADMIN')) {
-            return <AdminView currentUser={currentUser} onNavigate={setCurrentView} />;
+            return (
+                <React.Suspense fallback={<LoadingScreen />}>
+                    <AdminView currentUser={currentUser} onNavigate={setCurrentView} />
+                </React.Suspense>
+            );
         }
 
         // Settings Views
         if (currentView.startsWith('SETTINGS')) {
             return (
-                <SettingsView
-                    currentUser={currentUser}
-                    onUpdateUser={(updates) => setCurrentUser(currentUser ? { ...currentUser, ...updates } : null)}
-                    theme={theme}
-                    toggleTheme={toggleTheme}
-                />
+                <React.Suspense fallback={<LoadingScreen />}>
+                    <SettingsView
+                        currentUser={currentUser}
+                        onUpdateUser={(updates: Partial<User>) => setCurrentUser(currentUser ? { ...currentUser, ...updates } : null)}
+                        theme={theme}
+                        toggleTheme={toggleTheme}
+                    />
+                </React.Suspense>
             );
         }
 
@@ -499,8 +590,12 @@ const AppContent = () => {
                     {/* Top Bar for Session Views */}
                     {isSessionView && (
                         <div className="flex flex-col z-50 shrink-0">
+                            {/* AI Freeze Banner */}
+                            <AIFreezeBanner />
+
                             {/* Trial Banner */}
                             <TrialBanner />
+
 
                             <div className="h-12 border-b border-slate-200 dark:border-white/5 bg-white dark:bg-navy-950 flex items-center justify-between px-3 transition-colors duration-300">
                                 {/* ... existing top bar content ... */}
@@ -688,30 +783,41 @@ const AppContent = () => {
                         )}
 
                         {/* If SuperAdmin, simple full screen container logic is handled inside SuperAdminView which expects full height */}
-                        {currentUser?.role === 'SUPERADMIN' ? (
-                            renderContent()
-                        ) : (
-                            <div className="flex-1 overflow-hidden relative flex flex-col">
-                                {/* ... Content ... */}
-                                {currentView === AppView.WELCOME && (
-                                    <WelcomeView
-                                        onStartSession={handleStartSession}
-                                        onLoginClick={handleLoginRequest}
-                                    />
-                                )}
+                        <AnimatePresence mode="wait" initial={false}>
+                            {currentUser?.role === 'SUPERADMIN' ? (
+                                <PageTransition id="superadmin">
+                                    {renderContent()}
+                                </PageTransition>
+                            ) : (
+                                <div className="flex-1 overflow-hidden relative flex flex-col">
+                                    {currentView === AppView.WELCOME && (
+                                        <PageTransition id="welcome">
+                                            <ProductEntryPage
+                                                onStartSession={handleStartSession}
+                                                onLoginClick={handleLoginRequest}
+                                            />
+                                        </PageTransition>
+                                    )}
 
-                                {currentView === AppView.AUTH && (
-                                    <AuthView
-                                        initialStep={authInitialStep}
-                                        targetMode={sessionMode}
-                                        onAuthSuccess={handleAuthSuccess}
-                                        onBack={() => setCurrentView(AppView.WELCOME)}
-                                    />
-                                )}
+                                    {currentView === AppView.AUTH && (
+                                        <PageTransition id="auth">
+                                            <AuthView
+                                                initialStep={authInitialStep}
+                                                targetMode={sessionMode}
+                                                onAuthSuccess={handleAuthSuccess}
+                                                onBack={() => setCurrentView(AppView.WELCOME)}
+                                            />
+                                        </PageTransition>
+                                    )}
 
-                                {(currentView !== AppView.WELCOME && currentView !== AppView.AUTH) && renderContent()}
-                            </div>
-                        )}
+                                    {(currentView !== AppView.WELCOME && currentView !== AppView.AUTH) && (
+                                        <PageTransition id={currentView}>
+                                            {renderContent()}
+                                        </PageTransition>
+                                    )}
+                                </div>
+                            )}
+                        </AnimatePresence>
                     </TrialExpiredGate>
                 </main>
             </div >
@@ -740,12 +846,12 @@ export const App = () => (
                     </React.Suspense>
                 }
             />
-            {/* Phase A: Public Landing Page - dedicated cognitive gateway */}
+            {/* Email Verification Route */}
             <Route
-                path="/"
+                path="/auth/verify-email"
                 element={
-                    <React.Suspense fallback={<div className="flex items-center justify-center min-h-screen bg-white dark:bg-navy-950"><Loader2 className="w-8 h-8 animate-spin text-purple-500" /></div>}>
-                        {React.createElement(React.lazy(() => import('./views/PublicLandingPage')))}
+                    <React.Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-green-500" /></div>}>
+                        {React.createElement(React.lazy(() => import('./views/auth/VerifyEmail')))}
                     </React.Suspense>
                 }
             />
@@ -756,8 +862,10 @@ export const App = () => (
                         <HelpProvider>
                             <AccessPolicyProvider>
                                 <TrialProvider>
-                                    <RouterSync />
-                                    <AppContent />
+                                    <TourProvider>
+                                        <RouterSync />
+                                        <AppContent />
+                                    </TourProvider>
                                 </TrialProvider>
                             </AccessPolicyProvider>
                         </HelpProvider>

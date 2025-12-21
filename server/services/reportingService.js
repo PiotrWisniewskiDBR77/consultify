@@ -1,173 +1,164 @@
 // Reporting Service - Executive-grade reports
 // Step 6: Stabilization, Reporting & Economics
+// REFACTORED: Uses BaseService for common functionality
 
+const BaseService = require('./BaseService');
+const queryHelpers = require('../utils/queryHelpers');
 const db = require('../database');
 const StabilizationService = require('./stabilizationService');
 const EconomicsService = require('./economicsService');
 
-const ReportingService = {
+const ReportingService = Object.assign({}, BaseService, {
     /**
      * Generate Executive Overview
+     * REFACTORED: Uses BaseService query helpers and parallel queries
      */
-    generateExecutiveOverview: async (organizationId, userId) => {
-        // Portfolio health
-        const portfolioHealth = await new Promise((resolve, reject) => {
-            db.get(`SELECT 
+    generateExecutiveOverview: async function (organizationId, userId) {
+        try {
+            // OPTIMIZED: Execute all queries in parallel for better performance
+            const [
+                portfolioHealth,
+                phaseDistribution,
+                decisionStats,
+                varianceStats
+            ] = await Promise.all([
+                // Portfolio health
+                this.queryOne(`SELECT 
                     COUNT(*) as total,
                     SUM(CASE WHEN is_closed = 0 THEN 1 ELSE 0 END) as active,
                     SUM(CASE WHEN status = 'ACTIVE' AND progress >= 50 THEN 1 ELSE 0 END) as onTrack,
                     SUM(CASE WHEN status = 'ACTIVE' AND progress < 30 THEN 1 ELSE 0 END) as atRisk,
                     SUM(CASE WHEN status = 'ON_HOLD' THEN 1 ELSE 0 END) as blocked
-                    FROM projects WHERE organization_id = ?`,
-                [organizationId], (err, row) => {
-                    if (err) reject(err);
-                    else resolve(row || { total: 0, active: 0, onTrack: 0, atRisk: 0, blocked: 0 });
-                });
-        });
+                    FROM projects WHERE organization_id = ?`, [organizationId]),
 
-        // Phase distribution
-        const phaseDistribution = await new Promise((resolve, reject) => {
-            db.all(`SELECT current_phase as phase, COUNT(*) as count 
+                // Phase distribution
+                this.queryAll(`SELECT current_phase as phase, COUNT(*) as count 
                     FROM projects WHERE organization_id = ? AND is_closed = 0 
-                    GROUP BY current_phase`,
-                [organizationId], (err, rows) => {
-                    if (err) reject(err);
-                    else resolve(rows || []);
-                });
-        });
+                    GROUP BY current_phase`, [organizationId]),
 
-        // Pending decisions
-        const decisionStats = await new Promise((resolve, reject) => {
-            db.get(`SELECT 
+                // Pending decisions
+                this.queryOne(`SELECT 
                     COUNT(*) as pending,
                     SUM(CASE WHEN created_at < datetime('now', '-7 days') THEN 1 ELSE 0 END) as overdue
                     FROM decisions d
                     JOIN projects p ON d.project_id = p.id
-                    WHERE p.organization_id = ? AND d.status = 'PENDING'`,
-                [organizationId], (err, row) => {
-                    if (err) reject(err);
-                    else resolve(row || { pending: 0, overdue: 0 });
-                });
-        });
+                    WHERE p.organization_id = ? AND d.status = 'PENDING'`, [organizationId]),
 
-        // Initiative variance
-        const varianceStats = await new Promise((resolve, reject) => {
-            db.get(`SELECT 
+                // Initiative variance
+                this.queryOne(`SELECT 
                     COUNT(*) as total,
                     SUM(CASE WHEN status IN ('COMPLETED', 'IN_EXECUTION') THEN 1 ELSE 0 END) as onTrack,
                     SUM(CASE WHEN status = 'BLOCKED' THEN 1 ELSE 0 END) as delayed
                     FROM initiatives i
                     JOIN projects p ON i.project_id = p.id
-                    WHERE p.organization_id = ? AND p.is_closed = 0`,
-                [organizationId], (err, row) => {
-                    if (err) reject(err);
-                    else resolve(row || { total: 0, onTrack: 0, delayed: 0 });
-                });
-        });
+                    WHERE p.organization_id = ? AND p.is_closed = 0`, [organizationId])
+            ]);
 
-        // Top risks
-        const topRisks = [];
-        if (decisionStats.overdue > 0) {
-            topRisks.push(`${decisionStats.overdue} decisions overdue`);
-        }
-        if (portfolioHealth.atRisk > 0) {
-            topRisks.push(`${portfolioHealth.atRisk} project(s) at risk`);
-        }
-        if (varianceStats.delayed > 0) {
-            topRisks.push(`${varianceStats.delayed} initiative(s) blocked`);
-        }
+            // Default values if null
+            const portfolio = portfolioHealth || { total: 0, active: 0, onTrack: 0, atRisk: 0, blocked: 0 };
+            const decisions = decisionStats || { pending: 0, overdue: 0 };
+            const variance = varianceStats || { total: 0, onTrack: 0, delayed: 0 };
 
-        // AI Narrative
-        const aiNarrative = ReportingService._generateNarrative(portfolioHealth, decisionStats, topRisks);
+            // Top risks
+            const topRisks = [];
+            if (decisions.overdue > 0) {
+                topRisks.push(`${decisions.overdue} decisions overdue`);
+            }
+            if (portfolio.atRisk > 0) {
+                topRisks.push(`${portfolio.atRisk} project(s) at risk`);
+            }
+            if (variance.delayed > 0) {
+                topRisks.push(`${variance.delayed} initiative(s) blocked`);
+            }
 
-        return {
-            reportType: 'EXECUTIVE_OVERVIEW',
-            generatedAt: new Date().toISOString(),
-            generatedBy: userId,
-            portfolioHealth: {
-                totalProjects: portfolioHealth.total,
-                activeProjects: portfolioHealth.active,
-                onTrack: portfolioHealth.onTrack,
-                atRisk: portfolioHealth.atRisk,
-                blocked: portfolioHealth.blocked
-            },
-            phaseDistribution,
-            topRisks,
-            pendingDecisions: decisionStats.pending,
-            overdueDecisions: decisionStats.overdue,
-            initiativesOnTrack: varianceStats.onTrack,
-            initiativesDelayed: varianceStats.delayed,
-            aiNarrative,
-            changesSinceLastReview: []
-        };
+            // AI Narrative
+            const aiNarrative = ReportingService._generateNarrative(portfolio, decisions, topRisks);
+
+            return {
+                reportType: 'EXECUTIVE_OVERVIEW',
+                generatedAt: new Date().toISOString(),
+                generatedBy: userId,
+                portfolioHealth: {
+                    totalProjects: portfolio.total,
+                    activeProjects: portfolio.active,
+                    onTrack: portfolio.onTrack,
+                    atRisk: portfolio.atRisk,
+                    blocked: portfolio.blocked
+                },
+                phaseDistribution: phaseDistribution || [],
+                topRisks,
+                pendingDecisions: decisions.pending,
+                overdueDecisions: decisions.overdue,
+                initiativesOnTrack: variance.onTrack,
+                initiativesDelayed: variance.delayed,
+                aiNarrative,
+                changesSinceLastReview: []
+            };
+        } catch (error) {
+            this.logError('Error generating executive overview', error);
+            throw error;
+        }
     },
 
     /**
      * Generate Project Health Report
+     * REFACTORED: Uses BaseService query helpers and parallel queries
      */
-    generateProjectHealthReport: async (projectId, userId) => {
-        // Initiative distribution
-        const initiativeDistribution = await new Promise((resolve, reject) => {
-            db.all(`SELECT status, COUNT(*) as count FROM initiatives 
-                    WHERE project_id = ? GROUP BY status`,
-                [projectId], (err, rows) => {
-                    if (err) reject(err);
-                    else resolve(rows || []);
-                });
-        });
+    generateProjectHealthReport: async function (projectId, userId) {
+        try {
+            // OPTIMIZED: Execute all queries in parallel
+            const [
+                initiativeDistribution,
+                decisionLatencyRow,
+                blockedItems,
+                capacityStressRow
+            ] = await Promise.all([
+                // Initiative distribution
+                this.queryAll(`SELECT status, COUNT(*) as count FROM initiatives 
+                    WHERE project_id = ? GROUP BY status`, [projectId]),
 
-        // Decision latency
-        const decisionLatency = await new Promise((resolve, reject) => {
-            db.get(`SELECT 
+                // Decision latency
+                this.queryOne(`SELECT 
                     AVG(julianday(decided_at) - julianday(created_at)) as avg_days
-                    FROM decisions WHERE project_id = ? AND decided_at IS NOT NULL`,
-                [projectId], (err, row) => {
-                    if (err) reject(err);
-                    else resolve(Math.round(row?.avg_days || 0));
-                });
-        });
+                    FROM decisions WHERE project_id = ? AND decided_at IS NOT NULL`, [projectId]),
 
-        // Blocked items
-        const blockedItems = await new Promise((resolve, reject) => {
-            db.all(`SELECT id, name, blocked_reason FROM initiatives 
-                    WHERE project_id = ? AND status = 'BLOCKED'`,
-                [projectId], (err, rows) => {
-                    if (err) reject(err);
-                    else resolve(rows || []);
-                });
-        });
+                // Blocked items
+                this.queryAll(`SELECT id, name, blocked_reason FROM initiatives 
+                    WHERE project_id = ? AND status = 'BLOCKED'`, [projectId]),
 
-        // Capacity stress (users with >100% utilization)
-        const capacityStress = await new Promise((resolve, reject) => {
-            db.get(`SELECT COUNT(DISTINCT assignee_id) as overloaded FROM tasks 
+                // Capacity stress (users with >100% utilization)
+                this.queryOne(`SELECT COUNT(DISTINCT assignee_id) as overloaded FROM tasks 
                     WHERE project_id = ? AND status NOT IN ('done', 'DONE')
-                    GROUP BY assignee_id HAVING COUNT(*) > 10`,
-                [projectId], (err, row) => {
-                    if (err) reject(err);
-                    else resolve(row?.overloaded || 0);
-                });
-        });
+                    GROUP BY assignee_id HAVING COUNT(*) > 10`, [projectId])
+            ]);
 
-        // Stabilization summary
-        const stabilizationSummary = await StabilizationService.getStabilizationSummary(projectId);
+            const decisionLatency = Math.round(decisionLatencyRow?.avg_days || 0);
+            const capacityStress = capacityStressRow?.overloaded || 0;
 
-        return {
-            reportType: 'PROJECT_HEALTH',
-            projectId,
-            generatedAt: new Date().toISOString(),
-            generatedBy: userId,
-            initiativeDistribution,
-            decisionLatencyDays: decisionLatency,
-            blockedItems,
-            capacityStressedUsers: capacityStress,
-            stabilizationSummary
-        };
+            // Stabilization summary
+            const stabilizationSummary = await StabilizationService.getStabilizationSummary(projectId);
+
+            return {
+                reportType: 'PROJECT_HEALTH',
+                projectId,
+                generatedAt: new Date().toISOString(),
+                generatedBy: userId,
+                initiativeDistribution: initiativeDistribution || [],
+                decisionLatencyDays: decisionLatency,
+                blockedItems: blockedItems || [],
+                capacityStressedUsers: capacityStress,
+                stabilizationSummary
+            };
+        } catch (error) {
+            this.logError('Error generating project health report', error);
+            throw error;
+        }
     },
 
     /**
      * Generate Governance Report
      */
-    generateGovernanceReport: async (projectId, userId) => {
+    generateGovernanceReport: async function (projectId, userId) {
         // Decisions taken
         const decisions = await new Promise((resolve, reject) => {
             db.all(`SELECT id, title, decision_type, status, created_at, decided_at 
@@ -212,7 +203,7 @@ const ReportingService = {
     /**
      * Generate AI narrative for executive summary
      */
-    _generateNarrative: (portfolioHealth, decisionStats, risks) => {
+    _generateNarrative: function (portfolioHealth, decisionStats, risks) {
         const lines = [];
 
         if (portfolioHealth.total === 0) {
@@ -242,7 +233,7 @@ const ReportingService = {
      * Generate Organization Overview Report
      * For shareable reports - contains summary info without sensitive details
      */
-    generateOrganizationOverviewReport: async (organizationId) => {
+    generateOrganizationOverviewReport: async function (organizationId) {
         // Organization details
         const org = await new Promise((resolve, reject) => {
             db.get(`SELECT id, name, billing_status, organization_type, created_at FROM organizations WHERE id = ?`,
@@ -344,7 +335,7 @@ const ReportingService = {
      * Generate Initiative Execution Report
      * Detailed view of a single initiative for sharing
      */
-    generateInitiativeExecutionReport: async (initiativeId, organizationId) => {
+    generateInitiativeExecutionReport: async function (initiativeId, organizationId) {
         // Initiative details
         const initiative = await new Promise((resolve, reject) => {
             db.get(`SELECT i.*, u.name as owner_name, u.email as owner_email
@@ -430,7 +421,7 @@ const ReportingService = {
             upcomingDeadlines
         };
     }
-};
+});
 
 module.exports = ReportingService;
 

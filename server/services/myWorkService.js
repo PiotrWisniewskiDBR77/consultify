@@ -1,223 +1,219 @@
 // My Work Service - Execution hub aggregation
 // Step 5: Execution Control, My Work & Notifications
+// REFACTORED: Uses BaseService for common functionality
 
-let db = require('../database');
+const BaseService = require('./BaseService');
+const queryHelpers = require('../utils/queryHelpers');
 
-const MyWorkService = {
+const MyWorkService = Object.assign({}, BaseService, {
     /**
      * Get aggregated My Work view for a user
+     * REFACTORED: Uses BaseService caching
      */
-    getMyWork: async (userId, organizationId) => {
-        const result = {
-            userId,
-            generatedAt: new Date().toISOString(),
-            myTasks: await MyWorkService._getMyTasks(userId),
-            myInitiatives: null,
-            myDecisions: null,
-            myAlerts: await MyWorkService._getMyAlerts(userId)
-        };
+    getMyWork: async function(userId, organizationId) {
+        const cacheKey = this.cache.CacheKeys.userDashboard(userId, organizationId);
+        
+        return await this.cache.getCached(cacheKey, async () => {
+            // Execute all queries in parallel for better performance
+            const [myTasks, myAlerts, hasInitiatives, hasDecisions] = await Promise.all([
+                this._getMyTasks(userId),
+                this._getMyAlerts(userId),
+                this._isInitiativeOwnerOrPM(userId),
+                this._isDecisionOwner(userId)
+            ]);
 
-        // Check if user is an initiative owner or PM
-        const hasInitiatives = await MyWorkService._isInitiativeOwnerOrPM(userId);
-        if (hasInitiatives) {
-            result.myInitiatives = await MyWorkService._getMyInitiatives(userId);
-        }
+            const result = {
+                userId,
+                generatedAt: new Date().toISOString(),
+                myTasks,
+                myInitiatives: null,
+                myDecisions: null,
+                myAlerts
+            };
 
-        // Check if user is a decision owner
-        const hasDecisions = await MyWorkService._isDecisionOwner(userId);
-        if (hasDecisions) {
-            result.myDecisions = await MyWorkService._getMyDecisions(userId);
-        }
+            if (hasInitiatives) {
+                result.myInitiatives = await this._getMyInitiatives(userId);
+            }
 
-        return result;
+            if (hasDecisions) {
+                result.myDecisions = await this._getMyDecisions(userId);
+            }
+
+            return result;
+        }, this.cache.DEFAULT_TTL.SHORT); // Cache for 1 minute
     },
 
     /**
      * Get user's tasks
-     * GAP-04: Added locationIds filter support
+     * REFACTORED: Uses BaseService query helpers
      */
-    _getMyTasks: async (userId, locationIds = null) => {
-        return new Promise((resolve, reject) => {
-            const today = new Date().toISOString().split('T')[0];
+    _getMyTasks: async function(userId, locationIds = null) {
+        const today = new Date().toISOString().split('T')[0];
 
-            let sql = `
-                SELECT t.*, i.name as initiative_name, p.name as project_name
-                FROM tasks t
-                LEFT JOIN initiatives i ON t.initiative_id = i.id
-                LEFT JOIN projects p ON t.project_id = p.id
-                WHERE t.assignee_id = ? AND t.status NOT IN ('done', 'DONE')
-            `;
-            const params = [userId];
+        let sql = `
+            SELECT t.*, i.name as initiative_name, p.name as project_name
+            FROM tasks t
+            LEFT JOIN initiatives i ON t.initiative_id = i.id
+            LEFT JOIN projects p ON t.project_id = p.id
+            WHERE t.assignee_id = ? AND t.status NOT IN ('done', 'DONE')
+        `;
+        const params = [userId];
 
-            // GAP-04: Filter by location if provided
-            if (locationIds && locationIds.length > 0) {
-                const placeholders = locationIds.map(() => '?').join(',');
-                sql += ` AND (i.id IN (
-                    SELECT il.initiative_id FROM initiative_locations il WHERE il.location_id IN (${placeholders})
-                ) OR t.initiative_id IS NULL)`;
-                params.push(...locationIds);
-            }
+        // GAP-04: Filter by location if provided
+        if (locationIds && locationIds.length > 0) {
+            const placeholders = queryHelpers.buildInPlaceholders(locationIds);
+            sql += ` AND (i.id IN (
+                SELECT il.initiative_id FROM initiative_locations il WHERE il.location_id IN (${placeholders})
+            ) OR t.initiative_id IS NULL)`;
+            params.push(...locationIds);
+        }
 
-            sql += ` ORDER BY t.due_date ASC, t.priority DESC`;
+        sql += ` ORDER BY t.due_date ASC, t.priority DESC`;
 
-            db.all(sql, params, (err, rows) => {
-                if (err) return reject(err);
+        const tasks = await this.queryAll(sql, params);
 
-                const tasks = rows || [];
-                const overdue = tasks.filter(t => t.due_date && t.due_date < today).length;
-                const dueToday = tasks.filter(t => t.due_date && t.due_date.startsWith(today)).length;
-                const blocked = tasks.filter(t => t.status === 'blocked' || t.status === 'BLOCKED').length;
+        const overdue = tasks.filter(t => t.due_date && t.due_date < today).length;
+        const dueToday = tasks.filter(t => t.due_date && t.due_date.startsWith(today)).length;
+        const blocked = tasks.filter(t => t.status === 'blocked' || t.status === 'BLOCKED').length;
 
-                resolve({
-                    total: tasks.length,
-                    overdue,
-                    dueToday,
-                    blocked,
-                    items: tasks.map(t => ({
-                        id: t.id,
-                        title: t.title,
-                        initiativeName: t.initiative_name || 'Unassigned',
-                        projectName: t.project_name || 'Unknown',
-                        dueDate: t.due_date,
-                        status: t.status,
-                        priority: t.priority || 'MEDIUM',
-                        blockedReason: t.blocked_reason
-                    }))
-                });
-            });
-        });
+        return {
+            total: tasks.length,
+            overdue,
+            dueToday,
+            blocked,
+            items: tasks.map(t => ({
+                id: t.id,
+                title: t.title,
+                initiativeName: t.initiative_name || 'Unassigned',
+                projectName: t.project_name || 'Unknown',
+                dueDate: t.due_date,
+                status: t.status,
+                priority: t.priority || 'MEDIUM',
+                blockedReason: t.blocked_reason
+            }))
+        };
     },
 
     /**
      * Get initiatives owned by user
+     * REFACTORED: Uses BaseService query helpers
      */
-    _getMyInitiatives: async (userId) => {
-        return new Promise((resolve, reject) => {
-            const sql = `
-                SELECT i.*, p.name as project_name,
-                    (SELECT COUNT(*) FROM decisions d WHERE d.related_object_id = i.id AND d.status = 'PENDING') as pending_decisions
-                FROM initiatives i
-                LEFT JOIN projects p ON i.project_id = p.id
-                WHERE i.owner_business_id = ? AND i.status NOT IN ('COMPLETED', 'CANCELLED')
-                ORDER BY i.updated_at DESC
-            `;
+    _getMyInitiatives: async function(userId) {
+        const sql = `
+            SELECT i.*, p.name as project_name,
+                (SELECT COUNT(*) FROM decisions d WHERE d.related_object_id = i.id AND d.status = 'PENDING') as pending_decisions
+            FROM initiatives i
+            LEFT JOIN projects p ON i.project_id = p.id
+            WHERE i.owner_business_id = ? AND i.status NOT IN ('COMPLETED', 'CANCELLED')
+            ORDER BY i.updated_at DESC
+        `;
 
-            db.all(sql, [userId], (err, rows) => {
-                if (err) return reject(err);
+        const initiatives = await this.queryAll(sql, [userId]);
+        const atRisk = initiatives.filter(i =>
+            i.status === 'BLOCKED' || (i.progress || 0) < 30
+        ).length;
 
-                const initiatives = rows || [];
-                const atRisk = initiatives.filter(i =>
-                    i.status === 'BLOCKED' || (i.progress || 0) < 30
-                ).length;
-
-                resolve({
-                    total: initiatives.length,
-                    atRisk,
-                    items: initiatives.map(i => ({
-                        id: i.id,
-                        name: i.name,
-                        projectName: i.project_name || 'Unknown',
-                        status: i.status || 'DRAFT',
-                        progress: i.progress || 0,
-                        blockers: i.blocked_reason ? [i.blocked_reason] : [],
-                        pendingDecisions: i.pending_decisions || 0
-                    }))
-                });
-            });
-        });
+        return {
+            total: initiatives.length,
+            atRisk,
+            items: initiatives.map(i => ({
+                id: i.id,
+                name: i.name,
+                projectName: i.project_name || 'Unknown',
+                status: i.status || 'DRAFT',
+                progress: i.progress || 0,
+                blockers: i.blocked_reason ? [i.blocked_reason] : [],
+                pendingDecisions: i.pending_decisions || 0
+            }))
+        };
     },
 
     /**
      * Get decisions awaiting user
+     * REFACTORED: Uses BaseService query helpers
      */
-    _getMyDecisions: async (userId) => {
-        return new Promise((resolve, reject) => {
-            const sql = `
-                SELECT d.*, p.name as project_name
-                FROM decisions d
-                LEFT JOIN projects p ON d.project_id = p.id
-                WHERE d.decision_owner_id = ? AND d.status = 'PENDING'
-                ORDER BY d.created_at ASC
-            `;
+    _getMyDecisions: async function(userId) {
+        const sql = `
+            SELECT d.*, p.name as project_name
+            FROM decisions d
+            LEFT JOIN projects p ON d.project_id = p.id
+            WHERE d.decision_owner_id = ? AND d.status = 'PENDING'
+            ORDER BY d.created_at ASC
+        `;
 
-            db.all(sql, [userId], (err, rows) => {
-                if (err) return reject(err);
+        const decisions = await this.queryAll(sql, [userId]);
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-                const decisions = rows || [];
-                const sevenDaysAgo = new Date();
-                sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const overdue = decisions.filter(d =>
+            new Date(d.created_at) < sevenDaysAgo
+        ).length;
 
-                const overdue = decisions.filter(d =>
-                    new Date(d.created_at) < sevenDaysAgo
-                ).length;
-
-                resolve({
-                    total: decisions.length,
-                    overdue,
-                    items: decisions.map(d => ({
-                        id: d.id,
-                        title: d.title,
-                        projectName: d.project_name || 'Unknown',
-                        decisionType: d.decision_type,
-                        createdAt: d.created_at,
-                        isOverdue: new Date(d.created_at) < sevenDaysAgo
-                    }))
-                });
-            });
-        });
+        return {
+            total: decisions.length,
+            overdue,
+            items: decisions.map(d => ({
+                id: d.id,
+                title: d.title,
+                projectName: d.project_name || 'Unknown',
+                decisionType: d.decision_type,
+                createdAt: d.created_at,
+                isOverdue: new Date(d.created_at) < sevenDaysAgo
+            }))
+        };
     },
 
     /**
      * Get alerts for user
+     * REFACTORED: Uses BaseService query helpers
      */
-    _getMyAlerts: async (userId) => {
-        return new Promise((resolve, reject) => {
-            db.all(`SELECT * FROM notifications 
-                    WHERE user_id = ? AND is_read = 0 
-                    ORDER BY severity DESC, created_at DESC 
-                    LIMIT 20`, [userId], (err, rows) => {
-                if (err) return reject(err);
+    _getMyAlerts: async function(userId) {
+        const sql = `SELECT * FROM notifications 
+                     WHERE user_id = ? AND is_read = 0 
+                     ORDER BY severity DESC, created_at DESC 
+                     LIMIT 20`;
+        
+        const alerts = await this.queryAll(sql, [userId]);
+        const critical = alerts.filter(a => a.severity === 'CRITICAL').length;
 
-                const alerts = rows || [];
-                const critical = alerts.filter(a => a.severity === 'CRITICAL').length;
-
-                resolve({
-                    total: alerts.length,
-                    critical,
-                    items: alerts
-                });
-            });
-        });
+        return {
+            total: alerts.length,
+            critical,
+            items: alerts
+        };
     },
 
     /**
      * Check if user is initiative owner or PM
+     * REFACTORED: Uses BaseService query helpers
      */
-    _isInitiativeOwnerOrPM: async (userId) => {
-        return new Promise((resolve) => {
-            db.get(`SELECT id FROM initiatives WHERE owner_business_id = ? LIMIT 1`, [userId], (err, row) => {
-                if (row) return resolve(true);
-
-                db.get(`SELECT role FROM users WHERE id = ?`, [userId], (err2, user) => {
-                    resolve(user && (user.role === 'PROJECT_MANAGER' || user.role === 'ADMIN' || user.role === 'SUPERADMIN'));
-                });
-            });
-        });
+    _isInitiativeOwnerOrPM: async function(userId) {
+        const sql = `
+            SELECT 
+                CASE 
+                    WHEN EXISTS(SELECT 1 FROM initiatives WHERE owner_business_id = ? LIMIT 1) THEN 1
+                    WHEN EXISTS(
+                        SELECT 1 FROM users 
+                        WHERE id = ? 
+                        AND role IN ('PROJECT_MANAGER', 'ADMIN', 'SUPERADMIN')
+                    ) THEN 1
+                    ELSE 0
+                END as has_access
+        `;
+        
+        const row = await this.queryOne(sql, [userId, userId]);
+        return row && row.has_access === 1;
     },
 
     /**
      * Check if user is decision owner
+     * REFACTORED: Uses BaseService query helpers
      */
-    _isDecisionOwner: async (userId) => {
-        return new Promise((resolve) => {
-            db.get(`SELECT id FROM decisions WHERE decision_owner_id = ? AND status = 'PENDING' LIMIT 1`,
-                [userId], (err, row) => {
-                    resolve(!!row);
-                });
-        });
-    },
-    // Test helper
-    _setDb: (mockDb) => { db = mockDb; }
-};
+    _isDecisionOwner: async function(userId) {
+        const sql = `SELECT id FROM decisions WHERE decision_owner_id = ? AND status = 'PENDING' LIMIT 1`;
+        const row = await this.queryOne(sql, [userId]);
+        return !!row;
+    }
+});
 
 module.exports = MyWorkService;

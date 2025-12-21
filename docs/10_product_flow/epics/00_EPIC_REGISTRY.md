@@ -68,6 +68,13 @@
 | [EPIC-F2](./phase_f/EPIC-F2.md) | AI as Facilitator of Difference | HIGH |
 | [EPIC-F3](./phase_f/EPIC-F3.md) | System Becomes Alive Through Interaction | HIGH |
 
+### Phase G — Ecosystem Participation
+| Epic | Title | Priority |
+|------|-------|----------|
+| [EPIC-G1](./phase_g/EPIC-G1.md) | Referrer as Quality Filter | MEDIUM |
+| [EPIC-G2](./phase_g/EPIC-G2.md) | Value-Based Networking | MEDIUM |
+| [EPIC-G3](./phase_g/EPIC-G3.md) | Ecosystem Analytics | LOW |
+
 ---
 
 ## Core Principles

@@ -206,6 +206,50 @@ function initDb() {
         db.run(`ALTER TABLE users ADD COLUMN linkedin_id TEXT`, (err) => {
             // Ignore error if column exists - LinkedIn OAuth ID
         });
+        db.run(`ALTER TABLE users ADD COLUMN user_journey_state TEXT DEFAULT 'ANON'`, (err) => {
+            // Ignore
+        });
+        db.run(`ALTER TABLE users ADD COLUMN current_phase TEXT DEFAULT 'A'`, (err) => {
+            // Ignore
+        });
+        db.run(`ALTER TABLE users ADD COLUMN journey_state_changed_at DATETIME`, (err) => {
+            // Ignore
+        });
+        db.run(`ALTER TABLE users ADD COLUMN phase_changed_at DATETIME`, (err) => {
+            // Ignore
+        });
+        // Migration: MFA columns
+        db.run(`ALTER TABLE users ADD COLUMN mfa_enabled INTEGER DEFAULT 0`, (err) => {
+            // Ignore error if column exists
+        });
+        db.run(`ALTER TABLE users ADD COLUMN mfa_secret TEXT`, (err) => {
+            // Ignore error if column exists
+        });
+        db.run(`ALTER TABLE users ADD COLUMN mfa_verified_at DATETIME`, (err) => {
+            // Ignore error if column exists
+        });
+
+        // Migration: Email Verification columns
+        db.run(`ALTER TABLE users ADD COLUMN email_verification_token TEXT`, (err) => {
+            // Ignore error if column exists
+        });
+        db.run(`ALTER TABLE users ADD COLUMN email_verification_expires_at DATETIME`, (err) => {
+            // Ignore error if column exists
+        });
+        db.run(`ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 0`, (err) => {
+            // Ignore error if column exists
+        });
+        // Migration: Organization MFA settings
+        db.run(`ALTER TABLE organizations ADD COLUMN mfa_required INTEGER DEFAULT 0`, (err) => {
+            // Ignore error if column exists
+        });
+        db.run(`ALTER TABLE organizations ADD COLUMN mfa_grace_period_days INTEGER DEFAULT 0`, (err) => {
+            // Ignore error if column exists
+        });
+        // Migration: Activity logs correlation_id
+        db.run(`ALTER TABLE activity_logs ADD COLUMN correlation_id TEXT`, (err) => {
+            // Ignore error if column exists
+        });
 
         // Sessions Table (Linked to user_id and optionally project_id)
         db.run(`CREATE TABLE IF NOT EXISTS sessions(
@@ -950,6 +994,7 @@ function initDb() {
             new_value TEXT, -- JSON
             ip_address TEXT,
             user_agent TEXT,
+            correlation_id TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL

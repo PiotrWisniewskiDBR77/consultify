@@ -52,8 +52,12 @@ describe('AssessmentMatrixCard', () => {
                     target={3.5}
                 />
             );
-            expect(screen.getByText('2.5')).toBeInTheDocument();
-            expect(screen.getByText('3.5')).toBeInTheDocument();
+            // The component displays actual and target scores in multiple places
+            // Check for the presence of formatted values
+            const actualElements = screen.getAllByText('2.5');
+            const targetElements = screen.getAllByText('3.5');
+            expect(actualElements.length).toBeGreaterThan(0);
+            expect(targetElements.length).toBeGreaterThan(0);
         });
 
         it('should display gap points', () => {

@@ -55,46 +55,89 @@ describe('AI Maturity Monitor Service', () => {
     });
 
     describe('assessMaturity (Integration)', () => {
-        it.skip('should aggregate metrics into overall score [BLOCKED: REAL DB HIT]', async () => {
+        it('should aggregate metrics into overall score', async () => {
             // Mock sub-query responses in order they are called (roughly)
             mockDb.all.mockImplementation((sql, params, cb) => {
-                const s = sql.toLowerCase();
-                // Planning: Initiatives
-                if (s.includes('from initiatives')) return cb(null, [{ id: 'i1', target_date: '2025-01-01', description: 'Long enough' }]);
-                // Decision: Decisions
-                if (s.includes('from decisions')) return cb(null, []);
-                // Execution: Tasks
-                if (s.includes('from tasks')) return cb(null, []);
-                // Adoption: Status
-                if (s.includes('group by i.status')) return cb(null, []);
+                process.nextTick(() => {
+                    const s = sql.toLowerCase();
+                    // Planning: Initiatives
+                    if (s.includes('from initiatives')) return cb(null, [{ id: 'i1', target_date: '2025-01-01', description: 'Long enough description for planning assessment' }]);
+                    // Decision: Decisions
+                    if (s.includes('from decisions')) return cb(null, []);
+                    // Execution: Tasks
+                    if (s.includes('from tasks')) return cb(null, []);
+                    // Adoption: Status
+                    if (s.includes('group by i.status') || s.includes('group by status')) return cb(null, []);
 
-                cb(null, []);
+                    cb(null, []);
+                });
             });
 
             mockDb.get.mockImplementation((sql, params, cb) => {
-                cb(null, { count: 0 }); // Default counts
+                process.nextTick(() => {
+                    const s = sql.toLowerCase();
+                    // Return appropriate counts for different queries
+                    if (s.includes('count(*)')) {
+                        return cb(null, { count: 0 }); // Default counts
+                    }
+                    cb(null, { count: 0 });
+                });
             });
 
-            mockDb.run.mockImplementation((sql, params, cb) => cb(null)); // Insert assessment
+            mockDb.run.mockImplementation((sql, params, cb) => {
+                if (cb) {
+                    process.nextTick(() => {
+                        cb.call({ changes: 1 }, null);
+                    });
+                }
+            });
 
             const result = await AIMaturityMonitor.assessMaturity('p-1');
 
             expect(result.overall.score).toBeDefined();
+            expect(result.overall.score).toBeGreaterThanOrEqual(0);
             expect(result.insights).toBeInstanceOf(Array);
         });
     });
 
     describe('benchmarkAgainstPractices', () => {
-        it.skip('should compare levels vs benchmarks [BLOCKED: REAL DB HIT]', async () => {
-            // Mock assessMaturity results by overriding it or relying on mock DB flow (harder)
-            // We can spy on assessMaturity if exported module allows, but it's inside same module object usually.
-
-            // Rely on mock DB again
-            mockDb.all.mockImplementation((sql, params, cb) => cb(null, []));
-            mockDb.get.mockImplementation((sql, params, cb) => cb(null, { count: 1 }));
-            mockDb.run.mockImplementation((sql, params, cb) => cb(null));
+        it('should compare levels vs benchmarks', async () => {
+            // Mock assessMaturity results by relying on mock DB flow
+            mockDb.all.mockImplementation((sql, params, cb) => {
+                process.nextTick(() => {
+                    const s = sql.toLowerCase();
+                    // Planning: Initiatives
+                    if (s.includes('from initiatives')) return cb(null, [{ id: 'i1', target_date: '2025-01-01', description: 'Long enough' }]);
+                    // Decision: Decisions
+                    if (s.includes('from decisions')) return cb(null, []);
+                    // Execution: Tasks
+                    if (s.includes('from tasks')) return cb(null, []);
+                    // Adoption: Status
+                    if (s.includes('group by') && s.includes('status')) return cb(null, []);
+                    cb(null, []);
+                });
+            });
+            
+            mockDb.get.mockImplementation((sql, params, cb) => {
+                process.nextTick(() => {
+                    const s = sql.toLowerCase();
+                    if (s.includes('count(*)')) {
+                        return cb(null, { count: 1 });
+                    }
+                    cb(null, { count: 1 });
+                });
+            });
+            
+            mockDb.run.mockImplementation((sql, params, cb) => {
+                if (cb) {
+                    process.nextTick(() => {
+                        cb.call({ changes: 1 }, null);
+                    });
+                }
+            });
 
             const result = await AIMaturityMonitor.benchmarkAgainstPractices('p-1');
+            expect(result.comparison).toBeDefined();
             expect(result.comparison.planning).toBeDefined();
         });
     });

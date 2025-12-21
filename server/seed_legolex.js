@@ -32,6 +32,8 @@ function seedLegolex() {
         // Initiatives, Tasks etc depend on Org ID often.
         db.run(`DELETE FROM initiatives WHERE organization_id = ?`, [orgId]);
         db.run(`DELETE FROM tasks WHERE organization_id = ?`, [orgId]);
+        db.run(`DELETE FROM maturity_scores WHERE organization_id = ?`, [orgId]);
+        db.run(`DELETE FROM notifications WHERE organization_id = ?`, [orgId]);
         db.run(`DELETE FROM sessions WHERE project_id = ?`, ['proj-legolex-main']); // Hardcoded project ID from below
 
 
@@ -179,19 +181,19 @@ function seedLegolex() {
         console.log('Seeded Tasks.');
 
         // --- 7. Create Notifications ---
-        const insertNotif = db.prepare(`INSERT INTO notifications(id, user_id, type, title, message, read, created_at) VALUES(?, ?, ?, ?, ?, ?, ?)`);
+        const insertNotif = db.prepare(`INSERT INTO notifications(id, user_id, organization_id, type, title, message, is_read, created_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?)`);
 
         // Admin Notifications
-        insertNotif.run(uuidv4(), adminId, 'system', 'Welcome to Consultify', 'Your robust digital transformation platform is ready.', 0, new Date().toISOString());
-        insertNotif.run(uuidv4(), adminId, 'task_completed', 'Task Completed', 'Elena finished "Select Camera Hardware Vendor".', 0, new Date().toISOString());
-        insertNotif.run(uuidv4(), adminId, 'mention', 'Budget Approval Required', 'Sarah mentioned you in "Global ERP Modernization": We need sign-off on the cloud budget.', 0, new Date().toISOString());
-        insertNotif.run(uuidv4(), adminId, 'ai_insight', 'New AI Insight', 'Based on recent data, your "Data" maturity score is lagging behind the industry average (2.1 vs 3.4).', 0, new Date().toISOString());
+        insertNotif.run(uuidv4(), adminId, orgId, 'system', 'Welcome to Consultify', 'Your robust digital transformation platform is ready.', 0, new Date().toISOString());
+        insertNotif.run(uuidv4(), adminId, orgId, 'task_completed', 'Task Completed', 'Elena finished "Select Camera Hardware Vendor".', 0, new Date().toISOString());
+        insertNotif.run(uuidv4(), adminId, orgId, 'mention', 'Budget Approval Required', 'Sarah mentioned you in "Global ERP Modernization": We need sign-off on the cloud budget.', 0, new Date().toISOString());
+        insertNotif.run(uuidv4(), adminId, orgId, 'ai_insight', 'New AI Insight', 'Based on recent data, your "Data" maturity score is lagging behind the industry average (2.1 vs 3.4).', 0, new Date().toISOString());
 
         // CFO Notifications
-        insertNotif.run(uuidv4(), cfoId, 'task_assigned', 'New Task Assigned', 'You have been assigned to "Vendor Selection".', 0, new Date().toISOString());
+        insertNotif.run(uuidv4(), cfoId, orgId, 'task_assigned', 'New Task Assigned', 'You have been assigned to "Vendor Selection".', 0, new Date().toISOString());
 
         // COO Notifications
-        insertNotif.run(uuidv4(), cooId, 'deadline', 'Upcoming Deadline', 'Task "Train CV Model v1" is due in 3 days.', 0, new Date().toISOString());
+        insertNotif.run(uuidv4(), cooId, orgId, 'deadline', 'Upcoming Deadline', 'Task "Train CV Model v1" is due in 3 days.', 0, new Date().toISOString());
 
         insertNotif.finalize();
         console.log('Seeded Notifications.');

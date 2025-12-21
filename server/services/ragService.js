@@ -117,14 +117,17 @@ const RagService = {
                     .join('\n\n');
 
                 // GAP-13: Log RAG query for audit
-                db.run(`INSERT INTO activity_logs (id, user_id, action, entity_type, entity_id, new_value, created_at)
-                        VALUES (?, NULL, 'rag_query', 'knowledge', NULL, ?, CURRENT_TIMESTAMP)`,
-                    [require('uuid').v4(), JSON.stringify({
-                        query: query.substring(0, 200),
-                        resultsCount: topChunks.filter(c => c.score > 0.5).length,
-                        topScore: topChunks[0]?.score
-                    })]
-                );
+                // Only log if organizationId is available (required by NOT NULL constraint)
+                if (organizationId) {
+                    db.run(`INSERT INTO activity_logs (id, organization_id, user_id, action, entity_type, entity_id, new_value, created_at)
+                            VALUES (?, ?, NULL, 'rag_query', 'knowledge', NULL, ?, CURRENT_TIMESTAMP)`,
+                        [require('uuid').v4(), organizationId, JSON.stringify({
+                            query: query.substring(0, 200),
+                            resultsCount: topChunks.filter(c => c.score > 0.5).length,
+                            topScore: topChunks[0]?.score
+                        })]
+                    );
+                }
 
                 resolve(context);
             });

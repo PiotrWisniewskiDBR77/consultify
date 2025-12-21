@@ -14,18 +14,18 @@ const deps = {
 let BASE_UPLOAD_DIR = deps.path.resolve(__dirname, '../../uploads');
 
 class StorageService {
-    // For testing: allow overriding dependencies
-    static setDependencies(newDeps = {}) {
-        Object.assign(deps, newDeps);
-        if (newDeps.basePath) {
-            BASE_UPLOAD_DIR = newDeps.basePath;
+    constructor() {
+        // Ensure base directory exists
+        if (deps.fs.existsSync && !deps.fs.existsSync(BASE_UPLOAD_DIR)) {
+            deps.fs.mkdirSync && deps.fs.mkdirSync(BASE_UPLOAD_DIR, { recursive: true });
         }
     }
 
-    constructor() {
-        // Ensure base directory exists
-        if (!deps.fs.existsSync(BASE_UPLOAD_DIR)) {
-            deps.fs.mkdirSync(BASE_UPLOAD_DIR, { recursive: true });
+    // For testing: allow overriding dependencies
+    setDependencies(newDeps = {}) {
+        Object.assign(deps, newDeps);
+        if (newDeps.basePath) {
+            BASE_UPLOAD_DIR = newDeps.basePath;
         }
     }
 
@@ -35,6 +35,14 @@ class StorageService {
      */
     getIsolatedPath(orgId, projectId, type = 'global') {
         if (!orgId) throw new Error('Organization ID is required for storage path');
+
+        // Prevent path traversal attacks
+        if (orgId.includes('..') || orgId.includes('/') || orgId.includes('\\')) {
+            throw new Error('Invalid organization ID: path traversal detected');
+        }
+        if (projectId && (projectId.includes('..') || projectId.includes('/') || projectId.includes('\\'))) {
+            throw new Error('Invalid project ID: path traversal detected');
+        }
 
         // If no project, store in 'global' scope of organization
         const projectScope = projectId || 'global';
@@ -123,7 +131,28 @@ class StorageService {
      */
     async getUsageByOrganization(orgId) {
         const orgPath = deps.path.join(BASE_UPLOAD_DIR, orgId);
-        return await this.getDirectorySize(orgPath);
+        const totalBytes = await this.getDirectorySize(orgPath);
+        
+        // Count files
+        let fileCount = 0;
+        try {
+            const files = await this.listFiles(orgId);
+            fileCount = files.length;
+        } catch (e) {
+            // Ignore errors
+        }
+        
+        return {
+            totalBytes: totalBytes || 0,
+            fileCount: fileCount || 0
+        };
+    }
+
+    /**
+     * Get storage usage (alias for getUsageByOrganization)
+     */
+    async getStorageUsage(orgId) {
+        return this.getUsageByOrganization(orgId);
     }
 
     /**

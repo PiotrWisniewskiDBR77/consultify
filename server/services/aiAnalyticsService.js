@@ -10,10 +10,17 @@
  * - Time-to-resolution metrics
  */
 
-const db = require('../database');
-const ROIService = require('./roiService');
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db: require('../database'),
+    ROIService: require('./roiService')
+};
 
 const AIAnalyticsService = {
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
     /**
      * Get action execution statistics.
      * @param {string} orgId - Organization ID
@@ -46,7 +53,7 @@ const AIAnalyticsService = {
                 GROUP BY action_type, status
             `;
 
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) return reject(err);
 
                 // Aggregate by action type
@@ -115,7 +122,7 @@ const AIAnalyticsService = {
                 GROUP BY decision, approval_type
             `;
 
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) return reject(err);
 
                 let approved = 0, rejected = 0, modified = 0;
@@ -192,7 +199,7 @@ const AIAnalyticsService = {
                 GROUP BY t.id, r.status
             `;
 
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) return reject(err);
 
                 const byPlaybook = {};
@@ -279,7 +286,7 @@ const AIAnalyticsService = {
                 GROUP BY type, status, last_error_code
             `;
 
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) return reject(err);
 
                 let totalJobs = 0, deadLetterCount = 0, failedCount = 0;
@@ -340,7 +347,7 @@ const AIAnalyticsService = {
                 ${whereClause}
             `;
 
-            db.get(sql, params, (err, row) => {
+            deps.db.get(sql, params, (err, row) => {
                 if (err) return reject(err);
 
                 resolve({
@@ -361,8 +368,8 @@ const AIAnalyticsService = {
      */
     getROISummary: async (orgId, dateRange = {}) => {
         const [hoursSaved, costReduction, actionStats, playbookStats] = await Promise.all([
-            ROIService.estimateHoursSaved(orgId, dateRange),
-            ROIService.estimateCostReduction(orgId, dateRange),
+            deps.ROIService.estimateHoursSaved(orgId, dateRange),
+            deps.ROIService.estimateCostReduction(orgId, dateRange),
             AIAnalyticsService.getActionStats(orgId, dateRange),
             AIAnalyticsService.getPlaybookStats(orgId, dateRange)
         ]);

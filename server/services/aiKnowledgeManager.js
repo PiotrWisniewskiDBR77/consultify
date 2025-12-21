@@ -6,9 +6,12 @@
  * Provides citation support for audit trails.
  */
 
-const db = require('../database');
-const RagService = require('./ragService');
-const { v4: uuidv4 } = require('uuid');
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db: require('../database'),
+    RagService: require('./ragService'),
+    uuidv4: require('uuid').v4
+};
 
 // Knowledge types
 const KNOWLEDGE_TYPES = {
@@ -28,6 +31,11 @@ const VISIBILITY_SCOPES = {
 const AIKnowledgeManager = {
     KNOWLEDGE_TYPES,
     VISIBILITY_SCOPES,
+
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
 
     // ==========================================
     // CONTEXTUAL KNOWLEDGE RETRIEVAL
@@ -118,7 +126,7 @@ const AIKnowledgeManager = {
                 params.push(phase);
             }
 
-            db.all(sql, params, async (err, rows) => {
+            deps.db.all(sql, params, async (err, rows) => {
                 if (err || !rows || rows.length === 0) {
                     resolve({ chunks: [], citations: [] });
                     return;
@@ -126,7 +134,7 @@ const AIKnowledgeManager = {
 
                 // If we have embeddings, do vector search
                 if (query) {
-                    const queryEmbedding = await RagService.generateEmbedding(query);
+                    const queryEmbedding = await deps.RagService.generateEmbedding(query);
 
                     if (queryEmbedding) {
                         // Calculate similarity scores
@@ -218,7 +226,7 @@ const AIKnowledgeManager = {
      */
     getRAGSettings: async (projectId) => {
         return new Promise((resolve) => {
-            db.get(`SELECT * FROM project_rag_settings WHERE project_id = ?`, [projectId], (err, row) => {
+            deps.db.get(`SELECT * FROM project_rag_settings WHERE project_id = ?`, [projectId], (err, row) => {
                 resolve(row || {
                     rag_enabled: true,
                     max_chunks_per_query: 5,
@@ -245,7 +253,7 @@ const AIKnowledgeManager = {
         } = settings;
 
         return new Promise((resolve, reject) => {
-            db.run(`
+            deps.db.run(`
                 INSERT INTO project_rag_settings 
                 (project_id, rag_enabled, max_chunks_per_query, min_relevance_score, 
                  knowledge_visibility, prefer_internal_knowledge, include_citations)
@@ -282,7 +290,7 @@ const AIKnowledgeManager = {
      */
     classifyDocument: async (docId, { phase, knowledgeType }) => {
         return new Promise((resolve, reject) => {
-            db.run(`
+            deps.db.run(`
                 UPDATE knowledge_docs 
                 SET phase = COALESCE(?, phase),
                     knowledge_type = COALESCE(?, knowledge_type)
@@ -312,7 +320,7 @@ const AIKnowledgeManager = {
 
             sql += ` ORDER BY created_at DESC`;
 
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) reject(err);
                 else resolve(rows || []);
             });
@@ -327,11 +335,11 @@ const AIKnowledgeManager = {
      * Store a decision as knowledge for future reference
      */
     captureDecision: async ({ organizationId, projectId, title, rationale, outcome, phase, createdBy }) => {
-        const docId = uuidv4();
+        const docId = deps.uuidv4();
         const content = `DECISION: ${title}\n\nRATIONALE:\n${rationale}\n\nOUTCOME: ${outcome}`;
 
         return new Promise((resolve, reject) => {
-            db.run(`
+            deps.db.run(`
                 INSERT INTO knowledge_docs 
                 (id, organization_id, project_id, filename, content, phase, knowledge_type, status)
                 VALUES (?, ?, ?, ?, ?, ?, 'decision', 'indexed')
@@ -343,7 +351,7 @@ const AIKnowledgeManager = {
 
                 // Generate embedding and store chunk
                 try {
-                    await RagService.storeChunks(docId, [content]);
+                    await deps.RagService.storeChunks(docId, [content]);
                 } catch (e) {
                     console.warn('[AIKnowledgeManager] Failed to embed decision:', e);
                 }
@@ -357,11 +365,11 @@ const AIKnowledgeManager = {
      * Store a lesson learned as knowledge
      */
     captureLessonLearned: async ({ organizationId, projectId, title, description, recommendations, phase, createdBy }) => {
-        const docId = uuidv4();
+        const docId = deps.uuidv4();
         const content = `LESSON LEARNED: ${title}\n\nDESCRIPTION:\n${description}\n\nRECOMMENDATIONS:\n${recommendations}`;
 
         return new Promise((resolve, reject) => {
-            db.run(`
+            deps.db.run(`
                 INSERT INTO knowledge_docs 
                 (id, organization_id, project_id, filename, content, phase, knowledge_type, status)
                 VALUES (?, ?, ?, ?, ?, ?, 'lesson_learned', 'indexed')
@@ -373,7 +381,7 @@ const AIKnowledgeManager = {
 
                 // Generate embedding and store chunk
                 try {
-                    await RagService.storeChunks(docId, [content]);
+                    await deps.RagService.storeChunks(docId, [content]);
                 } catch (e) {
                     console.warn('[AIKnowledgeManager] Failed to embed lesson:', e);
                 }
@@ -392,7 +400,7 @@ const AIKnowledgeManager = {
      */
     validateAccess: async (userId, knowledgeDocId) => {
         return new Promise((resolve) => {
-            db.get(`
+            deps.db.get(`
                 SELECT d.id, d.organization_id, d.project_id
                 FROM knowledge_docs d
                 JOIN users u ON u.organization_id = d.organization_id

@@ -1,8 +1,11 @@
 // AI Memory Manager - Handles 4-layer memory system
 // AI Core Layer — Enterprise PMO Brain
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db: require('../database'),
+    uuidv4: require('uuid').v4
+};
 
 const MEMORY_TYPES = {
     DECISION: 'DECISION',
@@ -14,11 +17,16 @@ const MEMORY_TYPES = {
 const AIMemoryManager = {
     MEMORY_TYPES,
 
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
+
     // ==================== SESSION MEMORY ====================
     // (Handled in-memory, not persisted to DB)
 
     createSession: () => ({
-        conversationId: uuidv4(),
+        conversationId: deps.uuidv4(),
         messages: [],
         currentScreen: null,
         startedAt: new Date().toISOString()
@@ -40,25 +48,45 @@ const AIMemoryManager = {
      * GAP-08: Added audit logging
      */
     recordProjectMemory: async (projectId, memoryType, content, userId) => {
-        const id = uuidv4();
+        const id = deps.uuidv4();
 
         return new Promise((resolve, reject) => {
-            db.run(`INSERT INTO ai_project_memory (id, project_id, memory_type, content, recorded_by)
+            deps.db.run(`INSERT INTO ai_project_memory (id, project_id, memory_type, content, recorded_by)
                     VALUES (?, ?, ?, ?, ?)`,
                 [id, projectId, memoryType, JSON.stringify(content), userId], function (err) {
                     if (err) return reject(err);
 
                     // GAP-08: Log memory write to activity table for audit
-                    const contentSnippet = typeof content === 'string'
-                        ? content.substring(0, 100)
-                        : JSON.stringify(content).substring(0, 100);
+                    // First get organization_id from project (required by NOT NULL constraint)
+                    deps.db.get(`SELECT organization_id FROM projects WHERE id = ?`, [projectId], (err, project) => {
+                        if (err) {
+                            // If we can't get organization_id, skip logging but don't fail
+                            console.warn('[AIMemoryManager] Failed to get organization_id for activity log:', err.message);
+                            return resolve({ id, projectId, memoryType });
+                        }
 
-                    db.run(`INSERT INTO activity_logs (id, user_id, action, entity_type, entity_id, new_value, created_at)
-                            VALUES (?, ?, 'ai_memory_write', 'ai_memory', ?, ?, CURRENT_TIMESTAMP)`,
-                        [uuidv4(), userId, id, JSON.stringify({ memoryType, snippet: contentSnippet })]
-                    );
+                        if (!project || !project.organization_id) {
+                            // Project not found or no organization_id, skip logging
+                            return resolve({ id, projectId, memoryType });
+                        }
 
-                    resolve({ id, projectId, memoryType });
+                        const contentSnippet = typeof content === 'string'
+                            ? content.substring(0, 100)
+                            : JSON.stringify(content).substring(0, 100);
+
+                        deps.db.run(`INSERT INTO activity_logs (id, organization_id, user_id, action, entity_type, entity_id, new_value, created_at)
+                                VALUES (?, ?, ?, 'ai_memory_write', 'ai_memory', ?, ?, CURRENT_TIMESTAMP)`,
+                            [deps.uuidv4(), project.organization_id, userId, id, JSON.stringify({ memoryType, snippet: contentSnippet })],
+                            (logErr) => {
+                                // Log errors but don't fail the main operation
+                                if (logErr) {
+                                    console.warn('[AIMemoryManager] Failed to log activity:', logErr.message);
+                                }
+                            }
+                        );
+
+                        resolve({ id, projectId, memoryType });
+                    });
                 });
         });
     },
@@ -116,7 +144,7 @@ const AIMemoryManager = {
             sql += ` ORDER BY created_at DESC LIMIT ?`;
             params.push(limit);
 
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) return reject(err);
 
                 const result = (rows || []).map(row => {
@@ -155,7 +183,7 @@ const AIMemoryManager = {
      */
     getOrganizationMemory: async (organizationId) => {
         return new Promise((resolve, reject) => {
-            db.get(`SELECT * FROM ai_organization_memory WHERE organization_id = ?`,
+            deps.db.get(`SELECT * FROM ai_organization_memory WHERE organization_id = ?`,
                 [organizationId], (err, row) => {
                     if (err) return reject(err);
 
@@ -166,7 +194,7 @@ const AIMemoryManager = {
                         resolve(row);
                     } else {
                         // Create default
-                        db.run(`INSERT INTO ai_organization_memory (organization_id) VALUES (?)`,
+                        deps.db.run(`INSERT INTO ai_organization_memory (organization_id) VALUES (?)`,
                             [organizationId], function (err2) {
                                 if (err2) return reject(err2);
                                 resolve({
@@ -189,7 +217,7 @@ const AIMemoryManager = {
         const { governanceStyle, aiStrictness, pmoMaturity, patterns } = updates;
 
         return new Promise((resolve, reject) => {
-            db.run(`UPDATE ai_organization_memory SET
+            deps.db.run(`UPDATE ai_organization_memory SET
                     governance_style = COALESCE(?, governance_style),
                     ai_strictness = COALESCE(?, ai_strictness),
                     pmo_maturity = COALESCE(?, pmo_maturity),
@@ -222,14 +250,14 @@ const AIMemoryManager = {
      */
     getUserPreferences: async (userId) => {
         return new Promise((resolve, reject) => {
-            db.get(`SELECT * FROM ai_user_preferences WHERE user_id = ?`, [userId], (err, row) => {
+            deps.db.get(`SELECT * FROM ai_user_preferences WHERE user_id = ?`, [userId], (err, row) => {
                 if (err) return reject(err);
 
                 if (row) {
                     resolve(row);
                 } else {
                     // Create default
-                    db.run(`INSERT INTO ai_user_preferences (user_id) VALUES (?)`, [userId], function (err2) {
+                    deps.db.run(`INSERT INTO ai_user_preferences (user_id) VALUES (?)`, [userId], function (err2) {
                         if (err2) return reject(err2);
                         resolve({
                             user_id: userId,
@@ -251,7 +279,7 @@ const AIMemoryManager = {
         const { preferredTone, educationMode, proactiveNotifications, preferredLanguage } = updates;
 
         return new Promise((resolve, reject) => {
-            db.run(`INSERT INTO ai_user_preferences (user_id, preferred_tone, education_mode, proactive_notifications, preferred_language)
+            deps.db.run(`INSERT INTO ai_user_preferences (user_id, preferred_tone, education_mode, proactive_notifications, preferred_language)
                     VALUES (?, ?, ?, ?, ?)
                     ON CONFLICT(user_id) DO UPDATE SET
                     preferred_tone = COALESCE(?, preferred_tone),
@@ -279,7 +307,7 @@ const AIMemoryManager = {
      */
     clearProjectMemory: async (projectId) => {
         return new Promise((resolve, reject) => {
-            db.run(`DELETE FROM ai_project_memory WHERE project_id = ?`, [projectId], function (err) {
+            deps.db.run(`DELETE FROM ai_project_memory WHERE project_id = ?`, [projectId], function (err) {
                 if (err) return reject(err);
                 resolve({ deleted: this.changes });
             });
@@ -291,7 +319,7 @@ const AIMemoryManager = {
      */
     clearOrganizationMemory: async (organizationId) => {
         return new Promise((resolve, reject) => {
-            db.run(`DELETE FROM ai_organization_memory WHERE organization_id = ?`,
+            deps.db.run(`DELETE FROM ai_organization_memory WHERE organization_id = ?`,
                 [organizationId], function (err) {
                     if (err) return reject(err);
                     resolve({ deleted: this.changes });

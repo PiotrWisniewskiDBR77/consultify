@@ -155,7 +155,7 @@ const AICostControlService = {
 
     /**
      * Check budget status and determine if action is allowed
-     * Returns: { allowed, remainingBudget, shouldDowngrade, currentUsage, limit }
+     * Returns: { allowed, remainingBudget, shouldDowngrade, currentUsage, limit, isFrozen }
      */
     checkBudget: async (organizationId, projectId = null, estimatedCost = 0) => {
         const budgets = [];
@@ -184,32 +184,63 @@ const AICostControlService = {
                 shouldDowngrade: false,
                 currentUsage: 0,
                 limit: null,
-                restrictingScope: null
+                isFrozen: false
             };
         }
 
         // Find the most restrictive budget
         let mostRestrictive = null;
-        for (const budget of budgets) {
-            const remaining = budget.monthly_limit_usd - budget.current_month_usage;
-            const wouldExceed = remaining < estimatedCost;
+        let isFrozen = false;
 
-            if (!mostRestrictive || remaining < (mostRestrictive.monthly_limit_usd - mostRestrictive.current_month_usage)) {
+        for (const budget of budgets) {
+            const currentTotal = budget.current_month_usage || 0;
+            const limit = budget.monthly_limit_usd || Infinity;
+            const hardLimit = budget.hard_limit_usd || limit;
+            const remaining = limit - currentTotal;
+            const hardRemaining = hardLimit - currentTotal;
+
+            // If we are over hard limit AND freeze is enabled, block everything
+            if (currentTotal >= hardLimit && budget.freeze_on_limit === 1) {
+                isFrozen = true;
+                mostRestrictive = budget;
+                break;
+            }
+
+            if (!mostRestrictive || remaining < (mostRestrictive.monthly_limit_usd - (mostRestrictive.current_month_usage || 0))) {
                 mostRestrictive = budget;
             }
         }
 
-        const remaining = mostRestrictive.monthly_limit_usd - mostRestrictive.current_month_usage;
-        const percentUsed = (mostRestrictive.current_month_usage / mostRestrictive.monthly_limit_usd) * 100;
+        if (isFrozen) {
+            return {
+                allowed: false,
+                remainingBudget: 0,
+                shouldDowngrade: true,
+                currentUsage: mostRestrictive.current_month_usage,
+                limit: mostRestrictive.monthly_limit_usd,
+                restrictingScope: mostRestrictive.scope,
+                isFrozen: true,
+                reason: 'BUDGET_EXHAUSTED_FREEZE'
+            };
+        }
+
+        const currentTotal = mostRestrictive.current_month_usage || 0;
+        const limit = mostRestrictive.monthly_limit_usd || 0;
+        const remaining = limit - currentTotal;
+        const percentUsed = (currentTotal / limit) * 100;
+
+        // Prestige Rule: If we exceed limit but no freeze, we only allow if auto_downgrade is enabled
+        const allowed = remaining >= estimatedCost || mostRestrictive.auto_downgrade === 1;
 
         return {
-            allowed: remaining >= estimatedCost || mostRestrictive.auto_downgrade === 1,
+            allowed,
             remainingBudget: Math.max(0, remaining),
             shouldDowngrade: percentUsed >= 80, // Start downgrading at 80%
-            currentUsage: mostRestrictive.current_month_usage,
-            limit: mostRestrictive.monthly_limit_usd,
+            currentUsage: currentTotal,
+            limit: limit,
             restrictingScope: mostRestrictive.scope,
-            percentUsed: Math.round(percentUsed)
+            percentUsed: Math.round(percentUsed),
+            isFrozen: false
         };
     },
 

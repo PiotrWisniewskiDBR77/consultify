@@ -25,15 +25,17 @@ describe('RouterSync', () => {
         sessionStorage.clear();
     });
 
-    it('navigates to Demo on /demo route', () => {
+    it('navigates to Demo on /demo route', async () => {
         render(
             <MemoryRouter initialEntries={['/demo']}>
                 <RouterSync />
             </MemoryRouter>
         );
 
-        expect(mockSetSessionMode).toHaveBeenCalledWith(SessionMode.FREE);
-        expect(mockSetCurrentView).toHaveBeenCalledWith(AppView.FREE_ASSESSMENT_CHAT);
+        await waitFor(() => {
+            expect(mockSetSessionMode).toHaveBeenCalledWith(SessionMode.DEMO);
+            expect(mockSetCurrentView).toHaveBeenCalledWith(AppView.AUTH);
+        });
     });
 
     it('navigates to Trial Start on /trial/start route', () => {

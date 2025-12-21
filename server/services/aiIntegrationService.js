@@ -6,8 +6,11 @@
  * Provider-agnostic architecture ready for Jira, ClickUp, Asana, Slack, Teams.
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db: require('../database'),
+    uuidv4: require('uuid').v4
+};
 
 // Integration types
 const INTEGRATION_TYPES = {
@@ -59,6 +62,11 @@ const AIIntegrationService = {
     ACTION_STATUS,
     SYNC_DIRECTIONS,
 
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
+
     // ==========================================
     // INTEGRATION CONFIGURATION
     // ==========================================
@@ -72,10 +80,10 @@ const AIIntegrationService = {
             throw new Error(`Provider ${provider} not supported for ${integrationType}`);
         }
 
-        const id = uuidv4();
+        const id = deps.uuidv4();
 
         return new Promise((resolve, reject) => {
-            db.run(`
+            deps.db.run(`
                 INSERT INTO integration_configs 
                 (id, organization_id, project_id, integration_type, provider, config, sync_direction, is_active)
                 VALUES (?, ?, ?, ?, ?, ?, ?, 0)
@@ -91,7 +99,7 @@ const AIIntegrationService = {
      */
     setIntegrationActive: async (integrationId, isActive) => {
         return new Promise((resolve, reject) => {
-            db.run(`
+            deps.db.run(`
                 UPDATE integration_configs 
                 SET is_active = ?, updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?
@@ -120,7 +128,7 @@ const AIIntegrationService = {
 
             sql += ` ORDER BY integration_type, provider`;
 
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) reject(err);
                 else {
                     resolve((rows || []).map(row => ({
@@ -160,12 +168,12 @@ const AIIntegrationService = {
      * AI suggests a sync action (requires human approval)
      */
     suggestSync: async ({ organizationId, projectId, integrationId, actionType, targetEntityType, targetEntityId, payload, reason }) => {
-        const id = uuidv4();
+        const id = deps.uuidv4();
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 7); // Expires in 7 days
 
         return new Promise((resolve, reject) => {
-            db.run(`
+            deps.db.run(`
                 INSERT INTO integration_pending_actions 
                 (id, organization_id, project_id, integration_id, action_type, target_entity_type, target_entity_id, 
                  payload, suggested_by, suggestion_reason, status, expires_at)
@@ -209,7 +217,7 @@ const AIIntegrationService = {
 
             sql += ` ORDER BY a.created_at DESC`;
 
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) reject(err);
                 else {
                     resolve((rows || []).map(row => ({
@@ -226,7 +234,7 @@ const AIIntegrationService = {
      */
     approveAction: async (actionId, approvedBy) => {
         return new Promise((resolve, reject) => {
-            db.run(`
+            deps.db.run(`
                 UPDATE integration_pending_actions 
                 SET status = 'approved', approved_by = ?, approved_at = CURRENT_TIMESTAMP
                 WHERE id = ? AND status = 'pending'
@@ -246,7 +254,7 @@ const AIIntegrationService = {
      */
     rejectAction: async (actionId, rejectedBy, reason = null) => {
         return new Promise((resolve, reject) => {
-            db.run(`
+            deps.db.run(`
                 UPDATE integration_pending_actions 
                 SET status = 'rejected', approved_by = ?, approved_at = CURRENT_TIMESTAMP, rejected_reason = ?
                 WHERE id = ? AND status = 'pending'
@@ -268,7 +276,7 @@ const AIIntegrationService = {
     executeAction: async (actionId, executedBy) => {
         // 1. Get the action
         const action = await new Promise((resolve) => {
-            db.get(`
+            deps.db.get(`
                 SELECT a.*, i.provider, i.config
                 FROM integration_pending_actions a
                 JOIN integration_configs i ON a.integration_id = i.id
@@ -300,7 +308,7 @@ const AIIntegrationService = {
 
             // Update action status
             await new Promise((resolve) => {
-                db.run(`
+                deps.db.run(`
                     UPDATE integration_pending_actions 
                     SET status = 'failed', execution_result = ?, executed_at = CURRENT_TIMESTAMP
                     WHERE id = ?
@@ -325,7 +333,7 @@ const AIIntegrationService = {
 
         // 4. Update action status
         await new Promise((resolve) => {
-            db.run(`
+            deps.db.run(`
                 UPDATE integration_pending_actions 
                 SET status = 'executed', execution_result = ?, executed_at = CURRENT_TIMESTAMP
                 WHERE id = ?
@@ -349,7 +357,7 @@ const AIIntegrationService = {
         // Return mock result
         return {
             success: true,
-            externalId: `${provider}-${uuidv4().substring(0, 8)}`,
+            externalId: `${provider}-${deps.uuidv4().substring(0, 8)}`,
             externalUrl: `https://${provider}.example.com/item/${Date.now()}`,
             syncedAt: new Date().toISOString()
         };
@@ -365,7 +373,7 @@ const AIIntegrationService = {
     handleWebhook: async (provider, webhookData, signature = null) => {
         // 1. Find matching integration
         const integration = await new Promise((resolve) => {
-            db.get(`
+            deps.db.get(`
                 SELECT * FROM integration_configs 
                 WHERE provider = ? AND is_active = 1
                 LIMIT 1
@@ -407,10 +415,10 @@ const AIIntegrationService = {
      * Log a sync operation
      */
     _logSync: async ({ integrationId, direction, actionType, externalId, externalUrl, internalEntityType, internalEntityId, status, errorMessage, syncData }) => {
-        const id = uuidv4();
+        const id = deps.uuidv4();
 
         return new Promise((resolve) => {
-            db.run(`
+            deps.db.run(`
                 INSERT INTO integration_sync_log 
                 (id, integration_id, direction, action_type, external_id, external_url, 
                  internal_entity_type, internal_entity_id, status, error_message, sync_data)
@@ -447,7 +455,7 @@ const AIIntegrationService = {
             sql += ` ORDER BY created_at DESC LIMIT ?`;
             params.push(limit);
 
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) reject(err);
                 else {
                     resolve((rows || []).map(row => ({
@@ -499,7 +507,7 @@ const AIIntegrationService = {
      */
     checkIntegrationHealth: async (integrationId) => {
         return new Promise((resolve) => {
-            db.get(`
+            deps.db.get(`
                 SELECT ic.*, 
                     (SELECT COUNT(*) FROM integration_sync_log WHERE integration_id = ic.id AND status = 'failed' AND created_at > datetime('now', '-24 hours')) as recent_failures
                 FROM integration_configs ic

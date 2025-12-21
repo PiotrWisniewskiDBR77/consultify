@@ -22,10 +22,18 @@ const ReferralService = {
     /**
      * Generate a new referral code for a user.
      * @param {string} userId - User creating the referral
+     * @param {string} userState - Current state of the user
      * @param {number} expiresInDays - Days until expiration (default 90)
      * @returns {Promise<Object>} { code, expiresAt }
      */
-    generateCode: async (userId, expiresInDays = 90) => {
+    generateCode: async (userId, userState, expiresInDays = 90) => {
+        // Only ECOSYSTEM_NODE users can generate codes
+        if (userState !== 'ECOSYSTEM_NODE') {
+            const err = new Error('Only users in Phase G (Ecosystem) can generate referral codes');
+            err.statusCode = 403;
+            throw err;
+        }
+
         // Generate short ID from userId
         const shortId = userId.substring(0, 4).toUpperCase();
         const randomPart = crypto.randomBytes(2).toString('hex').toUpperCase();

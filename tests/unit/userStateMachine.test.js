@@ -97,7 +97,7 @@ describe('UserStateMachine', () => {
         test('TRIAL_TRUSTED to ORG_CREATOR requires explicit decision', () => {
             const result1 = UserStateMachine.validateTransition('TRIAL_TRUSTED', 'ORG_CREATOR', {});
             expect(result1.valid).toBe(false);
-            expect(result1.reason).toContain('explicit');
+            expect(result1.reason.toLowerCase()).toContain('explicit');
 
             const result2 = UserStateMachine.validateTransition('TRIAL_TRUSTED', 'ORG_CREATOR', { hasExplicitOrgDecision: true });
             expect(result2.valid).toBe(true);

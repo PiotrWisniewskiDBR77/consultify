@@ -6,10 +6,17 @@
  * used by both UI and AI context builder to ensure consistency.
  */
 
-let db = require('../database');
-const StageGateService = require('./stageGateService');
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db: require('../database'),
+    StageGateService: require('./stageGateService')
+};
 
 const PMOHealthService = {
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
     /**
      * Get PMOHealthSnapshot for a project
      * Returns a canonical snapshot of project health status
@@ -22,7 +29,7 @@ const PMOHealthService = {
 
         // 1. Get project and current phase
         const project = await new Promise((resolve, reject) => {
-            db.get(`SELECT * FROM projects WHERE id = ?`, [projectId], (err, row) => {
+            deps.db.get(`SELECT * FROM projects WHERE id = ?`, [projectId], (err, row) => {
                 if (err) reject(err);
                 else resolve(row);
             });
@@ -33,7 +40,7 @@ const PMOHealthService = {
         }
 
         const currentPhase = project.current_phase || 'Context';
-        const phaseNumber = StageGateService.PHASE_ORDER.indexOf(currentPhase) + 1;
+        const phaseNumber = deps.StageGateService.PHASE_ORDER.indexOf(currentPhase) + 1;
 
         // 2. Evaluate stage gate
         let stageGate = {
@@ -43,12 +50,12 @@ const PMOHealthService = {
             metCriteria: []
         };
 
-        if (phaseNumber < StageGateService.PHASE_ORDER.length) {
-            const nextPhase = StageGateService.PHASE_ORDER[phaseNumber];
-            const gateType = StageGateService.getGateType(currentPhase, nextPhase);
+        if (phaseNumber < deps.StageGateService.PHASE_ORDER.length) {
+            const nextPhase = deps.StageGateService.PHASE_ORDER[phaseNumber];
+            const gateType = deps.StageGateService.getGateType(currentPhase, nextPhase);
 
             if (gateType) {
-                const evaluation = await StageGateService.evaluateGate(projectId, gateType);
+                const evaluation = await deps.StageGateService.evaluateGate(projectId, gateType);
                 stageGate = {
                     gateType,
                     isReady: evaluation.status === 'READY',
@@ -101,7 +108,7 @@ const PMOHealthService = {
         const dueSoonDate = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
         return new Promise((resolve) => {
-            db.get(`
+            deps.db.get(`
                 SELECT 
                     SUM(CASE WHEN due_date < ? AND status NOT IN ('done', 'DONE', 'cancelled', 'CANCELLED') THEN 1 ELSE 0 END) as overdueCount,
                     SUM(CASE WHEN due_date >= ? AND due_date <= ? AND status NOT IN ('done', 'DONE', 'cancelled', 'CANCELLED') THEN 1 ELSE 0 END) as dueSoonCount,
@@ -130,7 +137,7 @@ const PMOHealthService = {
         const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
         return new Promise((resolve) => {
-            db.get(`
+            deps.db.get(`
                 SELECT 
                     SUM(CASE WHEN status = 'PENDING' THEN 1 ELSE 0 END) as pendingCount,
                     SUM(CASE WHEN status = 'PENDING' AND created_at < ? THEN 1 ELSE 0 END) as overdueCount
@@ -155,7 +162,7 @@ const PMOHealthService = {
      */
     _getInitiativeCounts: async (projectId) => {
         return new Promise((resolve) => {
-            db.get(`
+            deps.db.get(`
                 SELECT 
                     SUM(CASE WHEN risk_level = 'HIGH' OR status = 'AT_RISK' THEN 1 ELSE 0 END) as atRiskCount,
                     SUM(CASE WHEN status IN ('blocked', 'BLOCKED') THEN 1 ELSE 0 END) as blockedCount
@@ -185,7 +192,7 @@ const PMOHealthService = {
 
         // Overdue tasks
         const overdueTasks = await new Promise((resolve) => {
-            db.all(`
+            deps.db.all(`
                 SELECT id, title FROM tasks 
                 WHERE project_id = ? AND due_date < ? AND status NOT IN ('done', 'DONE', 'cancelled', 'CANCELLED')
                 LIMIT 5
@@ -202,7 +209,7 @@ const PMOHealthService = {
 
         // Pending decisions (7+ days)
         const pendingDecisions = await new Promise((resolve) => {
-            db.all(`
+            deps.db.all(`
                 SELECT id, title FROM decisions 
                 WHERE project_id = ? AND status = 'PENDING' AND created_at < ?
                 LIMIT 5
@@ -218,17 +225,17 @@ const PMOHealthService = {
         }
 
         // Stage gate blockers (missing criteria)
-        const phaseNumber = StageGateService.PHASE_ORDER.indexOf(
+        const phaseNumber = deps.StageGateService.PHASE_ORDER.indexOf(
             await PMOHealthService._getCurrentPhase(projectId)
         ) + 1;
 
-        if (phaseNumber < StageGateService.PHASE_ORDER.length) {
-            const nextPhase = StageGateService.PHASE_ORDER[phaseNumber];
-            const currentPhase = StageGateService.PHASE_ORDER[phaseNumber - 1];
-            const gateType = StageGateService.getGateType(currentPhase, nextPhase);
+        if (phaseNumber < deps.StageGateService.PHASE_ORDER.length) {
+            const nextPhase = deps.StageGateService.PHASE_ORDER[phaseNumber];
+            const currentPhase = deps.StageGateService.PHASE_ORDER[phaseNumber - 1];
+            const gateType = deps.StageGateService.getGateType(currentPhase, nextPhase);
 
             if (gateType) {
-                const evaluation = await StageGateService.evaluateGate(projectId, gateType);
+                const evaluation = await deps.StageGateService.evaluateGate(projectId, gateType);
                 const missing = (evaluation.completionCriteria || []).filter(c => !c.isMet);
 
                 if (missing.length > 0) {
@@ -249,14 +256,11 @@ const PMOHealthService = {
      */
     _getCurrentPhase: async (projectId) => {
         return new Promise((resolve) => {
-            db.get(`SELECT current_phase FROM projects WHERE id = ?`, [projectId], (err, row) => {
+            deps.db.get(`SELECT current_phase FROM projects WHERE id = ?`, [projectId], (err, row) => {
                 resolve(row?.current_phase || 'Context');
             });
         });
-    },
-
-    // Test helper
-    _setDb: (mockDb) => { db = mockDb; }
+    }
 };
 
 module.exports = PMOHealthService;

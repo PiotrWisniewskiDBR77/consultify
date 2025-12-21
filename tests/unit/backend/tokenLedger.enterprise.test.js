@@ -8,82 +8,63 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { createRequire } from 'module';
+import { createMockDb } from '../../helpers/dependencyInjector.js';
 
-// Mock database with controllable behavior
-let mockDbBehavior = {
-    failLedgerInsert: false,
-    orgExists: true,
-    orgBalance: 10000,
-    billingStatus: 'TRIAL',
-    organizationType: 'TRIAL'
-};
-
-vi.mock('../../../server/database', () => ({
-    default: {
-        serialize: vi.fn((callback) => callback()),
-        run: vi.fn((sql, params, callback) => {
-            if (callback) callback.call({ changes: 1 });
-        }),
-        get: vi.fn((sql, params, callback) => {
-            if (!mockDbBehavior.orgExists && sql.includes('organizations')) {
-                callback(null, null);
-            } else if (sql.includes('organizations')) {
-                callback(null, {
-                    token_balance: mockDbBehavior.orgBalance,
-                    billing_status: mockDbBehavior.billingStatus,
-                    organization_type: mockDbBehavior.organizationType
-                });
-            } else if (sql.includes('billing_margins')) {
-                callback(null, { base_cost_per_1k: 0.01, margin_percent: 20, min_charge: 0 });
-            } else if (sql.includes('token_ledger')) {
-                callback(null, { total_credits: 50000, total_debits: 1000, transaction_count: 10 });
-            } else {
-                callback(null, {});
-            }
-        }),
-        all: vi.fn((sql, params, callback) => {
-            callback(null, []);
-        })
-    }
-}));
-
-// Mock sqliteAsync with controllable failure
-vi.mock('../../../server/db/sqliteAsync', () => ({
-    runAsync: vi.fn().mockImplementation((db, sql, params) => {
-        if (mockDbBehavior.failLedgerInsert && sql.includes('token_ledger')) {
-            return Promise.reject(new Error('FATAL: Ledger insert failed'));
-        }
-        return Promise.resolve({ changes: 1, lastID: 1 });
-    }),
-    getAsync: vi.fn().mockImplementation((db, sql, params) => {
-        if (!mockDbBehavior.orgExists && sql.includes('organizations')) {
-            return Promise.resolve(null);
-        }
-        if (sql.includes('organizations')) {
-            return Promise.resolve({
-                token_balance: mockDbBehavior.orgBalance,
-                billing_status: mockDbBehavior.billingStatus,
-                organization_type: mockDbBehavior.organizationType
-            });
-        }
-        return Promise.resolve({});
-    }),
-    allAsync: vi.fn().mockResolvedValue([]),
-    withTransaction: vi.fn().mockImplementation(async (db, fn) => {
-        try {
-            return await fn();
-        } catch (e) {
-            throw e;
-        }
-    })
-}));
-
-const TokenBillingService = require('../../../server/services/tokenBillingService');
-const { runAsync, getAsync } = require('../../../server/db/sqliteAsync');
+const require = createRequire(import.meta.url);
 
 describe('Token Ledger Enterprise Tests', () => {
+    let TokenBillingService;
+    let mockDb;
+    let mockSqliteAsync;
+    
+    // Mock database with controllable behavior
+    let mockDbBehavior = {
+        failLedgerInsert: false,
+        orgExists: true,
+        orgBalance: 10000,
+        billingStatus: 'TRIAL',
+        organizationType: 'TRIAL'
+    };
+
     beforeEach(() => {
-        vi.clearAllMocks();
+        vi.resetModules();
+        
+        mockDb = createMockDb();
+        mockSqliteAsync = {
+            getAsync: vi.fn(),
+            runAsync: vi.fn(),
+            allAsync: vi.fn(),
+            withTransaction: vi.fn()
+        };
+        
+        vi.doMock('../../../server/database', () => ({
+            default: mockDb
+        }));
+        
+        vi.doMock('../../../server/db/sqliteAsync', () => mockSqliteAsync);
+
+        TokenBillingService = require('../../../server/services/tokenBillingService.js');
+        
+        // Inject mock dependencies
+        TokenBillingService.setDependencies({
+            db: mockDb,
+            uuidv4: () => 'test-uuid-1234',
+            crypto: {
+                randomBytes: vi.fn(() => Buffer.from('0123456789abcdef')),
+                scryptSync: vi.fn(() => Buffer.alloc(32)),
+                createCipheriv: vi.fn(() => ({
+                    update: vi.fn(() => Buffer.from('encrypted')),
+                    final: vi.fn(() => Buffer.from(''))
+                })),
+                createDecipheriv: vi.fn(() => ({
+                    update: vi.fn(() => Buffer.from('decrypted')),
+                    final: vi.fn(() => Buffer.from(''))
+                }))
+            },
+            sqliteAsync: mockSqliteAsync
+        });
+        
         // Reset to default behavior
         mockDbBehavior = {
             failLedgerInsert: false,
@@ -92,6 +73,50 @@ describe('Token Ledger Enterprise Tests', () => {
             billingStatus: 'TRIAL',
             organizationType: 'TRIAL'
         };
+        
+        // Setup default mocks
+        mockSqliteAsync.getAsync.mockImplementation((db, sql, params) => {
+            if (!mockDbBehavior.orgExists && sql.includes('organizations')) {
+                return Promise.resolve(null);
+            }
+            if (sql.includes('organizations')) {
+                return Promise.resolve({
+                    token_balance: mockDbBehavior.orgBalance,
+                    billing_status: mockDbBehavior.billingStatus,
+                    organization_type: mockDbBehavior.organizationType
+                });
+            }
+            return Promise.resolve({});
+        });
+        
+        mockSqliteAsync.runAsync.mockImplementation((db, sql, params) => {
+            if (mockDbBehavior.failLedgerInsert && sql.includes('token_ledger')) {
+                return Promise.reject(new Error('FATAL: Ledger insert failed'));
+            }
+            return Promise.resolve({ changes: 1, lastID: 1 });
+        });
+        
+        mockSqliteAsync.withTransaction.mockImplementation(async (db, fn) => {
+            try {
+                return await fn();
+            } catch (e) {
+                throw e;
+            }
+        });
+        
+        mockDb.get.mockImplementation((sql, params, callback) => {
+            if (sql.includes('token_ledger')) {
+                callback(null, { total_credits: 50000, total_debits: 1000, transaction_count: 10 });
+            } else {
+                callback(null, {});
+            }
+        });
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+        vi.doUnmock('../../../server/database');
+        vi.doUnmock('../../../server/db/sqliteAsync');
     });
 
     // ==========================================
@@ -148,7 +173,7 @@ describe('Token Ledger Enterprise Tests', () => {
         it('getOrgBalance uses async pattern', async () => {
             const result = await TokenBillingService.getOrgBalance('org-123');
 
-            expect(getAsync).toHaveBeenCalled();
+            expect(mockSqliteAsync.getAsync).toHaveBeenCalled();
             expect(result.balance).toBe(10000);
         });
 

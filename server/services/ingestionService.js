@@ -1,10 +1,18 @@
 const pdf = require('pdf-parse');
 const fs = require('fs');
 const path = require('path');
-const RagService = require('./ragService');
-const db = require('../database');
+
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db: require('../database'),
+    RagService: require('./ragService')
+};
 
 const IngestionService = {
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
     /**
      * Process an uploaded file
      * @param {Object} file - Multer file object
@@ -46,7 +54,7 @@ const IngestionService = {
 
             // 4. Store Document & Chunks
             await IngestionService.storeDocument(docId, organizationId, metadata, content);
-            await RagService.storeChunks(docId, chunks);
+            await deps.RagService.storeChunks(docId, chunks);
 
             // Cleanup temp file
             // fs.unlinkSync(filePath); // Keep for now or delete? Better delete to save space.
@@ -85,7 +93,7 @@ const IngestionService = {
      */
     storeDocument: (docId, organizationId, metadata, fullContent) => {
         return new Promise((resolve, reject) => {
-            const stmt = db.prepare(`
+            const stmt = deps.db.prepare(`
                 INSERT INTO knowledge_docs (id, organization_id, filename, file_type, file_size, content, created_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
             `);

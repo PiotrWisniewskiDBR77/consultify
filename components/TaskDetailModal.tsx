@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Task, User, RiskRating, TaskStatus, TaskType, DecisionImpact, FullInitiative } from '../types';
 import {
     X, Save, Calendar, DollarSign,
@@ -19,7 +19,7 @@ interface TaskDetailModalProps {
     initiative?: FullInitiative;
 }
 
-export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
+export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(({
     task: initialTask,
     isOpen,
     onClose,
@@ -40,7 +40,8 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
     if (!isOpen) return null;
 
-    const handleSave = () => {
+    // OPTIMIZED: Memoized callbacks to prevent unnecessary re-renders
+    const handleSave = useCallback(() => {
         // Validation
         if (!task.title.trim()) {
             alert("Title is required");
@@ -65,9 +66,9 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
         onSave(task);
         onClose();
-    };
+    }, [task, onSave, onClose]);
 
-    const generateAiInsight = async () => {
+    const generateAiInsight = useCallback(async () => {
         setAiLoading(true);
         try {
             const insight = await Api.generateTaskInsight(task, initiative);
@@ -460,4 +461,13 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             </div>
         </div>
     );
-};
+}, (prevProps, nextProps) => {
+    // Custom comparison function for React.memo
+    // Only re-render if task data or isOpen changes
+    return (
+        prevProps.isOpen === nextProps.isOpen &&
+        prevProps.task.id === nextProps.task.id &&
+        JSON.stringify(prevProps.task) === JSON.stringify(nextProps.task) &&
+        prevProps.users.length === nextProps.users.length
+    );
+});

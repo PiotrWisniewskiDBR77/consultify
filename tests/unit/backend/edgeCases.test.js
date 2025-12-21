@@ -24,7 +24,7 @@ describe('Edge Cases and Error Scenarios', () => {
     describe('Null and Undefined Handling', () => {
         it('should handle null organizationId gracefully', async () => {
             const StorageService = (await import('../../../server/services/storageService.js')).default;
-            
+
             expect(() => {
                 StorageService.getIsolatedPath(null, 'project-123', 'type');
             }).toThrow('Organization ID is required');
@@ -32,13 +32,13 @@ describe('Edge Cases and Error Scenarios', () => {
 
         it('should handle undefined projectId in storage', async () => {
             const StorageService = (await import('../../../server/services/storageService.js')).default;
-            
+
             const result = StorageService.getIsolatedPath(
                 testOrganizations.org1.id,
                 undefined,
                 'type'
             );
-            
+
             expect(result).toContain('global');
         });
     });
@@ -59,7 +59,7 @@ describe('Edge Cases and Error Scenarios', () => {
         it('should handle empty search results', async () => {
             const EscalationService = (await import('../../../server/services/escalationService.js')).default;
             EscalationService.setDependencies({ db: mockDb, uuidv4: () => 'uuid' });
-            
+
             mockDb.all.mockImplementation((query, params, callback) => {
                 callback(null, []);
             });
@@ -130,16 +130,16 @@ describe('Edge Cases and Error Scenarios', () => {
     describe('Invalid Input Handling', () => {
         it('should reject invalid email format in invitations', async () => {
             const InvitationService = (await import('../../../server/services/invitationService.js')).default;
-            
+
             // Mock database for InvitationService
-            InvitationService.setDependencies({ 
+            InvitationService.setDependencies({
                 db: mockDb,
                 crypto: { randomBytes: () => ({ toString: () => 'a'.repeat(64) }) },
                 uuidv4: () => 'uuid'
             });
-            
+
             await expect(
-                InvitationService.createOrganizationInvitation({
+                InvitationService.createOrgInvitation({
                     organizationId: testOrganizations.org1.id,
                     email: 'invalid-email',
                     role: 'USER',
@@ -189,7 +189,12 @@ describe('Edge Cases and Error Scenarios', () => {
             const dbError = new Error('Database connection failed');
 
             mockDb.run.mockImplementation((query, params, callback) => {
-                callback.call({ changes: 0 }, dbError);
+                // Use process.nextTick to simulate async callback
+                if (callback) {
+                    process.nextTick(() => {
+                        callback.call({ changes: 0 }, dbError);
+                    });
+                }
             });
 
             await expect(
@@ -208,14 +213,26 @@ describe('Edge Cases and Error Scenarios', () => {
             OrganizationService.setDependencies({ db: mockDb, uuidv4: () => 'uuid' });
             const constraintError = new Error('UNIQUE constraint failed');
 
-            mockDb.run.mockImplementation((query, params, callback) => {
-                callback.call({ changes: 0 }, constraintError);
+            mockDb.serialize.mockImplementation((callback) => {
+                if (callback) callback();
+            });
+
+            mockDb.run.mockImplementation(function (query, params, callback) {
+                if (query === 'BEGIN TRANSACTION') {
+                    return;
+                }
+                // Use process.nextTick to simulate async callback
+                if (callback) {
+                    process.nextTick(() => {
+                        callback.call({ changes: 0 }, constraintError);
+                    });
+                }
             });
 
             await expect(
                 OrganizationService.createOrganization({
-                    name: 'Duplicate Org',
-                    ownerId: testUsers.admin.id
+                    userId: testUsers.admin.id,
+                    name: 'Duplicate Org'
                 })
             ).rejects.toThrow('UNIQUE constraint failed');
         });
@@ -241,7 +258,7 @@ describe('Edge Cases and Error Scenarios', () => {
 
             // First update should succeed
             await RoadmapService.assignToWave('init-1', 'wave-1');
-            
+
             // Second concurrent update should handle error
             await expect(
                 RoadmapService.assignToWave('init-1', 'wave-2')
@@ -263,7 +280,7 @@ describe('Edge Cases and Error Scenarios', () => {
             const start = Date.now();
             const RoadmapService = (await import('../../../server/services/roadmapService.js')).default;
             RoadmapService.setDependencies({ db: mockDb, uuidv4: () => 'uuid' });
-            
+
             const result = await RoadmapService.getWaves('project-123');
             const duration = Date.now() - start;
 
@@ -286,7 +303,7 @@ describe('Edge Cases and Error Scenarios', () => {
         it('should handle slow database queries', async () => {
             const GovernanceService = (await import('../../../server/services/governanceService.js')).default;
             GovernanceService.setDependencies({ db: mockDb, uuidv4: () => 'uuid' });
-            
+
             mockDb.run.mockImplementation((query, params, callback) => {
                 // Simulate slow query
                 setTimeout(() => {

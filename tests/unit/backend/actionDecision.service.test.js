@@ -130,13 +130,14 @@ describe('ActionDecisionService - HARDENED', () => {
         });
     });
 
-    // CJS/ESM interop issue: database mock is not properly applied
-    describe.skip('getAuditLog - skipped due to CJS/ESM mock interop', () => {
+    describe('getAuditLog', () => {
         it('should enforce organization isolation', async () => {
             mockDb.all.mockImplementation((sql, params, cb) => {
-                expect(params).toContain('org-1');
-                expect(sql).toContain('ad.organization_id = ?');
-                cb(null, []);
+                process.nextTick(() => {
+                    expect(params).toContain('org-1');
+                    expect(sql).toContain('ad.organization_id = ?');
+                    cb(null, []);
+                });
             });
 
             await ActionDecisionService.getAuditLog('org-1');
@@ -144,9 +145,11 @@ describe('ActionDecisionService - HARDENED', () => {
 
         it('should support SUPERADMIN_BYPASS for global access', async () => {
             mockDb.all.mockImplementation((sql, params, cb) => {
-                expect(params).not.toContain('SUPERADMIN_BYPASS');
-                expect(sql).not.toContain('ad.organization_id = ?');
-                cb(null, []);
+                process.nextTick(() => {
+                    expect(params).not.toContain('SUPERADMIN_BYPASS');
+                    expect(sql).not.toContain('ad.organization_id = ?');
+                    cb(null, []);
+                });
             });
 
             await ActionDecisionService.getAuditLog('SUPERADMIN_BYPASS');
@@ -154,9 +157,11 @@ describe('ActionDecisionService - HARDENED', () => {
 
         it('should support filtering by actionType', async () => {
             mockDb.all.mockImplementation((sql, params, cb) => {
-                expect(params).toContain('TASK_CREATE');
-                expect(sql).toContain('ad.action_type = ?');
-                cb(null, []);
+                process.nextTick(() => {
+                    expect(params).toContain('TASK_CREATE');
+                    expect(sql).toContain('ad.action_type = ?');
+                    cb(null, []);
+                });
             });
 
             await ActionDecisionService.getAuditLog('org-1', { actionType: 'TASK_CREATE' });
@@ -164,9 +169,11 @@ describe('ActionDecisionService - HARDENED', () => {
 
         it('should support filtering by decision', async () => {
             mockDb.all.mockImplementation((sql, params, cb) => {
-                expect(params).toContain('APPROVED');
-                expect(sql).toContain('ad.decision = ?');
-                cb(null, []);
+                process.nextTick(() => {
+                    expect(params).toContain('APPROVED');
+                    expect(sql).toContain('ad.decision = ?');
+                    cb(null, []);
+                });
             });
 
             await ActionDecisionService.getAuditLog('org-1', { decision: 'APPROVED' });

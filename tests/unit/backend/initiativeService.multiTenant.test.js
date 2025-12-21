@@ -1,5 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+// Mock queryHelpers before import
+const mockQueryHelpers = vi.hoisted(() => ({
+    queryAll: vi.fn(),
+    queryOne: vi.fn(),
+    queryRun: vi.fn()
+}));
+
+vi.doMock('../../../server/utils/queryHelpers', () => mockQueryHelpers);
+
 // Mock dependencies
 const mockDb = {
     get: vi.fn(),
@@ -16,22 +25,21 @@ describe('InitiativeService - Multi-Tenant Isolation', () => {
         vi.clearAllMocks();
         InitiativeService.setDependencies({ db: mockDb });
 
-        mockDb.run.mockImplementation((...args) => {
-            const cb = args[args.length - 1];
-            if (typeof cb === 'function') cb(null, { changes: 1 });
-        });
+        // Default queryHelpers mocks
+        mockQueryHelpers.queryAll.mockResolvedValue([]);
+        mockQueryHelpers.queryRun.mockResolvedValue({ changes: 1, lastID: 0 });
     });
 
     describe('recalculateProgress with organizationId', () => {
         it('should filter tasks by organization_id AND initiative_id', async () => {
             // Simulate tasks only from orgA
-            mockDb.all.mockImplementation((query, params, cb) => {
+            mockQueryHelpers.queryAll.mockImplementation((query, params) => {
                 // Verify the query includes org_id filter
                 expect(query).toContain('organization_id = ?');
                 expect(query).toContain('initiative_id = ?');
                 expect(params[0]).toBe('org-a');
                 expect(params[1]).toBe('init-1');
-                cb(null, [{ progress: 100, priority: 'medium' }]);
+                return Promise.resolve([{ progress: 100, priority: 'medium' }]);
             });
 
             const progress = await InitiativeService.recalculateProgress({
@@ -43,17 +51,14 @@ describe('InitiativeService - Multi-Tenant Isolation', () => {
         });
 
         it('should update initiative with org-scoped WHERE clause', async () => {
-            mockDb.all.mockImplementation((...args) => {
-                const cb = args[args.length - 1];
-                cb(null, [{ progress: 50, priority: 'high' }]);
-            });
+            mockQueryHelpers.queryAll.mockResolvedValue([{ progress: 50, priority: 'high' }]);
 
             let updateQuery = '';
             let updateParams = [];
-            mockDb.run.mockImplementation((query, params, cb) => {
+            mockQueryHelpers.queryRun.mockImplementation((query, params) => {
                 updateQuery = query;
                 updateParams = params;
-                if (typeof cb === 'function') cb(null);
+                return Promise.resolve({ changes: 1, lastID: 0 });
             });
 
             await InitiativeService.recalculateProgress({
@@ -74,14 +79,14 @@ describe('InitiativeService - Multi-Tenant Isolation', () => {
             const orgATasks = [{ progress: 100, priority: 'high' }];
             const orgBTasks = [{ progress: 0, priority: 'low' }];
 
-            mockDb.all.mockImplementation((query, params, cb) => {
+            mockQueryHelpers.queryAll.mockImplementation((query, params) => {
                 const [orgId, initId] = params;
                 if (orgId === 'org-a') {
-                    cb(null, orgATasks);
+                    return Promise.resolve(orgATasks);
                 } else if (orgId === 'org-b') {
-                    cb(null, orgBTasks);
+                    return Promise.resolve(orgBTasks);
                 } else {
-                    cb(null, []);
+                    return Promise.resolve([]);
                 }
             });
 

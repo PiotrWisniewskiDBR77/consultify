@@ -7,10 +7,18 @@
  * - Organization details
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db: require('../database'),
+    uuidv4: require('uuid').v4
+};
 
 const OrganizationService = {
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
+
     // Role Constants
     ROLES: {
         OWNER: 'OWNER',
@@ -29,16 +37,16 @@ const OrganizationService = {
      * @returns {Promise<Object>}
      */
     createOrganization: async ({ userId, name, email, attribution = null }) => {
-        const orgId = uuidv4();
+        const orgId = deps.uuidv4();
         const now = new Date().toISOString();
         const attributionJson = attribution ? JSON.stringify(attribution) : null;
 
         return new Promise((resolve, reject) => {
-            db.serialize(() => {
-                db.run('BEGIN TRANSACTION');
+            deps.db.serialize(() => {
+                deps.db.run('BEGIN TRANSACTION');
 
                 // 1. Create Organization
-                db.run(
+                deps.db.run(
                     `INSERT INTO organizations (
                         id, name, status, billing_status, token_balance, created_by_user_id, created_at, is_active,
                         ai_assertiveness_level, ai_autonomy_level, attribution_data
@@ -47,24 +55,24 @@ const OrganizationService = {
                     [orgId, name, userId, now, attributionJson],
                     function (err) {
                         if (err) {
-                            db.run('ROLLBACK');
+                            deps.db.run('ROLLBACK');
                             return reject(err);
                         }
                     }
                 );
 
                 // 2. Add Creator as OWNER
-                db.run(
+                deps.db.run(
                     `INSERT INTO organization_members (id, organization_id, user_id, role, status, created_at)
-                     VALUES (?, ?, ?, 'OWNER', 'ACTIVE', ?)`,
-                    [uuidv4(), orgId, userId, now],
+                     VALUES (?, ?, ?, ?, 'ACTIVE', ?)`,
+                    [deps.uuidv4(), orgId, userId, 'OWNER', now],
                     function (err) {
                         if (err) {
-                            db.run('ROLLBACK');
+                            deps.db.run('ROLLBACK');
                             return reject(err);
                         }
 
-                        db.run('COMMIT', (commitErr) => {
+                        deps.db.run('COMMIT', (commitErr) => {
                             if (commitErr) return reject(commitErr);
                             resolve({ id: orgId, name, role: 'OWNER' });
                         });
@@ -81,7 +89,7 @@ const OrganizationService = {
      */
     getOrganization: async (orgId) => {
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT id, name, status, billing_status, token_balance, created_at 
                  FROM organizations WHERE id = ?`,
                 [orgId],
@@ -108,9 +116,9 @@ const OrganizationService = {
             throw new Error('Invalid role');
         }
 
-        const id = uuidv4();
+        const id = deps.uuidv4();
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `INSERT INTO organization_members (id, organization_id, user_id, role, status, invited_by_user_id)
                  VALUES (?, ?, ?, ?, 'ACTIVE', ?)`,
                 [id, organizationId, userId, role, invitedBy],
@@ -135,7 +143,7 @@ const OrganizationService = {
      */
     getMembers: async (orgId) => {
         return new Promise((resolve, reject) => {
-            db.all(
+            deps.db.all(
                 `SELECT m.id, m.user_id, m.role, m.status, m.created_at, u.first_name, u.last_name, u.email
                  FROM organization_members m
                  JOIN users u ON m.user_id = u.id
@@ -156,7 +164,7 @@ const OrganizationService = {
      */
     getUserOrganizations: async (userId) => {
         return new Promise((resolve, reject) => {
-            db.all(
+            deps.db.all(
                 `SELECT o.id, o.name, o.billing_status, m.role
                  FROM organizations o
                  JOIN organization_members m ON o.id = m.organization_id
@@ -180,15 +188,15 @@ const OrganizationService = {
         const INITIAL_TOKENS = 100000; // Configurable initial pack
 
         return new Promise((resolve, reject) => {
-            db.serialize(() => {
-                db.run('BEGIN TRANSACTION');
+            deps.db.serialize(() => {
+                deps.db.run('BEGIN TRANSACTION');
 
                 // Update Organization
                 // - Set billing_status -> ACTIVE
                 // - Set organization_type -> PAID
                 // - Set status -> ACTIVE (lifecycle)
                 // - Add Initial Tokens (only if not previously credited? - For now, just add)
-                db.run(
+                deps.db.run(
                     `UPDATE organizations 
                      SET billing_status = 'ACTIVE', 
                          organization_type = 'PAID',
@@ -198,24 +206,24 @@ const OrganizationService = {
                     [INITIAL_TOKENS, orgId],
                     function (err) {
                         if (err) {
-                            db.run('ROLLBACK');
+                            deps.db.run('ROLLBACK');
                             return reject(err);
                         }
                         if (this.changes === 0) {
-                            db.run('ROLLBACK');
+                            deps.db.run('ROLLBACK');
                             return reject(new Error('Organization not found'));
                         }
                     }
                 );
 
                 // Update Billing Table (Stub/Real)
-                db.run(
+                deps.db.run(
                     `INSERT OR REPLACE INTO organization_billing (organization_id, status, updated_at)
                      VALUES (?, 'ACTIVE', CURRENT_TIMESTAMP)`,
                     [orgId],
                     function (err) {
                         if (err) {
-                            db.run('ROLLBACK');
+                            deps.db.run('ROLLBACK');
                             return reject(err);
                         }
 
@@ -228,7 +236,7 @@ const OrganizationService = {
                         // Since creditTokens has its own transaction logic often, let's keep it simple here:
                         // We updated balance directly above. Just log it.
 
-                        db.run('COMMIT', async (commitErr) => {
+                        deps.db.run('COMMIT', async (commitErr) => {
                             if (commitErr) return reject(commitErr);
 
                             // Log the credit via TokenBillingService (post-commit)
@@ -284,7 +292,7 @@ const OrganizationService = {
         params.push(orgId);
 
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `UPDATE organizations SET ${updates.join(', ')} WHERE id = ?`,
                 params,
                 (err) => {
@@ -302,9 +310,9 @@ const OrganizationService = {
      */
     getAISettings: async (orgId) => {
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT ai_assertiveness_level, ai_autonomy_level 
-                 FROM organizations WHERE id = ?`,
+                FROM organizations WHERE id = ?`,
                 [orgId],
                 (err, row) => {
                     if (err) return reject(err);
@@ -312,6 +320,80 @@ const OrganizationService = {
                         ai_assertiveness_level: 'MEDIUM',
                         ai_autonomy_level: 'SUGGEST_ONLY'
                     });
+                }
+            );
+        });
+    },
+
+    /**
+     * Remove a member from the organization
+     * @param {Object} params
+     * @param {string} params.organizationId
+     * @param {string} params.userId
+     * @returns {Promise<void>}
+     */
+    removeMember: async ({ organizationId, userId }) => {
+        return new Promise((resolve, reject) => {
+            deps.db.run(
+                `DELETE FROM organization_members 
+                 WHERE organization_id = ? AND user_id = ?`,
+                [organizationId, userId],
+                function (err) {
+                    if (err) return reject(err);
+                    if (this.changes === 0) {
+                        return reject(new Error('Member not found'));
+                    }
+                    resolve();
+                }
+            );
+        });
+    },
+
+    /**
+     * Update a member's role in the organization
+     * @param {Object} params
+     * @param {string} params.organizationId
+     * @param {string} params.userId
+     * @param {string} params.role
+     * @returns {Promise<Object>}
+     */
+    updateMemberRole: async ({ organizationId, userId, role }) => {
+        if (!Object.values(OrganizationService.ROLES).includes(role)) {
+            throw new Error('Invalid role');
+        }
+
+        return new Promise((resolve, reject) => {
+            deps.db.run(
+                `UPDATE organization_members 
+                 SET role = ? 
+                 WHERE organization_id = ? AND user_id = ?`,
+                [role, organizationId, userId],
+                function (err) {
+                    if (err) return reject(err);
+                    if (this.changes === 0) {
+                        return reject(new Error('Member not found'));
+                    }
+                    resolve({ organizationId, userId, role });
+                }
+            );
+        });
+    },
+
+    /**
+     * Get a member's role in the organization
+     * @param {string} organizationId
+     * @param {string} userId
+     * @returns {Promise<string|null>}
+     */
+    getMemberRole: async (organizationId, userId) => {
+        return new Promise((resolve, reject) => {
+            deps.db.get(
+                `SELECT role FROM organization_members 
+                 WHERE organization_id = ? AND user_id = ?`,
+                [organizationId, userId],
+                (err, row) => {
+                    if (err) return reject(err);
+                    resolve(row ? row.role : null);
                 }
             );
         });

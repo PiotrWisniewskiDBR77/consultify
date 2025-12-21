@@ -512,7 +512,7 @@ const AccessPolicyService = {
                  (id, organization_id, max_projects, max_users, max_ai_calls_per_day, max_initiatives, max_storage_mb, ai_roles_enabled_json)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
-                    uuidv4(),
+                    deps.uuidv4(),
                     organizationId,
                     defaults.max_projects,
                     defaults.max_users,

@@ -1,9 +1,16 @@
 // Progress Calculation Service
 // Step 3: PMO Objects, Statuses & Stage Gates
 
-const db = require('../database');
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db: require('../database')
+};
 
 const ProgressService = {
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
     /**
      * Calculate initiative progress from its tasks
      * @returns {{ progress: number, totalTasks: number, completedTasks: number, isBlocked: boolean }}
@@ -19,7 +26,7 @@ const ProgressService = {
                 WHERE initiative_id = ?
             `;
 
-            db.get(sql, [initiativeId], (err, row) => {
+            deps.db.get(sql, [initiativeId], (err, row) => {
                 if (err) return reject(err);
 
                 const total = row?.total || 0;
@@ -67,7 +74,7 @@ const ProgressService = {
                   AND i.status NOT IN ('COMPLETED', 'CANCELLED')
             `;
 
-            db.all(sql, [initiativeId], (err, rows) => {
+            deps.db.all(sql, [initiativeId], (err, rows) => {
                 if (err) return reject(err);
                 resolve(rows && rows.length > 0);
             });
@@ -90,7 +97,7 @@ const ProgressService = {
                 WHERE project_id = ?
             `;
 
-            db.get(sql, [projectId], (err, row) => {
+            deps.db.get(sql, [projectId], (err, row) => {
                 if (err) return reject(err);
 
                 const total = row?.total || 0;
@@ -131,7 +138,7 @@ const ProgressService = {
                 WHERE organization_id = ?
             `;
 
-            db.get(sql, [organizationId], async (err, row) => {
+            deps.db.get(sql, [organizationId], async (err, row) => {
                 if (err) return reject(err);
 
                 // Get initiative counts
@@ -145,7 +152,7 @@ const ProgressService = {
                     WHERE p.organization_id = ?
                 `;
 
-                db.get(initSql, [organizationId], (err2, initRow) => {
+                deps.db.get(initSql, [organizationId], (err2, initRow) => {
                     if (err2) return reject(err2);
 
                     const totalProjects = row?.total_projects || 0;
@@ -181,7 +188,7 @@ const ProgressService = {
         const progress = await ProgressService.calculateInitiativeProgress(initiativeId);
 
         return new Promise((resolve, reject) => {
-            db.run(`UPDATE initiatives SET progress = ? WHERE id = ?`,
+            deps.db.run(`UPDATE initiatives SET progress = ? WHERE id = ?`,
                 [progress.progress, initiativeId], (err) => {
                     if (err) return reject(err);
                     resolve(progress);
@@ -196,7 +203,7 @@ const ProgressService = {
         const progress = await ProgressService.calculateProjectProgress(projectId);
 
         return new Promise((resolve, reject) => {
-            db.run(`UPDATE projects SET progress = ? WHERE id = ?`,
+            deps.db.run(`UPDATE projects SET progress = ? WHERE id = ?`,
                 [progress.progress, projectId], (err) => {
                     if (err) return reject(err);
                     resolve(progress);

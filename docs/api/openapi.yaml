@@ -1,0 +1,645 @@
+openapi: 3.0.3
+info:
+  title: Consultify API
+  description: |
+    Enterprise AI-Powered Strategic Change Management System API.
+    
+    ## Authentication
+    All endpoints (except public ones) require a Bearer token in the Authorization header:
+    ```
+    Authorization: Bearer <token>
+    ```
+    
+    ## Rate Limiting
+    - Standard endpoints: 100 requests/minute
+    - AI endpoints: 20 requests/minute
+    - Auth endpoints: 10 requests/minute
+    
+    ## Error Responses
+    All errors follow this format:
+    ```json
+    {
+      "error": "Error message",
+      "code": "ERROR_CODE" (optional)
+    }
+    ```
+  version: 1.0.0
+  contact:
+    name: Consultify Support
+    email: support@consultify.app
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://api.consultify.app
+    description: Production
+  - url: https://staging-api.consultify.app
+    description: Staging
+  - url: http://localhost:5000
+    description: Development
+
+tags:
+  - name: Authentication
+    description: Login, logout, token management
+  - name: Organizations
+    description: Organization management
+  - name: Users
+    description: User management within organizations
+  - name: Initiatives
+    description: Strategic initiatives and portfolios
+  - name: Tasks
+    description: Task management
+  - name: AI
+    description: AI-powered features
+  - name: Billing
+    description: Subscription and payment management
+  - name: SSO
+    description: Single Sign-On configuration
+  - name: MFA
+    description: Multi-Factor Authentication
+
+paths:
+  # ===== AUTHENTICATION =====
+  /api/auth/login:
+    post:
+      tags: [Authentication]
+      summary: User login
+      description: Authenticate user with email and password. Returns JWT token pair.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                mfaToken:
+                  type: string
+                  description: 6-digit MFA code (if MFA enabled)
+                deviceFingerprint:
+                  type: string
+                  description: Device fingerprint for trusted device check
+                trustDevice:
+                  type: boolean
+                  description: Trust this device for 30 days
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+        '403':
+          description: Organization blocked or MFA required
+
+  /api/auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: Refresh access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: New token pair
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+        '401':
+          description: Invalid or expired refresh token
+
+  /api/auth/logout:
+    post:
+      tags: [Authentication]
+      summary: Logout and revoke token
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logged out successfully
+
+  # ===== MFA =====
+  /api/mfa/setup:
+    post:
+      tags: [MFA]
+      summary: Initialize MFA setup
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: QR code and secret for authenticator app
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  qrCode:
+                    type: string
+                    description: Data URL for QR code image
+                  manualEntry:
+                    type: string
+                    description: Secret for manual entry
+
+  /api/mfa/verify-setup:
+    post:
+      tags: [MFA]
+      summary: Verify MFA setup and enable
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+                  pattern: '^\d{6}$'
+      responses:
+        '200':
+          description: MFA enabled, returns backup codes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  backupCodes:
+                    type: array
+                    items:
+                      type: string
+
+  /api/mfa/status:
+    get:
+      tags: [MFA]
+      summary: Get MFA status
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: MFA status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  enabled:
+                    type: boolean
+                  enforced:
+                    type: boolean
+                  trustedDeviceCount:
+                    type: integer
+
+  # ===== ORGANIZATIONS =====
+  /api/organizations:
+    get:
+      tags: [Organizations]
+      summary: Get current organization
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Organization details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+
+  /api/organizations/members:
+    get:
+      tags: [Organizations]
+      summary: Get organization members
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of members
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  members:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+
+  # ===== INITIATIVES =====
+  /api/initiatives:
+    get:
+      tags: [Initiatives]
+      summary: Get all initiatives
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [planning, active, on_hold, completed]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of initiatives
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  initiatives:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Initiative'
+                  total:
+                    type: integer
+
+    post:
+      tags: [Initiatives]
+      summary: Create initiative
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInitiative'
+      responses:
+        '201':
+          description: Initiative created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Initiative'
+
+  /api/initiatives/{id}:
+    get:
+      tags: [Initiatives]
+      summary: Get initiative by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Initiative details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Initiative'
+
+  # ===== AI =====
+  /api/ai/chat:
+    post:
+      tags: [AI]
+      summary: AI chat interaction
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message:
+                  type: string
+                contextType:
+                  type: string
+                  enum: [general, initiative, task, diagnosis]
+                contextId:
+                  type: string
+                history:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      role:
+                        type: string
+                        enum: [user, assistant]
+                      content:
+                        type: string
+      responses:
+        '200':
+          description: AI response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  response:
+                    type: string
+                  tokensUsed:
+                    type: integer
+                  model:
+                    type: string
+
+  /api/ai/stream:
+    post:
+      tags: [AI]
+      summary: Streaming AI chat (SSE)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message:
+                  type: string
+      responses:
+        '200':
+          description: Server-Sent Events stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  # ===== BILLING =====
+  /api/billing/subscription:
+    get:
+      tags: [Billing]
+      summary: Get current subscription
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Subscription details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+
+  /api/billing/invoices:
+    get:
+      tags: [Billing]
+      summary: Get invoices
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: List of invoices
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoices:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Invoice'
+
+  # ===== SSO =====
+  /api/sso/config:
+    get:
+      tags: [SSO]
+      summary: Get SSO configuration
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: SSO configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SSOConfig'
+
+    post:
+      tags: [SSO]
+      summary: Create SSO configuration
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSSOConfig'
+      responses:
+        '200':
+          description: SSO configuration created
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    LoginResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        token:
+          type: string
+        refreshToken:
+          type: string
+        expiresIn:
+          type: integer
+        mfaRequired:
+          type: boolean
+
+    TokenPair:
+      type: object
+      properties:
+        token:
+          type: string
+        refreshToken:
+          type: string
+        expiresIn:
+          type: integer
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+        role:
+          type: string
+          enum: [USER, ADMIN, OWNER, SUPERADMIN, AUDITOR]
+        status:
+          type: string
+        organizationId:
+          type: string
+          format: uuid
+        mfaEnabled:
+          type: boolean
+
+    Organization:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        plan:
+          type: string
+          enum: [free, trial, pro, enterprise]
+        status:
+          type: string
+        memberCount:
+          type: integer
+
+    Initiative:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [planning, active, on_hold, completed]
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+        progress:
+          type: number
+          minimum: 0
+          maximum: 100
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        ownerId:
+          type: string
+          format: uuid
+
+    CreateInitiative:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+
+    Subscription:
+      type: object
+      properties:
+        plan:
+          type: string
+        status:
+          type: string
+        currentPeriodEnd:
+          type: string
+          format: date-time
+        cancelAtPeriodEnd:
+          type: boolean
+
+    Invoice:
+      type: object
+      properties:
+        id:
+          type: string
+        invoiceNumber:
+          type: string
+        status:
+          type: string
+          enum: [draft, open, paid, void]
+        total:
+          type: integer
+        currency:
+          type: string
+        invoiceDate:
+          type: string
+          format: date
+        pdfUrl:
+          type: string
+
+    SSOConfig:
+      type: object
+      properties:
+        configured:
+          type: boolean
+        providerType:
+          type: string
+          enum: [saml, oidc, google, microsoft, okta]
+        isActive:
+          type: boolean
+        enforceSso:
+          type: boolean
+
+    CreateSSOConfig:
+      type: object
+      required: [providerType]
+      properties:
+        providerType:
+          type: string
+          enum: [saml, oidc]
+        providerName:
+          type: string
+        idpEntityId:
+          type: string
+        idpSsoUrl:
+          type: string
+        idpCertificate:
+          type: string
+
+security:
+  - bearerAuth: []

@@ -8,8 +8,9 @@ router.use(verifyToken);
 // ==========================================
 // GET /my-work/dashboard
 // Aggregated view for "Today" screen
+// OPTIMIZED: Parallel queries instead of nested callbacks
 // ==========================================
-router.get('/dashboard', (req, res) => {
+router.get('/dashboard', async (req, res) => {
     const userId = req.user.id;
     const orgId = req.user.organizationId;
     const today = new Date().toISOString().split('T')[0];
@@ -71,50 +72,75 @@ router.get('/dashboard', (req, res) => {
         `
     };
 
-    db.serialize(() => {
-        const result = {};
+    // OPTIMIZED: Use Promise.all for parallel execution instead of nested callbacks
+    // This reduces latency from sequential queries to parallel execution
+    try {
+        const [
+            todayFocusRows,
+            overdueRow,
+            dueThisWeekRow,
+            blockedRow,
+            completedRow,
+            totalRow
+        ] = await Promise.all([
+            new Promise((resolve, reject) => {
+                db.all(queries.todayFocus, [orgId, userId], (err, rows) => {
+                    if (err) reject(err);
+                    else resolve(rows || []);
+                });
+            }),
+            new Promise((resolve, reject) => {
+                db.get(queries.overdue, [orgId, userId, today], (err, row) => {
+                    if (err) reject(err);
+                    else resolve(row || { count: 0 });
+                });
+            }),
+            new Promise((resolve, reject) => {
+                db.get(queries.dueThisWeek, [orgId, userId, today, today], (err, row) => {
+                    if (err) reject(err);
+                    else resolve(row || { count: 0 });
+                });
+            }),
+            new Promise((resolve, reject) => {
+                db.get(queries.blocked, [orgId, userId], (err, row) => {
+                    if (err) reject(err);
+                    else resolve(row || { count: 0 });
+                });
+            }),
+            new Promise((resolve, reject) => {
+                db.get(queries.completed, [orgId, userId], (err, row) => {
+                    if (err) reject(err);
+                    else resolve(row || { count: 0 });
+                });
+            }),
+            new Promise((resolve, reject) => {
+                db.get(queries.total, [orgId, userId], (err, row) => {
+                    if (err) reject(err);
+                    else resolve(row || { count: 0 });
+                });
+            })
+        ]);
 
-        db.all(queries.todayFocus, [orgId, userId], (err, rows) => {
-            if (err) {
-                console.error("Error fetching today focus:", err);
-                return res.status(500).json({ error: err.message });
-            }
-            // Parse JSON fields safely
-            result.todayFocus = rows.map(t => ({
+        const result = {
+            todayFocus: todayFocusRows.map(t => ({
                 ...t,
                 projectId: t.project_id,
                 projectName: t.project_name,
                 checklist: t.checklist ? JSON.parse(t.checklist) : [],
                 tags: t.tags ? JSON.parse(t.tags) : []
-            }));
+            })),
+            overdueCount: overdueRow.count,
+            dueThisWeekCount: dueThisWeekRow.count,
+            blockedCount: blockedRow.count,
+            completedCount: completedRow.count,
+            totalCount: totalRow.count
+        };
 
-            db.get(queries.overdue, [orgId, userId, today], (err, row) => {
-                if (err) return res.status(500).json({ error: err.message });
-                result.overdueCount = row.count;
-
-                db.get(queries.dueThisWeek, [orgId, userId, today, today], (err, row) => {
-                    if (err) return res.status(500).json({ error: err.message });
-                    result.dueThisWeekCount = row.count;
-
-                    db.get(queries.blocked, [orgId, userId], (err, row) => {
-                        if (err) return res.status(500).json({ error: err.message });
-                        result.blockedCount = row.count;
-
-                        db.get(queries.completed, [orgId, userId], (err, row) => {
-                            if (err) return res.status(500).json({ error: err.message });
-                            result.completedCount = row.count;
-
-                            db.get(queries.total, [orgId, userId], (err, row) => {
-                                if (err) return res.status(500).json({ error: err.message });
-                                result.totalCount = row.count;
-                                res.json(result);
-                            });
-                        });
-                    });
-                });
-            });
-        });
-    });
+        res.json(result);
+    } catch (err) {
+        console.error("Error fetching dashboard:", err);
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // ==========================================

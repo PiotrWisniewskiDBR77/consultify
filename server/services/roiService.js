@@ -8,8 +8,11 @@
  * - ROI model management
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+// Dependency injection for testing
+const deps = {
+    db: require('../database'),
+    uuidv4: require('uuid').v4
+};
 
 /**
  * Default ROI model assumptions
@@ -24,13 +27,19 @@ const DEFAULT_ASSUMPTIONS = {
 
 const ROIService = {
     /**
+     * Allow dependency injection for testing
+     */
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
+    /**
      * Get or create default ROI model for an organization.
      * @param {string} orgId - Organization ID
      * @returns {Promise<Object>} ROI model
      */
     getDefaultModel: async (orgId) => {
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT * FROM roi_models WHERE org_id = ? AND is_default = 1`,
                 [orgId],
                 (err, row) => {
@@ -44,14 +53,14 @@ const ROIService = {
                     }
 
                     // Create default model
-                    const id = `roi-${uuidv4()}`;
+                    const id = `roi-${deps.uuidv4()}`;
                     const defaultMappings = {
                         time_saved_mins: { formula: 'value * (hourly_cost / 60)', label: 'Time Saved' },
                         tasks_completed: { formula: 'value * task_avg_time_mins * (hourly_cost / 60)', label: 'Tasks Completed' },
                         tasks_blocked: { formula: 'value * -1 * downtime_cost_per_hour', label: 'Blocked Tasks (Cost)' }
                     };
 
-                    db.run(
+                    deps.db.run(
                         `INSERT INTO roi_models (id, org_id, name, description, assumptions, metric_mappings, is_default)
                          VALUES (?, ?, ?, ?, ?, ?, 1)`,
                         [id, orgId, 'Default ROI Model', 'Standard ROI calculation model', JSON.stringify(DEFAULT_ASSUMPTIONS), JSON.stringify(defaultMappings)],
@@ -83,7 +92,7 @@ const ROIService = {
         let model;
         if (modelId) {
             model = await new Promise((resolve, reject) => {
-                db.get(`SELECT * FROM roi_models WHERE id = ? AND org_id = ?`, [modelId, orgId], (err, row) => {
+                deps.db.get(`SELECT * FROM roi_models WHERE id = ? AND org_id = ?`, [modelId, orgId], (err, row) => {
                     if (err) return reject(err);
                     resolve(row ? {
                         ...row,
@@ -163,7 +172,7 @@ const ROIService = {
                 params.push(to);
             }
 
-            db.get(sql, params, (err, row) => {
+            deps.db.get(sql, params, (err, row) => {
                 if (err) return reject(err);
 
                 const tasksDelta = row?.tasks_delta || 0;
@@ -221,7 +230,7 @@ const ROIService = {
      */
     getModels: async (orgId) => {
         return new Promise((resolve, reject) => {
-            db.all(
+            deps.db.all(
                 `SELECT * FROM roi_models WHERE org_id = ? ORDER BY is_default DESC, created_at DESC`,
                 [orgId],
                 (err, rows) => {
@@ -243,7 +252,7 @@ const ROIService = {
         const { name, description, assumptions, metric_mappings } = updates;
 
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `UPDATE roi_models SET 
                     name = COALESCE(?, name),
                     description = COALESCE(?, description),

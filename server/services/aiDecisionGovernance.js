@@ -7,8 +7,11 @@
  * "In PMO, the most expensive mistakes are decisional, not task-related."
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db: require('../database'),
+    uuidv4: require('uuid').v4
+};
 
 // Decision types by organizational level
 const DECISION_TYPES = {
@@ -40,6 +43,11 @@ const AIDecisionGovernance = {
     DECISION_TYPES,
     DECISION_STATUS,
     DECISION_URGENCY,
+
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
 
     // ==========================================
     // DECISION DETECTION
@@ -118,7 +126,7 @@ const AIDecisionGovernance = {
      */
     getBlockingDecisions: async (projectId) => {
         return new Promise((resolve, reject) => {
-            db.all(`
+            deps.db.all(`
                 SELECT d.*, 
                     u.first_name as owner_first, u.last_name as owner_last,
                     (SELECT COUNT(*) FROM decision_impacts di WHERE di.decision_id = d.id AND di.is_blocker = 1) as blocked_items
@@ -170,9 +178,9 @@ const AIDecisionGovernance = {
         const recommendation = AIDecisionGovernance._generateRecommendation(decision, options, risks);
 
         // Store brief
-        const briefId = uuidv4();
+        const briefId = deps.uuidv4();
         await new Promise((resolve, reject) => {
-            db.run(`
+            deps.db.run(`
                 INSERT INTO decision_briefs 
                 (id, decision_id, context_summary, options, risks, ai_recommendation, 
                  recommendation_rationale, recommendation_confidence, data_sources_used)
@@ -392,10 +400,10 @@ const AIDecisionGovernance = {
      * Register an impact for a decision
      */
     registerImpact: async (decisionId, { impactedType, impactedId, description, isBlocker = false }) => {
-        const id = uuidv4();
+        const id = deps.uuidv4();
 
         return new Promise((resolve, reject) => {
-            db.run(`
+            deps.db.run(`
                 INSERT INTO decision_impacts 
                 (id, decision_id, impacted_type, impacted_id, impact_description, is_blocker, blocking_since)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -414,7 +422,7 @@ const AIDecisionGovernance = {
      */
     getDecisionImpacts: async (decisionId) => {
         return new Promise((resolve, reject) => {
-            db.all(`
+            deps.db.all(`
                 SELECT * FROM decision_impacts 
                 WHERE decision_id = ?
                 ORDER BY is_blocker DESC, created_at ASC
@@ -452,7 +460,7 @@ const AIDecisionGovernance = {
 
     _getDecision: async (decisionId) => {
         return new Promise((resolve) => {
-            db.get(`SELECT * FROM decisions WHERE id = ?`, [decisionId], (err, row) => {
+            deps.db.get(`SELECT * FROM decisions WHERE id = ?`, [decisionId], (err, row) => {
                 resolve(row || null);
             });
         });
@@ -466,7 +474,7 @@ const AIDecisionGovernance = {
                 resolve(null);
                 return;
             }
-            db.get(`SELECT * FROM ${tableName} WHERE id = ?`, [entityId], (err, row) => {
+            deps.db.get(`SELECT * FROM ${tableName} WHERE id = ?`, [entityId], (err, row) => {
                 resolve(row || null);
             });
         });
@@ -492,7 +500,7 @@ const AIDecisionGovernance = {
 
             sql += ` ORDER BY d.created_at DESC`;
 
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) reject(err);
                 else resolve(rows || []);
             });

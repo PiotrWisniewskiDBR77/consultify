@@ -11,8 +11,11 @@
  *  - Lack of response to signals"
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db: require('../database'),
+    uuidv4: require('uuid').v4
+};
 
 // Risk types that PMO must monitor
 const RISK_TYPES = {
@@ -44,6 +47,11 @@ const AIRiskChangeControl = {
     RISK_TYPES,
     RISK_SEVERITY,
     CHANGE_TYPES,
+
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
 
     // ==========================================
     // RISK DETECTION
@@ -111,7 +119,7 @@ const AIRiskChangeControl = {
 
         // Check overdue tasks
         const overdueTasks = await new Promise((resolve) => {
-            db.all(`
+            deps.db.all(`
                 SELECT t.*, i.name as initiative_name
                 FROM tasks t
                 LEFT JOIN initiatives i ON t.initiative_id = i.id
@@ -138,7 +146,7 @@ const AIRiskChangeControl = {
 
         // Check stalled initiatives
         const stalledInitiatives = await new Promise((resolve) => {
-            db.all(`
+            deps.db.all(`
                 SELECT * FROM initiatives
                 WHERE project_id = ?
                 AND status IN ('IN_EXECUTION', 'APPROVED')
@@ -168,7 +176,7 @@ const AIRiskChangeControl = {
 
         // Check for users with too many tasks
         const overloadedUsers = await new Promise((resolve) => {
-            db.all(`
+            deps.db.all(`
                 SELECT u.id, u.first_name, u.last_name, COUNT(t.id) as task_count
                 FROM tasks t
                 JOIN users u ON t.assignee_id = u.id
@@ -205,7 +213,7 @@ const AIRiskChangeControl = {
 
         // Check blocked tasks
         const blockedTasks = await new Promise((resolve) => {
-            db.all(`
+            deps.db.all(`
                 SELECT * FROM tasks
                 WHERE project_id = ?
                 AND status = 'BLOCKED'
@@ -225,7 +233,7 @@ const AIRiskChangeControl = {
 
         // Check unsatisfied initiative dependencies
         const blockedDeps = await new Promise((resolve) => {
-            db.all(`
+            deps.db.all(`
                 SELECT id.*, 
                     fi.name as from_name, ti.name as to_name
                 FROM initiative_dependencies id
@@ -263,7 +271,7 @@ const AIRiskChangeControl = {
 
         // Check old pending decisions
         const pendingDecisions = await new Promise((resolve) => {
-            db.all(`
+            deps.db.all(`
                 SELECT * FROM decisions
                 WHERE project_id = ?
                 AND status = 'PENDING'
@@ -297,7 +305,7 @@ const AIRiskChangeControl = {
 
         // Check for too many active initiatives simultaneously
         const activeInitiatives = await new Promise((resolve) => {
-            db.get(`
+            deps.db.get(`
                 SELECT COUNT(*) as count FROM initiatives
                 WHERE project_id = ?
                 AND status IN ('IN_EXECUTION', 'APPROVED')
@@ -317,7 +325,7 @@ const AIRiskChangeControl = {
 
         // Check for frequent scope changes
         const recentChanges = await new Promise((resolve) => {
-            db.get(`
+            deps.db.get(`
                 SELECT COUNT(*) as count FROM scope_change_log
                 WHERE project_id = ?
                 AND changed_at > datetime('now', '-7 days')
@@ -348,7 +356,7 @@ const AIRiskChangeControl = {
     _registerRisk: async (risk) => {
         // Check if similar risk already exists (not resolved)
         const existing = await new Promise((resolve) => {
-            db.get(`
+            deps.db.get(`
                 SELECT id FROM risk_register
                 WHERE project_id = ? AND risk_type = ? AND title = ? AND status NOT IN ('resolved', 'accepted')
             `, [risk.projectId, risk.riskType, risk.title], (err, row) => resolve(row));
@@ -358,10 +366,10 @@ const AIRiskChangeControl = {
             return existing; // Don't duplicate
         }
 
-        const id = uuidv4();
+        const id = deps.uuidv4();
 
         return new Promise((resolve, reject) => {
-            db.run(`
+            deps.db.run(`
                 INSERT INTO risk_register 
                 (id, project_id, organization_id, risk_type, severity, title, description, trigger_conditions, affected_entities)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -380,7 +388,7 @@ const AIRiskChangeControl = {
      */
     explainRisk: async (riskId) => {
         const risk = await new Promise((resolve) => {
-            db.get(`SELECT * FROM risk_register WHERE id = ?`, [riskId], (err, row) => resolve(row));
+            deps.db.get(`SELECT * FROM risk_register WHERE id = ?`, [riskId], (err, row) => resolve(row));
         });
 
         if (!risk) {
@@ -426,7 +434,7 @@ const AIRiskChangeControl = {
      */
     preEscalationWarning: async (riskId) => {
         const risk = await new Promise((resolve) => {
-            db.get(`SELECT * FROM risk_register WHERE id = ?`, [riskId], (err, row) => resolve(row));
+            deps.db.get(`SELECT * FROM risk_register WHERE id = ?`, [riskId], (err, row) => resolve(row));
         });
 
         if (!risk || risk.status === 'escalated') {
@@ -466,11 +474,11 @@ const AIRiskChangeControl = {
      * Track a scope change
      */
     trackScopeChange: async ({ projectId, entityType, entityId, changeType, summary, field, previousValue, newValue, isControlled, reason, changedBy, approvedBy }) => {
-        const id = uuidv4();
+        const id = deps.uuidv4();
         const orgId = await AIRiskChangeControl._getOrgId(projectId);
 
         return new Promise((resolve, reject) => {
-            db.run(`
+            deps.db.run(`
                 INSERT INTO scope_change_log 
                 (id, project_id, organization_id, entity_type, entity_id, change_type, change_summary, field_changed, previous_value, new_value, is_controlled, change_reason, changed_by, approved_by)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -490,7 +498,7 @@ const AIRiskChangeControl = {
      */
     detectUncontrolledChanges: async (projectId, days = 7) => {
         return new Promise((resolve, reject) => {
-            db.all(`
+            deps.db.all(`
                 SELECT * FROM scope_change_log
                 WHERE project_id = ?
                 AND is_controlled = 0
@@ -519,7 +527,7 @@ const AIRiskChangeControl = {
      */
     getScopeChangeSummary: async (projectId, days = 30) => {
         return new Promise((resolve, reject) => {
-            db.all(`
+            deps.db.all(`
                 SELECT 
                     entity_type,
                     change_type,
@@ -568,7 +576,7 @@ const AIRiskChangeControl = {
      */
     getOpenRisks: async (projectId) => {
         return new Promise((resolve, reject) => {
-            db.all(`
+            deps.db.all(`
                 SELECT r.*, u.first_name as owner_first, u.last_name as owner_last
                 FROM risk_register r
                 LEFT JOIN users u ON r.owner_id = u.id
@@ -629,7 +637,7 @@ const AIRiskChangeControl = {
 
     _getOrgId: async (projectId) => {
         return new Promise((resolve) => {
-            db.get(`SELECT organization_id FROM projects WHERE id = ?`, [projectId], (err, row) => {
+            deps.db.get(`SELECT organization_id FROM projects WHERE id = ?`, [projectId], (err, row) => {
                 resolve(row?.organization_id || null);
             });
         });

@@ -8,8 +8,11 @@
  * AI Core Layer — Enterprise PMO Brain
  */
 
-const db = require('../database');
-const AIAuditLogger = require('./aiAuditLogger');
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db: require('../database'),
+    AIAuditLogger: require('./aiAuditLogger')
+};
 
 // Actions that are ALWAYS allowed in regulatory mode
 const ALLOWED_ACTIONS = [
@@ -60,6 +63,11 @@ const RegulatoryModeGuard = {
     FORBIDDEN_VERBS,
     ADVISORY_PHRASES,
 
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
+
     /**
      * Check if regulatory mode is enabled for a project
      * @param {string} projectId - Project ID to check
@@ -69,7 +77,7 @@ const RegulatoryModeGuard = {
         if (!projectId) return false;
 
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT regulatory_mode_enabled FROM projects WHERE id = ?`,
                 [projectId],
                 (err, row) => {
@@ -94,7 +102,7 @@ const RegulatoryModeGuard = {
      */
     setEnabled: async (projectId, enabled) => {
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `UPDATE projects SET regulatory_mode_enabled = ? WHERE id = ?`,
                 [enabled ? 1 : 0, projectId],
                 function (err) {
@@ -180,7 +188,7 @@ const RegulatoryModeGuard = {
         const { userId, organizationId, projectId } = context;
 
         try {
-            await AIAuditLogger.logInteraction({
+            await deps.AIAuditLogger.logInteraction({
                 userId: userId || 'SYSTEM',
                 organizationId: organizationId || 'UNKNOWN',
                 projectId,

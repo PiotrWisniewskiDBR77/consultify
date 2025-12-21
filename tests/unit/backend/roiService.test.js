@@ -25,6 +25,12 @@ describe('ROIService', () => {
     beforeEach(() => {
         vi.clearAllMocks();
 
+        // Inject mock dependencies
+        ROIService.setDependencies({
+            db: mockDb,
+            uuidv4: mockUuidv4
+        });
+
         mockDb.get.mockImplementation((sql, params, callback) => {
             const cb = typeof callback === 'function' ? callback : (typeof params === 'function' ? params : null);
             if (typeof cb === 'function') cb(null, null);

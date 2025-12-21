@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { FullInitiative, User, StrategicIntent, StakeholderImpact, StrategicGoal } from '../types';
 
 import {
@@ -22,7 +22,7 @@ interface InitiativeDetailModalProps {
     strategicGoals?: StrategicGoal[];
 }
 
-export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
+export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React.memo(({
     initiative: initialInitiative,
     isOpen,
     onClose,
@@ -35,8 +35,8 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
     const [activeTab, setActiveTab] = useState<'overview' | 'definition' | 'execution' | 'tasks' | 'economics' | 'intelligence'>('overview');
     const [isGenerating, setIsGenerating] = useState(false);
 
-    // Calculations
-    const calculateReadiness = () => {
+    // OPTIMIZED: Memoized calculations to avoid recalculation on every render
+    const calculateReadiness = useCallback(() => {
         // 1. Strategic (20%)
         let strategic = 0;
         if (initiative.name && initiative.name.length > 5) strategic += 5;
@@ -74,15 +74,16 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
     const readiness = readinessData.total;
     const isReady = readiness >= 80;
 
-    const generateSummary = () => {
+    // OPTIMIZED: Memoized callbacks to prevent unnecessary re-renders
+    const generateSummary = useCallback(() => {
         // Mock generation
         setInitiative(prev => ({
             ...prev,
             summary: `** Executive Summary(AI Generated) **\n\nThis initiative aims to ${prev.strategicIntent?.toLowerCase() || 'improve'} the organization by addressing ${prev.problemStatement?.slice(0, 30)}...\n\nIt is aligned with our goal to ${prev.applicantOneLiner || 'drive value'}.`
         }));
-    };
+    }, []);
 
-    const generateExecutionStrategy = async () => {
+    const generateExecutionStrategy = useCallback(async () => {
         setIsGenerating(true);
         try {
             const res = await fetch('/api/ai/execution-strategy', {
@@ -1175,7 +1176,16 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
             </div>
         </div >
     );
-};
+}, (prevProps, nextProps) => {
+    // Custom comparison function for React.memo
+    // Only re-render if initiative data or isOpen changes
+    return (
+        prevProps.isOpen === nextProps.isOpen &&
+        prevProps.initiative.id === nextProps.initiative.id &&
+        JSON.stringify(prevProps.initiative) === JSON.stringify(nextProps.initiative) &&
+        prevProps.users.length === nextProps.users.length
+    );
+});
 
 // Helper for Input fields
 const InputGroup = ({ label, children }: { label: string, children: React.ReactNode }) => (

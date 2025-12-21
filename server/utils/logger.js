@@ -5,13 +5,19 @@
 
 const isProduction = process.env.NODE_ENV === 'production';
 
-const formatLog = (level, message, meta = {}) => ({
-    level,
-    timestamp: new Date().toISOString(),
-    message,
-    ...meta,
-    ...(meta.error && !isProduction ? { stack: meta.error.stack } : {})
-});
+const requestStore = require('./requestStore');
+
+const formatLog = (level, message, meta = {}) => {
+    const correlationId = requestStore.getCorrelationId();
+    return {
+        level,
+        timestamp: new Date().toISOString(),
+        correlationId, // Injected for all log entries
+        message,
+        ...meta,
+        ...(meta.error && !isProduction ? { stack: meta.error.stack } : {})
+    };
+};
 
 const logger = {
     info: (message, meta = {}) => {

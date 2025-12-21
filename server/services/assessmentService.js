@@ -1,14 +1,21 @@
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db: require('../database'),
+    uuidv4: require('uuid').v4
+};
 
 const AssessmentService = {
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
     /**
      * Get or create assessment for a project
      * @param {string} projectId
      */
     getAssessment: (projectId) => {
         return new Promise((resolve, reject) => {
-            db.get(`SELECT * FROM maturity_assessments WHERE project_id = ?`, [projectId], (err, row) => {
+            deps.db.get(`SELECT * FROM maturity_assessments WHERE project_id = ?`, [projectId], (err, row) => {
                 if (err) return reject(err);
                 if (!row) return resolve(null);
                 try {
@@ -54,8 +61,8 @@ const AssessmentService = {
                     ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP
                 )`;
 
-            db.run(sql, [
-                projectId, uuidv4(),
+            deps.db.run(sql, [
+                projectId, deps.uuidv4(),
                 projectId,
                 JSON.stringify(axisScores || []),
                 JSON.stringify(completedAxes || []),

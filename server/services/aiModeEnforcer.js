@@ -11,6 +11,7 @@
 
 const AIModeResolver = require('./aiModeResolver');
 const AiService = require('./aiService');
+const AiContextValidator = require('./aiContextValidator');
 
 // Lazy-loaded database
 let db = null;
@@ -57,7 +58,7 @@ const AIModeEnforcer = {
      * Phase-aware chat function
      * Enforces AI mode based on user's current phase
      */
-    chat: async function (message, history, userId, overridePhase = null) {
+    chat: async function (message, history, userId, overridePhase = null, context = {}) {
         const { phase, state } = overridePhase
             ? { phase: overridePhase, state: null }
             : await getUserContext(userId);
@@ -71,10 +72,21 @@ const AIModeEnforcer = {
 
         // Detect if user is asking for something forbidden in this mode
         const requestType = this._detectRequestType(message);
-        const validation = AIModeResolver.validateRequest(mode, requestType);
+        const modeValidation = AIModeResolver.validateRequest(mode, requestType);
 
-        if (!validation.allowed) {
-            return `${validation.reason}. ${validation.alternative ? `Available actions: ${validation.alternative}` : ''}`;
+        if (!modeValidation.allowed) {
+            return `${modeValidation.reason}. ${modeValidation.alternative ? `Available actions: ${modeValidation.alternative}` : ''}`;
+        }
+
+        // Validate context for request type (new: EPIC compliance)
+        const contextValidation = AiContextValidator.validate(context, requestType, 'pl');
+        if (!contextValidation.valid) {
+            return {
+                error: true,
+                reason: contextValidation.reason,
+                message: contextValidation.message,
+                missingFields: contextValidation.missingFields,
+            };
         }
 
         // Get mode-specific system instruction
@@ -96,6 +108,7 @@ const AIModeEnforcer = {
                 CURRENT_MODE: mode,
                 phase,
                 state,
+                contextWarning: contextValidation.warning || null,
                 timestamp: new Date().toISOString()
             }
         };

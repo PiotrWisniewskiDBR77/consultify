@@ -4,6 +4,7 @@ import { User } from '../../types';
 import { useTranslation } from 'react-i18next';
 import { UserCircle, Mail, Phone, Building2, Save, Loader2, CheckCircle, Globe } from 'lucide-react';
 import { Api } from '../../services/api';
+import { MFASetup } from '../../components/Profile/MFASetup';
 
 interface ProfileSettingsProps {
     currentUser: User;
@@ -239,6 +240,18 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                     </div>
                 </div>
             </div>
+
+            {/* MFA Settings - Outside Grid */}
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg p-6">
+                <label className="text-sm font-bold text-navy-900 dark:text-white mb-6 uppercase tracking-wider block border-b border-slate-100 dark:border-white/5 pb-2">Security</label>
+                <MFASetup
+                    isEnabled={!!currentUser.mfaEnabled}
+                    onUpdate={() => {
+                        window.location.reload();
+                    }}
+                />
+            </div>
+
             {saveStatus === 'success' && (
                 <div className="fixed bottom-8 right-8 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
                     <CheckCircle size={16} />

@@ -5,9 +5,8 @@
  */
 
 const config = require('../config');
-
 const db = require('../database');
-// const nodemailer = require('nodemailer'); // Uncomment when credentials available
+const nodemailer = require('nodemailer');
 
 const EmailService = {
     /**
@@ -45,7 +44,6 @@ const EmailService = {
         console.log('------------------------------------------\n');
 
         // IF REAL CONFIG EXISTS, TRY SENDING
-        /*
         if (smtpConfig.host && smtpConfig.auth.user) {
             try {
                 const transporter = nodemailer.createTransport(smtpConfig);
@@ -60,7 +58,6 @@ const EmailService = {
                 console.error('[EMAIL SERVICE] SMTP Failed:', e.message);
             }
         }
-        */
 
         return true;
     }

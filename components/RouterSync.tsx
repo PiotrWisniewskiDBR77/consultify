@@ -80,9 +80,12 @@ export const RouterSync: React.FC = () => {
             console.log('[RouterSync] Public Share Link accessed');
             // No state change needed - App.tsx will handle this route
         } else if (path === '/' || path === '') {
-            // Phase A: Public Landing Page - handled directly by App.tsx Route
-            // No state change needed - the dedicated route renders PublicLandingPage
-            console.log('[RouterSync] Phase A: Public Landing (handled by direct route)');
+            // Phase A: Public Landing Page (ProductEntryPage)
+            // If already logged in, we stay on landing but TopBar shows "Go to Workspace"
+            console.log('[RouterSync] Phase A: Product Entry Page');
+            if (currentView !== AppView.WELCOME && !currentUser) {
+                setCurrentView(AppView.WELCOME);
+            }
         }
 
     }, [location, setCurrentView, setSessionMode, setAuthInitialStep, currentUser, currentView]);

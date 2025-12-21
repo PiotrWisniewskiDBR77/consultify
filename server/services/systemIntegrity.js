@@ -1,4 +1,7 @@
-const db = require('../database');
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db: require('../database')
+};
 
 /**
  * SystemIntegrity Service
@@ -7,6 +10,10 @@ const db = require('../database');
  * Checks vital signs at startup to prevent "Silent Failures" and "Data Disconnections".
  */
 const SystemIntegrity = {
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
 
     check: async () => {
         console.log('\n🏥 [SystemIntegrity] Starting Vitals Check...');
@@ -15,7 +22,7 @@ const SystemIntegrity = {
         try {
             // 1. Check Database Semantic Anchor (Are we in the RIGHT database?)
             const dbr77 = await new Promise((resolve) => {
-                db.get("SELECT id, name FROM organizations WHERE name LIKE '%DBR77%' OR id = 'dbr77'", [], (err, row) => {
+                deps.db.get("SELECT id, name FROM organizations WHERE name LIKE '%DBR77%' OR id = 'dbr77'", [], (err, row) => {
                     if (err) resolve(null);
                     else resolve(row);
                 });
@@ -33,7 +40,7 @@ const SystemIntegrity = {
 
             // 2. Check LLM Configuration (Are keys real?)
             const providers = await new Promise((resolve) => {
-                db.all("SELECT provider, api_key FROM llm_providers WHERE is_active = 1", [], (err, rows) => {
+                deps.db.all("SELECT provider, api_key FROM llm_providers WHERE is_active = 1", [], (err, rows) => {
                     if (err) resolve([]);
                     else resolve(rows);
                 });

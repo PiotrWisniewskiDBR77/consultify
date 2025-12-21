@@ -6,8 +6,11 @@
  * Organization learns while executing.
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db: require('../database'),
+    uuidv4: require('uuid').v4
+};
 
 // Maturity dimensions based on PMO best practices
 const MATURITY_DIMENSIONS = {
@@ -42,6 +45,11 @@ const AIMaturityMonitor = {
     MATURITY_DIMENSIONS,
     MATURITY_LEVELS,
     DISCIPLINE_EVENTS,
+
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
 
     // ==========================================
     // MATURITY ASSESSMENT
@@ -90,7 +98,7 @@ const AIMaturityMonitor = {
         // Store assessment
         const assessmentId = uuidv4();
         await new Promise((resolve) => {
-            db.run(`
+            deps.db.run(`
                 INSERT INTO maturity_assessments 
                 (id, project_id, organization_id, assessment_date, planning_score, decision_score, 
                  execution_score, governance_score, adoption_score, overall_score, overall_level, insights, recommendations)
@@ -170,7 +178,7 @@ const AIMaturityMonitor = {
 
         // Check for dependencies defined
         const deps = await new Promise((resolve) => {
-            db.get(`SELECT COUNT(*) as count FROM initiative_dependencies`, [], (err, row) => resolve(row?.count || 0));
+            deps.db.get(`SELECT COUNT(*) as count FROM initiative_dependencies`, [], (err, row) => resolve(row?.count || 0));
         });
         if (deps === 0 && initiatives.length > 5) score -= 0.5;
 
@@ -272,7 +280,7 @@ const AIMaturityMonitor = {
         // Check for defined roles
         if (scope.projectId) {
             const project = await new Promise((resolve) => {
-                db.get(`SELECT * FROM projects WHERE id = ?`, [param], (err, row) => resolve(row));
+                deps.db.get(`SELECT * FROM projects WHERE id = ?`, [param], (err, row) => resolve(row));
             });
 
             if (!project?.sponsor_id) score -= 0.5;
@@ -453,7 +461,7 @@ const AIMaturityMonitor = {
         const whereClause = projectId ? 'project_id = ?' : 'organization_id = ?';
 
         const assessments = await new Promise((resolve, reject) => {
-            db.all(`
+            deps.db.all(`
                 SELECT * FROM maturity_assessments
                 WHERE ${whereClause}
                 AND assessment_date >= date('now', '-${months} months')
@@ -514,10 +522,10 @@ const AIMaturityMonitor = {
      * Log a discipline event for pattern detection
      */
     logDisciplineEvent: async ({ projectId, organizationId, eventType, entityType, entityId, description, severity = 'medium' }) => {
-        const id = uuidv4();
+        const id = deps.uuidv4();
 
         return new Promise((resolve, reject) => {
-            db.run(`
+            deps.db.run(`
                 INSERT INTO discipline_events 
                 (id, project_id, organization_id, event_type, severity, entity_type, entity_id, description)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -536,7 +544,7 @@ const AIMaturityMonitor = {
         const whereClause = projectId ? 'project_id = ?' : 'organization_id = ?';
 
         const events = await new Promise((resolve, reject) => {
-            db.all(`
+            deps.db.all(`
                 SELECT event_type, severity, COUNT(*) as count
                 FROM discipline_events
                 WHERE ${whereClause}

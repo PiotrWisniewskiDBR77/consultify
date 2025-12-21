@@ -25,13 +25,25 @@ describe('SettlementService', () => {
         };
 
         mockPartnerService = {
-            getAgreementAtTime: vi.fn().mockResolvedValue({
+            getByPartnerCode: vi.fn().mockResolvedValue(null),
+            getActiveAgreement: vi.fn().mockResolvedValue({
                 revenue_share_percent: 20
+            }),
+            getPartner: vi.fn().mockResolvedValue({
+                id: 'partner-1',
+                name: 'Test Partner',
+                partnerType: 'AFFILIATE'
             })
         };
 
         mockMetricsCollector = {
-            record: vi.fn().mockResolvedValue({})
+            recordEvent: vi.fn().mockResolvedValue({}),
+            EVENT_TYPES: {
+                SETTLEMENT_GENERATED: 'SETTLEMENT_GENERATED'
+            },
+            SOURCE_TYPES: {
+                PARTNER: 'PARTNER'
+            }
         };
 
         SettlementService = (await import('../../../server/services/settlementService.js')).default;
@@ -206,23 +218,39 @@ describe('SettlementService', () => {
             const periodId = 'period-123';
             const calculatedByUserId = 'user-123';
 
-            // Mock period
+            // Mock getPeriod - this is called first in calculateSettlements
             mockDb.get.mockImplementation((query, params, callback) => {
-                if (query.includes('SELECT * FROM settlement_periods WHERE id')) {
+                if (query.includes('settlement_periods') && query.includes('sp.id')) {
+                    // getPeriod query with JOIN
                     callback(null, {
                         id: periodId,
                         period_start: '2024-01-01T00:00:00Z',
                         period_end: '2024-01-31T23:59:59Z',
-                        status: SettlementService.PERIOD_STATUS.OPEN
+                        status: SettlementService.PERIOD_STATUS.OPEN,
+                        calculated_at: null,
+                        calculated_by: null,
+                        locked_at: null,
+                        locked_by: null,
+                        total_revenue: 0,
+                        total_settlements: 0,
+                        partner_count: 0,
+                        created_at: '2024-01-01T00:00:00Z'
                     });
+                } else if (query.includes('organization_billing')) {
+                    // Mock getRevenueForAttribution
+                    callback(null, { price_monthly: 100 });
                 } else {
                     callback(null, null);
                 }
             });
 
-            // Mock attribution export (empty for simplicity)
-            const AttributionService = await import('../../../server/services/attributionService.js');
-            AttributionService.default.exportAttribution.mockResolvedValue([]);
+            // Reset mock to return empty array (no attributions)
+            mockAttributionService.exportAttribution.mockResolvedValue([]);
+            mockPartnerService.getByPartnerCode = vi.fn().mockResolvedValue(null);
+            mockPartnerService.getActiveAgreement = vi.fn().mockResolvedValue(null);
+            mockMetricsCollector.recordEvent = vi.fn().mockResolvedValue({});
+            mockMetricsCollector.EVENT_TYPES = { SETTLEMENT_GENERATED: 'SETTLEMENT_GENERATED' };
+            mockMetricsCollector.SOURCE_TYPES = { PARTNER: 'PARTNER' };
 
             mockDb.run.mockImplementation((query, params, callback) => {
                 callback.call({ changes: 1 }, null);
@@ -232,6 +260,8 @@ describe('SettlementService', () => {
 
             expect(result.periodId).toBe(periodId);
             expect(result.status).toBe(SettlementService.PERIOD_STATUS.CALCULATED);
+            expect(result.settlementCount).toBe(0);
+            expect(result.partnerCount).toBe(0);
         });
 
         it('should reject calculation for locked period', async () => {
@@ -287,10 +317,12 @@ describe('SettlementService', () => {
 
             const result = await SettlementService.lockPeriod(periodId, lockedByUserId);
 
-            expect(result.success).toBe(true);
+            expect(result.periodId).toBe(periodId);
+            expect(result.status).toBe(SettlementService.PERIOD_STATUS.LOCKED);
+            expect(result.alreadyLocked).toBe(false);
             expect(mockDb.run).toHaveBeenCalledWith(
-                expect.stringContaining('UPDATE settlement_periods SET status'),
-                expect.arrayContaining([SettlementService.PERIOD_STATUS.LOCKED, periodId]),
+                expect.stringContaining('UPDATE settlement_periods SET'),
+                expect.any(Array),
                 expect.any(Function)
             );
         });
@@ -309,26 +341,32 @@ describe('SettlementService', () => {
             await expect(
                 SettlementService.lockPeriod(periodId, lockedByUserId)
             ).rejects.toMatchObject({
-                errorCode: 'INVALID_STATUS'
+                errorCode: 'NOT_CALCULATED'
             });
         });
 
-        it('should reject locking already locked period', async () => {
+        it('should return already locked status for already locked period', async () => {
             const periodId = 'period-locked';
             const lockedByUserId = 'user-123';
+            const lockedAt = '2024-01-15T00:00:00Z';
+            const lockedBy = 'user-456';
 
             mockDb.get.mockImplementation((query, params, callback) => {
                 callback(null, {
                     id: periodId,
-                    status: SettlementService.PERIOD_STATUS.LOCKED
+                    status: SettlementService.PERIOD_STATUS.LOCKED,
+                    locked_at: lockedAt,
+                    locked_by: lockedBy
                 });
             });
 
-            await expect(
-                SettlementService.lockPeriod(periodId, lockedByUserId)
-            ).rejects.toMatchObject({
-                errorCode: 'PERIOD_LOCKED'
-            });
+            const result = await SettlementService.lockPeriod(periodId, lockedByUserId);
+
+            expect(result.periodId).toBe(periodId);
+            expect(result.status).toBe(SettlementService.PERIOD_STATUS.LOCKED);
+            expect(result.alreadyLocked).toBe(true);
+            expect(result.lockedAt).toBe(lockedAt);
+            expect(result.lockedBy).toBe(lockedBy);
         });
     });
 

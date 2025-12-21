@@ -11,8 +11,11 @@
  *  - Forecasts"
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db: require('../database'),
+    uuidv4: require('uuid').v4
+};
 
 // Report types
 const REPORT_TYPES = {
@@ -33,6 +36,11 @@ const STATUS_INDICATORS = {
 const AIExecutiveReporting = {
     REPORT_TYPES,
     STATUS_INDICATORS,
+
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
 
     // ==========================================
     // REPORT GENERATION
@@ -62,7 +70,7 @@ const AIExecutiveReporting = {
     _generateProjectStatusReport: async (projectId, options) => {
         // Get project details
         const project = await new Promise((resolve) => {
-            db.get(`
+            deps.db.get(`
                 SELECT p.*, u.first_name as owner_first, u.last_name as owner_last
                 FROM projects p
                 LEFT JOIN users u ON p.owner_id = u.id
@@ -74,7 +82,7 @@ const AIExecutiveReporting = {
 
         // Get initiatives status
         const initiatives = await new Promise((resolve) => {
-            db.all(`
+            deps.db.all(`
                 SELECT status, COUNT(*) as count
                 FROM initiatives WHERE project_id = ?
                 GROUP BY status
@@ -90,7 +98,7 @@ const AIExecutiveReporting = {
 
         // Get task metrics
         const taskMetrics = await new Promise((resolve) => {
-            db.get(`
+            deps.db.get(`
                 SELECT 
                     COUNT(*) as total,
                     SUM(CASE WHEN status IN ('done', 'DONE') THEN 1 ELSE 0 END) as completed,
@@ -102,7 +110,7 @@ const AIExecutiveReporting = {
 
         // Get pending decisions
         const pendingDecisions = await new Promise((resolve) => {
-            db.get(`
+            deps.db.get(`
                 SELECT COUNT(*) as count
                 FROM decisions WHERE project_id = ? AND status = 'PENDING'
             `, [projectId], (err, row) => resolve(row?.count || 0));
@@ -110,7 +118,7 @@ const AIExecutiveReporting = {
 
         // Get open risks
         const openRisks = await new Promise((resolve) => {
-            db.all(`
+            deps.db.all(`
                 SELECT severity, COUNT(*) as count
                 FROM risk_register WHERE project_id = ? AND status NOT IN ('resolved', 'accepted')
                 GROUP BY severity
@@ -178,7 +186,7 @@ const AIExecutiveReporting = {
     _generatePortfolioOverview: async (organizationId, options) => {
         // Get all projects in organization
         const projects = await new Promise((resolve) => {
-            db.all(`
+            deps.db.all(`
                 SELECT p.*, u.first_name as owner_first, u.last_name as owner_last,
                     (SELECT COUNT(*) FROM initiatives WHERE project_id = p.id) as initiative_count,
                     (SELECT COUNT(*) FROM tasks WHERE project_id = p.id AND status NOT IN ('done', 'DONE')) as active_tasks,

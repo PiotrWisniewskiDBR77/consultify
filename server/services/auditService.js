@@ -321,6 +321,32 @@ async function getEvents({ orgId, actorUserId, actionType, entityType, entityId,
     });
 }
 
+/**
+ * Generate CSV content for audit events.
+ */
+async function getCSVExport({ orgId, limit = 1000 }) {
+    const events = await getEvents({ orgId, limit });
+
+    const headers = ['Timestamp', 'Actor ID', 'Actor Type', 'Action', 'Entity Type', 'Entity ID', 'IP', 'Metadata'];
+    const rows = events.map(e => [
+        e.ts,
+        e.actor_user_id || 'System',
+        e.actor_type,
+        e.action_type,
+        e.entity_type || 'N/A',
+        e.entity_id || 'N/A',
+        e.ip || 'N/A',
+        JSON.stringify(e.metadata).replace(/"/g, '""')
+    ]);
+
+    const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    return csvContent;
+}
+
 module.exports = {
     // Constants
     ACTOR_TYPES,
@@ -333,7 +359,9 @@ module.exports = {
     logAIEvent,
     logSecurityEvent,
     getEvents,
+    getCSVExport,
 
     // Utility (exported for testing)
     sanitizeMetadata
 };
+

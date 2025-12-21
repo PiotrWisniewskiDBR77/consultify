@@ -1,16 +1,25 @@
 // Scenario Service - What-if analysis
 // Step 4: Roadmap, Sequencing & Capacity
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const DependencyService = require('./dependencyService');
+// Dependency injection for testing
+const deps = {
+    db: require('../database'),
+    uuidv4: require('uuid').v4,
+    DependencyService: require('./dependencyService')
+};
 
 const ScenarioService = {
+    /**
+     * Allow dependency injection for testing
+     */
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
     /**
      * Create a what-if scenario (non-persistent by default)
      */
     createScenario: async (projectId, name, proposedChanges, userId, persist = false) => {
-        const id = uuidv4();
+        const id = deps.uuidv4();
 
         // Analyze impact
         const impact = await ScenarioService.analyzeImpact(projectId, proposedChanges);
@@ -20,7 +29,7 @@ const ScenarioService = {
                 const sql = `INSERT INTO scenarios (id, project_id, name, proposed_changes, impact_analysis, created_by)
                              VALUES (?, ?, ?, ?, ?, ?)`;
 
-                db.run(sql, [id, projectId, name, JSON.stringify(proposedChanges), JSON.stringify(impact), userId], function (err) {
+                deps.db.run(sql, [id, projectId, name, JSON.stringify(proposedChanges), JSON.stringify(impact), userId], function (err) {
                     if (err) return reject(err);
                     resolve({ id, projectId, name, proposedChanges, impactAnalysis: impact, persisted: true });
                 });
@@ -42,7 +51,7 @@ const ScenarioService = {
 
         // Get current initiative data
         const initiatives = await new Promise((resolve, reject) => {
-            db.all(`SELECT i.id, i.name, i.planned_start_date, i.planned_end_date, i.owner_business_id
+            deps.db.all(`SELECT i.id, i.name, i.planned_start_date, i.planned_end_date, i.owner_business_id
                     FROM initiatives i WHERE i.project_id = ?`, [projectId], (err, rows) => {
                 if (err) reject(err);
                 else resolve(rows || []);
@@ -53,7 +62,7 @@ const ScenarioService = {
         initiatives.forEach(i => { initMap[i.id] = i; });
 
         // Get dependencies
-        const deps = await DependencyService.buildDependencyGraph(projectId);
+        const dependencyGraph = await deps.DependencyService.buildDependencyGraph(projectId);
 
         for (const change of proposedChanges) {
             const init = initMap[change.initiativeId];
@@ -70,7 +79,7 @@ const ScenarioService = {
                     totalDelayDays += delayDays;
 
                     // Check if this breaks dependencies
-                    const dependents = (deps.edges || []).filter(e => e.from_initiative_id === change.initiativeId);
+                    const dependents = (dependencyGraph.edges || []).filter(e => e.from_initiative_id === change.initiativeId);
                     for (const dep of dependents) {
                         const dependent = initMap[dep.to_initiative_id];
                         if (dependent && new Date(dependent.planned_start_date) < newEnd) {
@@ -82,7 +91,7 @@ const ScenarioService = {
 
             if (change.field === 'plannedStartDate') {
                 // Check if moving start violates dependencies
-                const predecessors = (deps.edges || []).filter(e => e.to_initiative_id === change.initiativeId);
+                const predecessors = (dependencyGraph.edges || []).filter(e => e.to_initiative_id === change.initiativeId);
                 for (const pred of predecessors) {
                     if (pred.type === 'FINISH_TO_START') {
                         const predecessor = initMap[pred.from_initiative_id];
@@ -109,7 +118,7 @@ const ScenarioService = {
      */
     getScenarios: async (projectId) => {
         return new Promise((resolve, reject) => {
-            db.all(`SELECT * FROM scenarios WHERE project_id = ? ORDER BY created_at DESC`,
+            deps.db.all(`SELECT * FROM scenarios WHERE project_id = ? ORDER BY created_at DESC`,
                 [projectId], (err, rows) => {
                     if (err) return reject(err);
 

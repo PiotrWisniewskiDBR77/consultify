@@ -374,8 +374,8 @@ class TokenBillingService {
      * @throws {Error} if org not found
      */
     static async getOrgBalance(orgId) {
-        const row = await getAsync(
-            db,
+        const row = await deps.sqliteAsync.getAsync(
+            deps.db,
             `SELECT token_balance, billing_status, organization_type FROM organizations WHERE id = ?`,
             [orgId]
         );
@@ -451,10 +451,10 @@ class TokenBillingService {
             throw err;
         }
 
-        return withTransaction(db, async () => {
+        return deps.sqliteAsync.withTransaction(deps.db, async () => {
             // 2) Lock row / read status inside transaction for safety
-            const orgRow = await getAsync(
-                db,
+            const orgRow = await deps.sqliteAsync.getAsync(
+                deps.db,
                 `SELECT token_balance, billing_status, organization_type FROM organizations WHERE id = ?`,
                 [organizationId]
             );
@@ -471,8 +471,8 @@ class TokenBillingService {
             }
 
             // 3) Apply balance change
-            const upd = await runAsync(
-                db,
+            const upd = await deps.sqliteAsync.runAsync(
+                deps.db,
                 `UPDATE organizations SET token_balance = IFNULL(token_balance, 0) - ? WHERE id = ?`,
                 [billedTokens, organizationId]
             );
@@ -482,8 +482,8 @@ class TokenBillingService {
             const txId = `tx-${deps.uuidv4()}`;
             const legacyMeta = JSON.stringify({ raw_tokens: tokens, multiplier: finalMultiplier });
 
-            await runAsync(
-                db,
+            await deps.sqliteAsync.runAsync(
+                deps.db,
                 `INSERT INTO token_transactions
                  (id, user_id, organization_id, type, source_type, tokens, margin_usd, net_revenue_usd, llm_provider, model_used, description, metadata)
                  VALUES (?, ?, ?, 'usage', ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -514,8 +514,8 @@ class TokenBillingService {
                 source_type: sourceType
             });
 
-            await runAsync(
-                db,
+            await deps.sqliteAsync.runAsync(
+                deps.db,
                 `INSERT INTO token_ledger
                  (id, organization_id, actor_user_id, actor_type, type, amount, reason, ref_entity_type, ref_entity_id, metadata_json)
                  VALUES (?, ?, ?, 'USER', 'DEBIT', ?, ?, 'AI_CALL', ?, ?)`,
@@ -523,8 +523,8 @@ class TokenBillingService {
             );
 
             // 6) PAYGO trigger - measurable (status flag + ledger event)
-            const newBalanceRow = await getAsync(
-                db,
+            const newBalanceRow = await deps.sqliteAsync.getAsync(
+                deps.db,
                 `SELECT token_balance, billing_status, organization_type FROM organizations WHERE id = ?`,
                 [organizationId]
             );
@@ -533,16 +533,16 @@ class TokenBillingService {
 
             if (isActivePaid && newBalance < 0) {
                 // Mark as PAYGO_PENDING
-                await runAsync(
-                    db,
+                await deps.sqliteAsync.runAsync(
+                    deps.db,
                     `UPDATE organizations SET billing_status = 'PAYGO_PENDING' WHERE id = ? AND billing_status = 'ACTIVE'`,
                     [organizationId]
                 );
 
                 // Log PAYGO event to ledger
                 const paygoLedgerId = `led-${deps.uuidv4()}`;
-                await runAsync(
-                    db,
+                await deps.sqliteAsync.runAsync(
+                    deps.db,
                     `INSERT INTO token_ledger
                      (id, organization_id, actor_user_id, actor_type, type, amount, reason, ref_entity_type, ref_entity_id, metadata_json)
                      VALUES (?, ?, ?, 'SYSTEM', 'DEBIT', 0, 'PAYGO_TRIGGERED', 'ORG', ?, ?)`,
@@ -595,18 +595,18 @@ class TokenBillingService {
         const ledgerId = `led-${deps.uuidv4()}`;
         const metadataJson = JSON.stringify(metadata);
 
-        return withTransaction(db, async () => {
+        return deps.sqliteAsync.withTransaction(deps.db, async () => {
             // 1. Update Organization Balance
-            const upd = await runAsync(
-                db,
+            const upd = await deps.sqliteAsync.runAsync(
+                deps.db,
                 `UPDATE organizations SET token_balance = IFNULL(token_balance, 0) + ? WHERE id = ?`,
                 [tokens, orgId]
             );
             if (upd.changes === 0) throw new Error('Organization not found');
 
             // 2. Insert Ledger Entry (FATAL)
-            await runAsync(
-                db,
+            await deps.sqliteAsync.runAsync(
+                deps.db,
                 `INSERT INTO token_ledger (id, organization_id, actor_user_id, actor_type, type, amount, reason, ref_entity_type, ref_entity_id, metadata_json)
                  VALUES (?, ?, ?, ?, 'CREDIT', ?, ?, ?, ?, ?)`,
                 [ledgerId, orgId, userId, userId ? 'USER' : 'SYSTEM', tokens, reason, refType, refId, metadataJson]

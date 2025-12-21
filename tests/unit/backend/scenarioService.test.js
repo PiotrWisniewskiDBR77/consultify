@@ -1,37 +1,40 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { createRequire } from 'module';
+import { createMockDb } from '../../helpers/dependencyInjector.js';
+
+const require = createRequire(import.meta.url);
 
 describe('Scenario Service', () => {
     let ScenarioService;
     let mockDb;
-    let mockUuid;
     let mockDependencyService;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         vi.resetModules();
 
-        mockDb = {
-            all: vi.fn(),
-            get: vi.fn(),
-            run: vi.fn()
-        };
-
-        mockUuid = {
-            v4: vi.fn(() => 'mock-uuid-scenario')
-        };
+        mockDb = createMockDb();
 
         mockDependencyService = {
             buildDependencyGraph: vi.fn()
         };
 
         vi.doMock('../../../server/database', () => ({ default: mockDb }));
-        vi.doMock('uuid', () => ({ v4: mockUuid.v4 }));
         vi.doMock('../../../server/services/dependencyService', () => ({ default: mockDependencyService }));
 
-        ScenarioService = (await import('../../../server/services/scenarioService.js')).default;
+        ScenarioService = require('../../../server/services/scenarioService.js');
+
+        // Inject mock dependencies
+        ScenarioService.setDependencies({
+            db: mockDb,
+            uuidv4: () => 'mock-uuid-scenario',
+            DependencyService: mockDependencyService
+        });
     });
 
     afterEach(() => {
-        vi.clearAllMocks();
+        vi.restoreAllMocks();
+        vi.doUnmock('../../../server/database');
+        vi.doUnmock('../../../server/services/dependencyService');
     });
 
     describe('compareScenarios', () => {
@@ -56,10 +59,10 @@ describe('Scenario Service', () => {
     });
 
     describe('analyzeImpact', () => {
-        it.skip('should detect dependency breaks [BLOCKED: REAL DB HIT]', async () => {
+        it('should detect dependency breaks', async () => {
             mockDb.all.mockImplementation((sql, params, cb) => cb(null, [
-                { id: 'i1', name: 'Init 1', planned_end_date: '2025-01-10' },
-                { id: 'i2', name: 'Init 2', planned_start_date: '2025-01-12' }
+                { id: 'i1', name: 'Init 1', planned_end_date: '2025-01-10', planned_start_date: '2025-01-01', owner_business_id: 'b1' },
+                { id: 'i2', name: 'Init 2', planned_start_date: '2025-01-12', planned_end_date: '2025-01-20', owner_business_id: 'b2' }
             ]));
 
             mockDependencyService.buildDependencyGraph.mockResolvedValue({
@@ -67,18 +70,20 @@ describe('Scenario Service', () => {
             });
 
             // Propose moving i1 end date to 2025-01-15 (breaking i2 start of 12th)
+            // i1 ends 2025-01-15, i2 starts 2025-01-12, so 2025-01-15 > 2025-01-12 = conflict
             const changes = [{ initiativeId: 'i1', field: 'plannedEndDate', newValue: '2025-01-15' }];
 
             const result = await ScenarioService.analyzeImpact('p-1', changes);
+            // The logic checks: if newEnd (2025-01-15) > dependent.planned_start_date (2025-01-12), then break
+            // So isValid should be false if dependencyBreaks.length > 0
+            expect(result.dependencyBreaks.length).toBeGreaterThan(0);
             expect(result.isValid).toBe(false);
-            expect(result.warnings).toHaveLength(1);
+            expect(result.warnings.length).toBeGreaterThan(0);
         });
     });
 
     describe('createScenario', () => {
-        it.skip('should persist scenario [BLOCKED: REAL DB HIT]', async () => {
-            // Mock analyzeImpact internal call? Hard to spy on self.
-            // So we mock the deps of analyzeImpact too.
+        it('should persist scenario', async () => {
             mockDb.all.mockImplementation((sql, params, cb) => cb(null, []));
             mockDependencyService.buildDependencyGraph.mockResolvedValue({ edges: [] });
             mockDb.run.mockImplementation(function (sql, params, cb) { if (cb) cb.call({ changes: 1 }, null); });

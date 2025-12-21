@@ -1,38 +1,51 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { createRequire } from 'module';
+import { createMockDb } from '../../helpers/dependencyInjector.js';
+
+const require = createRequire(import.meta.url);
 
 describe('Progress Service', () => {
     let ProgressService;
     let mockDb;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         vi.resetModules();
 
-        mockDb = {
-            all: vi.fn(),
-            get: vi.fn(),
-            run: vi.fn()
-        };
+        mockDb = createMockDb();
 
         vi.doMock('../../../server/database', () => ({ default: mockDb }));
 
-        ProgressService = (await import('../../../server/services/progressService.js')).default;
+        ProgressService = require('../../../server/services/progressService.js');
+
+        // Inject mock dependencies
+        ProgressService.setDependencies({
+            db: mockDb
+        });
     });
 
     afterEach(() => {
-        vi.clearAllMocks();
+        vi.restoreAllMocks();
+        vi.doUnmock('../../../server/database');
     });
 
     describe('calculateInitiativeProgress', () => {
-        it.skip('should calculate progress from tasks [BLOCKED: REAL DB HIT]', async () => {
+        it('should calculate progress from tasks', async () => {
             mockDb.get.mockImplementation((sql, params, cb) => cb(null, { total: 10, completed: 5, blocked: 0 }));
             const result = await ProgressService.calculateInitiativeProgress('i-1');
             expect(result.progress).toBe(50);
             expect(result.isBlocked).toBe(false);
         });
+
+        it('should detect blocked initiatives', async () => {
+            mockDb.get.mockImplementation((sql, params, cb) => cb(null, { total: 10, completed: 5, blocked: 2 }));
+            const result = await ProgressService.calculateInitiativeProgress('i-1');
+            expect(result.isBlocked).toBe(true);
+            expect(result.blockedTasks).toBe(2);
+        });
     });
 
     describe('calculateProjectProgress', () => {
-        it.skip('should calculate weighted project progress [BLOCKED: REAL DB HIT]', async () => {
+        it('should calculate weighted project progress', async () => {
             mockDb.get.mockImplementation((sql, params, cb) => cb(null, {
                 total: 2,
                 completed: 1,
@@ -49,7 +62,7 @@ describe('Progress Service', () => {
     });
 
     describe('calculatePortfolioMetrics', () => {
-        it.skip('should calculate health score based on blocked initiatives [BLOCKED: REAL DB HIT]', async () => {
+        it('should calculate health score based on blocked initiatives', async () => {
             // Mock first query (Projects)
             mockDb.get.mockImplementationOnce((sql, params, cb) => cb(null, { total_projects: 4, active: 4, avg_progress: 60 }));
             // Mock second query (Initiatives)

@@ -119,7 +119,10 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
 
     // --- Render ---
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-navy-900 text-navy-900 dark:text-white overflow-hidden">
+        <div
+            data-tour="drd-workspace"
+            className="flex flex-col h-full bg-white dark:bg-navy-900 text-navy-900 dark:text-white overflow-hidden"
+        >
             {/* Header */}
             <div className="h-20 border-b border-slate-200 dark:border-white/5 flex items-center justify-between px-6 bg-white dark:bg-navy-900 shrink-0 z-20 relative">
                 <div className="flex items-center gap-6">

@@ -85,10 +85,19 @@ router.post('/chat/stream', verifyToken, async (req, res) => {
 
     } catch (err) {
         console.error('Stream Error:', err);
-        res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
+        if (err.isBudgetError) {
+            res.write(`data: ${JSON.stringify({
+                error: err.message,
+                code: 'AI_BUDGET_EXHAUSTED',
+                budgetStatus: err.budgetStatus
+            })}\n\n`);
+        } else {
+            res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
+        }
         res.end();
     }
 });
+
 
 // POST /api/ai/chat
 router.post('/chat', verifyToken, async (req, res) => {
@@ -123,8 +132,17 @@ router.post('/chat', verifyToken, async (req, res) => {
             policyLevel: result.responseContext.policy.policyLevel
         });
     } catch (err) {
+        console.error('Chat Error:', err);
+        if (err.isBudgetError) {
+            return res.status(403).json({
+                error: err.message,
+                code: 'AI_BUDGET_EXHAUSTED',
+                budgetStatus: err.budgetStatus
+            });
+        }
         res.status(500).json({ error: err.message });
     }
+
 });
 
 // ==================== POLICY ====================
@@ -327,6 +345,13 @@ router.get('/actions/proposals', verifyToken, async (req, res) => {
         res.json(proposals);
     } catch (err) {
         console.error('[AI Proposals] Error:', err);
+        if (err.isBudgetError) {
+            return res.status(403).json({
+                error: err.message,
+                code: 'AI_BUDGET_EXHAUSTED',
+                budgetStatus: err.budgetStatus
+            });
+        }
         res.status(500).json({ error: err.message });
     }
 });

@@ -1,0 +1,20 @@
+{
+    "sidebar": {
+        "dashboard": "Tablero",
+        "quickAssessment": "Evaluación Rápida",
+        "fullProject": "Transformación Completa",
+        "masterclass": "Clase Maestra",
+        "resources": "Recursos",
+        "logOut": "Cerrar Sesión",
+        "settings": "Ajustes"
+    },
+    "auth": {
+        "logIn": "Iniciar Sesión",
+        "register": "Registrarse",
+        "email": "Correo Electrónico",
+        "password": "Contraseña"
+    },
+    "common": {
+        "brand": "Consultinity"
+    }
+}

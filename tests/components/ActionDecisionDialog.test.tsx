@@ -70,9 +70,9 @@ describe('ActionDecisionDialog', () => {
                     title="Reject Action"
                 />
             );
-            expect(screen.getByText('Confirm Rejection')).toBeInTheDocument();
+            expect(screen.getByRole('heading', { name: 'Confirm Rejection' })).toBeInTheDocument();
             expect(screen.getByText('Reject Action')).toBeInTheDocument();
-            expect(screen.getByText('Confirm Rejection')).toBeInTheDocument();
+            expect(screen.getByRole('button', { name: 'Confirm Rejection' })).toBeInTheDocument();
         });
 
         it('should display action title', () => {
@@ -181,7 +181,7 @@ describe('ActionDecisionDialog', () => {
             );
             const textarea = screen.getByPlaceholderText(/Please provide a reason for rejecting/i);
             fireEvent.change(textarea, { target: { value: 'Rejection reason' } });
-            const confirmButton = screen.getByText('Confirm Rejection');
+            const confirmButton = screen.getByRole('button', { name: 'Confirm Rejection' });
             fireEvent.click(confirmButton);
             expect(mockOnConfirm).toHaveBeenCalledWith('Rejection reason');
         });
@@ -198,7 +198,7 @@ describe('ActionDecisionDialog', () => {
                     title="Test Action"
                 />
             );
-            const confirmButton = screen.getByText('Confirm Rejection');
+            const confirmButton = screen.getByRole('button', { name: 'Confirm Rejection' });
             expect(confirmButton).toBeDisabled();
         });
 
@@ -214,7 +214,7 @@ describe('ActionDecisionDialog', () => {
             );
             const textarea = screen.getByPlaceholderText(/Please provide a reason for rejecting/i);
             fireEvent.change(textarea, { target: { value: 'Reason' } });
-            const confirmButton = screen.getByText('Confirm Rejection');
+            const confirmButton = screen.getByRole('button', { name: 'Confirm Rejection' });
             expect(confirmButton).not.toBeDisabled();
         });
 
@@ -244,7 +244,7 @@ describe('ActionDecisionDialog', () => {
             );
             const textarea = screen.getByPlaceholderText(/Please provide a reason for rejecting/i);
             fireEvent.change(textarea, { target: { value: '   ' } });
-            const confirmButton = screen.getByText('Confirm Rejection');
+            const confirmButton = screen.getByRole('button', { name: 'Confirm Rejection' });
             expect(confirmButton).toBeDisabled();
         });
     });

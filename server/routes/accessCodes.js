@@ -29,7 +29,7 @@ const validateLimiter = rateLimit({
     message: { valid: false, error: 'RATE_LIMIT_EXCEEDED' },
     standardHeaders: true,
     legacyHeaders: false,
-    keyGenerator: (req) => req.ip
+    validate: { xForwardedForHeader: false, default: true }
 });
 
 /**
@@ -42,7 +42,7 @@ const acceptLimiter = rateLimit({
     message: { ok: false, error: 'RATE_LIMIT_EXCEEDED' },
     standardHeaders: true,
     legacyHeaders: false,
-    keyGenerator: (req) => req.ip
+    validate: { xForwardedForHeader: false, default: true }
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

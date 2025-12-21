@@ -6,8 +6,11 @@
  * adding granular database-backed permission management.
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db: require('../database'),
+    uuidv4: require('uuid').v4
+};
 
 const ROLES = {
     SUPERADMIN: 'SUPERADMIN',
@@ -74,6 +77,11 @@ const PermissionService = {
     CAPABILITIES,
     ROLE_CAPABILITIES,
 
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
+
     /**
      * Legacy: Check if a user has a capability (role-based)
      * Maintained for backward compatibility
@@ -119,7 +127,7 @@ const PermissionService = {
 
         return new Promise((resolve) => {
             // First check for explicit org-user override
-            db.get(
+            deps.db.get(
                 `SELECT grant_type FROM org_user_permissions 
                  WHERE user_id = ? AND organization_id = ? AND permission_key = ?`,
                 [userId, orgId, permissionKey],
@@ -134,7 +142,7 @@ const PermissionService = {
                     }
 
                     // Fall back to role-based permission from role_permissions table
-                    db.get(
+                    deps.db.get(
                         `SELECT 1 FROM role_permissions 
                          WHERE role = ? AND permission_key = ?`,
                         [userRole, permissionKey],
@@ -161,7 +169,7 @@ const PermissionService = {
     getUserPermissions: async (userId, orgId, userRole) => {
         return new Promise((resolve, reject) => {
             // Get role-based permissions
-            db.all(
+            deps.db.all(
                 `SELECT permission_key FROM role_permissions WHERE role = ?`,
                 [userRole],
                 (roleErr, rolePerms) => {
@@ -170,7 +178,7 @@ const PermissionService = {
                     const rolePermissions = (rolePerms || []).map(r => r.permission_key);
 
                     // Get user overrides
-                    db.all(
+                    deps.db.all(
                         `SELECT permission_key, grant_type 
                          FROM org_user_permissions 
                          WHERE user_id = ? AND organization_id = ?`,
@@ -218,10 +226,10 @@ const PermissionService = {
             throw new Error(`Permission not found: ${permissionKey}`);
         }
 
-        const id = uuidv4();
+        const id = deps.uuidv4();
 
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `INSERT OR REPLACE INTO org_user_permissions 
                  (id, user_id, organization_id, permission_key, grant_type, granted_by, created_at)
                  VALUES (?, ?, ?, ?, 'GRANT', ?, datetime('now'))`,
@@ -231,6 +239,7 @@ const PermissionService = {
 
                     console.log(`[PermissionService] Permission granted: ${permissionKey} to ${userId} by ${grantedBy}`);
                     resolve({
+                        success: true,
                         id,
                         userId,
                         organizationId: orgId,
@@ -258,10 +267,10 @@ const PermissionService = {
             throw new Error(`Permission not found: ${permissionKey}`);
         }
 
-        const id = uuidv4();
+        const id = deps.uuidv4();
 
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `INSERT OR REPLACE INTO org_user_permissions 
                  (id, user_id, organization_id, permission_key, grant_type, granted_by, created_at)
                  VALUES (?, ?, ?, ?, 'REVOKE', ?, datetime('now'))`,
@@ -271,6 +280,7 @@ const PermissionService = {
 
                     console.log(`[PermissionService] Permission revoked: ${permissionKey} from ${userId} by ${revokedBy}`);
                     resolve({
+                        success: true,
                         id,
                         userId,
                         organizationId: orgId,
@@ -292,7 +302,7 @@ const PermissionService = {
      */
     removeOverride: async (userId, orgId, permissionKey) => {
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `DELETE FROM org_user_permissions 
                  WHERE user_id = ? AND organization_id = ? AND permission_key = ?`,
                 [userId, orgId, permissionKey],
@@ -316,7 +326,7 @@ const PermissionService = {
      */
     getAllPermissions: async () => {
         return new Promise((resolve, reject) => {
-            db.all(
+            deps.db.all(
                 `SELECT key, description, category FROM permissions ORDER BY category, key`,
                 [],
                 (err, rows) => {
@@ -334,7 +344,7 @@ const PermissionService = {
      */
     getPermissionsByCategory: async (category) => {
         return new Promise((resolve, reject) => {
-            db.all(
+            deps.db.all(
                 `SELECT key, description, category FROM permissions WHERE category = ?`,
                 [category],
                 (err, rows) => {
@@ -364,7 +374,7 @@ const PermissionService = {
 
             sql += ` ORDER BY rp.role, p.category, rp.permission_key`;
 
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) return reject(err);
                 resolve(rows || []);
             });
@@ -376,7 +386,7 @@ const PermissionService = {
      */
     _permissionExists: async (permissionKey) => {
         return new Promise((resolve) => {
-            db.get(
+            deps.db.get(
                 `SELECT 1 FROM permissions WHERE key = ?`,
                 [permissionKey],
                 (err, row) => {

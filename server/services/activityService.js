@@ -6,22 +6,16 @@
 const db = require('../database');
 const { v4: uuidv4 } = require('uuid');
 
+const requestStore = require('../utils/requestStore');
+const siemService = require('./siemService');
+
 const ActivityService = {
     /**
      * Log an activity
      * @param {Object} params - Activity parameters
-     * @param {string} params.organizationId - Organization ID
-     * @param {string} params.userId - User ID (optional)
-     * @param {string} params.action - Action type (created, updated, deleted, etc.)
-     * @param {string} params.entityType - Entity type (task, project, user, etc.)
-     * @param {string} params.entityId - Entity ID
-     * @param {string} params.entityName - Entity name/title
-     * @param {Object} params.oldValue - Previous value (optional)
-     * @param {Object} params.newValue - New value (optional)
-     * @param {string} params.ipAddress - IP address (optional)
-     * @param {string} params.userAgent - User agent (optional)
      */
     log: (params) => {
+        const correlationId = requestStore.getCorrelationId();
         const {
             organizationId,
             userId,
@@ -37,12 +31,14 @@ const ActivityService = {
 
         const sql = `
             INSERT INTO activity_logs 
-            (id, organization_id, user_id, action, entity_type, entity_id, entity_name, old_value, new_value, ip_address, user_agent)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (id, organization_id, user_id, action, entity_type, entity_id, entity_name, old_value, new_value, ip_address, user_agent, correlation_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
+        const activityId = uuidv4();
+
         db.run(sql, [
-            uuidv4(),
+            activityId,
             organizationId,
             userId || null,
             action,
@@ -52,14 +48,25 @@ const ActivityService = {
             oldValue ? JSON.stringify(oldValue) : null,
             newValue ? JSON.stringify(newValue) : null,
             ipAddress || null,
-            userAgent || null
+            userAgent || null,
+            correlationId
         ], (err) => {
-            // Silently handle errors to prevent unhandled exceptions
-            // Activity logging is non-critical and should not break the main flow
             if (err && process.env.NODE_ENV !== 'production') {
                 console.warn('[ActivityService] Failed to log activity:', err.message);
             }
         });
+
+        // Prestige Layer: Stream to external SIEM
+        siemService.stream({
+            id: activityId,
+            organizationId,
+            userId,
+            action,
+            entityType,
+            entityId,
+            correlationId,
+            metadata: { ipAddress, userAgent }
+        }).catch(() => { });
     },
 
     /**

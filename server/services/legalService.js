@@ -98,14 +98,22 @@ const LegalService = {
      */
     getUserAcceptances: (userId, orgId = null) => {
         return new Promise((resolve, reject) => {
-            const sql = `
+            let sql = `
                 SELECT la.*, ld.title as doc_title
                 FROM legal_acceptances la
                 LEFT JOIN legal_documents ld ON la.doc_type = ld.doc_type AND la.version = ld.version
                 WHERE la.user_id = ?
-                ORDER BY la.accepted_at DESC
             `;
-            deps.db.all(sql, [userId], (err, rows) => {
+            const params = [userId];
+            
+            if (orgId) {
+                sql += ` AND la.organization_id = ?`;
+                params.push(orgId);
+            }
+            
+            sql += ` ORDER BY la.accepted_at DESC`;
+            
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) return reject(err);
                 resolve(rows || []);
             });
@@ -271,6 +279,11 @@ const LegalService = {
      * @returns {Promise<Object>} Result with created acceptances
      */
     acceptDocuments: async ({ userId, orgId, docTypes, scope = 'USER', ip, userAgent, userRole }) => {
+        // Validate docTypes is an array
+        if (!Array.isArray(docTypes)) {
+            throw new Error('docTypes must be an array');
+        }
+
         // Validate ORG_ADMIN scope
         if (scope === 'ORG_ADMIN') {
             if (!['ADMIN', 'OWNER'].includes(userRole)) {
@@ -289,7 +302,7 @@ const LegalService = {
                 // Get active document for this type
                 const doc = await LegalService.getActiveDocument(docType);
                 if (!doc) {
-                    errors.push({ docType, error: 'No active document found' });
+                    errors.push({ docType, error: 'Document not found' });
                     continue;
                 }
 
@@ -554,6 +567,39 @@ const LegalService = {
                 }
             });
         });
+    },
+
+    /**
+     * Check if acceptance is required for a specific document type
+     * @param {string} userId - User ID
+     * @param {string} docType - Document type
+     * @param {string} orgId - Organization ID (optional)
+     * @returns {Promise<Object>} Result with required flag
+     */
+    checkAcceptanceRequired: async (userId, docType, orgId = null) => {
+        try {
+            // Get active document
+            const doc = await LegalService.getActiveDocument(docType);
+            if (!doc) {
+                return { required: false, reason: 'No active document found' };
+            }
+
+            // Check if user has accepted this version
+            const acceptances = await LegalService.getUserAcceptances(userId, orgId);
+            const hasAccepted = acceptances.some(
+                a => a.doc_type === docType && a.version === doc.version
+            );
+
+            return {
+                required: !hasAccepted,
+                docType,
+                version: doc.version,
+                currentVersion: doc.version
+            };
+        } catch (err) {
+            console.error('[LegalService] checkAcceptanceRequired error:', err);
+            throw err;
+        }
     }
 };
 

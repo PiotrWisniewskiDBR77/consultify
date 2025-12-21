@@ -6,7 +6,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { authMiddleware } = require('../middleware/auth');
+const authMiddleware = require('../middleware/authMiddleware');
 const ReferralService = require('../services/referralService');
 
 /**
@@ -16,9 +16,10 @@ const ReferralService = require('../services/referralService');
 router.post('/generate', authMiddleware, async (req, res) => {
     try {
         const userId = req.user.id;
+        const userState = req.userState || 'ANON'; // Default to ANON if not attached
         const { expiresInDays } = req.body;
 
-        const result = await ReferralService.generateCode(userId, expiresInDays || 90);
+        const result = await ReferralService.generateCode(userId, userState, expiresInDays || 90);
 
         res.json({
             success: true,

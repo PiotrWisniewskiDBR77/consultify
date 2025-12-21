@@ -1,118 +1,111 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { createRequire } from 'module';
+import { createMockDb } from '../../helpers/dependencyInjector.js';
 
-// We use dynamic imports and vi.doMock to ensure clean mocking for each test
-// This is necessary because aiAnalyticsService may be stateful or rely on cached requires
+const require = createRequire(import.meta.url);
 
 describe('AI Analytics Service', () => {
     let AIAnalyticsService;
-    let db;
+    let mockDb;
     let mockRoiService;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         vi.resetModules();
 
-        // Mock DB structure
-        db = {
-            all: vi.fn(),
-            get: vi.fn(),
-            run: vi.fn()
-        };
+        mockDb = createMockDb();
 
         mockRoiService = {
+            estimateHoursSaved: vi.fn().mockResolvedValue({ hours_saved: 100 }),
+            estimateCostReduction: vi.fn().mockResolvedValue({ cost_saved: 5000 }),
             calculateProjectROI: vi.fn(),
             calculateTaskROI: vi.fn()
         };
 
-        // Inject mocks
-        vi.doMock('../../../server/database', () => ({ default: db }));
+        vi.doMock('../../../server/database', () => ({ default: mockDb }));
         vi.doMock('../../../server/services/roiService', () => ({ default: mockRoiService }));
 
-        // Dynamic import the service under test
-        AIAnalyticsService = (await import('../../../server/services/aiAnalyticsService.js')).default;
+        AIAnalyticsService = require('../../../server/services/aiAnalyticsService.js');
+
+        // Inject mock dependencies
+        AIAnalyticsService.setDependencies({
+            db: mockDb,
+            ROIService: mockRoiService
+        });
     });
 
     afterEach(() => {
-        vi.clearAllMocks();
+        vi.restoreAllMocks();
+        vi.doUnmock('../../../server/database');
+        vi.doUnmock('../../../server/services/roiService');
     });
 
-    describe('getLastActionTrends', () => {
-        it.skip('should aggregate action counts correctly [BLOCKED: MOCK BYPASS]', async () => {
+    describe('getActionStats', () => {
+        it('should aggregate action counts correctly', async () => {
             const mockRows = [
-                { action_type: 'create_task', count: 10 },
-                { action_type: 'update_status', count: 5 }
+                { action_type: 'create_task', status: 'SUCCESS', count: 10 },
+                { action_type: 'create_task', status: 'FAILED', count: 2 },
+                { action_type: 'update_status', status: 'SUCCESS', count: 5 }
             ];
 
-            db.all.mockImplementation((sql, params, cb) => cb(null, mockRows));
+            mockDb.all.mockImplementation((sql, params, cb) => cb(null, mockRows));
 
-            const trends = await AIAnalyticsService.getLastActionTrends('org-1');
+            const stats = await AIAnalyticsService.getActionStats('org-1');
 
-            expect(trends.total_actions).toBe(15);
-            expect(trends.breakdown['create_task']).toBe(10);
-            expect(db.all).toHaveBeenCalledWith(expect.stringMatching(/FROM ai_audit_log/), expect.anything(), expect.anything());
+            expect(stats.total_executions).toBe(17);
+            expect(stats.success_count).toBe(15);
+            expect(stats.failed_count).toBe(2);
+            expect(stats.by_action_type['create_task']).toBeDefined();
         });
     });
 
     describe('getApprovalStats', () => {
-        it.skip('should distinguish between auto and manual approvals [BLOCKED: MOCK BYPASS]', async () => {
+        it('should distinguish between auto and manual approvals', async () => {
+            // Service runs multiple queries:
+            // 1. Total, Approved, Rejected
+            // 2. Auto-approved (user_id IS NULL)
             const mockRows = [
-                { decision: 'APPROVED', count: 20 }, // Auto (missing user) -> handled by SQL logic usually
-                // The service query separates auto/manual via WHERE clause or GROUP BY
-                // Let's check the service logic relative to DB response
-                // Service expects specific rows
+                { decision: 'APPROVED', approval_type: 'auto', count: 20 },
+                { decision: 'APPROVED', approval_type: 'manual', count: 5 },
+                { decision: 'REJECTED', approval_type: 'manual', count: 3 }
             ];
 
-            // Actually, let's look at service implementation assumption
-            // It runs 3 queries? Or 1?
-            /* 
-               Service runs:
-               1. Total, Approved, Rejected
-               2. Auto-approved (user_id IS NULL)
-            */
-
-            // Mocking multiple calls sequence
-            db.all
-                .mockImplementationOnce((sql, params, cb) => cb(null, [{ status: 'APPROVED', count: 25 }, { status: 'REJECTED', count: 3 }])) // General stats
-                .mockImplementationOnce((sql, params, cb) => cb(null, [{ count: 20 }])); // Auto-approved count
+            mockDb.all.mockImplementation((sql, params, cb) => cb(null, mockRows));
 
             const stats = await AIAnalyticsService.getApprovalStats('org-1');
 
             expect(stats.total_decisions).toBe(28);
             expect(stats.approved).toBe(25);
             expect(stats.auto_approved).toBe(20);
+            expect(stats.manual_approved).toBe(5);
         });
     });
 
     describe('getPlaybookStats', () => {
-        it.skip('should calculate completion rates and average duration [BLOCKED: MOCK BYPASS]', async () => {
+        it('should calculate completion rates and average duration', async () => {
             const mockRows = [
-                { playbook_id: 'pb_onboard', status: 'COMPLETED', count: 10, avg_duration: 120 },
-                { playbook_id: 'pb_onboard', status: 'FAILED', count: 2, avg_duration: 0 }
+                { playbook_name: 'Onboard', playbook_key: 'pb_onboard', status: 'COMPLETED', count: 10, avg_duration_mins: 120 },
+                { playbook_name: 'Onboard', playbook_key: 'pb_onboard', status: 'FAILED', count: 2, avg_duration_mins: 0 }
             ];
 
-            db.all.mockImplementation((sql, params, cb) => cb(null, mockRows));
+            mockDb.all.mockImplementation((sql, params, cb) => cb(null, mockRows));
 
             const stats = await AIAnalyticsService.getPlaybookStats('org-1');
 
             expect(stats.total_runs).toBe(12);
             expect(stats.completed).toBe(10);
-            expect(stats.by_playbook['pb_onboard'].completion_rate).toBe(83.33); // 10/12
+            expect(stats.by_playbook['pb_onboard'].completion_rate).toBeCloseTo(83.33, 1);
         });
     });
 
     describe('getDeadLetterStats', () => {
-        it.skip('should aggregate dead letter jobs by error code [BLOCKED: MOCK BYPASS]', async () => {
+        it('should aggregate dead letter jobs by error code', async () => {
             const mockRows = [
-                { error_code: 'RATE_LIMIT', count: 5 }
+                { type: 'ai_task', status: 'DEAD_LETTER', last_error_code: 'RATE_LIMIT', count: 5 },
+                { type: 'ai_task', status: 'FAILED', last_error_code: 'TIMEOUT', count: 3 },
+                { type: 'ai_task', status: 'COMPLETED', last_error_code: null, count: 7 }
             ];
 
-            // Mock total jobs count query?
-            // Service might query total jobs from another table?
-            // Assuming simplified logic for unit test
-
-            db.all.mockImplementation((sql, params, cb) => {
-                if (sql.includes('dead_letter_queue')) cb(null, mockRows);
-                else cb(null, [{ count: 15 }]); // Total jobs
-            });
+            mockDb.all.mockImplementation((sql, params, cb) => cb(null, mockRows));
 
             const stats = await AIAnalyticsService.getDeadLetterStats('org-1');
 
@@ -123,51 +116,46 @@ describe('AI Analytics Service', () => {
     });
 
     describe('getROISummary', () => {
-        it.skip('should combine metrics from multiple sources [BLOCKED: MOCK BYPASS]', async () => {
-            // Mock roiService
-            mockRoiService.calculateProjectROI.mockResolvedValue(5000); // Only called if project IDs found?
-
-            // AI Audit Log query for actions
-            db.all.mockImplementation((sql, params, cb) => cb(null, [{ count: 100 }]));
-
-            // Mock config for cost per hour? Service might use constants.
-
-            // We need to match service expectation. 
-            // If service sums calls to ROIService.
+        it('should combine metrics from multiple sources', async () => {
+            mockDb.all.mockImplementation((sql, params, cb) => {
+                if (sql.includes('action_executions')) {
+                    cb(null, [{ action_type: 'create_task', status: 'SUCCESS', count: 10 }]);
+                } else if (sql.includes('ai_playbook_runs')) {
+                    cb(null, [{ playbook_name: 'Test', playbook_key: 'test', status: 'COMPLETED', count: 5, avg_duration_mins: 60 }]);
+                } else {
+                    cb(null, []);
+                }
+            });
 
             const summary = await AIAnalyticsService.getROISummary('org-1');
 
-            // Assuming minimal logic: 100 actions * 0.1h * $100 = $1000? 
-            // Or if service allows injecting rates.
-            // Let's stick to what we see.
-            // The test expects 5000 cost saved?
-            // Just verify structure.
-
             expect(summary).toHaveProperty('hours_saved');
             expect(summary).toHaveProperty('cost_saved');
+            expect(summary).toHaveProperty('actions_executed');
+            expect(summary).toHaveProperty('playbooks_completed');
         });
     });
 
     describe('exportData', () => {
-        it.skip('should export CSV format correctly [BLOCKED: MOCK BYPASS]', async () => {
-            // Setup Mocks for data retrieval
-            // Reuse previous mocks logic or simple defaults
-            db.all.mockImplementation((sql, params, cb) => cb(null, []));
+        it('should export CSV format correctly', async () => {
+            mockDb.all.mockImplementation((sql, params, cb) => cb(null, []));
 
-            const result = await AIAnalyticsService.exportData('org-1', 'csv', 'last_30_days');
+            const result = await AIAnalyticsService.exportData('org-1', 'csv');
 
             expect(result.content_type).toBe('text/csv');
             expect(result.content).toContain('Metric,Value');
+            expect(result.filename).toContain('.csv');
         });
 
-        it.skip('should export JSON format correctly [BLOCKED: MOCK BYPASS]', async () => {
-            db.all.mockImplementation((sql, params, cb) => cb(null, []));
+        it('should export JSON format correctly', async () => {
+            mockDb.all.mockImplementation((sql, params, cb) => cb(null, []));
 
-            const result = await AIAnalyticsService.exportData('org-1', 'json', 'last_30_days');
+            const result = await AIAnalyticsService.exportData('org-1', 'json');
 
-            expect(result.content_type).toBe('application/json');
-            const json = JSON.parse(result.content);
-            expect(json).toHaveProperty('generated_at');
+            expect(result).toHaveProperty('exported_at');
+            expect(result).toHaveProperty('organization_id');
+            expect(result).toHaveProperty('actions');
+            expect(result).toHaveProperty('approvals');
         });
     });
 });

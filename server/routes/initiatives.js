@@ -5,13 +5,16 @@ const router = express.Router();
 const db = require('../database');
 const { v4: uuidv4 } = require('uuid');
 const verifyToken = require('../middleware/authMiddleware');
+const { asyncHandler } = require('../utils/errorHandler');
+const queryHelpers = require('../utils/queryHelpers');
 
 router.use(verifyToken);
 
 // ==========================================
 // GET INITIATIVES
+// REFACTORED: Uses asyncHandler and queryHelpers
 // ==========================================
-router.get('/', (req, res) => {
+router.get('/', asyncHandler(async (req, res) => {
     const orgId = req.user.organizationId;
 
     const sql = `
@@ -27,8 +30,8 @@ router.get('/', (req, res) => {
         ORDER BY i.created_at DESC
     `;
 
-    db.all(sql, [orgId], (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
+    try {
+        const rows = await queryHelpers.queryAll(sql, [orgId]);
 
         const initiatives = rows.map(i => ({
             id: i.id,
@@ -91,32 +94,39 @@ router.get('/', (req, res) => {
         }));
 
         res.json(initiatives);
-    });
-});
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}));
 
 // ==========================================
 // GET SINGLE INITIATIVE
 // ==========================================
-router.get('/:id', (req, res) => {
+router.get('/:id', asyncHandler(async (req, res) => {
     const orgId = req.user.organizationId;
     const { id } = req.params;
 
     const sql = `SELECT * FROM initiatives WHERE id = ? AND organization_id = ?`;
 
-    db.get(sql, [id, orgId], (err, row) => {
-        if (err) return res.status(500).json({ error: err.message });
-        if (!row) return res.status(404).json({ error: 'Initiative not found' });
+    try {
+        const row = await queryHelpers.queryOne(sql, [id, orgId]);
+        if (!row) {
+            return res.status(404).json({ error: 'Initiative not found' });
+        }
 
         // Return structured object (simplified for brevity, similar map as above)
         // For detailed view, we might want to fetch stats like task counts
         res.json(row);
-    });
-});
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}));
 
 // ==========================================
 // CREATE INITIATIVE
+// REFACTORED: Uses asyncHandler and queryHelpers
 // ==========================================
-router.post('/', (req, res) => {
+router.post('/', asyncHandler(async (req, res) => {
     const orgId = req.user.organizationId;
     const {
         name, axis, area, summary, hypothesis,
@@ -140,78 +150,70 @@ router.post('/', (req, res) => {
     }
 
     // CHECK ACCESS POLICY
-    AccessPolicyService.checkAccess(orgId, 'create_initiative')
-        .then(accessCheck => {
-            if (!accessCheck.allowed) {
-                return res.status(403).json({ error: accessCheck.reason, errorCode: accessCheck.errorCode });
-            }
+    const accessCheck = await AccessPolicyService.checkAccess(orgId, 'create_initiative');
+    if (!accessCheck.allowed) {
+        return res.status(403).json({ error: accessCheck.reason, errorCode: accessCheck.errorCode });
+    }
 
-            const id = uuidv4();
-            const now = new Date().toISOString();
+    const id = uuidv4();
+    const now = new Date().toISOString();
 
-            const sql = `
-                INSERT INTO initiatives (
-                    id, organization_id, name, axis, area, summary, hypothesis,
-                    business_value, competencies_required,
-                    cost_capex, cost_opex, expected_roi, social_impact,
-                    value_driver, confidence_level, value_timing,
-                    owner_business_id, owner_execution_id, sponsor_id,
-                    start_date, pilot_end_date, end_date,
-                    problem_statement, deliverables, success_criteria, scope_in, scope_out, key_risks,
-                    created_from, created_from_plan_id,
-                    created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `;
+    const sql = `
+        INSERT INTO initiatives (
+            id, organization_id, name, axis, area, summary, hypothesis,
+            business_value, competencies_required,
+            cost_capex, cost_opex, expected_roi, social_impact,
+            value_driver, confidence_level, value_timing,
+            owner_business_id, owner_execution_id, sponsor_id,
+            start_date, pilot_end_date, end_date,
+            problem_statement, deliverables, success_criteria, scope_in, scope_out, key_risks,
+            created_from, created_from_plan_id,
+            created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
 
-            const params = [
-                id,
-                orgId,
-                name,
-                axis ?? null,
-                area ?? null,
-                summary ?? null,
-                hypothesis ?? null,
-                businessValue ?? null,
-                JSON.stringify(competenciesRequired || []),
-                costCapex ?? null,
-                costOpex ?? null,
-                expectedRoi ?? null,
-                socialImpact ?? null,
-                valueDriver ?? null,
-                confidenceLevel ?? null,
-                valueTiming ?? null,
-                ownerBusinessId ?? null,
-                ownerExecutionId ?? null,
-                sponsorId ?? null,
-                startDate ?? null,
-                pilotEndDate ?? null,
-                endDate ?? null,
-                problemStatement ?? null,
-                JSON.stringify(deliverables || []),
-                JSON.stringify(successCriteria || []),
-                JSON.stringify(scopeIn || []),
-                JSON.stringify(scopeOut || []),
-                JSON.stringify(keyRisks || []),
-                createdFrom ?? 'MANUAL',
-                createdFromPlanId ?? null,
-                now,
-                now
-            ];
+    const params = [
+        id,
+        orgId,
+        name,
+        axis ?? null,
+        area ?? null,
+        summary ?? null,
+        hypothesis ?? null,
+        businessValue ?? null,
+        JSON.stringify(competenciesRequired || []),
+        costCapex ?? null,
+        costOpex ?? null,
+        expectedRoi ?? null,
+        socialImpact ?? null,
+        valueDriver ?? null,
+        confidenceLevel ?? null,
+        valueTiming ?? null,
+        ownerBusinessId ?? null,
+        ownerExecutionId ?? null,
+        sponsorId ?? null,
+        startDate ?? null,
+        pilotEndDate ?? null,
+        endDate ?? null,
+        problemStatement ?? null,
+        JSON.stringify(deliverables || []),
+        JSON.stringify(successCriteria || []),
+        JSON.stringify(scopeIn || []),
+        JSON.stringify(scopeOut || []),
+        JSON.stringify(keyRisks || []),
+        createdFrom ?? 'MANUAL',
+        createdFromPlanId ?? null,
+        now,
+        now
+    ];
 
-            db.run(sql, params, function (err) {
-                if (err) return res.status(500).json({ error: err.message });
+    await queryHelpers.queryRun(sql, params);
 
-                // Track Usage
-                AccessPolicyService.incrementUsage(orgId, 'initiatives').catch(console.error);
+    // Track Usage (fire and forget)
+    AccessPolicyService.incrementUsage(orgId, 'initiatives').catch(console.error);
 
-                res.json({ id, name, message: 'Initiative created' });
-            });
-        })
-        .catch(err => {
-            console.error("Access Check Error", err);
-            res.status(500).json({ error: "Failed to verify access permissions" });
-        });
-});
+    res.json({ id, name, message: 'Initiative created' });
+}));
 
 
 // ==========================================
@@ -223,8 +225,9 @@ router.post('/', (req, res) => {
 
 // ==========================================
 // UPDATE INITIATIVE
+// REFACTORED: Uses asyncHandler and queryHelpers
 // ==========================================
-router.put('/:id', (req, res) => {
+router.put('/:id', asyncHandler(async (req, res) => {
     const orgId = req.user.organizationId;
     const { id } = req.params;
     const body = req.body;
@@ -232,11 +235,8 @@ router.put('/:id', (req, res) => {
     const allowedFields = [
         'name', 'axis', 'area', 'summary', 'hypothesis',
         'status', 'current_stage', 'business_value', 'competencies_required',
-        'status', 'current_stage', 'business_value', 'competencies_required',
         'cost_capex', 'cost_opex', 'expected_roi', 'social_impact',
         'value_driver', 'confidence_level', 'value_timing',
-        'start_date', 'pilot_end_date', 'end_date',
-        'owner_business_id', 'owner_execution_id', 'sponsor_id',
         'start_date', 'pilot_end_date', 'end_date',
         'owner_business_id', 'owner_execution_id', 'sponsor_id',
         'market_context',
@@ -266,7 +266,7 @@ router.put('/:id', (req, res) => {
         }
     });
 
-    updates.push(`updated_at = ? `);
+    updates.push(`updated_at = ?`);
     params.push(new Date().toISOString());
 
     if (updates.length === 0) return res.json({ message: 'No changes' });
@@ -274,110 +274,109 @@ router.put('/:id', (req, res) => {
     params.push(id);
     params.push(orgId);
 
-    const sql = `UPDATE initiatives SET ${updates.join(', ')} WHERE id = ? AND organization_id = ? `;
+    const sql = `UPDATE initiatives SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?`;
 
-    db.run(sql, params, function (err) {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ message: 'Initiative updated' });
-    });
-});
+    await queryHelpers.queryRun(sql, params);
+    res.json({ message: 'Initiative updated' });
+}));
 
 // ==========================================
 // SUGGEST TASKS (AI)
+// REFACTORED: Uses asyncHandler and queryHelpers
 // ==========================================
-router.post('/:id/tasks/suggest', (req, res) => {
+router.post('/:id/tasks/suggest', asyncHandler(async (req, res) => {
     const orgId = req.user.organizationId;
     const { id } = req.params;
 
     // 1. Get Initiative
-    const sql = `SELECT * FROM initiatives WHERE id = ? AND organization_id = ? `;
-    db.get(sql, [id, orgId], async (err, initiative) => {
-        if (err) return res.status(500).json({ error: err.message });
-        if (!initiative) return res.status(404).json({ error: 'Initiative not found' });
+    const sql = `SELECT * FROM initiatives WHERE id = ? AND organization_id = ?`;
+    const initiative = await queryHelpers.queryOne(sql, [id, orgId]);
 
-        try {
-            // 2. Call AI Service
-            // Convert DB keys to camelCase if needed, or AiService handles it.
-            // AiService expects { name, summary, hypothesis, axis }
-            const tasks = await AiService.suggestTasks({
-                name: initiative.name,
-                summary: initiative.summary,
-                hypothesis: initiative.hypothesis,
-                axis: initiative.axis
-            });
+    if (!initiative) {
+        return res.status(404).json({ error: 'Initiative not found' });
+    }
 
-            res.json(tasks);
-        } catch (aiError) {
-            console.error("AI Error:", aiError);
-            res.status(500).json({ error: 'Failed to generate suggestions' });
-        }
-    });
-});
+    try {
+        // 2. Call AI Service
+        // Convert DB keys to camelCase if needed, or AiService handles it.
+        // AiService expects { name, summary, hypothesis, axis }
+        const tasks = await AiService.suggestTasks({
+            name: initiative.name,
+            summary: initiative.summary,
+            hypothesis: initiative.hypothesis,
+            axis: initiative.axis
+        });
+
+        res.json(tasks);
+    } catch (aiError) {
+        console.error("AI Error:", aiError);
+        res.status(500).json({ error: 'Failed to generate suggestions' });
+    }
+}));
 
 
 // ==========================================
 // VALIDATE INITIATIVE (AI)
+// REFACTORED: Uses asyncHandler and queryHelpers
 // ==========================================
-router.post('/:id/validate', (req, res) => {
+router.post('/:id/validate', asyncHandler(async (req, res) => {
     const orgId = req.user.organizationId;
     const { id } = req.params;
 
-    const sql = `SELECT * FROM initiatives WHERE id = ? AND organization_id = ? `;
-    db.get(sql, [id, orgId], async (err, initiative) => {
-        if (err) return res.status(500).json({ error: err.message });
-        if (!initiative) return res.status(404).json({ error: 'Initiative not found' });
+    const sql = `SELECT * FROM initiatives WHERE id = ? AND organization_id = ?`;
+    const initiative = await queryHelpers.queryOne(sql, [id, orgId]);
 
-        try {
-            const validationResult = await AiService.validateInitiative({
-                name: initiative.name,
-                hypothesis: initiative.hypothesis,
-                businessValue: initiative.business_value,
-                costCapex: initiative.cost_capex,
-                expectedRoi: initiative.expected_roi
-            });
-            res.json(validationResult);
-        } catch (error) {
-            console.error("Validation failed", error);
-            res.status(500).json({ error: 'Validation failed' });
-        }
-    });
-});
+    if (!initiative) {
+        return res.status(404).json({ error: 'Initiative not found' });
+    }
+
+    try {
+        const validationResult = await AiService.validateInitiative({
+            name: initiative.name,
+            hypothesis: initiative.hypothesis,
+            businessValue: initiative.business_value,
+            costCapex: initiative.cost_capex,
+            expectedRoi: initiative.expected_roi
+        });
+        res.json(validationResult);
+    } catch (error) {
+        console.error("Validation failed", error);
+        res.status(500).json({ error: 'Validation failed' });
+    }
+}));
 
 // ==========================================
 // ENRICH INITIATIVE (Web Research)
+// REFACTORED: Uses asyncHandler and queryHelpers
 // ==========================================
-router.post('/:id/enrich', (req, res) => {
+router.post('/:id/enrich', asyncHandler(async (req, res) => {
     const orgId = req.user.organizationId;
     const { id } = req.params;
 
-    const sql = `SELECT * FROM initiatives WHERE id = ? AND organization_id = ? `;
-    db.get(sql, [id, orgId], async (err, initiative) => {
-        if (err) return res.status(500).json({ error: err.message });
-        if (!initiative) return res.status(404).json({ error: 'Initiative not found' });
+    const sql = `SELECT * FROM initiatives WHERE id = ? AND organization_id = ?`;
+    const initiative = await queryHelpers.queryOne(sql, [id, orgId]);
 
-        try {
-            const marketContext = await AiService.enrichInitiative({
-                name: initiative.name,
-                axis: initiative.axis,
-                area: initiative.area,
-                summary: initiative.summary
-            });
+    if (!initiative) {
+        return res.status(404).json({ error: 'Initiative not found' });
+    }
 
-            // Update DB
-            const updateSql = `UPDATE initiatives SET market_context = ? WHERE id = ? `;
-            db.run(updateSql, [marketContext, id], (err) => {
-                if (err) {
-                    console.error("Failed to save enrichment", err);
-                    return res.status(500).json({ error: "Failed to save data" });
-                }
-                res.json({ marketContext });
-            });
+    try {
+        const marketContext = await AiService.enrichInitiative({
+            name: initiative.name,
+            axis: initiative.axis,
+            area: initiative.area,
+            summary: initiative.summary
+        });
 
-        } catch (error) {
-            console.error("Enrichment failed", error);
-            res.status(500).json({ error: 'Enrichment failed' });
-        }
-    });
-});
+        // Update DB
+        const updateSql = `UPDATE initiatives SET market_context = ? WHERE id = ?`;
+        await queryHelpers.queryRun(updateSql, [marketContext, id]);
+
+        res.json({ marketContext });
+    } catch (error) {
+        console.error("Enrichment failed", error);
+        res.status(500).json({ error: 'Enrichment failed' });
+    }
+}));
 
 module.exports = router;

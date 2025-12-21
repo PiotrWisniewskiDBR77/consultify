@@ -35,6 +35,8 @@ app.use(compression());
 // Rate Limiting
 const RedisStore = require('./utils/redisRateLimitStore');
 const auditLogMiddleware = require('./middleware/auditLog');
+const logger = require('./utils/logger');
+
 
 // Rate Limiting Config
 const redisStore = new RedisStore({ windowMs: 15 * 60 * 1000 }); // 15 mins
@@ -71,9 +73,18 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Correlation & Context Tracking
+const { correlationMiddleware } = require('./utils/requestStore');
+app.use(correlationMiddleware);
+
+// FAZA 5: Performance Metrics Middleware
+const { performanceMetricsMiddleware } = require('./middleware/performanceMetrics');
+app.use('/api/', performanceMetricsMiddleware);
+
 // Apply rate limiting and security logging to API routes
 app.use('/api/', apiLimiter);
 app.use('/api/', auditLogMiddleware); // Audit Log for all API methods (filters GET internally)
+app.use(logger.requestLogger); // Standard Request Logging with IDs
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 
@@ -155,6 +166,10 @@ app.use('/api/organizations', organizationRoutes);
 const onboardingRoutes = require('./routes/onboarding');
 app.use('/api/onboarding', onboardingRoutes);
 
+// P0: Journey Analytics (Interactive Walkthroughs + Metrics)
+const journeyAnalyticsRoutes = require('./routes/journeyAnalytics');
+app.use('/api/analytics/journey', journeyAnalyticsRoutes);
+
 // Phase G: Ecosystem Participation - Referrals
 const referralRoutes = require('./routes/referrals');
 app.use('/api/referrals', referralRoutes);
@@ -164,6 +179,18 @@ app.use('/api/consultants', consultantRoutes);
 
 const userOrgsRoutes = require('./routes/userOrgs');
 app.use('/api/users', userOrgsRoutes);
+
+// P1: User Goals (Personalization)
+const userGoalsRoutes = require('./routes/userGoals');
+app.use('/api/user', userGoalsRoutes);
+
+// P2: Gamification (P2 Start)
+const gamificationRoutes = require('./routes/gamification');
+app.use('/api/gamification', gamificationRoutes);
+
+// P2: Advanced Analytics
+const advancedAnalyticsRoutes = require('./routes/analyticsAdvanced');
+app.use('/api/analytics/advanced', advancedAnalyticsRoutes);
 
 app.use('/api/webhooks', stripeWebhookRoutes);
 const reportRoutes = require('./routes/reports');
@@ -279,7 +306,6 @@ app.use('/api/promo', promoRoutes);
 const partnerRoutes = require('./routes/partners');
 const settlementRoutes = require('./routes/settlements');
 app.use('/api/partners', partnerRoutes);
-app.use('/api/partners', partnerRoutes);
 app.use('/api/settlements', settlementRoutes);
 
 // Access Codes Engine (Unified)
@@ -293,6 +319,9 @@ app.use('/api/help', helpRoutes);
 // Step 7: Metrics & Conversion Intelligence Routes
 const metricsRoutes = require('./routes/metrics');
 app.use('/api/metrics', metricsRoutes);
+// FAZA 5: Performance Metrics Routes
+const performanceMetricsRoutes = require('./routes/performance-metrics');
+app.use('/api/performance-metrics', performanceMetricsRoutes);
 
 // AI Core Layer Routes (already mounted above at /api/ai)
 const aiCoachRoutes = require('./routes/aiCoach');
@@ -325,6 +354,31 @@ app.use('/api/connectors', connectorRoutes);
 const aiAnalyticsRoutes = require('./routes/aiAnalytics');
 app.use('/api/analytics/ai', aiAnalyticsRoutes);
 
+// Audit Events API (for AuditHistoryView component)
+const auditRoutes = require('./routes/audit');
+app.use('/api/audit', auditRoutes);
+
+// MFA (Multi-Factor Authentication) Routes
+const mfaRoutes = require('./routes/mfa');
+app.use('/api/mfa', mfaRoutes);
+
+// Email Verification Routes
+const verifyRoutes = require('./routes/verify');
+app.use('/api/verify', verifyRoutes);
+
+// SSO (Single Sign-On) Routes
+
+
+// User Preferences Routes
+const preferencesRoutes = require('./routes/preferences');
+app.use('/api/preferences', preferencesRoutes);
+
+// Billing & Invoice Routes (already registered above, line 103)
+// Removed duplicate declaration
+
+// Webhooks (Stripe, etc.) - already registered above, line 100
+// Removed duplicate declaration
+
 const db = require('./database');
 
 // Health Check - MUST be before catchall
@@ -356,6 +410,35 @@ app.use(express.static(path.join(__dirname, '../dist')));
 // match one above, send back React's index.html file.
 app.use((req, res) => {
     res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
+
+// Feature Flags
+const featureFlagRoutes = require('./routes/featureFlags');
+app.use('/api/features', featureFlagRoutes);
+
+// Phase 7: Enterprise Maturity Routes
+const webhookSubRoutes = require('./routes/webhookSubscriptions');
+app.use('/api/webhooks/subscriptions', webhookSubRoutes);
+
+const gdprRoutes = require('./routes/gdpr');
+app.use('/api/gdpr', gdprRoutes);
+
+const systemHealthRoutes = require('./routes/systemHealth');
+app.use('/api/system/health', systemHealthRoutes);
+
+// Error Handler Middleware (must be last, after all routes)
+const { errorHandlerMiddleware } = require('./utils/errorHandler');
+app.use(errorHandlerMiddleware);
+
+// 404 Handler (must be after error handler)
+app.use((req, res) => {
+    res.status(404).json({
+        error: {
+            code: 'NOT_FOUND',
+            message: `Route ${req.method} ${req.path} not found`,
+            timestamp: new Date().toISOString()
+        }
+    });
 });
 
 // Only listen if the file is run directly (not imported)

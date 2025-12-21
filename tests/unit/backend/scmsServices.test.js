@@ -2,6 +2,9 @@
 // Tests for Roadmap, Execution, Stabilization, Economics - Constants & Structure
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
 
 // Mock database
 vi.mock('../../../server/database', () => ({
@@ -221,7 +224,7 @@ describe('ReportingService', () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        ReportingService = (await import('../../../server/services/reportingService.js')).default;
+        ReportingService = require('../../../server/services/reportingService.js');
     });
 
     describe('Service Structure', () => {

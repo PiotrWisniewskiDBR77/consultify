@@ -6,69 +6,52 @@ const router = express.Router();
 const ReportingService = require('../services/reportingService');
 const NarrativeService = require('../services/narrativeService');
 const verifyToken = require('../middleware/authMiddleware');
+const { asyncHandler } = require('../utils/errorHandler');
 
 // GET /api/reports/executive-overview
-router.get('/executive-overview', verifyToken, async (req, res) => {
-    try {
-        const report = await ReportingService.generateExecutiveOverview(req.organizationId, req.userId);
-        res.json(report);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
+// REFACTORED: Uses asyncHandler
+router.get('/executive-overview', verifyToken, asyncHandler(async (req, res) => {
+    const report = await ReportingService.generateExecutiveOverview(req.organizationId, req.userId);
+    res.json(report);
+}));
 
 // GET /api/reports/project-health/:projectId
-router.get('/project-health/:projectId', verifyToken, async (req, res) => {
-    try {
-        const report = await ReportingService.generateProjectHealthReport(req.params.projectId, req.userId);
-        res.json(report);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
+// REFACTORED: Uses asyncHandler
+router.get('/project-health/:projectId', verifyToken, asyncHandler(async (req, res) => {
+    const report = await ReportingService.generateProjectHealthReport(req.params.projectId, req.userId);
+    res.json(report);
+}));
 
 // GET /api/reports/governance/:projectId
-router.get('/governance/:projectId', verifyToken, async (req, res) => {
-    try {
-        const report = await ReportingService.generateGovernanceReport(req.params.projectId, req.userId);
-        res.json(report);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
+// REFACTORED: Uses asyncHandler
+router.get('/governance/:projectId', verifyToken, asyncHandler(async (req, res) => {
+    const report = await ReportingService.generateGovernanceReport(req.params.projectId, req.userId);
+    res.json(report);
+}));
 
 // ==================== NARRATIVES ====================
 
 // GET /api/reports/narrative/weekly/:projectId
-router.get('/narrative/weekly/:projectId', verifyToken, async (req, res) => {
-    try {
-        const narrative = await NarrativeService.generateWeeklySummary(req.params.projectId);
-        res.json(narrative);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
+// REFACTORED: Uses asyncHandler
+router.get('/narrative/weekly/:projectId', verifyToken, asyncHandler(async (req, res) => {
+    const narrative = await NarrativeService.generateWeeklySummary(req.params.projectId);
+    res.json(narrative);
+}));
 
 // GET /api/reports/narrative/memo/:projectId
-router.get('/narrative/memo/:projectId', verifyToken, async (req, res) => {
+// REFACTORED: Uses asyncHandler
+router.get('/narrative/memo/:projectId', verifyToken, asyncHandler(async (req, res) => {
     const { topic } = req.query;
-    try {
-        const narrative = await NarrativeService.generateExecutiveMemo(req.params.projectId, topic);
-        res.json(narrative);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
+    const narrative = await NarrativeService.generateExecutiveMemo(req.params.projectId, topic);
+    res.json(narrative);
+}));
 
 // GET /api/reports/narrative/progress/:projectId
-router.get('/narrative/progress/:projectId', verifyToken, async (req, res) => {
-    try {
-        const narrative = await NarrativeService.generateProgressNarrative(req.params.projectId);
-        res.json(narrative);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
+// REFACTORED: Uses asyncHandler
+router.get('/narrative/progress/:projectId', verifyToken, asyncHandler(async (req, res) => {
+    const narrative = await NarrativeService.generateProgressNarrative(req.params.projectId);
+    res.json(narrative);
+}));
 
 // ==================== ORGANIZATION & INITIATIVE REPORTS ====================
 
@@ -76,27 +59,21 @@ const ShareLinkService = require('../services/shareLinkService');
 const PermissionService = require('../services/permissionService');
 
 // GET /api/reports/org-overview
-router.get('/org-overview', verifyToken, async (req, res) => {
-    try {
-        const report = await ReportingService.generateOrganizationOverviewReport(req.organizationId);
-        res.json(report);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
+// REFACTORED: Uses asyncHandler
+router.get('/org-overview', verifyToken, asyncHandler(async (req, res) => {
+    const report = await ReportingService.generateOrganizationOverviewReport(req.organizationId);
+    res.json(report);
+}));
 
 // GET /api/reports/initiative/:initiativeId
-router.get('/initiative/:initiativeId', verifyToken, async (req, res) => {
-    try {
-        const report = await ReportingService.generateInitiativeExecutionReport(
-            req.params.initiativeId,
-            req.organizationId
-        );
-        res.json(report);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
+// REFACTORED: Uses asyncHandler
+router.get('/initiative/:initiativeId', verifyToken, asyncHandler(async (req, res) => {
+    const report = await ReportingService.generateInitiativeExecutionReport(
+        req.params.initiativeId,
+        req.organizationId
+    );
+    res.json(report);
+}));
 
 // ==================== SHARE LINKS (HARDENED) ====================
 
@@ -123,7 +100,8 @@ function publicRateLimit(req, res, next) {
 }
 
 // POST /api/reports/share - Create a share link
-router.post('/share', verifyToken, async (req, res) => {
+// REFACTORED: Uses asyncHandler
+router.post('/share', verifyToken, asyncHandler(async (req, res) => {
     try {
         const { entityType, entityId, expiresInHours } = req.body;
 
@@ -176,129 +154,111 @@ router.post('/share', verifyToken, async (req, res) => {
         if (err.message.includes('Trial limit')) {
             return res.status(402).json({ error: err.message, code: 'TRIAL_LIMIT_REACHED' });
         }
-        res.status(500).json({ error: err.message });
+        throw err; // Let asyncHandler handle it
     }
-});
+}));
 
 // GET /api/reports/share-links - List share links for org (org-scoped)
-router.get('/share-links', verifyToken, async (req, res) => {
-    try {
-        // org-scoping enforced by service method
-        const links = await ShareLinkService.listShareLinks(req.organizationId);
-        res.json(links);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
+// REFACTORED: Uses asyncHandler
+router.get('/share-links', verifyToken, asyncHandler(async (req, res) => {
+    // org-scoping enforced by service method
+    const links = await ShareLinkService.listShareLinks(req.organizationId);
+    res.json(links);
+}));
 
 // DELETE /api/reports/share-links/:id - Revoke a share link (soft delete)
-router.delete('/share-links/:id', verifyToken, async (req, res) => {
-    try {
-        // Check permission
-        const canRevoke = await PermissionService.hasCapability(req.userId, 'manage_org_settings', req.organizationId);
-        if (!canRevoke) {
-            return res.status(403).json({ error: 'Permission denied to revoke share links' });
-        }
-
-        // Use revokeShareLink for soft-delete (status = REVOKED)
-        const revoked = await ShareLinkService.revokeShareLink(req.params.id, req.organizationId);
-        if (revoked) {
-            res.json({ success: true });
-        } else {
-            res.status(404).json({ error: 'Share link not found or not owned by your organization' });
-        }
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+// REFACTORED: Uses asyncHandler
+router.delete('/share-links/:id', verifyToken, asyncHandler(async (req, res) => {
+    // Check permission
+    const canRevoke = await PermissionService.hasCapability(req.userId, 'manage_org_settings', req.organizationId);
+    if (!canRevoke) {
+        return res.status(403).json({ error: 'Permission denied to revoke share links' });
     }
-});
+
+    // Use revokeShareLink for soft-delete (status = REVOKED)
+    const revoked = await ShareLinkService.revokeShareLink(req.params.id, req.organizationId);
+    if (revoked) {
+        res.json({ success: true });
+    } else {
+        res.status(404).json({ error: 'Share link not found or not owned by your organization' });
+    }
+}));
 
 // POST /api/reports/share-links/revoke-all - Revoke all share links for org
-router.post('/share-links/revoke-all', verifyToken, async (req, res) => {
-    try {
-        // Check permission (OWNER only ideally, but ADMIN is fine for MVP)
-        const canRevoke = await PermissionService.hasCapability(req.userId, 'manage_org_settings', req.organizationId);
-        if (!canRevoke) {
-            return res.status(403).json({ error: 'Permission denied' });
-        }
-
-        const count = await ShareLinkService.revokeAllForOrg(req.organizationId);
-        res.json({ success: true, revokedCount: count });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+// REFACTORED: Uses asyncHandler
+router.post('/share-links/revoke-all', verifyToken, asyncHandler(async (req, res) => {
+    // Check permission (OWNER only ideally, but ADMIN is fine for MVP)
+    const canRevoke = await PermissionService.hasCapability(req.userId, 'manage_org_settings', req.organizationId);
+    if (!canRevoke) {
+        return res.status(403).json({ error: 'Permission denied' });
     }
-});
+
+    const count = await ShareLinkService.revokeAllForOrg(req.organizationId);
+    res.json({ success: true, revokedCount: count });
+}));
 
 // ==================== PUBLIC SHARE ACCESS (RATE LIMITED) ====================
 
 // GET /api/reports/public/:token - Public access to shared report (no auth required)
-router.get('/public/:token', publicRateLimit, async (req, res) => {
-    try {
-        const result = await ShareLinkService.getShareLinkByToken(req.params.token);
+// REFACTORED: Uses asyncHandler
+router.get('/public/:token', publicRateLimit, asyncHandler(async (req, res) => {
+    const result = await ShareLinkService.getShareLinkByToken(req.params.token);
 
-        // Handle specific error states
-        if (!result) {
-            return res.status(404).json({ error: 'Share link not found' });
-        }
-
-        if (result.error === 'REVOKED') {
-            return res.status(410).json({ error: 'This share link has been revoked' });
-        }
-
-        if (result.error === 'EXPIRED') {
-            return res.status(410).json({ error: 'This share link has expired' });
-        }
-
-        res.json({
-            entityType: result.entityType,
-            snapshot: result.snapshot,
-            expiresAt: result.expiresAt,
-            createdAt: result.createdAt
-        });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+    // Handle specific error states
+    if (!result) {
+        return res.status(404).json({ error: 'Share link not found' });
     }
-});
+
+    if (result.error === 'REVOKED') {
+        return res.status(410).json({ error: 'This share link has been revoked' });
+    }
+
+    if (result.error === 'EXPIRED') {
+        return res.status(410).json({ error: 'This share link has expired' });
+    }
+
+    res.json({
+        entityType: result.entityType,
+        snapshot: result.snapshot,
+        expiresAt: result.expiresAt,
+        createdAt: result.createdAt
+    });
+}));
 
 // ==================== EXPORT TRACKING ====================
 
 // POST /api/reports/track-export - Track PDF export for trial limits
-router.post('/track-export', verifyToken, async (req, res) => {
-    try {
-        // Check if export is allowed
-        const limitCheck = await ShareLinkService.checkExportLimit(req.organizationId);
-        if (!limitCheck.allowed) {
-            return res.status(402).json({
-                error: `Trial export limit reached: ${limitCheck.used}/${limitCheck.limit}`,
-                code: 'TRIAL_LIMIT_REACHED'
-            });
-        }
-
-        // Increment counter
-        await ShareLinkService.incrementExportCounter(req.organizationId);
-
-        res.json({
-            success: true,
-            used: limitCheck.used + 1,
-            limit: limitCheck.limit
+// REFACTORED: Uses asyncHandler
+router.post('/track-export', verifyToken, asyncHandler(async (req, res) => {
+    // Check if export is allowed
+    const limitCheck = await ShareLinkService.checkExportLimit(req.organizationId);
+    if (!limitCheck.allowed) {
+        return res.status(402).json({
+            error: `Trial export limit reached: ${limitCheck.used}/${limitCheck.limit}`,
+            code: 'TRIAL_LIMIT_REACHED'
         });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
     }
-});
+
+    // Increment counter
+    await ShareLinkService.incrementExportCounter(req.organizationId);
+
+    res.json({
+        success: true,
+        used: limitCheck.used + 1,
+        limit: limitCheck.limit
+    });
+}));
 
 // GET /api/reports/export-status - Check export limit status
-router.get('/export-status', verifyToken, async (req, res) => {
-    try {
-        const limitCheck = await ShareLinkService.checkExportLimit(req.organizationId);
-        res.json({
-            canExport: limitCheck.allowed,
-            used: limitCheck.used,
-            limit: limitCheck.limit === Infinity ? null : limitCheck.limit
-        });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
+// REFACTORED: Uses asyncHandler
+router.get('/export-status', verifyToken, asyncHandler(async (req, res) => {
+    const limitCheck = await ShareLinkService.checkExportLimit(req.organizationId);
+    res.json({
+        canExport: limitCheck.allowed,
+        used: limitCheck.used,
+        limit: limitCheck.limit === Infinity ? null : limitCheck.limit
+    });
+}));
 
 module.exports = router;
 

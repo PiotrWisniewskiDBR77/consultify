@@ -466,6 +466,7 @@ export const Sidebar: React.FC = () => {
 
       {/* SIDEBAR CONTAINER */}
       <div
+        data-tour="sidebar-nav"
         className={`
           fixed inset-y-0 left-0 z-50
           bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl

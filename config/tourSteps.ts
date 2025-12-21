@@ -2,7 +2,7 @@
 export const tourSteps = [
     {
         target: '.sidebar',
-        title: 'Welcome to Consultify!',
+        title: 'Welcome to Consultinity!',
         content: 'Navigate your digital transformation journey using this sidebar. Access all key features from here.',
         placement: 'right' as const
     },

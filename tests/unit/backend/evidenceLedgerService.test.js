@@ -17,7 +17,7 @@ describe('EvidenceLedgerService', () => {
     beforeEach(async () => {
         vi.resetModules();
         uuidCounter = 0;
-        
+
         mockDb = createMockDb();
 
         EvidenceLedgerService = (await import('../../../server/services/evidenceLedgerService.js')).default;
@@ -279,19 +279,23 @@ describe('EvidenceLedgerService', () => {
                 }
             ];
 
-            mockDb.all
-                .mockImplementationOnce((query, params, callback) => {
-                    // Reasoning query
-                    expect(query).toContain('SELECT * FROM ai_reasoning_ledger');
-                    callback(null, mockReasoning);
-                })
-                .mockImplementationOnce((query, params, callback) => {
-                    // Evidence query
-                    expect(query).toContain('FROM ai_explainability_links');
-                    expect(query).toContain('WHERE l.from_type = ? AND l.from_id = ? AND e.org_id = ?');
-                    expect(params[2]).toBe(orgId);
-                    callback(null, mockEvidences);
+            let callCount = 0;
+            mockDb.all.mockImplementation((query, params, callback) => {
+                callCount++;
+                process.nextTick(() => {
+                    if (callCount === 1) {
+                        // Reasoning query
+                        expect(query).toContain('SELECT * FROM ai_reasoning_ledger');
+                        callback(null, mockReasoning);
+                    } else if (callCount === 2) {
+                        // Evidence query
+                        expect(query).toContain('FROM ai_explainability_links');
+                        expect(query).toContain('WHERE l.from_type = ? AND l.from_id = ? AND e.org_id = ?');
+                        expect(params[2]).toBe(orgId);
+                        callback(null, mockEvidences);
+                    }
                 });
+            });
 
             const result = await EvidenceLedgerService.getExplanation(orgId, entityType, entityId);
 
@@ -335,9 +339,11 @@ describe('EvidenceLedgerService', () => {
             const entityId = 'proposal-123';
 
             mockDb.get.mockImplementation((query, params, callback) => {
-                expect(query).toContain('SELECT COUNT(*)');
-                expect(query).toContain('WHERE from_type = ? AND from_id = ?');
-                callback(null, { count: 2 });
+                process.nextTick(() => {
+                    expect(query).toContain('SELECT COUNT(*)');
+                    expect(query).toContain('WHERE from_type = ? AND from_id = ?');
+                    callback(null, { count: 2 });
+                });
             });
 
             const result = await EvidenceLedgerService.hasEvidence(entityType, entityId);
@@ -350,7 +356,9 @@ describe('EvidenceLedgerService', () => {
             const entityId = 'proposal-123';
 
             mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { count: 0 });
+                process.nextTick(() => {
+                    callback(null, { count: 0 });
+                });
             });
 
             const result = await EvidenceLedgerService.hasEvidence(entityType, entityId);
@@ -399,9 +407,11 @@ describe('EvidenceLedgerService', () => {
             ];
 
             mockDb.all.mockImplementation((query, params, callback) => {
-                expect(query).toContain('WHERE org_id = ?');
-                expect(params[0]).toBe(orgId);
-                callback(null, mockEvidences);
+                process.nextTick(() => {
+                    expect(query).toContain('WHERE org_id = ?');
+                    expect(params[0]).toBe(orgId);
+                    callback(null, mockEvidences);
+                });
             });
 
             const result = await EvidenceLedgerService.getEvidencesByOrg(orgId);
@@ -415,9 +425,11 @@ describe('EvidenceLedgerService', () => {
             const filters = { type: 'METRIC_SNAPSHOT' };
 
             mockDb.all.mockImplementation((query, params, callback) => {
-                expect(query).toContain('AND type = ?');
-                expect(params[1]).toBe('METRIC_SNAPSHOT');
-                callback(null, []);
+                process.nextTick(() => {
+                    expect(query).toContain('AND type = ?');
+                    expect(params[1]).toBe('METRIC_SNAPSHOT');
+                    callback(null, []);
+                });
             });
 
             await EvidenceLedgerService.getEvidencesByOrg(orgId, filters);
@@ -428,9 +440,11 @@ describe('EvidenceLedgerService', () => {
             const filters = { limit: 10 };
 
             mockDb.all.mockImplementation((query, params, callback) => {
-                expect(query).toContain('LIMIT ?');
-                expect(params[1]).toBe(10);
-                callback(null, []);
+                process.nextTick(() => {
+                    expect(query).toContain('LIMIT ?');
+                    expect(params[1]).toBe(10);
+                    callback(null, []);
+                });
             });
 
             await EvidenceLedgerService.getEvidencesByOrg(orgId, filters);
@@ -443,13 +457,13 @@ describe('EvidenceLedgerService', () => {
             const entityType = EvidenceLedgerService.ENTITY_TYPES.DECISION;
             const entityId = 'decision-123';
 
-            mockDb.all
-                .mockImplementationOnce((query, params, callback) => {
-                    callback(null, []);
-                })
-                .mockImplementationOnce((query, params, callback) => {
+            let callCount = 0;
+            mockDb.all.mockImplementation((query, params, callback) => {
+                callCount++;
+                process.nextTick(() => {
                     callback(null, []);
                 });
+            });
 
             const result = await EvidenceLedgerService.exportExplanation(orgId, entityType, entityId, 'json');
 
@@ -471,18 +485,27 @@ describe('EvidenceLedgerService', () => {
                 }
             ];
 
-            mockDb.all
-                .mockImplementationOnce((query, params, callback) => {
-                    callback(null, mockReasoning);
-                })
-                .mockImplementationOnce((query, params, callback) => {
-                    callback(null, []);
+            let callCount = 0;
+            mockDb.all.mockImplementation((query, params, callback) => {
+                callCount++;
+                process.nextTick(() => {
+                    if (callCount === 1) {
+                        // First call: reasoning query
+                        callback(null, mockReasoning);
+                    } else if (callCount === 2) {
+                        // Second call: evidence query
+                        callback(null, []);
+                    }
                 });
+            });
 
             const result = await EvidenceLedgerService.exportExplanation(orgId, entityType, entityId, 'pdf');
 
             expect(result.metadata.format).toBe('pdf');
             expect(result.render_options).toBeDefined();
+            // include_confidence_chart is true only if confidence > 0
+            // Since we have mockReasoning with confidence 0.8, it should be true
+            // But getExplanation uses latestReasoning?.confidence || 0, so it should be 0.8
             expect(result.render_options.include_confidence_chart).toBe(true);
         });
     });

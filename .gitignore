@@ -53,3 +53,53 @@ node_modules_trash
 trash_node_modules_*
 package-lock 2.json
 verify_all_apis.cjs
+
+# Temporary helper scripts (should be in scripts/)
+# Allow .cjs files in scripts directories, but ignore in root
+*.cjs
+!scripts/**/*.cjs
+!server/scripts/**/*.cjs
+
+# Backup and converted files
+*.bak
+*.bak.broken
+*_converted.*
+* 2.*
+*_trash*
+
+# Test output files
+test_output*.txt
+test_output*.log
+coverage_*.txt
+unit_tests_report.txt
+verification_results.txt
+lint_report.txt
+
+# Temporary documentation files (move to docs/ if needed)
+*_SUMMARY.md
+*_PROGRESS.md
+*_COMPLETE.md
+*_FIX*.md
+PLAN_*.md
+FAZA*.md
+SETUP_*.md
+
+# Debug and trace files
+trace_*.cjs
+analyze_*.cjs
+find_*.cjs
+fix_*.cjs
+check_*.cjs
+switch_*.cjs
+update_*.cjs
+list_*.cjs
+reproduce_*.cjs
+verify_*.cjs
+verify_*.sh
+debug-*.cjs
+extract_*.cjs
+migrate_*.cjs
+read_*.js
+parse_*.py
+test-*.js
+test-*.cjs

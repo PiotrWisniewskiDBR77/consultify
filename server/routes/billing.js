@@ -1,349 +1,98 @@
-/**
- * Billing Routes
- * API endpoints for subscription management, usage tracking, and invoices
- */
-
 const express = require('express');
 const router = express.Router();
-const billingService = require('../services/billingService');
-const usageService = require('../services/usageService');
-const verifySuperAdmin = require('../middleware/superAdminMiddleware');
-
-// ==========================================
-// PUBLIC ROUTES (Authenticated Users)
-// ==========================================
+const authMiddleware = require('../middleware/authMiddleware');
+const { requireOrgAccess } = require('../middleware/rbac');
+const InvoiceService = require('../services/invoiceService');
+const CurrencyService = require('../services/currencyService');
 
 /**
- * GET /billing/plans
- * List all active subscription plans
+ * GET /api/billing/invoices
+ * Get invoices for organization
  */
-router.get('/plans', async (req, res) => {
+router.get('/invoices', authMiddleware, requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }), async (req, res) => {
     try {
-        const plans = await billingService.getPlans();
-        res.json(plans);
-    } catch (error) {
-        console.error('Get plans error:', error);
-        res.status(500).json({ error: 'Failed to fetch plans' });
-    }
-});
+        const orgId = req.org?.id || req.user.organizationId;
+        const { status, limit, offset } = req.query;
 
-/**
- * GET /billing/user-plans
- * List all active user license plans
- */
-router.get('/user-plans', async (req, res) => {
-    try {
-        const plans = await billingService.getUserPlans();
-        res.json(plans);
-    } catch (error) {
-        console.error('Get user plans error:', error);
-        res.status(500).json({ error: 'Failed to fetch user plans' });
-    }
-});
-
-/**
- * GET /billing/current
- * Get current organization's billing info and usage
- */
-router.get('/current', async (req, res) => {
-    try {
-        const orgId = req.user?.organization_id;
-        if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-
-        const billing = await billingService.getOrganizationBilling(orgId);
-        const usage = await usageService.getCurrentUsage(orgId);
-
-        res.json({
-            billing: billing || { status: 'no_subscription' },
-            usage
+        const invoices = await InvoiceService.getInvoices(orgId, {
+            status,
+            limit: parseInt(limit) || 20,
+            offset: parseInt(offset) || 0
         });
+
+        res.json({ invoices });
     } catch (error) {
-        console.error('Get current billing error:', error);
-        res.status(500).json({ error: 'Failed to fetch billing info' });
+        console.error('[Billing] Get invoices error:', error);
+        res.status(500).json({ error: 'Failed to get invoices' });
     }
 });
 
 /**
- * GET /billing/usage
- * Get current usage statistics
+ * GET /api/billing/invoices/:id
+ * Get single invoice details
  */
-router.get('/usage', async (req, res) => {
+router.get('/invoices/:id', authMiddleware, requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }), async (req, res) => {
     try {
-        const orgId = req.user?.organization_id;
-        if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+        const invoice = await InvoiceService.getInvoice(req.params.id);
 
-        const usage = await usageService.getCurrentUsage(orgId);
-        res.json(usage);
-    } catch (error) {
-        console.error('Get usage error:', error);
-        res.status(500).json({ error: 'Failed to fetch usage' });
-    }
-});
-
-/**
- * GET /billing/usage/history
- * Get usage history
- */
-router.get('/usage/history', async (req, res) => {
-    try {
-        const orgId = req.user?.organization_id;
-        if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-
-        const history = await usageService.getUsageHistory(orgId);
-        res.json(history);
-    } catch (error) {
-        console.error('Get usage history error:', error);
-        res.status(500).json({ error: 'Failed to fetch usage history' });
-    }
-});
-
-/**
- * GET /billing/invoices
- * Get invoice history for organization
- */
-router.get('/invoices', async (req, res) => {
-    try {
-        const orgId = req.user?.organization_id;
-        if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-
-        const invoices = await billingService.getInvoices(orgId);
-        res.json(invoices);
-    } catch (error) {
-        console.error('Get invoices error:', error);
-        res.status(500).json({ error: 'Failed to fetch invoices' });
-    }
-});
-
-// ==========================================
-// ADMIN ROUTES (Organization Admins)
-// ==========================================
-
-/**
- * POST /billing/subscribe
- * Subscribe organization to a plan
- */
-router.post('/subscribe', async (req, res) => {
-    try {
-        const orgId = req.user?.organization_id;
-        const userRole = req.user?.role;
-
-        if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-        if (userRole !== 'ADMIN' && userRole !== 'SUPERADMIN') {
-            return res.status(403).json({ error: 'Admin access required' });
+        if (!invoice || invoice.organization_id !== (req.org?.id || req.user.organizationId)) {
+            return res.status(404).json({ error: 'Invoice not found' });
         }
 
-        const { planId, paymentMethodId } = req.body;
-        if (!planId) return res.status(400).json({ error: 'Plan ID required' });
-
-        const subscription = await billingService.createSubscription(
-            orgId,
-            planId,
-            paymentMethodId,
-            req.user.email,
-            req.user.organization_name
-        );
-
-        res.json({ success: true, subscription });
+        res.json({ invoice });
     } catch (error) {
-        console.error('Subscribe error:', error);
-        res.status(500).json({ error: error.message || 'Subscription failed' });
+        console.error('[Billing] Get invoice error:', error);
+        res.status(500).json({ error: 'Failed to get invoice' });
     }
 });
 
 /**
- * POST /billing/change-plan
- * Change subscription plan
+ * POST /api/billing/invoices/:id/pay
+ * Mark invoice as paid (manual action for testing/admin)
  */
-router.post('/change-plan', async (req, res) => {
+router.post('/invoices/:id/pay', authMiddleware, requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }), async (req, res) => {
     try {
-        const orgId = req.user?.organization_id;
-        const userRole = req.user?.role;
-
-        if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-        if (userRole !== 'ADMIN' && userRole !== 'SUPERADMIN') {
-            return res.status(403).json({ error: 'Admin access required' });
+        const invoice = await InvoiceService.getInvoice(req.params.id);
+        if (!invoice || invoice.organization_id !== (req.org?.id || req.user.organizationId)) {
+            return res.status(404).json({ error: 'Invoice not found' });
         }
 
-        const { newPlanId } = req.body;
-        if (!newPlanId) return res.status(400).json({ error: 'New plan ID required' });
-
-        const result = await billingService.changePlan(orgId, newPlanId);
-        res.json({ success: true, ...result });
+        await InvoiceService.markAsPaid(req.params.id);
+        res.json({ success: true });
     } catch (error) {
-        console.error('Change plan error:', error);
-        res.status(500).json({ error: error.message || 'Plan change failed' });
+        console.error('[Billing] Pay invoice error:', error);
+        res.status(500).json({ error: 'Failed to pay invoice' });
     }
 });
 
 /**
- * POST /billing/cancel
- * Cancel subscription at period end
+ * GET /api/billing/currencies
+ * Get supported currencies
  */
-router.post('/cancel', async (req, res) => {
+router.get('/currencies', async (req, res) => {
     try {
-        const orgId = req.user?.organization_id;
-        const userRole = req.user?.role;
-
-        if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-        if (userRole !== 'ADMIN' && userRole !== 'SUPERADMIN') {
-            return res.status(403).json({ error: 'Admin access required' });
-        }
-
-        const result = await billingService.cancelSubscription(orgId);
-        res.json({ success: true, status: result.status });
+        const currencies = await CurrencyService.getSupportedCurrencies();
+        res.json({ currencies });
     } catch (error) {
-        console.error('Cancel subscription error:', error);
-        res.status(500).json({ error: error.message || 'Cancellation failed' });
-    }
-});
-
-// ==========================================
-// SUPERADMIN ROUTES
-// ==========================================
-
-/**
- * GET /billing/admin/plans
- * Get all plans (including inactive)
- */
-router.get('/admin/plans', verifySuperAdmin, async (req, res) => {
-    try {
-        const plans = await new Promise((resolve, reject) => {
-            const db = require('../database');
-            db.all('SELECT * FROM subscription_plans ORDER BY price_monthly ASC', [], (err, rows) => {
-                if (err) reject(err);
-                else resolve(rows || []);
-            });
-        });
-        res.json(plans);
-    } catch (error) {
-        console.error('Admin get plans error:', error);
-        res.status(500).json({ error: 'Failed to fetch plans' });
+        console.error('[Billing] Get currencies error:', error);
+        res.status(500).json({ error: 'Failed to get currencies' });
     }
 });
 
 /**
- * POST /billing/admin/plans
- * Create a new subscription plan
+ * GET /api/billing/exchange-rates
+ * Get exchange rate for currency
  */
-router.post('/admin/plans', verifySuperAdmin, async (req, res) => {
+router.get('/exchange-rate', async (req, res) => {
     try {
-        const plan = await billingService.createPlan(req.body);
-        res.json({ success: true, plan });
-    } catch (error) {
-        console.error('Create plan error:', error);
-        res.status(500).json({ error: error.message || 'Failed to create plan' });
-    }
-});
+        const { from, to } = req.query;
+        if (!from || !to) return res.status(400).json({ error: 'Missing currency codes' });
 
-/**
- * PUT /billing/admin/plans/:id
- * Update subscription plan
- */
-router.put('/admin/plans/:id', verifySuperAdmin, async (req, res) => {
-    try {
-        const result = await billingService.updatePlan(req.params.id, req.body);
-        res.json({ success: true, ...result });
+        const rate = await CurrencyService.getExchangeRate(from, to);
+        res.json({ from, to, rate });
     } catch (error) {
-        console.error('Update plan error:', error);
-        res.status(500).json({ error: error.message || 'Failed to update plan' });
-    }
-});
-
-/**
- * DELETE /billing/admin/plans/:id
- * Deactivate subscription plan
- */
-router.delete('/admin/plans/:id', verifySuperAdmin, async (req, res) => {
-    try {
-        await billingService.deletePlan(req.params.id);
-        res.json({ success: true, message: 'Plan deactivated' });
-    } catch (error) {
-        console.error('Delete plan error:', error);
-        res.status(500).json({ error: error.message || 'Failed to deactivate plan' });
-    }
-});
-
-/**
- * GET /billing/admin/user-plans
- * Get all user license plans
- */
-router.get('/admin/user-plans', verifySuperAdmin, async (req, res) => {
-    try {
-        const plans = await billingService.getUserPlans();
-        res.json(plans);
-    } catch (error) {
-        console.error('Get user plans error:', error);
-        res.status(500).json({ error: 'Failed to fetch user plans' });
-    }
-});
-
-/**
- * POST /billing/admin/user-plans
- * Create a new user license plan
- */
-router.post('/admin/user-plans', verifySuperAdmin, async (req, res) => {
-    try {
-        const plan = await billingService.createUserPlan(req.body);
-        res.json({ success: true, plan });
-    } catch (error) {
-        console.error('Create user plan error:', error);
-        res.status(500).json({ error: error.message || 'Failed to create user plan' });
-    }
-});
-
-/**
- * PUT /billing/admin/user-plans/:id
- * Update user license plan
- */
-router.put('/admin/user-plans/:id', verifySuperAdmin, async (req, res) => {
-    try {
-        const result = await billingService.updateUserPlan(req.params.id, req.body);
-        res.json({ success: true, ...result });
-    } catch (error) {
-        console.error('Update user plan error:', error);
-        res.status(500).json({ error: error.message || 'Failed to update user plan' });
-    }
-});
-
-/**
- * DELETE /billing/admin/user-plans/:id
- * Deactivate user license plan
- */
-router.delete('/admin/user-plans/:id', verifySuperAdmin, async (req, res) => {
-    try {
-        await billingService.deleteUserPlan(req.params.id);
-        res.json({ success: true, message: 'User plan deactivated' });
-    } catch (error) {
-        console.error('Delete user plan error:', error);
-        res.status(500).json({ error: error.message || 'Failed to deactivate user plan' });
-    }
-});
-
-/**
- * GET /billing/admin/revenue
- * Get revenue statistics
- */
-router.get('/admin/revenue', verifySuperAdmin, async (req, res) => {
-    try {
-        const stats = await billingService.getRevenueStats();
-        res.json(stats);
-    } catch (error) {
-        console.error('Get revenue stats error:', error);
-        res.status(500).json({ error: 'Failed to fetch revenue stats' });
-    }
-});
-
-/**
- * GET /billing/admin/usage
- * Get global usage statistics
- */
-router.get('/admin/usage', verifySuperAdmin, async (req, res) => {
-    try {
-        const stats = await usageService.getGlobalUsageStats();
-        res.json(stats);
-    } catch (error) {
-        console.error('Get global usage error:', error);
-        res.status(500).json({ error: 'Failed to fetch global usage' });
+        console.error('[Billing] Exchange rate error:', error);
+        res.status(500).json({ error: 'Failed to get exchange rate' });
     }
 });
 

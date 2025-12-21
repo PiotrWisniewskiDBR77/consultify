@@ -1,5 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+// Mock queryHelpers before import
+const mockQueryHelpers = vi.hoisted(() => ({
+    queryAll: vi.fn(),
+    queryOne: vi.fn(),
+    queryRun: vi.fn(),
+    parseJsonFields: vi.fn((row) => row)
+}));
+
+vi.mock('../../../server/utils/queryHelpers', () => mockQueryHelpers);
+
 // Mock dependencies
 const mockDb = {
     get: vi.fn(),
@@ -16,16 +26,9 @@ describe('InitiativeService', () => {
         vi.clearAllMocks();
         InitiativeService.setDependencies({ db: mockDb });
 
-        // Default DB mocks
-        mockDb.all.mockImplementation((...args) => {
-            const cb = args[args.length - 1];
-            if (typeof cb === 'function') cb(null, []);
-        });
-
-        mockDb.run.mockImplementation((...args) => {
-            const cb = args[args.length - 1];
-            if (typeof cb === 'function') cb(null, { changes: 1 });
-        });
+        // Default queryHelpers mocks
+        mockQueryHelpers.queryAll.mockResolvedValue([]);
+        mockQueryHelpers.queryRun.mockResolvedValue({ changes: 1, lastID: 0 });
     });
 
     describe('recalculateProgress', () => {
@@ -35,30 +38,21 @@ describe('InitiativeService', () => {
         });
 
         it('should handle database error during fetch', async () => {
-            mockDb.all.mockImplementation((...args) => {
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') cb(new Error('DB Fetch Error'));
-            });
+            mockQueryHelpers.queryAll.mockRejectedValue(new Error('DB Fetch Error'));
 
-            await expect(InitiativeService.recalculateProgress('init-1')).rejects.toThrow('DB Fetch Error');
+            await expect(InitiativeService.recalculateProgress({ organizationId: 'org-1', initiativeId: 'init-1' })).rejects.toThrow('DB Fetch Error');
         });
 
         it('should set progress to 0 if no tasks found', async () => {
-            mockDb.all.mockImplementation((...args) => {
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') cb(null, []);
-            });
+            mockQueryHelpers.queryAll.mockResolvedValue([]);
 
-            const progress = await InitiativeService.recalculateProgress('init-1');
+            const progress = await InitiativeService.recalculateProgress({ organizationId: 'org-1', initiativeId: 'init-1' });
 
             expect(progress).toBe(0);
-            expect(mockDb.run).toHaveBeenCalledWith(
+            expect(mockQueryHelpers.queryRun).toHaveBeenCalledWith(
                 expect.stringContaining('UPDATE initiatives'),
-                ['init-1'],
-                expect.any(Function)
+                expect.arrayContaining(['org-1', 'init-1'])
             );
-            // Note: In service implementation, if no tasks, it assumes promise resolves 0 
-            // but effectively mockDb.run is called. However, await logic is simpler there.
         });
 
         it('should calculate weighted progress correctly', async () => {
@@ -69,57 +63,37 @@ describe('InitiativeService', () => {
             // Weighted Progress: (100*1.5) + (50*1.0) + (0*0.5) = 150 + 50 + 0 = 200
             // Result: 200 / 3.0 = 66.66 => 67
 
-            mockDb.all.mockImplementation((...args) => {
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    cb(null, [
-                        { progress: 100, priority: 'High' },
-                        { progress: 50, priority: 'Medium' },
-                        { progress: 0, priority: 'Low' }
-                    ]);
-                }
-            });
+            mockQueryHelpers.queryAll.mockResolvedValue([
+                { progress: 100, priority: 'High' },
+                { progress: 50, priority: 'Medium' },
+                { progress: 0, priority: 'Low' }
+            ]);
 
-            const progress = await InitiativeService.recalculateProgress('init-1');
+            const progress = await InitiativeService.recalculateProgress({ organizationId: 'org-1', initiativeId: 'init-1' });
 
             expect(progress).toBe(67);
-            expect(mockDb.run).toHaveBeenCalledWith(
+            expect(mockQueryHelpers.queryRun).toHaveBeenCalledWith(
                 expect.stringContaining('UPDATE initiatives'),
-                [67, 'init-1'],
-                expect.any(Function)
+                expect.arrayContaining([67, 'org-1', 'init-1'])
             );
         });
 
         it('should handle tasks with missing progress/priority', async () => {
-            mockDb.all.mockImplementation((...args) => {
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    cb(null, [
-                        { progress: null, priority: null } // Defaults: 0 progress, medium (1.0) weight
-                    ]);
-                }
-            });
+            mockQueryHelpers.queryAll.mockResolvedValue([
+                { progress: null, priority: null } // Defaults: 0 progress, medium (1.0) weight
+            ]);
 
-            const progress = await InitiativeService.recalculateProgress('init-1');
+            const progress = await InitiativeService.recalculateProgress({ organizationId: 'org-1', initiativeId: 'init-1' });
 
             // Weight: 1.0, Progress: 0 => 0 / 1 = 0
             expect(progress).toBe(0);
         });
 
         it('should handle database error during update', async () => {
-            mockDb.all.mockImplementation((...args) => {
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    cb(null, [{ progress: 50, priority: 'Medium' }]);
-                }
-            });
+            mockQueryHelpers.queryAll.mockResolvedValue([{ progress: 50, priority: 'Medium' }]);
+            mockQueryHelpers.queryRun.mockRejectedValue(new Error('Update failed'));
 
-            mockDb.run.mockImplementation((...args) => {
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') cb(new Error('Update failed'));
-            });
-
-            await expect(InitiativeService.recalculateProgress('init-1')).rejects.toThrow('Update failed');
+            await expect(InitiativeService.recalculateProgress({ organizationId: 'org-1', initiativeId: 'init-1' })).rejects.toThrow('Update failed');
         });
     });
 });

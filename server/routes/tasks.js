@@ -6,6 +6,7 @@ const verifyToken = require('../middleware/authMiddleware');
 const notificationsRouter = require('./notifications');
 const ActivityService = require('../services/activityService');
 const InitiativeService = require('../services/initiativeService');
+const cacheHelper = require('../utils/cacheHelper');
 
 router.use(verifyToken);
 
@@ -305,8 +306,15 @@ router.post('/', async (req, res) => {
                 });
 
                 // Fetch created task
-                db.get(`SELECT * FROM tasks WHERE id = ?`, [id], (err, row) => {
+                db.get(`SELECT * FROM tasks WHERE id = ?`, [id], async (err, row) => {
                     if (err) return res.status(500).json({ error: err.message });
+                    
+                    // Invalidate cache for affected users
+                    if (assigneeId) {
+                        await cacheHelper.invalidateUserCache(assigneeId, orgId);
+                    }
+                    await cacheHelper.invalidateProjectCache(projectId);
+                    
                     res.status(201).json(row); // Use raw row or parse function if available
                 });
             }
@@ -498,8 +506,18 @@ router.put('/:id', async (req, res) => {
             }
 
             // Return updated task
-            db.get(`SELECT * FROM tasks WHERE id = ?`, [id], (err, row) => {
+            db.get(`SELECT * FROM tasks WHERE id = ?`, [id], async (err, row) => {
                 if (err) return res.status(500).json({ error: err.message });
+
+                // Invalidate cache for affected users
+                const affectedUserIds = new Set();
+                if (currentTask.assignee_id) affectedUserIds.add(currentTask.assignee_id);
+                if (updates.assigneeId) affectedUserIds.add(updates.assigneeId);
+                
+                for (const userId of affectedUserIds) {
+                    await cacheHelper.invalidateUserCache(userId, req.user.organizationId);
+                }
+                await cacheHelper.invalidateProjectCache(currentTask.project_id);
 
                 // Recalculate Initiative Progress if linked (use old or new initiative ID)
                 const linkedInitiativeId = updates.initiativeId || currentTask.initiative_id;

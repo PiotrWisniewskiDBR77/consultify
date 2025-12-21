@@ -18,16 +18,28 @@
 
 ## 🚀 Quick Start (Development)
 
+### Option 1: Using Startup Script (Recommended)
+
+```bash
+chmod +x start.sh
+./start.sh
+```
+
+### Option 2: Manual Setup
+
 1.  **Install dependencies**:
     ```bash
     npm install
     ```
 2.  **Configure Environment**:
-    Copy `.env.production.example` to `.env.local` and set your `GEMINI_API_KEY`.
+    Create `.env.local` file (see `LOCAL_SETUP.md` for detailed instructions).
+    Minimum required: `GEMINI_API_KEY` (or other LLM provider key).
 3.  **Run Application**:
     ```bash
     npm run dev
     ```
+
+**📖 For detailed local setup instructions, see [LOCAL_SETUP.md](LOCAL_SETUP.md)**
 
 ## 🧪 Running Tests
 ```bash

@@ -93,6 +93,7 @@ export const ChatOverlay: React.FC = () => {
     if (!isChatOpen) {
         return (
             <button
+                data-tour="ai-panel"
                 onClick={toggleChat}
                 className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-105 z-50 group"
             >
@@ -112,7 +113,10 @@ export const ChatOverlay: React.FC = () => {
     }
 
     return (
-        <div className="fixed bottom-6 right-6 w-[400px] h-[600px] bg-white dark:bg-navy-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 flex flex-col z-50 overflow-hidden animate-in slide-in-from-bottom-10 fade-in zoom-in-95 duration-200">
+        <div
+            data-tour="ai-chat"
+            className="fixed bottom-6 right-6 w-[400px] h-[600px] bg-white dark:bg-navy-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 flex flex-col z-50 overflow-hidden animate-in slide-in-from-bottom-10 fade-in zoom-in-95 duration-200"
+        >
             {/* Header */}
             <div className="bg-navy-950 shrink-0 border-b border-white/5">
                 <div className="h-14 flex items-center justify-between px-4">

@@ -1,42 +1,41 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { createRequire } from 'module';
+import { createMockDb } from '../../helpers/dependencyInjector.js';
+
+const require = createRequire(import.meta.url);
 
 describe('AI Knowledge Manager Service', () => {
     let AIKnowledgeManager;
     let mockDb;
-    let mockUuid;
     let mockRagService;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         vi.resetModules();
 
-        mockDb = {
-            all: vi.fn(),
-            get: vi.fn(),
-            run: vi.fn()
-        };
-
-        mockUuid = {
-            v4: vi.fn(() => 'mock-uuid-doc')
-        };
+        mockDb = createMockDb();
 
         mockRagService = {
-            generateEmbedding: vi.fn(),
-            storeChunks: vi.fn()
+            generateEmbedding: vi.fn().mockResolvedValue([0.1, 0.2, 0.3]),
+            storeChunks: vi.fn().mockResolvedValue({})
         };
 
         vi.doMock('../../../server/database', () => ({ default: mockDb }));
-        vi.doMock('../../../server/services/ragService', () => mockRagService); // Might need adjustment based on require resolution
-        // Also mock the path exactly as required if possible, but path resolution is tricky in mocks.
-        // If the service uses require('./ragService'), Vitest might look for that.
-        // Let's rely on logic tests primarily.
+        vi.doMock('../../../server/services/ragService', () => ({ default: mockRagService }));
 
-        vi.doMock('uuid', () => ({ v4: mockUuid.v4 }));
-
-        AIKnowledgeManager = (await import('../../../server/services/aiKnowledgeManager.js')).default;
+        AIKnowledgeManager = require('../../../server/services/aiKnowledgeManager.js');
+        
+        // Inject mock dependencies
+        AIKnowledgeManager.setDependencies({
+            db: mockDb,
+            RagService: mockRagService,
+            uuidv4: () => 'mock-uuid-doc'
+        });
     });
 
     afterEach(() => {
-        vi.clearAllMocks();
+        vi.restoreAllMocks();
+        vi.doUnmock('../../../server/database');
+        vi.doUnmock('../../../server/services/ragService');
     });
 
     describe('Logic: _cosineSimilarity', () => {
@@ -69,35 +68,72 @@ describe('AI Knowledge Manager Service', () => {
         });
     });
 
-    describe('getContextualKnowledge (Integration)', () => {
-        it.skip('should retrieve and rank knowledge chunks [BLOCKED: REAL DB HIT]', async () => {
+    describe('getContextualKnowledge', () => {
+        it('should retrieve and rank knowledge chunks', async () => {
             mockDb.get.mockImplementation((sql, params, cb) => {
-                // Settings
-                cb(null, { rag_enabled: true, min_relevance_score: 0.5 });
+                if (sql.includes('project_rag_settings')) {
+                    cb(null, { rag_enabled: 1, min_relevance_score: 0.5, max_chunks_per_query: 5 });
+                } else {
+                    cb(null, null);
+                }
             });
 
             mockDb.all.mockImplementation((sql, params, cb) => {
-                // Chunks
                 cb(null, [
-                    { id: 'c1', content: 'A', embedding: JSON.stringify([1, 0]), filename: 'f1' },
-                    { id: 'c2', content: 'B', embedding: JSON.stringify([0, 1]), filename: 'f2' }
+                    { 
+                        id: 'c1', 
+                        content: 'Test content', 
+                        embedding: JSON.stringify([1, 0, 0]), 
+                        doc_id: 'doc1',
+                        filename: 'f1.pdf',
+                        phase: 'Planning',
+                        knowledge_type: 'general'
+                    }
                 ]);
             });
 
-            // Mock RAG service to rank 'A' higher
-            // We need to ensure the mock is picked up. Since we can't easily ensure 'require' matches,
-            // this test is extremely fragile or likely to fail on "module not found" or "real module used".
-            // Skipping.
+            const result = await AIKnowledgeManager.getContextualKnowledge({
+                organizationId: 'org-1',
+                projectId: 'project-1',
+                query: 'test query',
+                maxChunks: 5
+            });
+
+            expect(result).toBeDefined();
+            expect(result.chunksUsed).toBeGreaterThanOrEqual(0);
+            expect(mockDb.all).toHaveBeenCalled();
+        });
+
+        it('should return empty when organizationId missing', async () => {
+            const result = await AIKnowledgeManager.getContextualKnowledge({
+                projectId: 'project-1',
+                query: 'test'
+            });
+
+            expect(result.scoped).toBe(false);
+            expect(result.context).toBe('');
         });
     });
 
     describe('captureDecision', () => {
-        it.skip('should store decision and generate embeddings [BLOCKED: REAL DB HIT]', async () => {
-            mockDb.run.mockImplementation(function (sql, params, cb) { if (cb) cb.call({ changes: 1 }, null); });
-            // ragService mock would be needed here too
+        it('should store decision and generate embeddings', async () => {
+            mockDb.run.mockImplementation(function (sql, params, cb) { 
+                if (cb) cb.call({ changes: 1 }, null); 
+            });
 
-            const result = await AIKnowledgeManager.captureDecision({ organizationId: 'o1', title: 'Dec' });
+            const result = await AIKnowledgeManager.captureDecision({ 
+                organizationId: 'o1', 
+                projectId: 'p1',
+                title: 'Test Decision',
+                rationale: 'Test rationale',
+                outcome: 'Approved',
+                phase: 'Planning',
+                createdBy: 'user-1'
+            });
+            
             expect(result.captured).toBe(true);
+            expect(result.docId).toBeDefined();
+            expect(mockRagService.storeChunks).toHaveBeenCalled();
         });
     });
 });

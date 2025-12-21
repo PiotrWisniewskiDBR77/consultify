@@ -9,70 +9,239 @@ const authMiddleware = require('../middleware/authMiddleware');
 const ActivityService = require('../services/activityService');
 
 // LOGIN
-router.post('/login', (req, res) => {
-    const { email, password } = req.body;
+// Enhanced with MFA support and refresh tokens
+router.post('/login', async (req, res) => {
+    const { email, password, mfaToken, deviceFingerprint, trustDevice } = req.body;
 
     if (!email || !password) {
         return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    db.get('SELECT * FROM users WHERE email = ?', [email], (err, user) => {
-        if (err) return res.status(500).json({ error: 'Server error' });
-        if (!user) return res.status(404).json({ error: 'User not found' });
+    // Import services
+    const MFAService = require('../services/mfaService');
+    const RefreshTokenService = require('../services/refreshTokenService');
 
+    try {
+        // Get user
+        const user = await new Promise((resolve, reject) => {
+            db.get('SELECT * FROM users WHERE email = ?', [email], (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
+            });
+        });
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Verify password
         const passwordIsValid = bcrypt.compareSync(password, user.password);
-        if (!passwordIsValid) return res.status(401).json({ error: 'Invalid password' });
+        if (!passwordIsValid) {
+            return res.status(401).json({ error: 'Invalid password' });
+        }
+
+        // Get organization
+        const org = await new Promise((resolve, reject) => {
+            db.get('SELECT * FROM organizations WHERE id = ?', [user.organization_id], (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
+            });
+        });
+
+        if (!org) {
+            return res.status(404).json({ error: 'Organization not found' });
+        }
+
+        // Check organization status
+        if (org.status === 'pending' && user.role !== 'SUPERADMIN') {
+            return res.status(403).json({ error: 'Your organization is waiting for approval.', status: 'pending' });
+        }
+        if (org.status === 'blocked' && user.role !== 'SUPERADMIN') {
+            return res.status(403).json({ error: 'Your organization has been blocked. Contact support.' });
+        }
+
+        // Check MFA requirement
+        const mfaStatus = await MFAService.getMFAStatus(user.id);
+
+        if (mfaStatus.enabled) {
+            // MFA is enabled - check if device is trusted
+            if (deviceFingerprint) {
+                const isTrusted = await MFAService.isDeviceTrusted(user.id, deviceFingerprint);
+                if (isTrusted) {
+                    // Device is trusted, skip MFA
+                } else if (!mfaToken) {
+                    // Need MFA verification
+                    return res.json({
+                        mfaRequired: true,
+                        userId: user.id,
+                        message: 'Please enter your 2FA code'
+                    });
+                } else {
+                    // Verify MFA token
+                    const verification = await MFAService.verifyTOTP(
+                        user.id,
+                        mfaToken,
+                        req.ip,
+                        req.get('user-agent')
+                    );
+
+                    if (!verification.success) {
+                        return res.status(401).json({
+                            error: verification.error,
+                            mfaRequired: true
+                        });
+                    }
+
+                    // Trust device if requested
+                    if (trustDevice && deviceFingerprint) {
+                        const deviceName = (req.get('user-agent') || 'Unknown Device').substring(0, 100);
+                        await MFAService.trustDevice(user.id, deviceFingerprint, deviceName);
+                    }
+                }
+            } else if (!mfaToken) {
+                // No device fingerprint, need MFA
+                return res.json({
+                    mfaRequired: true,
+                    userId: user.id,
+                    message: 'Please enter your 2FA code'
+                });
+            } else {
+                // Verify MFA token
+                const verification = await MFAService.verifyTOTP(
+                    user.id,
+                    mfaToken,
+                    req.ip,
+                    req.get('user-agent')
+                );
+
+                if (!verification.success) {
+                    return res.status(401).json({
+                        error: verification.error,
+                        mfaRequired: true
+                    });
+                }
+            }
+        } else if (mfaStatus.enforced) {
+            // Organization requires MFA but user hasn't set it up
+            return res.status(403).json({
+                error: 'Your organization requires two-factor authentication. Please set up MFA first.',
+                mfaSetupRequired: true,
+                gracePeriodRemaining: mfaStatus.gracePeriodRemaining
+            });
+        }
 
         // Update Last Login
-        db.run('UPDATE users SET last_login = datetime("now") WHERE id = ?', [user.id]);
-
-        db.get('SELECT * FROM organizations WHERE id = ?', [user.organization_id], (err, org) => {
-            if (err) return res.status(500).json({ error: 'Server error' });
-            if (!org) return res.status(404).json({ error: 'Organization not found' });
-
-            // Check if organization is pending or blocked
-            if (org.status === 'pending' && user.role !== 'SUPERADMIN') {
-                return res.status(403).json({ error: 'Your organization is waiting for approval.', status: 'pending' });
-            }
-            if (org.status === 'blocked' && user.role !== 'SUPERADMIN') {
-                return res.status(403).json({ error: 'Your organization has been blocked. Contact support.' });
-            }
-
-            // Generate unique token ID for revocation support
-            const jti = uuidv4();
-
-            const token = jwt.sign({
-                id: user.id,
-                email: user.email,
-                role: user.role,
-                organizationId: user.organization_id,
-                jti: jti // Unique token identifier for revocation
-            }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRES_IN });
-
-            const safeUser = {
-                id: user.id,
-                email: user.email,
-                firstName: user.first_name,
-                lastName: user.last_name,
-                role: user.role,
-                status: user.status,
-                organizationId: user.organization_id,
-                companyName: org.name
-            };
-
-            // Log successful login
-            ActivityService.log({
-                organizationId: user.organization_id,
-                userId: user.id,
-                action: 'login',
-                entityType: 'session',
-                entityId: jti,
-                entityName: 'User Login'
-            });
-
-            res.json({ user: safeUser, token });
+        await new Promise((resolve) => {
+            db.run('UPDATE users SET last_login = datetime("now") WHERE id = ?', [user.id], resolve);
         });
-    });
+
+        // Generate token pair (access + refresh)
+        const deviceInfo = (req.get('user-agent') || 'Unknown Device').substring(0, 200);
+        const tokenPair = await RefreshTokenService.generateTokenPair(
+            {
+                id: user.id,
+                email: user.email,
+                role: user.role,
+                organization_id: user.organization_id
+            },
+            {
+                deviceInfo,
+                ip: req.ip,
+                userAgent: req.get('user-agent')
+            }
+        );
+
+        const safeUser = {
+            id: user.id,
+            email: user.email,
+            firstName: user.first_name,
+            lastName: user.last_name,
+            role: user.role,
+            status: user.status,
+            organizationId: user.organization_id,
+            companyName: org.name,
+            mfaEnabled: mfaStatus.enabled
+        };
+
+        // Log successful login
+        ActivityService.log({
+            organizationId: user.organization_id,
+            userId: user.id,
+            action: 'login',
+            entityType: 'session',
+            entityId: 'session',
+            entityName: 'User Login'
+        });
+
+        res.json({
+            user: safeUser,
+            token: tokenPair.accessToken,
+            refreshToken: tokenPair.refreshToken,
+            expiresIn: tokenPair.expiresIn
+        });
+
+    } catch (error) {
+        console.error('[Auth] Login error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// REFRESH TOKEN - Get new access token using refresh token
+router.post('/refresh', async (req, res) => {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+        return res.status(400).json({ error: 'Refresh token is required' });
+    }
+
+    const RefreshTokenService = require('../services/refreshTokenService');
+
+    try {
+        const result = await RefreshTokenService.refreshAccessToken(refreshToken, {
+            ip: req.ip,
+            userAgent: req.get('user-agent')
+        });
+
+        if (!result) {
+            return res.status(401).json({ error: 'Invalid or expired refresh token' });
+        }
+
+        res.json({
+            token: result.accessToken,
+            refreshToken: result.refreshToken,
+            expiresIn: result.expiresIn
+        });
+    } catch (error) {
+        console.error('[Auth] Refresh error:', error);
+        res.status(500).json({ error: 'Token refresh failed' });
+    }
+});
+
+// GET ACTIVE SESSIONS
+router.get('/sessions', authMiddleware, async (req, res) => {
+    const RefreshTokenService = require('../services/refreshTokenService');
+
+    try {
+        const sessions = await RefreshTokenService.getActiveSessions(req.user.id);
+        res.json({ sessions });
+    } catch (error) {
+        console.error('[Auth] Get sessions error:', error);
+        res.status(500).json({ error: 'Failed to get sessions' });
+    }
+});
+
+// REVOKE SESSION
+router.delete('/sessions/:id', authMiddleware, async (req, res) => {
+    const { id } = req.params;
+    const RefreshTokenService = require('../services/refreshTokenService');
+
+    try {
+        await RefreshTokenService.revokeSession(req.user.id, id);
+        res.json({ success: true, message: 'Session revoked' });
+    } catch (error) {
+        console.error('[Auth] Revoke session error:', error);
+        res.status(500).json({ error: 'Failed to revoke session' });
+    }
 });
 
 
@@ -428,6 +597,116 @@ router.post('/reset-password', (req, res) => {
             res.json({ message: 'Password updated successfully' });
         });
     });
+});
+
+// EMAIL VERIFICATION
+router.post('/verify-email', async (req, res) => {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ error: 'Token is required' });
+
+    try {
+        const user = await new Promise((resolve, reject) => {
+            db.get('SELECT * FROM users WHERE email_verification_token = ?', [token], (err, row) => resolve(row));
+        });
+
+        if (!user) return res.status(400).json({ error: 'Invalid token' });
+
+        if (new Date(user.email_verification_expires_at) < new Date()) {
+            return res.status(400).json({ error: 'Token expired' });
+        }
+
+        await new Promise((resolve) => {
+            db.run(
+                `UPDATE users SET 
+                 email_verified = 1, 
+                 email_verification_token = NULL, 
+                 email_verification_expires_at = NULL 
+                 WHERE id = ?`,
+                [user.id], resolve
+            );
+        });
+
+        res.json({ success: true, message: 'Email verified successfully' });
+    } catch (error) {
+        console.error('Email verify error:', error);
+        res.status(500).json({ error: 'Verification failed' });
+    }
+});
+
+router.post('/resend-verification', authMiddleware, async (req, res) => {
+    const userId = req.user.id;
+    const EmailService = require('../services/emailService');
+    const crypto = require('crypto');
+
+    try {
+        const token = crypto.randomBytes(32).toString('hex');
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24h
+
+        await new Promise((resolve) => {
+            db.run(
+                `UPDATE users SET 
+                 email_verification_token = ?, 
+                 email_verification_expires_at = ?,
+                 email_verification_sent_at = datetime('now')
+                 WHERE id = ?`,
+                [token, expiresAt, userId], resolve
+            );
+        });
+
+        const verifyLink = `${process.env.APP_URL || 'http://localhost:3000'}/auth/verify-email?token=${token}`;
+        await EmailService.sendEmail(
+            req.user.email,
+            'Verify your Email',
+            `<a href="${verifyLink}">Click here to verify your email</a>`
+        );
+
+        res.json({ success: true, message: 'Verification email sent' });
+    } catch (error) {
+        console.error('Resend verify error:', error);
+        res.status(500).json({ error: 'Failed to send email' });
+    }
+});
+
+// MFA SETUP
+router.post('/mfa/setup', authMiddleware, async (req, res) => {
+    const MFAService = require('../services/mfaService');
+    try {
+        const result = await MFAService.setupMFA(req.user.id, req.user.email);
+        res.json(result);
+    } catch (error) {
+        console.error('MFA Setup error:', error);
+        res.status(500).json({ error: 'MFA setup failed' });
+    }
+});
+
+router.post('/mfa/enable', authMiddleware, async (req, res) => {
+    const { token } = req.body;
+    const MFAService = require('../services/mfaService');
+    try {
+        const result = await MFAService.verifyAndEnableMFA(req.user.id, token);
+        if (!result.success) {
+            return res.status(400).json(result);
+        }
+        res.json(result);
+    } catch (error) {
+        console.error('MFA Enable error:', error);
+        res.status(500).json({ error: 'MFA activation failed' });
+    }
+});
+
+router.post('/mfa/disable', authMiddleware, async (req, res) => {
+    const { token } = req.body;
+    const MFAService = require('../services/mfaService');
+    try {
+        const result = await MFAService.disableMFA(req.user.id, token);
+        if (!result.success) {
+            return res.status(400).json(result);
+        }
+        res.json(result);
+    } catch (error) {
+        console.error('MFA Disable error:', error);
+        res.status(500).json({ error: 'MFA disable failed' });
+    }
 });
 
 module.exports = router;

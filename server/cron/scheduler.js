@@ -49,16 +49,19 @@ const Scheduler = {
             });
         });
 
-        // 7. Notification Queue Processing - Run every 10 minutes
-        cron.schedule('*/10 * * * *', () => {
-            console.log('[Scheduler] Processing Notification Queue');
-            const NotificationOutboxService = require('../services/notificationOutboxService');
-            NotificationOutboxService.processQueue().catch(err => {
-                console.error('[Scheduler] Notification Queue Processing failed:', err.message);
+        // 8. AI Monthly Budget Reset - Run on the 1st of every month at midnight
+        cron.schedule('0 0 1 * *', () => {
+            console.log('[Scheduler] Running Monthly AI Budget Reset');
+            const AICostControlService = require('../services/aiCostControlService');
+            AICostControlService.resetMonthlyUsage().then(result => {
+                console.log(`[Scheduler] AI Monthly Budget Reset completed. Count: ${result.resetCount}`);
+            }).catch(err => {
+                console.error('[Scheduler] AI Monthly Budget Reset failed:', err.message);
             });
         });
 
-        console.log('[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min)');
+        console.log('[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st)');
+
     }
 };
 

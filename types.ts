@@ -14,6 +14,7 @@ export enum AppView {
 
   // Full Transformation Views
   ONBOARDING_WIZARD = 'ONBOARDING_WIZARD', // Phase E: Guided First Value
+  ORG_SETUP_WIZARD = 'ORG_SETUP_WIZARD', // Phase D: Organization Setup
   FULL_STEP1_CONTEXT = 'FULL_STEP1_CONTEXT', // NEW: Senior Consultant Context Gathering
   FULL_STEP1_ASSESSMENT = 'FULL_STEP1_ASSESSMENT', // Parent
   FULL_STEP1_PROCESSES = 'FULL_STEP1_PROCESSES',
@@ -1695,6 +1696,7 @@ export interface User {
   units?: 'metric' | 'imperial'; // User preference
   impersonatorId?: string; // ID of the admin impersonating this user
   licensePlanId?: string;
+  hasWorkspace?: boolean; // NEW: Indicates if user already has an active workspace
 }
 
 export interface FreeSession {
@@ -2485,6 +2487,7 @@ export interface User {
   tokenResetAt?: string;
   aiConfig?: AIProviderConfig;
   licensePlanId?: string;
+  mfaEnabled?: boolean;
 }
 
 // Organization with extended fields

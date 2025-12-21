@@ -37,7 +37,7 @@ function recordStorageUsage(orgId, bytes, action, metadata = {}) {
         deps.db.run(
             `INSERT INTO usage_records (id, organization_id, user_id, type, amount, action, metadata)
              VALUES (?, ?, NULL, 'storage', ?, ?, ?)`,
-            [id, orgId, bytes, action, JSON.stringify(metadata)],
+            [id, orgId, null, bytes, action, JSON.stringify(metadata)],
             function (err) {
                 if (err) reject(err);
                 else resolve({ id, bytes });

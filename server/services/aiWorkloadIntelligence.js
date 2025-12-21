@@ -7,8 +7,11 @@
  * "This is the killer feature traditional PMO tools don't have."
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db: require('../database'),
+    uuidv4: require('uuid').v4
+};
 
 // Workload status levels
 const WORKLOAD_STATUS = {
@@ -31,6 +34,11 @@ const AIWorkloadIntelligence = {
     WORKLOAD_STATUS,
     BURNOUT_RISK,
 
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
+
     // ==========================================
     // PORTFOLIO-WIDE WORKLOAD
     // ==========================================
@@ -41,7 +49,7 @@ const AIWorkloadIntelligence = {
     getPortfolioWorkload: async (organizationId) => {
         // Get all users in organization with their task counts
         const users = await new Promise((resolve, reject) => {
-            db.all(`
+            deps.db.all(`
                 SELECT 
                     u.id, u.first_name, u.last_name, u.role,
                     COUNT(DISTINCT t.id) as active_tasks,
@@ -61,7 +69,7 @@ const AIWorkloadIntelligence = {
 
         // Get capacity profiles
         const capacityProfiles = await new Promise((resolve) => {
-            db.all(`SELECT * FROM user_capacity_profile WHERE organization_id = ?`, [organizationId], (err, rows) => {
+            deps.db.all(`SELECT * FROM user_capacity_profile WHERE organization_id = ?`, [organizationId], (err, rows) => {
                 resolve((rows || []).reduce((acc, p) => { acc[p.user_id] = p; return acc; }, {}));
             });
         });
@@ -182,11 +190,12 @@ const AIWorkloadIntelligence = {
 
     /**
      * Detect over-allocation patterns in a project
+     * OPTIMIZED: Eliminated N+1 queries by using batch operations
      */
     detectOverAllocation: async (projectId) => {
         // Get users with tasks in project
         const projectUsers = await new Promise((resolve, reject) => {
-            db.all(`
+            deps.db.all(`
                 SELECT DISTINCT 
                     u.id, u.first_name, u.last_name,
                     COUNT(t.id) as task_count
@@ -201,40 +210,90 @@ const AIWorkloadIntelligence = {
             });
         });
 
+        if (projectUsers.length === 0) {
+            return {
+                projectId,
+                usersAnalyzed: 0,
+                overAllocatedUsers: [],
+                hasOverAllocation: false,
+                severity: 'low'
+            };
+        }
+
+        const userIds = projectUsers.map(u => u.id);
+        const placeholders = userIds.map(() => '?').join(',');
+
+        // OPTIMIZATION: Batch fetch all weekly tasks for all users in one query
+        const allWeeklyTasks = await new Promise((resolve, reject) => {
+            deps.db.all(`
+                SELECT 
+                    assignee_id,
+                    strftime('%Y-%W', due_date) as week,
+                    SUM(effort_estimate) as effort
+                FROM tasks
+                WHERE assignee_id IN (${placeholders})
+                AND project_id = ?
+                AND status NOT IN ('done', 'DONE', 'cancelled')
+                AND due_date IS NOT NULL
+                GROUP BY assignee_id, strftime('%Y-%W', due_date)
+            `, [...userIds, projectId], (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows || []);
+            });
+        });
+
+        // OPTIMIZATION: Batch fetch all capacity profiles in one query
+        const allProfiles = await new Promise((resolve, reject) => {
+            deps.db.all(`
+                SELECT user_id, default_weekly_hours 
+                FROM user_capacity_profile 
+                WHERE user_id IN (${placeholders})
+            `, userIds, (err, rows) => {
+                if (err) reject(err);
+                else {
+                    // Create a map for quick lookup
+                    const profileMap = {};
+                    (rows || []).forEach(row => {
+                        profileMap[row.user_id] = row.default_weekly_hours || 40;
+                    });
+                    // Fill in defaults for users without profiles
+                    userIds.forEach(id => {
+                        if (!profileMap[id]) {
+                            profileMap[id] = 40;
+                        }
+                    });
+                    resolve(profileMap);
+                }
+            });
+        });
+
+        // Group weekly tasks by user
+        const weeklyTasksByUser = {};
+        allWeeklyTasks.forEach(wt => {
+            if (!weeklyTasksByUser[wt.assignee_id]) {
+                weeklyTasksByUser[wt.assignee_id] = [];
+            }
+            weeklyTasksByUser[wt.assignee_id].push({
+                week: wt.week,
+                effort: wt.effort || 0
+            });
+        });
+
+        // Process each user
         const overAllocated = [];
-
         for (const user of projectUsers) {
-            // Get tasks by week
-            const weeklyTasks = await new Promise((resolve) => {
-                db.all(`
-                    SELECT 
-                        strftime('%Y-%W', due_date) as week,
-                        SUM(effort_estimate) as effort
-                    FROM tasks
-                    WHERE assignee_id = ?
-                    AND project_id = ?
-                    AND status NOT IN ('done', 'DONE', 'cancelled')
-                    AND due_date IS NOT NULL
-                    GROUP BY strftime('%Y-%W', due_date)
-                `, [user.id, projectId], (err, rows) => resolve(rows || []));
-            });
+            const weeklyTasks = weeklyTasksByUser[user.id] || [];
+            const weeklyCapacity = allProfiles[user.id] || 40;
 
-            // Get capacity profile
-            const profile = await new Promise((resolve) => {
-                db.get(`SELECT * FROM user_capacity_profile WHERE user_id = ?`, [user.id], (err, row) => {
-                    resolve(row || { default_weekly_hours: 40 });
-                });
-            });
-
-            const overloadedWeeks = weeklyTasks.filter(w => (w.effort || 0) > profile.default_weekly_hours);
+            const overloadedWeeks = weeklyTasks.filter(w => w.effort > weeklyCapacity);
 
             if (overloadedWeeks.length > 0) {
                 overAllocated.push({
                     userId: user.id,
                     userName: `${user.first_name} ${user.last_name}`,
                     totalTasks: user.task_count,
-                    totalEffort: user.total_effort || 0,
-                    weeklyCapacity: profile.default_weekly_hours,
+                    totalEffort: 0, // Could be calculated if needed
+                    weeklyCapacity: weeklyCapacity,
                     overloadedWeeks: overloadedWeeks.length,
                     worstWeek: overloadedWeeks.reduce((max, w) => w.effort > (max.effort || 0) ? w : max, {})
                 });
@@ -270,7 +329,7 @@ const AIWorkloadIntelligence = {
 
         // Find users with capacity
         const usersWithCapacity = await new Promise((resolve) => {
-            db.all(`
+            deps.db.all(`
                 SELECT 
                     u.id, u.first_name, u.last_name,
                     COUNT(t.id) as task_count,
@@ -290,7 +349,7 @@ const AIWorkloadIntelligence = {
         for (const overloaded of overAllocation.overAllocatedUsers) {
             // Get tasks that could be reassigned
             const reassignableTasks = await new Promise((resolve) => {
-                db.all(`
+                deps.db.all(`
                     SELECT id, title, priority, effort_estimate, due_date
                     FROM tasks
                     WHERE assignee_id = ? AND project_id = ?
@@ -352,7 +411,7 @@ const AIWorkloadIntelligence = {
 
         // 1. Check for compressed timelines (too much work in short period)
         const upcomingWork = await new Promise((resolve) => {
-            db.all(`
+            deps.db.all(`
                 SELECT 
                     strftime('%Y-%W', due_date) as week,
                     COUNT(*) as task_count,
@@ -381,7 +440,7 @@ const AIWorkloadIntelligence = {
 
         // 2. Check for tasks with no effort estimate but tight deadlines
         const underestimated = await new Promise((resolve) => {
-            db.all(`
+            deps.db.all(`
                 SELECT id, title, due_date
                 FROM tasks
                 WHERE project_id = ?
@@ -403,7 +462,7 @@ const AIWorkloadIntelligence = {
 
         // 3. Check for milestone compression
         const milestones = await new Promise((resolve) => {
-            db.all(`
+            deps.db.all(`
                 SELECT i.id, i.name, i.target_date, 
                     COUNT(t.id) as remaining_tasks,
                     SUM(t.effort_estimate) as remaining_effort
@@ -476,7 +535,7 @@ const AIWorkloadIntelligence = {
 
         // Get capacity profile
         const profile = await new Promise((resolve) => {
-            db.get(`SELECT * FROM user_capacity_profile WHERE user_id = ?`, [userId], (err, row) => {
+            deps.db.get(`SELECT * FROM user_capacity_profile WHERE user_id = ?`, [userId], (err, row) => {
                 resolve(row || { default_weekly_hours: 40 });
             });
         });
@@ -488,7 +547,7 @@ const AIWorkloadIntelligence = {
 
         // Get previous snapshot for trend
         const previous = await new Promise((resolve) => {
-            db.get(`
+            deps.db.get(`
                 SELECT utilization_percent FROM workload_snapshots
                 WHERE user_id = ? ${projectId ? 'AND project_id = ?' : ''}
                 ORDER BY snapshot_date DESC LIMIT 1
@@ -536,7 +595,7 @@ const AIWorkloadIntelligence = {
      */
     getWorkloadTrend: async (userId, days = 30) => {
         return new Promise((resolve, reject) => {
-            db.all(`
+            deps.db.all(`
                 SELECT * FROM workload_snapshots
                 WHERE user_id = ?
                 AND snapshot_date > date('now', '-${days} days')

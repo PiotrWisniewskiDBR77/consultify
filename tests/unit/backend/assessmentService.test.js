@@ -1,36 +1,32 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { createRequire } from 'module';
+import { createMockDb } from '../../helpers/dependencyInjector.js';
+
+const require = createRequire(import.meta.url);
 
 describe('Assessment Service', () => {
     let AssessmentService;
     let mockDb;
-    let mockUuid;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         vi.resetModules();
 
-        mockDb = {
-            all: vi.fn(),
-            get: vi.fn(),
-            run: vi.fn()
-        };
+        mockDb = createMockDb();
 
-        mockUuid = {
-            v4: vi.fn(() => 'mock-uuid-assessment')
-        };
+        vi.doMock('../../../server/database', () => ({ default: mockDb }));
 
-        vi.doMock('../../../server/database', () => ({ default: mockDb })); // Assuming default export or CommonJS module.exports handling
-        // Since assessmentService uses require('../database'), we strictly need to mock that module.
-        // In previous successful attempts (logic only), we just ignored the failure or the mock didn't work for DB but logic ran fine.
-
-        vi.doMock('uuid', () => ({ v4: mockUuid.v4 }));
-
-        AssessmentService = (await import('../../../server/services/assessmentService.js')).default;
-        // Note: assessmentService uses CommonJS `module.exports = AssessmentService`. 
-        // Vitest import usually returns it as `defaults` or proper interop.
+        AssessmentService = require('../../../server/services/assessmentService.js');
+        
+        // Inject mock dependencies
+        AssessmentService.setDependencies({
+            db: mockDb,
+            uuidv4: () => 'mock-uuid-assessment'
+        });
     });
 
     afterEach(() => {
-        vi.clearAllMocks();
+        vi.restoreAllMocks();
+        vi.doUnmock('../../../server/database');
     });
 
     describe('Logic: generateGapSummary', () => {
@@ -59,25 +55,37 @@ describe('Assessment Service', () => {
     });
 
     describe('getAssessment', () => {
-        it.skip('should retrieve and parse assessment [BLOCKED: REAL DB HIT]', async () => {
+        it('should retrieve and parse assessment', async () => {
             mockDb.get.mockImplementation((sql, params, cb) => {
                 cb(null, {
+                    id: 'assessment-1',
+                    project_id: 'p-1',
                     axis_scores: JSON.stringify([{ axis: 'A', asIs: 1, toBe: 2 }]),
                     completed_axes: JSON.stringify(['A'])
                 });
             });
 
             const result = await AssessmentService.getAssessment('p-1');
+            expect(result).toBeDefined();
             expect(result.axisScores).toHaveLength(1);
+            expect(result.completedAxes).toContain('A');
+        });
+
+        it('should return null for non-existent assessment', async () => {
+            mockDb.get.mockImplementation((sql, params, cb) => {
+                cb(null, null);
+            });
+
+            const result = await AssessmentService.getAssessment('p-1');
+            expect(result).toBeNull();
         });
     });
 
     describe('saveAssessment', () => {
-        it.skip('should calculate totals and save [BLOCKED: REAL DB HIT]', async () => {
+        it('should calculate totals and save', async () => {
             mockDb.run.mockImplementation(function (sql, params, cb) {
-                cb.call({ changes: 1 });
+                cb.call({ changes: 1 }, null);
             });
-            mockDb.get.mockImplementation((sql, params, cb) => cb(null, { id: 'existing' })); // For subquery if mocked
 
             const data = {
                 axisScores: [{ axis: 'A', asIs: 3, toBe: 5 }],
@@ -86,6 +94,9 @@ describe('Assessment Service', () => {
 
             const result = await AssessmentService.saveAssessment('p-1', data);
             expect(result.overallGap).toBe(2);
+            expect(result.overallAsIs).toBe(3);
+            expect(result.overallToBe).toBe(5);
+            expect(mockDb.run).toHaveBeenCalled();
         });
     });
 });

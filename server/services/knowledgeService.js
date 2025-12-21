@@ -1,14 +1,21 @@
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+// Dependency injection container (for deterministic unit tests)
+const deps = {
+    db: require('../database'),
+    uuidv4: require('uuid').v4
+};
 
 const KnowledgeService = {
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
     // --- 1. IDEA COLLECTOR (Inbox) ---
 
     addCandidate: (content, reasoning, source, relatedAxis = null, originContext = '') => {
         return new Promise((resolve, reject) => {
-            const id = uuidv4();
+            const id = deps.uuidv4();
             const sql = `INSERT INTO knowledge_candidates (id, content, reasoning, source, origin_context, related_axis) VALUES (?, ?, ?, ?, ?, ?)`;
-            db.run(sql, [id, content, reasoning, source, originContext, relatedAxis], function (err) {
+            deps.db.run(sql, [id, content, reasoning, source, originContext, relatedAxis], function (err) {
                 if (err) reject(err);
                 else resolve(id);
             });
@@ -17,7 +24,7 @@ const KnowledgeService = {
 
     getCandidates: (status = 'pending') => {
         return new Promise((resolve, reject) => {
-            db.all("SELECT * FROM knowledge_candidates WHERE status = ? ORDER BY created_at DESC", [status], (err, rows) => {
+            deps.db.all("SELECT * FROM knowledge_candidates WHERE status = ? ORDER BY created_at DESC", [status], (err, rows) => {
                 if (err) reject(err);
                 else resolve(rows || []);
             });
@@ -26,7 +33,7 @@ const KnowledgeService = {
 
     updateCandidateStatus: (id, status, adminComment = '') => {
         return new Promise((resolve, reject) => {
-            db.run("UPDATE knowledge_candidates SET status = ?, admin_comment = ? WHERE id = ?", [status, adminComment, id], function (err) {
+            deps.db.run("UPDATE knowledge_candidates SET status = ?, admin_comment = ? WHERE id = ?", [status, adminComment, id], function (err) {
                 if (err) reject(err);
                 else resolve(this.changes);
             });
@@ -37,8 +44,8 @@ const KnowledgeService = {
 
     addStrategy: (title, description, createdBy = 'admin') => {
         return new Promise((resolve, reject) => {
-            const id = uuidv4();
-            db.run("INSERT INTO global_strategies (id, title, description, created_by) VALUES (?, ?, ?, ?)",
+            const id = deps.uuidv4();
+            deps.db.run("INSERT INTO global_strategies (id, title, description, created_by) VALUES (?, ?, ?, ?)",
                 [id, title, description, createdBy], function (err) {
                     if (err) reject(err);
                     else resolve(id);
@@ -48,7 +55,7 @@ const KnowledgeService = {
 
     getActiveStrategies: () => {
         return new Promise((resolve, reject) => {
-            db.all("SELECT * FROM global_strategies WHERE is_active = 1", (err, rows) => {
+            deps.db.all("SELECT * FROM global_strategies WHERE is_active = 1", (err, rows) => {
                 if (err) reject(err);
                 else resolve(rows || []);
             });
@@ -57,7 +64,7 @@ const KnowledgeService = {
 
     toggleStrategy: (id, isActive) => {
         return new Promise((resolve, reject) => {
-            db.run("UPDATE global_strategies SET is_active = ? WHERE id = ?", [isActive ? 1 : 0, id], function (err) {
+            deps.db.run("UPDATE global_strategies SET is_active = ? WHERE id = ?", [isActive ? 1 : 0, id], function (err) {
                 if (err) reject(err);
                 else resolve(this.changes);
             });
@@ -68,18 +75,21 @@ const KnowledgeService = {
 
     setClientContext: (orgId, key, value, source = 'inferred', confidence = 1.0) => {
         return new Promise((resolve, reject) => {
-            const id = uuidv4();
+            const id = deps.uuidv4();
             const valStr = typeof value === 'object' ? JSON.stringify(value) : value;
 
             // Upsert logic (delete then insert, or check exists)
             // SQLite upsert: INSERT INTO ... ON CONFLICT(organization_id, key) DO UPDATE... (requires unique index)
             // For now, let's just check if exists
-            db.get("SELECT id FROM client_context WHERE organization_id = ? AND key = ?", [orgId, key], (err, row) => {
+            deps.db.get("SELECT id FROM client_context WHERE organization_id = ? AND key = ?", [orgId, key], (err, row) => {
                 if (row) {
-                    db.run("UPDATE client_context SET value = ?, source = ?, confidence = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-                        [valStr, source, confidence, row.id], (err) => err ? reject(err) : resolve(row.id));
+                    deps.                    deps.db.run("UPDATE client_context SET value = ?, source = ?, confidence = ? WHERE id = ?",
+                        [valStr, source, confidence, row.id], (err) => {
+                            if (err) return reject(err);
+                            resolve(row.id);
+                        });
                 } else {
-                    db.run("INSERT INTO client_context (id, organization_id, key, value, source, confidence) VALUES (?, ?, ?, ?, ?, ?)",
+                    deps.db.run("INSERT INTO client_context (id, organization_id, key, value, source, confidence) VALUES (?, ?, ?, ?, ?, ?)",
                         [id, orgId, key, valStr, source, confidence], (err) => err ? reject(err) : resolve(id));
                 }
             });
@@ -88,7 +98,7 @@ const KnowledgeService = {
 
     getClientContext: (orgId) => {
         return new Promise((resolve, reject) => {
-            db.all("SELECT * FROM client_context WHERE organization_id = ?", [orgId], (err, rows) => {
+            deps.db.all("SELECT * FROM client_context WHERE organization_id = ?", [orgId], (err, rows) => {
                 if (err) reject(err);
                 else resolve(rows || []);
             });
@@ -100,7 +110,7 @@ const KnowledgeService = {
     addDocument: (filename, filepath, orgId, projectId, size) => {
         const id = uuidv4();
         return new Promise((resolve, reject) => {
-            db.run("INSERT INTO knowledge_docs (id, filename, filepath, organization_id, project_id, file_size_bytes, status) VALUES (?, ?, ?, ?, ?, ?, 'pending')",
+            deps.db.run("INSERT INTO knowledge_docs (id, filename, filepath, organization_id, project_id, file_size_bytes, status) VALUES (?, ?, ?, ?, ?, ?, 'pending')",
                 [id, filename, filepath, orgId, projectId, size], function (err) {
                     if (err) reject(err);
                     else resolve(id);
@@ -136,7 +146,7 @@ const KnowledgeService = {
                 params = [userId, orgId];
             }
 
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) reject(err);
                 else resolve(rows || []);
             });
@@ -165,7 +175,7 @@ const KnowledgeService = {
         if (currentChunk.trim().length > 0) chunks.push(currentChunk);
 
         // 2. Clear existing chunks for this doc
-        await new Promise((resolve) => db.run("DELETE FROM knowledge_chunks WHERE doc_id = ?", [docId], resolve));
+        await new Promise((resolve) => deps.db.run("DELETE FROM knowledge_chunks WHERE doc_id = ?", [docId], resolve));
 
         // 3. Process Chunks
         let processedCount = 0;
@@ -178,7 +188,7 @@ const KnowledgeService = {
             const embeddingJson = embedding ? JSON.stringify(embedding) : null;
 
             await new Promise((resolve, reject) => {
-                db.run("INSERT INTO knowledge_chunks (id, doc_id, content, chunk_index, embedding) VALUES (?, ?, ?, ?, ?)",
+                deps.db.run("INSERT INTO knowledge_chunks (id, doc_id, content, chunk_index, embedding) VALUES (?, ?, ?, ?, ?)",
                     [chunkId, docId, content, i, embeddingJson], (err) => {
                         if (err) console.error("Chunk insert error", err);
                         resolve();
@@ -189,7 +199,7 @@ const KnowledgeService = {
 
         // 4. Update Doc Status
         return new Promise((resolve, reject) => {
-            db.run("UPDATE knowledge_docs SET status = 'indexed' WHERE id = ?", [docId], (err) => {
+            deps.db.run("UPDATE knowledge_docs SET status = 'indexed' WHERE id = ?", [docId], (err) => {
                 if (err) reject(err);
                 else resolve(processedCount);
             });
@@ -204,7 +214,7 @@ const KnowledgeService = {
 
         return new Promise((resolve, reject) => {
             // 1. Get document info
-            db.get("SELECT * FROM knowledge_docs WHERE id = ?", [docId], async (err, doc) => {
+            deps.db.get("SELECT * FROM knowledge_docs WHERE id = ?", [docId], async (err, doc) => {
                 if (err) return reject(err);
                 if (!doc) return resolve(false);
 
@@ -221,7 +231,7 @@ const KnowledgeService = {
                     // 3. Mark as Deleted in DB
                     const deletedAt = new Date().toISOString().replace('T', ' ').split('.')[0];
 
-                    db.run("UPDATE knowledge_docs SET deleted_at = ? WHERE id = ?", [deletedAt, docId], function (err) {
+                    deps.db.run("UPDATE knowledge_docs SET deleted_at = ? WHERE id = ?", [deletedAt, docId], function (err) {
                         if (err) return reject(err);
 
                         if (this.changes === 0) {

@@ -20,7 +20,12 @@ describe('UsageService', () => {
 
     beforeEach(() => {
         mockDb = createMockDb();
-        mockUuid = createMockUuid('usage');
+        // Mock UUID that returns just the counter (service adds 'usage-' prefix)
+        let counter = 0;
+        mockUuid = () => {
+            counter++;
+            return counter.toString();
+        };
         mockBillingService = {
             getOrganizationBilling: vi.fn(),
             getPlanById: vi.fn()
@@ -48,7 +53,7 @@ describe('UsageService', () => {
 
             mockDb.run.mockImplementation((query, params, callback) => {
                 expect(query).toContain('INSERT INTO usage_records');
-                expect(query).toContain("type = 'token'");
+                expect(query).toContain("'token'"); // Type is hardcoded in SQL
                 expect(params[0]).toBe('usage-1'); // UUID
                 expect(params[1]).toBe(orgId);
                 expect(params[2]).toBe(userId);
@@ -85,7 +90,8 @@ describe('UsageService', () => {
             const metadata = { filename: 'test.pdf' };
 
             mockDb.run.mockImplementation((query, params, callback) => {
-                expect(query).toContain("type = 'storage'");
+                expect(query).toContain("'storage'"); // Type is hardcoded in SQL
+                expect(params[0]).toBe('usage-1'); // UUID
                 expect(params[1]).toBe(orgId);
                 expect(params[2]).toBe(null); // user_id is NULL for storage
                 expect(params[3]).toBe(bytes);

@@ -78,7 +78,16 @@ interface AppState {
     theme: 'light' | 'dark' | 'system';
     toggleTheme: (newTheme?: 'light' | 'dark' | 'system') => void;
     updateLastChatMessage: (content: string) => void;
+
+    // AI Freeze Status (Budget/Hard Freeze)
+    aiFreezeStatus: {
+        isFrozen: boolean;
+        reason: string | null;
+        scope: string | null;
+    };
+    setAiFreezeStatus: (status: Partial<AppState['aiFreezeStatus']>) => void;
 }
+
 
 const initialFreeSession: Partial<FreeSession> = {
     painPoints: [],
@@ -263,7 +272,17 @@ export const useAppStore = create<AppState>()(
                 }
                 return { activeChatMessages: messages };
             }),
+
+            aiFreezeStatus: {
+                isFrozen: false,
+                reason: null,
+                scope: null
+            },
+            setAiFreezeStatus: (status) => set((state) => ({
+                aiFreezeStatus: { ...state.aiFreezeStatus, ...status }
+            })),
         }),
+
         {
             name: 'consultify-storage', // unique name for localStorage
             storage: createJSONStorage(() => localStorage),

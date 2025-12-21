@@ -36,16 +36,26 @@ describe('AuthMiddleware', () => {
         expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'No token provided' }));
     });
 
-    it.skip('should return 401 if token expired', () => {
+    it('should return 401 if token expired', () => {
         req.headers['authorization'] = 'Bearer expired-token';
-        // Mock jwt.verify to call callback with error
+        // Mock jwt.verify to call callback with error asynchronously
         jwt.verify.mockImplementation((token, secret, cb) => {
-            cb({ name: 'TokenExpiredError' }, null);
+            process.nextTick(() => {
+                const error = new Error('Token expired');
+                error.name = 'TokenExpiredError';
+                cb(error, null);
+            });
         });
 
         verifyToken(req, res, next);
-        expect(res.status).toHaveBeenCalledWith(401);
-        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'Token expired' }));
+        // Wait for async callback
+        return new Promise(resolve => {
+            setTimeout(() => {
+                expect(res.status).toHaveBeenCalledWith(401);
+                expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'Token expired' }));
+                resolve();
+            }, 10);
+        });
     });
 
     it('should return 401 if token invalid', () => {
@@ -59,58 +69,91 @@ describe('AuthMiddleware', () => {
         expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'Unauthorized' }));
     });
 
-    it.skip('should call next() if token valid and no revocation check needed (no jti)', () => {
+    it('should call next() if token valid and no revocation check needed (no jti)', () => {
         req.headers['authorization'] = 'Bearer valid-token';
         const decoded = { id: 1, role: 'USER' };
         jwt.verify.mockImplementation((token, secret, cb) => {
-            cb(null, decoded);
+            process.nextTick(() => {
+                cb(null, decoded);
+            });
         });
 
         verifyToken(req, res, next);
-        expect(next).toHaveBeenCalled();
-        expect(req.userId).toBe(1);
+        // Wait for async callback
+        return new Promise(resolve => {
+            setTimeout(() => {
+                expect(next).toHaveBeenCalled();
+                expect(req.userId).toBe(1);
+                resolve();
+            }, 10);
+        });
     });
 
-    it.skip('should check revocation if jti is present', () => {
+    it('should check revocation if jti is present', () => {
         req.headers['authorization'] = 'Bearer valid-token';
-        const decoded = { id: 1, role: 'USER', jti: 'uuid' };
+        const decoded = { id: 1, role: 'USER', jti: 'uuid', iat: Math.floor(Date.now() / 1000) };
+        
+        let callCount = 0;
         jwt.verify.mockImplementation((token, secret, cb) => {
-            cb(null, decoded);
+            process.nextTick(() => {
+                cb(null, decoded);
+            });
         });
 
-        // Mock db.get to assume token NOT revoked
+        // Mock db.get to handle nested calls - first for jti check, second for revoke-all
         db.get.mockImplementation((query, params, cb) => {
+            callCount++;
             const callback = typeof params === 'function' ? params : cb;
             // First call checks specific token revocation
-            if (query.includes('FROM revoked_tokens WHERE jti')) {
-                callback(null, undefined); // Not revoked
+            if (callCount === 1) {
+                process.nextTick(() => {
+                    callback(null, undefined); // Not revoked
+                });
             }
             // Second call (nested) checks global revocation
-            else if (query.includes('revoke-all')) {
-                callback(null, undefined); // No global revoke
+            else if (callCount === 2) {
+                process.nextTick(() => {
+                    callback(null, undefined); // No global revoke
+                });
             }
         });
 
         verifyToken(req, res, next);
-        expect(db.get).toHaveBeenCalled();
-        expect(next).toHaveBeenCalled();
+        // Wait for async callbacks
+        return new Promise(resolve => {
+            setTimeout(() => {
+                expect(db.get).toHaveBeenCalled();
+                expect(next).toHaveBeenCalled();
+                resolve();
+            }, 20);
+        });
     });
 
-    it.skip('should return 401 if token is revoked', () => {
+    it('should return 401 if token is revoked', () => {
         req.headers['authorization'] = 'Bearer valid-token';
         const decoded = { id: 1, role: 'USER', jti: 'uuid' };
         jwt.verify.mockImplementation((token, secret, cb) => {
-            cb(null, decoded);
+            process.nextTick(() => {
+                cb(null, decoded);
+            });
         });
 
         db.get.mockImplementation((query, params, cb) => {
             const callback = typeof params === 'function' ? params : cb;
-            // Assume revoked
-            callback(null, { jti: 'uuid' });
+            // Token is revoked - return row
+            process.nextTick(() => {
+                callback(null, { jti: 'uuid' });
+            });
         });
 
         verifyToken(req, res, next);
-        expect(res.status).toHaveBeenCalledWith(401);
-        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'Token has been revoked' }));
+        // Wait for async callbacks
+        return new Promise(resolve => {
+            setTimeout(() => {
+                expect(res.status).toHaveBeenCalledWith(401);
+                expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'Token has been revoked' }));
+                resolve();
+            }, 20);
+        });
     });
 });
