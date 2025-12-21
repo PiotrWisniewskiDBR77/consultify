@@ -100,9 +100,6 @@ router.get('/initiative/:initiativeId', verifyToken, async (req, res) => {
 
 // ==================== SHARE LINKS (HARDENED) ====================
 
-const ShareLinkService = require('../services/shareLinkService');
-const PermissionService = require('../services/permissionService');
-
 // Simple in-memory rate limiter for public endpoint
 const publicHits = new Map(); // ip -> {count, ts}
 function publicRateLimit(req, res, next) {

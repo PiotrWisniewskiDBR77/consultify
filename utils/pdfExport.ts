@@ -71,7 +71,7 @@ export async function exportToPDF(
     yOffset += 10;
 
     // Handle multi-page if content is tall
-    let position = yOffset;
+    const position = yOffset;
     let remainingHeight = imgHeight;
     const availableHeight = pageHeight - yOffset - margin;
 

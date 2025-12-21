@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { FileText, Plus, Check, X, Eye, Edit, Trash2, RefreshCw, Loader2, AlertCircle, Shield } from 'lucide-react';
 import { LegalDocument, LegalDocType } from '../../types';
 
-interface SuperAdminLegalViewProps { }
+type SuperAdminLegalViewProps = Record<string, never>;
 
 const DOC_TYPE_OPTIONS: { value: LegalDocType; label: string }[] = [
     { value: 'TOS', label: 'Terms of Service' },

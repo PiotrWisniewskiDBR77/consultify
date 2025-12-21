@@ -287,7 +287,6 @@ const ROIService = {
             }
 
             // Safe eval using Function constructor (no access to global scope)
-            // eslint-disable-next-line no-new-func
             const fn = new Function(`return (${expr})`);
             return fn() || 0;
         } catch (e) {

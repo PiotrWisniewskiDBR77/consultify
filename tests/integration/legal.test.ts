@@ -5,7 +5,9 @@
 
 import { describe, it, expect, beforeAll } from 'vitest';
 import request from 'supertest';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const app = require('../../../server/index');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const db = require('../../../server/database');
 
 describe('Legal API Routes', () => {
@@ -23,42 +25,42 @@ describe('Legal API Routes', () => {
         testOrgId = 'test-legal-org-' + Date.now();
 
         // Create test organization
-        await new Promise((resolve, reject) => {
+        await new Promise<void>((resolve, reject) => {
             db.run(
                 `INSERT OR IGNORE INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`,
                 [testOrgId, 'Test Legal Org', 'pro', 'active'],
-                (err) => err ? reject(err) : resolve(undefined)
+                (err: Error | null) => err ? reject(err) : resolve()
             );
         });
 
         // Create test user
-        await new Promise((resolve, reject) => {
+        await new Promise<void>((resolve, reject) => {
             db.run(
                 `INSERT OR IGNORE INTO users (id, organization_id, email, password, role, status, first_name, last_name) 
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
                 [testUserId, testOrgId, 'legal-test@example.com', 'hashed', 'USER', 'active', 'Legal', 'Test'],
-                (err) => err ? reject(err) : resolve(undefined)
+                (err: Error | null) => err ? reject(err) : resolve()
             );
         });
 
         // Create admin user
         adminUserId = 'test-legal-admin-' + Date.now();
-        await new Promise((resolve, reject) => {
+        await new Promise<void>((resolve, reject) => {
             db.run(
                 `INSERT OR IGNORE INTO users (id, organization_id, email, password, role, status, first_name, last_name) 
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
                 [adminUserId, testOrgId, 'legal-admin@example.com', 'hashed', 'ADMIN', 'active', 'Admin', 'Test'],
-                (err) => err ? reject(err) : resolve(undefined)
+                (err: Error | null) => err ? reject(err) : resolve()
             );
         });
 
         // Create seed document
-        await new Promise((resolve, reject) => {
+        await new Promise<void>((resolve, reject) => {
             db.run(
                 `INSERT OR IGNORE INTO legal_documents (id, doc_type, version, title, content_md, effective_from, is_active, created_by)
                  VALUES (?, ?, ?, ?, ?, ?, 1, 'system')`,
                 ['test-tos-doc', 'TOS', '2025-01-01.1', 'Terms of Service', '# Test ToS', '2025-01-01'],
-                (err) => err ? reject(err) : resolve(undefined)
+                (err: Error | null) => err ? reject(err) : resolve()
             );
         });
 
@@ -187,30 +189,30 @@ describe('Legal Service', () => {
     it('should have legal_documents table', async () => {
         await db.initPromise;
 
-        const tables = await new Promise((resolve, reject) => {
+        const tables = await new Promise<unknown[]>((resolve, reject) => {
             db.all(
                 "SELECT name FROM sqlite_master WHERE type='table' AND name='legal_documents'",
                 [],
-                (err, rows) => err ? reject(err) : resolve(rows)
+                (err: Error | null, rows: unknown[]) => err ? reject(err) : resolve(rows)
             );
         });
 
         expect(Array.isArray(tables)).toBe(true);
-        expect((tables as any[]).length).toBeGreaterThan(0);
+        expect((tables as unknown[]).length).toBeGreaterThan(0);
     });
 
     it('should have legal_acceptances table', async () => {
         await db.initPromise;
 
-        const tables = await new Promise((resolve, reject) => {
+        const tables = await new Promise<unknown[]>((resolve, reject) => {
             db.all(
                 "SELECT name FROM sqlite_master WHERE type='table' AND name='legal_acceptances'",
                 [],
-                (err, rows) => err ? reject(err) : resolve(rows)
+                (err: Error | null, rows: unknown[]) => err ? reject(err) : resolve(rows)
             );
         });
 
         expect(Array.isArray(tables)).toBe(true);
-        expect((tables as any[]).length).toBeGreaterThan(0);
+        expect((tables as unknown[]).length).toBeGreaterThan(0);
     });
 });
