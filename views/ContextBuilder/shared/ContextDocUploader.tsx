@@ -30,8 +30,8 @@ export const ContextDocUploader: React.FC<ContextDocUploaderProps> = ({ tabName,
                 setUploadStatus('idle');
                 setStatusMessage('');
             }, 3000);
-        } catch (error: any) {
-            console.error("Upload failed", error);
+`catch (error: unknown) {`
+`setStatusMessage(error instanceof Error ? error.message : 'Upload failed');`
             setUploadStatus('error');
             setStatusMessage(error.message || 'Upload failed');
         } finally {

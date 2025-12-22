@@ -39,12 +39,12 @@ describe('AuditLogViewer', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        (global.fetch as any).mockClear();
+`(global.fetch as jest.Mock).mockClear();`
     });
 
     describe('Rendering', () => {
         it('should render audit log viewer', async () => {
-            (global.fetch as any).mockResolvedValue({
+`(global.fetch as jest.Mock).mockResolvedValue({`
                 ok: true,
                 json: async () => ({ entries: mockEntries })
             });
@@ -61,7 +61,7 @@ describe('AuditLogViewer', () => {
         });
 
         it('should display audit entries', async () => {
-            (global.fetch as any).mockResolvedValue({
+`(global.fetch as jest.Mock).mockResolvedValue({`
                 ok: true,
                 json: async () => ({ entries: mockEntries })
             });
@@ -79,7 +79,7 @@ describe('AuditLogViewer', () => {
         });
 
         it('should show loading state initially', () => {
-            (global.fetch as any).mockImplementation(() => new Promise(() => {})); // Never resolves
+`(global.fetch as jest.Mock).mockImplementation(() => new Promise(() => {}));`
 
             render(
                 <AuditLogViewer
@@ -94,7 +94,7 @@ describe('AuditLogViewer', () => {
 
     describe('Filtering', () => {
         it('should filter by action type', async () => {
-            (global.fetch as any).mockResolvedValue({
+`(global.fetch as jest.Mock).mockResolvedValue({`
                 ok: true,
                 json: async () => ({ entries: mockEntries })
             });
@@ -112,7 +112,7 @@ describe('AuditLogViewer', () => {
         });
 
         it('should filter by resource type', async () => {
-            (global.fetch as any).mockResolvedValue({
+`(global.fetch as jest.Mock).mockResolvedValue({`
                 ok: true,
                 json: async () => ({ entries: mockEntries })
             });
@@ -129,7 +129,7 @@ describe('AuditLogViewer', () => {
         });
 
         it('should filter by date range', async () => {
-            (global.fetch as any).mockResolvedValue({
+`(global.fetch as jest.Mock).mockResolvedValue({`
                 ok: true,
                 json: async () => ({ entries: mockEntries })
             });
@@ -146,7 +146,7 @@ describe('AuditLogViewer', () => {
         });
 
         it('should search entries', async () => {
-            (global.fetch as any).mockResolvedValue({
+`(global.fetch as jest.Mock).mockResolvedValue({`
                 ok: true,
                 json: async () => ({ entries: mockEntries })
             });
@@ -168,7 +168,7 @@ describe('AuditLogViewer', () => {
 
     describe('Pagination', () => {
         it('should paginate entries', async () => {
-            (global.fetch as any).mockResolvedValue({
+`(global.fetch as jest.Mock).mockResolvedValue({`
                 ok: true,
                 json: async () => ({ entries: mockEntries })
             });
@@ -185,7 +185,7 @@ describe('AuditLogViewer', () => {
         });
 
         it('should navigate to next page', async () => {
-            (global.fetch as any).mockResolvedValue({
+`(global.fetch as jest.Mock).mockResolvedValue({`
                 ok: true,
                 json: async () => ({ entries: mockEntries })
             });
@@ -205,7 +205,7 @@ describe('AuditLogViewer', () => {
         });
 
         it('should navigate to previous page', async () => {
-            (global.fetch as any).mockResolvedValue({
+`(global.fetch as jest.Mock).mockResolvedValueOnce({`
                 ok: true,
                 json: async () => ({ entries: mockEntries })
             });
@@ -227,7 +227,7 @@ describe('AuditLogViewer', () => {
 
     describe('Export Functionality', () => {
         it('should export as JSON', async () => {
-            (global.fetch as any)
+`(global.fetch as jest.Mock).mockResolvedValueOnce({`
                 .mockResolvedValueOnce({
                     ok: true,
                     json: async () => ({ entries: mockEntries })
@@ -252,7 +252,7 @@ describe('AuditLogViewer', () => {
         });
 
         it('should export as CSV', async () => {
-            (global.fetch as any)
+`(global.fetch as jest.Mock).mockResolvedValue({`
                 .mockResolvedValueOnce({
                     ok: true,
                     json: async () => ({ entries: mockEntries })
@@ -278,7 +278,7 @@ describe('AuditLogViewer', () => {
 
     describe('Entry Details', () => {
         it('should show entry details when selected', async () => {
-            (global.fetch as any).mockResolvedValue({
+`(global.fetch as jest.Mock).mockRejectedValue(new Error('Network error'));`
                 ok: true,
                 json: async () => ({ entries: mockEntries })
             });
@@ -297,7 +297,7 @@ describe('AuditLogViewer', () => {
 
     describe('Error Handling', () => {
         it('should display error when fetch fails', async () => {
-            (global.fetch as any).mockRejectedValue(new Error('Network error'));
+`(global.fetch as jest.Mock).mockResolvedValue({`
 
             render(
                 <AuditLogViewer
@@ -311,7 +311,7 @@ describe('AuditLogViewer', () => {
         });
 
         it('should handle API error responses', async () => {
-            (global.fetch as any).mockResolvedValue({
+`(global.fetch as jest.Mock).mockResolvedValue({`
                 ok: false,
                 status: 500
             });
@@ -330,7 +330,7 @@ describe('AuditLogViewer', () => {
 
     describe('Multi-Tenant Isolation', () => {
         it('should filter by organizationId when provided', async () => {
-            (global.fetch as any).mockResolvedValue({
+`(global.fetch as jest.Mock).mockResolvedValue({`
                 ok: true,
                 json: async () => ({ entries: mockEntries })
             });
@@ -350,7 +350,7 @@ describe('AuditLogViewer', () => {
         });
 
         it('should allow superadmin to view all entries', async () => {
-            (global.fetch as any).mockResolvedValue({
+`(global.fetch as jest.Mock).mockResolvedValue({`
                 ok: true,
                 json: async () => ({ entries: mockEntries })
             });

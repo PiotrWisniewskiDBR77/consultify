@@ -17,12 +17,12 @@ export const TransformationScenarios: React.FC<TransformationScenariosProps> = (
     onSelectScenario,
     currentScenarioId
 }) => {
-    const { fullSessionData, currentUser } = useAppStore();
+`const { fullSessionData, currentUser } = useAppStore() as { fullSessionData: any; currentUser: any };`
 
     // Derived State
-    const { synthesis, challenges, companyProfile } = useContextBuilderStore();
+`const { synthesis, challenges, companyProfile } = useContextBuilderStore() as { synthesis: any; challenges: any; companyProfile: any };`
     const { t: translate } = useTranslation();
-    const t = translate('transformationScenarios', { returnObjects: true }) as any;
+`const t = translate('transformationScenarios', { returnObjects: true }) as { [key: string]: any };`
 
     const recommendedId = recommendScenario(challenges.declaredChallenges, companyProfile);
 

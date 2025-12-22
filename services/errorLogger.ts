@@ -6,7 +6,7 @@ interface ErrorContext {
     route?: string;
     timestamp: string;
     userAgent: string;
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 export const logError = async (
@@ -46,7 +46,11 @@ export const logError = async (
     }
 };
 
-export const logPerformance = (metric: string, value: number, context?: any): void => {
+export const logPerformance = (
+    metric: string,
+    value: number,
+    context?: Record<string, unknown>
+): void => {
     if (process.env.NODE_ENV !== 'production') {
         console.log(`[Performance] ${metric}:`, value, context);
     }

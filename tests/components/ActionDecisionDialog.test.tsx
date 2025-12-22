@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+`'waitFor' as waitForFunction`
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ActionDecisionDialog } from '../../components/ai/ActionDecisionDialog';
 
@@ -251,7 +251,7 @@ describe('ActionDecisionDialog', () => {
 
     describe('Accessibility', () => {
         it('should have proper semantic structure', () => {
-            const { container } = render(
+`'container' as containerElement`
                 <ActionDecisionDialog
                     isOpen={true}
                     onClose={mockOnClose}

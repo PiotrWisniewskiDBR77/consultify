@@ -7,6 +7,7 @@ import { sendMessageToAIStream, AIMessageHistory } from '../../services/ai/gemin
 import { getQuestionsForAxis, DRD_STRUCTURE } from '../../services/drdStructure';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { ACTUAL_COLORS, TARGET_COLORS } from '../../utils/assessmentColors';
 
 interface AssessmentSummaryWorkspaceProps {
     assessment: Partial<Record<DRDAxis, AxisAssessment>>;
@@ -169,19 +170,19 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
                 <div className="flex gap-4">
                     <button
                         onClick={handleDownloadPDF}
-                        className="flex items-center gap-2 px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-navy-900 dark:text-white rounded-lg text-sm font-semibold transition-colors border border-slate-300 dark:border-white/10"
+                        className="flex items-center gap-2 px-5 py-2.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-navy-900 dark:text-white rounded-lg text-sm font-semibold transition-colors border border-slate-300 dark:border-white/10"
                         title="Download Report as PDF"
                     >
                         <Download size={16} />
                         Export PDF
                     </button>
                     <div className="bg-white dark:bg-navy-950/50 p-3 rounded-xl border border-slate-200 dark:border-white/5 text-center min-w-[100px]">
-                        <div className="text-2xl font-bold text-blue-400">{avgMaturity}</div>
-                        <div className="text-[10px] uppercase text-slate-500 font-bold">Avg Actual</div>
+                        <div className="text-3xl font-bold text-blue-400">{avgMaturity}</div>
+                        <div className="text-xs uppercase tracking-wide text-slate-500 font-bold">Avg Actual</div>
                     </div>
                     <div className="bg-white dark:bg-navy-950/50 p-3 rounded-xl border border-slate-200 dark:border-white/5 text-center min-w-[100px]">
-                        <div className="text-2xl font-bold text-red-400">{totalGap}</div>
-                        <div className="text-[10px] uppercase text-slate-500 font-bold">Total Gap Points</div>
+                        <div className="text-3xl font-bold text-red-400">{totalGap}</div>
+                        <div className="text-xs uppercase tracking-wide text-slate-500 font-bold">Total Gap Points</div>
                     </div>
                 </div>
             </div>
@@ -189,10 +190,10 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
             {/* Main Chart / Table */}
             <div className="bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-xl p-6 mb-8">
                 <div className="flex items-center justify-between mb-6 border-b border-slate-200 dark:border-white/5 pb-4">
-                    <h3 className="text-lg font-bold text-navy-900 dark:text-white">Wizualizacja Luk (Gap Map)</h3>
+                    <h3 className="text-xl font-bold text-navy-900 dark:text-white">Wizualizacja Luk (Gap Map)</h3>
                     <div className="flex gap-4 text-xs font-mono">
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 bg-blue-600 rounded-sm"></div> Obecny</div>
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 bg-purple-500/20 border border-purple-500 rounded-sm"></div> Docelowy</div>
+                        <div className="flex items-center gap-2"><div className={`w-3 h-3 rounded-sm ${ACTUAL_COLORS.bg}`}></div> Obecny</div>
+                        <div className="flex items-center gap-2"><div className={`w-3 h-3 ${TARGET_COLORS.bgLight} border ${TARGET_COLORS.border} rounded-sm`}></div> Docelowy</div>
                         <div className="flex items-center gap-2"><div className="w-3 h-3 bg-red-500/20 border border-dashed border-red-500 rounded-sm"></div> Luka</div>
                     </div>
                 </div>
@@ -327,7 +328,7 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
                         {!summary && !isGenerating && (
                             <button
                                 onClick={handleGenerateSummary}
-                                className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm font-semibold transition-colors shadow-lg shadow-purple-900/30"
+                                className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm font-semibold transition-colors shadow-lg shadow-purple-900/30"
                             >
                                 <Sparkles size={16} />
                                 Generate Summary

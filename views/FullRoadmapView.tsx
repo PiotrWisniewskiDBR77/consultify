@@ -20,7 +20,7 @@ export const FullRoadmapView: React.FC = () => {
     setFullSessionData: updateFullSession,
     setIsBotTyping: setTyping,
     addChatMessage: addMessage,
-    activeChatMessages: messages,
+`activeChatMessages: activeMessages,`
     currentProjectId,
     setCurrentView: onNavigate
   } = useAppStore();
@@ -56,7 +56,7 @@ export const FullRoadmapView: React.FC = () => {
 
     // Debounce or just run on mount/change
     fetchSummary();
-  }, [fullSession.initiatives.length, fullSession.initiatives.map(i => i.quarter).join(',')]); // Re-run when quarters change
+`useEffect(() => {`
 
   const handleAiChat = async (text: string) => {
     // Simple pass-through for now, or implement full chat logic
@@ -65,7 +65,7 @@ export const FullRoadmapView: React.FC = () => {
   };
 
   const { t: translate } = useTranslation();
-  const t = translate('fullRoadmap', { returnObjects: true }) as any;
+`const t = translate('fullRoadmap', { returnObjects: true }) as Record<string, any>;`
 
   const addAiMessage = useCallback((content: string, delay = 600) => {
     setTyping(true);
@@ -185,7 +185,7 @@ export const FullRoadmapView: React.FC = () => {
         }, 2000);
       });
     }
-  }, [fullSession.initiatives.length, generateRoadmap, addAiMessage]); // Reduced dependencies to length only to avoid deep object churn loops
+`React.useEffect(() => {`
 
   const handleUpdateInitiative = (updated: FullInitiative) => {
     const newInits = fullSession.initiatives.map(i => i.id === updated.id ? updated : i);
@@ -199,7 +199,7 @@ export const FullRoadmapView: React.FC = () => {
   };
 
   // Rebalance Handler
-  const handleApplyRebalance = (option: any) => {
+`const handleApplyRebalance = (option: { schedule: Record<string, string>, type: string }) => {`
     // option.schedule is a map of initId -> Quarter string
     if (!option.schedule) return;
 
@@ -219,7 +219,7 @@ export const FullRoadmapView: React.FC = () => {
     addAiMessage(`Roadmap rebalanced using "${option.type}" strategy.`);
   };
 
-  const [users, setUsers] = React.useState<any[]>([]);
+`const [users, setUsers] = React.useState<Array<{ id: string, name: string }>>([]);`
 
   useEffect(() => {
     const fetchUsers = async () => {

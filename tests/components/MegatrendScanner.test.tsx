@@ -73,7 +73,7 @@ describe('Component Test: TrendDetailCard', () => {
 });
 
 describe('Component Test: IndustryBaselineCard', () => {
-    const mockTrends: any[] = [
+`const mockTrends: Array<{ id: string, label: string, shortDescription: string, type: string, baseImpactScore: number }> = [`
         { id: 't1', label: 'Trend 1', shortDescription: 'Desc 1', type: 'Technology', baseImpactScore: 5 },
         { id: 't2', label: 'Trend 2', shortDescription: 'Desc 2', type: 'Business', baseImpactScore: 3 }
     ];

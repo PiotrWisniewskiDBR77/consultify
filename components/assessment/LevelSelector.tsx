@@ -2,6 +2,7 @@
 import React from 'react';
 import { MaturityLevel } from '../../types';
 import { Check } from 'lucide-react';
+import { getAssessmentButtonClasses, getLevelBubbleClasses } from '../../utils/assessmentColors';
 
 interface LevelSelectorProps {
     levels: Record<string, string>; // "1": "Description"
@@ -33,21 +34,14 @@ export const LevelSelector: React.FC<LevelSelectorProps> = ({
                     <div
                         key={key}
                         className={`relative group flex items-start gap-4 p-3 rounded-xl border transition-all ${isActual || isTarget
-                                ? 'bg-navy-900 border-white/10 shadow-lg'
-                                : isInGap
-                                    ? 'bg-navy-900/40 border-purple-500/10'
-                                    : 'bg-transparent border-transparent hover:bg-white/5'
+                            ? 'bg-navy-900 border-white/10 shadow-lg'
+                            : isInGap
+                                ? 'bg-navy-900/40 border-purple-500/10'
+                                : 'bg-transparent border-transparent hover:bg-white/5'
                             }`}
                     >
                         {/* Number Bubble */}
-                        <div className={`shrink-0 w-14 h-14 rounded-full border-2 flex items-center justify-center text-xl font-bold bg-navy-950 z-10 transition-colors ${isActual
-                                ? 'border-blue-500 text-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.5)]'
-                                : isTarget
-                                    ? 'border-purple-500 text-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.5)]'
-                                    : isInGap
-                                        ? 'border-purple-500/30 text-purple-200/50'
-                                        : 'border-white/10 text-slate-600'
-                            }`}>
+                        <div className={`shrink-0 w-14 h-14 rounded-full border-2 flex items-center justify-center text-xl font-bold bg-navy-950 z-10 transition-colors ${getLevelBubbleClasses(isActual, isTarget, !!isInGap)}`}>
                             {levelNum}
                         </div>
 
@@ -64,10 +58,7 @@ export const LevelSelector: React.FC<LevelSelectorProps> = ({
                             {/* Actual Button */}
                             <button
                                 onClick={() => onSelect('actual', levelNum)}
-                                className={`px-3 py-1 text-xs font-bold rounded-full border transition-all flex items-center gap-1 ${isActual
-                                        ? 'bg-blue-600 border-blue-500 text-white'
-                                        : 'bg-navy-950 border-white/10 text-slate-500 hover:border-blue-500/50 hover:text-blue-400 opacity-0 group-hover:opacity-100'
-                                    }`}
+                                className={`px-3 py-1 text-xs font-bold rounded-full border transition-all flex items-center gap-1 ${isActual ? getAssessmentButtonClasses('actual', true).replace('px-6 py-3', 'px-3 py-1').replace('text-sm', 'text-xs') : 'bg-navy-950 border-white/10 text-slate-500 hover:border-blue-500/50 hover:text-blue-400 opacity-0 group-hover:opacity-100'}`}
                             >
                                 {isActual && <Check size={12} />}
                                 ACTUAL
@@ -76,10 +67,7 @@ export const LevelSelector: React.FC<LevelSelectorProps> = ({
                             {/* Target Button */}
                             <button
                                 onClick={() => onSelect('target', levelNum)}
-                                className={`px-3 py-1 text-xs font-bold rounded-full border transition-all flex items-center gap-1 ${isTarget
-                                        ? 'bg-purple-600 border-purple-500 text-white'
-                                        : 'bg-navy-950 border-white/10 text-slate-500 hover:border-purple-500/50 hover:text-purple-400 opacity-0 group-hover:opacity-100'
-                                    }`}
+                                className={`px-3 py-1 text-xs font-bold rounded-full border transition-all flex items-center gap-1 ${isTarget ? getAssessmentButtonClasses('target', true).replace('px-6 py-3', 'px-3 py-1').replace('text-sm', 'text-xs') : 'bg-navy-950 border-white/10 text-slate-500 hover:border-purple-500/50 hover:text-purple-400 opacity-0 group-hover:opacity-100'}`}
                             >
                                 {isTarget && <Check size={12} />}
                                 TARGET

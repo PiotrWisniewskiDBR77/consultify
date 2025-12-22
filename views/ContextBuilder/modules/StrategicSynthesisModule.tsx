@@ -1,14 +1,13 @@
+```typescript
 import React, { useState, useEffect } from 'react';
-import { AlertTriangle, TrendingUp, GitMerge, FileText, Check, AlertOctagon, Download, ArrowRight, BrainCircuit, Zap, RefreshCw } from 'lucide-react';
+import { AlertTriangle, TrendingUp, GitMerge, FileText, AlertOctagon, BrainCircuit } from 'lucide-react';
 import { DynamicList, DynamicListItem } from '../shared/DynamicList';
 import { useContextBuilderStore } from '../../../store/useContextBuilderStore';
 import { useAppStore } from '../../../store/useAppStore';
 import { TransformationScenarios } from './TransformationScenarios';
 import { ReportContainer } from '../../../components/ReportBuilder/ReportContainer';
-
 export const StrategicSynthesisModule: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'risks' | 'strengths' | 'scenarios' | 'summary'>('risks');
-
     // Store Access
     const {
         companyProfile,
@@ -18,14 +17,11 @@ export const StrategicSynthesisModule: React.FC = () => {
         setSynthesis,
         updateSynthesisList
     } = useContextBuilderStore();
-
     const { fullSessionData, currentUser } = useAppStore();
-
     // Derived State
     const { risks, strengths = [], selectedScenarioId } = synthesis;
     const [selectedRisk, setSelectedRisk] = useState<DynamicListItem | null>(null);
     const [selectedStrength, setSelectedStrength] = useState<DynamicListItem | null>(null);
-
     // Handlers
     const createHandler = (
         listName: 'risks' | 'strengths',
@@ -44,10 +40,8 @@ export const StrategicSynthesisModule: React.FC = () => {
             updateSynthesisList(listName, newItems);
         }
     });
-
     const riskHandlers = createHandler('risks', risks);
     const strengthHandlers = createHandler('strengths', strengths);
-
     // TABS CONFIG
     const tabs = [
         { id: 'risks', label: 'Hidden Risks', icon: AlertTriangle },
@@ -55,7 +49,6 @@ export const StrategicSynthesisModule: React.FC = () => {
         { id: 'scenarios', label: 'Transformation Scenarios', icon: GitMerge },
         { id: 'summary', label: 'Executive Report', icon: FileText },
     ];
-
     return (
         <div className="space-y-6 h-full flex flex-col">
             <div className="flex justify-between items-end border-b border-slate-200 dark:border-white/10 shrink-0">
@@ -63,7 +56,7 @@ export const StrategicSynthesisModule: React.FC = () => {
                     {tabs.map(tab => (
                         <button
                             key={tab.id}
-                            onClick={() => setActiveTab(tab.id as any)}
+                            onClick={() => setActiveTab(tab.id as 'risks' | 'strengths' | 'scenarios' | 'summary')}
                             className={`
                                 flex items-center gap-2 pb-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap
                                 ${activeTab === tab.id
@@ -77,9 +70,7 @@ export const StrategicSynthesisModule: React.FC = () => {
                     ))}
                 </div>
             </div>
-
             <div className="flex-1 overflow-visible min-h-[500px]">
-
                 {/* TAB 1: RISKS */}
                 {activeTab === 'risks' && (
                     <div className="space-y-6 relative">
@@ -90,7 +81,6 @@ export const StrategicSynthesisModule: React.FC = () => {
                                 <p className="opacity-90">Based on your <strong>{challenges.declaredChallenges.length} declared challenges</strong> and <strong>{companyProfile.activeConstraints.length} active constraints</strong>, we have identified the following risks.</p>
                             </div>
                         </div>
-
                         <DynamicList
                             title="Hidden Risks & Threats"
                             description="What could derail this transformation? (Generated from Constraints + Challenges)"
@@ -139,7 +129,6 @@ export const StrategicSynthesisModule: React.FC = () => {
                             ]}
                             {...riskHandlers}
                         />
-
                         {/* Risk Detail Modal / Overlay */}
                         {selectedRisk && (
                             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-900/80 backdrop-blur-sm" onClick={() => setSelectedRisk(null)}>
@@ -169,7 +158,6 @@ export const StrategicSynthesisModule: React.FC = () => {
                                             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                                         </button>
                                     </div>
-
                                     {/* Content */}
                                     <div className="p-6 space-y-6">
                                         <div className="grid grid-cols-2 gap-6">
@@ -193,7 +181,6 @@ export const StrategicSynthesisModule: React.FC = () => {
                                                 </div>
                                             </div>
                                         </div>
-
                                         <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-xl border border-slate-100 dark:border-white/5 space-y-4">
                                             <div>
                                                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Root Cause Analysis</label>
@@ -205,7 +192,6 @@ export const StrategicSynthesisModule: React.FC = () => {
                                                 <p className="text-navy-900 dark:text-slate-200">{selectedRisk.mitigation}</p>
                                             </div>
                                         </div>
-
                                         {selectedRisk.isAiSuggested && (
                                             <div className="flex gap-3 text-sm text-slate-500 bg-purple-50 dark:bg-purple-900/10 p-4 rounded-lg border border-purple-100 dark:border-purple-900/20">
                                                 <BrainCircuit size={16} className="text-purple-500 shrink-0 mt-0.5" />
@@ -213,7 +199,6 @@ export const StrategicSynthesisModule: React.FC = () => {
                                             </div>
                                         )}
                                     </div>
-
                                     {/* Footer */}
                                     <div className="bg-slate-50 dark:bg-navy-800 p-4 border-t border-slate-200 dark:border-white/5 flex justify-end gap-3">
                                         <button
@@ -233,7 +218,6 @@ export const StrategicSynthesisModule: React.FC = () => {
                         )}
                     </div>
                 )}
-
                 {/* TAB 2: STRENGTHS & OPPORTUNITIES */}
                 {activeTab === 'strengths' && (
                     <div className="space-y-6">
@@ -244,7 +228,6 @@ export const StrategicSynthesisModule: React.FC = () => {
                                 <p className="opacity-90">Based on your <strong>Company Profile</strong> and <strong>Goals</strong>, we have identified these key strengths and market opportunities.</p>
                             </div>
                         </div>
-
                         <DynamicList
                             title="Strengths & Opportunities"
                             description="What strengths can you leverage? (Generated from Profile & Opportunities)"
@@ -272,7 +255,6 @@ export const StrategicSynthesisModule: React.FC = () => {
                             onRowClick={(item) => setSelectedStrength(item)}
                             {...strengthHandlers}
                         />
-
                         {/* Strength Detail Modal */}
                         {selectedStrength && (
                             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-900/80 backdrop-blur-sm" onClick={() => setSelectedStrength(null)}>
@@ -302,85 +284,9 @@ export const StrategicSynthesisModule: React.FC = () => {
                                             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                                         </button>
                                     </div>
-
                                     {/* Content */}
                                     <div className="p-6 space-y-6">
                                         <div className="grid grid-cols-2 gap-6">
                                             <div>
                                                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Impact Potential</label>
-                                                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg font-bold text-sm bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
-                                                    <TrendingUp size={14} />
-                                                    High Strategic Value
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Source / Context</label>
-                                                <div className="text-sm text-navy-900 dark:text-white font-medium">
-                                                    {selectedStrength.isAiSuggested ? 'Market Analysis Engine' : 'Internal Profile'}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-xl border border-slate-100 dark:border-white/5 space-y-4">
-                                            <div>
-                                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Evidence / Observed In</label>
-                                                <p className="text-navy-900 dark:text-slate-200">{selectedStrength.seen}</p>
-                                            </div>
-                                            <div className="h-px bg-slate-200 dark:bg-white/5" />
-                                            <div>
-                                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">How to Leverage</label>
-                                                <p className="text-navy-900 dark:text-slate-200">{selectedStrength.leverage}</p>
-                                            </div>
-                                        </div>
-
-                                        {selectedStrength.isAiSuggested && (
-                                            <div className="flex gap-3 text-sm text-slate-500 bg-purple-50 dark:bg-purple-900/10 p-4 rounded-lg border border-purple-100 dark:border-purple-900/20">
-                                                <BrainCircuit size={16} className="text-purple-500 shrink-0 mt-0.5" />
-                                                <p>AI Analysis: Leveraging this opportunity typically yields <strong>15-20% faster time-to-market</strong> for companies in your sector.</p>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Footer */}
-                                    <div className="bg-slate-50 dark:bg-navy-800 p-4 border-t border-slate-200 dark:border-white/5 flex justify-end gap-3">
-                                        <button
-                                            onClick={() => setSelectedStrength(null)}
-                                            className="px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/5 rounded-lg text-sm font-medium transition-colors"
-                                        >
-                                            Close
-                                        </button>
-                                        <button
-                                            className="px-4 py-2 bg-navy-900 dark:bg-green-600 text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
-                                        >
-                                            Add to Roadmap
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* TAB 3: SCENARIOS */}
-                {activeTab === 'scenarios' && (
-                    <TransformationScenarios
-
-
-                        currentScenarioId={selectedScenarioId}
-                        onSelectScenario={(id) => setSynthesis({ selectedScenarioId: id })}
-                    />
-                )}
-
-                {/* TAB 4: EXECUTIVE REPORT */}
-                {activeTab === 'summary' && (
-                    <div className="h-full -mx-6 -my-6">
-                        <ReportContainer
-                            projectId={fullSessionData.id}
-                            organizationId={currentUser?.organizationId || ''}
-                        />
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-};
+                                                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg font-bold text-sm bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-

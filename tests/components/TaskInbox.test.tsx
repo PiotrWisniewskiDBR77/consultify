@@ -29,7 +29,7 @@ describe('TaskInbox', () => {
 
     describe('Rendering', () => {
         it('should render task inbox', async () => {
-            (Api.getTasks as any).mockResolvedValue([]);
+`(Api.getTasks as jest.Mock).mockResolvedValue([]);`
 
             render(
                 <TaskInbox
@@ -53,7 +53,7 @@ describe('TaskInbox', () => {
                 }
             ];
 
-            (Api.getTasks as any).mockResolvedValue(mockTasks);
+`(Api.getTasks as jest.Mock).mockResolvedValue(mockTasks);`
 
             render(
                 <TaskInbox
@@ -76,7 +76,7 @@ describe('TaskInbox', () => {
 
     describe('Filtering', () => {
         it('should filter by priority', async () => {
-            (Api.getTasks as any).mockResolvedValue([]);
+`(Api.getTasks as jest.Mock).mockResolvedValue([]);`
 
             render(
                 <TaskInbox
@@ -91,7 +91,7 @@ describe('TaskInbox', () => {
         });
 
         it('should filter by status', async () => {
-            (Api.getTasks as any).mockResolvedValue([]);
+`(Api.getTasks as jest.Mock).mockResolvedValue([]);`
 
             render(
                 <TaskInbox

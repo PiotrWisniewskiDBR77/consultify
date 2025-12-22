@@ -595,6 +595,118 @@ function initDb() {
             FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
         )`);
 
+        // Assessment Reports (DRD Report Archive)
+        db.run(`CREATE TABLE IF NOT EXISTS assessment_reports (
+            id TEXT PRIMARY KEY,
+            project_id TEXT NOT NULL,
+            organization_id TEXT NOT NULL,            title TEXT,
+            generated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            assessment_snapshot TEXT NOT NULL, -- JSON: full assessment data
+            summary TEXT, -- AI-generated summary
+            avg_actual REAL DEFAULT 0,
+            avg_target REAL DEFAULT 0,
+            gap_points INTEGER DEFAULT 0,
+            created_by TEXT,
+            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        // Migration: Add enhanced report management columns
+        db.run(`ALTER TABLE assessment_reports ADD COLUMN category TEXT DEFAULT 'assessment'`, (err) => {
+            // Ignore if exists - Report category/type
+        });
+        db.run(`ALTER TABLE assessment_reports ADD COLUMN tags TEXT DEFAULT '[]'`, (err) => {
+            // Ignore if exists - JSON array of tags
+        });
+        db.run(`ALTER TABLE assessment_reports ADD COLUMN export_formats TEXT DEFAULT '["json"]'`, (err) => {
+            // Ignore if exists - JSON array of available export formats
+        });
+        db.run(`ALTER TABLE assessment_reports ADD COLUMN is_archived INTEGER DEFAULT 0`, (err) => {
+            // Ignore if exists - Soft delete flag
+        });
+        db.run(`ALTER TABLE assessment_reports ADD COLUMN archived_at DATETIME`, (err) => {
+            // Ignore if exists - Archive timestamp
+        });
+        db.run(`ALTER TABLE assessment_reports ADD COLUMN notes TEXT`, (err) => {
+            // Ignore if exists - User notes/annotations
+        });
+        db.run(`ALTER TABLE assessment_reports ADD COLUMN pdf_url TEXT`, (err) => {
+            // Ignore if exists - Generated PDF file path
+        });
+        db.run(`ALTER TABLE assessment_reports ADD COLUMN excel_url TEXT`, (err) => {
+            // Ignore if exists - Generated Excel file path
+        });
+        db.run(`ALTER TABLE assessment_reports ADD COLUMN custom_data TEXT DEFAULT '{}'`, (err) => {
+            // Ignore if exists - Additional metadata JSON
+        });
+
+        // Report Templates
+        db.run(`CREATE TABLE IF NOT EXISTS report_templates (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT,
+            template_type TEXT DEFAULT 'assessment', -- assessment, custom
+            is_default INTEGER DEFAULT 0,
+            is_public INTEGER DEFAULT 0, -- Available to all users in org
+            created_by TEXT NOT NULL,
+            sections TEXT DEFAULT '[]', -- JSON array of template sections
+            styling TEXT DEFAULT '{}', -- JSON object for custom styling
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        // Report Comparisons (Saved comparisons)
+        db.run(`CREATE TABLE IF NOT EXISTS report_comparisons (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            project_id TEXT,
+            name TEXT NOT NULL,
+            description TEXT,
+            report_ids TEXT NOT NULL, -- JSON array of report IDs being compared
+            comparison_data TEXT, -- JSON object with calculated deltas and trends
+            created_by TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        // Report Shares (Shareable links with access control)
+        db.run(`CREATE TABLE IF NOT EXISTS report_shares (
+            id TEXT PRIMARY KEY,
+            report_id TEXT NOT NULL,
+            share_token TEXT UNIQUE NOT NULL,
+            created_by TEXT NOT NULL,
+            expires_at DATETIME,
+            access_count INTEGER DEFAULT 0,
+            max_access_count INTEGER, -- NULL = unlimited
+            is_active INTEGER DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            last_accessed_at DATETIME,
+            FOREIGN KEY(report_id) REFERENCES assessment_reports(id) ON DELETE CASCADE,
+            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        // Report Annotations (Comments and highlights)
+        db.run(`CREATE TABLE IF NOT EXISTS report_annotations (
+            id TEXT PRIMARY KEY,
+            report_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            annotation_type TEXT DEFAULT 'comment', -- comment, highlight, note
+            section TEXT, -- Which section of the report
+            content TEXT NOT NULL,
+            position_data TEXT, -- JSON for highlight position/coords
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(report_id) REFERENCES assessment_reports(id) ON DELETE CASCADE,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+
+
         // Roadmap Waves (SCMS Phase 4)
         db.run(`CREATE TABLE IF NOT EXISTS roadmap_waves (
             id TEXT PRIMARY KEY,

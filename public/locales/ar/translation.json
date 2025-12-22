@@ -54,7 +54,15 @@
     "dashboardSub": {
       "overview": "نظرة عامة",
       "snapshot": "لمحة عن التنفيذ"
-    }
+    },
+    "kpiOkr": "KPI/OKR",
+    "tools": "أدوات",
+    "pilotPhase": "التجريبي (المرحلة الأولية)",
+    "fullImplementation": "التنفيذ الكامل",
+    "standardReports": "التقارير القياسية",
+    "executiveView": "عرض تنفيذي",
+    "aiAdvisor": "مستشار الذكاء الاصطناعي",
+    "automationScheme": "مخطط الأتمتة"
   },
   "auth": {
     "startQuick": "ابدأ التقييم السريع",

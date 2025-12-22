@@ -1,7 +1,8 @@
 import React from 'react';
-import { Check, Circle } from 'lucide-react'; // Removing legacy MaturityLevel import if unused or keeping it
+import { Check, Circle } from 'lucide-react';
 import { MaturityLevel } from '../../types';
 import { useTranslation } from 'react-i18next';
+import { getStatusBadgeClasses } from '../../utils/assessmentColors';
 
 interface LevelNavigatorProps {
     levels: Record<string, string>;
@@ -50,8 +51,8 @@ export const LevelNavigator: React.FC<LevelNavigatorProps> = ({
                     // Label helper
                     let statusLabel = null;
                     if (isActual && isTarget) statusLabel = <span className="text-[10px] font-bold text-white bg-gradient-to-r from-blue-500 to-purple-500 px-2 py-0.5 rounded-full">{t('assessment.workspace.actual_target')}</span>;
-                    else if (isActual) statusLabel = <span className="text-[10px] font-bold text-white bg-blue-600 px-2 py-0.5 rounded-full">{t('assessment.workspace.actual_only')}</span>;
-                    else if (isTarget) statusLabel = <span className="text-[10px] font-bold text-white bg-purple-600 px-2 py-0.5 rounded-full">{t('assessment.workspace.target_only')}</span>;
+                    else if (isActual) statusLabel = <span className={getStatusBadgeClasses('actual')}>{t('assessment.workspace.actual_only')}</span>;
+                    else if (isTarget) statusLabel = <span className={getStatusBadgeClasses('target')}>{t('assessment.workspace.target_only')}</span>;
 
                     return (
                         <button

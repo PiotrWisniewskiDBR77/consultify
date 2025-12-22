@@ -12,14 +12,14 @@ describe('Component Test: SystemHealth', () => {
     });
 
     it('does not render while loading', () => {
-        (Api.checkSystemHealth as any).mockImplementation(() => new Promise(() => { }));
+`(Api.checkSystemHealth as jest.Mock).mockImplementation(() => new Promise(() => { }));`
 
         const { container } = render(<SystemHealth />);
         expect(container.firstChild).toBeNull();
     });
 
     it('displays online status when system is healthy', async () => {
-        (Api.checkSystemHealth as any).mockResolvedValue({ status: 'ok', latency: 50 });
+`(Api.checkSystemHealth as jest.Mock).mockResolvedValue({ status: 'ok', latency: 50 });`
 
         render(<SystemHealth />);
 
@@ -29,7 +29,7 @@ describe('Component Test: SystemHealth', () => {
     });
 
     it('displays latency when online', async () => {
-        (Api.checkSystemHealth as any).mockResolvedValue({ status: 'ok', latency: 100 });
+`(Api.checkSystemHealth as jest.Mock).mockResolvedValue({ status: 'ok', latency: 100 });`
 
         render(<SystemHealth />);
 
@@ -39,7 +39,7 @@ describe('Component Test: SystemHealth', () => {
     });
 
     it('displays offline status when system is down', async () => {
-        (Api.checkSystemHealth as any).mockRejectedValue(new Error('Connection failed'));
+`(Api.checkSystemHealth as jest.Mock).mockRejectedValue(new Error('Connection failed'));`
 
         render(<SystemHealth />);
 
@@ -52,7 +52,7 @@ describe('Component Test: SystemHealth', () => {
     it('polls health status periodically', async () => {
         vi.useFakeTimers();
         const checkSystemHealthMock = vi.fn().mockResolvedValue({ status: 'ok', latency: 50 });
-        (Api.checkSystemHealth as any).mockImplementation(checkSystemHealthMock);
+`(Api.checkSystemHealth as jest.Mock).mockImplementation(checkSystemHealthMock);`
 
         render(<SystemHealth />);
 

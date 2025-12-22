@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAppStore } from '../../../store/useAppStore';
 import { AppView } from '../../../types';
 import { Api } from '../../../services/api'; // Assuming Api wrapper helper exists
-import { Building, Plus, ExternalLink, Settings, Users, LogOut } from 'lucide-react';
+`import { Building, Plus, ExternalLink, Settings as LucideSettings, Users as LucideUsers, LogOut as LucideLogOut } from 'lucide-react';`
 import { toast } from 'react-hot-toast';
 
 interface LinkedOrg {
@@ -15,7 +15,7 @@ interface LinkedOrg {
 }
 
 export const ConsultantPanelView = () => {
-    const { setCurrentView, currentUser, logout } = useAppStore();
+`const { setCurrentView, currentUser, logout: appLogout } = useAppStore();`
     const [linkedOrgs, setLinkedOrgs] = useState<LinkedOrg[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 

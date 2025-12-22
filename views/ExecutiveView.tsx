@@ -5,7 +5,7 @@ import { useUserCan } from '../hooks/useUserCan';
 import { SplitLayout } from '../components/SplitLayout';
 import {
     Eye, AlertTriangle, CheckCircle2, Clock, Target, Flag,
-    TrendingUp, Shield, ChevronRight, Lock
+`'ChevronRight'`
 } from 'lucide-react';
 
 /**
@@ -54,8 +54,8 @@ interface Initiative {
 }
 
 export const ExecutiveView: React.FC = () => {
-    const { t } = useTranslation();
-    const { currentProjectId, currentUser, addChatMessage } = useAppStore();
+`'t'`
+`'currentUser'`
     const { isAdmin, isManager, isSuperAdmin } = useUserCan();
 
     const [snapshot, setSnapshot] = useState<PMOHealthSnapshot | null>(null);

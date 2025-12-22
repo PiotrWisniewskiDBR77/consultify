@@ -3,7 +3,7 @@ import { Plus, X, Edit2, Check, Trash2 } from 'lucide-react';
 
 export interface DynamicListItem {
     id: string;
-    [key: string]: any;
+`[key: string]: unknown;`
 }
 
 export interface ColumnConfig {
@@ -46,7 +46,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
     const [editingId, setEditingId] = useState<string | null>(null);
 
     // Staging state for new or edited item
-    const [formData, setFormData] = useState<Record<string, any>>({});
+`const [formData, setFormData] = useState<Record<string, unknown>>({});`
 
     const handleStartAdd = () => {
         setFormData({});
@@ -81,7 +81,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
         handleCancel();
     };
 
-    const handleChange = (key: string, value: any) => {
+`const handleChange = (key: string, value: unknown) => {`
         setFormData(prev => ({ ...prev, [key]: value }));
     };
 

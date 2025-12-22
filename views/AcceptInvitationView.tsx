@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, AlertCircle, Loader2, Building2, Users, Shield, LogOut, LogIn } from 'lucide-react';
+`import { CheckCircle, XCircle, AlertCircle, Loader2, Building2, Users, Shield } from 'lucide-react';`
 import { InvitationValidation, InvitationType } from '../types';
 import { useStore } from '../store';
 
@@ -12,12 +12,12 @@ interface AcceptInvitationViewProps {
 const API_URL = '/api';
 
 const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({ token, onAccepted, onError }) => {
-    const { currentUser } = useStore();
+`const { currentUser } = useStore(); // Ensure currentUser is used or remove it if unnecessary.`
     const [loading, setLoading] = useState(true);
     const [validating, setValidating] = useState(true);
     const [invitation, setInvitation] = useState<InvitationValidation | null>(null);
     const [error, setError] = useState<string | null>(null);
-    const [emailMismatch, setEmailMismatch] = useState(false);
+`const [emailMismatch, setEmailMismatch] = useState(false); // Ensure emailMismatch and setEmailMismatch are used or remove them if unnecessary.`
 
     // Form state
     const [firstName, setFirstName] = useState('');

@@ -1,33 +1,29 @@
+```typescript
 import React, { useState } from 'react';
 import { AlertOctagon, Activity, Lock, Search, Cpu, Check, X, AlertTriangle, Plus, Trash2, Edit2, GripVertical } from 'lucide-react';
 import { DynamicList, DynamicListItem } from '../shared/DynamicList';
 import { AITextArea } from '../shared/AITextArea';
 import { ContextDocUploader } from '../shared/ContextDocUploader';
 import { useContextBuilderStore } from '../../../store/useContextBuilderStore';
-
 export const ChallengeMapModule: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'challenges' | 'rootcause' | 'blockers' | 'evidence'>('challenges');
-
     // Store State
     const {
         challenges,
         setChallenges,
         updateChallengesList
     } = useContextBuilderStore();
-
     // Derived State Shortcuts
     const declaredChallenges = challenges.declaredChallenges;
     const rootCauseAnswers = challenges.rootCauseAnswers;
     const evidence = challenges.evidence;
     const activeBlockers = challenges.activeBlockers;
-
     const ROOT_CAUSE_QUESTIONS = [
         { q: "Where do decisions get stuck?", h: "e.g. Middle management fear, Lack of data..." },
         { q: "Where is the strongest resistance to change?", h: "e.g. Shop floor, Specific department..." },
         { q: "What initiatives failed in the past and why?", h: "e.g. Lean impl failed due to no follow-up..." },
         { q: "Is there a gap between management view and reality?", h: "e.g. CEO thinks ERP works, users use Excel..." }
     ];
-
     // Common Blockers Library
     const commonBlockers = [
         { id: 'c1', type: 'Culture', title: 'Fear of Failure', desc: 'Employees hide mistakes instead of reporting them.' },
@@ -35,12 +31,10 @@ export const ChallengeMapModule: React.FC = () => {
         { id: 'c3', type: 'Strategy', title: 'Change Fatigue', desc: 'Teams are burnt out from too many initiatives.' },
         { id: 'c4', type: 'Technology', title: 'Data Fragmentation', desc: 'Key KPIs are manually aggregated in Excel.' }
     ];
-
-    const addBlocker = (blocker: any) => {
+    const addBlocker = (blocker: { id: string, type: string, title: string, desc: string }) => {
         const newBlocker = { ...blocker, id: Math.random().toString(), status: 'confirmed', confidence: 'Manual' };
         setChallenges({ activeBlockers: [...activeBlockers, newBlocker] });
     };
-
     const addCustomBlocker = () => {
         const newBlocker = {
             id: Math.random().toString(),
@@ -50,18 +44,15 @@ export const ChallengeMapModule: React.FC = () => {
             status: 'confirmed',
             confidence: 'Manual'
         };
-        setChallenges({ activeBlockers: [...activeBlockers, newBlocker] as any });
+        setChallenges({ activeBlockers: [...activeBlockers, newBlocker] });
     };
-
     const removeBlocker = (id: string) => {
         setChallenges({ activeBlockers: activeBlockers.filter(b => b.id !== id) });
     };
-
     const updateBlocker = (id: string, field: string, value: string) => {
         const updated = activeBlockers.map(b => b.id === id ? { ...b, [field]: value } : b);
         setChallenges({ activeBlockers: updated });
     };
-
     // Handlers
     const createHandler = (
         listName: 'declaredChallenges' | 'evidence',
@@ -80,10 +71,8 @@ export const ChallengeMapModule: React.FC = () => {
             updateChallengesList(listName, newItems);
         }
     });
-
     const challengeHandlers = createHandler('declaredChallenges', declaredChallenges);
     const evidenceHandlers = createHandler('evidence', evidence);
-
     // TABS CONFIG
     const tabs = [
         { id: 'challenges', label: 'Declared Challenges', icon: AlertOctagon },
@@ -91,14 +80,13 @@ export const ChallengeMapModule: React.FC = () => {
         { id: 'blockers', label: 'Objective Blockers', icon: Lock },
         { id: 'evidence', label: 'Evidence', icon: Search },
     ];
-
     return (
         <div className="space-y-6">
             <div className="flex border-b border-slate-200 dark:border-white/10 space-x-6 overflow-x-auto">
                 {tabs.map(tab => (
                     <button
                         key={tab.id}
-                        onClick={() => setActiveTab(tab.id as any)}
+                        onClick={() => setActiveTab(tab.id)}
                         className={`
                             flex items-center gap-2 pb-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap
                             ${activeTab === tab.id
@@ -111,9 +99,7 @@ export const ChallengeMapModule: React.FC = () => {
                     </button>
                 ))}
             </div>
-
             <div className="min-h-[400px]">
-
                 {/* TAB 1: DECLARED CHALLENGES */}
                 {activeTab === 'challenges' && (
                     <div className="space-y-6">
@@ -135,7 +121,6 @@ export const ChallengeMapModule: React.FC = () => {
                         />
                     </div>
                 )}
-
                 {/* TAB 2: ROOT CAUSE SIGNALS */}
                 {activeTab === 'rootcause' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -148,7 +133,6 @@ export const ChallengeMapModule: React.FC = () => {
                         <div className="col-span-1 md:col-span-2 bg-blue-50 dark:bg-blue-900/10 p-4 rounded-lg border border-blue-100 dark:border-blue-900/20 text-sm text-blue-800 dark:text-blue-200">
                             <strong>Diagnostic Questions:</strong> These answers help AI identify hidden root causes behind the declared challenges.
                         </div>
-
                         {ROOT_CAUSE_QUESTIONS.map((item, index) => (
                             <div key={index} className="space-y-2">
                                 <label className="block text-sm font-bold text-navy-900 dark:text-white">{item.q}</label>
@@ -163,7 +147,6 @@ export const ChallengeMapModule: React.FC = () => {
                         ))}
                     </div>
                 )}
-
                 {/* TAB 3: OBJECTIVE BLOCKERS */}
                 {activeTab === 'blockers' && (
                     <div className="space-y-8">
@@ -189,7 +172,6 @@ export const ChallengeMapModule: React.FC = () => {
                                     Create Custom
                                 </button>
                             </div>
-
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                                 {commonBlockers.map(cb => {
                                     const isAdded = activeBlockers.some(b => b.title === cb.title);
@@ -215,7 +197,6 @@ export const ChallengeMapModule: React.FC = () => {
                                 })}
                             </div>
                         </div>
-
                         {/* 2. Active Blockers List (Editable) */}
                         <div className="space-y-4">
                             <h4 className="text-sm font-bold text-navy-900 dark:text-white flex items-center gap-2">
@@ -223,7 +204,6 @@ export const ChallengeMapModule: React.FC = () => {
                                 Active Blockers
                                 <span className="bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full text-xs font-normal">{activeBlockers.length}</span>
                             </h4>
-
                             {activeBlockers.length === 0 ? (
                                 <div className="text-center py-10 border-2 border-dashed border-slate-200 dark:border-white/5 rounded-2xl">
                                     <p className="text-sm text-slate-400">No blockers identified yet. Add from suggestions or create a custom one.</p>
@@ -245,7 +225,6 @@ export const ChallengeMapModule: React.FC = () => {
                                                     <Trash2 size={16} />
                                                 </button>
                                             </div>
-
                                             <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
                                                 {/* Left: Icon & Type */}
                                                 <div className="md:col-span-4 space-y-3">
@@ -274,7 +253,6 @@ export const ChallengeMapModule: React.FC = () => {
                                                             </select>
                                                         </div>
                                                     </div>
-
                                                     {/* Confidence Badge (if detected) */}
                                                     {blocker.status === 'detected' && (
                                                         <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-500/20 rounded text-[10px] font-bold text-purple-600 dark:text-purple-400">
@@ -283,7 +261,6 @@ export const ChallengeMapModule: React.FC = () => {
                                                         </div>
                                                     )}
                                                 </div>
-
                                                 {/* Right: Description Editor */}
                                                 <div className="md:col-span-8">
                                                     <div className="relative">
@@ -304,7 +281,6 @@ export const ChallengeMapModule: React.FC = () => {
                         </div>
                     </div>
                 )}
-
                 {/* TAB 4: EVIDENCE */}
                 {activeTab === 'evidence' && (
                     <div className="space-y-6">
@@ -330,3 +306,4 @@ export const ChallengeMapModule: React.FC = () => {
         </div>
     );
 };
+```

@@ -58,14 +58,14 @@ if (typeof window !== 'undefined') {
 
 // Node Polyfills
 import { TextEncoder, TextDecoder } from 'util';
-global.TextEncoder = TextEncoder as any;
-global.TextDecoder = TextDecoder as any;
+`global.TextEncoder = TextEncoder as unknown as typeof TextEncoder;`
+`global.TextDecoder = TextDecoder as unknown as typeof TextDecoder;`
 
 // PDF-Parse / Canvas Polyfills
 global.DOMMatrix = class DOMMatrix {
     a = 1; b = 0; c = 0; d = 1; e = 0; f = 0;
     constructor() { }
-} as any;
+`};`
 
 // Handle uncaught exceptions from async database operations during tests
 // This prevents non-test-related FK constraint errors from causing CI exit code 1

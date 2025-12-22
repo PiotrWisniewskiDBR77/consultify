@@ -10,7 +10,7 @@ import {
     Shield,
     ExternalLink,
     CheckCircle2,
-    Clock,
+    Clock as ClockIcon,
     Share2,
     LayoutGrid
 } from 'lucide-react';
@@ -27,8 +27,8 @@ import { toast } from 'react-hot-toast';
  */
 
 export const AffiliateDashboardView: React.FC = () => {
-    const [referrals, setReferrals] = useState<any[]>([]);
-    const [stats, setStats] = useState<any>(null);
+    const [referrals, setReferrals] = useState<{ id: string; code: string; use_count: number; conversions?: number; expires_at?: string; }[]>([]);
+    const [stats, setStats] = useState<{ totalReferrals: number; totalConversions: number; } | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isGenerating, setIsGenerating] = useState(false);
 

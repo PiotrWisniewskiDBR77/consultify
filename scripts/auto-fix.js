@@ -10,9 +10,19 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
+import { createRequire } from 'module';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+const require = createRequire(import.meta.url);
+
+// Załaduj zmienne środowiskowe z .env (używamy CommonJS require dla dotenv)
+try {
+  require('dotenv').config();
+} catch (e) {
+  // Jeśli dotenv nie jest dostępny, kontynuuj bez niego
+  console.warn('⚠️  Nie można załadować dotenv, używam zmiennych środowiskowych systemowych');
+}
 
 // Parse command line arguments
 const args = process.argv.slice(2);

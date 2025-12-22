@@ -220,6 +220,104 @@ export const Api = {
         await handleResponse(res, `Failed to save session`);
     },
 
+    // Assessment Reports
+    generateAssessmentReport: async (projectId: string): Promise<any> => {
+        const res = await trackedFetch(`${API_URL}/sessions/${projectId}/reports`, {
+            method: 'POST',
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to generate report');
+    },
+
+    getAssessmentReports: async (projectId: string): Promise<any[]> => {
+        const res = await trackedFetch(`${API_URL}/sessions/${projectId}/reports`, {
+            headers: getHeaders()
+        });
+        const data = await handleResponse(res, 'Failed to fetch reports');
+        return data.reports || [];
+    },
+
+    getAssessmentReport: async (reportId: string): Promise<any> => {
+        const res = await trackedFetch(`${API_URL}/sessions/reports/${reportId}`, {
+            headers: getHeaders()
+        });
+        const data = await handleResponse(res, 'Failed to fetch report');
+        return data.report;
+    },
+
+    exportReportPDF: async (reportId: string, options?: { branding?: any; includeCharts?: boolean; includeSummary?: boolean }): Promise<{ pdfUrl: string; message: string }> => {
+        const res = await trackedFetch(`${API_URL}/sessions/reports/${reportId}/export-pdf`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(options || {})
+        });
+        return handleResponse(res, 'Failed to export PDF');
+    },
+
+    exportReportExcel: async (reportId: string, options?: { includeCharts?: boolean; includeRawData?: boolean }): Promise<{ excelUrl: string; message: string }> => {
+        const res = await trackedFetch(`${API_URL}/sessions/reports/${reportId}/export-excel`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(options || {})
+        });
+        return handleResponse(res, 'Failed to export Excel');
+    },
+
+    compareReports: async (reportIds: string[], saveName?: string): Promise<{ reports: any[]; comparisonData: any }> => {
+        const res = await trackedFetch(`${API_URL}/sessions/reports/compare`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ reportIds, saveName })
+        });
+        return handleResponse(res, 'Failed to compare reports');
+    },
+
+    archiveReport: async (reportId: string, archive: boolean): Promise<{ message: string }> => {
+        const res = await trackedFetch(`${API_URL}/sessions/reports/${reportId}/archive`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify({ archive })
+        });
+        return handleResponse(res, 'Failed to archive report');
+    },
+
+    addReportAnnotation: async (reportId: string, annotation: { annotationType?: string; section?: string; content: string; positionData?: any }): Promise<{ id: string; message: string }> => {
+        const res = await trackedFetch(`${API_URL}/sessions/reports/${reportId}/annotations`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(annotation)
+        });
+        return handleResponse(res, 'Failed to add annotation');
+    },
+
+    getReportAnnotations: async (reportId: string): Promise<any[]> => {
+        const res = await trackedFetch(`${API_URL}/sessions/reports/${reportId}/annotations`, {
+            headers: getHeaders()
+        });
+        const data = await handleResponse(res, 'Failed to fetch annotations');
+        return data.annotations || [];
+    },
+
+    shareReport: async (reportId: string, options?: { expiresIn?: number; maxAccessCount?: number }): Promise<{ shareToken: string; shareUrl: string; expiresAt?: string; message: string }> => {
+        const res = await trackedFetch(`${API_URL}/sessions/reports/${reportId}/share`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(options || {})
+        });
+        return handleResponse(res, 'Failed to create share link');
+    },
+
+    getSharedReport: async (shareToken: string): Promise<any> => {
+        const res = await trackedFetch(`${API_URL}/sessions/reports/shared/${shareToken}`, {
+            method: 'GET'
+            // No auth headers for public endpoint
+        });
+        const data = await handleResponse(res, 'Failed to access shared report');
+        return data.report;
+    },
+
+
+
     // --- AI ---
     // --- AI ---
     chatWithAI: async (message: string, history: any[], systemInstruction?: string, roleName?: string) => {

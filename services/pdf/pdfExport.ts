@@ -146,7 +146,7 @@ export const exportDashboardToPDF = async (options: ExportOptions) => {
     }
 };
 
-export const exportToCSV = (data: any[], filename: string) => {
+export const exportToCSV = <T extends Record<string, unknown>>(data: T[], filename: string): boolean => {
     if (data.length === 0) return false;
 
     try {

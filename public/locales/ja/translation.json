@@ -54,7 +54,15 @@
     "dashboardSub": {
       "overview": "概要",
       "snapshot": "実行スナップショット"
-    }
+    },
+    "kpiOkr": "KPI/OKR",
+    "tools": "ツール",
+    "pilotPhase": "パイロット（初期フェーズ）",
+    "fullImplementation": "完全実装",
+    "standardReports": "標準レポート",
+    "executiveView": "エグゼクティブビュー",
+    "aiAdvisor": "AIアドバイザー",
+    "automationScheme": "自動化スキーマ"
   },
   "auth": {
     "startQuick": "クイック診断を開始",
@@ -551,9 +559,9 @@
           "1": "なし",
           "2": "実験",
           "3": "ポイントソリューション",
+          "4": "統合AI",
           "5": "AIファースト戦略",
-```
-      "6": "自律エージェント",
+          "6": "自律エージェント",
           "7": "スーパーインテリジェンス"
         }
       }

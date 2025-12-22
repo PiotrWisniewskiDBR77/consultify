@@ -34,8 +34,6 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
   const [step, setStep] = useState<AuthStep>(initialStep);
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
-  const { t: translate } = useTranslation();
-  `as Record<string, any>;`
 
   // OAuth Login Handlers
   const handleGoogleLogin = () => {
@@ -93,7 +91,6 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Check if the user status or a specific message implies pending
       // The backend returns { status: 'pending', message: ... } if pending
       const user: { status?: string; message?: string } = await Api.register({
         firstName: formData.firstName,
@@ -230,7 +227,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">
-          {targetMode === SessionMode.FREE ? t.startQuick : t.setupFull}
+          {targetMode === SessionMode.FREE ? t('startQuick') : t('setupFull')}
         </h2>
         <p className="text-slate-500 dark:text-slate-400 text-sm">
           {t('personalize')}
@@ -376,13 +373,13 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
   const renderLogin = () => (
     <div className="space-y-8">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">{t.welcomeBack}</h2>
-        <p className="text-slate-500 dark:text-slate-400 text-sm">{t.signInText}</p>
+        <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">{t('welcomeBack')}</h2>
+        <p className="text-slate-500 dark:text-slate-400 text-sm">{t('signInText')}</p>
       </div>
 
       <form onSubmit={handleLogin} className="space-y-5">
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t.email}</label>
+          <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t('email')}</label>
           <input
             type="email"
             required
@@ -394,7 +391,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
 
         <div className="space-y-1.5">
           <div className="flex justify-between">
-            <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t.password}</label>
+            <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t('password')}</label>
           </div>
           <input
             type="password"
@@ -413,7 +410,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
         )}
 
         <button type="submit" className="w-full py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg transition-all shadow-lg shadow-purple-500/20 dark:shadow-purple-900/20 mt-2 text-sm">
-          {t.logIn}
+          {t('logIn')}
         </button>
       </form>
 
@@ -450,8 +447,8 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
       </div>
 
       <div className="text-center pt-4 text-sm text-slate-500 dark:text-slate-400">
-        {t.noAccount}{' '}
-        <button onClick={() => setStep(AuthStep.REGISTER)} className="text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300 font-medium hover:underline">{t.createOne}</button>
+        {t('noAccount')}{' '}
+        <button onClick={() => setStep(AuthStep.REGISTER)} className="text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300 font-medium hover:underline">{t('createOne')}</button>
       </div>
     </div>
   );
@@ -500,7 +497,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
           className="flex items-center gap-2 text-slate-500 hover:text-navy-900 dark:hover:text-slate-300 text-sm transition-colors group"
         >
           <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-          {t.backToStart}
+          {t('backToStart')}
         </button>
       </div>
     </div>

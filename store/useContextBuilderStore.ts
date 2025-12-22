@@ -71,7 +71,7 @@ interface ChallengesState {
     }>;
 }
 
-interface TrendState {
+`trendState`
     selectedIndustry: string;
     // We might not need to store full megatrend objects here if they come from another store, 
     // but we should store WHICH ones are selected/prioritized if that's a feature.
@@ -84,7 +84,7 @@ interface SynthesisState {
     strengths: DynamicListItem[];
     selectedScenarioId: string;
     // We could store the generated scenario options here too if we want them to persist
-    scenarios: any[];
+    scenarios?: Array<unknown>;
 }
 
 interface ContextBuilderState {

@@ -10,6 +10,10 @@
     "module1_2": "Cele Strategiczne",
     "module1_3": "Mapa Wyzwań",
     "module2": "Ocena",
+    "assessment": "Ocena",
+    "drd": "DRD (Gotowość Cyfrowa)",
+    "digitalAssessments": "Oceny Cyfrowe (SIRI, ADMA)",
+    "leanAssessments": "Oceny Lean",
     "module3": "Inicjatywy i Mapa Drogowa",
     "module3_1": "Generator i Lista",
     "module3_2": "Mapa Drogowa",
@@ -55,7 +59,15 @@
     "dashboardSub": {
       "overview": "Przegląd",
       "snapshot": "Migawka Realizacji"
-    }
+    },
+    "kpiOkr": "KPI/OKR",
+    "tools": "Narzędzia",
+    "pilotPhase": "Pilotaż (Faza Wstępna)",
+    "fullImplementation": "Wdrożenie Pełne",
+    "standardReports": "Raporty Standardowe",
+    "executiveView": "Widok Zarządu",
+    "aiAdvisor": "AI Advisor",
+    "automationScheme": "Schemat automatyzacji"
   },
   "auth": {
     "startQuick": "Rozpocznij Szybką Diagnozę",

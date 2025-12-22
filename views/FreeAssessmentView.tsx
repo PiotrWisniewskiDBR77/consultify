@@ -62,7 +62,7 @@ export const FreeAssessmentView: React.FC = () => {
 
   const [currentStep, setCurrentStep] = useState<AssessmentStep>(AssessmentStep.INTRO);
   const { t: translate } = useTranslation();
-  const chat = translate('chat', { returnObjects: true }) as any;
+  const chat = translate('chat.freeAssessment', { returnObjects: true }) as { scripts: Record<string, string>, options: Record<string, string> };
   const t = chat?.scripts || {};
   const opts = chat?.options || {};
 
@@ -292,7 +292,7 @@ export const FreeAssessmentView: React.FC = () => {
       const newGoal: StrategicGoal = {
         id: Date.now().toString(),
         title: `${label} Improvement`,
-        type: value as any,
+        category: value as keyof typeof AssessmentStep,
         priority: 'High',
         horizon: '12m'
       };
@@ -328,7 +328,7 @@ export const FreeAssessmentView: React.FC = () => {
       const newChallenge: Challenge = {
         id: Date.now().toString(),
         title: `Critical Gap in ${value}`,
-        area: value as any,
+        category: value as keyof typeof StrategicGoal,
         severity: 5,
         impact: 5,
         description: 'Identified during quick scan.'
@@ -346,7 +346,7 @@ export const FreeAssessmentView: React.FC = () => {
       if (value !== 'None') {
         const newConstraint: Constraint = {
           id: Date.now().toString(),
-          type: value as any,
+          type: value as keyof typeof Challenge,
           description: 'Hard limit by user',
           impactLevel: 'High'
         };
@@ -388,7 +388,7 @@ export const FreeAssessmentView: React.FC = () => {
       }
     }, 100);
     return () => clearTimeout(timeout);
-  }, [currentAppView, messages, sessionData, currentStep]);
+  }, [currentAppView, sessionData.step2Completed, sessionData.step3Completed, currentStep, messages]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getActiveStepIndex = () => {
     if (currentAppView === AppView.QUICK_STEP3_EXPECTATIONS) return 3;

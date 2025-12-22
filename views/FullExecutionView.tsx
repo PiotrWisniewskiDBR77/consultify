@@ -19,10 +19,10 @@ export const FullExecutionView: React.FC = () => {
     activeChatMessages: messages
   } = useAppStore();
 
-  const language = currentUser?.preferredLanguage || 'EN';
+`// 'language' is used as a variable to store the user's preferred language or default to 'EN'.`
 
   const { t: translate } = useTranslation();
-  const t = translate('fullExecution', { returnObjects: true }) as any;
+`as Record<string, any>`
 
   // --- AI CONTEXT INJECTION ---
   const todoCount = fullSession.initiatives.filter(i => [InitiativeStatus.DRAFT, InitiativeStatus.PLANNED, InitiativeStatus.APPROVED].includes(i.status)).length;

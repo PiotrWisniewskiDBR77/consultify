@@ -54,7 +54,15 @@
     "dashboardSub": {
       "overview": "Überblick",
       "snapshot": "Ausführungsmomentaufnahme"
-    }
+    },
+    "kpiOkr": "KPI/OKR",
+    "tools": "Werkzeuge",
+    "pilotPhase": "Pilot (Anfangsphase)",
+    "fullImplementation": "Vollständige Umsetzung",
+    "standardReports": "Standardberichte",
+    "executiveView": "Geschäftsführungsansicht",
+    "aiAdvisor": "KI-Berater",
+    "automationScheme": "Automatisierungsschema"
   },
   "auth": {
     "startQuick": "Starten Sie Ihre Schnellbewertung",

@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowRight, Trophy, AlertCircle, Target, CheckCircle2 } from 'lucide-react';
 import { DRDArea } from '../../services/drdStructure';
+import { getMatrixCellClasses, getScoreBadgeClasses, getLegendDotClasses } from '../../utils/assessmentColors';
 
 interface AssessmentMatrixCardProps {
     title: string;
@@ -64,13 +65,13 @@ export const AssessmentMatrixCard: React.FC<AssessmentMatrixCardProps> = ({
                 <div className="flex flex-col items-end gap-1">
                     <div className="flex items-center gap-2 text-xs">
                         <span className="text-slate-400">Avg Actual</span>
-                        <div className="px-2 py-0.5 rounded bg-blue-600 font-bold text-white shadow-[0_0_10px_rgba(37,99,235,0.3)]">
+                        <div className={getScoreBadgeClasses('actual')}>
                             {actual.toFixed(1)}
                         </div>
                     </div>
                     <div className="flex items-center gap-2 text-xs">
                         <span className="text-slate-500 dark:text-slate-400">Target</span>
-                        <div className="px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-500/20 border border-purple-500 text-purple-600 dark:text-purple-300 font-bold">
+                        <div className={getScoreBadgeClasses('target')}>
                             {target.toFixed(1)}
                         </div>
                     </div>
@@ -115,15 +116,7 @@ export const AssessmentMatrixCard: React.FC<AssessmentMatrixCardProps> = ({
                                 return (
                                     <div
                                         key={`${areaId}-${level}`}
-                                        className={`
-                                            relative p-3 rounded border text-[10px] flex items-center justify-center text-center transition-all
-                                            ${isActual
-                                                ? 'bg-blue-600 border-blue-400 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)] z-10 scale-105'
-                                                : isTarget
-                                                    ? 'bg-purple-100 dark:bg-purple-600/40 border-purple-400 text-purple-900 dark:text-white border-dashed'
-                                                    : 'bg-slate-50 dark:bg-navy-900/40 border-slate-200 dark:border-slate-800 text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/40 hover:border-slate-300 dark:hover:border-slate-700'
-                                            }
-                                        `}
+                                        className={`relative p-3 rounded border text-[10px] flex items-center justify-center text-center transition-all ${getMatrixCellClasses(isActual, isTarget)}`}
                                     >
                                         <span className="line-clamp-4 font-medium leading-tight">
                                             {levelInfo?.title || "Brak opisu"}
@@ -165,11 +158,11 @@ export const AssessmentMatrixCard: React.FC<AssessmentMatrixCardProps> = ({
                         {/* Legend */}
                         <div className="flex gap-3 text-[10px]">
                             <div className="flex items-center gap-1.5">
-                                <span className="w-2 h-2 rounded-full bg-blue-600 block"></span>
+                                <span className={getLegendDotClasses('actual')}></span>
                                 <span className="text-slate-500 dark:text-slate-300">Aktualny</span>
                             </div>
                             <div className="flex items-center gap-1.5">
-                                <span className="w-2 h-2 rounded-full border border-purple-400 border-dashed block"></span>
+                                <span className={getLegendDotClasses('target')}></span>
                                 <span className="text-slate-500 dark:text-slate-300">Cel</span>
                             </div>
                         </div>

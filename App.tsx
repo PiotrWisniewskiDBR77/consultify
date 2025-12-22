@@ -23,7 +23,8 @@ const FullROIView = React.lazy(() => import('./views/FullROIView').then(m => ({ 
 const FullExecutionView = React.lazy(() => import('./views/FullExecutionView').then(m => ({ default: m.FullExecutionView })));
 const FullPilotView = React.lazy(() => import('./views/FullPilotView').then(m => ({ default: m.FullPilotView })));
 const FullRolloutView = React.lazy(() => import('./views/FullRolloutView').then(m => ({ default: m.FullRolloutView })));
-const FullReportsView = React.lazy(() => import('./views/FullReportsView').then(m => ({ default: m.FullReportsView })));
+const FullReportsView = React.lazy(() => import('./views/FullReportsView').then(m => ({ default: m.FullReportsView })))
+const KpiOkrView = React.lazy(() => import('./views/KpiOkrView').then(m => ({ default: m.KpiOkrView })));
 const AdminView = React.lazy(() => import('./views/admin/AdminView').then(m => ({ default: m.AdminView })));
 const SettingsView = React.lazy(() => import('./views/SettingsView').then(m => ({ default: m.SettingsView })));
 const SuperAdminView = React.lazy(() => import('./views/superadmin/SuperAdminView').then(m => ({ default: m.SuperAdminView })));
@@ -352,6 +353,15 @@ const AppContent: React.FC = () => {
             }
             return <ContextBuilderView initialTab={initialTab} />;
         }
+        // DRD Assessment (dedicated view)
+        if (currentView === AppView.ASSESSMENT_DRD) {
+            return (
+                <React.Suspense fallback={<LoadingScreen />}>
+                    <FullAssessmentView />
+                </React.Suspense>
+            );
+        }
+
         if (currentView === AppView.FULL_STEP1_ASSESSMENT || currentView.startsWith('FULL_STEP1_')) {
             return (
                 <React.Suspense fallback={<LoadingScreen />}>
@@ -405,6 +415,13 @@ const AppContent: React.FC = () => {
             return (
                 <React.Suspense fallback={<LoadingScreen />}>
                     <FullReportsView />
+                </React.Suspense>
+            );
+        }
+        if (currentView === AppView.KPI_OKR_DASHBOARD) {
+            return (
+                <React.Suspense fallback={<LoadingScreen />}>
+                    <KpiOkrView />
                 </React.Suspense>
             );
         }

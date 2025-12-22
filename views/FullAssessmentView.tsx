@@ -1,7 +1,7 @@
-
+```typescript
 import React, { useEffect, useState } from 'react';
 import { SplitLayout } from '../components/SplitLayout';
-import { AppView, DRDAxis, AxisAssessment, AdditionalAudit, SessionMode, MaturityLevel } from '../types';
+import { AppView, DRDAxis, AxisAssessment, SessionMode, MaturityLevel } from '../types';
 import { useAppStore } from '../store/useAppStore';
 import { Api } from '../services/api';
 import { AIMessageHistory } from '../services/ai/gemini';
@@ -9,13 +9,11 @@ import { useAIStream } from '../hooks/useAIStream';
 import { AssessmentAxisWorkspace } from '../components/assessment/AssessmentAxisWorkspace';
 import { AssessmentWizard } from '../components/assessment/AssessmentWizard';
 import { AssessmentSummaryWorkspace } from '../components/assessment/AssessmentSummaryWorkspace';
-import { AssessmentAuditsWorkspace } from '../components/assessment/AssessmentAuditsWorkspace';
+import { AssessmentReportsWorkspace } from '../components/assessment/AssessmentReportsWorkspace';
 import { useTranslation } from 'react-i18next';
 import { Settings, Smartphone, Briefcase, Database, Users, Lock, BrainCircuit, ArrowRight } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-
 type AxisId = DRDAxis;
-
 export const FullAssessmentView: React.FC = () => {
   const {
     currentUser,
@@ -28,11 +26,8 @@ export const FullAssessmentView: React.FC = () => {
     activeChatMessages: messages,
     setIsBotTyping
   } = useAppStore();
-
   const { startStream } = useAIStream();
-
-  const [dashboardTab, setDashboardTab] = useState<'summary' | 'audits'>('summary');
-
+  const [dashboardTab, setDashboardTab] = useState<'summary' | 'reports'>('summary');
   // Load Session Data
   useEffect(() => {
     const loadSession = async () => {
@@ -48,7 +43,6 @@ export const FullAssessmentView: React.FC = () => {
     };
     loadSession();
   }, [currentUser, currentProjectId, updateFullSession]);
-
   // View Mapping
   const getAxisFromView = (view: AppView): DRDAxis | null => {
     switch (view) {
@@ -62,17 +56,14 @@ export const FullAssessmentView: React.FC = () => {
       default: return null;
     }
   };
-
   const currentAxisId = getAxisFromView(currentAppView);
-
   // --- HANDLERS ---
   const { t: translate } = useTranslation();
-  const t = translate('fullAssessment', { returnObjects: true }) as any;
-  const ts = translate('sidebar', { returnObjects: true }) as any;
-  const ta = translate('assessment.workspace', { returnObjects: true }) as any;
-  const tc = translate('common', { returnObjects: true }) as any;
+  const t = translate('fullAssessment', { returnObjects: true }) as Record<string, any>;
+  const ts = translate('sidebar', { returnObjects: true }) as Record<string, any>;
+  const ta = translate('assessment.workspace', { returnObjects: true }) as Record<string, any>;
+  const tc = translate('common', { returnObjects: true }) as Record<string, any>;
   const [interviewAxis, setInterviewAxis] = useState<{ id: AxisId; label: string } | null>(null);
-
   const axes: { id: AxisId; label: string; icon: React.ReactNode; desc: string }[] = [
     { id: 'processes', label: ts.fullStep1_proc, icon: <Settings size={22} />, desc: t.descriptions.processes },
     { id: 'digitalProducts', label: ts.fullStep1_prod, icon: <Smartphone size={22} />, desc: t.descriptions.digitalProducts },
@@ -82,33 +73,26 @@ export const FullAssessmentView: React.FC = () => {
     { id: 'cybersecurity', label: ts.fullStep1_cyber, icon: <Lock size={22} />, desc: t.descriptions.cybersecurity },
     { id: 'aiMaturity', label: ts.fullStep1_ai, icon: <BrainCircuit size={22} />, desc: t.descriptions.aiMaturity },
   ];
-
   // Wizard State - Disabled as per user request
   const [isWizardActive, setIsWizardActive] = useState(false);
-
   // Auto-start wizard removed.
-
   const handleAxisUpdate = async (axis: DRDAxis, data: Partial<AxisAssessment>) => {
     const updatedAssessment = { ...fullSession.assessment };
     const current = updatedAssessment[axis] || { actual: 1, target: 1, justification: '' };
     updatedAssessment[axis] = { ...current, ...data } as AxisAssessment;
-
     const newSession = { ...fullSession, assessment: updatedAssessment };
     updateFullSession(newSession);
-
     // Auto-save
     try {
       await Api.saveSession(currentUser!.id, SessionMode.FULL, newSession, currentProjectId || undefined);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to save assessment', err);
       toast.error('Failed to save changes. Please try again.');
     }
   };
-
   const handleWizardComplete = (recommendedLevel: MaturityLevel, justification: string, areaScores: Record<string, number[]>) => {
     // Wizard disabled
   };
-
   const handleNextAxis = (current: DRDAxis) => {
     const order: DRDAxis[] = ['processes', 'digitalProducts', 'businessModels', 'culture', 'dataManagement', 'cybersecurity', 'aiMaturity'];
     const idx = order.indexOf(current);
@@ -131,51 +115,20 @@ export const FullAssessmentView: React.FC = () => {
       setDashboardTab('summary');
     }
   };
-
-  const handleAuditAdd = async (audit: AdditionalAudit) => {
-    const newAudits = [...(fullSession.audits || []), audit];
-    const newSession = { ...fullSession, audits: newAudits };
-    updateFullSession(newSession);
-    try {
-      await Api.saveSession(currentUser!.id, SessionMode.FULL, newSession, currentProjectId || undefined);
-      toast.success('Audit added');
-    } catch (err) {
-      console.error('Failed to save audit', err);
-      toast.error('Failed to save audit.');
-    }
-  };
-
-  const handleAuditRemove = async (id: string) => {
-    const newAudits = (fullSession.audits || []).filter(a => a.id !== id);
-    const newSession = { ...fullSession, audits: newAudits };
-    updateFullSession(newSession);
-    try {
-      await Api.saveSession(currentUser!.id, SessionMode.FULL, newSession, currentProjectId || undefined);
-      toast.success('Audit removed');
-    } catch (err) {
-      console.error('Failed to remove audit', err);
-      toast.error('Failed to save changes.');
-    }
-  };
-
   const handleGenerateInitiatives = async () => {
     // Navigate to Module 3 (Impact Phase)
     onNavigate(AppView.FULL_STEP2_INITIATIVES);
-
     // Here we would also trigger the AI Generation Engine for Initiatives
     // For now, we assume the view transition triggers it or user initiates it there.
   };
-
   // --- AI LOGIC ---
   const handleAiChat = async (text: string) => {
     addChatMessage({ id: Date.now().toString(), role: 'user', content: text, timestamp: new Date() });
     setIsBotTyping(true);
-
     const history: AIMessageHistory[] = messages.map(m => ({
       role: m.role === 'user' ? 'user' : 'model',
       parts: [{ text: m.content }]
     }));
-
     let context = `User is in Module 2: Assessment.`;
     if (currentAxisId) {
       const data = fullSession.assessment[currentAxisId];
@@ -184,13 +137,10 @@ export const FullAssessmentView: React.FC = () => {
       context += ` Reviewing Assessment Summary/Gap Map.`;
     }
     context += `\nUser asks: ${text}`;
-
     // Start Stream
     startStream(text, history, context);
   };
-
   // --- RENDER ---
-
   // Render 1. Specific Axis View
   if (currentAxisId) {
     const axisData = fullSession.assessment?.[currentAxisId];
@@ -224,7 +174,6 @@ export const FullAssessmentView: React.FC = () => {
       </SplitLayout>
     );
   }
-
   // Render 2. Dashboard View
   return (
     <SplitLayout title={ta.dashboardHeader} onSendMessage={handleAiChat}>
@@ -234,27 +183,25 @@ export const FullAssessmentView: React.FC = () => {
           <div className="flex items-center gap-8 h-full">
             <button
               onClick={() => setDashboardTab('summary')}
-              className={`h-full border-b-2 text-sm font-semibold transition-colors ${dashboardTab === 'summary' ? 'border-purple-500 text-navy-900 dark:text-white' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+              className={`h-full px-6 border-b-2 text-base font-medium transition-colors ${dashboardTab === 'summary' ? 'border-purple-500 text-navy-900 dark:text-white' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
             >
               {ta.tabs.summary}
             </button>
             <button
-              onClick={() => setDashboardTab('audits')}
-              className={`h-full border-b-2 text-sm font-semibold transition-colors ${dashboardTab === 'audits' ? 'border-purple-500 text-navy-900 dark:text-white' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+              onClick={() => setDashboardTab('reports')}
+              className={`h-full px-6 border-b-2 text-base font-medium transition-colors ${dashboardTab === 'reports' ? 'border-purple-500 text-navy-900 dark:text-white' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
             >
-              {ta.tabs.audits}
+              {ta.tabs.reports || 'Reports'}
             </button>
           </div>
-
           <button
             onClick={handleGenerateInitiatives}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white rounded-lg text-sm font-bold shadow-lg shadow-green-900/20 transition-all"
+            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white rounded-lg text-sm font-semibold shadow-lg shadow-green-900/20 transition-all"
           >
             <span>{ta.generateInitiatives}</span>
             <ArrowRight size={16} />
           </button>
         </div>
-
         <div className="flex-1 overflow-y-auto w-full">
           {dashboardTab === 'summary' ? (
             // Summary / Gap Map
@@ -275,14 +222,14 @@ export const FullAssessmentView: React.FC = () => {
                       };
                       onNavigate(viewMap[axis]);
                     }}
-                    className="p-2 rounded bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-xs text-center border border-slate-200 dark:border-white/5 transition-all group"
+                    className="p-2 rounded bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-center border border-slate-200 dark:border-white/5 transition-all group"
                   >
-                    <span className="block text-slate-500 dark:text-slate-400 group-hover:text-navy-900 dark:group-hover:text-white mb-1 truncate">{axis}</span>
+                    <span className="block text-xs text-slate-500 dark:text-slate-400 group-hover:text-navy-900 dark:group-hover:text-white mb-1 truncate">{axis}</span>
                     <div className="flex justify-center gap-1">
-                      <span className="w-5 h-5 rounded bg-slate-100 dark:bg-navy-900 flex items-center justify-center font-bold text-blue-600 dark:text-blue-400">
+                      <span className="w-5 h-5 rounded bg-slate-100 dark:bg-navy-900 flex items-center justify-center text-sm font-bold text-blue-600 dark:text-blue-400">
                         {fullSession.assessment?.[axis]?.actual || '-'}
                       </span>
-                      <span className="w-5 h-5 rounded bg-slate-100 dark:bg-navy-900 flex items-center justify-center font-bold text-purple-600 dark:text-purple-400">
+                      <span className="w-5 h-5 rounded bg-slate-100 dark:bg-navy-900 flex items-center justify-center text-sm font-bold text-purple-600 dark:text-purple-400">
                         {fullSession.assessment?.[axis]?.target || '-'}
                       </span>
                     </div>
@@ -306,15 +253,12 @@ export const FullAssessmentView: React.FC = () => {
               />
             </>
           ) : (
-            // Audits View
-            <AssessmentAuditsWorkspace
-              audits={fullSession.audits || []}
-              onAddAudit={handleAuditAdd}
-              onRemoveAudit={handleAuditRemove}
-            />
+            // Reports View
+            <AssessmentReportsWorkspace />
           )}
         </div>
       </div>
     </SplitLayout>
   );
 };
+```

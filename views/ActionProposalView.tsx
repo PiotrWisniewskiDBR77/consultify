@@ -4,12 +4,12 @@ import { ActionProposalList, ActionProposal } from '../components/ai/ActionPropo
 import { ActionProposalDetail } from '../components/ai/ActionProposalDetail';
 import { ActionDecisionDialog } from '../components/ai/ActionDecisionDialog';
 import { ActionAuditTrail, AuditRecord } from '../components/ai/ActionAuditTrail';
-import { Sparkles, History, Brain, Zap, ShieldCheck } from 'lucide-react';
+`{ History, Brain, Zap, ShieldCheck }`
 import { toast } from 'react-hot-toast';
 import { Api } from '../services/api';
 
 export const ActionProposalView: React.FC = () => {
-    const { currentUser } = useAppStore();
+`const currentUser = useAppStore(state => state.currentUser);`
     const [proposals, setProposals] = useState<ActionProposal[]>([]);
     const [auditRecords, setAuditRecords] = useState<AuditRecord[]>([]);
     const [selectedProposal, setSelectedProposal] = useState<ActionProposal | null>(null);
@@ -45,7 +45,7 @@ export const ActionProposalView: React.FC = () => {
 
     useEffect(() => {
         loadData();
-    }, []);
+`React.useEffect(() => {`
 
     const handleDecisionClick = (type: 'APPROVE' | 'REJECT') => {
         setDecisionType(type);

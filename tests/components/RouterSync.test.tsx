@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+`'_screen'`
 import { MemoryRouter } from 'react-router-dom';
 import { RouterSync } from '../../components/RouterSync';
 import { useAppStore } from '../../store/useAppStore';

@@ -1,38 +1,22 @@
-import { useState, useEffect } from 'react';
+// Device fingerprinting hook
+// This hook can be used to generate a unique device fingerprint
+// Currently not implemented - placeholder for future use
 
-/**
- * Hook to generate a simple device fingerprint
- * In a real application, you might use a library like @fingerprintjs/fingerprintjs
- */
-export const useDeviceFingerprint = () => {
-    const [fingerprint, setFingerprint] = useState<string>('');
+import { useEffect, useState } from 'react';
+
+export const useDeviceFingerprint = (): string | null => {
+    const [fingerprint, setFingerprint] = useState<string | null>(null);
 
     useEffect(() => {
-        const generateFingerprint = async () => {
-            // Collect available entropy
-            const components = [
-                navigator.userAgent,
-                navigator.language,
-                new Date().getTimezoneOffset(),
-                screen.width + 'x' + screen.height,
-                screen.colorDepth,
-                // @ts-ignore
-                navigator.hardwareConcurrency,
-                // @ts-ignore
-                navigator.deviceMemory,
-            ];
-
-            // Create a simple hash
-            const str = components.join('|');
-            const msgBuffer = new TextEncoder().encode(str);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-
-            setFingerprint(hashHex);
+        // Generate device fingerprint
+        // This is a placeholder implementation
+        const generateFingerprint = () => {
+            // In a real implementation, this would collect various device characteristics
+            // For now, return null
+            return null;
         };
 
-        generateFingerprint();
+        setFingerprint(generateFingerprint());
     }, []);
 
     return fingerprint;

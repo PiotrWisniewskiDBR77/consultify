@@ -45,6 +45,7 @@ import {
   TrendingUp,
   Sparkles,
   Factory, // Organization
+  Wrench, // Tools
 } from 'lucide-react';
 import { SidebarUsage } from './SidebarUsage';
 import { PhaseIndicator } from './PMO/PhaseIndicator';
@@ -225,34 +226,47 @@ export const Sidebar: React.FC = () => {
       viewId: AppView.MY_WORK,
     },
     {
-      id: 'EXECUTIVE_VIEW',
-      label: t('sidebar.executiveView', 'Executive View'),
-      icon: <Eye size={20} />,
-      viewId: AppView.EXECUTIVE_VIEW,
-    },
-    {
       id: 'MODULE_2',
-      label: t('sidebar.module2'),
+      label: t('sidebar.assessment'),
       icon: <CheckCircle2 size={20} />,
       subItems: [
-        { id: 'M2_1', label: t('sidebar.fullStep1_proc'), viewId: AppView.FULL_STEP1_PROCESSES, icon: <Workflow size={16} /> },
-        { id: 'M2_2', label: t('sidebar.fullStep1_prod'), viewId: AppView.FULL_STEP1_DIGITAL, icon: <Cpu size={16} /> },
-        { id: 'M2_3', label: t('sidebar.fullStep1_model'), viewId: AppView.FULL_STEP1_MODELS, icon: <Layers size={16} /> },
-        { id: 'M2_4', label: t('sidebar.fullStep1_data'), viewId: AppView.FULL_STEP1_DATA, icon: <Database size={16} /> },
-        { id: 'M2_5', label: t('sidebar.fullStep1_cult'), viewId: AppView.FULL_STEP1_CULTURE, icon: <Users size={16} /> },
-        { id: 'M2_CYBER', label: t('sidebar.fullStep1_cyber'), viewId: AppView.FULL_STEP1_CYBERSECURITY, icon: <Fingerprint size={16} /> },
-        { id: 'M2_6', label: t('sidebar.fullStep1_ai'), viewId: AppView.FULL_STEP1_AI, icon: <Brain size={16} /> },
+        {
+          id: 'M2_DRD',
+          label: t('sidebar.drd'),
+          viewId: AppView.ASSESSMENT_DRD,
+          icon: <Activity size={16} />
+        },
+        {
+          id: 'M2_DIGITAL',
+          label: t('sidebar.digitalAssessments'),
+          viewId: AppView.ASSESSMENT_DIGITAL_EXTERNAL,
+          icon: <Cpu size={16} />
+        },
+        {
+          id: 'M2_LEAN',
+          label: t('sidebar.leanAssessments'),
+          viewId: AppView.ASSESSMENT_LEAN_EXTERNAL,
+          icon: <Workflow size={16} />
+        },
       ]
     },
+    // Inicjatywy - standalone
     {
-      id: 'MODULE_3',
-      label: t('sidebar.module3'),
-      icon: <Layers size={20} />,
-      subItems: [
-        { id: 'M3_1', label: t('sidebar.module3_1'), viewId: AppView.FULL_STEP2_INITIATIVES, requiresView: AppView.FULL_STEP1_ASSESSMENT, icon: <Lightbulb size={16} /> },
-        { id: 'M3_2', label: t('sidebar.module3_2'), viewId: AppView.FULL_STEP3_ROADMAP, requiresView: AppView.FULL_STEP2_INITIATIVES, icon: <Calendar size={16} /> },
-      ]
+      id: 'MODULE_3_INITIATIVES',
+      label: t('sidebar.module3_1'),
+      icon: <Lightbulb size={20} />,
+      viewId: AppView.FULL_STEP2_INITIATIVES,
+      requiresView: AppView.FULL_STEP1_ASSESSMENT
     },
+    // Mapa drogowa - standalone
+    {
+      id: 'MODULE_3_ROADMAP',
+      label: t('sidebar.module3_2'),
+      icon: <Calendar size={20} />,
+      viewId: AppView.FULL_STEP3_ROADMAP,
+      requiresView: AppView.FULL_STEP2_INITIATIVES
+    },
+    // Wdrożenie - back to single view (Pilot phase)
     {
       id: 'MODULE_4',
       label: t('sidebar.module4'),
@@ -260,6 +274,7 @@ export const Sidebar: React.FC = () => {
       viewId: AppView.FULL_PILOT_EXECUTION,
       requiresView: AppView.FULL_STEP3_ROADMAP
     },
+    // Realizacja - renamed from KPI/OKR, using FULL_ROLLOUT view
     {
       id: 'MODULE_5',
       label: t('sidebar.module5'),
@@ -274,6 +289,7 @@ export const Sidebar: React.FC = () => {
       viewId: AppView.FULL_STEP4_ROI,
       requiresView: AppView.FULL_STEP2_INITIATIVES
     },
+    // Raporty - simplified to single item
     {
       id: 'MODULE_7',
       label: t('sidebar.module7'),
@@ -281,12 +297,15 @@ export const Sidebar: React.FC = () => {
       viewId: AppView.FULL_STEP6_REPORTS,
       requiresView: AppView.FULL_STEP5_EXECUTION
     },
+    // Tools Section with AI Advisor and Automation Scheme
     {
-      id: 'AI_ADVISOR',
-      label: t('sidebar.aiAdvisor', 'AI Advisor'),
-      icon: <Sparkles size={20} />,
-      viewId: AppView.AI_ACTION_PROPOSALS,
-      requiresView: AppView.DASHBOARD // Available essentially always for admins
+      id: 'MODULE_TOOLS',
+      label: t('sidebar.tools', 'Narzędzia'),
+      icon: <Wrench size={20} />,
+      subItems: [
+        { id: 'TOOLS_AI_ADVISOR', label: t('sidebar.aiAdvisor', 'AI Advisor'), viewId: AppView.AI_ACTION_PROPOSALS, requiresView: AppView.DASHBOARD, icon: <Sparkles size={16} /> },
+        { id: 'TOOLS_AUTOMATION', label: t('sidebar.automationScheme', 'Schemat automatyzacji'), viewId: AppView.KPI_OKR_DASHBOARD, requiresView: AppView.DASHBOARD, icon: <Workflow size={16} /> },
+      ]
     }
   ];
 

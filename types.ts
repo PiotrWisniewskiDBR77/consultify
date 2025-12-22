@@ -17,7 +17,15 @@ export enum AppView {
   ONBOARDING_WIZARD = 'ONBOARDING_WIZARD', // Phase E: Guided First Value
   ORG_SETUP_WIZARD = 'ORG_SETUP_WIZARD', // Phase D: Organization Setup
   FULL_STEP1_CONTEXT = 'FULL_STEP1_CONTEXT', // NEW: Senior Consultant Context Gathering
-  FULL_STEP1_ASSESSMENT = 'FULL_STEP1_ASSESSMENT', // Parent
+  FULL_STEP1_ASSESSMENT = 'FULL_STEP1_ASSESSMENT', // Parent (legacy)
+
+  // Assessment Module - Hierarchical Structure
+  ASSESSMENT_OVERVIEW = 'ASSESSMENT_OVERVIEW', // Assessment landing page
+  ASSESSMENT_DRD = 'ASSESSMENT_DRD', // DRD with axis selector
+  ASSESSMENT_DIGITAL_EXTERNAL = 'ASSESSMENT_DIGITAL_EXTERNAL', // SIRI, ADMA, etc.
+  ASSESSMENT_LEAN_EXTERNAL = 'ASSESSMENT_LEAN_EXTERNAL', // Lean frameworks
+
+  // DRD Axis Views (kept for backward compatibility)
   FULL_STEP1_PROCESSES = 'FULL_STEP1_PROCESSES',
   FULL_STEP1_DIGITAL = 'FULL_STEP1_DIGITAL',
   FULL_STEP1_MODELS = 'FULL_STEP1_MODELS',
@@ -867,7 +875,7 @@ export interface Notification {
     link?: string;
     actionLabel?: string;
     priority?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 
   // Status
@@ -1550,9 +1558,56 @@ export interface ProjectContext {
 // ==========================================
 
 // Maturity Assessment: Captures As-Is vs To-Be state
-export interface MaturityAssessment {
+// ==========================================
+// EXTERNAL ASSESSMENTS (SIRI, ADMA, LEAN)
+// ==========================================
+
+/** External Assessment Types */
+export type ExternalAssessmentType = 'SIRI' | 'ADMA' | 'DIGITAL_OTHER' | 'LEAN';
+
+/** External Assessment Status */
+export type ExternalAssessmentStatus = 'uploaded' | 'processing' | 'mapped' | 'error';
+
+/** External Assessment Entity */
+export interface ExternalAssessment {
   id: string;
-  projectId: string;
+  projectId?: number;
+  organizationId: number;
+
+  // File Info
+  type: ExternalAssessmentType;
+  fileName: string;
+  filePath: string;
+  fileSize?: number;
+
+  // Upload Info
+  uploadedAt: string;
+  uploadedBy: number;
+  uploadedByName?: string;
+
+  // Processing Status
+  status: ExternalAssessmentStatus;
+  processingError?: string;
+
+  // Mapping to Initiatives
+  generatedInitiatives?: string[]; // Initiative IDs
+  mappingNotes?: string;
+
+  // Metadata
+  metadata?: {
+    frameworkVersion?: string;
+    assessmentDate?: string;
+    assessorName?: string;
+    maturityScore?: number;
+    [key: string]: unknown;
+  };
+
+  updatedAt?: string;
+}
+
+export interface MaturityAssessment {
+  id?: string;
+  userId: string;
 
   // Per-Axis Scores
   axisScores: {
@@ -1770,8 +1825,8 @@ export interface TaskChangeLog {
   id: string;
   type: string;
   field: string;
-  oldValue: any;
-  newValue: any;
+  oldValue?: unknown;
+  newValue?: unknown;
   changedBy: string;
   changedAt: string;
 }
@@ -2073,7 +2128,6 @@ export interface ReportBlockMeta {
   tags?: string[];
   lastGeneratedBy?: string;
   lastEditedBy?: string;
-  [key: string]: any;
 }
 
 export interface ReportBlock {
@@ -2088,7 +2142,7 @@ export interface ReportBlock {
   aiRegeneratable: boolean;
   locked: boolean;
 
-  content: any; // Type-specific content structure
+  content?: unknown;
   meta?: ReportBlockMeta;
   position: number;
 
@@ -2465,8 +2519,8 @@ export interface ActivityLog {
   entityType: ActivityEntityType;
   entityId?: string;
   entityName?: string;
-  oldValue?: any;
-  newValue?: any;
+  metadata?: Record<string, unknown>;
+  context?: Record<string, unknown>;
   ipAddress?: string;
   userAgent?: string;
   createdAt: string;

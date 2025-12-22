@@ -1,3 +1,4 @@
+```typescript
 import React, { useState, useEffect } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { AppView, FullSession, ChatMessage, SessionMode } from '../types';
@@ -6,14 +7,12 @@ import { Api } from '../services/api'; // Using Api service for consistency
 import { useAIStream } from '../hooks/useAIStream';
 import { AIMessageHistory } from '../services/ai/gemini';
 import { CheckCircle2, Lock, AlertTriangle, ShieldCheck, ChevronRight } from 'lucide-react';
-
 interface Module1ContextViewProps {
-    currentUser: any;
+    currentUser: { id: string }; // Replace `any` with a more specific type
     fullSession: FullSession;
     onNavigate: (view: AppView) => void;
     setFullSession: (session: FullSession) => void;
 }
-
 export const Module1ContextView: React.FC<Module1ContextViewProps> = ({ currentUser, fullSession, onNavigate, setFullSession }) => {
     const {
         activeChatMessages: messages,
@@ -21,15 +20,12 @@ export const Module1ContextView: React.FC<Module1ContextViewProps> = ({ currentU
         isBotTyping,
         setIsBotTyping
     } = useAppStore();
-
     const { isStreaming, streamedContent, startStream } = useAIStream();
-
     const [sufficiency, setSufficiency] = useState({
         score: fullSession.contextSufficiency?.score || 0,
         gaps: fullSession.contextSufficiency?.gaps || [],
         isReady: fullSession.contextSufficiency?.isReady || false
     });
-
     // Initial greeting if chat is empty
     useEffect(() => {
         if (messages.length === 0) {
@@ -41,8 +37,7 @@ export const Module1ContextView: React.FC<Module1ContextViewProps> = ({ currentU
                 timestamp: new Date()
             });
         }
-    }, [messages.length]);
-
+    }, [messages.length, addChatMessage]);
     // Update session when local sufficiency state changes
     useEffect(() => {
         if (
@@ -62,16 +57,13 @@ export const Module1ContextView: React.FC<Module1ContextViewProps> = ({ currentU
             // Debounced save could go here, but for now we rely on explicit actions or periodic saves
             Api.saveSession(currentUser.id, SessionMode.FULL, updatedSession, fullSession.id);
         }
-    }, [sufficiency]);
-
+    }, [sufficiency, fullSession, setFullSession, currentUser.id]);
     const analyzeSufficiency = async (history: ChatMessage[]) => {
         // Mock Sufficiency Analysis for immediate feedback loop (Real implementation would call a specialized LLM prompt)
         // Here we simulate the AI "Checking" the context.
-
         // In a real scenario, we would send the conversation to the LLM with a hidden system prompt asking to rate the context.
         // For this prototype, we'll increment score based on message count + length as a heuristic,
         // OR better yet, ask the AI to output a JSON block in a separate hidden call.
-
         // Let's do a hidden AI call to evaluate context.
         const evaluationPrompt = `
         ACT AS A SENIOR STRATEGY CONSULTANT AUDITOR.
@@ -81,7 +73,6 @@ export const Module1ContextView: React.FC<Module1ContextViewProps> = ({ currentU
         2. Business Goals (Quantifiable targets)
         3. Key Challenges (Pain points)
         4. Financial/Risk Context (Budget, constraints)
-
         Output a JSON ONLY:
         {
             "score": number (0-100),
@@ -89,38 +80,31 @@ export const Module1ContextView: React.FC<Module1ContextViewProps> = ({ currentU
             "reasoning": string (brief explanation)
         }
         `;
-
         // This is a simplified call to get the JSON. In production we might split this.
         // For now, we simulate "progress" to not block the user indefinitely in this demo.
         const msgCount = history.filter(m => m.role === 'user').length;
         const mockScore = Math.min(10 + (msgCount * 20), 100);
         let mockGaps: string[] = [];
-
         if (mockScore < 40) mockGaps = ["Strategic Drivers", "Business Goals", "Financial Context"];
         else if (mockScore < 70) mockGaps = ["Business Goals", "Financial Context"];
         else if (mockScore < 90) mockGaps = ["Financial Context"];
-
         setSufficiency({
             score: mockScore,
             gaps: mockGaps,
             isReady: mockScore >= 80
         });
     };
-
     const handleSendMessage = async (text: string) => {
         addChatMessage({ id: Date.now().toString(), role: 'user', content: text, timestamp: new Date() });
         setIsBotTyping(true);
-
         const history: AIMessageHistory[] = messages.map(m => ({
             role: m.role === 'user' ? 'user' : 'model',
             parts: [{ text: m.content }]
         }));
         // Add user's new message to history for the API call
         history.push({ role: 'user', parts: [{ text }] });
-
         // Add placeholder AI message
         addChatMessage({ id: Date.now().toString(), role: 'ai', content: '', timestamp: new Date() });
-
         // 1. Generate AI Response (Conversation)
         startStream(
             text,
@@ -133,12 +117,10 @@ export const Module1ContextView: React.FC<Module1ContextViewProps> = ({ currentU
             // Wait, useAIStream's startStream awaits the whole stream?
             // Yes, looking at implementation: `await Api.chatWithAIStream(...)`.
             // So this .then() happens when stream is DONE.
-
             // Analyze Sufficiency
             analyzeSufficiency([...messages, { id: 'x', role: 'user', content: text, timestamp: new Date() }]);
         });
     };
-
     const handleProceed = () => {
         if (sufficiency.isReady) {
             // update step completion
@@ -148,7 +130,6 @@ export const Module1ContextView: React.FC<Module1ContextViewProps> = ({ currentU
             onNavigate(AppView.FULL_STEP1_ASSESSMENT); // Proceed to Assessment (Step 2)
         }
     };
-
     return (
         <div className="flex w-full h-full bg-slate-50 dark:bg-navy-950">
             {/* Left: Chat Area */}
@@ -177,7 +158,6 @@ export const Module1ContextView: React.FC<Module1ContextViewProps> = ({ currentU
                         </div>
                     </div>
                 </div>
-
                 <ChatPanel
                     messages={
                         isStreaming
@@ -194,14 +174,12 @@ export const Module1ContextView: React.FC<Module1ContextViewProps> = ({ currentU
                     onOptionSelect={(opt) => handleSendMessage(opt.value)}
                 />
             </div>
-
             {/* Right: Context Status Panel */}
             <div className="w-80 bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-white/5 flex flex-col p-6 shadow-xl z-10">
                 <h3 className="font-bold text-navy-900 dark:text-white mb-6 uppercase tracking-wider text-sm flex items-center gap-2">
                     <Lock size={16} />
                     Gatekeeper
                 </h3>
-
                 <div className="flex-1 space-y-6">
                     <div className="p-4 bg-slate-50 dark:bg-navy-800 rounded-xl border border-slate-100 dark:border-white/5">
                         <h4 className="font-semibold text-sm mb-3">Missing Context</h4>
@@ -221,12 +199,10 @@ export const Module1ContextView: React.FC<Module1ContextViewProps> = ({ currentU
                             </div>
                         )}
                     </div>
-
                     <div className="text-xs text-slate-500 italic leading-relaxed">
                         "I cannot allow you to proceed to the Assessment phase until I am satisfied that we have defined clear, quantifiable business goals. This logic protection ensures your roadmap will actually be relevant."
                     </div>
                 </div>
-
                 <button
                     onClick={handleProceed}
                     disabled={!sufficiency.isReady}

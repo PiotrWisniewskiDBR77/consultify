@@ -1,5 +1,5 @@
-import { FullSession, FullInitiative, AxisId, StrategicGoal, Challenge, Idea, InitiativeStatus } from '../types';
-import { DRD_STRUCTURE, DRDLevel } from './drdStructure';
+`import { FullSession, FullInitiative, AxisId, InitiativeStatus } from '../types';`
+`import { DRD_STRUCTURE } from './drdStructure';`
 
 export const generateInitiatives = (session: FullSession): FullInitiative[] => {
     const initiatives: FullInitiative[] = [];

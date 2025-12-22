@@ -1,5 +1,6 @@
 import { CheckCircle2, Circle, MessageSquare, AlertCircle, Sparkles, BrainCircuit } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { getAssessmentButtonClasses } from '../../utils/assessmentColors';
 
 interface LevelDetailCardProps {
     level: number;
@@ -90,10 +91,7 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
                 <div className="flex flex-wrap items-center justify-center gap-4 mb-8">
                     <button
                         onClick={onSetActual}
-                        className={`px-6 py-3 rounded-xl font-bold text-sm transition-all border flex items-center gap-2 min-w-[160px] justify-center ${isActual
-                            ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-900/40'
-                            : 'bg-slate-100 dark:bg-navy-950/30 border-slate-200 dark:border-blue-500/30 text-slate-500 dark:text-slate-300 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:text-blue-600 dark:hover:text-white hover:shadow-lg hover:shadow-blue-900/20'
-                            }`}
+                        className={`px-6 py-3 rounded-xl font-bold text-sm transition-all border flex items-center gap-2 min-w-[160px] justify-center ${getAssessmentButtonClasses('actual', isActual)}`}
                     >
                         {isActual && <CheckCircle2 size={16} />}
                         {cardT.actual || 'Actual'}
@@ -101,10 +99,7 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
 
                     <button
                         onClick={onSetTarget}
-                        className={`px-6 py-3 rounded-xl font-bold text-sm transition-all border flex items-center gap-2 min-w-[160px] justify-center ${isTarget
-                            ? 'bg-purple-600 border-purple-500 text-white shadow-lg shadow-purple-900/40'
-                            : 'bg-slate-100 dark:bg-navy-950/30 border-slate-200 dark:border-purple-500/30 text-slate-500 dark:text-slate-300 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-500/10 hover:text-purple-600 dark:hover:text-white hover:shadow-lg hover:shadow-purple-900/20'
-                            }`}
+                        className={`px-6 py-3 rounded-xl font-bold text-sm transition-all border flex items-center gap-2 min-w-[160px] justify-center ${getAssessmentButtonClasses('target', isTarget)}`}
                     >
                         {isTarget && <CheckCircle2 size={16} />}
                         {cardT.target || 'Target'}

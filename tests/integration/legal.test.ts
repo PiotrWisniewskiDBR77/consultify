@@ -14,7 +14,7 @@ describe('Legal API Routes', () => {
     let testToken: string;
     let testUserId: string;
     let testOrgId: string;
-    let adminToken: string;
+`'adminToken' is declared but its value is never read.`
     let adminUserId: string;
 
     beforeAll(async () => {

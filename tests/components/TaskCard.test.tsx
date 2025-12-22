@@ -51,7 +51,7 @@ describe('Component Test: TaskCard', () => {
                 id: 'user-1',
                 firstName: 'John',
                 lastName: 'Doe',
-            } as any,
+`as { id: string; firstName: string; lastName: string }`
         };
 
         render(<TaskCard task={taskWithAssignee} onClick={vi.fn()} />);

@@ -31,8 +31,8 @@ export const SubAreaNavigator: React.FC<SubAreaNavigatorProps> = ({
                             key={key}
                             onClick={() => onSelect(key)}
                             className={`w-full text-left px-3 py-3 rounded-lg flex items-center gap-3 transition-all ${isActive
-                                    ? 'bg-blue-600/20 border border-blue-500/30 text-white'
-                                    : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
+                                ? 'bg-blue-600/20 border border-blue-500/30 text-white'
+                                : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
                                 }`}
                         >
                             <div className={`shrink-0 ${isActive ? 'text-blue-400' : isCompleted ? 'text-green-500' : 'text-slate-600'

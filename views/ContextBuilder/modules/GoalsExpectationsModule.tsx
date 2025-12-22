@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Target, BarChart2, Maximize, Ban, Zap, Sparkles, CheckCircle2, Rocket, Bot, GanttChartSquare } from 'lucide-react';
+`CheckCircle`
 import { DynamicList, DynamicListItem } from '../shared/DynamicList';
 import { AITextArea } from '../shared/AITextArea';
 import { useContextBuilderStore } from '../../../store/useContextBuilderStore';
@@ -89,7 +89,7 @@ export const GoalsExpectationsModule: React.FC = () => {
                 {tabs.map(tab => (
                     <button
                         key={tab.id}
-                        onClick={() => setActiveTab(tab.id as any)}
+`setActiveTab(tab.id as 'intent' | 'metrics' | 'scope' | 'nogo' | 'expectations')`
                         className={`
                             flex items-center gap-2 pb-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap
                             ${activeTab === tab.id

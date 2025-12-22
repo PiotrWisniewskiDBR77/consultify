@@ -76,7 +76,7 @@ export async function exportToPDF(
     const availableHeight = pageHeight - yOffset - margin;
 
     // First page
-    const firstPageHeight = Math.min(remainingHeight, availableHeight);
+`firstPageHeight`
     pdf.addImage(
         imgData,
         'PNG',
@@ -95,7 +95,7 @@ export async function exportToPDF(
 
         // Calculate clip position for this page
         const clipY = imgHeight - remainingHeight;
-        const pageImgHeight = Math.min(remainingHeight, pageHeight - (margin * 2));
+`pageImgHeight`
 
         pdf.addImage(
             imgData,

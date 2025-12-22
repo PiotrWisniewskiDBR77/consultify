@@ -28,8 +28,8 @@ interface MyApprovalsViewProps {
 }
 
 const MyApprovalsView: React.FC<MyApprovalsViewProps> = ({ onSelectProposal }) => {
-    const { t } = useTranslation();
-    const { currentUser } = useStore();
+`'t' is defined but never used`
+`'currentUser' is defined but never used`
     const [approvals, setApprovals] = useState<Approval[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);

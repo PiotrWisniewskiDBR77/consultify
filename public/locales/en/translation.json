@@ -10,6 +10,10 @@
     "module1_2": "Strategic Goals",
     "module1_3": "Challenge Map",
     "module2": "Assessment",
+    "assessment": "Assessment",
+    "drd": "DRD (Digital Readiness)",
+    "digitalAssessments": "Digital Assessments (SIRI, ADMA)",
+    "leanAssessments": "Lean Assessments",
     "module3": "Initiatives & Roadmap",
     "module3_1": "Generator & List",
     "module3_2": "Roadmap",
@@ -55,7 +59,15 @@
     "dashboardSub": {
       "overview": "Overview",
       "snapshot": "Execution Snapshot"
-    }
+    },
+    "kpiOkr": "KPI/OKR",
+    "tools": "Tools",
+    "pilotPhase": "Pilot (Preliminary Phase)",
+    "fullImplementation": "Full Implementation",
+    "standardReports": "Standard Reports",
+    "executiveView": "Executive View",
+    "aiAdvisor": "AI Advisor",
+    "automationScheme": "Automation Scheme"
   },
   "auth": {
     "startQuick": "Start Your Quick Assessment",

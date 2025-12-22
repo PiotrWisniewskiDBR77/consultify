@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { FullSession, Initiative } from '../types';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+`import { FullSession } from '../types';`
+`import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';`
 
 interface ExecutiveSummaryViewProps {
     session: FullSession;
@@ -13,7 +13,7 @@ export const ExecutiveSummaryView: React.FC<ExecutiveSummaryViewProps> = ({ sess
         if (completedIds.length === 0) return 0;
 
         // Map ID to score, handle undefined
-        const scores = completedIds.map(id => (session.assessment[id] as any)?.score || 0);
+`const scores = completedIds.map(id => (session.assessment[id]?.score || 0));`
         const total = scores.reduce((sum, score) => sum + score, 0);
 
         return (total / completedIds.length).toFixed(1);
@@ -41,7 +41,7 @@ export const ExecutiveSummaryView: React.FC<ExecutiveSummaryViewProps> = ({ sess
 
     const maturityData = (session.assessment.completedAxes || []).map(axisId => ({
         name: axisId.substring(0, 10), // Short name
-        score: (session.assessment[axisId] as any)?.score || 0
+`score: (session.assessment[axisId]?.score || 0)`
     }));
 
     return (

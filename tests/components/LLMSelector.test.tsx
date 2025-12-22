@@ -14,7 +14,7 @@ describe('Component Test: LLMSelector', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        (useAppStore as any).mockReturnValue({
+`(useAppStore as jest.Mock).mockReturnValue({`
             aiConfig: {
                 autoMode: false,
                 selectedModelId: null,
@@ -22,7 +22,7 @@ describe('Component Test: LLMSelector', () => {
             setAIConfig: mockSetAIConfig,
             currentUser: mockCurrentUser,
         });
-        (Api.getPublicLLMProviders as any).mockResolvedValue([
+`(Api.getPublicLLMProviders as jest.Mock).mockResolvedValue([`
             { id: 'model-1', name: 'GPT-4', provider: 'OpenAI' },
             { id: 'model-2', name: 'Claude', provider: 'Anthropic' },
         ]);

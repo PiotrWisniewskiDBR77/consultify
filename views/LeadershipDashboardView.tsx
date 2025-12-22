@@ -1,3 +1,4 @@
+```typescript
 import React, { useEffect, useState } from 'react';
 import { SplitLayout } from '../components/SplitLayout';
 import { useAppStore } from '../store/useAppStore';
@@ -8,7 +9,6 @@ import {
     Activity, ArrowUpRight, ArrowDownRight, PieChart
 } from 'lucide-react';
 import { sendMessageToAI } from '../services/ai/gemini';
-
 interface MetricCardProps {
     title: string;
     value: string | number;
@@ -18,7 +18,6 @@ interface MetricCardProps {
     icon: React.ReactNode;
     color: string;
 }
-
 const MetricCard: React.FC<MetricCardProps> = ({ title, value, subValue, trend, trendUp, icon, color }) => (
     <div className="bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-white/5 rounded-xl p-5 relative overflow-hidden group hover:border-blue-500/30 dark:hover:border-white/10 transition-colors shadow-sm dark:shadow-none">
         <div className={`absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity ${color}`}>
@@ -44,20 +43,16 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, subValue, trend, 
         </div>
     </div>
 );
-
 export const LeadershipDashboardView: React.FC = () => {
     const {
         currentUser, addChatMessage: addMessage
     } = useAppStore();
-
     // State for dashboard data
-    const [healthData, setHealthData] = useState<any>(null);
-    const [performanceData, setPerformanceData] = useState<any[]>([]);
-    const [economicsData, setEconomicsData] = useState<any>(null);
+    const [healthData, setHealthData] = useState<unknown>(null);
+    const [performanceData, setPerformanceData] = useState<unknown[]>([]);
+    const [economicsData, setEconomicsData] = useState<unknown>(null);
     const [loading, setLoading] = useState(true);
-
     const language = currentUser?.preferredLanguage || 'EN';
-
     useEffect(() => {
         const loadAnalytics = async () => {
             if (!currentUser?.organizationId) return;
@@ -69,13 +64,11 @@ export const LeadershipDashboardView: React.FC = () => {
                 const token = localStorage.getItem('token');
                 const headers = { 'Authorization': `Bearer ${token}` };
                 const API_URL = 'http://127.0.0.1:3001/api'; // Hardcoded for now based on Api.ts
-
                 const [healthRes, perfRes, ecoRes] = await Promise.all([
                     fetch(`${API_URL}/analytics/health`, { headers }).then(r => r.json()),
                     fetch(`${API_URL}/analytics/performance`, { headers }).then(r => r.json()),
                     fetch(`${API_URL}/analytics/economics`, { headers }).then(r => r.json())
                 ]);
-
                 setHealthData(healthRes);
                 setPerformanceData(perfRes);
                 setEconomicsData(ecoRes);
@@ -87,11 +80,9 @@ export const LeadershipDashboardView: React.FC = () => {
         };
         loadAnalytics();
     }, [currentUser]);
-
     const handleAiChat = (text: string) => {
         addMessage({ id: Date.now().toString(), role: 'user', content: text, timestamp: new Date() });
     };
-
     if (loading) {
         return (
             <SplitLayout title="Leadership Dashboard" onSendMessage={handleAiChat}>
@@ -101,12 +92,10 @@ export const LeadershipDashboardView: React.FC = () => {
             </SplitLayout>
         );
     }
-
     return (
         <SplitLayout title="Leadership Dashboard" onSendMessage={handleAiChat}>
             <div className="w-full h-full bg-gray-50 dark:bg-navy-900 overflow-y-auto p-8">
                 <div className="max-w-7xl mx-auto space-y-8">
-
                     {/* Section 1: Economic Impact (The "CFO View") */}
                     <div>
                         <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
@@ -148,7 +137,6 @@ export const LeadershipDashboardView: React.FC = () => {
                             />
                         </div>
                     </div>
-
                     {/* Section 2: Initiative Health (The "COO View") */}
                     <div>
                         <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
@@ -156,7 +144,7 @@ export const LeadershipDashboardView: React.FC = () => {
                         </h2>
                         <div className="bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-white/5 rounded-xl p-6 shadow-sm dark:shadow-none">
                             <div className="flex items-center justify-around text-center">
-                                {healthData?.initiativesByStatus?.map((statusItem: any) => (
+                                {healthData?.initiativesByStatus?.map((statusItem: { status: string, count: number }) => (
                                     <div key={statusItem.status} className="flex flex-col gap-2">
                                         <div className="text-3xl font-bold text-navy-900 dark:text-white">{statusItem.count}</div>
                                         <div className="text-xs uppercase text-slate-500 font-bold tracking-wider">{statusItem.status.replace('_', ' ')}</div>
@@ -168,9 +156,7 @@ export const LeadershipDashboardView: React.FC = () => {
                                 {(!healthData?.initiativesByStatus?.length) && (
                                     <div className="text-slate-500">No active initiatives found.</div>
                                 )}
-
                                 <div className="w-px h-16 bg-white/10"></div>
-
                                 <div className="flex flex-col gap-2">
                                     <div className="text-3xl font-bold text-red-400">{healthData?.overdueTasks || 0}</div>
                                     <div className="text-xs uppercase text-slate-500 font-bold tracking-wider">Overdue Tasks</div>
@@ -178,14 +164,13 @@ export const LeadershipDashboardView: React.FC = () => {
                             </div>
                         </div>
                     </div>
-
                     {/* Section 3: People & Teams (The "CHRO View") */}
                     <div>
                         <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
                             <Users className="text-purple-400" /> Team Performance
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {performanceData.map((user: any) => (
+                            {performanceData.map((user: { id: string, first_name: string, last_name: string, completed_tasks: number, total_tasks: number, overdue_tasks: number }) => (
                                 <div key={user.id} className="bg-white dark:bg-navy-950/30 border border-slate-200 dark:border-white/5 rounded-xl p-4 flex items-center gap-4 shadow-sm dark:shadow-none">
                                     <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-lg font-bold text-white">
                                         {user.first_name[0]}{user.last_name[0]}
@@ -209,9 +194,9 @@ export const LeadershipDashboardView: React.FC = () => {
                             ))}
                         </div>
                     </div>
-
                 </div>
             </div>
         </SplitLayout>
     );
 };
+```

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAppStore } from '../../../store/useAppStore';
 import { AppView } from '../../../types';
 import { Api } from '../../../services/api';
-import { ArrowLeft, Copy, Check, Mail, Send, History } from 'lucide-react';
+`import { ArrowLeft, Copy, Send, History } from 'lucide-react';`
 import { toast } from 'react-hot-toast';
 
 interface Invite {
@@ -26,7 +26,7 @@ export const ConsultantInviteView = () => {
     const [targetEmail, setTargetEmail] = useState('');
     const [targetCompany, setTargetCompany] = useState('');
     const [isCreating, setIsCreating] = useState(false);
-    const [link, setLink] = useState(''); // Added setLink state as it's used in handleCreateInvite
+`const [link, setLink] = useState('');`
 
     useEffect(() => {
         loadInvites();

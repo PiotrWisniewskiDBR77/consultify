@@ -18,7 +18,7 @@ describe('PermissionManager', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        (global.fetch as any).mockClear();
+`(global.fetch as jest.Mock).mockClear();`
     });
 
     describe('Rendering', () => {
@@ -44,7 +44,7 @@ describe('PermissionManager', () => {
         });
 
         it('should display user role when permissions loaded', async () => {
-            (global.fetch as any)
+`(global.fetch as jest.Mock)`
                 .mockResolvedValueOnce({
                     ok: true,
                     json: async () => [{ key: 'perm-1', description: 'Test', category: 'POLICY' }]
@@ -75,7 +75,7 @@ describe('PermissionManager', () => {
 
     describe('Search Functionality', () => {
         it('should filter permissions by search term', async () => {
-            (global.fetch as any)
+`(global.fetch as jest.Mock)`
                 .mockResolvedValueOnce({
                     ok: true,
                     json: async () => [
@@ -108,7 +108,7 @@ describe('PermissionManager', () => {
         });
 
         it('should search by permission key', async () => {
-            (global.fetch as any)
+`(global.fetch as jest.Mock)`
                 .mockResolvedValueOnce({
                     ok: true,
                     json: async () => [
@@ -142,7 +142,7 @@ describe('PermissionManager', () => {
 
     describe('Category Expansion', () => {
         it('should toggle category expansion', async () => {
-            (global.fetch as any)
+`(global.fetch as jest.Mock)`
                 .mockResolvedValueOnce({
                     ok: true,
                     json: async () => [
@@ -178,7 +178,7 @@ describe('PermissionManager', () => {
 
     describe('Permission Toggling', () => {
         it('should toggle permission status', async () => {
-            (global.fetch as any)
+`(global.fetch as jest.Mock)`
                 .mockResolvedValueOnce({
                     ok: true,
                     json: async () => [
@@ -212,7 +212,7 @@ describe('PermissionManager', () => {
 
     describe('Save Functionality', () => {
         it('should show save button when changes pending', async () => {
-            (global.fetch as any)
+`(global.fetch as jest.Mock)`
                 .mockResolvedValueOnce({
                     ok: true,
                     json: async () => [
@@ -249,7 +249,7 @@ describe('PermissionManager', () => {
         });
 
         it('should call onSave callback after saving', async () => {
-            (global.fetch as any)
+`(global.fetch as jest.Mock)`
                 .mockResolvedValueOnce({
                     ok: true,
                     json: async () => [
@@ -287,7 +287,7 @@ describe('PermissionManager', () => {
 
     describe('Error Handling', () => {
         it('should display error when fetch fails', async () => {
-            (global.fetch as any).mockRejectedValue(new Error('Network error'));
+`(global.fetch as jest.Mock)`
 
             render(
                 <PermissionManager
@@ -303,7 +303,7 @@ describe('PermissionManager', () => {
         });
 
         it('should handle API error responses', async () => {
-            (global.fetch as any).mockResolvedValue({
+`(global.fetch as jest.Mock)`
                 ok: false,
                 status: 500
             });
