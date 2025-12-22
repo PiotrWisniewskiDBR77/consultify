@@ -11,6 +11,10 @@ const PORT = process.env.PORT || 3005;
 const isProduction = process.env.NODE_ENV === 'production';
 const isTest = process.env.NODE_ENV === 'test';
 
+// Initialize Sentry (must be before other middleware)
+const { initSentry } = require('./config/sentry');
+const sentryHandlers = initSentry(app);
+
 // Init Scheduler
 const Scheduler = require('./cron/scheduler');
 
@@ -68,6 +72,12 @@ const corsOptions = {
     allowedHeaders: ['Content-Type', 'Authorization', 'x-access-token']
 };
 app.use(cors(corsOptions));
+
+// Sentry Request Handler (must be FIRST middleware - before body parsing)
+app.use(sentryHandlers.requestHandler);
+
+// Sentry Tracing Handler (must be after request handler, before routes)
+app.use(sentryHandlers.tracingHandler);
 
 // Body Parsing & Static Files
 app.use(express.json({ limit: '10mb' }));
@@ -425,6 +435,9 @@ app.use('/api/gdpr', gdprRoutes);
 
 const systemHealthRoutes = require('./routes/systemHealth');
 app.use('/api/system/health', systemHealthRoutes);
+
+// Sentry Error Handler (must be before other error handlers)
+app.use(sentryHandlers.errorHandler);
 
 // Error Handler Middleware (must be last, after all routes)
 const { errorHandlerMiddleware } = require('./utils/errorHandler');
