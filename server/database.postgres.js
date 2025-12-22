@@ -209,6 +209,7 @@ function initDb() {
                 status TEXT DEFAULT 'active',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 valid_until TIMESTAMP,
+                discount_percent INTEGER DEFAULT 0,
                 -- MFA enforcement settings (enterprise feature)
                 mfa_required INTEGER DEFAULT 0,
                 mfa_grace_period_days INTEGER DEFAULT 7
@@ -428,11 +429,32 @@ function initDb() {
                 FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
             )`);
 
-            // Alter Users
-            await safeRun("ALTER TABLE users ADD COLUMN token_limit INTEGER DEFAULT 100000");
-            await safeRun("ALTER TABLE users ADD COLUMN token_used INTEGER DEFAULT 0");
-            await safeRun("ALTER TABLE users ADD COLUMN token_reset_at TIMESTAMP");
-            await safeRun("ALTER TABLE users ADD COLUMN avatar_url TEXT");
+            // Alter Users - Add columns if they don't exist (migration)
+            // Note: These columns are already in CREATE TABLE, but we add them here for existing databases
+            await query(`
+                DO $$ 
+                BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='users' AND column_name='token_limit') THEN
+                        ALTER TABLE users ADD COLUMN token_limit INTEGER DEFAULT 100000;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='users' AND column_name='token_used') THEN
+                        ALTER TABLE users ADD COLUMN token_used INTEGER DEFAULT 0;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='users' AND column_name='token_reset_at') THEN
+                        ALTER TABLE users ADD COLUMN token_reset_at TIMESTAMP;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='users' AND column_name='avatar_url') THEN
+                        ALTER TABLE users ADD COLUMN avatar_url TEXT;
+                    END IF;
+                END $$;
+            `).catch(err => {
+                // Ignore errors - columns might already exist or table might not exist yet
+                console.log('[Postgres] User token columns migration skipped (may already exist)');
+            });
 
             // AI Feedback
             await query(`CREATE TABLE IF NOT EXISTS ai_feedback (
@@ -948,7 +970,7 @@ function initDb() {
                 console.log('[Postgres] MFA columns migration skipped (may already exist)');
             });
 
-            // Organizations table MFA columns
+            // Organizations table MFA columns and discount_percent
             await query(`
                 DO $$ 
                 BEGIN
@@ -960,10 +982,14 @@ function initDb() {
                                    WHERE table_name='organizations' AND column_name='mfa_grace_period_days') THEN
                         ALTER TABLE organizations ADD COLUMN mfa_grace_period_days INTEGER DEFAULT 7;
                     END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='discount_percent') THEN
+                        ALTER TABLE organizations ADD COLUMN discount_percent INTEGER DEFAULT 0;
+                    END IF;
                 END $$;
             `).catch(err => {
                 // Ignore errors - columns might already exist or table might not exist yet
-                console.log('[Postgres] Organization MFA columns migration skipped (may already exist)');
+                console.log('[Postgres] Organization columns migration skipped (may already exist)');
             });
 
             console.log('[Postgres] Schema Check Complete.');
