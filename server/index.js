@@ -74,11 +74,36 @@ const apiLimiter = rateLimit({
 });
 
 const authLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000,
-    max: isProduction ? 10 : 1000,
+    windowMs: 15 * 60 * 1000, // Reduced from 1 hour to 15 minutes for faster reset
+    max: isProduction ? 15 : 1000, // 15 attempts per 15 minutes (60/hour) instead of 10/hour
     store: authRedisStore,
-    skip: (req) => isTest, // Skip in test environment
-    message: { error: 'Too many login attempts, please try again later.' }
+    skip: (req) => {
+        // Skip in test environment
+        if (isTest) return true;
+        // Skip OPTIONS requests (CORS preflight)
+        if (req.method === 'OPTIONS') return true;
+        return false;
+    },
+    message: { error: 'Too many login attempts, please try again later.' },
+    // Standard headers for better debugging
+    standardHeaders: true,
+    legacyHeaders: false,
+    // Skip successful logins - only count failed attempts
+    skipSuccessfulRequests: true,
+    // Generate key based on IP + email (if available) to avoid shared IP issues
+    keyGenerator: (req) => {
+        // Try to use email from body if available (more accurate than IP alone)
+        const email = req.body?.email;
+        const ip = req.ip || req.connection.remoteAddress || 'unknown';
+        
+        if (email) {
+            // Use email-based key to avoid shared IP issues (office networks, VPNs)
+            return `auth:${email.toLowerCase().trim()}`;
+        }
+        
+        // Fallback to IP if no email in request
+        return `auth:ip:${ip}`;
+    },
 });
 
 // CORS Configuration
