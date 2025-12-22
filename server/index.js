@@ -441,25 +441,70 @@ app.use((req, res) => {
     });
 });
 
+// Global Error Handlers - Prevent server crashes
+if (!isTest) {
+    // Handle uncaught exceptions
+    process.on('uncaughtException', (err) => {
+        logger.error('[Server] Uncaught Exception:', err);
+        // Don't exit in production - let the process manager restart it
+        if (isProduction) {
+            // Log to monitoring service if available
+            console.error('[Server] Uncaught Exception (not exiting):', err.message);
+        } else {
+            // In development, log and continue
+            console.error('[Server] Uncaught Exception:', err);
+        }
+    });
+
+    // Handle unhandled promise rejections
+    process.on('unhandledRejection', (reason, promise) => {
+        logger.error('[Server] Unhandled Rejection:', { reason, promise });
+        // Don't exit - log and continue
+        if (isProduction) {
+            console.error('[Server] Unhandled Rejection (not exiting):', reason);
+        } else {
+            console.error('[Server] Unhandled Rejection:', reason);
+        }
+    });
+
+    // Handle warnings
+    process.on('warning', (warning) => {
+        logger.warn('[Server] Warning:', warning);
+    });
+}
+
 // Only listen if the file is run directly (not imported)
 if (require.main === module) {
     const http = require('http');
     const server = http.createServer(app);
+
+    // Handle server errors
+    server.on('error', (err) => {
+        logger.error('[Server] HTTP Server Error:', err);
+        if (err.code === 'EADDRINUSE') {
+            console.error(`Port ${PORT} is already in use`);
+            process.exit(1);
+        }
+    });
 
     // Initialize WebSocket server (using built-in upgrade mechanism instead of 'ws' library)
     const realtimeService = require('./services/realtimeService');
     realtimeService.initializeSimple(server);
 
     // Start token cleanup cron job
-    const { startCleanupJob } = require('./cron/cleanupRevokedTokens');
-    startCleanupJob();
+    try {
+        const { startCleanupJob } = require('./cron/cleanupRevokedTokens');
+        startCleanupJob();
+    } catch (err) {
+        logger.warn('[Server] Token cleanup job failed to start:', err.message);
+    }
 
     // Init AI Worker
     try {
         const { initWorker } = require('./workers/aiWorker');
         initWorker();
     } catch (err) {
-        console.warn('[Server] AI Worker failed to start (likely Redis missing):', err.message);
+        logger.warn('[Server] AI Worker failed to start (likely Redis missing):', err.message);
     }
 
     server.listen(PORT, '0.0.0.0', () => {

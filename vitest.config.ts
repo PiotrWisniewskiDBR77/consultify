@@ -10,6 +10,8 @@ export default defineConfig({
             '@': path.resolve(__dirname, './src'),
         },
     },
+    // Disable .env loading in tests to avoid permission issues
+    envPrefix: [],
     test: {
         globals: true,
         environment: 'jsdom',
@@ -17,6 +19,7 @@ export default defineConfig({
             MOCK_DB: 'true',
             MOCK_REDIS: 'true',
             DB_TYPE: 'sqlite',
+            NODE_ENV: 'test',
         },
         setupFiles: './tests/setup.ts',
         include: ['tests/unit/**/*.{test,spec}.{js,ts,jsx,tsx}', 'tests/components/**/*.{test,spec}.{js,ts,jsx,tsx}', 'tests/integration/**/*.{test,spec}.{js,ts,jsx,tsx}', 'tests/backend/**/*.{test,spec}.{js,ts,jsx,tsx}'],

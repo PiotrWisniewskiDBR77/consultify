@@ -75,6 +75,9 @@ unit_tests_report.txt
 verification_results.txt
 lint_report.txt
 
+# Auto-fix marker
+.auto-fix-applied
+
 # Temporary documentation files (move to docs/ if needed)
 *_SUMMARY.md
 *_PROGRESS.md

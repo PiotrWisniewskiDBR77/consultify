@@ -44,6 +44,7 @@ import {
   Eye, // Step D: Executive View
   TrendingUp,
   Sparkles,
+  Factory, // Organization
 } from 'lucide-react';
 import { SidebarUsage } from './SidebarUsage';
 import { PhaseIndicator } from './PMO/PhaseIndicator';
@@ -230,18 +231,6 @@ export const Sidebar: React.FC = () => {
       viewId: AppView.EXECUTIVE_VIEW,
     },
     {
-      id: 'INTRO_CONTEXT',
-      label: t('sidebar.intro'),
-      icon: <BookOpen size={20} />,
-      subItems: [
-        { id: 'CTX_1', label: t('sidebar.context.profile'), viewId: AppView.CONTEXT_BUILDER_PROFILE, icon: <Target size={16} /> },
-        { id: 'CTX_2', label: t('sidebar.context.goals'), viewId: AppView.CONTEXT_BUILDER_GOALS, icon: <Target size={16} /> },
-        { id: 'CTX_3', label: t('sidebar.context.challenges'), viewId: AppView.CONTEXT_BUILDER_CHALLENGES, icon: <Scale size={16} /> },
-        { id: 'CTX_4', label: t('sidebar.context.megatrends'), viewId: AppView.CONTEXT_BUILDER_MEGATRENDS, icon: <Globe size={16} /> },
-        { id: 'CTX_5', label: t('sidebar.context.strategy'), viewId: AppView.CONTEXT_BUILDER_STRATEGY, icon: <Zap size={16} /> },
-      ]
-    },
-    {
       id: 'MODULE_2',
       label: t('sidebar.module2'),
       icon: <CheckCircle2 size={20} />,
@@ -313,6 +302,19 @@ export const Sidebar: React.FC = () => {
       { id: 'ADMIN_LLM', label: t('sidebar.adminLLM'), viewId: AppView.ADMIN_LLM, icon: <Brain size={16} /> },
       { id: 'ADMIN_KNOWLEDGE', label: t('sidebar.adminKnowledge'), viewId: AppView.ADMIN_KNOWLEDGE, icon: <BookOpen size={16} /> },
       { id: 'ADMIN_FEEDBACK', label: t('sidebar.adminFeedback'), viewId: AppView.ADMIN_FEEDBACK, icon: <MessageSquare size={16} /> },
+    ]
+  };
+
+  const organizationMenuItem: MenuItem = {
+    id: 'ORGANIZATION',
+    label: t('sidebar.organization'),
+    icon: <Factory size={20} />,
+    subItems: [
+      { id: 'CTX_1', label: t('sidebar.context.profile'), viewId: AppView.CONTEXT_BUILDER_PROFILE, icon: <Target size={16} /> },
+      { id: 'CTX_2', label: t('sidebar.context.goals'), viewId: AppView.CONTEXT_BUILDER_GOALS, icon: <Target size={16} /> },
+      { id: 'CTX_3', label: t('sidebar.context.challenges'), viewId: AppView.CONTEXT_BUILDER_CHALLENGES, icon: <Scale size={16} /> },
+      { id: 'CTX_4', label: t('sidebar.context.megatrends'), viewId: AppView.CONTEXT_BUILDER_MEGATRENDS, icon: <Globe size={16} /> },
+      { id: 'CTX_5', label: t('sidebar.context.strategy'), viewId: AppView.CONTEXT_BUILDER_STRATEGY, icon: <Zap size={16} /> },
     ]
   };
 
@@ -549,6 +551,7 @@ export const Sidebar: React.FC = () => {
           <div className="space-y-1">
             <div className="my-1 border-t border-slate-200 dark:border-white/5" />
 
+            {currentUser?.role === UserRole.ADMIN && renderMenuItem(organizationMenuItem)}
             {currentUser?.role === UserRole.ADMIN && renderMenuItem(adminMenuItem)}
             {renderMenuItem(settingsMenuItem)}
 
