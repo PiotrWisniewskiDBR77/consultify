@@ -79,11 +79,19 @@ export const RouterSync: React.FC = () => {
             // Just log for debugging, the App component will render PublicReportView
             console.log('[RouterSync] Public Share Link accessed');
             // No state change needed - App.tsx will handle this route
+        } else if (path === '/login' || path === '/auth') {
+            // Login/Auth route - show auth view
+            if (currentView !== AppView.AUTH) {
+                console.log('[RouterSync] Navigating to AUTH/LOGIN');
+                setAuthInitialStep(AuthStep.LOGIN);
+                setCurrentView(AppView.AUTH);
+            }
         } else if (path === '/' || path === '') {
             // Phase A: Public Landing Page (ProductEntryPage)
             // If already logged in, we stay on landing but TopBar shows "Go to Workspace"
+            // Only set to WELCOME if we're not already in AUTH (login dialog might be open)
             console.log('[RouterSync] Phase A: Product Entry Page');
-            if (currentView !== AppView.WELCOME && !currentUser) {
+            if (currentView !== AppView.WELCOME && currentView !== AppView.AUTH && !currentUser) {
                 setCurrentView(AppView.WELCOME);
             }
         }

@@ -34,7 +34,19 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
 
 // Security Headers (production-ready)
 app.use(helmet({
-    contentSecurityPolicy: isProduction ? undefined : false, // Disable CSP in dev for hot reload
+    contentSecurityPolicy: isProduction ? {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            imgSrc: ["'self'", "data:", "https://www.transparenttextures.com"],
+            connectSrc: ["'self'"],
+            fontSrc: ["'self'", "data:"],
+            objectSrc: ["'none'"],
+            mediaSrc: ["'self'"],
+            frameSrc: ["'none'"],
+        },
+    } : false, // Disable CSP in dev for hot reload
     crossOriginEmbedderPolicy: false // Allow embedding
 }));
 
