@@ -25,16 +25,17 @@ const LinkedInIcon = () => (
 interface AuthViewProps {
   initialStep: AuthStep;
   targetMode: SessionMode;
-  onAuthSuccess: (user: any) => void;
+  onAuthSuccess: (user: { status?: string; message?: string }) => void;
   onBack: () => void;
 }
 
 export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onAuthSuccess, onBack }) => {
+  const { t } = useTranslation();
   const [step, setStep] = useState<AuthStep>(initialStep);
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
   const { t: translate } = useTranslation();
-  const t = translate('auth', { returnObjects: true }) as any;
+  `as Record<string, any>;`
 
   // OAuth Login Handlers
   const handleGoogleLogin = () => {
@@ -92,7 +93,9 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const user = await Api.register({
+      // Check if the user status or a specific message implies pending
+      // The backend returns { status: 'pending', message: ... } if pending
+      const user: { status?: string; message?: string } = await Api.register({
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
@@ -107,14 +110,17 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
       });
 
       // Check if the user status or a specific message implies pending
-      // The backend returns { status: 'pending', message: ... } if pending
-      if ((user as any).status === 'pending') {
+      if (user.status === 'pending') {
         setIsPending(true);
         return;
       }
 
       onAuthSuccess(user);
     } catch (err: any) {
+      if (err.status === 'pending') {
+        setIsPending(true);
+        return;
+      }
       setError(err.message || 'Registration failed');
     }
   };
@@ -132,7 +138,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
         role: UserRole.CEO,
         accessLevel: 'full'
       };
-      const user = await Api.register(demoUser);
+      const user: { status?: string; message?: string } = await Api.register(demoUser);
       onAuthSuccess(user);
     } catch (err: any) {
       setError('Failed to start demo: ' + err.message);
@@ -145,7 +151,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
     console.log('handleLogin called with:', formData.email);
     try {
       console.log('Calling Api.login...');
-      const user = await Api.login(formData.email, formData.password);
+      const user: { status?: string; message?: string } = await Api.login(formData.email, formData.password);
       console.log('Login successful:', user);
       onAuthSuccess(user);
     } catch (err: any) {
@@ -185,8 +191,8 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
         <div className="w-12 h-12 bg-blue-100 dark:bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-200 dark:border-blue-500/20 shadow-[0_0_15px_-3px_rgba(59,130,246,0.3)]">
           <Lock className="text-blue-600 dark:text-blue-400" size={24} />
         </div>
-        <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">{t.unlockFull}</h2>
-        <p className="text-slate-500 dark:text-slate-400 text-sm max-w-xs mx-auto">{t.enterCode}</p>
+        <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">{t('unlockFull')}</h2>
+        <p className="text-slate-500 dark:text-slate-400 text-sm max-w-xs mx-auto">{t('enterCode')}</p>
       </div>
 
       <div className="flex justify-center gap-3 mb-8" dir="ltr">
@@ -215,7 +221,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
         onClick={verifyCode}
         className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-all shadow-lg shadow-blue-500/20 dark:shadow-blue-900/20 text-sm"
       >
-        {t.verifyCode}
+        {t('verifyCode')}
       </button>
     </div>
   );
@@ -227,14 +233,14 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
           {targetMode === SessionMode.FREE ? t.startQuick : t.setupFull}
         </h2>
         <p className="text-slate-500 dark:text-slate-400 text-sm">
-          {t.personalize}
+          {t('personalize')}
         </p>
       </div>
 
       <form onSubmit={handleRegister} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t.firstName} <span className="text-purple-500 dark:text-purple-400">*</span></label>
+            <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t('firstName')} <span className="text-purple-500 dark:text-purple-400">*</span></label>
             <input
               required
               value={formData.firstName}
@@ -243,7 +249,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t.lastName} <span className="text-purple-500 dark:text-purple-400">*</span></label>
+            <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t('lastName')} <span className="text-purple-500 dark:text-purple-400">*</span></label>
             <input
               required
               value={formData.lastName}
@@ -254,7 +260,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t.email} <span className="text-purple-500 dark:text-purple-400">*</span></label>
+          <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t('email')} <span className="text-purple-500 dark:text-purple-400">*</span></label>
           <input
             type="email"
             required
@@ -265,7 +271,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t.phone}</label>
+          <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t('phone')}</label>
           <input
             type="tel"
             value={formData.phone}
@@ -275,7 +281,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t.company} <span className="text-purple-500 dark:text-purple-400">*</span></label>
+          <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t('company')} <span className="text-purple-500 dark:text-purple-400">*</span></label>
           <input
             required
             value={formData.companyName}
@@ -295,7 +301,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t.password} <span className="text-purple-500 dark:text-purple-400">*</span></label>
+          <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t('password')} <span className="text-purple-500 dark:text-purple-400">*</span></label>
           <input
             type="password"
             required
@@ -314,7 +320,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
         )}
 
         <button className="w-full py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg transition-all flex items-center justify-center gap-2 mt-4 shadow-lg shadow-purple-500/20 dark:shadow-purple-900/20 group text-sm">
-          {t.createStart}
+          {t('createStart')}
           <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
         </button>
       </form>
@@ -353,8 +359,8 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
 
       <div className="text-center pt-3 space-y-2">
         <div className="text-sm text-slate-500 dark:text-slate-400">
-          {t.haveAccount}{' '}
-          <button onClick={() => setStep(AuthStep.LOGIN)} className="text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300 font-medium hover:underline">{t.logIn}</button>
+          {t('haveAccount')}{' '}
+          <button onClick={() => setStep(AuthStep.LOGIN)} className="text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300 font-medium hover:underline">{t('logIn')}</button>
         </div>
 
         <div className="pt-2 border-t border-slate-200 dark:border-white/5">

@@ -299,3 +299,4 @@ npm run test:unit
 **Ostatnia aktualizacja:** 2025-01-XX  
 **Następny przegląd:** Po zakończeniu refaktoringu 5 serwisów
 
+

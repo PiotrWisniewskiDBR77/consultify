@@ -136,3 +136,4 @@ ON knowledge_chunks(doc_id);
 -- 3. Optimize workload calculations and aggregations
 -- 4. Improve dashboard and list view performance
 
+

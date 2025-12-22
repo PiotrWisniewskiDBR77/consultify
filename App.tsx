@@ -195,7 +195,7 @@ const AppContent: React.FC = () => {
         // Login doesn't necessarily have a specific URL requirement, but we could do /login
     };
 
-    const handleAuthSuccess = (user: User) => {
+    const handleAuthSuccess = (user: User | { status?: string; message?: string }) => {
         setCurrentUser({ ...user });
 
         // Redirect logic

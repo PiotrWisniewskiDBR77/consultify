@@ -188,3 +188,4 @@ git commit -m "refactor: use asyncHandler in initiatives routes"
 **Ostatnia aktualizacja:** 2025-01-XX  
 **Rekomendacja:** Opcja 1 - Dokończenie Refaktoringu Routes
 
+
