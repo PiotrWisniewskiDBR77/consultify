@@ -55,7 +55,7 @@ jobs:
           cd server && npm ci
       
       - name: TypeScript check
-        run: npx tsc --noEmit
+        run: npm run type-check
 
   # ============================================
   # Unit & Integration Tests
