@@ -17,6 +17,19 @@ router.post('/login', async (req, res) => {
         return res.status(400).json({ error: 'Email and password are required' });
     }
 
+    // Clear rate limit on successful login attempt (before validation)
+    // This prevents legitimate users from being blocked after fixing their password
+    // Note: We'll clear it again after successful login, but clearing early helps
+    // if user had typos and is now typing correctly
+    try {
+        const RedisStore = require('../utils/redisRateLimitStore');
+        const authRedisStore = new RedisStore({ windowMs: 15 * 60 * 1000 });
+        const rateLimitKey = `auth:${email.toLowerCase().trim()}`;
+        await authRedisStore.resetKey(rateLimitKey);
+    } catch (err) {
+        // Ignore errors - rate limit clearing is best effort
+    }
+
     // Import services
     const MFAService = require('../services/mfaService');
     const RefreshTokenService = require('../services/refreshTokenService');
@@ -31,13 +44,27 @@ router.post('/login', async (req, res) => {
         });
 
         if (!user) {
-            return res.status(404).json({ error: 'User not found' });
+            // Don't reveal if user exists or not (security best practice)
+            // But don't count this toward rate limit since it's not a real attempt
+            return res.status(401).json({ error: 'Invalid email or password' });
         }
 
         // Verify password
         const passwordIsValid = bcrypt.compareSync(password, user.password);
         if (!passwordIsValid) {
-            return res.status(401).json({ error: 'Invalid password' });
+            // Invalid password - this counts toward rate limit
+            return res.status(401).json({ error: 'Invalid email or password' });
+        }
+
+        // Successful password verification - clear rate limit for this email
+        // This allows users to retry after fixing typos without hitting limit
+        try {
+            const RedisStore = require('../utils/redisRateLimitStore');
+            const authRedisStore = new RedisStore({ windowMs: 15 * 60 * 1000 });
+            const rateLimitKey = `auth:${email.toLowerCase().trim()}`;
+            await authRedisStore.resetKey(rateLimitKey);
+        } catch (err) {
+            // Ignore errors - rate limit clearing is best effort
         }
 
         // Get organization

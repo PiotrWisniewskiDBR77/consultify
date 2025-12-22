@@ -11,6 +11,15 @@ const PORT = process.env.PORT || 3005;
 const isProduction = process.env.NODE_ENV === 'production';
 const isTest = process.env.NODE_ENV === 'test';
 
+// Trust proxy (required for Railway and other reverse proxies)
+// This allows express-rate-limit to correctly identify client IPs
+// Use 1 to trust first proxy (Railway), not true which trusts all (security risk)
+app.set('trust proxy', 1);
+
+// Initialize Sentry (must be before other middleware)
+const { initSentry } = require('./config/sentry');
+const sentryHandlers = initSentry(app);
+
 // Init Scheduler
 const Scheduler = require('./cron/scheduler');
 
@@ -25,7 +34,19 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
 
 // Security Headers (production-ready)
 app.use(helmet({
-    contentSecurityPolicy: isProduction ? undefined : false, // Disable CSP in dev for hot reload
+    contentSecurityPolicy: isProduction ? {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            imgSrc: ["'self'", "data:", "https://www.transparenttextures.com"],
+            connectSrc: ["'self'"],
+            fontSrc: ["'self'", "data:"],
+            objectSrc: ["'none'"],
+            mediaSrc: ["'self'"],
+            frameSrc: ["'none'"],
+        },
+    } : false, // Disable CSP in dev for hot reload
     crossOriginEmbedderPolicy: false // Allow embedding
 }));
 
@@ -53,11 +74,36 @@ const apiLimiter = rateLimit({
 });
 
 const authLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000,
-    max: isProduction ? 10 : 1000,
+    windowMs: 15 * 60 * 1000, // Reduced from 1 hour to 15 minutes for faster reset
+    max: isProduction ? 15 : 1000, // 15 attempts per 15 minutes (60/hour) instead of 10/hour
     store: authRedisStore,
-    skip: (req) => isTest, // Skip in test environment
-    message: { error: 'Too many login attempts, please try again later.' }
+    skip: (req) => {
+        // Skip in test environment
+        if (isTest) return true;
+        // Skip OPTIONS requests (CORS preflight)
+        if (req.method === 'OPTIONS') return true;
+        return false;
+    },
+    message: { error: 'Too many login attempts, please try again later.' },
+    // Standard headers for better debugging
+    standardHeaders: true,
+    legacyHeaders: false,
+    // Skip successful logins - only count failed attempts
+    skipSuccessfulRequests: true,
+    // Generate key based on IP + email (if available) to avoid shared IP issues
+    keyGenerator: (req) => {
+        // Try to use email from body if available (more accurate than IP alone)
+        const email = req.body?.email;
+        const ip = req.ip || req.connection.remoteAddress || 'unknown';
+        
+        if (email) {
+            // Use email-based key to avoid shared IP issues (office networks, VPNs)
+            return `auth:${email.toLowerCase().trim()}`;
+        }
+        
+        // Fallback to IP if no email in request
+        return `auth:ip:${ip}`;
+    },
 });
 
 // CORS Configuration
@@ -68,6 +114,12 @@ const corsOptions = {
     allowedHeaders: ['Content-Type', 'Authorization', 'x-access-token']
 };
 app.use(cors(corsOptions));
+
+// Sentry Request Handler (must be FIRST middleware - before body parsing)
+app.use(sentryHandlers.requestHandler);
+
+// Sentry Tracing Handler (must be after request handler, before routes)
+app.use(sentryHandlers.tracingHandler);
 
 // Body Parsing & Static Files
 app.use(express.json({ limit: '10mb' }));
@@ -425,6 +477,9 @@ app.use('/api/gdpr', gdprRoutes);
 
 const systemHealthRoutes = require('./routes/systemHealth');
 app.use('/api/system/health', systemHealthRoutes);
+
+// Sentry Error Handler (must be before other error handlers)
+app.use(sentryHandlers.errorHandler);
 
 // Error Handler Middleware (must be last, after all routes)
 const { errorHandlerMiddleware } = require('./utils/errorHandler');

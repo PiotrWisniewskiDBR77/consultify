@@ -30,8 +30,18 @@ const securityHeaders = (req, res, next) => {
     }
 
     // Content Security Policy (customize as needed)
-    // Using a permissive default for API server
-    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'");
+    // Allow images from transparenttextures.com for background patterns
+    res.setHeader('Content-Security-Policy', 
+        "default-src 'self'; " +
+        "script-src 'self' 'unsafe-inline'; " +
+        "style-src 'self' 'unsafe-inline'; " +
+        "img-src 'self' data: https://www.transparenttextures.com; " +
+        "connect-src 'self'; " +
+        "font-src 'self' data:; " +
+        "object-src 'none'; " +
+        "media-src 'self'; " +
+        "frame-src 'none'"
+    );
 
     next();
 };

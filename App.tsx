@@ -192,7 +192,8 @@ const AppContent: React.FC = () => {
         setSessionMode(SessionMode.FREE);
         setAuthInitialStep(AuthStep.LOGIN);
         setCurrentView(AppView.AUTH);
-        // Login doesn't necessarily have a specific URL requirement, but we could do /login
+        // Update URL to /login so RouterSync doesn't override it back to WELCOME
+        window.history.pushState({}, '', '/login');
     };
 
     const handleAuthSuccess = (user: User | { status?: string; message?: string }) => {
