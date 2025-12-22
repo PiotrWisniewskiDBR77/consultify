@@ -55,7 +55,7 @@ function parsePostgresUrl(url) {
             database: parsed.pathname.slice(1), // Remove leading /
             user: parsed.username,
             password: parsed.password,
-            ssl: isProduction ? { rejectUnauthorized: false } : false,
+            ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false' } : false,
             max: parseInt(process.env.DB_POOL_SIZE || '10', 10),
             idleTimeoutMillis: 30000,
             connectionTimeoutMillis: 2000
@@ -79,17 +79,30 @@ const config = {
     },
 
     // PostgreSQL config (parsed from DATABASE_URL)
-    postgres: databaseUrl ? parsePostgresUrl(databaseUrl) : {
-        host: process.env.DB_HOST || 'localhost',
-        port: parseInt(process.env.DB_PORT || '5432', 10),
-        database: process.env.DB_NAME || 'consultify',
-        user: process.env.DB_USER || 'postgres',
-        password: process.env.DB_PASSWORD || '',
-        ssl: isProduction ? { rejectUnauthorized: false } : false,
-        max: parseInt(process.env.DB_POOL_SIZE || '10', 10),
-        idleTimeoutMillis: 30000,
-        connectionTimeoutMillis: 2000
-    },
+    postgres: databaseUrl ? parsePostgresUrl(databaseUrl) : (() => {
+        // Determine SSL configuration
+        let sslConfig = false;
+        if (process.env.DB_SSL === 'true' || process.env.DB_SSL === 'require') {
+            sslConfig = { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false' };
+        } else if (process.env.DB_SSL === 'false' || process.env.DB_SSL === 'disable') {
+            sslConfig = false;
+        } else {
+            // Default: No SSL for Railway/internal connections
+            sslConfig = false;
+        }
+        
+        return {
+            host: process.env.DB_HOST || 'localhost',
+            port: parseInt(process.env.DB_PORT || '5432', 10),
+            database: process.env.DB_NAME || 'consultify',
+            user: process.env.DB_USER || 'postgres',
+            password: process.env.DB_PASSWORD || '',
+            ssl: sslConfig,
+            max: parseInt(process.env.DB_POOL_SIZE || '10', 10),
+            idleTimeoutMillis: 30000,
+            connectionTimeoutMillis: 2000
+        };
+    })(),
 
     // Common settings
     debug: process.env.DB_DEBUG === 'true',
