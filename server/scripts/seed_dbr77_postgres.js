@@ -143,13 +143,14 @@ async function seedDBR77() {
         console.log(`✅ Created Default Project: ${PROJECT_ID}`);
 
         // 7. Create LLM Provider (if table exists and no providers exist)
-        const llmCheck = await client.query('SELECT COUNT(*) as count FROM llm_providers WHERE is_active = true');
+        // Note: is_active and is_default are INTEGER (0/1) in PostgreSQL, not BOOLEAN
+        const llmCheck = await client.query('SELECT COUNT(*) as count FROM llm_providers WHERE is_active = 1');
         if (llmCheck.rows[0].count === '0') {
             // Try to insert a default LLM provider if GEMINI_API_KEY is set
             if (process.env.GEMINI_API_KEY) {
                 await client.query(
                     `INSERT INTO llm_providers (id, name, provider, api_key, is_active, is_default, created_at)
-                     VALUES (gen_random_uuid(), $1, $2, $3, true, true, NOW())
+                     VALUES (gen_random_uuid(), $1, $2, $3, 1, 1, NOW())
                      ON CONFLICT DO NOTHING`,
                     ['Google Gemini', 'gemini', process.env.GEMINI_API_KEY]
                 );
