@@ -11,6 +11,10 @@ const PORT = process.env.PORT || 3005;
 const isProduction = process.env.NODE_ENV === 'production';
 const isTest = process.env.NODE_ENV === 'test';
 
+// Trust proxy (required for Railway and other reverse proxies)
+// This allows express-rate-limit to correctly identify client IPs
+app.set('trust proxy', true);
+
 // Initialize Sentry (must be before other middleware)
 const { initSentry } = require('./config/sentry');
 const sentryHandlers = initSentry(app);

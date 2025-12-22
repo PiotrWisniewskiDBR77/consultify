@@ -146,7 +146,10 @@ function initDb() {
                 plan TEXT DEFAULT 'free',
                 status TEXT DEFAULT 'active',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                valid_until TIMESTAMP
+                valid_until TIMESTAMP,
+                -- MFA enforcement settings (enterprise feature)
+                mfa_required INTEGER DEFAULT 0,
+                mfa_grace_period_days INTEGER DEFAULT 7
             )`);
 
             // Users Table
@@ -162,6 +165,12 @@ function initDb() {
                 avatar_url TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 last_login TIMESTAMP,
+                -- MFA columns
+                mfa_enabled INTEGER DEFAULT 0,
+                mfa_secret TEXT,
+                mfa_backup_codes TEXT,
+                mfa_verified_at TIMESTAMP,
+                mfa_recovery_email TEXT,
                 FOREIGN KEY(organization_id) REFERENCES organizations(id)
             )`);
 
@@ -792,6 +801,37 @@ function initDb() {
             await query(`CREATE INDEX IF NOT EXISTS idx_approval_assignments_user ON approval_assignments(assigned_to_user_id, status)`);
             await query(`CREATE INDEX IF NOT EXISTS idx_approval_assignments_proposal ON approval_assignments(proposal_id)`);
             await query(`CREATE INDEX IF NOT EXISTS idx_approval_assignments_sla ON approval_assignments(sla_due_at, status)`);
+
+            // MFA Attempts Table (for brute-force protection)
+            await query(`CREATE TABLE IF NOT EXISTS mfa_attempts (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                attempt_type TEXT NOT NULL CHECK(attempt_type IN ('TOTP', 'BACKUP_CODE', 'SMS', 'EMAIL')),
+                success INTEGER NOT NULL DEFAULT 0,
+                ip_address TEXT,
+                user_agent TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )`);
+
+            await query(`CREATE INDEX IF NOT EXISTS idx_mfa_attempts_user_time ON mfa_attempts(user_id, created_at DESC)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_mfa_attempts_ip ON mfa_attempts(ip_address, created_at DESC)`);
+
+            // Trusted Devices Table (remember this device feature)
+            await query(`CREATE TABLE IF NOT EXISTS trusted_devices (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                device_fingerprint TEXT NOT NULL,
+                device_name TEXT,
+                last_used_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                expires_at TIMESTAMP NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                UNIQUE(user_id, device_fingerprint)
+            )`);
+
+            await query(`CREATE INDEX IF NOT EXISTS idx_trusted_devices_user ON trusted_devices(user_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_trusted_devices_fingerprint ON trusted_devices(device_fingerprint)`);
 
             console.log('[Postgres] Schema Check Complete.');
 
