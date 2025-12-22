@@ -48,8 +48,10 @@ USER consultify
 EXPOSE 3005
 
 # Health check
+# Railway uses HTTP healthchecks configured in railway.json, but Docker HEALTHCHECK provides fallback
+# Using Node.js since alpine doesn't include wget/curl by default
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3005/api/health || exit 1
+    CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 3005) + '/api/health', (r) => { r.on('data', () => {}); r.on('end', () => process.exit(r.statusCode === 200 ? 0 : 1)); }).on('error', () => process.exit(1))"
 
 # Start server
 CMD ["node", "server/index.js"]
