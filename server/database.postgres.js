@@ -768,6 +768,31 @@ function initDb() {
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )`);
 
+            // Approval Assignments (for SLA tracking and escalation)
+            await query(`CREATE TABLE IF NOT EXISTS approval_assignments (
+                id TEXT PRIMARY KEY,
+                org_id TEXT NOT NULL,
+                proposal_id TEXT NOT NULL,
+                assigned_to_user_id TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'PENDING',
+                sla_due_at TIMESTAMP NOT NULL,
+                escalated_to_user_id TEXT,
+                escalated_at TIMESTAMP,
+                escalation_reason TEXT,
+                acked_at TIMESTAMP,
+                completed_at TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(org_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                FOREIGN KEY(assigned_to_user_id) REFERENCES users(id) ON DELETE SET NULL,
+                FOREIGN KEY(escalated_to_user_id) REFERENCES users(id) ON DELETE SET NULL
+            )`);
+
+            // Indexes for approval_assignments
+            await query(`CREATE INDEX IF NOT EXISTS idx_approval_assignments_org ON approval_assignments(org_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_approval_assignments_user ON approval_assignments(assigned_to_user_id, status)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_approval_assignments_proposal ON approval_assignments(proposal_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_approval_assignments_sla ON approval_assignments(sla_due_at, status)`);
+
             console.log('[Postgres] Schema Check Complete.');
 
             // Note: Seeding is skipped in this simplified adapter for now to avoid complexity.
