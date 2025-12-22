@@ -833,6 +833,55 @@ function initDb() {
             await query(`CREATE INDEX IF NOT EXISTS idx_trusted_devices_user ON trusted_devices(user_id)`);
             await query(`CREATE INDEX IF NOT EXISTS idx_trusted_devices_fingerprint ON trusted_devices(device_fingerprint)`);
 
+            // Add MFA columns to existing tables if they don't exist (migration)
+            // Users table MFA columns
+            await query(`
+                DO $$ 
+                BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='users' AND column_name='mfa_enabled') THEN
+                        ALTER TABLE users ADD COLUMN mfa_enabled INTEGER DEFAULT 0;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='users' AND column_name='mfa_secret') THEN
+                        ALTER TABLE users ADD COLUMN mfa_secret TEXT;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='users' AND column_name='mfa_backup_codes') THEN
+                        ALTER TABLE users ADD COLUMN mfa_backup_codes TEXT;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='users' AND column_name='mfa_verified_at') THEN
+                        ALTER TABLE users ADD COLUMN mfa_verified_at TIMESTAMP;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='users' AND column_name='mfa_recovery_email') THEN
+                        ALTER TABLE users ADD COLUMN mfa_recovery_email TEXT;
+                    END IF;
+                END $$;
+            `).catch(err => {
+                // Ignore errors - columns might already exist or table might not exist yet
+                console.log('[Postgres] MFA columns migration skipped (may already exist)');
+            });
+
+            // Organizations table MFA columns
+            await query(`
+                DO $$ 
+                BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='mfa_required') THEN
+                        ALTER TABLE organizations ADD COLUMN mfa_required INTEGER DEFAULT 0;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='mfa_grace_period_days') THEN
+                        ALTER TABLE organizations ADD COLUMN mfa_grace_period_days INTEGER DEFAULT 7;
+                    END IF;
+                END $$;
+            `).catch(err => {
+                // Ignore errors - columns might already exist or table might not exist yet
+                console.log('[Postgres] Organization MFA columns migration skipped (may already exist)');
+            });
+
             console.log('[Postgres] Schema Check Complete.');
 
             // Note: Seeding is skipped in this simplified adapter for now to avoid complexity.
