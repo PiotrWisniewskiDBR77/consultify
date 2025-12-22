@@ -19,8 +19,70 @@ function adaptQuery(sql) {
     // Also replace SQLite specific functions if possible
     let adapted = sql.replace(/\?/g, () => `$${paramIndex++}`);
 
-    // Replace datetime('now') with NOW()
-    adapted = adapted.replace(/datetime\('now'\)/g, "NOW()");
+    // Replace datetime('now') and datetime("now") with NOW()
+    adapted = adapted.replace(/datetime\(['"]now['"]\)/g, "NOW()");
+
+    // Replace datetime('now', '-N days') with NOW() - INTERVAL 'N days'
+    adapted = adapted.replace(/datetime\(['"]now['"],\s*['"]-(\d+)\s+days?['"]\)/gi, (match, days) => {
+        return `NOW() - INTERVAL '${days} days'`;
+    });
+
+    // Replace datetime('now', '+N days') with NOW() + INTERVAL 'N days'
+    adapted = adapted.replace(/datetime\(['"]now['"],\s*['"]\+(\d+)\s+days?['"]\)/gi, (match, days) => {
+        return `NOW() + INTERVAL '${days} days'`;
+    });
+
+    // Replace datetime('now', '-N hours') with NOW() - INTERVAL 'N hours'
+    adapted = adapted.replace(/datetime\(['"]now['"],\s*['"]-(\d+)\s+hours?['"]\)/gi, (match, hours) => {
+        return `NOW() - INTERVAL '${hours} hours'`;
+    });
+
+    // Replace datetime('now', '-N days') with NOW() - INTERVAL 'N days' (without quotes around interval)
+    adapted = adapted.replace(/datetime\(['"]now['"],\s*['"]-(\d+)\s+days?['"]\)/gi, (match, days) => {
+        return `NOW() - INTERVAL '${days} days'`;
+    });
+
+    // Replace datetime(date, '+' || N || ' days') with date + INTERVAL 'N days'
+    adapted = adapted.replace(/datetime\(([^,]+),\s*['"]\+['"]\s*\|\|\s*([^|]+)\s*\|\|\s*['"]\s+days?['"]\)/gi, (match, dateExpr, daysExpr) => {
+        return `${dateExpr} + INTERVAL '${daysExpr} days'`;
+    });
+
+    // Replace datetime(date, '+' || N || ' days') <= datetime('now') with date + INTERVAL 'N days' <= NOW()
+    adapted = adapted.replace(/datetime\(([^,]+),\s*['"]\+['"]\s*\|\|\s*([^|]+)\s*\|\|\s*['"]\s+days?['"]\)/gi, (match, dateExpr, daysExpr) => {
+        return `${dateExpr} + INTERVAL '${daysExpr} days'`;
+    });
+
+    // Replace julianday(date1) - julianday(date2) with EXTRACT(EPOCH FROM (date1 - date2)) / 86400
+    adapted = adapted.replace(/julianday\(([^)]+)\)\s*-\s*julianday\(([^)]+)\)/gi, (match, date1, date2) => {
+        return `EXTRACT(EPOCH FROM (${date1} - ${date2})) / 86400`;
+    });
+
+    // Replace date('now') with CURRENT_DATE
+    adapted = adapted.replace(/date\(['"]now['"]\)/g, "CURRENT_DATE");
+
+    // Replace date(column) with column::date (PostgreSQL cast)
+    adapted = adapted.replace(/date\(([^)]+)\)/g, "$1::date");
+
+    // Replace INSERT OR REPLACE with INSERT ... ON CONFLICT DO UPDATE
+    // This is complex - we'll handle common cases
+    if (adapted.includes('INSERT OR REPLACE')) {
+        // Extract table name and columns for basic cases
+        const match = adapted.match(/INSERT\s+OR\s+REPLACE\s+INTO\s+(\w+)\s*\(([^)]+)\)/i);
+        if (match) {
+            const tableName = match[1];
+            const columns = match[2].split(',').map(c => c.trim());
+            // Find primary key or first column as conflict target
+            const conflictColumn = columns[0]; // Simplified - assumes first column is key
+            adapted = adapted.replace(/INSERT\s+OR\s+REPLACE\s+INTO/i, 'INSERT INTO');
+            // Add ON CONFLICT clause - this is a simplified version
+            // Full implementation would need to parse VALUES and UPDATE SET properly
+            adapted += ` ON CONFLICT (${conflictColumn}) DO UPDATE SET ${columns.map((col, idx) => `${col} = EXCLUDED.${col}`).join(', ')}`;
+        } else {
+            // Fallback: just remove INSERT OR REPLACE and add basic ON CONFLICT
+            adapted = adapted.replace(/INSERT\s+OR\s+REPLACE/i, 'INSERT');
+            // Note: This won't work perfectly for all cases, but handles simple ones
+        }
+    }
 
     // Replace INSERT OR IGNORE with INSERT ... ON CONFLICT DO NOTHING
     // This is a naive regex, might need more care for specific tables involving constraints
@@ -832,6 +894,28 @@ function initDb() {
 
             await query(`CREATE INDEX IF NOT EXISTS idx_trusted_devices_user ON trusted_devices(user_id)`);
             await query(`CREATE INDEX IF NOT EXISTS idx_trusted_devices_fingerprint ON trusted_devices(device_fingerprint)`);
+
+            // Refresh Tokens Table (for JWT refresh token rotation)
+            await query(`CREATE TABLE IF NOT EXISTS refresh_tokens (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                token_hash TEXT NOT NULL UNIQUE,
+                token_family TEXT,
+                device_info TEXT,
+                ip_address TEXT,
+                user_agent TEXT,
+                expires_at TIMESTAMP NOT NULL,
+                revoked_at TIMESTAMP,
+                revoked_reason TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                last_used_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )`);
+
+            await query(`CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_refresh_tokens_hash ON refresh_tokens(token_hash)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_refresh_tokens_family ON refresh_tokens(token_family)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires ON refresh_tokens(expires_at)`);
 
             // Add MFA columns to existing tables if they don't exist (migration)
             // Users table MFA columns
