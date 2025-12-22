@@ -169,7 +169,25 @@ function initDb() {
             // We'll skip complex migration logic for Phase 1 and rely on CREATE TABLE IF NOT EXISTS
             // For ALTERs, we should wrap in try/catch or checks.
 
-            // Sessions
+            // Settings (no dependencies)
+            await query(`CREATE TABLE IF NOT EXISTS settings(
+                key TEXT PRIMARY KEY,
+                value TEXT,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )`);
+
+            // Projects (must be created before sessions, which references it)
+            await query(`CREATE TABLE IF NOT EXISTS projects(
+                id TEXT PRIMARY KEY,
+                organization_id TEXT,
+                name TEXT,
+                status TEXT DEFAULT 'active',
+                owner_id TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id)
+            )`);
+
+            // Sessions (references users and projects - must come after both)
             await query(`CREATE TABLE IF NOT EXISTS sessions(
                 id TEXT PRIMARY KEY,
                 user_id TEXT,
@@ -179,24 +197,6 @@ function initDb() {
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY(user_id) REFERENCES users(id),
                 FOREIGN KEY(project_id) REFERENCES projects(id)
-            )`);
-
-            // Settings
-            await query(`CREATE TABLE IF NOT EXISTS settings(
-                key TEXT PRIMARY KEY,
-                value TEXT,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )`);
-
-            // Projects
-            await query(`CREATE TABLE IF NOT EXISTS projects(
-                id TEXT PRIMARY KEY,
-                organization_id TEXT,
-                name TEXT,
-                status TEXT DEFAULT 'active',
-                owner_id TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY(organization_id) REFERENCES organizations(id)
             )`);
 
             // Knowledge Docs
@@ -775,6 +775,15 @@ function initDb() {
 
         } catch (err) {
             console.error('[Postgres] InitDb Failed:', err);
+            // Log detailed error information
+            if (err.code) {
+                console.error('[Postgres] Error code:', err.code);
+            }
+            if (err.message) {
+                console.error('[Postgres] Error message:', err.message);
+            }
+            // Don't exit - allow app to start even if some tables fail
+            // This is important for Railway where tables might already exist or be created separately
         }
     })();
 }
