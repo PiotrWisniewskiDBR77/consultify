@@ -37,8 +37,8 @@ jobs:
       # Run mocking-heavy tests that DON'T need real services
       - run: npm run test:unit
         env:
-          MOCK_DB: true
-          MOCK_REDIS: true
+          MOCK_DB: 'true'
+          MOCK_REDIS: 'true'
 
   integration-tests:
     name: Integration Tests (Real Services)
@@ -60,8 +60,8 @@ jobs:
       # Limit workers to avoid OOM on standard runners
       - run: npm run test:integration -- --max-workers=2
         env:
-          MOCK_DB: false
-          MOCK_REDIS: false
+          MOCK_DB: 'false'
+          MOCK_REDIS: 'false'
           REDIS_URL: redis://localhost:6379
 
   build:
