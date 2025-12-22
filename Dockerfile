@@ -8,8 +8,9 @@ COPY package*.json ./
 COPY server/package*.json ./server/
 
 # Install all dependencies (including dev for build)
-RUN npm ci
-RUN cd server && npm ci
+# Use npm install if package-lock.json is out of sync, otherwise use npm ci for faster installs
+RUN if [ -f package-lock.json ]; then npm ci || npm install; else npm install; fi
+RUN if [ -f server/package-lock.json ]; then cd server && npm ci || npm install; else cd server && npm install; fi
 
 # Copy source files
 COPY . .
