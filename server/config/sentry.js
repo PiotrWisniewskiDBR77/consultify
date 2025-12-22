@@ -14,7 +14,7 @@ const isEnabled = (isProduction || isStaging) && process.env.SENTRY_DSN;
 
 /**
  * Initialize Sentry
- * @param {Express} app - Express application instance
+ * @param {Express} app - Express application instance (not used in v8, but kept for compatibility)
  */
 function initSentry(app) {
     if (!isEnabled) {
@@ -32,11 +32,8 @@ function initSentry(app) {
         release: process.env.npm_package_version || '1.0.0',
 
         // Integrations
+        // Express and HTTP integrations are automatically included in @sentry/node v8
         integrations: [
-            // Express integration
-            new Sentry.Integrations.Express({ app }),
-            // HTTP integration for tracing outgoing requests
-            new Sentry.Integrations.Http({ tracing: true }),
             // Profiling (optional, requires @sentry/profiling-node)
             nodeProfilingIntegration(),
         ],
