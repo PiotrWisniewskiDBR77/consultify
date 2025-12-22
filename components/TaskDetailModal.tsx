@@ -468,6 +468,6 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(({
         prevProps.isOpen === nextProps.isOpen &&
         prevProps.task.id === nextProps.task.id &&
         JSON.stringify(prevProps.task) === JSON.stringify(nextProps.task) &&
-        prevProps.users.length === nextProps.users.length
+        (prevProps.users?.length || 0) === (nextProps.users?.length || 0)
     );
 });

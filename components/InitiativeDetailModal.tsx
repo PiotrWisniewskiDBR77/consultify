@@ -1183,7 +1183,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
         prevProps.isOpen === nextProps.isOpen &&
         prevProps.initiative.id === nextProps.initiative.id &&
         JSON.stringify(prevProps.initiative) === JSON.stringify(nextProps.initiative) &&
-        prevProps.users.length === nextProps.users.length
+        (prevProps.users?.length || 0) === (nextProps.users?.length || 0)
     );
 });
 
