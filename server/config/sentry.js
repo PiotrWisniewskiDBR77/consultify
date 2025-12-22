@@ -14,7 +14,7 @@ const isEnabled = (isProduction || isStaging) && process.env.SENTRY_DSN;
 
 /**
  * Initialize Sentry
- * @param {Express} app - Express application instance (not used in v8, but kept for compatibility)
+ * @param {Express} app - Express application instance
  */
 function initSentry(app) {
     if (!isEnabled) {
@@ -32,8 +32,9 @@ function initSentry(app) {
         release: process.env.npm_package_version || '1.0.0',
 
         // Integrations
-        // Express and HTTP integrations are automatically included in @sentry/node v8
         integrations: [
+            // Express integration - handles request/tracing automatically
+            Sentry.expressIntegration({ app }),
             // Profiling (optional, requires @sentry/profiling-node)
             nodeProfilingIntegration(),
         ],
@@ -77,30 +78,36 @@ function initSentry(app) {
 
     console.log(`[Sentry] Initialized for ${process.env.NODE_ENV} environment`);
 
+    // In Sentry v8, Express integration is automatic via expressIntegration
+    // Request and tracing are handled automatically
+    // We only need to set up the error handler
+    
+    // Create error handler middleware with custom filtering
+    const errorHandler = Sentry.expressErrorHandler({
+        shouldHandleError(error) {
+            // Only report 500+ errors automatically
+            if (error.status >= 500) {
+                return true;
+            }
+            // Also report 429 (rate limit) errors
+            if (error.status === 429) {
+                return true;
+            }
+            return false;
+        },
+    });
+
     return {
-        // Request handler - must be first middleware
-        requestHandler: Sentry.Handlers.requestHandler({
-            user: ['id', 'email', 'role'],
-            ip: true,
-        }),
+        // Request handler - Express integration handles this automatically in v8
+        // Return no-op middleware since Express integration is automatic
+        requestHandler: (req, res, next) => next(),
 
-        // Tracing handler - must be after request handler and before routes
-        tracingHandler: Sentry.Handlers.tracingHandler(),
+        // Tracing handler - Express integration handles this automatically in v8
+        // Return no-op middleware since Express integration is automatic
+        tracingHandler: (req, res, next) => next(),
 
-        // Error handler - must be after routes and before other error handlers
-        errorHandler: Sentry.Handlers.errorHandler({
-            shouldHandleError(error) {
-                // Only report 500+ errors automatically
-                if (error.status >= 500) {
-                    return true;
-                }
-                // Also report 429 (rate limit) errors
-                if (error.status === 429) {
-                    return true;
-                }
-                return false;
-            },
-        }),
+        // Error handler - Use the configured error handler
+        errorHandler: errorHandler,
     };
 }
 
