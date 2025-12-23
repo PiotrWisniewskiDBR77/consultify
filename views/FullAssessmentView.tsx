@@ -1,4 +1,4 @@
-```typescript
+
 import React, { useEffect, useState } from 'react';
 import { SplitLayout } from '../components/SplitLayout';
 import { AppView, DRDAxis, AxisAssessment, SessionMode, MaturityLevel } from '../types';
@@ -261,4 +261,3 @@ export const FullAssessmentView: React.FC = () => {
     </SplitLayout>
   );
 };
-```
