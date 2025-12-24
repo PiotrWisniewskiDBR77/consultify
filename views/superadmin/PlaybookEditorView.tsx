@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useStore } from '../../store';
 import {
     PlaybookTemplateVersion,
     PlaybookNode,

@@ -3,7 +3,7 @@ import { Plus, X, Edit2, Check, Trash2 } from 'lucide-react';
 
 export interface DynamicListItem {
     id: string;
-`[key: string]: unknown;`
+    [key: string]: unknown;
 }
 
 export interface ColumnConfig {
@@ -46,7 +46,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
     const [editingId, setEditingId] = useState<string | null>(null);
 
     // Staging state for new or edited item
-`const [formData, setFormData] = useState<Record<string, unknown>>({});`
+    const [formData, setFormData] = useState<Record<string, unknown>>({});
 
     const handleStartAdd = () => {
         setFormData({});
@@ -81,7 +81,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
         handleCancel();
     };
 
-`const handleChange = (key: string, value: unknown) => {`
+    const handleChange = (key: string, value: unknown) => {
         setFormData(prev => ({ ...prev, [key]: value }));
     };
 
@@ -123,7 +123,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
                                         <label className="md:hidden text-xs font-bold text-slate-400 mb-1 block">{col.label}</label>
                                         {col.type === 'select' ? (
                                             <select
-                                                value={formData[col.key] || ''}
+                                                value={(formData[col.key] as string) || ''}
                                                 onChange={(e) => handleChange(col.key, e.target.value)}
                                                 className="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-navy-800 text-sm focus:ring-1 focus:ring-purple-500"
                                             >
@@ -135,7 +135,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
                                         ) : (
                                             <input
                                                 type={col.type || 'text'}
-                                                value={formData[col.key] || ''}
+                                                value={(formData[col.key] as string) || ''}
                                                 onChange={(e) => handleChange(col.key, e.target.value)}
                                                 placeholder={col.placeholder || col.label}
                                                 className="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-navy-800 text-sm focus:ring-1 focus:ring-purple-500"
@@ -163,7 +163,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
                                     {col.render ? (
                                         col.render(item)
                                     ) : (
-                                        <span className="text-sm text-navy-900 dark:text-slate-200">{item[col.key]}</span>
+                                        <span className="text-sm text-navy-900 dark:text-slate-200">{String(item[col.key] ?? '')}</span>
                                     )}
                                 </div>
                             ))}
@@ -183,7 +183,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
                                 <label className="md:hidden text-xs font-bold text-slate-400 mb-1 block">{col.label}</label>
                                 {col.type === 'select' ? (
                                     <select
-                                        value={formData[col.key] || ''}
+                                        value={(formData[col.key] as string) || ''}
                                         onChange={(e) => handleChange(col.key, e.target.value)}
                                         className="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-navy-800 text-sm focus:ring-1 focus:ring-purple-500"
                                     >
@@ -195,7 +195,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
                                 ) : (
                                     <input
                                         type={col.type || 'text'}
-                                        value={formData[col.key] || ''}
+                                        value={(formData[col.key] as string) || ''}
                                         onChange={(e) => handleChange(col.key, e.target.value)}
                                         placeholder={col.placeholder || col.label}
                                         className="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-navy-800 text-sm focus:ring-1 focus:ring-purple-500"

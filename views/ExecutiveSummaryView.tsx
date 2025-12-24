@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-`import { FullSession } from '../types';`
-`import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';`
+import { FullSession, AxisAssessment, FullInitiative } from '../types';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
 
 interface ExecutiveSummaryViewProps {
     session: FullSession;
@@ -12,20 +12,23 @@ export const ExecutiveSummaryView: React.FC<ExecutiveSummaryViewProps> = ({ sess
         const completedIds = session.assessment.completedAxes || [];
         if (completedIds.length === 0) return 0;
 
-        // Map ID to score, handle undefined
-`const scores = completedIds.map(id => (session.assessment[id]?.score || 0));`
-        const total = scores.reduce((sum, score) => sum + score, 0);
+        // Map ID to score, calculate from actual maturity level
+        const scores = completedIds.map((id: string) => {
+            const axisData = session.assessment[id as keyof typeof session.assessment] as AxisAssessment | undefined;
+            return axisData ? (axisData.actual * 100 / 7) : 0; // Convert 1-7 scale to 0-100
+        });
+        const total = scores.reduce((sum: number, score: number) => sum + score, 0);
 
         return (total / completedIds.length).toFixed(1);
     };
 
     const financials = useMemo(() => {
         const inits = session.initiatives || [];
-        const capex = inits.reduce((sum, i) => sum + (i.costCapex || 0), 0);
-        const opex = inits.reduce((sum, i) => sum + (i.costOpex || 0), 0);
+        const capex = inits.reduce((sum: number, i: FullInitiative) => sum + (i.costCapex || 0), 0);
+        const opex = inits.reduce((sum: number, i: FullInitiative) => sum + (i.costOpex || 0), 0);
         // Weighted ROI
         const totalCost = capex + (opex * 3); // 3 year horizon
-        const totalGain = inits.reduce((sum, i) => sum + ((i.costCapex || 0) * (i.expectedRoi || 0)), 0);
+        const totalGain = inits.reduce((sum: number, i: FullInitiative) => sum + ((i.costCapex || 0) * (i.expectedRoi || 0)), 0);
         const avgRoi = totalCost > 0 ? (totalGain / totalCost).toFixed(1) : 0;
 
         return { capex, opex, avgRoi, count: inits.length };
@@ -39,10 +42,15 @@ export const ExecutiveSummaryView: React.FC<ExecutiveSummaryViewProps> = ({ sess
         })
         .slice(0, 5);
 
-    const maturityData = (session.assessment.completedAxes || []).map(axisId => ({
-        name: axisId.substring(0, 10), // Short name
-`score: (session.assessment[axisId]?.score || 0)`
-    }));
+    const maturityData = (session.assessment.completedAxes || []).map(axisId => {
+        const axisData = session.assessment[axisId as keyof typeof session.assessment] as AxisAssessment | undefined;
+        // Calculate score from actual and target maturity levels
+        const score = axisData ? (axisData.actual * 100 / 7) : 0; // Convert 1-7 scale to 0-100
+        return {
+            name: axisId.substring(0, 10), // Short name
+            score: score
+        };
+    });
 
     return (
         <div id="executive-summary-content" className="w-[210mm] min-h-[297mm] bg-white text-slate-900 p-8 mx-auto shadow-2xl overflow-hidden">

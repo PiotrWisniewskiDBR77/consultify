@@ -637,6 +637,30 @@ function calculateComparisonData(reports) {
     return comparison;
 }
 
+// ==========================================
+// ASSESSMENT OVERVIEW API (Multi-Framework Dashboard)
+// ==========================================
+
+/**
+ * GET ASSESSMENT OVERVIEW - Unified dashboard data
+ * GET /api/sessions/:projectId/assessment-overview
+ */
+router.get('/:projectId/assessment-overview', async (req, res) => {
+    const { projectId } = req.params;
+    const orgId = req.user.organizationId;
+
+    console.log(`[AssessmentOverview] Fetching overview for project: ${projectId}, org: ${orgId}`);
+
+    try {
+        const AssessmentOverviewService = require('../services/assessmentOverviewService');
+        const overview = await AssessmentOverviewService.getAssessmentOverview(orgId, projectId);
+        res.json(overview);
+    } catch (error) {
+        console.error('[AssessmentOverview] Error:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 module.exports = router;
 
 

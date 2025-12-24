@@ -7,7 +7,8 @@ const router = express.Router();
 const CohortService = require('../services/cohortService');
 const ExperimentService = require('../services/experimentService');
 const auth = require('../middleware/authMiddleware');
-const requireAdmin = (req, res, next) => next(); // TODO: Implement actual admin check
+const { verifyAdmin } = require('../middleware/adminMiddleware');
+const requireAdmin = verifyAdmin;
 
 // GET /api/analytics/cohorts — Cohort Matrix (Admin only)
 router.get('/cohorts', auth, requireAdmin, async (req, res) => {

@@ -8,9 +8,18 @@ const config = require('../config');
 const authMiddleware = require('../middleware/authMiddleware');
 const ActivityService = require('../services/activityService');
 
+// Helper to add timeout to promises
+const withTimeout = (promise, timeoutMs = 1000) => {
+    return Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Operation timeout')), timeoutMs))
+    ]);
+};
+
 // LOGIN
 // Enhanced with MFA support and refresh tokens
 router.post('/login', async (req, res) => {
+    console.log('[Auth] Login request received for:', req.body?.email || 'no email');
     const { email, password, mfaToken, deviceFingerprint, trustDevice } = req.body;
 
     if (!email || !password) {
@@ -25,7 +34,7 @@ router.post('/login', async (req, res) => {
         const RedisStore = require('../utils/redisRateLimitStore');
         const authRedisStore = new RedisStore({ windowMs: 15 * 60 * 1000 });
         const rateLimitKey = `auth:${email.toLowerCase().trim()}`;
-        await authRedisStore.resetKey(rateLimitKey);
+        await withTimeout(authRedisStore.resetKey(rateLimitKey), 500);
     } catch (err) {
         // Ignore errors - rate limit clearing is best effort
     }
@@ -62,7 +71,7 @@ router.post('/login', async (req, res) => {
             const RedisStore = require('../utils/redisRateLimitStore');
             const authRedisStore = new RedisStore({ windowMs: 15 * 60 * 1000 });
             const rateLimitKey = `auth:${email.toLowerCase().trim()}`;
-            await authRedisStore.resetKey(rateLimitKey);
+            await withTimeout(authRedisStore.resetKey(rateLimitKey), 500);
         } catch (err) {
             // Ignore errors - rate limit clearing is best effort
         }

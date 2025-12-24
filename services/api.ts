@@ -1,4 +1,4 @@
-import { User, SessionMode, FullSession, LLMProvider } from '../types';
+import { User, SessionMode, FullSession, FreeSession, LLMProvider, AIMessageHistory } from '../types';
 // FAZA 5: Frontend Metrics
 import { frontendMetrics } from '../utils/frontendMetrics';
 
@@ -14,6 +14,13 @@ if (!correlationId) {
 
 const getHeaders = () => {
     const token = localStorage.getItem('token');
+
+    // Check if token is expired (if expiry time is stored)
+    const tokenExpiry = localStorage.getItem('tokenExpiry');
+    if (tokenExpiry && parseInt(tokenExpiry) < Date.now()) {
+        console.warn('[Auth] Token expired, will attempt refresh on next request');
+    }
+
     return {
         'Content-Type': 'application/json',
         'Authorization': token ? `Bearer ${token}` : '',
@@ -21,17 +28,41 @@ const getHeaders = () => {
     };
 };
 
-// FAZA 5: Wrapper for fetch with metrics tracking
+// FAZA 5: Wrapper for fetch with metrics tracking and automatic token refresh
 const trackedFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
     const startTime = Date.now();
     const method = options.method || 'GET';
+    const headers = options.headers as Record<string, string> || {};
+    const hasAuth = headers['Authorization'] || (options.headers && 'Authorization' in options.headers);
 
     try {
-        const response = await fetch(url, options);
+        let response = await fetch(url, options);
         const duration = Date.now() - startTime;
 
         // Track API call metrics
         frontendMetrics.trackApiCall(url, method, duration, response.status);
+
+        // If unauthorized and we have auth headers, try to refresh token
+        if (response.status === 401 && hasAuth) {
+            const errorData = await response.clone().json().catch(() => ({}));
+            if (errorData.error === 'Token expired' || errorData.error === 'Unauthorized') {
+                const newToken = await refreshAccessToken();
+                if (newToken) {
+                    // Retry with new token
+                    const retryHeaders = {
+                        ...headers,
+                        'Authorization': `Bearer ${newToken}`
+                    };
+                    const retryOptions = {
+                        ...options,
+                        headers: retryHeaders
+                    };
+                    response = await fetch(url, retryOptions);
+                    const retryDuration = Date.now() - startTime;
+                    frontendMetrics.trackApiCall(url, method, retryDuration, response.status);
+                }
+            }
+        }
 
         return response;
     } catch (error) {
@@ -86,22 +117,107 @@ const handleResponse = async (res: Response, defaultError: string) => {
 };
 
 
+// Token refresh helper
+let isRefreshing = false;
+let refreshPromise: Promise<string | null> | null = null;
+
+const refreshAccessToken = async (): Promise<string | null> => {
+    if (isRefreshing && refreshPromise) {
+        return refreshPromise;
+    }
+
+    isRefreshing = true;
+    refreshPromise = (async () => {
+        try {
+            const refreshToken = localStorage.getItem('refreshToken');
+            if (!refreshToken) {
+                console.warn('[Auth] No refresh token available');
+                return null;
+            }
+
+            const res = await trackedFetch(`${API_URL}/auth/refresh`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ refreshToken })
+            });
+
+            if (!res.ok) {
+                // Refresh token expired or invalid - clear tokens and redirect to login
+                localStorage.removeItem('token');
+                localStorage.removeItem('refreshToken');
+                window.dispatchEvent(new CustomEvent('auth:token-expired'));
+                return null;
+            }
+
+            const data = await res.json();
+            if (data.token) {
+                localStorage.setItem('token', data.token);
+                if (data.refreshToken) {
+                    localStorage.setItem('refreshToken', data.refreshToken);
+                }
+                return data.token;
+            }
+            return null;
+        } catch (error) {
+            console.error('[Auth] Token refresh failed:', error);
+            localStorage.removeItem('token');
+            localStorage.removeItem('refreshToken');
+            window.dispatchEvent(new CustomEvent('auth:token-expired'));
+            return null;
+        } finally {
+            isRefreshing = false;
+            refreshPromise = null;
+        }
+    })();
+
+    return refreshPromise;
+};
+
+
 export const Api = {
     // --- AUTH ---
     login: async (email: string, password: string): Promise<User> => {
         console.log('Api.login called:', { email, url: `${API_URL}/auth/login` });
-        const res = await trackedFetch(`${API_URL}/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        });
-        return handleResponse(res, 'Login failed').then(data => {
+
+        try {
+            const res = await trackedFetch(`${API_URL}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await handleResponse(res, 'Login failed');
+
+            // Validate response structure
+            if (!data || !data.user || !data.token) {
+                throw new Error('Invalid login response: missing user or token');
+            }
+
+            // Store tokens securely
             localStorage.setItem('token', data.token);
+            if (data.refreshToken) {
+                localStorage.setItem('refreshToken', data.refreshToken);
+            }
+
+            // Store token expiry if provided
+            if (data.expiresIn) {
+                const expiryTime = Date.now() + (data.expiresIn * 1000);
+                localStorage.setItem('tokenExpiry', expiryTime.toString());
+            }
+
+            console.log('[Auth] Login successful, token stored');
             return data.user;
-        });
+        } catch (error: any) {
+            console.error('[Auth] Login error:', error);
+            // Clear any partial tokens on error
+            localStorage.removeItem('token');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('tokenExpiry');
+            throw error;
+        }
     },
 
-    register: async (userData: any): Promise<User | any> => {
+    register: async (userData: Record<string, unknown> & { email: string; password: string }): Promise<User | { status: string; message?: string }> => {
         const res = await trackedFetch(`${API_URL}/auth/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -121,8 +237,12 @@ export const Api = {
             });
         } catch (error) {
             console.warn('Logout API call failed, clearing token anyway:', error);
+        } finally {
+            // Always clear tokens on logout
+            localStorage.removeItem('token');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('tokenExpiry');
         }
-        localStorage.removeItem('token');
     },
 
     // --- DEMO ---
@@ -145,7 +265,7 @@ export const Api = {
         return handleResponse(res, 'Failed to fetch users');
     },
 
-    addUser: async (user: any): Promise<User> => {
+    addUser: async (user: Record<string, unknown>): Promise<User> => {
         const res = await trackedFetch(`${API_URL}/users`, {
             method: 'POST',
             headers: getHeaders(),
@@ -172,7 +292,7 @@ export const Api = {
         return data;
     },
 
-    updateUser: async (id: string, updates: any): Promise<void> => {
+    updateUser: async (id: string, updates: Record<string, unknown>): Promise<void> => {
         const res = await trackedFetch(`${API_URL}/users/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
@@ -197,7 +317,7 @@ export const Api = {
     },
 
     // Session Management
-    getSession: async (userId: string, type: SessionMode, projectId?: string): Promise<any> => {
+    getSession: async (userId: string, type: SessionMode, projectId?: string): Promise<FullSession | FreeSession | null> => {
         let url = `${API_URL}/sessions/${userId}?type=${type}`;
         if (projectId) url += `&projectId=${projectId}`;
 
@@ -207,7 +327,7 @@ export const Api = {
         return json.data;
     },
 
-    saveSession: async (userId: string, type: SessionMode, data: any, projectId?: string): Promise<void> => {
+    saveSession: async (userId: string, type: SessionMode, data: FullSession | FreeSession, projectId?: string): Promise<void> => {
         if (userId && projectId) {
             // We won't block session saves usually, but if we do:
             // Actually saveSession might be blocked.
@@ -245,7 +365,7 @@ export const Api = {
         return data.report;
     },
 
-    exportReportPDF: async (reportId: string, options?: { branding?: any; includeCharts?: boolean; includeSummary?: boolean }): Promise<{ pdfUrl: string; message: string }> => {
+    exportReportPDF: async (reportId: string, options?: { branding?: Record<string, unknown>; includeCharts?: boolean; includeSummary?: boolean }): Promise<{ pdfUrl: string; message: string }> => {
         const res = await trackedFetch(`${API_URL}/sessions/reports/${reportId}/export-pdf`, {
             method: 'POST',
             headers: getHeaders(),
@@ -263,7 +383,7 @@ export const Api = {
         return handleResponse(res, 'Failed to export Excel');
     },
 
-    compareReports: async (reportIds: string[], saveName?: string): Promise<{ reports: any[]; comparisonData: any }> => {
+    compareReports: async (reportIds: string[], saveName?: string): Promise<{ reports: Array<Record<string, unknown>>; comparisonData: Record<string, unknown> }> => {
         const res = await trackedFetch(`${API_URL}/sessions/reports/compare`, {
             method: 'POST',
             headers: getHeaders(),
@@ -281,7 +401,7 @@ export const Api = {
         return handleResponse(res, 'Failed to archive report');
     },
 
-    addReportAnnotation: async (reportId: string, annotation: { annotationType?: string; section?: string; content: string; positionData?: any }): Promise<{ id: string; message: string }> => {
+    addReportAnnotation: async (reportId: string, annotation: { annotationType?: string; section?: string; content: string; positionData?: Record<string, unknown> }): Promise<{ id: string; message: string }> => {
         const res = await trackedFetch(`${API_URL}/sessions/reports/${reportId}/annotations`, {
             method: 'POST',
             headers: getHeaders(),
@@ -290,7 +410,7 @@ export const Api = {
         return handleResponse(res, 'Failed to add annotation');
     },
 
-    getReportAnnotations: async (reportId: string): Promise<any[]> => {
+    getReportAnnotations: async (reportId: string): Promise<Array<{ id: string; annotationType?: string; section?: string; content: string; positionData?: Record<string, unknown>; createdAt?: string }>> => {
         const res = await trackedFetch(`${API_URL}/sessions/reports/${reportId}/annotations`, {
             headers: getHeaders()
         });
@@ -320,7 +440,7 @@ export const Api = {
 
     // --- AI ---
     // --- AI ---
-    chatWithAI: async (message: string, history: any[], systemInstruction?: string, roleName?: string) => {
+    chatWithAI: async (message: string, history: AIMessageHistory[], systemInstruction?: string, roleName?: string): Promise<string> => {
         try {
             const response = await trackedFetch(`${API_URL}/ai/chat`, {
                 method: 'POST',
@@ -337,13 +457,13 @@ export const Api = {
 
     chatWithAIStream: async (
         message: string,
-        history: any[],
+        history: AIMessageHistory[],
         onChunk: (text: string) => void,
         onDone: () => void,
         systemInstruction?: string,
-        context?: any,
+        context?: Record<string, unknown>,
         roleName?: string
-    ) => {
+    ): Promise<void> => {
         // #region agent log
         const token = localStorage.getItem('token');
         console.log('[DEBUG-A] chatWithAIStream entry:', { hasToken: !!token, tokenLength: token?.length || 0, historyLength: history?.length || 0, roleName });
@@ -484,7 +604,7 @@ export const Api = {
         if (!res.ok) throw new Error('Failed to update user');
     },
 
-    createSuperAdminUser: async (user: any): Promise<User> => {
+    createSuperAdminUser: async (user: Record<string, unknown>): Promise<User> => {
         const res = await trackedFetch(`${API_URL}/superadmin/users`, {
             method: 'POST',
             headers: getHeaders(),
@@ -651,7 +771,7 @@ export const Api = {
         return res.json();
     },
 
-    addLLMProvider: async (provider: any): Promise<void> => {
+    addLLMProvider: async (provider: Partial<LLMProvider> & { name?: string; provider?: string;[key: string]: unknown }): Promise<void> => {
         const res = await trackedFetch(`${API_URL}/llm/providers`, {
             method: 'POST',
             headers: getHeaders(),
@@ -708,7 +828,7 @@ export const Api = {
         return res.json();
     },
 
-    testOllamaConnection: async (endpoint: string): Promise<{ success: boolean; message?: string; models?: any[]; error?: string }> => {
+    testOllamaConnection: async (endpoint: string): Promise<{ success: boolean; message?: string; models?: Array<{ name: string;[key: string]: unknown }>; error?: string }> => {
         const res = await trackedFetch(`${API_URL}/llm/test-ollama`, {
             method: 'POST',
             headers: getHeaders(),
@@ -717,7 +837,7 @@ export const Api = {
         return res.json();
     },
 
-    getOllamaModels: async (endpoint: string): Promise<any[]> => {
+    getOllamaModels: async (endpoint: string): Promise<Array<{ name: string;[key: string]: unknown }>> => {
         const res = await trackedFetch(`${API_URL}/llm/ollama-models?endpoint=${encodeURIComponent(endpoint)}`, {
             headers: getHeaders()
         });
@@ -725,7 +845,7 @@ export const Api = {
         return res.json();
     },
 
-    getOrganizationLLMConfig: async (orgId: string): Promise<{ activeProviderId: string | null; availableProviders: any[] }> => {
+    getOrganizationLLMConfig: async (orgId: string): Promise<{ activeProviderId: string | null; availableProviders: LLMProvider[] }> => {
         const res = await trackedFetch(`${API_URL}/llm/organization-config/${orgId}`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch organization LLM config');
         return res.json();
@@ -2002,5 +2122,75 @@ export const Api = {
             body: JSON.stringify({ code, email })
         });
         return res.json();
+    },
+
+    // --- DOCUMENTS LIBRARY ---
+    uploadDocumentToLibrary: async (file: File, options: { scope: 'project' | 'user'; projectId?: string; description?: string; tags?: string[] }): Promise<any> => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('scope', options.scope);
+        if (options.projectId) formData.append('projectId', options.projectId);
+        if (options.description) formData.append('description', options.description);
+        if (options.tags) formData.append('tags', JSON.stringify(options.tags));
+
+        const token = localStorage.getItem('token');
+        const res = await trackedFetch(`${API_URL}/documents/upload`, {
+            method: 'POST',
+            headers: {
+                'Authorization': token ? `Bearer ${token}` : '',
+                'X-Correlation-ID': correlationId as string
+            },
+            body: formData
+        });
+        return handleResponse(res, 'Failed to upload document');
+    },
+
+    getProjectDocuments: async (projectId: string): Promise<any[]> => {
+        const res = await trackedFetch(`${API_URL}/documents/project/${projectId}`, {
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to fetch project documents');
+    },
+
+    getUserDocuments: async (): Promise<any[]> => {
+        const res = await trackedFetch(`${API_URL}/documents/user`, {
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to fetch user documents');
+    },
+
+    getAllDocuments: async (projectId?: string): Promise<any[]> => {
+        const url = projectId
+            ? `${API_URL}/documents/all?projectId=${projectId}`
+            : `${API_URL}/documents/all`;
+        const res = await trackedFetch(url, {
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to fetch documents');
+    },
+
+    moveDocumentToProject: async (documentId: string, projectId: string): Promise<any> => {
+        const res = await trackedFetch(`${API_URL}/documents/${documentId}/move-to-project`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify({ projectId })
+        });
+        return handleResponse(res, 'Failed to move document');
+    },
+
+    deleteDocument: async (documentId: string): Promise<void> => {
+        const res = await trackedFetch(`${API_URL}/documents/${documentId}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        await handleResponse(res, 'Failed to delete document');
+    },
+
+    downloadDocument: async (documentId: string): Promise<Blob> => {
+        const res = await trackedFetch(`${API_URL}/documents/${documentId}/download`, {
+            headers: getHeaders()
+        });
+        if (!res.ok) throw new Error('Failed to download document');
+        return res.blob();
     }
 };

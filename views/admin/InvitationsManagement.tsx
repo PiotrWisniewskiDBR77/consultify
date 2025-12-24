@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Users, Mail, Clock, CheckCircle, XCircle, RefreshCw, AlertCircle, Trash2, Send } from 'lucide-react';
 import { Invitation, InvitationType, InvitationStatus, InvitationEvent } from '../../types';
-import { useStore } from '../../store';
+import { useAppStore } from '../../store/useAppStore';
 import InviteUserModal from '../../components/InviteUserModal';
 
 interface InvitationsManagementProps {
@@ -13,7 +13,7 @@ type TabType = 'pending' | 'accepted' | 'expired' | 'revoked' | 'all';
 const API_URL = '/api';
 
 const InvitationsManagement: React.FC<InvitationsManagementProps> = ({ organizationId }) => {
-    const { currentUser } = useStore();
+    const { currentUser } = useAppStore();
     const token = localStorage.getItem('token');
     const [invitations, setInvitations] = useState<Invitation[]>([]);
     const [loading, setLoading] = useState(true);

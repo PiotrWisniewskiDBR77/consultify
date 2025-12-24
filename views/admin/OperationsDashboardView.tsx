@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useStore } from '../../store';
+import { useAppStore } from '../../store/useAppStore';
 import { useTranslation } from 'react-i18next';
 import {
     BarChart2,
@@ -46,7 +46,7 @@ interface DashboardData {
 
 const OperationsDashboardView: React.FC = () => {
     const { t } = useTranslation();
-    const { currentUser } = useStore();
+    const { currentUser } = useAppStore();
     const token = localStorage.getItem('token');
     const [data, setData] = useState<DashboardData | null>(null);
     const [loading, setLoading] = useState(true);

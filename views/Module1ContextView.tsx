@@ -1,4 +1,3 @@
-```typescript
 import React, { useState, useEffect } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { AppView, FullSession, ChatMessage, SessionMode } from '../types';

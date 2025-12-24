@@ -292,7 +292,7 @@ export const FreeAssessmentView: React.FC = () => {
       const newGoal: StrategicGoal = {
         id: Date.now().toString(),
         title: `${label} Improvement`,
-        category: value as keyof typeof AssessmentStep,
+        type: value as StrategicGoal['type'] || 'Other',
         priority: 'High',
         horizon: '12m'
       };
@@ -328,7 +328,7 @@ export const FreeAssessmentView: React.FC = () => {
       const newChallenge: Challenge = {
         id: Date.now().toString(),
         title: `Critical Gap in ${value}`,
-        category: value as keyof typeof StrategicGoal,
+        area: value as Challenge['area'] || 'People',
         severity: 5,
         impact: 5,
         description: 'Identified during quick scan.'
@@ -346,7 +346,7 @@ export const FreeAssessmentView: React.FC = () => {
       if (value !== 'None') {
         const newConstraint: Constraint = {
           id: Date.now().toString(),
-          type: value as keyof typeof Challenge,
+          type: value as Constraint['type'] || 'Budget',
           description: 'Hard limit by user',
           impactLevel: 'High'
         };

@@ -38,20 +38,37 @@ if (process.env.MOCK_REDIS === 'true' || !redisAvailable) {
     client = createMockClient();
 } else {
     client = createClient({
-        url: redisUrl
+        url: redisUrl,
+        socket: {
+            connectTimeout: 2000, // 2 second timeout
+            reconnectStrategy: false // Don't reconnect - fail fast
+        }
     });
 
-    client.on('error', (err) => console.error('[Redis] Client Error', err));
+    client.on('error', (err) => console.error('[Redis] Client Error', err.message));
     client.on('connect', () => console.log('[Redis] Connected'));
 
-    // Connect immediately
+    // Connect immediately with timeout
     (async () => {
         try {
             if (!client.isOpen) {
-                await client.connect();
+                // Add timeout to prevent hanging
+                const connectPromise = client.connect();
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Redis connection timeout')), 2000)
+                );
+                await Promise.race([connectPromise, timeoutPromise]);
+                console.log('[Redis] Successfully connected');
             }
         } catch (err) {
-            console.error('[Redis] Connection Failed:', err);
+            console.error('[Redis] Connection Failed:', err.message);
+            // Fallback to mock on connection failure
+            console.log('[Redis] Falling back to Mock Client');
+            const mockClient = createMockClient();
+            // Replace the broken client with mock
+            Object.keys(mockClient).forEach(key => {
+                client[key] = mockClient[key];
+            });
         }
     })();
 }

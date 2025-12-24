@@ -146,19 +146,65 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
     e.preventDefault();
     setError(null);
     console.log('handleLogin called with:', formData.email);
-    try {
-      console.log('Calling Api.login...');
-      const user: { status?: string; message?: string } = await Api.login(formData.email, formData.password);
-      console.log('Login successful:', user);
-      onAuthSuccess(user);
-    } catch (err: any) {
-      console.error('Login error:', err);
-      // Check for pending status in error or response
-      if (err.message && (err.message.includes('approval') || err.message.toLowerCase().includes('pending'))) {
-        setIsPending(true);
-      } else {
-        setError(err.message || 'Login failed');
+    
+    // Validate input
+    if (!formData.email || !formData.password) {
+      setError('Email and password are required');
+      return;
+    }
+
+    // Retry logic for network errors
+    let retries = 3;
+    let lastError: any = null;
+
+    while (retries > 0) {
+      try {
+        console.log('Calling Api.login... (attempts remaining:', retries, ')');
+        const user = await Api.login(formData.email, formData.password);
+        
+        // Verify token was stored
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('Login succeeded but token was not stored');
+        }
+
+        console.log('Login successful, token stored:', !!token);
+        onAuthSuccess(user);
+        return; // Success - exit function
+      } catch (err: any) {
+        lastError = err;
+        console.error('Login error:', err);
+        
+        // Don't retry on authentication errors (wrong password, etc.)
+        if (err.message && (
+          err.message.includes('Invalid email or password') ||
+          err.message.includes('Invalid login response') ||
+          err.message.includes('approval') ||
+          err.message.toLowerCase().includes('pending')
+        )) {
+          // Check for pending status
+          if (err.message && (err.message.includes('approval') || err.message.toLowerCase().includes('pending'))) {
+            setIsPending(true);
+            return;
+          }
+          setError(err.message || 'Login failed');
+          return; // Don't retry auth errors
+        }
+
+        // Retry on network errors
+        retries--;
+        if (retries > 0) {
+          console.log('Retrying login in 1 second...');
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
       }
+    }
+
+    // All retries failed
+    if (lastError) {
+      setError(lastError.message || 'Login failed. Please check your connection and try again.');
+    } else {
+      setError('Login failed. Please try again.');
     }
   };
 

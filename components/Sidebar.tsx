@@ -232,21 +232,39 @@ export const Sidebar: React.FC = () => {
       subItems: [
         {
           id: 'M2_DRD',
-          label: t('sidebar.drd'),
+          label: t('sidebar.assessmentDRD', 'DRD'),
           viewId: AppView.ASSESSMENT_DRD,
           icon: <Activity size={16} />
         },
         {
-          id: 'M2_DIGITAL',
-          label: t('sidebar.digitalAssessments'),
-          viewId: AppView.ASSESSMENT_DIGITAL_EXTERNAL,
+          id: 'M2_SIRI',
+          label: t('sidebar.assessmentSIRI', 'SIRI'),
+          viewId: AppView.ASSESSMENT_SIRI,
           icon: <Cpu size={16} />
         },
         {
+          id: 'M2_ADMA',
+          label: t('sidebar.assessmentADMA', 'ADMA'),
+          viewId: AppView.ASSESSMENT_ADMA,
+          icon: <Database size={16} />
+        },
+        {
+          id: 'M2_CMMI',
+          label: t('sidebar.assessmentCMMI', 'CMMI'),
+          viewId: AppView.ASSESSMENT_CMMI,
+          icon: <Layers size={16} />
+        },
+        {
           id: 'M2_LEAN',
-          label: t('sidebar.leanAssessments'),
-          viewId: AppView.ASSESSMENT_LEAN_EXTERNAL,
+          label: t('sidebar.assessmentLean', 'Lean 4.0'),
+          viewId: AppView.ASSESSMENT_LEAN,
           icon: <Workflow size={16} />
+        },
+        {
+          id: 'M2_OTHER',
+          label: t('sidebar.assessmentOther', 'Inne'),
+          viewId: AppView.ASSESSMENT_OTHER,
+          icon: <Box size={16} />
         },
       ]
     },
@@ -266,21 +284,21 @@ export const Sidebar: React.FC = () => {
       viewId: AppView.FULL_STEP3_ROADMAP,
       requiresView: AppView.FULL_STEP2_INITIATIVES
     },
-    // Wdrożenie - back to single view (Pilot phase)
+    // Wdrożenie (Implementation)
     {
       id: 'MODULE_4',
-      label: t('sidebar.module4'),
+      label: t('sidebar.implementation', 'Wdrożenie'),
       icon: <Rocket size={20} />,
       viewId: AppView.FULL_PILOT_EXECUTION,
       requiresView: AppView.FULL_STEP3_ROADMAP
     },
-    // Realizacja - renamed from KPI/OKR, using FULL_ROLLOUT view
+    // Realizacja (Execution/Rollout)
     {
       id: 'MODULE_5',
-      label: t('sidebar.module5'),
+      label: t('sidebar.realization', 'Realizacja'),
       icon: <Map size={20} />,
       viewId: AppView.FULL_ROLLOUT,
-      requiresView: AppView.FULL_STEP3_ROADMAP
+      requiresView: AppView.FULL_PILOT_EXECUTION
     },
     {
       id: 'MODULE_6',
@@ -405,6 +423,18 @@ export const Sidebar: React.FC = () => {
     // Check if locked
     const isLocked = item.requiresView && !completedViews.includes(item.requiresView) && !(currentUser?.role === UserRole.ADMIN || currentUser?.role === 'SUPERADMIN');
 
+    // Get human-readable name for required view
+    const getViewName = (view: AppView): string => {
+      const viewNames: Record<string, string> = {
+        [AppView.FULL_STEP1_ASSESSMENT]: 'Assessment',
+        [AppView.FULL_STEP2_INITIATIVES]: 'Initiatives',
+        [AppView.FULL_STEP3_ROADMAP]: 'Roadmap',
+        [AppView.FULL_STEP5_EXECUTION]: 'Execution',
+        [AppView.DASHBOARD]: 'Dashboard'
+      };
+      return viewNames[view] || 'previous step';
+    };
+
     // Check if child active (for highlighting parent)
     const isChildActive = (i: MenuItem): boolean => {
       if (i.viewId === currentView) return true;
@@ -415,6 +445,17 @@ export const Sidebar: React.FC = () => {
 
     // Padding logic
     const paddingLeft = showFull ? 'px-3' : 'px-0 justify-center';
+
+    // Generate tooltip
+    const getTooltip = () => {
+      if (isLocked && item.requiresView) {
+        return `Locked: Complete ${getViewName(item.requiresView)} first`;
+      }
+      if (!showFull) {
+        return item.label;
+      }
+      return undefined;
+    };
 
     return (
       <div
@@ -444,7 +485,7 @@ export const Sidebar: React.FC = () => {
                 : 'text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'
             }
           `}
-          title={!showFull ? item.label : undefined}
+          title={getTooltip()}
         >
           <div className={`flex items-center gap-3 ${!showFull ? 'justify-center w-full' : ''} `}>
             {item.icon && (

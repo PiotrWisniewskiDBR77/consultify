@@ -67,7 +67,16 @@
     "standardReports": "Standard Reports",
     "executiveView": "Executive View",
     "aiAdvisor": "AI Advisor",
-    "automationScheme": "Automation Scheme"
+    "automationScheme": "Automation Scheme",
+    "implementation": "Implementation",
+    "realization": "Execution",
+    "otherAssessments": "Other",
+    "assessmentDRD": "DRD",
+    "assessmentSIRI": "SIRI",
+    "assessmentADMA": "ADMA",
+    "assessmentCMMI": "CMMI",
+    "assessmentLean": "Lean 4.0",
+    "assessmentOther": "Other"
   },
   "auth": {
     "startQuick": "Start Your Quick Assessment",

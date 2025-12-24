@@ -19,11 +19,18 @@ export enum AppView {
   FULL_STEP1_CONTEXT = 'FULL_STEP1_CONTEXT', // NEW: Senior Consultant Context Gathering
   FULL_STEP1_ASSESSMENT = 'FULL_STEP1_ASSESSMENT', // Parent (legacy)
 
-  // Assessment Module - Hierarchical Structure
+  // Assessment views (Multi-framework)
   ASSESSMENT_OVERVIEW = 'ASSESSMENT_OVERVIEW', // Assessment landing page
   ASSESSMENT_DRD = 'ASSESSMENT_DRD', // DRD with axis selector
-  ASSESSMENT_DIGITAL_EXTERNAL = 'ASSESSMENT_DIGITAL_EXTERNAL', // SIRI, ADMA, etc.
-  ASSESSMENT_LEAN_EXTERNAL = 'ASSESSMENT_LEAN_EXTERNAL', // Lean frameworks
+  ASSESSMENT_SIRI = 'ASSESSMENT_SIRI', // SIRI framework
+  ASSESSMENT_ADMA = 'ASSESSMENT_ADMA', // ADMA framework
+  ASSESSMENT_CMMI = 'ASSESSMENT_CMMI', // CMMI-DMM framework
+  ASSESSMENT_LEAN = 'ASSESSMENT_LEAN', // Lean 4.0 (RapidLean)
+  ASSESSMENT_DIGITAL_EXTERNAL = 'ASSESSMENT_DIGITAL_EXTERNAL', // Legacy - kept for backward compat
+  ASSESSMENT_LEAN_EXTERNAL = 'ASSESSMENT_LEAN_EXTERNAL', // Legacy - kept for backward compat
+  ASSESSMENT_OTHER = 'ASSESSMENT_OTHER', // Other assessments
+  ASSESSMENT_SUMMARY = 'ASSESSMENT_SUMMARY', // Assessment Hub dashboard
+  ASSESSMENT_AUDITS = 'ASSESSMENT_AUDITS', // Generic reports/audits
 
   // DRD Axis Views (kept for backward compatibility)
   FULL_STEP1_PROCESSES = 'FULL_STEP1_PROCESSES',
@@ -2130,6 +2137,72 @@ export interface ReportBlockMeta {
   lastEditedBy?: string;
 }
 
+// Content types for different block types
+export interface TextBlockContent {
+  text: string;
+}
+
+export interface TableBlockContent {
+  headers: string[];
+  rows: string[][];
+}
+
+export interface CalloutBlockContent {
+  level: 'info' | 'warning' | 'success' | 'error';
+  text: string;
+}
+
+export interface CardsBlockContent {
+  cards: Array<{
+    title: string;
+    description?: string;
+    value?: string | number;
+    [key: string]: unknown;
+  }>;
+}
+
+export interface MatrixBlockContent {
+  rows: string[];
+  columns: string[];
+  data: (string | number)[][];
+}
+
+export interface EvidenceListBlockContent {
+  items: Array<{
+    id: string;
+    title: string;
+    description?: string;
+    source?: string;
+    [key: string]: unknown;
+  }>;
+}
+
+export interface RecommendationBlockContent {
+  recommendations: Array<{
+    id: string;
+    title: string;
+    description: string;
+    priority?: string;
+    [key: string]: unknown;
+  }>;
+}
+
+export interface ImageBlockContent {
+  url: string;
+  alt?: string;
+  caption?: string;
+}
+
+export type ReportBlockContent =
+  | TextBlockContent
+  | TableBlockContent
+  | CalloutBlockContent
+  | CardsBlockContent
+  | MatrixBlockContent
+  | EvidenceListBlockContent
+  | RecommendationBlockContent
+  | ImageBlockContent;
+
 export interface ReportBlock {
   id: string;
   reportId: string;
@@ -2142,12 +2215,12 @@ export interface ReportBlock {
   aiRegeneratable: boolean;
   locked: boolean;
 
-  content?: unknown;
+  content?: ReportBlockContent;
   meta?: ReportBlockMeta;
   position: number;
 
-  message?: string; // For callout
-  level?: string;   // For callout
+  message?: string; // For callout (legacy)
+  level?: string;   // For callout (legacy)
 }
 
 export interface Report {
@@ -2791,4 +2864,34 @@ export interface PlaybookTemplateExport {
     templateGraph: TemplateGraph | null;
     steps?: PlaybookTemplateStep[];
   };
+}
+
+// Document Library
+export type DocumentScope = 'project' | 'user';
+export type DocumentStatus = 'active' | 'archived' | 'deleted';
+
+export interface Document {
+  id: string;
+  organizationId: string;
+  projectId?: string;
+  ownerId: string;
+  scope: DocumentScope;
+  filename: string;
+  originalName: string;
+  fileType: string;
+  fileSize: number;
+  mimeType: string;
+  filepath: string;
+  description?: string;
+  tags?: string[];
+  status: DocumentStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DocumentUploadOptions {
+  scope: DocumentScope;
+  projectId?: string;
+  description?: string;
+  tags?: string[];
 }

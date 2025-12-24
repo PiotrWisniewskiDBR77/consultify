@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ReportBlock } from '../../../types';
+import { ReportBlock, TableBlockContent } from '../../../types';
 import { Plus, Trash2, GripVertical, MoreHorizontal } from 'lucide-react';
 
 interface TableBlockProps {
@@ -8,18 +8,23 @@ interface TableBlockProps {
 }
 
 export const TableBlock: React.FC<TableBlockProps> = ({ block, onUpdate }) => {
-    const [headers, setHeaders] = useState<string[]>(block.content?.headers || ['Column 1', 'Column 2']);
-    const [rows, setRows] = useState<string[][]>(block.content?.rows || [['Data 1', 'Data 2']]);
+    const content = block.content as TableBlockContent | undefined;
+    const [headers, setHeaders] = useState<string[]>(content?.headers || ['Column 1', 'Column 2']);
+    const [rows, setRows] = useState<string[][]>(content?.rows || [['Data 1', 'Data 2']]);
 
     useEffect(() => {
-        const newHeaders = block.content?.headers || ['Column 1', 'Column 2'];
-        const newRows = block.content?.rows || [['Data 1', 'Data 2']];
+        const newHeaders = content?.headers || ['Column 1', 'Column 2'];
+        const newRows = content?.rows || [['Data 1', 'Data 2']];
         if (JSON.stringify(newHeaders) !== JSON.stringify(headers)) setHeaders(newHeaders);
         if (JSON.stringify(newRows) !== JSON.stringify(rows)) setRows(newRows);
-    }, [block.content]);
+    }, [content]);
 
     const save = (newHeaders: string[], newRows: string[][]) => {
-        onUpdate({ content: { ...block.content, headers: newHeaders, rows: newRows } });
+        const updatedContent: TableBlockContent = {
+            headers: newHeaders,
+            rows: newRows
+        };
+        onUpdate({ content: updatedContent });
     };
 
     const updateHeader = (index: number, value: string) => {

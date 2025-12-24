@@ -20,6 +20,14 @@ interface AppState {
     isSidebarCollapsed: boolean;
     toggleSidebarCollapse: () => void;
 
+    // Chat Panel Visibility
+    isChatCollapsed: boolean;
+    toggleChatCollapse: () => void;
+
+    // Chat Panel Width (persisted across module changes)
+    chatPanelWidth: number;
+    setChatPanelWidth: (width: number) => void;
+
     // Chat State
     activeChatMessages: ChatMessage[];
     projectChatMessages: Record<string, ChatMessage[]>; // MED-01: Per-project chat storage
@@ -163,6 +171,14 @@ export const useAppStore = create<AppState>()(
             isSidebarCollapsed: true,
             toggleSidebarCollapse: () => set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
 
+            // Chat Panel Visibility
+            isChatCollapsed: false,
+            toggleChatCollapse: () => set((state) => ({ isChatCollapsed: !state.isChatCollapsed })),
+
+            // Chat Panel Width (persisted across module changes)
+            chatPanelWidth: 380,
+            setChatPanelWidth: (width) => set({ chatPanelWidth: width }),
+
             setCurrentProjectId: (pid) => set((state) => {
                 // MED-01: Save current chat before switching projects
                 const MAX_MESSAGES = 100;
@@ -297,7 +313,9 @@ export const useAppStore = create<AppState>()(
                 currentProjectId: state.currentProjectId,
                 aiConfig: state.aiConfig,
                 theme: state.theme,
-                notifications: state.notifications
+                notifications: state.notifications,
+                isChatCollapsed: state.isChatCollapsed,
+                chatPanelWidth: state.chatPanelWidth
             }),
         }
     )

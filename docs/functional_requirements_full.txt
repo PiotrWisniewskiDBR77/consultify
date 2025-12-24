@@ -618,7 +618,7 @@ Ten dialog sprawia, że użytkownik nie popełni błędu.
 
 ⭐ PODMODUŁ 2.2 — ADDITIONAL AUDITS (ADMA, SIRI…)
 🎯 Cel:
-Pozwolić użytkownikowi wprowadzić wyniki innych audytów i zmapować je do DRD.
+Pozwolić użytkownikowi wprowadzić wyniki innych audytów i zmapować je do DRD.
 🧩 Układ:
 Dla każdego audytu:
 	•	Nazwa audytu
@@ -635,7 +635,93 @@ AI:
 	•	proponuje korekty poziomów.
 Przykład:
 „ADMA wskazuje poziom 2 w Data — dopasowałam to do DRD (oś Data & Analytics).”
-W wielu firmach to jest game changer, bo audyty są często chaotyczne.
+W wielu firmach to jest game changer, bo audyty są często chaotyczne.
+
+⭐ PODMODUŁ 2.2.1 — RAPIDLEAN PRODUCTION OBSERVATIONS (GEMBA WALK)
+🎯 Cel:
+Automatyzacja wprowadzania danych z obserwacji produkcyjnych (Gemba Walk) i automatyczne generowanie raportu zgodnego z formatem DBR77 i zasadami DRD.
+🧩 Filozofia:
+Operator na hali produkcyjnej używa wystandaryzowanych szablonów do dokumentowania obserwacji, które automatycznie mapują się na oceny RapidLean i DRD, kończąc się wygenerowaniem raportu PDF.
+
+🔷 STRUKTURA OBSERWACJI
+6 wystandaryzowanych szablonów obserwacji:
+1. Value Stream Observation → DRD Axis 1 (Processes), Area 1A, 1B, 1C
+2. Waste Identification → DRD Axis 1 (Processes), Area 1C
+3. Flow & Pull Systems → DRD Axis 1 (Processes), Area 1C
+4. Quality at Source → DRD Axis 1 (Processes), Area 1B
+5. Continuous Improvement → DRD Axis 5 (Culture), Area 5A
+6. Visual Management → DRD Axis 5 (Culture), Area 5B
+
+Każdy szablon zawiera:
+	•	Checklist z pytaniami (yes/no, scale, text, photo, measurement)
+	•	Mapowanie na wymiary RapidLean (6 wymiarów, skala 1-5)
+	•	Mapowanie na osie DRD (Axis 1: Processes, Axis 5: Culture)
+	•	Wymagane pola (zdjęcia, notatki)
+	•	Szacowany czas wypełnienia (10-20 minut)
+
+🔷 WORKFLOW OBSERWACJI PRODUKCYJNYCH
+1. Operator rozpoczyna obserwację na hali produkcyjnej
+2. Wypełnia kolejne szablony obserwacji (mobilny interfejs)
+3. Dla każdego szablonu:
+	•	Odpowiada na pytania checklisty
+	•	Wykonuje zdjęcia (wymagane)
+	•	Dodaje notatki
+	•	Określa lokalizację
+4. Po ukończeniu wszystkich szablonów:
+	•	System automatycznie mapuje obserwacje na odpowiedzi RapidLean
+	•	Generuje ocenę RapidLean (6 wymiarów, skala 1-5)
+	•	Mapuje wyniki na DRD (Axis 1 i 5, skala 1-7)
+	•	Generuje raport PDF zgodny z formatem DBR77
+
+🔷 MAPOWANIE OBSERWACJI → RAPIDLEAN → DRD
+Automatyczne mapowanie:
+	•	Obserwacje (yes/no, measurements) → Odpowiedzi RapidLean (skala 1-5)
+	•	Odpowiedzi RapidLean → Poziomy DRD (skala 1-7)
+	•	Konwersja skali: Linear interpolation (1-5 Lean → 1-7 DRD)
+	•	Uwzględnienie obserwacji jako evidence dla mapowania DRD
+
+🔷 GENEROWANIE RAPORTU
+Raport PDF zawiera (format DBR77):
+1. Executive Summary
+	•	Overall Lean Maturity Score
+	•	Benchmark comparison
+	•	Key findings
+	•	DRD maturity mapping
+2. Observation Details
+	•	Dla każdego szablonu: location, timestamp, key findings, photos
+3. DRD Mapping & Gaps
+	•	Scores per DRD axis
+	•	Gap analysis
+	•	Pathways to target levels
+4. Recommendations
+	•	AI-powered recommendations zgodne z DRD principles
+	•	Priority ranking
+	•	Expected impact
+5. Evidence & Photos
+	•	Galeria zdjęć z obserwacji
+	•	Notatki operatora
+
+🤖 ROLA AI
+AI wspiera proces obserwacji:
+	•	Analiza notatek i zdjęć dla dodatkowego scoringu (opcjonalnie)
+	•	Sense-checking odpowiedzi operatora
+	•	Generowanie rekomendacji zgodnych z DRD
+	•	Identyfikacja luk i ścieżek rozwoju
+
+🔷 INTEGRACJA Z DRD
+RapidLean observations są automatycznie uwzględniane w:
+	•	Generowaniu inicjatyw (Initiative Generator)
+	•	Mapowaniu DRD z obserwacji jako evidence
+	•	Identyfikacji gaps w DRD areas
+	•	Budowaniu pathways do target levels
+
+🔷 MOBILNY INTERFEJS
+Formularz obserwacji zoptymalizowany dla operatorów na hali:
+	•	Auto-save co 30 sekund
+	•	Progress bar pokazujący ukończenie szablonu
+	•	Walidacja wymaganych pól
+	•	Upload zdjęć z aparatu/pliku
+	•	Nawigacja między szablonami
 
 ⭐ PODMODUŁ 2.3 — AI SUMMARY & GAPS MAP
 To jest najważniejszy ekran Assessmentu.

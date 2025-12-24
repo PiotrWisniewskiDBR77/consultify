@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ReportBlock } from '../../../types';
+import { ReportBlock, TextBlockContent } from '../../../types';
 
 interface TextBlockProps {
     block: ReportBlock;
@@ -7,18 +7,20 @@ interface TextBlockProps {
 }
 
 export const TextBlock: React.FC<TextBlockProps> = ({ block, onUpdate }) => {
-    const [text, setText] = useState(block.content?.text || '');
+    const content = block.content as TextBlockContent | undefined;
+    const [text, setText] = useState(content?.text || '');
     const [isEditing, setIsEditing] = useState(false);
 
     useEffect(() => {
-        const newText = block.content?.text || '';
+        const newText = content?.text || '';
         if (text !== newText) setText(newText);
-    }, [block.content?.text]);
+    }, [content?.text]);
 
     const handleBlur = () => {
         setIsEditing(false);
-        if (text !== block.content?.text) {
-            onUpdate({ content: { ...block.content, text } });
+        if (text !== content?.text) {
+            const updatedContent: TextBlockContent = { text };
+            onUpdate({ content: updatedContent });
         }
     };
 

@@ -67,7 +67,16 @@
     "standardReports": "Raporty Standardowe",
     "executiveView": "Widok Zarządu",
     "aiAdvisor": "AI Advisor",
-    "automationScheme": "Schemat automatyzacji"
+    "automationScheme": "Schemat automatyzacji",
+    "implementation": "Wdrożenie",
+    "realization": "Realizacja",
+    "otherAssessments": "Inne",
+    "assessmentDRD": "DRD",
+    "assessmentSIRI": "SIRI",
+    "assessmentADMA": "ADMA",
+    "assessmentCMMI": "CMMI",
+    "assessmentLean": "Lean 4.0",
+    "assessmentOther": "Inne"
   },
   "auth": {
     "startQuick": "Rozpocznij Szybką Diagnozę",

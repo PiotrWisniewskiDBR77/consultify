@@ -197,6 +197,25 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                 return <div className="p-8 overflow-y-auto h-full"><SystemSettings /></div>;
             case 'storage':
                 return <div className="p-8 overflow-y-auto h-full"><SuperAdminStorageView /></div>;
+            case 'analytics':
+                return (
+                    <div className="p-8 overflow-y-auto">
+                        <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
+                            <h2 className="text-xl font-bold mb-4">AI Analytics</h2>
+                            <p className="text-slate-400 mb-4">Advanced AI usage analytics and insights.</p>
+                            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 flex items-start gap-3">
+                                <AlertCircle className="text-yellow-500 shrink-0 mt-0.5" size={20} />
+                                <div>
+                                    <p className="text-yellow-500 font-medium mb-1">Coming Soon</p>
+                                    <p className="text-slate-400 text-sm">
+                                        This section is currently under development. Advanced AI analytics including token usage trends,
+                                        model performance metrics, and cost optimization recommendations will be available here.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
             case 'audit':
                 return renderAuditLogs();
             case 'database':

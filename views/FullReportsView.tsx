@@ -1,15 +1,15 @@
-`import React from 'react';`
+import React from 'react';
 import { SplitLayout } from '../components/SplitLayout';
 // import { FullReportDocument } from '../components/FullReportDocument';
 // import { FullExecutionDashboardWorkspace } from '../components/FullExecutionDashboardWorkspace';
-`// import { AIConsultantView } from './AIConsultantView';`
-`// import { FullReport, AIMessageHistory, FullInitiative } from '../types';`
+// import { AIConsultantView } from './AIConsultantView';
+// import { FullReport, AIMessageHistory, FullInitiative } from '../types';
 // import { translations } from '../translations';
 import { useAppStore } from '../store/useAppStore';
-`// import { exportReportToPDF } from '../services/pdf/pdfExport';`
-`// import { Download, Bot, FileText } from 'lucide-react';`
-`// import { AIFeedbackButton } from '../components/AIFeedbackButton';`
-`// import { sendMessageToAI } from '../services/ai/gemini';`
+// import { exportReportToPDF } from '../services/pdf/pdfExport';
+// import { Download, Bot, FileText } from 'lucide-react';
+// import { AIFeedbackButton } from '../components/AIFeedbackButton';
+// import { sendMessageToAI } from '../services/ai/gemini';
 
 // ... imports
 // import { ReportContainer } from '../components/ReportBuilder/ReportContainer';

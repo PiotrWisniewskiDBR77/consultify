@@ -73,7 +73,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                     {/* Demo Button */}
                     <button
                         onClick={onDemoClick}
-                        className="px-5 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-all cursor-pointer"
+                        className="min-w-24 px-5 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-all border border-slate-200 dark:border-white/10 cursor-pointer"
                     >
                         Demo
                     </button>
@@ -81,7 +81,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                     {/* Trial Button */}
                     <button
                         onClick={onTrialClick}
-                        className="px-5 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-all cursor-pointer"
+                        className="min-w-24 px-5 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-all border border-slate-200 dark:border-white/10 cursor-pointer"
                     >
                         Trial
                     </button>

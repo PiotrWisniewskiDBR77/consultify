@@ -1,91 +1,153 @@
 import React, { useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Api } from '../services/api';
+import { useAppStore } from '../store/useAppStore';
+import { AppView, UserRole } from '../types';
 
-export const OAuthCallback: React.FC = () => {
+const OAuthCallback: React.FC = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
+    const { setCurrentUser, setCurrentView } = useAppStore();
     const [status, setStatus] = React.useState<'processing' | 'success' | 'error'>('processing');
     const [message, setMessage] = React.useState('');
 
     useEffect(() => {
         const processCallback = async () => {
             try {
-                const code = searchParams.get('code');
-                const state = searchParams.get('state');
-                const error = searchParams.get('error');
+                // Backend redirects with token and user in URL query params
+                const token = searchParams.get('token');
+                const userParam = searchParams.get('user');
+                const error = searchParams.get('auth_error');
 
                 if (error) {
                     setStatus('error');
-                    setMessage(error);
-                    setTimeout(() => navigate('/login'), 3000);
+                    let errorMessage = 'Authentication failed';
+                    if (error === 'google_failed') {
+                        errorMessage = 'Google authentication failed';
+                    } else if (error === 'linkedin_failed') {
+                        errorMessage = 'LinkedIn authentication failed';
+                    } else if (error === 'token_generation_failed') {
+                        errorMessage = 'Token generation failed. Please try again.';
+                    }
+                    setMessage(errorMessage);
+                    setTimeout(() => navigate('/'), 3000);
                     return;
                 }
 
-                if (!code) {
+                if (!token) {
                     setStatus('error');
-                    setMessage('No authorization code received');
-                    setTimeout(() => navigate('/login'), 3000);
+                    setMessage('No authentication token received');
+                    setTimeout(() => navigate('/'), 3000);
                     return;
                 }
 
-                // Exchange code for token
-                const response = await Api.post('/auth/oauth/callback', {
-                    code,
-                    state
-                });
+                // Save token to localStorage
+                localStorage.setItem('token', token);
 
-                if (response.token) {
-                    localStorage.setItem('token', response.token);
+                // Parse user data if provided
+                let user = null;
+                if (userParam) {
+                    try {
+                        user = JSON.parse(decodeURIComponent(userParam));
+                    } catch (e) {
+                        console.error('Failed to parse user data:', e);
+                    }
+                }
+
+                // If user data is provided, use it; otherwise fetch from API
+                if (user && user.id && user.email) {
+                    // Add isAuthenticated flag
+                    const authenticatedUser = {
+                        ...user,
+                        isAuthenticated: true
+                    };
+                    setCurrentUser(authenticatedUser);
+
+                    // Redirect based on user role
+                    if (authenticatedUser.role === 'SUPERADMIN') {
+                        setCurrentView(AppView.ADMIN_DASHBOARD);
+                    } else if (authenticatedUser.role === UserRole.ADMIN) {
+                        setCurrentView(AppView.ADMIN_DASHBOARD);
+                    } else {
+                        setCurrentView(AppView.USER_DASHBOARD);
+                    }
+
                     setStatus('success');
                     setTimeout(() => {
                         navigate('/');
-                    }, 2000);
+                    }, 1000);
                 } else {
-                    setStatus('error');
-                    setMessage('Failed to authenticate');
-                    setTimeout(() => navigate('/login'), 3000);
+                    // If no user data, try to fetch from API
+                    try {
+                        const { Api } = await import('../services/api');
+                        const userData = await Api.get('/auth/me');
+                        if (userData && userData.user) {
+                            const authenticatedUser = {
+                                ...userData.user,
+                                isAuthenticated: true
+                            };
+                            setCurrentUser(authenticatedUser);
+
+                            if (authenticatedUser.role === 'SUPERADMIN') {
+                                setCurrentView(AppView.ADMIN_DASHBOARD);
+                            } else if (authenticatedUser.role === UserRole.ADMIN) {
+                                setCurrentView(AppView.ADMIN_DASHBOARD);
+                            } else {
+                                setCurrentView(AppView.USER_DASHBOARD);
+                            }
+
+                            setStatus('success');
+                            setTimeout(() => {
+                                navigate('/');
+                            }, 1000);
+                        } else {
+                            throw new Error('Failed to fetch user data');
+                        }
+                    } catch (err: any) {
+                        setStatus('error');
+                        setMessage(err.message || 'Failed to authenticate');
+                        setTimeout(() => navigate('/'), 3000);
+                    }
                 }
             } catch (err: any) {
                 setStatus('error');
                 setMessage(err.message || 'Authentication failed');
-                setTimeout(() => navigate('/login'), 3000);
+                setTimeout(() => navigate('/'), 3000);
             }
         };
 
         processCallback();
-    }, [searchParams, navigate]);
+    }, [searchParams, navigate, setCurrentUser, setCurrentView]);
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12">
+        <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-navy-950 px-4 py-12">
             <div className="w-full max-w-md space-y-8 text-center">
                 {status === 'processing' && (
                     <div>
-                        <h2 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">
+                        <h2 className="mt-6 text-3xl font-bold tracking-tight text-navy-900 dark:text-white">
                             Processing authentication...
                         </h2>
-                        <div className="mt-4 animate-spin h-8 w-8 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto"></div>
+                        <div className="mt-4 animate-spin h-8 w-8 border-4 border-purple-500 border-t-transparent rounded-full mx-auto"></div>
                     </div>
                 )}
                 {status === 'success' && (
                     <div>
-                        <h2 className="mt-6 text-3xl font-bold tracking-tight text-green-600">
+                        <h2 className="mt-6 text-3xl font-bold tracking-tight text-green-600 dark:text-green-400">
                             Authentication Successful!
                         </h2>
-                        <p className="mt-2 text-sm text-gray-600">Redirecting...</p>
+                        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Redirecting...</p>
                     </div>
                 )}
                 {status === 'error' && (
                     <div>
-                        <h2 className="mt-6 text-3xl font-bold tracking-tight text-red-600">
+                        <h2 className="mt-6 text-3xl font-bold tracking-tight text-red-600 dark:text-red-400">
                             Authentication Failed
                         </h2>
-                        <p className="mt-2 text-sm text-gray-600">{message}</p>
+                        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{message}</p>
                         <button
-                            onClick={() => navigate('/login')}
-                            className="mt-4 rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+                            onClick={() => navigate('/')}
+                            className="mt-4 rounded-md bg-purple-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-purple-500 transition-colors"
                         >
-                            Back to Login
+                            Back to Home
                         </button>
                     </div>
                 )}
@@ -93,3 +155,5 @@ export const OAuthCallback: React.FC = () => {
         </div>
     );
 };
+
+export default OAuthCallback;

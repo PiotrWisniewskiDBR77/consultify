@@ -71,7 +71,7 @@ interface ChallengesState {
     }>;
 }
 
-`trendState`
+interface TrendState {
     selectedIndustry: string;
     // We might not need to store full megatrend objects here if they come from another store, 
     // but we should store WHICH ones are selected/prioritized if that's a feature.

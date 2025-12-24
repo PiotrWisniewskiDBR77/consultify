@@ -195,7 +195,7 @@ export const AffiliateDashboardView: React.FC = () => {
                                             <div>
                                                 <div className="text-sm font-bold flex items-center gap-2">
                                                     Wygasa: {ref.expires_at ? new Date(ref.expires_at).toLocaleDateString() : 'Nigdy'}
-                                                    {new Date(ref.expires_at) < new Date() && <span className="text-[10px] bg-red-500/10 text-red-500 px-1.5 py-0.5 rounded border border-red-500/20">Wygasł</span>}
+                                                    {ref.expires_at && new Date(ref.expires_at) < new Date() && <span className="text-[10px] bg-red-500/10 text-red-500 px-1.5 py-0.5 rounded border border-red-500/20">Wygasł</span>}
                                                 </div>
                                                 <div className="text-xs text-slate-500 flex items-center gap-3 mt-1">
                                                     <span className="flex items-center gap-1"><Users size={12} /> {ref.use_count} użyć</span>

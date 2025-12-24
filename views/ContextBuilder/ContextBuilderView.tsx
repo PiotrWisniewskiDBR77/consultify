@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-`{ FileText, Layout, RefreshCw }`
+import { FileText, Layout, RefreshCw } from 'lucide-react';
 import { CompanyProfileModule } from './modules/CompanyProfileModule';
 import { GoalsExpectationsModule } from './modules/GoalsExpectationsModule';
 import { ChallengeMapModule } from './modules/ChallengeMapModule';
@@ -28,7 +28,7 @@ const RefreshAnalysisButton = () => {
 };
 
 export const ContextBuilderView: React.FC<ContextBuilderProps> = ({ initialTab = 1 }) => {
-`'{ t }'`
+    const { t } = useTranslation();
     const [activeModule, setActiveModule] = useState<number>(initialTab);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 

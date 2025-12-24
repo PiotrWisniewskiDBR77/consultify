@@ -359,6 +359,34 @@ function initDb() {
             FOREIGN KEY(doc_id) REFERENCES knowledge_docs(id) ON DELETE CASCADE
         )`);
 
+        // Documents Library (Project + User scope separation)
+        db.run(`CREATE TABLE IF NOT EXISTS documents (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            project_id TEXT,
+            owner_id TEXT NOT NULL,
+            scope TEXT NOT NULL DEFAULT 'user' CHECK(scope IN ('project', 'user')),
+            filename TEXT NOT NULL,
+            original_name TEXT,
+            file_type TEXT,
+            file_size INTEGER,
+            mime_type TEXT,
+            filepath TEXT,
+            description TEXT,
+            tags TEXT,
+            status TEXT DEFAULT 'active' CHECK(status IN ('active', 'archived', 'deleted')),
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE SET NULL,
+            FOREIGN KEY(owner_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+
+        // Indexes for documents
+        db.run(`CREATE INDEX IF NOT EXISTS idx_documents_project ON documents(project_id, scope)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_documents_owner ON documents(owner_id, scope)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_documents_org ON documents(organization_id)`);
+
         // LLM Providers
         db.run(`CREATE TABLE IF NOT EXISTS llm_providers(
                                                             id TEXT PRIMARY KEY,
@@ -706,6 +734,156 @@ function initDb() {
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
         )`);
 
+        // ==========================================
+        // ASSESSMENT MODULE - PHASE 2 EXPANSION
+        // Multi-Framework Assessment System
+        // ==========================================
+
+        // RapidLean Assessments
+        db.run(`CREATE TABLE IF NOT EXISTS rapid_lean_assessments (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            project_id TEXT,
+            assessment_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+            
+            -- Scoring (6 dimensions on 1-5 scale)
+            value_stream_score REAL DEFAULT 0,
+            waste_elimination_score REAL DEFAULT 0,
+            flow_pull_score REAL DEFAULT 0,
+            quality_source_score REAL DEFAULT 0,
+            continuous_improvement_score REAL DEFAULT 0,
+            visual_management_score REAL DEFAULT 0,
+            
+            -- Aggregated
+            overall_score REAL DEFAULT 0,
+            industry_benchmark REAL DEFAULT 0,
+            
+            -- AI Analysis
+            ai_recommendations TEXT,
+            top_gaps TEXT DEFAULT '[]',
+            
+            -- Raw Data
+            questionnaire_responses TEXT DEFAULT '{}',
+            
+            -- Metadata
+            created_by TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        // External Digital Assessments (SIRI, ADMA, CMMI, etc.)
+        db.run(`CREATE TABLE IF NOT EXISTS external_digital_assessments (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            project_id TEXT,
+            
+            -- Framework Info
+            framework_type TEXT NOT NULL CHECK(framework_type IN ('SIRI', 'ADMA', 'CMMI', 'DIGITAL_OTHER')),
+            framework_version TEXT,
+            assessment_date DATETIME,
+            
+            -- Scores
+            raw_scores_json TEXT NOT NULL,
+            normalized_scores_json TEXT,
+            mapping_confidence REAL DEFAULT 0,
+            
+            -- Mapping to DRD
+            drd_axis_mapping TEXT DEFAULT '{}',
+            inconsistencies TEXT DEFAULT '[]',
+            
+            -- File Info
+            file_path TEXT,
+            file_name TEXT,
+            file_size INTEGER,
+            upload_method TEXT DEFAULT 'MANUAL' CHECK(upload_method IN ('PDF_PARSE', 'MANUAL', 'API')),
+            
+            -- Metadata
+            uploaded_by TEXT NOT NULL,
+            uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            processing_status TEXT DEFAULT 'uploaded' CHECK(processing_status IN ('uploaded', 'processing', 'mapped', 'error')),
+            processing_error TEXT,
+            
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+            FOREIGN KEY(uploaded_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        // Generic Assessment Reports (ISO, Consulting, Compliance, etc.)
+        db.run(`CREATE TABLE IF NOT EXISTS generic_assessment_reports (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            project_id TEXT,
+            
+            -- Report Info
+            report_type TEXT DEFAULT 'OTHER' CHECK(report_type IN ('ISO_AUDIT', 'CONSULTING', 'COMPLIANCE', 'LEAN', 'OTHER')),
+            title TEXT NOT NULL,
+            consultant_name TEXT,
+            report_date DATETIME,
+            
+            -- File Info
+            file_path TEXT NOT NULL,
+            file_name TEXT NOT NULL,
+            file_size INTEGER,
+            file_type TEXT,
+            
+            -- AI Processing
+            ocr_text TEXT,
+            ai_summary TEXT,
+            ai_key_findings TEXT DEFAULT '[]',
+            
+            -- Organization
+            tags_json TEXT DEFAULT '[]',
+            linked_initiatives TEXT DEFAULT '[]',
+            
+            -- Metadata
+            uploaded_by TEXT NOT NULL,
+            uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            processing_status TEXT DEFAULT 'pending' CHECK(processing_status IN ('pending', 'processing', 'completed', 'error')),
+            processing_error TEXT,
+            
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+            FOREIGN KEY(uploaded_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        // Assessment Correlations (Cross-framework analysis)
+        db.run(`CREATE TABLE IF NOT EXISTS assessment_correlations (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            project_id TEXT,
+            
+            -- Source Assessment
+            source_type TEXT NOT NULL,
+            source_id TEXT NOT NULL,
+            source_dimension TEXT,
+            source_score REAL,
+            
+            -- Target Assessment
+            target_type TEXT NOT NULL,
+            target_id TEXT NOT NULL,
+            target_dimension TEXT,
+            target_score REAL,
+            
+            -- Correlation Analysis
+            correlation_strength REAL DEFAULT 0,
+            inconsistency_flag INTEGER DEFAULT 0,
+            ai_explanation TEXT,
+            
+            -- Metadata
+            detected_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            reviewed_by TEXT,
+            reviewed_at DATETIME,
+            resolution_notes TEXT,
+            
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+            FOREIGN KEY(reviewed_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
 
         // Roadmap Waves (SCMS Phase 4)
         db.run(`CREATE TABLE IF NOT EXISTS roadmap_waves (
@@ -942,6 +1120,17 @@ function initDb() {
         // Phase E->F Linkage (Fix Pack 1)
         db.run(`ALTER TABLE initiatives ADD COLUMN created_from TEXT DEFAULT 'MANUAL'`, (err) => { });
         db.run(`ALTER TABLE initiatives ADD COLUMN created_from_plan_id TEXT`, (err) => { });
+
+        // Assessment → Initiatives Traceability (Phase 2 Integration)
+        db.run(`ALTER TABLE initiatives ADD COLUMN derived_from_assessments TEXT DEFAULT '[]'`, (err) => {
+            // JSON array: [{ source: 'DRD', axis: 'dataManagement', gap: 4.5, score: 2.5 }, ...]
+        });
+        db.run(`ALTER TABLE initiatives ADD COLUMN gap_justification TEXT`, (err) => {
+            // AI-generated explanation of why this initiative addresses the gaps
+        });
+        db.run(`ALTER TABLE initiatives ADD COLUMN assessment_traceability TEXT DEFAULT '{}'`, (err) => {
+            // JSON object: { drd_id, lean_id, external_ids[], report_ids[], generated_at }
+        });
 
         // ==========================================
         // STEP 5: EXECUTION CONTROL & NOTIFICATIONS

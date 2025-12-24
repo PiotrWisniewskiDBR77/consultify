@@ -3,8 +3,8 @@ import { useAIContext } from '../../contexts/AIContext';
 import { useAppStore } from '../../store/useAppStore';
 import { ChatPanel } from '../ChatPanel';
 import { useAIStream } from '../../hooks/useAIStream';
-import { MessageCircle, X, Cpu, MapPin, Shield } from 'lucide-react';
-import { ChatMessage, ChatOption } from '../../types';
+import { MessageCircle, X, Cpu, MapPin, Shield, Maximize2 } from 'lucide-react';
+import { ChatMessage, ChatOption, AppView } from '../../types';
 import { AIRoleBadge } from './AIRoleBadge';
 
 export const ChatOverlay: React.FC = () => {
@@ -12,7 +12,8 @@ export const ChatOverlay: React.FC = () => {
     const {
         activeChatMessages,
         addChatMessage,
-        isBotTyping
+        isBotTyping,
+        setCurrentView
     } = useAppStore();
 
     const { isStreaming, streamedContent, startStream } = useAIStream();
@@ -139,6 +140,17 @@ export const ChatOverlay: React.FC = () => {
                         </div>
                     </div>
                     <div className="flex items-center gap-1">
+                        {/* Expand to fullscreen button */}
+                        <button
+                            onClick={() => {
+                                toggleChat(); // Close the overlay
+                                setCurrentView(AppView.AI_ACTION_PROPOSALS); // Open fullscreen chat
+                            }}
+                            className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-white transition-colors rounded-full hover:bg-white/10"
+                            title="Rozwiń na pełny ekran"
+                        >
+                            <Maximize2 size={16} />
+                        </button>
                         <button
                             onClick={toggleChat}
                             className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-white transition-colors rounded-full hover:bg-white/10"

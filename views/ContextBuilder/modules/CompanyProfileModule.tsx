@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-`FileText as FileTextIcon, Info as InfoIcon, UploadCloud as UploadCloudIcon`
+import { Building2, Factory, Users, History, AlertTriangle, Sparkles, Briefcase, TrendingUp, Globe, Award, MapPin, Clock, Check, Crown, Network, Layers, Heart, Cpu, Database, Wallet, BatteryWarning, Anchor, Shield, Lock, Hammer, Truck, Code2, CloudOff } from 'lucide-react';
 import { DynamicList, DynamicListItem } from '../shared/DynamicList';
 import { useAppStore } from '../../../store/useAppStore';
 import { useContextBuilderStore } from '../../../store/useContextBuilderStore';
@@ -8,7 +8,7 @@ import { AITextArea } from '../shared/AITextArea';
 import { ContextDocUploader } from '../shared/ContextDocUploader';
 
 export const CompanyProfileModule: React.FC = () => {
-`const { t } = useTranslation(); // Ensure 't' is used or remove this line if unnecessary`
+    const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState<'snapshot' | 'operating' | 'org' | 'history' | 'constraints'>('snapshot');
 
     // Store State
@@ -48,7 +48,7 @@ export const CompanyProfileModule: React.FC = () => {
             });
         }, 3000);
         return () => clearTimeout(timer);
-`setActiveTab(tab.id as 'snapshot' | 'operating' | 'org' | 'history' | 'constraints')`
+    }, [addNotification, currentUser]);
 
     // Handlers for Dynamic Lists
     const createHandler = (
@@ -83,7 +83,7 @@ export const CompanyProfileModule: React.FC = () => {
     ];
 
     // Helper Component for Selection Cards
-`icon?: React.ElementType`
+    const SelectionGroup = ({ label, options, value, onChange, name, icon: Icon }: { label: string, options: string[], value: string, onChange: (val: string) => void, name: string, icon?: React.ElementType }) => (
         <div className="space-y-2">
             <div className="flex items-center gap-2">
                 {Icon && <Icon size={14} className="text-purple-500" />}
@@ -139,7 +139,7 @@ export const CompanyProfileModule: React.FC = () => {
                 {tabs.map(tab => (
                     <button
                         key={tab.id}
-`icon: React.ElementType`
+                        onClick={() => setActiveTab(tab.id as 'snapshot' | 'operating' | 'org' | 'history' | 'constraints')}
                         className={`
                             flex items-center gap-2 pb-3 text-sm font-medium transition-all border-b-2 whitespace-nowrap px-1
                             ${activeTab === tab.id

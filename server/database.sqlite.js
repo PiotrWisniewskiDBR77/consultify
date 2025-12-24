@@ -1,3 +1,12 @@
+/**
+ * DEPRECATED: This file is kept for reference only.
+ * 
+ * Use database.sqlite.active.js instead, which is the current active implementation.
+ * This file may be removed in a future version.
+ * 
+ * @deprecated Use database.sqlite.active.js
+ */
+
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const bcrypt = require('bcryptjs');

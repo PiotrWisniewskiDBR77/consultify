@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useAppStore } from '../../../store/useAppStore';
 import { AppView } from '../../../types';
-import { Api } from '../../../services/api'; // Assuming Api wrapper helper exists
-`import { Building, Plus, ExternalLink, Settings as LucideSettings, Users as LucideUsers, LogOut as LucideLogOut } from 'lucide-react';`
+import { Api } from '../../../services/api';
+import { Building, Plus, ExternalLink, Settings as LucideSettings, Users as LucideUsers, LogOut as LucideLogOut } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 interface LinkedOrg {
@@ -15,7 +15,7 @@ interface LinkedOrg {
 }
 
 export const ConsultantPanelView = () => {
-`const { setCurrentView, currentUser, logout: appLogout } = useAppStore();`
+    const { setCurrentView, currentUser, logout: appLogout } = useAppStore();
     const [linkedOrgs, setLinkedOrgs] = useState<LinkedOrg[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -53,7 +53,7 @@ export const ConsultantPanelView = () => {
                     <div>
                         <h1 className="text-3xl font-bold text-navy-900 dark:text-white">Consultant Panel</h1>
                         <p className="text-slate-500 dark:text-slate-400 mt-1">
-                            Welcome back, {currentUser?.firstName}. Manage your client organizations.
+                            Welcome back, {currentUser?.firstName || 'Consultant'}. Manage your client organizations.
                         </p>
                     </div>
                     <div className="flex gap-3">

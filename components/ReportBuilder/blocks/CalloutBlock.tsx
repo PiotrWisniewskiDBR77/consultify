@@ -1,5 +1,5 @@
 import React from 'react';
-import { ReportBlock } from '../../../types';
+import { ReportBlock, CalloutBlockContent } from '../../../types';
 import { AlertCircle, Info, CheckCircle, AlertTriangle } from 'lucide-react';
 
 interface CalloutBlockProps {
@@ -8,8 +8,9 @@ interface CalloutBlockProps {
 }
 
 export const CalloutBlock: React.FC<CalloutBlockProps> = ({ block, onUpdate }) => {
-    const level = block.content?.level || 'info';
-    const text = block.content?.text || '';
+    const content = block.content as CalloutBlockContent | undefined;
+    const level = content?.level || block.level || 'info';
+    const text = content?.text || block.message || '';
 
     const getStyles = () => {
         switch (level) {
@@ -30,7 +31,11 @@ export const CalloutBlock: React.FC<CalloutBlockProps> = ({ block, onUpdate }) =
     };
 
     const handleChangeText = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        onUpdate({ content: { ...block.content, text: e.target.value } });
+        const updatedContent: CalloutBlockContent = {
+            level: level as 'info' | 'warning' | 'success' | 'error',
+            text: e.target.value
+        };
+        onUpdate({ content: updatedContent });
     };
 
     return (

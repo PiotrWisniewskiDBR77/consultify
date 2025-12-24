@@ -29,7 +29,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             description: t('landing.hero.cards.demo.description'),
             meta: t('landing.hero.cards.demo.meta'),
             cta: t('landing.hero.cards.demo.cta'),
-            image: '/assets/landing/demo_legolex.jpg',
+            image: '/assets/landing/cinematic/demo_digital_twin.png',
             color: 'purple',
             onClick: onDemoClick,
             className: 'lg:col-span-1 lg:row-span-1'
@@ -40,7 +40,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             description: t('landing.hero.cards.trial.description'),
             meta: t('landing.hero.cards.trial.meta'),
             cta: t('landing.hero.cards.trial.cta'),
-            image: '/assets/landing/trial_drive.jpg',
+            image: '/assets/landing/cinematic/trial_command_cockpit.png',
             color: 'indigo',
             onClick: onTrialClick,
             primary: true,
@@ -64,7 +64,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             description: t('landing.hero.cards.expert.description'),
             meta: t('landing.hero.cards.expert.meta'),
             cta: t('landing.hero.cards.expert.cta'),
-            image: '/assets/landing/expert_consultation.jpg',
+            image: '/assets/landing/cinematic/expert_dialogue.png',
             color: 'emerald',
             onClick: onExpertClick,
             className: 'lg:col-span-1 lg:row-span-1'
@@ -75,7 +75,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             description: t('landing.hero.cards.login.description'),
             meta: t('landing.hero.cards.login.meta'),
             cta: t('landing.hero.cards.login.cta'),
-            image: '/assets/landing/login_keyhole.jpg',
+            image: '/assets/landing/cinematic/login_portal.png',
             color: 'navy',
             onClick: onLoginClick,
             className: 'lg:col-span-1 lg:row-span-1'
@@ -146,9 +146,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                                     <img
                                         src={card.image}
                                         alt={card.title}
-                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
                                     />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent group-hover:from-black/90 transition-colors" />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent group-hover:from-black/95 transition-colors" />
                                 </div>
 
                                 {/* Content Overlay */}
@@ -187,7 +187,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
                                 {/* Glowing accent for primary */}
                                 {card.primary && (
-                                    <div className={`absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl pointer-events-none ${isDark ? 'bg-purple-500/20' : 'bg-purple-600/10'}`} />
+                                    <div className={`absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl pointer-events-none animate-breathing-glow ${isDark ? 'bg-purple-500/20' : 'bg-purple-600/10'}`} />
                                 )}
                             </motion.div>
                         );
@@ -205,8 +205,16 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                         <div className="absolute inset-0 bg-gradient-to-br from-purple-600/30 to-indigo-600/30 rounded-2xl blur-2xl opacity-50 group-hover:opacity-80 transition-opacity duration-500"></div>
 
                         {/* Content */}
-                        <div className="relative h-full px-8 py-8 rounded-2xl border border-white/20 backdrop-blur-xl bg-black/60 shadow-2xl flex flex-col justify-center ring-2 ring-purple-500/40 group-hover:ring-purple-400/60 ring-inset transition-all duration-500">
-                            <div className="text-right space-y-1">
+                        <div className="relative h-full px-8 py-8 rounded-2xl border border-white/20 backdrop-blur-xl bg-black/60 shadow-2xl flex flex-col justify-center ring-2 ring-purple-500/40 group-hover:ring-purple-400/60 ring-inset transition-all duration-500 overflow-hidden">
+                            {/* Background Image */}
+                            <img
+                                src="/assets/landing/cinematic/decisions_manifest.png"
+                                alt=""
+                                className="absolute inset-0 w-full h-full object-cover opacity-25 transition-opacity duration-500 group-hover:opacity-35"
+                            />
+
+                            {/* Text Content */}
+                            <div className="relative z-10 text-right space-y-1">
                                 <p className="text-2xl lg:text-3xl font-black text-white tracking-tight leading-tight">
                                     AI consulting.
                                 </p>
@@ -219,7 +227,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                             </div>
 
                             {/* Accent line */}
-                            <div className="mt-4 h-1.5 w-20 ml-auto bg-gradient-to-r from-purple-600 to-pink-600 rounded-full"></div>
+                            <div className="relative z-10 mt-4 h-1.5 w-20 ml-auto bg-gradient-to-r from-purple-600 to-pink-600 rounded-full"></div>
                         </div>
                     </motion.div>
                 </div>

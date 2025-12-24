@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Mail, UserPlus, AlertCircle, Loader2 } from 'lucide-react';
-import { useStore } from '../store';
+import { useAppStore } from '../store/useAppStore';
 
 interface InviteUserModalProps {
     onClose: () => void;
@@ -16,7 +16,7 @@ interface Project {
 const API_URL = '/api';
 
 const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, projectId }) => {
-    const { currentUser } = useStore();
+    const { currentUser } = useAppStore();
     const token = localStorage.getItem('token');
     const [email, setEmail] = useState('');
     const [role, setRole] = useState('USER');

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useStore } from '../../store';
 import { PlaybookTemplateVersion, TemplateStatus } from '../../types';
 import { Play, Clock, CheckCircle, XCircle, Pause, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';

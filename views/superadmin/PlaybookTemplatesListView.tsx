@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useStore } from '../../store';
 import { PlaybookTemplateVersion, TemplateStatus, AppView } from '../../types';
 import {
     FileText,

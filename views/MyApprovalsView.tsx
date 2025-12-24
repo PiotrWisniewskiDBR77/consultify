@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useStore } from '../store';
 import { useTranslation } from 'react-i18next';
 import {
     ClipboardList,
@@ -28,8 +27,7 @@ interface MyApprovalsViewProps {
 }
 
 const MyApprovalsView: React.FC<MyApprovalsViewProps> = ({ onSelectProposal }) => {
-`'t' is defined but never used`
-`'currentUser' is defined but never used`
+    // Note: 't' and 'currentUser' are available from useAppStore/useTranslation but not currently used
     const [approvals, setApprovals] = useState<Approval[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);

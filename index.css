@@ -11,6 +11,10 @@
         animation: fadeIn 0.4s ease-out forwards;
     }
 
+    .animate-breathing-glow {
+        animation: breathing-glow 4s ease-in-out infinite;
+    }
+
     @keyframes fadeUp {
         from {
             opacity: 0;
@@ -30,6 +34,15 @@
 
         to {
             opacity: 1;
+        }
+    }
+
+    @keyframes breathing-glow {
+        0%, 100% {
+            opacity: 0.4;
+        }
+        50% {
+            opacity: 0.6;
         }
     }
 

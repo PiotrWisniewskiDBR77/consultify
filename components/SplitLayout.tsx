@@ -30,7 +30,11 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
         addChatMessage,
         isBotTyping,
         setIsBotTyping,
-        currentProjectId
+        currentProjectId,
+        isChatCollapsed,
+        toggleChatCollapse,
+        chatPanelWidth,
+        setChatPanelWidth
     } = useAppStore();
 
     // CRIT-03: Auto-fetch PMO context when project changes
@@ -39,8 +43,7 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
     const { screenContext } = useAIContext();
     const { isStreaming, streamedContent, startStream } = useAIStream();
 
-    // Resizable State
-    const [sidebarWidth, setSidebarWidth] = React.useState(380);
+    // Resizable State (width comes from global store)
     const [isResizing, setIsResizing] = React.useState(false);
     const sidebarRef = React.useRef<HTMLDivElement>(null);
 
@@ -49,14 +52,14 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
         mouseDownEvent.preventDefault();
 
         const startX = mouseDownEvent.clientX;
-        const startWidth = sidebarWidth;
+        const startWidth = chatPanelWidth;
 
         const doDrag = (mouseMoveEvent: MouseEvent) => {
             // Calculate new width: original width + delta
             // If dragging right, delta is positive, sidebar grows.
             const delta = mouseMoveEvent.clientX - startX;
             const newWidth = Math.max(280, Math.min(700, startWidth + delta));
-            setSidebarWidth(newWidth);
+            setChatPanelWidth(newWidth);
         };
 
         const stopDrag = () => {
@@ -74,11 +77,10 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
         // Prevent selection while dragging
         document.body.style.cursor = 'col-resize';
         document.body.style.userSelect = 'none';
-    }, [sidebarWidth]);
+    }, [chatPanelWidth, setChatPanelWidth]);
 
     // Mobile/Responsive State
     const [isMobileChatOpen, setIsMobileChatOpen] = React.useState(false);
-    const [isCollapsed, setIsCollapsed] = React.useState(false);
 
     // Default message handler if none provided
     const handleSendMessage = (text: string) => {
@@ -135,17 +137,16 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
 
     return (
         <div className="flex w-full h-full overflow-hidden bg-gray-50 dark:bg-navy-950 relative">
-
             {/* Desktop Left Panel: Consultant Chat */}
-            {!isCollapsed && !hideSidebar && (
+            {!isChatCollapsed && !hideSidebar && (
                 <div
                     ref={sidebarRef}
-                    style={{ width: sidebarWidth }}
+                    style={{ width: chatPanelWidth }}
                     className="shrink-0 border-r border-slate-200 dark:border-white/5 bg-white dark:bg-navy-950 flex flex-col hidden lg:flex h-full transition-none relative"
                 >
                     <div className="absolute top-2 right-2 z-10">
                         <button
-                            onClick={() => setIsCollapsed(true)}
+                            onClick={() => toggleChatCollapse()}
                             className="p-1 rounded bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-500"
                             title="Collapse AI Panel"
                         >
@@ -172,12 +173,11 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
                     />
                 </div>
             )}
-
             {/* Desktop Collapsed Trigger */}
-            {isCollapsed && (
+            {isChatCollapsed && (
                 <div className="hidden lg:flex w-12 border-r border-slate-200 dark:border-white/5 bg-white dark:bg-navy-950 flex-col items-center py-4 gap-4 h-full shrink-0">
                     <button
-                        onClick={() => setIsCollapsed(false)}
+                        onClick={() => toggleChatCollapse()}
                         className="w-8 h-8 rounded bg-brand/10 text-brand flex items-center justify-center hover:bg-brand/20 transition-colors"
                         title="Expand Chat"
                     >
@@ -188,9 +188,8 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
                     </div>
                 </div>
             )}
-
             {/* Resizer Handle (Only when visible) */}
-            {!isCollapsed && (
+            {!isChatCollapsed && (
                 <div
                     className={`hidden lg:block w-1 hover:w-1.5 -ml-0.5 z-10 cursor-col-resize bg-transparent hover:bg-brand/50 active:bg-brand transition-all duration-150 relative ${isResizing ? 'bg-brand w-1.5' : ''}`}
                     onMouseDown={startResizing}

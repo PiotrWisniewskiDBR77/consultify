@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useStore } from '../../store';
 import { useTranslation } from 'react-i18next';
 import {
     Bell,

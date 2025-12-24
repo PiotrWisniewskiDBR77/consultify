@@ -1,4 +1,3 @@
-```typescript
 import React, { useEffect, useCallback } from 'react';
 import { SplitLayout } from '../components/SplitLayout';
 import { FullStep2Workspace } from '../components/FullStep2Workspace';
@@ -213,4 +212,3 @@ export const FullInitiativesView: React.FC = () => {
     </SplitLayout>
   );
 };
-```

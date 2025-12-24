@@ -1,8 +1,8 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { Api } from '../services/api';
-import { ChevronDown, Cpu, Server, Cloud, Check, Sparkles, Settings } from 'lucide-react';
+import { ChevronDown, Check, Settings } from 'lucide-react';
 import { AIProviderType } from '../types';
 
 interface ModelOption {
@@ -12,11 +12,19 @@ interface ModelOption {
     modelId: string;
 }
 
-const PROVIDER_ICONS: Record<string, React.ReactNode> = {
-    openai: <Sparkles size={14} className="text-green-400" />,
-    gemini: <Cloud size={14} className="text-blue-400" />,
-    system: <Cpu size={14} className="text-orange-400" />,
-    ollama: <Server size={14} className="text-purple-400" />
+// Status indicator dot component - similar to SystemHealth database indicator
+const StatusDot: React.FC<{ isConnected: boolean; isLoading?: boolean }> = ({ isConnected, isLoading }) => {
+    if (isLoading) {
+        return (
+            <div className="w-2.5 h-2.5 rounded-full bg-yellow-500 animate-pulse" title="Sprawdzanie połączenia..." />
+        );
+    }
+    return (
+        <div
+            className={`w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}
+            title={isConnected ? 'Model LLM połączony' : 'Model LLM niedostępny'}
+        />
+    );
 };
 
 export const ModelSelector: React.FC = () => {
@@ -24,6 +32,8 @@ export const ModelSelector: React.FC = () => {
     const [options, setOptions] = useState<ModelOption[]>([]);
     const [isOpen, setIsOpen] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [llmConnected, setLlmConnected] = useState<boolean | null>(null);
+    const [checkingConnection, setCheckingConnection] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     // Current State
@@ -85,6 +95,40 @@ export const ModelSelector: React.FC = () => {
             setLoading(false);
         }
     }, [currentUser?.aiConfig?.visibleModelIds, currentUser?.aiConfig?.privateModels]);
+
+    // LLM Connection Health Check
+    const checkLLMConnection = useCallback(async () => {
+        if (!currentModelId) {
+            setLlmConnected(false);
+            return;
+        }
+
+        setCheckingConnection(true);
+        try {
+            // Build config for currently selected model
+            const testConfig = {
+                provider: currentProvider,
+                model_id: currentModelId,
+                endpoint: currentUser?.aiConfig?.endpoint,
+                api_key: currentUser?.aiConfig?.apiKey,
+            };
+
+            const result = await Api.testLLMConnection(testConfig as any);
+            setLlmConnected(result.success);
+        } catch (err) {
+            console.error('LLM connection check failed:', err);
+            setLlmConnected(false);
+        } finally {
+            setCheckingConnection(false);
+        }
+    }, [currentProvider, currentModelId, currentUser?.aiConfig?.endpoint, currentUser?.aiConfig?.apiKey]);
+
+    // Check connection on mount and every 30 seconds
+    useEffect(() => {
+        checkLLMConnection();
+        const interval = setInterval(checkLLMConnection, 30000);
+        return () => clearInterval(interval);
+    }, [checkLLMConnection]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -153,7 +197,6 @@ export const ModelSelector: React.FC = () => {
 
     // Determine display label
     let displayLabel = "Select AI";
-    const activeIcon = PROVIDER_ICONS[currentProvider] || PROVIDER_ICONS['system'];
 
     // Find in options if possible (but options might not be loaded if menu closed)
     // We can try to look at current config to guess logic
@@ -188,7 +231,7 @@ export const ModelSelector: React.FC = () => {
                 className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-navy-900 hover:bg-slate-200 dark:hover:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-full text-sm transition-colors min-w-[160px]"
             >
                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                    {activeIcon}
+                    <StatusDot isConnected={llmConnected === true} isLoading={checkingConnection || llmConnected === null} />
                     <span className="truncate font-medium text-slate-700 dark:text-white text-xs">
                         {displayLabel}
                     </span>
@@ -233,7 +276,7 @@ export const ModelSelector: React.FC = () => {
                                         className={`w-full flex items-center justify-between gap-2 px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${isSelected ? 'bg-purple-50 dark:bg-purple-500/10' : ''}`}
                                     >
                                         <div className="flex items-center gap-2 min-w-0">
-                                            {PROVIDER_ICONS[opt.provider]}
+                                            <div className={`w-2 h-2 rounded-full ${isSelected ? 'bg-green-500' : 'bg-slate-400'}`} />
                                             <div className="flex flex-col items-start min-w-0">
                                                 <span className={`truncate font-medium text-xs ${isSelected ? 'text-purple-600 dark:text-purple-300' : 'text-slate-700 dark:text-white'}`}>
                                                     {opt.name}

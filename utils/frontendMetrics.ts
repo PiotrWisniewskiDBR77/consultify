@@ -49,8 +49,19 @@ export const frontendMetrics = {
     /**
      * Track API call duration
      */
-    trackApiCall: (endpoint: string, duration: number, success: boolean): void => {
-        frontendMetrics.track('api_call', duration, { endpoint, success });
+    trackApiCall: (endpoint: string, method: string, duration: number, status: number): void => {
+        frontendMetrics.track('api_call', duration, { endpoint, method, status, success: status >= 200 && status < 300 });
+    },
+
+    /**
+     * Track errors
+     */
+    trackError: (error: Error, context?: Record<string, unknown>): void => {
+        frontendMetrics.track('error', 1, {
+            message: error.message,
+            stack: error.stack,
+            ...context
+        });
     }
 };
 

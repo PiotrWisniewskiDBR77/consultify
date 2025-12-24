@@ -1,4 +1,3 @@
-```typescript
 import React, { useState } from 'react';
 import { AlertOctagon, Activity, Lock, Search, Cpu, Check, X, AlertTriangle, Plus, Trash2, Edit2, GripVertical } from 'lucide-react';
 import { DynamicList, DynamicListItem } from '../shared/DynamicList';
@@ -32,7 +31,7 @@ export const ChallengeMapModule: React.FC = () => {
         { id: 'c4', type: 'Technology', title: 'Data Fragmentation', desc: 'Key KPIs are manually aggregated in Excel.' }
     ];
     const addBlocker = (blocker: { id: string, type: string, title: string, desc: string }) => {
-        const newBlocker = { ...blocker, id: Math.random().toString(), status: 'confirmed', confidence: 'Manual' };
+        const newBlocker = { ...blocker, id: Math.random().toString(), status: 'confirmed' as const, confidence: 'Manual' };
         setChallenges({ activeBlockers: [...activeBlockers, newBlocker] });
     };
     const addCustomBlocker = () => {
@@ -41,7 +40,7 @@ export const ChallengeMapModule: React.FC = () => {
             type: 'Process',
             title: 'New Obstacle',
             desc: '',
-            status: 'confirmed',
+            status: 'confirmed' as const,
             confidence: 'Manual'
         };
         setChallenges({ activeBlockers: [...activeBlockers, newBlocker] });
@@ -86,7 +85,7 @@ export const ChallengeMapModule: React.FC = () => {
                 {tabs.map(tab => (
                     <button
                         key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
+                        onClick={() => setActiveTab(tab.id as 'challenges' | 'rootcause' | 'blockers' | 'evidence')}
                         className={`
                             flex items-center gap-2 pb-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap
                             ${activeTab === tab.id
@@ -306,4 +305,3 @@ export const ChallengeMapModule: React.FC = () => {
         </div>
     );
 };
-```

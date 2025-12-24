@@ -1,0 +1,154 @@
+{
+    "assessmentModule": {
+        "hub": {
+            "title": "Hub Oceny",
+            "subtitle": "Zunifikowany Przegląd Multi-Framework",
+            "overallReadiness": "Ogólna Gotowość Cyfrowa",
+            "basedOn": "Na podstawie {{count}} ocen(y) w {{modules}} module(ach)",
+            "strengths": "Mocne Strony",
+            "priorityGaps": "Priorytetowe Luki",
+            "quickActions": "Szybkie Akcje",
+            "startRapidLean": "Rozpocznij Ocenę RapidLean",
+            "uploadExternal": "Prześlij Zewnętrzną Ocenę",
+            "uploadGeneric": "Prześlij Raport ",
+            "noData": "Brak danych oceny. Rozpocznij pierwszą ocenę, aby zobaczyć wyniki."
+        },
+        "rapidLean": {
+            "title": "Ocena RapidLean",
+            "subtitle": "18-Pytaniowa Ewaluacja Dojrzałości Lean",
+            "dimensions": {
+                "value_stream": "Efektywność Strumienia Wartości",
+                "waste_elimination": "Eliminacja Marnotrawstwa (7+1 Marnotrawstw)",
+                "flow_pull": "Systemy Przepływu i Ssania",
+                "quality_source": "Jakość u Źródła (Jidoka)",
+                "continuous_improvement": "Kultura Ciągłego Doskonalenia",
+                "visual_management": "Zarządzanie Wizualne"
+            },
+            "wizard": {
+                "progress": "Pytanie {{current}} / {{total}}",
+                "dimension": "Wymiar {{current}}/6: {{name}}",
+                "helpTooltip": "Pokaż pomoc dla tego pytania",
+                "scale": {
+                    "1": "Ad-Hoc",
+                    "2": "Początkowy",
+                    "3": "Zdefiniowany",
+                    "4": "Zarządzany",
+                    "5": "Światowej Klasy"
+                },
+                "complete": "Zakończ Ocenę",
+                "next": "Dalej",
+                "back": "Wstecz",
+                "cancel": "Anuluj"
+            },
+            "results": {
+                "title": "Wyniki RapidLean",
+                "overallScore": "Ogólna Dojrzałość Lean",
+                "benchmark": "Benchmark",
+                "gap": "Luka",
+                "ahead": "Przed",
+                "dimensionBreakdown": "Podział na Wymiary",
+                "topGaps": "Priorytetowe Obszary Poprawy",
+                "aiRecommendations": "Rekomendacje AI"
+            }
+        },
+        "externalDigital": {
+            "title": "Zewnętrzne Oceny Cyfrowe",
+            "subtitle": "Przesyłanie Framework SIRI, ADMA, CMMI",
+            "selectFramework": "Wybierz Framework",
+            "frameworks": {
+                "SIRI": "SIRI (Smart Industry Readiness Index)",
+                "ADMA": "ADMA (ASEAN Digital Masterplan)",
+                "CMMI": "CMMI (Capability Maturity Model)",
+                "DIGITAL_OTHER": "Inny Framework Cyfrowy"
+            },
+            "upload": {
+                "title": "Prześlij Raport Oceny",
+                "version": "Wersja Framework (np. SIRI 2.0)",
+                "date": "Data Oceny",
+                "dropzone": "Upuść PDF {{framework}} tutaj lub kliknij, aby wybrać",
+                "processing": "AI automatycznie wyodrębni wyniki i zmapuje na framework DRD",
+                "maxSize": "Maks 10MB"
+            },
+            "status": {
+                "uploaded": "Przesłano",
+                "processing": "Przetwarzanie...",
+                "mapped": "Zmapowano",
+                "error": "Błąd"
+            },
+            "confidence": "Pewność Mapowania"
+        },
+        "genericReports": {
+            "title": "Ogólne Raporty Oceny",
+            "subtitle": "Audyty ISO, Raporty Konsultingowe, Dokumenty Zgodności",
+            "upload": {
+                "title": "Prześlij Nowy Raport",
+                "reportTitle": "Tytuł Raportu (opcjonalnie)",
+                "reportType": "Typ Raportu",
+                "consultantName": "Nazwa Konsultanta (opcjonalnie)",
+                "reportDate": "Data Raportu",
+                "dropzone": "Przeciągnij i upuść plik tutaj lub kliknij, aby wybrać",
+                "supportedFormats": "Obsługuje: PDF, Word (.docx, .doc), Excel (.xlsx, .xls) • Maks 10MB"
+            },
+            "types": {
+                "ISO_AUDIT": "Audyt ISO",
+                "CONSULTING": "Raport Konsultingowy",
+                "COMPLIANCE": "Raport Zgodności",
+                "LEAN": "Ocena Lean",
+                "OTHER": "Inny"
+            },
+            "search": "Szukaj raportów...",
+            "filter": {
+                "all": "Wszystkie Typy",
+                "sortBy": "Sortuj Według"
+            },
+            "detail": {
+                "aiSummary": "Podsumowanie AI",
+                "tags": "Tagi",
+                "uploaded": "Przesłano",
+                "close": "Zamknij"
+            },
+            "noReports": "Nie znaleziono raportów"
+        },
+        "gapAnalysis": {
+            "title": "Analiza Luk & Inicjatywy",
+            "subtitle": "Analiza Cross-Framework & Generowanie Inicjatyw AI",
+            "coverage": "Pokrycie Oceny",
+            "modules": {
+                "drd": "DRD",
+                "rapidLean": "RapidLean",
+                "external": "Zewnętrzne",
+                "reports": "Raporty"
+            },
+            "generator": {
+                "title": "Generator Inicjatyw AI",
+                "description": "Generuj wykonalne inicjatywy z zidentyfikowanych luk",
+                "requiresMultiple": "Uzupełnij co najmniej 2 oceny, aby wygenerować inicjatywy",
+                "generate": "Generuj Inicjatywy",
+                "generating": "Generowanie..."
+            },
+            "initiatives": {
+                "title": "Wygenerowane Szkice Inicjatyw",
+                "priority": "Priorytet",
+                "gapJustification": "Uzasadnienie Luki",
+                "sources": "Źródła"
+            }
+        },
+        "benchmarking": {
+            "title": "Porównanie z Benchmarkiem",
+            "yourScore": "Twój Wynik",
+            "industryAvg": "Średnia Branżowa",
+            "vsBenchmark": "vs. benchmark",
+            "percentile": {
+                "top10": "Top 10%",
+                "top25": "Top 25%",
+                "aboveAvg": "Powyżej Średniej",
+                "belowAvg": "Poniżej Średniej",
+                "bottom25": "Dolne 25%"
+            }
+        },
+        "trends": {
+            "title": "Ewolucja Wyniku w Czasie",
+            "noData": "Brak danych historycznych. Wykonuj ponowne oceny, aby śledzić trendy."
+        }
+    }
+}

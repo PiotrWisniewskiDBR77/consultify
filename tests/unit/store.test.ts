@@ -40,7 +40,7 @@ describe('Store Test: useAppStore', () => {
     });
 
     it('sets current user', () => {
-`const user = { id: '1', email: 'test@example.com', role: 'user' };`
+        `const user = { id: '1', email: 'test@example.com', role: 'user' };`
         const store = useAppStore.getState();
         store.setCurrentUser(user);
 
@@ -64,6 +64,18 @@ describe('Store Test: useAppStore', () => {
         store.toggleSidebarCollapse();
 
         expect(useAppStore.getState().isSidebarCollapsed).toBe(!initialCollapsed);
+    });
+
+    it('toggles chat collapse', () => {
+        const store = useAppStore.getState();
+        const initialChatCollapsed = store.isChatCollapsed;
+
+        store.toggleChatCollapse();
+
+        expect(useAppStore.getState().isChatCollapsed).toBe(!initialChatCollapsed);
+
+        store.toggleChatCollapse();
+        expect(useAppStore.getState().isChatCollapsed).toBe(initialChatCollapsed);
     });
 
     it('adds chat message', () => {
@@ -128,7 +140,7 @@ describe('Store Test: useAppStore', () => {
 
     it('updates full session data', () => {
         const store = useAppStore.getState();
-`store.setFullSessionData({ id: 'session-1' });`
+        `store.setFullSessionData({ id: 'session-1' });`
 
         expect(useAppStore.getState().fullSessionData.id).toBe('session-1');
     });
@@ -162,7 +174,7 @@ describe('Store Test: useAppStore', () => {
 
     it('logout resets state', () => {
         const store = useAppStore.getState();
-`store.setCurrentUser({ id: '1', email: 'test@example.com' });`
+        `store.setCurrentUser({ id: '1', email: 'test@example.com' });`
         store.setCurrentView(AppView.DASHBOARD_OVERVIEW);
         store.addChatMessage({ id: '1', role: 'user' as const, content: 'Hello', timestamp: new Date() });
 

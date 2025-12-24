@@ -5,7 +5,7 @@ import { useUserCan } from '../hooks/useUserCan';
 import { SplitLayout } from '../components/SplitLayout';
 import {
     Eye, AlertTriangle, CheckCircle2, Clock, Target, Flag,
-`'ChevronRight'`
+    ChevronRight, Lock, Shield, TrendingUp
 } from 'lucide-react';
 
 /**
@@ -54,8 +54,8 @@ interface Initiative {
 }
 
 export const ExecutiveView: React.FC = () => {
-`'t'`
-`'currentUser'`
+    const { t } = useTranslation();
+    const { currentUser, currentProjectId, addChatMessage } = useAppStore();
     const { isAdmin, isManager, isSuperAdmin } = useUserCan();
 
     const [snapshot, setSnapshot] = useState<PMOHealthSnapshot | null>(null);
@@ -124,7 +124,12 @@ export const ExecutiveView: React.FC = () => {
     }, [currentProjectId, accessDenied]);
 
     const handleAiChat = async (text: string) => {
-        addChatMessage({ id: Date.now().toString(), role: 'user', content: text, timestamp: new Date() });
+        addChatMessage({ 
+            id: Date.now().toString(), 
+            role: 'user', 
+            content: text, 
+            timestamp: new Date()
+        });
     };
 
     // Access Denied View
@@ -256,8 +261,8 @@ export const ExecutiveView: React.FC = () => {
                             {snapshot?.blockers.slice(0, 5).map((blocker, idx) => (
                                 <div key={idx} className="flex items-center gap-3 py-2 border-b border-slate-100 dark:border-white/5 last:border-0">
                                     <span className={`px-2 py-0.5 rounded text-xs font-medium ${blocker.type === 'TASK' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
-                                            blocker.type === 'DECISION' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' :
-                                                'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                                        blocker.type === 'DECISION' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' :
+                                            'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
                                         }`}>
                                         {blocker.type}
                                     </span>
@@ -343,8 +348,8 @@ export const ExecutiveView: React.FC = () => {
                                         {initiative.name}
                                     </span>
                                     <span className={`px-2 py-0.5 rounded text-xs ${initiative.status === 'BLOCKED'
-                                            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-                                            : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
+                                        ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                                        : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
                                         }`}>
                                         {initiative.status || initiative.risk_level}
                                     </span>

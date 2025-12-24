@@ -1,4 +1,3 @@
-```typescript
 import React, { useEffect, useState } from 'react';
 import { SplitLayout } from '../components/SplitLayout';
 import { useAppStore } from '../store/useAppStore';
@@ -9,6 +8,24 @@ import {
     Activity, ArrowUpRight, ArrowDownRight, PieChart
 } from 'lucide-react';
 import { sendMessageToAI } from '../services/ai/gemini';
+
+interface HealthData {
+    initiativesByStatus?: Array<{ status: string; count: number }>;
+    overdueTasks?: number;
+}
+interface EconomicsData {
+    total_cost?: number;
+    expected_benefit?: number;
+    actualSpend?: number;
+}
+interface PerformanceUser {
+    id: string;
+    first_name: string;
+    last_name: string;
+    completed_tasks: number;
+    total_tasks: number;
+    overdue_tasks: number;
+}
 interface MetricCardProps {
     title: string;
     value: string | number;
@@ -48,9 +65,9 @@ export const LeadershipDashboardView: React.FC = () => {
         currentUser, addChatMessage: addMessage
     } = useAppStore();
     // State for dashboard data
-    const [healthData, setHealthData] = useState<unknown>(null);
-    const [performanceData, setPerformanceData] = useState<unknown[]>([]);
-    const [economicsData, setEconomicsData] = useState<unknown>(null);
+    const [healthData, setHealthData] = useState<HealthData | null>(null);
+    const [performanceData, setPerformanceData] = useState<PerformanceUser[]>([]);
+    const [economicsData, setEconomicsData] = useState<EconomicsData | null>(null);
     const [loading, setLoading] = useState(true);
     const language = currentUser?.preferredLanguage || 'EN';
     useEffect(() => {
@@ -170,7 +187,7 @@ export const LeadershipDashboardView: React.FC = () => {
                             <Users className="text-purple-400" /> Team Performance
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {performanceData.map((user: { id: string, first_name: string, last_name: string, completed_tasks: number, total_tasks: number, overdue_tasks: number }) => (
+                            {performanceData.map((user: PerformanceUser) => (
                                 <div key={user.id} className="bg-white dark:bg-navy-950/30 border border-slate-200 dark:border-white/5 rounded-xl p-4 flex items-center gap-4 shadow-sm dark:shadow-none">
                                     <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-lg font-bold text-white">
                                         {user.first_name[0]}{user.last_name[0]}
@@ -199,4 +216,3 @@ export const LeadershipDashboardView: React.FC = () => {
         </SplitLayout>
     );
 };
-```

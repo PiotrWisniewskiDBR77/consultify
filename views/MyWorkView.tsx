@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-`import { LayoutDashboard, CheckSquare, Users, BarChart2, Bell, Plus, Brain, FileQuestion } from 'lucide-react';`
+import { LayoutDashboard, CheckSquare, Users, BarChart2, Bell, Plus, Brain, FileQuestion } from 'lucide-react';
 import { SplitLayout } from '../components/SplitLayout';
 import { TodayDashboard } from '../components/MyWork/TodayDashboard';
 import { TaskInbox } from '../components/MyWork/TaskInbox';

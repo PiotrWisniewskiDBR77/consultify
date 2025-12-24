@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAppStore } from '../../../store/useAppStore';
 import { AppView } from '../../../types';
 import { Api } from '../../../services/api';
-`import { ArrowLeft, Copy, Send, History } from 'lucide-react';`
+import { ArrowLeft, Copy, Send, Clock } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 interface Invite {
@@ -26,7 +26,7 @@ export const ConsultantInviteView = () => {
     const [targetEmail, setTargetEmail] = useState('');
     const [targetCompany, setTargetCompany] = useState('');
     const [isCreating, setIsCreating] = useState(false);
-`const [link, setLink] = useState('');`
+    const [link, setLink] = useState('');
 
     useEffect(() => {
         loadInvites();
@@ -145,7 +145,7 @@ export const ConsultantInviteView = () => {
                     {/* History */}
                     <div className="bg-white dark:bg-navy-800 rounded-xl shadow-sm border border-slate-200 dark:border-white/5 flex flex-col">
                         <div className="px-6 py-4 border-b border-slate-100 dark:border-white/5 text-lg font-semibold flex items-center gap-2">
-                            <History size={18} className="text-blue-500" />
+                            <Clock size={18} className="text-blue-500" />
                             Recent Invites
                         </div>
                         <div className="flex-1 overflow-y-auto max-h-[400px] p-2">

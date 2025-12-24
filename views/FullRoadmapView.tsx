@@ -2,7 +2,7 @@
 import React, { useEffect, useCallback } from 'react';
 import { SplitLayout } from '../components/SplitLayout';
 import { FullStep3Workspace } from '../components/FullStep3Workspace';
-import { FullInitiative, Quarter, Wave, AppView, SessionMode, InitiativeStatus } from '../types';
+import { FullInitiative, Quarter, Wave, AppView, SessionMode, InitiativeStatus, User } from '../types';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../store/useAppStore';
 import { Api } from '../services/api';
@@ -20,7 +20,7 @@ export const FullRoadmapView: React.FC = () => {
     setFullSessionData: updateFullSession,
     setIsBotTyping: setTyping,
     addChatMessage: addMessage,
-`activeChatMessages: activeMessages,`
+    activeChatMessages: activeMessages,
     currentProjectId,
     setCurrentView: onNavigate
   } = useAppStore();
@@ -56,7 +56,7 @@ export const FullRoadmapView: React.FC = () => {
 
     // Debounce or just run on mount/change
     fetchSummary();
-`useEffect(() => {`
+  }, [fullSession.initiatives]);
 
   const handleAiChat = async (text: string) => {
     // Simple pass-through for now, or implement full chat logic
@@ -65,7 +65,7 @@ export const FullRoadmapView: React.FC = () => {
   };
 
   const { t: translate } = useTranslation();
-`const t = translate('fullRoadmap', { returnObjects: true }) as Record<string, any>;`
+  const t = translate('fullRoadmap', { returnObjects: true }) as Record<string, any>;
 
   const addAiMessage = useCallback((content: string, delay = 600) => {
     setTyping(true);
@@ -185,7 +185,7 @@ export const FullRoadmapView: React.FC = () => {
         }, 2000);
       });
     }
-`React.useEffect(() => {`
+  }, [fullSession.initiatives.length, generateRoadmap]);
 
   const handleUpdateInitiative = (updated: FullInitiative) => {
     const newInits = fullSession.initiatives.map(i => i.id === updated.id ? updated : i);
@@ -199,7 +199,7 @@ export const FullRoadmapView: React.FC = () => {
   };
 
   // Rebalance Handler
-`const handleApplyRebalance = (option: { schedule: Record<string, string>, type: string }) => {`
+  const handleApplyRebalance = (option: { schedule: Record<string, string>, type: string }) => {
     // option.schedule is a map of initId -> Quarter string
     if (!option.schedule) return;
 
@@ -219,7 +219,7 @@ export const FullRoadmapView: React.FC = () => {
     addAiMessage(`Roadmap rebalanced using "${option.type}" strategy.`);
   };
 
-`const [users, setUsers] = React.useState<Array<{ id: string, name: string }>>([]);`
+  const [users, setUsers] = React.useState<User[]>([]);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -300,8 +300,8 @@ export const FullRoadmapView: React.FC = () => {
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
                   Rebalance with AI
                 </button>
-              </div >
-            </div >
+              </div>
+            </div>
           )}
 
           {/* 2. Workload Chart */}
@@ -317,10 +317,10 @@ export const FullRoadmapView: React.FC = () => {
             users={users} // Pass users
             currentUser={currentUser} // Pass currentUser
           />
-        </div >
+        </div>
 
         {/* Rebalance Modal */}
-        < RebalanceModal
+        <RebalanceModal
           isOpen={showRebalanceModal}
           onClose={() => setShowRebalanceModal(false)}
           onApply={handleApplyRebalance}
@@ -364,7 +364,7 @@ export const FullRoadmapView: React.FC = () => {
             </div>
           </div>
         )}
-      </div >
-    </SplitLayout >
+      </div>
+    </SplitLayout>
   );
 };

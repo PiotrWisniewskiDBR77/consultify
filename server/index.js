@@ -5,6 +5,7 @@ const path = require('path');
 const helmet = require('helmet');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
+const { ipKeyGenerator } = require('express-rate-limit');
 
 const app = express();
 const PORT = process.env.PORT || 3005;
@@ -95,14 +96,15 @@ const authLimiter = rateLimit({
         // Try to use email from body if available (more accurate than IP alone)
         const email = req.body?.email;
         const ip = req.ip || req.connection.remoteAddress || 'unknown';
-        
+
         if (email) {
             // Use email-based key to avoid shared IP issues (office networks, VPNs)
             return `auth:${email.toLowerCase().trim()}`;
         }
-        
-        // Fallback to IP if no email in request
-        return `auth:ip:${ip}`;
+
+        // Fallback to IP if no email in request - use ipKeyGenerator helper for IPv6 support
+        const { ipKeyGenerator } = require('express-rate-limit');
+        return `auth:ip:${ipKeyGenerator(req)}`;
     },
 });
 
@@ -115,30 +117,35 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
+// TEMP DEBUG: Disabling Sentry middleware
 // Sentry Request Handler (must be FIRST middleware - before body parsing)
-app.use(sentryHandlers.requestHandler);
+// app.use(sentryHandlers.requestHandler);
 
 // Sentry Tracing Handler (must be after request handler, before routes)
-app.use(sentryHandlers.tracingHandler);
+// app.use(sentryHandlers.tracingHandler);
 
 // Body Parsing & Static Files
 app.use(express.json({ limit: '10mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// TEMP DEBUG: Disabling correlation middleware
 // Correlation & Context Tracking
-const { correlationMiddleware } = require('./utils/requestStore');
-app.use(correlationMiddleware);
+// const { correlationMiddleware } = require('./utils/requestStore');
+// app.use(correlationMiddleware);
 
 // FAZA 5: Performance Metrics Middleware
 const { performanceMetricsMiddleware } = require('./middleware/performanceMetrics');
-app.use('/api/', performanceMetricsMiddleware);
+// TEMP DEBUG: Disabling ALL suspect middleware
+// app.use('/api/', performanceMetricsMiddleware);
 
 // Apply rate limiting and security logging to API routes
-app.use('/api/', apiLimiter);
-app.use('/api/', auditLogMiddleware); // Audit Log for all API methods (filters GET internally)
-app.use(logger.requestLogger); // Standard Request Logging with IDs
-app.use('/api/auth/login', authLimiter);
-app.use('/api/auth/register', authLimiter);
+// Temporarily disabled apiLimiter to debug hanging issue
+// app.use('/api/', apiLimiter);
+// app.use('/api/', auditLogMiddleware); // Audit Log for all API methods (filters GET internally)
+// app.use(logger.requestLogger); // Standard Request Logging with IDs
+// Temporarily disabled auth Limiter to debug hanging issue
+// app.use('/api/auth/login', authLimiter);
+// app.use('/api/auth/register', authLimiter);
 
 
 // ... (imports remain the same)
@@ -273,6 +280,16 @@ app.use('/api/context', contextRoutes);
 // SCMS Assessment Routes (Step 3)
 const assessmentRoutes = require('./routes/assessment');
 app.use('/api/assessment', assessmentRoutes);
+
+// Assessment Module - Multi-Framework System (Phase 2)
+const rapidleanRoutes = require('./routes/rapidlean');
+const externalAssessmentsRoutes = require('./routes/external-assessments');
+const genericReportsRoutes = require('./routes/generic-reports');
+const initiativeGeneratorRoutes = require('./routes/initiative-generator');
+app.use('/api/rapidlean', rapidleanRoutes);
+app.use('/api/external-assessments', externalAssessmentsRoutes);
+app.use('/api/generic-reports', genericReportsRoutes);
+app.use('/api/initiatives', initiativeGeneratorRoutes);
 
 // SCMS Roadmap Routes (Step 5)
 const roadmapRoutes = require('./routes/roadmap');

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bot, User, HelpCircle, Check, Send, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Bot, User, HelpCircle, Check, Send, ThumbsUp, ThumbsDown, Mic, MicOff, Square } from 'lucide-react';
 import { ChatMessage, ChatOption } from '../types';
 import { AIFeedbackButton } from './AIFeedbackButton';
 import { useAppStore } from '../store/useAppStore';
@@ -30,6 +30,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   const displaySubtitle = subtitle || t('chat.subHeader');
   const [inputValue, setInputValue] = useState('');
   const [selectedMultiOptions, setSelectedMultiOptions] = useState<string[]>([]);
+  const [isRecording, setIsRecording] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(false);
+  const recognitionRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -40,11 +43,65 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     scrollToBottom();
   }, [messages, isTyping]);
 
+  // Initialize Speech Recognition
+  useEffect(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      setSpeechSupported(true);
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = 'pl-PL'; // Polish by default, will also recognize English
+
+      recognition.onresult = (event: any) => {
+        const transcript = Array.from(event.results)
+          .map((result: any) => result[0].transcript)
+          .join('');
+        setInputValue(transcript);
+      };
+
+      recognition.onerror = (event: any) => {
+        console.error('Speech recognition error:', event.error);
+        setIsRecording(false);
+      };
+
+      recognition.onend = () => {
+        setIsRecording(false);
+      };
+
+      recognitionRef.current = recognition;
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
+      }
+    };
+  }, []);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (inputValue.trim()) {
       onSendMessage(inputValue);
       setInputValue('');
+      // Stop recording if active
+      if (isRecording && recognitionRef.current) {
+        recognitionRef.current.stop();
+        setIsRecording(false);
+      }
+    }
+  };
+
+  const toggleRecording = () => {
+    if (!recognitionRef.current) return;
+
+    if (isRecording) {
+      recognitionRef.current.stop();
+      setIsRecording(false);
+    } else {
+      setInputValue('');
+      recognitionRef.current.start();
+      setIsRecording(true);
     }
   };
 
@@ -86,16 +143,16 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
 
                 {/* Avatar */}
                 <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 border ${msg.role === 'ai'
-                    ? 'bg-primary-50 dark:bg-primary-900/50 border-primary-200 dark:border-primary-700'
-                    : 'bg-slate-100 dark:bg-slate-700 border-slate-200 dark:border-slate-600'
+                  ? 'bg-primary-50 dark:bg-primary-900/50 border-primary-200 dark:border-primary-700'
+                  : 'bg-slate-100 dark:bg-slate-700 border-slate-200 dark:border-slate-600'
                   }`}>
                   {msg.role === 'ai' ? <Bot size={14} className="text-primary-600 dark:text-primary-400" /> : <User size={14} className="text-slate-400 dark:text-slate-300" />}
                 </div>
 
                 {/* Bubble */}
                 <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm ${msg.role === 'user'
-                    ? 'bg-primary-600 text-white rounded-tr-none'
-                    : 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-navy-700 rounded-tl-none'
+                  ? 'bg-primary-600 text-white rounded-tr-none'
+                  : 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-navy-700 rounded-tl-none'
                   }`}>
                   {msg.content}
                 </div>
@@ -122,8 +179,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                               key={option.id}
                               onClick={() => handleMultiSelectToggle(option.value)}
                               className={`px-3 py-1.5 text-xs rounded-full border transition-all flex items-center gap-1.5 ${isSelected
-                                  ? 'bg-purple-100 dark:bg-purple-600/20 border-purple-300 dark:border-purple-500 text-purple-700 dark:text-purple-200'
-                                  : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 hover:border-slate-300 dark:hover:border-white/20'
+                                ? 'bg-purple-100 dark:bg-purple-600/20 border-purple-300 dark:border-purple-500 text-purple-700 dark:text-purple-200'
+                                : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 hover:border-slate-300 dark:hover:border-white/20'
                                 }`}
                             >
                               {option.label}
@@ -176,14 +233,53 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
 
       {/* Input Area */}
       <div className="p-3 border-t border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-950">
-        <form onSubmit={handleSubmit} className="relative">
-          <input
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            disabled={aiFreezeStatus.isFrozen}
-            placeholder={aiFreezeStatus.isFrozen ? "AI RESTRICTED (Budget Exhausted)" : "Type your answer..."}
-            className={`w-full bg-slate-50 dark:bg-navy-900 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 rounded-lg px-3 py-2.5 text-sm border border-slate-200 dark:border-navy-700 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all ${aiFreezeStatus.isFrozen ? 'opacity-50 cursor-not-allowed bg-slate-100 dark:bg-navy-950' : ''}`}
-          />
+        <form onSubmit={handleSubmit} className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <input
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              disabled={aiFreezeStatus.isFrozen}
+              placeholder={aiFreezeStatus.isFrozen ? "AI RESTRICTED (Budget Exhausted)" : isRecording ? "Listening..." : "Type your answer..."}
+              className={`w-full bg-slate-50 dark:bg-navy-900 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 rounded-lg px-3 py-2.5 pr-10 text-sm border border-slate-200 dark:border-navy-700 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all ${aiFreezeStatus.isFrozen ? 'opacity-50 cursor-not-allowed bg-slate-100 dark:bg-navy-950' : ''} ${isRecording ? 'border-red-400 ring-1 ring-red-400 animate-pulse' : ''}`}
+            />
+            {isRecording && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <span className="flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Microphone Button */}
+          {speechSupported && (
+            <button
+              type="button"
+              onClick={toggleRecording}
+              disabled={aiFreezeStatus.isFrozen}
+              className={`p-2.5 rounded-lg transition-all flex items-center justify-center ${isRecording
+                ? 'bg-red-500 text-white hover:bg-red-600 shadow-md shadow-red-500/30'
+                : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700 hover:text-slate-700 dark:hover:text-slate-200'
+                } ${aiFreezeStatus.isFrozen ? 'opacity-50 cursor-not-allowed' : ''}`}
+              title={isRecording ? 'Stop recording' : 'Start voice input'}
+            >
+              {isRecording ? <Square size={16} /> : <Mic size={16} />}
+            </button>
+          )}
+
+          {/* Send Button */}
+          <button
+            type="submit"
+            disabled={aiFreezeStatus.isFrozen || !inputValue.trim()}
+            className={`p-2.5 rounded-lg transition-all flex items-center justify-center ${inputValue.trim()
+              ? 'bg-purple-600 text-white hover:bg-purple-700 shadow-md shadow-purple-500/30'
+              : 'bg-slate-100 dark:bg-navy-800 text-slate-400 dark:text-slate-500'
+              } ${aiFreezeStatus.isFrozen ? 'opacity-50 cursor-not-allowed' : ''}`}
+            title="Send message"
+          >
+            <Send size={16} />
+          </button>
         </form>
       </div>
     </div>

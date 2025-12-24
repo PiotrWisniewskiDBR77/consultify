@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { SplitLayout } from '../components/SplitLayout';
-import { AppView, DRDAxis, AxisAssessment, SessionMode, MaturityLevel } from '../types';
+import { AppView, DRDAxis, AxisAssessment, SessionMode, MaturityLevel, FullSession } from '../types';
 import { useAppStore } from '../store/useAppStore';
 import { Api } from '../services/api';
 import { AIMessageHistory } from '../services/ai/gemini';
@@ -34,11 +34,12 @@ export const FullAssessmentView: React.FC = () => {
       if (!currentUser) return;
       // Ensure we have a session. If not, create or fetch.
       const data = await Api.getSession(currentUser.id, SessionMode.FULL, currentProjectId || undefined);
-      if (data) {
+      if (data && 'assessment' in data) {
         // Migration safety: Ensure assessment object exists
-        if (!data.assessment) data.assessment = {};
-        if (!data.audits) data.audits = [];
-        updateFullSession(data);
+        const fullSession = data as FullSession;
+        if (!fullSession.assessment) fullSession.assessment = { completedAxes: [] };
+        if (!fullSession.audits) fullSession.audits = [];
+        updateFullSession(fullSession);
       }
     };
     loadSession();

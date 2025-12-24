@@ -137,3 +137,5 @@ ON knowledge_chunks(doc_id);
 -- 4. Improve dashboard and list view performance
 
 
+
+

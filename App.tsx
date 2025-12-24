@@ -1,15 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { RouterSync } from './components/RouterSync';
 const PublicReportView = React.lazy(() => import('./views/reports/PublicReportView'));
 import { Sidebar } from './components/Sidebar';
 import { LoadingScreen } from './components/LoadingScreen';
 import { useTranslation } from 'react-i18next';
-// FAZA 5: Frontend Metrics
-import { frontendMetrics } from './utils/frontendMetrics';
-import { PublicLandingPage } from './views/PublicLandingPage';
-import { WelcomeView } from './views/WelcomeView';
 import { ProductEntryPage } from './views/ProductEntryPage';
 import { AuthView } from './views/AuthView';
 import TrialEntryView from './views/TrialEntryView.tsx';
@@ -34,7 +30,7 @@ const ContextBuilderView = React.lazy(() => import('./views/ContextBuilder/Conte
 const MyWorkView = React.lazy(() => import('./views/MyWorkView').then(m => ({ default: m.MyWorkView })));
 const ActionProposalView = React.lazy(() => import('./views/ActionProposalView').then(m => ({ default: m.ActionProposalView })));
 import { AppView, SessionMode, AuthStep, User, UserRole } from './types';
-import { Menu, UserCircle, ChevronRight, CheckCircle, CheckSquare, Loader2, AlertCircle, LogOut, Settings, CreditCard, Cpu, Sun, Moon, Monitor, Languages } from 'lucide-react';
+import { Menu, UserCircle, ChevronRight, Loader2, LogOut, CreditCard, Cpu, Sun, Moon, Monitor, Languages, Bot, Database, Layers, Box, Sparkles } from 'lucide-react';
 import { useAppStore } from './store/useAppStore';
 import { Toaster } from 'react-hot-toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -42,12 +38,12 @@ import { Api } from './services/api';
 import { LLMSelector } from './components/LLMSelector';
 import { NotificationDropdown } from './components/NotificationDropdown';
 import { TaskDropdown } from './components/TaskDropdown';
-import { AutoSaveProvider, useAutoSave } from './src/context/AutoSaveContext';
+import { AutoSaveProvider } from './src/context/AutoSaveContext';
 import { SystemHealth } from './components/SystemHealth';
 import { ChatOverlay } from './components/AIChat/ChatOverlay';
 import { AIProvider } from './contexts/AIContext';
 import { PMOStatusBar } from './components/PMO';
-import { usePMOContext } from './hooks/usePMOContext';
+// PMO context is available via usePMOContext hook when needed in child components
 import { HelpProvider, useHelpPanel } from './contexts/HelpContext';
 import HelpButton from './components/HelpButton';
 import HelpPanel from './components/HelpPanel';
@@ -57,6 +53,7 @@ import { TrialExpiredGate } from './components/Trial/TrialExpiredGate';
 import { AccessPolicyProvider } from './contexts/AccessPolicyContext';
 import { TourProvider } from './components/Onboarding/TourProvider';
 import { AIFreezeBanner } from './components/AIFreezeBanner';
+import { DocumentToggleButton } from './components/documents/DocumentToggleButton';
 
 
 // Help system wrapper component
@@ -75,6 +72,12 @@ const OnboardingWizard = React.lazy(() => import('./views/OnboardingWizard').the
 const OrgSetupWizard = React.lazy(() => import('./views/OrgSetupWizard').then(module => ({ default: module.OrgSetupWizard }))); // Phase D
 const ConsultantPanelView = React.lazy(() => import('./src/views/consultant/ConsultantPanelView').then(module => ({ default: module.ConsultantPanelView })));
 const ConsultantInviteView = React.lazy(() => import('./src/views/consultant/ConsultantInviteView').then(module => ({ default: module.ConsultantInviteView })));
+
+// Assessment Module Components (NEW)
+const RapidLeanWizard = React.lazy(() => import('./components/assessment/RapidLeanWizard').then(module => ({ default: module.RapidLeanWizard })));
+const ExternalDigitalWorkspace = React.lazy(() => import('./components/assessment/ExternalDigitalWorkspace').then(module => ({ default: module.ExternalDigitalWorkspace })));
+const AssessmentHubDashboard = React.lazy(() => import('./components/assessment/AssessmentHubDashboard').then(module => ({ default: module.AssessmentHubDashboard })));
+const GenericReportsWorkspace = React.lazy(() => import('./components/assessment/GenericReportsWorkspace').then(module => ({ default: module.GenericReportsWorkspace })));
 
 const PageTransition: React.FC<{ children: React.ReactNode, id: string }> = ({ children, id }) => (
     <motion.div
@@ -100,15 +103,15 @@ const AppContent: React.FC = () => {
         // setFreeSessionData,
         fullSessionData, setFullSessionData,
         logout,
-        theme, toggleTheme
+        theme, toggleTheme,
+        isChatCollapsed, toggleChatCollapse
     } = useAppStore();
 
     // ... (rest of hook calls)
 
 
 
-    // Initialize PMO context for session views
-    const pmoContext = usePMOContext();
+    // PMO context is available via usePMOContext hook when needed in child components
 
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const profileRef = useRef<HTMLDivElement>(null);
@@ -127,7 +130,6 @@ const AppContent: React.FC = () => {
     }, []);
 
     const { t, i18n } = useTranslation();
-    const { status } = useAutoSave();
 
     // Handle RTL
     useEffect(() => {
@@ -156,6 +158,49 @@ const AppContent: React.FC = () => {
             console.log('[Metrics] Frontend metrics initialized');
         }
     }, []);
+
+    // Verify authentication token on app load and handle token expiry
+    useEffect(() => {
+        const verifyAuth = async () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                // No token - clear user if set
+                if (currentUser) {
+                    setCurrentUser(null);
+                }
+                return;
+            }
+
+            // If we have a token but no user, try to verify it
+            if (!currentUser) {
+                try {
+                    const response = await Api.getUsers().catch(() => null);
+                    // If getUsers succeeds, we're authenticated but user wasn't loaded
+                    // This shouldn't happen normally, but handle it gracefully
+                } catch (error) {
+                    // Token invalid - clear it
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('refreshToken');
+                    localStorage.removeItem('tokenExpiry');
+                }
+            }
+        };
+
+        verifyAuth();
+    }, []); // Run once on mount
+
+    // Listen for token expiry events
+    useEffect(() => {
+        const handleTokenExpired = () => {
+            console.log('[Auth] Token expired event received');
+            logout();
+            setCurrentView(AppView.AUTH);
+            setAuthInitialStep(AuthStep.LOGIN);
+        };
+
+        window.addEventListener('auth:token-expired', handleTokenExpired);
+        return () => window.removeEventListener('auth:token-expired', handleTokenExpired);
+    }, [logout, setCurrentView, setAuthInitialStep]);
 
     // FIX: Reset to WELCOME if user is not authenticated but current view requires auth
     useEffect(() => {
@@ -198,12 +243,43 @@ const AppContent: React.FC = () => {
     };
 
     const handleAuthSuccess = (user: User | { status?: string; message?: string }) => {
-        setCurrentUser({ ...user });
+        // Check if it's an error response
+        if ('status' in user && user.status !== 'success' && 'message' in user) {
+            console.error('Auth error:', user.message);
+            return;
+        }
+
+        // Type guard: ensure it's a User object
+        if (!('id' in user) || !('email' in user)) {
+            console.error('Invalid user object received');
+            return;
+        }
+
+        // Verify token was stored
+        const token = localStorage.getItem('token');
+        if (!token) {
+            console.error('Authentication succeeded but token was not stored');
+            // Try to get user info from API to verify token
+            Api.getUsers().catch(() => {
+                console.error('Failed to verify authentication - redirecting to login');
+                setCurrentView(AppView.AUTH);
+                setAuthInitialStep(AuthStep.LOGIN);
+            });
+            return;
+        }
+
+        const validUser = user as User;
+        // Mark user as authenticated
+        const authenticatedUser: User = {
+            ...validUser,
+            isAuthenticated: true
+        };
+        setCurrentUser(authenticatedUser);
 
         // Redirect logic
-        if (user.role === 'SUPERADMIN') {
+        if (validUser.role === 'SUPERADMIN') {
             setCurrentView(AppView.ADMIN_DASHBOARD);
-        } else if (user.role === UserRole.ADMIN) {
+        } else if (validUser.role === UserRole.ADMIN) {
             setCurrentView(AppView.ADMIN_DASHBOARD);
         } else {
             // Regular User -> Dashboard to select project
@@ -506,6 +582,139 @@ const AppContent: React.FC = () => {
             );
         }
 
+        // Assessment Module Views
+
+        // SIRI Assessment - Placeholder
+        if (currentView === AppView.ASSESSMENT_SIRI) {
+            return (
+                <div className="w-full h-full flex flex-col items-center justify-center p-8">
+                    <div className="max-w-md text-center">
+                        <Cpu className="w-16 h-16 mx-auto mb-4 text-blue-500" />
+                        <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">SIRI Assessment</h2>
+                        <p className="text-slate-500 dark:text-slate-400 mb-6">
+                            Smart Industry Readiness Index - {t('common.underConstruction', 'Strona w przygotowaniu')}
+                        </p>
+                        <button
+                            onClick={() => setCurrentView(AppView.ASSESSMENT_DRD)}
+                            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                        >
+                            {t('common.backToDashboard', 'Wróć do DRD')}
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        // ADMA Assessment - Placeholder
+        if (currentView === AppView.ASSESSMENT_ADMA) {
+            return (
+                <div className="w-full h-full flex flex-col items-center justify-center p-8">
+                    <div className="max-w-md text-center">
+                        <Database className="w-16 h-16 mx-auto mb-4 text-green-500" />
+                        <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">ADMA Assessment</h2>
+                        <p className="text-slate-500 dark:text-slate-400 mb-6">
+                            Advanced Digital Maturity Assessment - {t('common.underConstruction', 'Strona w przygotowaniu')}
+                        </p>
+                        <button
+                            onClick={() => setCurrentView(AppView.ASSESSMENT_DRD)}
+                            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                        >
+                            {t('common.backToDashboard', 'Wróć do DRD')}
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        // CMMI Assessment - Placeholder
+        if (currentView === AppView.ASSESSMENT_CMMI) {
+            return (
+                <div className="w-full h-full flex flex-col items-center justify-center p-8">
+                    <div className="max-w-md text-center">
+                        <Layers className="w-16 h-16 mx-auto mb-4 text-orange-500" />
+                        <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">CMMI-DMM Assessment</h2>
+                        <p className="text-slate-500 dark:text-slate-400 mb-6">
+                            Capability Maturity Model Integration - {t('common.underConstruction', 'Strona w przygotowaniu')}
+                        </p>
+                        <button
+                            onClick={() => setCurrentView(AppView.ASSESSMENT_DRD)}
+                            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                        >
+                            {t('common.backToDashboard', 'Wróć do DRD')}
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        // Lean 4.0 Assessment - RapidLean Wizard (also handles legacy ASSESSMENT_LEAN_EXTERNAL)
+        if (currentView === AppView.ASSESSMENT_LEAN || currentView === AppView.ASSESSMENT_LEAN_EXTERNAL) {
+            return (
+                <React.Suspense fallback={<LoadingScreen />}>
+                    <RapidLeanWizard
+                        onComplete={(responses, mode) => {
+                            console.log('RapidLean Assessment completed:', responses, 'Mode:', mode);
+                            // After completing, navigate to assessment summary
+                            setCurrentView(AppView.ASSESSMENT_SUMMARY);
+                        }}
+                        onCancel={() => {
+                            // Navigate back to user dashboard when canceling
+                            setCurrentView(AppView.USER_DASHBOARD);
+                        }}
+                    />
+                </React.Suspense>
+            );
+        }
+
+        // Other Assessments - Placeholder
+        if (currentView === AppView.ASSESSMENT_OTHER) {
+            return (
+                <div className="w-full h-full flex flex-col items-center justify-center p-8">
+                    <div className="max-w-md text-center">
+                        <Box className="w-16 h-16 mx-auto mb-4 text-purple-500" />
+                        <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">{t('sidebar.assessmentOther', 'Inne Oceny')}</h2>
+                        <p className="text-slate-500 dark:text-slate-400 mb-6">
+                            {t('common.underConstruction', 'Strona w przygotowaniu')}
+                        </p>
+                        <button
+                            onClick={() => setCurrentView(AppView.ASSESSMENT_DRD)}
+                            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                        >
+                            {t('common.backToDashboard', 'Wróć do DRD')}
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        // Legacy: ASSESSMENT_DIGITAL_EXTERNAL - redirect to SIRI
+        if (currentView === AppView.ASSESSMENT_DIGITAL_EXTERNAL) {
+            return (
+                <React.Suspense fallback={<LoadingScreen />}>
+                    <ExternalDigitalWorkspace organizationId={currentUser?.organizationId || ''} />
+                </React.Suspense>
+            );
+        }
+
+        if (currentView === AppView.ASSESSMENT_SUMMARY || currentView === AppView.ASSESSMENT_OVERVIEW) {
+            return (
+                <React.Suspense fallback={<LoadingScreen />}>
+                    <AssessmentHubDashboard
+                        organizationId={currentUser?.organizationId || ''}
+                        projectId={'default'}
+                    />
+                </React.Suspense>
+            );
+        }
+
+        if (currentView === AppView.ASSESSMENT_AUDITS) {
+            return (
+                <React.Suspense fallback={<LoadingScreen />}>
+                    <GenericReportsWorkspace organizationId={currentUser?.organizationId || ''} />
+                </React.Suspense>
+            );
+        }
+
         return (
             <div className="w-full p-8 flex items-center justify-center text-slate-500 flex-col gap-4">
                 <div className="text-2xl font-bold text-navy-900 dark:text-white mb-2">{currentView}</div>
@@ -571,6 +780,7 @@ const AppContent: React.FC = () => {
                 {isSessionView && (
                     <>
                         <HelpButtonWrapper />
+                        <DocumentToggleButton />
                     </>
                 )}
 
@@ -650,6 +860,22 @@ const AppContent: React.FC = () => {
                                     <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
                                     <LLMSelector />
                                     <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
+
+                                    {/* AI Chat Toggle Button */}
+                                    <button
+                                        onClick={() => toggleChatCollapse()}
+                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs transition-all border
+                                            ${isChatCollapsed
+                                                ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-300 dark:border-purple-500/30 hover:bg-purple-200 dark:hover:bg-purple-500/30 hover:border-purple-400'
+                                                : 'bg-purple-600 text-white border-purple-600 hover:bg-purple-700 shadow-md shadow-purple-500/30'
+                                            }`}
+                                        title={isChatCollapsed ? 'Show AI Chat' : 'Hide AI Chat'}
+                                    >
+                                        <Sparkles size={14} />
+                                        <span>AI</span>
+                                    </button>
+                                    <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
+
                                     <TaskDropdown />
                                     <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
                                     <NotificationDropdown />

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-`import { Globe, Radar, FileText, PlusCircle, Sparkles } from 'lucide-react';`
-`import { DynamicListItem } from '../shared/DynamicList';`
+import { Globe, Radar, FileText, PlusCircle, Sparkles } from 'lucide-react';
+import { DynamicListItem } from '../shared/DynamicList';
 import { useMegatrendStore } from '../../../store/megatrendStore';
 import { TrendRadarCard, RadarMegatrend } from '../../../components/Megatrend/TrendRadarCard';
 import { TrendDetailCard } from '../../../components/Megatrend/TrendDetailCard';
@@ -8,11 +8,19 @@ import { IndustryBaselineCard } from '../../../components/Megatrend/IndustryBase
 import { CustomTrendCard } from '../../../components/Megatrend/CustomTrendCard';
 import { AIInsightsCard } from '../../../components/Megatrend/AIInsightsCard';
 
+interface CustomTrend {
+    id: string;
+    label: string;
+    description: string;
+    type: 'Technology' | 'Business' | 'Societal';
+    ring: 'Now' | 'Watch Closely' | 'On the Horizon';
+}
+
 export const MegatrendScannerModule: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'baseline' | 'radar' | 'detail' | 'custom' | 'insights'>('baseline');
     const [lastTab, setLastTab] = useState<'baseline' | 'radar'>('baseline');
     const [selectedTrendId, setSelectedTrendId] = useState<string | null>(null);
-`const [industry, setIndustry] = useState('automotive');`
+    const [industry, setIndustry] = useState('automotive');
 
     // Use megatrend store for data
     const { megatrends, loading, error, fetchMegatrends } = useMegatrendStore();
@@ -20,7 +28,7 @@ export const MegatrendScannerModule: React.FC = () => {
     // Load data on mount or industry change
     useEffect(() => {
         fetchMegatrends(industry);
-`React.useEffect(() => {`
+    }, [industry, fetchMegatrends]);
 
     const handleTrendSelect = (trendId: string) => {
         if (activeTab === 'baseline' || activeTab === 'radar') {
@@ -31,17 +39,18 @@ export const MegatrendScannerModule: React.FC = () => {
     };
 
     // For custom trends, keep local state (could be extended to store)
-`const [customTrends, setCustomTrends] = useState<DynamicListItem[]>([`
+    const [customTrends, setCustomTrends] = useState<CustomTrend[]>([
         { id: '1', label: 'Local Competitor Pricing', description: 'Aggressive undercutting in Q3', type: 'Business', ring: 'Now' }
     ]);
 
-    const createHandler = (setter: React.Dispatch<React.SetStateAction<DynamicListItem[]>>) => ({
-`onAdd: (item: DynamicListItem) => setter(prev => [...prev, { ...item, id: Math.random().toString(36).substr(2, 9) }]),`
-        onUpdate: (id: string, updates: Partial<DynamicListItem>) => setter(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p)),
-        onDelete: (id: string) => setter(prev => prev.filter(p => p.id !== id))
-    });
-
-    const customTrendHandlers = createHandler(setCustomTrends);
+    const customTrendHandlers = {
+        onAdd: (trend: Omit<CustomTrend, 'id'>) => {
+            setCustomTrends(prev => [...prev, { ...trend, id: Math.random().toString(36).substr(2, 9) }]);
+        },
+        onDelete: (id: string) => {
+            setCustomTrends(prev => prev.filter(p => p.id !== id));
+        }
+    };
 
     // Map detailed trends to radar format
     const radarData: RadarMegatrend[] = megatrends.map(m => ({
@@ -69,7 +78,7 @@ export const MegatrendScannerModule: React.FC = () => {
                 {tabs.map(tab => (
                     <button
                         key={tab.id}
-`onClick={() => setActiveTab(tab.id as 'baseline' | 'radar' | 'detail' | 'custom' | 'insights')}`
+                        onClick={() => setActiveTab(tab.id as 'baseline' | 'radar' | 'detail' | 'custom' | 'insights')}
                         className={`
                             flex items-center gap-2 pb-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap
                             ${activeTab === tab.id
@@ -133,7 +142,7 @@ export const MegatrendScannerModule: React.FC = () => {
                 {/* TAB 4: CUSTOM TRENDS */}
                 {activeTab === 'custom' && (
                     <CustomTrendCard
-`trends={customTrends}`
+                        trends={customTrends}
                         onAdd={customTrendHandlers.onAdd}
                         onDelete={customTrendHandlers.onDelete}
                     />
