@@ -11,11 +11,7 @@ import { AssessmentWizard } from '../components/assessment/AssessmentWizard';
 import { AssessmentSummaryWorkspace } from '../components/assessment/AssessmentSummaryWorkspace';
 import { AssessmentReportsWorkspace } from '../components/assessment/AssessmentReportsWorkspace';
 import { AIAssessmentSidebar } from '../components/assessment/AIAssessmentSidebar';
-import { AssessmentModuleLayout } from '../components/assessment/AssessmentModuleLayout';
-import { AssessmentDashboard } from '../components/assessment/AssessmentDashboard';
-import { MyAssessmentsList } from '../components/assessment/MyAssessmentsList';
-import { ReviewerDashboard } from '../components/assessment/ReviewerDashboard';
-import { GapAnalysisDashboard } from '../components/assessment/GapAnalysisDashboard';
+import { AssessmentModuleHub, HubTab } from '../components/assessment/AssessmentModuleHub';
 import { useTranslation } from 'react-i18next';
 import { Settings, Smartphone, Briefcase, Database, Users, Lock, BrainCircuit, ArrowRight, Brain } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -37,7 +33,7 @@ export const FullAssessmentView: React.FC = () => {
   const { startStream } = useAIStream();
   const [dashboardTab, setDashboardTab] = useState<'summary' | 'reports'>('reports');
   const [isAISidebarOpen, setIsAISidebarOpen] = useState(false);
-  const [activeModuleTab, setActiveModuleTab] = useState<AssessmentTab>('dashboard');
+  const [activeHubTab, setActiveHubTab] = useState<HubTab>('assessment');
   // Load Session Data
   useEffect(() => {
     const loadSession = async () => {
@@ -256,186 +252,16 @@ export const FullAssessmentView: React.FC = () => {
       </SplitLayout>
     );
   }
-  // Helper: Render content based on active tab
-  const renderTabContent = () => {
-    switch (activeModuleTab) {
-      case 'dashboard':
-        return (
-          <AssessmentDashboard
-            onNavigate={onNavigate}
-            onNewAssessment={() => {
-              setActiveModuleTab('assessments');
-              // Could also start new assessment wizard here
-            }}
-          />
-        );
-      
-      case 'assessments':
-        return (
-          <MyAssessmentsList
-            onViewAssessment={(assessmentId, projectId) => {
-              // Navigate to view assessment
-              onNavigate(AppView.FULL_STEP1_ASSESSMENT);
-            }}
-            onEditAssessment={(assessmentId, projectId) => {
-              // Navigate to edit assessment
-              onNavigate(AppView.FULL_STEP1_ASSESSMENT);
-            }}
-            onCreateNew={() => {
-              // Start new assessment - go to summary tab
-              setDashboardTab('summary');
-              setActiveModuleTab('gap-map');
-            }}
-          />
-        );
-      
-      case 'reviews':
-        return (
-          <ReviewerDashboard
-            onNavigateToReview={(assessmentId, reviewId) => {
-              // Navigate to review the assessment
-              onNavigate(AppView.FULL_STEP1_ASSESSMENT);
-            }}
-          />
-        );
-      
-      case 'gap-map':
-        return (
-          <>
-            {/* Report Context Header */}
-            <div className="px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-200 dark:border-purple-500/20 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-purple-600 flex items-center justify-center">
-                  <Settings size={16} className="text-white" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-semibold text-navy-900 dark:text-white">
-                    {currentReportMode === 'new'
-                      ? translate('assessment.workspace.newAssessment', 'New Assessment')
-                      : translate('assessment.workspace.viewingReport', 'Viewing Report')}
-                  </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {currentReportMode === 'new'
-                      ? translate('assessment.workspace.newAssessmentDesc', 'Fill in the 7 DRD axes to create your assessment report')
-                      : translate('assessment.workspace.viewingReportDesc', 'Read-only view of historical assessment')}
-                  </p>
-                </div>
-              </div>
-              {currentReportMode === 'new' && (
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-1 text-xs font-medium bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 rounded">
-                    Draft
-                  </span>
-                  <button
-                    onClick={async () => {
-                      if (!currentReportId || !currentProjectId) return;
-                      try {
-                        await Api.generateAssessmentReport(currentProjectId);
-                        toast.success(translate('assessment.reports.saved', 'Report saved'));
-                      } catch (err) {
-                        toast.error(translate('assessment.reports.saveFailed', 'Failed to save'));
-                      }
-                    }}
-                    className="px-3 py-1.5 text-xs font-medium bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 rounded-lg transition-colors"
-                  >
-                    {translate('assessment.reports.saveDraft', 'Save Draft')}
-                  </button>
-                  <button
-                    onClick={async () => {
-                      if (!currentReportId || !currentProjectId) return;
-                      if (!confirm(translate('assessment.reports.finalizeConfirm', 'Finalize this report? This will lock it from further edits.'))) return;
-                      try {
-                        await Api.generateAssessmentReport(currentProjectId);
-                        toast.success(translate('assessment.reports.finalized', 'Report finalized'));
-                        setActiveModuleTab('reports');
-                      } catch (err) {
-                        toast.error(translate('assessment.reports.finalizeFailed', 'Failed to finalize'));
-                      }
-                    }}
-                    className="px-3 py-1.5 text-xs font-medium bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
-                  >
-                    {translate('assessment.reports.finalize', 'Finalize Report')}
-                  </button>
-                </div>
-              )}
-            </div>
-            <div className="grid grid-cols-7 gap-1 p-4 bg-slate-50 dark:bg-navy-950/50 border-b border-slate-200 dark:border-white/5">
-              {(['processes', 'digitalProducts', 'businessModels', 'dataManagement', 'culture', 'cybersecurity', 'aiMaturity'] as DRDAxis[]).map(axis => (
-                <button
-                  key={axis}
-                  onClick={() => {
-                    const viewMap: Record<DRDAxis, AppView> = {
-                      processes: AppView.FULL_STEP1_PROCESSES,
-                      digitalProducts: AppView.FULL_STEP1_DIGITAL,
-                      businessModels: AppView.FULL_STEP1_MODELS,
-                      dataManagement: AppView.FULL_STEP1_DATA,
-                      culture: AppView.FULL_STEP1_CULTURE,
-                      cybersecurity: AppView.FULL_STEP1_CYBERSECURITY,
-                      aiMaturity: AppView.FULL_STEP1_AI
-                    };
-                    onNavigate(viewMap[axis]);
-                  }}
-                  className="p-2 rounded bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-center border border-slate-200 dark:border-white/5 transition-all group"
-                >
-                  <span className="block text-xs text-slate-500 dark:text-slate-400 group-hover:text-navy-900 dark:group-hover:text-white mb-1 truncate">{axis}</span>
-                  <div className="flex justify-center gap-1">
-                    <span className="w-5 h-5 rounded bg-slate-100 dark:bg-navy-900 flex items-center justify-center text-sm font-bold text-blue-600 dark:text-blue-400">
-                      {fullSession.assessment?.[axis]?.actual || '-'}
-                    </span>
-                    <span className="w-5 h-5 rounded bg-slate-100 dark:bg-navy-900 flex items-center justify-center text-sm font-bold text-purple-600 dark:text-purple-400">
-                      {fullSession.assessment?.[axis]?.target || '-'}
-                    </span>
-                  </div>
-                </button>
-              ))}
-            </div>
-            <AssessmentSummaryWorkspace
-              assessment={fullSession.assessment || {}}
-              onNavigate={(axis) => {
-                const viewMap: Record<DRDAxis, AppView> = {
-                  processes: AppView.FULL_STEP1_PROCESSES,
-                  digitalProducts: AppView.FULL_STEP1_DIGITAL,
-                  businessModels: AppView.FULL_STEP1_MODELS,
-                  dataManagement: AppView.FULL_STEP1_DATA,
-                  culture: AppView.FULL_STEP1_CULTURE,
-                  cybersecurity: AppView.FULL_STEP1_CYBERSECURITY,
-                  aiMaturity: AppView.FULL_STEP1_AI
-                };
-                onNavigate(viewMap[axis]);
-              }}
-            />
-          </>
-        );
-      
-      case 'reports':
-        return (
-          <AssessmentReportsWorkspace
-            onStartNewAssessment={() => setActiveModuleTab('gap-map')}
-            onGenerateInitiatives={(reportId) => {
-              // Navigate to initiatives with report context
-              onNavigate(AppView.INITIATIVE_GENERATOR);
-            }}
-          />
-        );
-      
-      default:
-        return null;
-    }
-  };
 
-  // Render 2. Dashboard View with Module Layout
+  // NOTE: Legacy renderTabContent removed - now using AssessmentModuleHub for 4-tab navigation
+  // Render 2. New 4-Tab Hub (Assessment → Map → Reports → Initiatives)
   return (
     <SplitLayout title={ta.dashboardHeader} onSendMessage={handleAiChat}>
-      <AssessmentModuleLayout
-        activeTab={activeModuleTab}
-        onTabChange={setActiveModuleTab}
-        showGenerateButton={activeModuleTab === 'gap-map'}
-        onGenerateClick={handleGenerateInitiatives}
-      >
-        <div className="h-full overflow-y-auto">
-          {renderTabContent()}
-        </div>
-      </AssessmentModuleLayout>
+      <AssessmentModuleHub
+        framework="DRD"
+        initialTab={activeHubTab}
+        onNavigate={(view, params) => onNavigate(view)}
+      />
     </SplitLayout>
   );
 };

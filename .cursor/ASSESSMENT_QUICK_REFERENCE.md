@@ -1,7 +1,18 @@
 # 🚀 Assessment Module - Quick Reference
 
 > Szybka karta referencyjna dla deweloperów  
-> **Wersja:** 2.0 | **Status:** ✅ 100% Complete
+> **Wersja:** 3.0 | **Status:** ✅ 100% Complete
+
+---
+
+## 🆕 Nowe Menu (v3.0)
+
+```
+[Assessment] → [Map] → [Reports] → [Initiatives]
+   Tabela      Edytor    Tabela      Tabela
+```
+
+**Główny komponent:** `AssessmentModuleHub.tsx`
 
 ---
 
@@ -9,11 +20,11 @@
 
 | Metric | Value |
 |--------|-------|
-| Components | 31 |
+| Components | 35+ |
 | Services | 12+ |
-| API Endpoints | 48+ |
+| API Endpoints | 52+ |
 | AI Functions | 26 |
-| React Hooks | 3 |
+| React Hooks | 4 |
 
 ---
 
@@ -336,9 +347,24 @@ GET  /api/initiatives/gaps/:assessmentId      # Get gaps for wizard
 
 ---
 
+## 🆕 Nowe Komponenty Menu (v3.0)
+
+```tsx
+// Główny hub z 4 zakładkami
+<AssessmentModuleHub initialTab="assessment" />
+
+// Komponenty zakładek
+<AssessmentTable projectId={pid} onOpenInMap={fn} onCreateReport={fn} />
+<ReportsTable projectId={pid} onCreateInitiatives={fn} />
+<InitiativesTable projectId={pid} />
+```
+
+---
+
 📚 **Dokumentacja:**
 - `.cursor/ASSESSMENT_MODULE_COMPLETE.md` - Pełna dokumentacja techniczna
-- `.cursor/ASSESSMENT_MODULE_WORKFLOW.md` - Workflow i standardy
+- `.cursor/ASSESSMENT_WORKFLOW_V3.md` - **NOWY** Workflow v3.0
+- `.cursor/INITIATIVE_GENERATOR.md` - Generator inicjatyw
 - `.cursor/AI_ASSESSMENT_SYSTEM.md` - System AI
 - `.cursor/rules/assessment-module.mdc` - Reguły developerskie
 

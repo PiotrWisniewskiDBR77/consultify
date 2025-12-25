@@ -287,11 +287,17 @@ const externalAssessmentsRoutes = require('./routes/external-assessments');
 const genericReportsRoutes = require('./routes/generic-reports');
 const initiativeGeneratorRoutes = require('./routes/initiative-generator');
 const assessmentWorkflowRoutes = require('./routes/assessment-workflow');
+const assessmentHubRoutes = require('./routes/assessment-hub');
+const assessmentReportsRoutes = require('./routes/assessment-reports');
 app.use('/api/rapidlean', rapidleanRoutes);
 app.use('/api/external-assessments', externalAssessmentsRoutes);
 app.use('/api/generic-reports', genericReportsRoutes);
 app.use('/api/initiatives', initiativeGeneratorRoutes);
 app.use('/api/assessment-workflow', assessmentWorkflowRoutes);
+// Assessment Hub Routes (for 4-tab UI)
+app.use('/api/assessments', assessmentHubRoutes);
+app.use('/api/assessment-reports', assessmentReportsRoutes);
+
 
 // SCMS Roadmap Routes (Step 5)
 const roadmapRoutes = require('./routes/roadmap');

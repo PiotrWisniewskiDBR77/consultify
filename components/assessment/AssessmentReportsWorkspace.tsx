@@ -43,7 +43,10 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
     }, [currentProjectId]);
 
     const loadReports = async () => {
-        if (!currentProjectId) return;
+        if (!currentProjectId) {
+            setLoading(false);
+            return;
+        }
         try {
             setLoading(true);
             const data = await Api.getAssessmentReports(currentProjectId);
@@ -345,7 +348,17 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
             </div>
 
             <div className="flex-1 overflow-y-auto p-6">
-                {loading ? (
+                {!currentProjectId ? (
+                    <div className="flex flex-col items-center justify-center h-48 text-center">
+                        <AlertCircle className="text-amber-400 dark:text-amber-500 mb-3" size={48} />
+                        <p className="text-slate-600 dark:text-slate-300 text-sm font-medium">
+                            {t('assessment.reports.noProjectSelected', 'No project selected')}
+                        </p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                            {t('assessment.reports.selectProjectHint', 'Please select a project from the sidebar to view assessment reports')}
+                        </p>
+                    </div>
+                ) : loading ? (
                     <div className="flex items-center justify-center h-48">
                         <Loader2 className="animate-spin text-purple-600" size={32} />
                     </div>
@@ -356,7 +369,7 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
                             {t('assessment.reports.noReports', 'No reports generated yet')}
                         </p>
                         <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                            {t('assessment.reports.noReportsHint', 'Click "Generate Report" to create your first assessment report')}
+                            {t('assessment.reports.noReportsHint', 'Click "New Assessment" to create your first assessment report')}
                         </p>
                     </div>
                 ) : (

@@ -22,7 +22,7 @@ const securityHeaders = (req, res, next) => {
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
 
     // Permissions policy (disable unnecessary features)
-    res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+    res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(self), camera=()');
 
     // HSTS (only in production with HTTPS)
     if (process.env.NODE_ENV === 'production') {
@@ -31,7 +31,7 @@ const securityHeaders = (req, res, next) => {
 
     // Content Security Policy (customize as needed)
     // Allow images from transparenttextures.com for background patterns
-    res.setHeader('Content-Security-Policy', 
+    res.setHeader('Content-Security-Policy',
         "default-src 'self'; " +
         "script-src 'self' 'unsafe-inline'; " +
         "style-src 'self' 'unsafe-inline'; " +

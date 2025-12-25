@@ -31,6 +31,7 @@ export const LLMSelector: React.FC = () => {
     const [models, setModels] = useState<LLMModel[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(false);
+    const [initialLoadDone, setInitialLoadDone] = useState(false);
     const [llmConnected, setLlmConnected] = useState<boolean | null>(null);
     const [checkingConnection, setCheckingConnection] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
@@ -97,10 +98,12 @@ export const LLMSelector: React.FC = () => {
             }
         };
 
-        if (isOpen && models.length === 0) {
+        // Always fetch on mount, and also when opening dropdown if empty
+        if (!initialLoadDone || (isOpen && models.length === 0)) {
             fetchModels();
+            setInitialLoadDone(true);
         }
-    }, [isOpen, models.length]);
+    }, [isOpen, models.length, initialLoadDone]);
 
     // Close on click outside
     useEffect(() => {
@@ -138,11 +141,15 @@ export const LLMSelector: React.FC = () => {
 
     const getActiveLabel = () => {
         if (aiConfig.autoMode) return 'Auto';
+        if (loading && models.length === 0) return 'Loading...';
         if (aiConfig.selectedModelId) {
             const currentModel = models.find(m => m.id === aiConfig.selectedModelId);
-            return currentModel ? currentModel.name : 'Unknown Model';
+            if (currentModel) return currentModel.name;
+            // If model not found but models are loading/empty, show loading
+            if (models.length === 0) return 'Loading...';
+            return 'Select Model';
         }
-        return 'Select Model';
+        return models.length === 0 ? 'Loading...' : 'Select Model';
     };
 
     return (

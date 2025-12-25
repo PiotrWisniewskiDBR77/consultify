@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { DRDAxis, MaturityLevel, AxisAssessment } from '../../types';
-import { ArrowRight, Info, CheckCircle2, AlertTriangle, BrainCircuit, TrendingUp, Lightbulb, ChevronRight, ChevronDown, Sparkles, Loader2, RefreshCw, Target, FileText, Zap } from 'lucide-react';
+import { ArrowRight, Info, CheckCircle2, AlertTriangle, BrainCircuit, TrendingUp, Lightbulb, ChevronRight, ChevronDown, Sparkles, Loader2, RefreshCw, Target, FileText, Zap, MoreVertical, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { LevelNavigator } from './LevelNavigator';
 import { LevelSelector } from './LevelSelector';
 import { LevelDetailCard } from './LevelDetailCard';
 import { useAssessmentAI } from '../../hooks/useAssessmentAI';
 import { useAppStore } from '../../store/useAppStore';
+import { useDeviceType } from '../../hooks/useDeviceType';
 
 interface AssessmentAxisWorkspaceProps {
     axis: DRDAxis;
@@ -276,6 +277,25 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
             : axisContent.levels)
         : {};
 
+    // Device detection for responsive layout
+    const { isTablet, isMobile, isTouchDevice } = useDeviceType();
+    const isCompact = isTablet || isMobile;
+
+    // State for mobile/tablet specific UI
+    const [showAreaSelector, setShowAreaSelector] = useState(false);
+    const [showAiMenu, setShowAiMenu] = useState(false);
+
+    // Calculate progress
+    const progressStats = (() => {
+        if (hasSubAreas) {
+            const total = Object.keys(axisAreas).length;
+            const completed = Object.values(data.areaScores || {}).filter(s => s[0] > 0 && s[1] > 0).length;
+            return { completed, total, remaining: total - completed };
+        }
+        const completed = (data.actual && data.target) ? 1 : 0;
+        return { completed, total: 1, remaining: 1 - completed };
+    })();
+
     // --- Render ---
     return (
         <div
@@ -291,8 +311,109 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                     </span>
                 </div>
             )}
-            {/* Header */}
-            <div className="h-20 border-b border-slate-200 dark:border-white/5 flex items-center justify-between px-6 bg-white dark:bg-navy-900 shrink-0 z-20 relative">
+
+            {/* Header - Responsive */}
+            <div className={`border-b border-slate-200 dark:border-white/5 bg-white dark:bg-navy-900 shrink-0 z-20 relative ${isCompact ? 'px-4 py-3' : 'h-20 px-6 flex items-center justify-between'}`}>
+                {/* Mobile/Tablet Header Layout */}
+                {isCompact ? (
+                    <div className="space-y-3">
+                        {/* Row 1: Title + Progress + Next */}
+                        <div className="flex items-center justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                                <h2 className="text-lg font-bold text-navy-900 dark:text-white truncate">
+                                    {t(`sidebar.fullStep1_${axis === 'cybersecurity' ? 'cyber' : axis === 'aiMaturity' ? 'ai' : axis === 'processes' ? 'proc' : axis === 'digitalProducts' ? 'prod' : axis === 'businessModels' ? 'model' : axis === 'dataManagement' ? 'data' : axis === 'culture' ? 'cult' : 'proc'}`) || axisContent?.title || axis}
+                                </h2>
+                            </div>
+                            
+                            {/* Compact Progress Indicator */}
+                            <div className="flex items-center gap-2 px-2 py-1 bg-slate-100 dark:bg-navy-950/50 rounded-lg">
+                                <span className="text-xs font-bold text-blue-500">{progressStats.completed}/{progressStats.total}</span>
+                            </div>
+
+                            {/* AI Menu Button (Tablet/Mobile) */}
+                            {!readOnly && effectiveProjectId && (
+                                <button
+                                    onClick={() => setShowAiMenu(!showAiMenu)}
+                                    className="touch-target flex items-center justify-center w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
+                                >
+                                    <Sparkles size={18} />
+                                </button>
+                            )}
+
+                            {/* Next Button */}
+                            <button
+                                onClick={onNext}
+                                disabled={!data.actual || !data.target}
+                                className={`touch-target flex items-center justify-center w-10 h-10 rounded-lg transition-all ${data.actual && data.target
+                                    ? 'bg-purple-600 text-white shadow-lg'
+                                    : 'bg-slate-100 dark:bg-white/5 text-slate-400'
+                                }`}
+                            >
+                                <ArrowRight size={18} />
+                            </button>
+                        </div>
+
+                        {/* Row 2: Sub-Area Selector (full width on touch) */}
+                        {hasSubAreas && (
+                            <button
+                                onClick={() => setShowAreaSelector(true)}
+                                className="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 touch-target"
+                            >
+                                <div className="flex-1 text-left">
+                                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block">{workspaceT.functionalArea || 'FUNCTIONAL AREA'}</span>
+                                    <span className="text-sm font-bold text-navy-900 dark:text-white">{activeArea?.title || workspaceT.selectArea || 'Select Area'}</span>
+                                </div>
+                                <ChevronDown size={16} className="text-slate-400" />
+                            </button>
+                        )}
+
+                        {/* AI Menu Dropdown (Mobile/Tablet) */}
+                        {showAiMenu && (
+                            <div className="absolute top-full left-0 right-0 mt-1 mx-4 p-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl shadow-xl z-50">
+                                <div className="flex items-center justify-between mb-2 px-2">
+                                    <span className="text-xs font-bold text-slate-500 uppercase">AI Actions</span>
+                                    <button onClick={() => setShowAiMenu(false)} className="p-1">
+                                        <X size={14} className="text-slate-400" />
+                                    </button>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <AIActionButton
+                                        onClick={() => { handleAiSuggestJustification(); setShowAiMenu(false); }}
+                                        isLoading={ai.isLoading}
+                                        icon={<Sparkles size={14} />}
+                                        label="Sugeruj"
+                                        variant="primary"
+                                        disabled={!data.actual && !activeScores[0]}
+                                    />
+                                    <AIActionButton
+                                        onClick={() => { handleAiSuggestEvidence(); setShowAiMenu(false); }}
+                                        isLoading={ai.isLoading}
+                                        icon={<FileText size={14} />}
+                                        label="Dowody"
+                                        disabled={!data.actual && !activeScores[0]}
+                                    />
+                                    <AIActionButton
+                                        onClick={() => { handleAiSuggestTarget(); setShowAiMenu(false); }}
+                                        isLoading={ai.isLoading}
+                                        icon={<Target size={14} />}
+                                        label="Cel"
+                                        disabled={!data.actual && !activeScores[0]}
+                                    />
+                                    {data.justification && (
+                                        <AIActionButton
+                                            onClick={() => { handleAiCorrectText(); setShowAiMenu(false); }}
+                                            isLoading={ai.isLoading}
+                                            icon={<RefreshCw size={14} />}
+                                            label="Popraw"
+                                        />
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    /* Desktop Header Layout */
+                    <>
                 <div className="flex items-center gap-6">
                     {/* Axis Label */}
                     <div className="flex flex-col">
@@ -305,7 +426,7 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                         </h2>
                     </div>
 
-                    {/* Sub-Area Selector (If applicable) */}
+                            {/* Sub-Area Selector (Desktop - hover based) */}
                     {hasSubAreas && (
                         <div className="relative group ml-4 pl-4 border-l border-slate-200 dark:border-white/10">
                             <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-0.5 block">{workspaceT.functionalArea || 'FUNCTIONAL AREA'}</span>
@@ -339,7 +460,7 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                 </div>
 
                 <div className="flex items-center gap-4">
-                    {/* AI Quick Actions */}
+                            {/* AI Quick Actions (Desktop) */}
                     {!readOnly && effectiveProjectId && (
                         <div className="flex items-center gap-2 mr-2">
                             <AIActionButton
@@ -375,36 +496,18 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                         </div>
                     )}
 
-                    {/* Overall Progress */}
+                            {/* Overall Progress (Desktop) */}
                     <div className="flex items-center gap-3 bg-slate-100 dark:bg-navy-950/50 px-4 py-2 rounded-lg border border-slate-200 dark:border-white/5">
                         <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">{workspaceT.axisProgress || 'AXIS PROGRESS'}</span>
                         <div className="h-8 w-px bg-slate-200 dark:bg-white/10 mx-2"></div>
                         <div className="flex gap-4 text-sm">
                             <div>
                                 <span className="text-xs text-slate-500 block">{workspaceT.approved || 'Approved'}</span>
-                                <span className="font-bold text-blue-400">
-                                    {(() => {
-                                        if (hasSubAreas) {
-                                            const total = Object.keys(axisAreas).length;
-                                            const completed = Object.values(data.areaScores || {}).filter(s => s[0] > 0 && s[1] > 0).length;
-                                            return `${completed}/${total}`;
-                                        }
-                                        return (data.actual && data.target) ? '1/1' : '0/1';
-                                    })()}
-                                </span>
+                                        <span className="font-bold text-blue-400">{progressStats.completed}/{progressStats.total}</span>
                             </div>
                             <div>
                                 <span className="text-xs text-slate-500 block">{workspaceT.remaining || 'Remaining'}</span>
-                                <span className="font-bold text-purple-400">
-                                    {(() => {
-                                        if (hasSubAreas) {
-                                            const total = Object.keys(axisAreas).length;
-                                            const completed = Object.values(data.areaScores || {}).filter(s => s[0] > 0 && s[1] > 0).length;
-                                            return total - completed;
-                                        }
-                                        return (data.actual && data.target) ? '0' : '1';
-                                    })()}
-                                </span>
+                                        <span className="font-bold text-purple-400">{progressStats.remaining}</span>
                             </div>
                         </div>
                     </div>
@@ -421,12 +524,51 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                         <ArrowRight size={16} />
                     </button>
                 </div>
+                    </>
+                )}
             </div>
 
-            {/* Split View Container */}
-            <div className="flex-1 flex overflow-hidden">
+            {/* Area Selector Modal (Mobile/Tablet) */}
+            {showAreaSelector && hasSubAreas && (
+                <div className="fixed inset-0 z-50 flex items-end lg:hidden">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowAreaSelector(false)} />
+                    <div className="relative w-full max-h-[70vh] bg-white dark:bg-navy-900 rounded-t-2xl overflow-hidden safe-area-pb">
+                        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-white/10">
+                            <h3 className="text-lg font-bold text-navy-900 dark:text-white">{workspaceT.selectArea || 'Select Area'}</h3>
+                            <button onClick={() => setShowAreaSelector(false)} className="p-2">
+                                <X size={20} className="text-slate-400" />
+                            </button>
+                        </div>
+                        <div className="overflow-y-auto max-h-[calc(70vh-60px)] momentum-scroll">
+                            {Object.entries(axisAreas).map(([key, area]: [string, any]) => {
+                                const scores = data.areaScores?.[key] || [0, 0];
+                                const isCompleted = scores[0] > 0 && scores[1] > 0;
 
-                {/* 1. Sidebar (Level Navigation) */}
+                                return (
+                                    <button
+                                        key={key}
+                                        onClick={() => { setCurrentAreaKey(key); setShowAreaSelector(false); }}
+                                        className={`w-full text-left px-4 py-4 flex items-center justify-between border-b border-slate-100 dark:border-white/5 touch-target ${key === currentAreaKey ? 'bg-purple-50 dark:bg-purple-600/10' : ''}`}
+                                    >
+                                        <div>
+                                            <span className={`text-sm font-medium ${key === currentAreaKey ? 'text-purple-600 dark:text-purple-300' : 'text-navy-900 dark:text-white'}`}>
+                                                {area.title}
+                                            </span>
+                                            {isCompleted && (
+                                                <span className="text-xs text-green-500 block mt-0.5">Completed</span>
+                                            )}
+                                        </div>
+                                        {isCompleted && <CheckCircle2 size={18} className="text-green-500" />}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Level Navigator - Shows horizontally on tablet/mobile */}
+            {isCompact && (
                 <LevelNavigator
                     levels={(hasSubAreas && activeArea ? activeArea.levels : mainLevelsRecord) as Record<string, string>}
                     currentLevel={currentLevelView}
@@ -434,10 +576,25 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                     actualScore={hasSubAreas ? activeScores[0] : (data.actual || 0)}
                     targetScore={hasSubAreas ? activeScores[1] : (data.target || 0)}
                 />
+            )}
+
+            {/* Split View Container */}
+            <div className="flex-1 flex overflow-hidden">
+
+                {/* 1. Sidebar (Level Navigation) - Desktop Only (tablet/mobile shows horizontal version above) */}
+                {!isCompact && (
+                    <LevelNavigator
+                        levels={(hasSubAreas && activeArea ? activeArea.levels : mainLevelsRecord) as Record<string, string>}
+                        currentLevel={currentLevelView}
+                        onSelectLevel={setCurrentLevelView}
+                        actualScore={hasSubAreas ? activeScores[0] : (data.actual || 0)}
+                        targetScore={hasSubAreas ? activeScores[1] : (data.target || 0)}
+                    />
+                )}
 
                 {/* 2. Main Content (Level Detail) */}
-                <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-navy-900 relative">
-                    <div className="max-w-4xl mx-auto p-8 lg:p-12">
+                <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-navy-900 relative momentum-scroll">
+                    <div className={`max-w-4xl mx-auto ${isCompact ? 'p-4' : 'p-8 lg:p-12'}`}>
 
                         <LevelDetailCard
                             level={currentLevelView}

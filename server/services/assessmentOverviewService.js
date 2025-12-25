@@ -249,7 +249,140 @@ class AssessmentOverviewService {
         metrics.strongestAreas = ['To be implemented'];
         metrics.weakestAreas = ['To be implemented'];
 
+
         return metrics;
+    }
+
+
+    /**
+     * Get list of assessments for AssessmentTable component
+     * @param {string} organizationId - Organization ID
+     * @param {string} projectId - Project ID
+     * @returns {Promise<Array>} List of assessments
+     */
+    static async getAssessmentsList(organizationId, projectId) {
+        return new Promise((resolve, reject) => {
+            let sql = `
+                SELECT 
+                    aw.id,
+                    aw.assessment_id,
+                    aw.project_id,
+                    aw.workflow_state as status,
+                    aw.created_at,
+                    aw.updated_at,
+                    p.name as project_name,
+                    u.first_name || ' ' || u.last_name as created_by,
+                    ma.overall_as_is,
+                    ma.overall_to_be,
+                    ma.is_complete
+                FROM assessment_workflows aw
+                LEFT JOIN projects p ON aw.project_id = p.id
+                LEFT JOIN users u ON aw.created_by = u.id
+                LEFT JOIN maturity_assessments ma ON aw.project_id = ma.project_id
+                WHERE aw.organization_id = ?
+            `;
+
+            const params = [organizationId];
+
+            if (projectId) {
+                sql += ` AND aw.project_id = ?`;
+                params.push(projectId);
+            }
+
+            sql += ` ORDER BY aw.updated_at DESC`;
+
+            db.all(sql, params, (err, rows) => {
+                if (err) {
+                    // If table doesn't exist, return empty array
+                    if (err.message && err.message.includes('no such table')) {
+                        console.warn('[AssessmentOverview] assessment_workflows table not found, returning empty list');
+                        return resolve([]);
+                    }
+                    return reject(err);
+                }
+
+                const assessments = (rows || []).map(row => ({
+                    id: row.assessment_id || row.id,
+                    name: `DRD Assessment - ${new Date(row.created_at).toLocaleDateString()}`,
+                    projectName: row.project_name || 'Unknown Project',
+                    status: row.status || 'DRAFT',
+                    progress: row.is_complete ? 100 : Math.round((row.overall_as_is / 7) * 100) || 0,
+                    completedAxes: row.is_complete ? 7 : Math.min(Math.floor((row.overall_as_is || 0) * 7 / 7), 7),
+                    totalAxes: 7,
+                    createdAt: row.created_at,
+                    updatedAt: row.updated_at,
+                    createdBy: row.created_by || 'System',
+                    canCreateReport: row.status === 'APPROVED'
+                }));
+
+                resolve(assessments);
+            });
+        });
+    }
+
+
+    /**
+     * Get list of reports for ReportsTable component
+     * @param {string} organizationId - Organization ID
+     * @param {string} projectId - Project ID
+     * @returns {Promise<Array>} List of reports
+     */
+    static async getReportsList(organizationId, projectId) {
+        return new Promise((resolve, reject) => {
+            let sql = `
+                SELECT 
+                    ar.id,
+                    ar.name,
+                    ar.assessment_id,
+                    ar.status,
+                    ar.created_at,
+                    ar.updated_at,
+                    aw.project_id,
+                    p.name as project_name,
+                    u.first_name || ' ' || u.last_name as created_by,
+                    (SELECT COUNT(*) FROM initiatives i WHERE i.report_id = ar.id) as initiatives_count
+                FROM assessment_reports ar
+                LEFT JOIN assessment_workflows aw ON ar.assessment_id = aw.assessment_id
+                LEFT JOIN projects p ON aw.project_id = p.id
+                LEFT JOIN users u ON ar.created_by = u.id
+                WHERE ar.organization_id = ?
+            `;
+
+            const params = [organizationId];
+
+            if (projectId) {
+                sql += ` AND aw.project_id = ?`;
+                params.push(projectId);
+            }
+
+            sql += ` ORDER BY ar.updated_at DESC`;
+
+            db.all(sql, params, (err, rows) => {
+                if (err) {
+                    // If table doesn't exist, return empty array
+                    if (err.message && err.message.includes('no such table')) {
+                        return resolve([]);
+                    }
+                    return reject(err);
+                }
+
+                const reports = (rows || []).map(row => ({
+                    id: row.id,
+                    name: row.name || `Report - ${new Date(row.created_at).toLocaleDateString()}`,
+                    assessmentId: row.assessment_id,
+                    assessmentName: `DRD Assessment`,
+                    status: row.status || 'DRAFT',
+                    createdAt: row.created_at,
+                    updatedAt: row.updated_at,
+                    createdBy: row.created_by || 'System',
+                    canGenerateInitiatives: row.status === 'FINAL',
+                    initiativesGenerated: (row.initiatives_count || 0) > 0,
+                    initiativesCount: row.initiatives_count || 0
+                }));
+
+                resolve(reports);
+            });
+        });
     }
 }
 

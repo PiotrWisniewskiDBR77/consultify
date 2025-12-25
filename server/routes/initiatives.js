@@ -93,8 +93,13 @@ router.get('/', asyncHandler(async (req, res) => {
             updatedAt: i.updated_at
         }));
 
-        res.json(initiatives);
+        res.json({ initiatives, total: initiatives.length });
     } catch (error) {
+        // If table doesn't exist, return empty array
+        if (error.message && error.message.includes('no such table')) {
+            console.warn('[Initiatives API] initiatives table not found, returning empty list');
+            return res.json({ initiatives: [], total: 0 });
+        }
         res.status(500).json({ error: error.message });
     }
 }));

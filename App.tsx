@@ -54,6 +54,7 @@ import { AccessPolicyProvider } from './contexts/AccessPolicyContext';
 import { TourProvider } from './components/Onboarding/TourProvider';
 import { AIFreezeBanner } from './components/AIFreezeBanner';
 import { DocumentToggleButton } from './components/documents/DocumentToggleButton';
+import { BottomNavigation } from './components/navigation';
 
 
 // Help system wrapper component
@@ -78,6 +79,8 @@ const RapidLeanWizard = React.lazy(() => import('./components/assessment/RapidLe
 const ExternalDigitalWorkspace = React.lazy(() => import('./components/assessment/ExternalDigitalWorkspace').then(module => ({ default: module.ExternalDigitalWorkspace })));
 const AssessmentHubDashboard = React.lazy(() => import('./components/assessment/AssessmentHubDashboard').then(module => ({ default: module.AssessmentHubDashboard })));
 const GenericReportsWorkspace = React.lazy(() => import('./components/assessment/GenericReportsWorkspace').then(module => ({ default: module.GenericReportsWorkspace })));
+const AssessmentModuleHub = React.lazy(() => import('./components/assessment/AssessmentModuleHub').then(module => ({ default: module.AssessmentModuleHub })));
+import { SplitLayout } from './components/SplitLayout';
 
 const PageTransition: React.FC<{ children: React.ReactNode, id: string }> = ({ children, id }) => (
     <motion.div
@@ -315,35 +318,135 @@ const AppContent: React.FC = () => {
         let section = sidebarT.dashboard || 'Dashboard';
         let sub = '';
 
-        if (viewParts.includes('QUICK')) {
-            section = sidebarT.quickAssessment;
+        // My Work View
+        if (currentView === AppView.MY_WORK) {
+            section = sidebarT.dashboard || 'Dashboard';
+            sub = t('myWork.title', 'My Work');
+        }
+        // Assessment Module Views
+        else if (currentView === AppView.ASSESSMENT_DRD) {
+            section = sidebarT.assessment || 'Ocena';
+            sub = sidebarT.assessmentDRD || 'DRD';
+        } else if (currentView === AppView.ASSESSMENT_SIRI) {
+            section = sidebarT.assessment || 'Ocena';
+            sub = sidebarT.assessmentSIRI || 'SIRI';
+        } else if (currentView === AppView.ASSESSMENT_ADMA) {
+            section = sidebarT.assessment || 'Ocena';
+            sub = sidebarT.assessmentADMA || 'ADMA';
+        } else if (currentView === AppView.ASSESSMENT_CMMI) {
+            section = sidebarT.assessment || 'Ocena';
+            sub = sidebarT.assessmentCMMI || 'CMMI';
+        } else if (currentView === AppView.ASSESSMENT_LEAN || currentView === AppView.ASSESSMENT_LEAN_EXTERNAL) {
+            section = sidebarT.assessment || 'Ocena';
+            sub = sidebarT.assessmentLean || 'Lean 4.0';
+        } else if (currentView === AppView.ASSESSMENT_SUMMARY || currentView === AppView.ASSESSMENT_OVERVIEW) {
+            section = sidebarT.assessment || 'Ocena';
+            sub = t('assessment.workspace.dashboardHeader', 'Pulpit Oceny');
+        } else if (currentView === AppView.ASSESSMENT_AUDITS) {
+            section = sidebarT.assessment || 'Ocena';
+            sub = sidebarT.otherAssessments || 'Inne';
+        }
+        // Context Builder Views
+        else if (currentView.startsWith('CONTEXT_BUILDER')) {
+            section = sidebarT.module1 || 'Oczekiwania i Wyzwania';
+            if (currentView === AppView.CONTEXT_BUILDER_PROFILE) {
+                sub = sidebarT.context?.profile || 'Profil Firmy';
+            } else if (currentView === AppView.CONTEXT_BUILDER_GOALS) {
+                sub = sidebarT.context?.goals || 'Cele i Oczekiwania';
+            } else if (currentView === AppView.CONTEXT_BUILDER_CHALLENGES) {
+                sub = sidebarT.context?.challenges || 'Mapa Wyzwań';
+            } else if (currentView === AppView.CONTEXT_BUILDER_MEGATRENDS) {
+                sub = sidebarT.context?.megatrends || 'Skaner Megatrendów';
+            } else if (currentView === AppView.CONTEXT_BUILDER_STRATEGY) {
+                sub = sidebarT.context?.strategy || 'Synteza Strategiczna';
+            } else {
+                sub = sidebarT.context?.profile || 'Profil Firmy';
+            }
+        }
+        // Full Transformation Views
+        else if (currentView === AppView.FULL_STEP1_CONTEXT) {
+            section = sidebarT.fullProject || 'Pełna Transformacja';
+            sub = sidebarT.module1 || 'Oczekiwania i Wyzwania';
+        } else if (currentView === AppView.FULL_STEP1_ASSESSMENT || currentView.startsWith('FULL_STEP1_')) {
+            section = sidebarT.fullProject || 'Pełna Transformacja';
+            sub = sidebarT.fullStep1 || 'Ocena (DRD)';
+        } else if (currentView === AppView.FULL_STEP2_INITIATIVES) {
+            section = sidebarT.fullProject || 'Pełna Transformacja';
+            sub = sidebarT.fullStep2 || 'Generator Inicjatyw';
+        } else if (currentView === AppView.FULL_STEP3_ROADMAP) {
+            section = sidebarT.fullProject || 'Pełna Transformacja';
+            sub = sidebarT.fullStep3 || 'Mapa Drogowa';
+        } else if (currentView === AppView.FULL_STEP4_ROI) {
+            section = sidebarT.fullProject || 'Pełna Transformacja';
+            sub = sidebarT.fullStep4 || 'Ekonomia i ROI';
+        } else if (currentView === AppView.FULL_STEP5_EXECUTION) {
+            section = sidebarT.fullProject || 'Pełna Transformacja';
+            sub = sidebarT.fullStep5 || 'Dashboard Realizacji';
+        } else if (currentView === AppView.FULL_PILOT_EXECUTION) {
+            section = sidebarT.fullProject || 'Pełna Transformacja';
+            sub = sidebarT.pilotPhase || 'Pilotaż';
+        } else if (currentView === AppView.FULL_ROLLOUT) {
+            section = sidebarT.fullProject || 'Pełna Transformacja';
+            sub = sidebarT.fullImplementation || 'Wdrożenie';
+        } else if (currentView === AppView.FULL_STEP6_REPORTS) {
+            section = sidebarT.fullProject || 'Pełna Transformacja';
+            sub = sidebarT.fullStep6 || 'Raporty';
+        } else if (currentView === AppView.KPI_OKR_DASHBOARD) {
+            section = sidebarT.fullProject || 'Pełna Transformacja';
+            sub = sidebarT.kpiOkr || 'KPI/OKR';
+        }
+        // Quick Assessment Views
+        else if (viewParts.includes('QUICK')) {
+            section = sidebarT.quickAssessment || 'Szybka Diagnoza';
             const stepNum = viewParts[1]?.replace('STEP', '') || '1';
-            sub = `${step1T.subtitle} ${stepNum}`;
-        } else if (viewParts.includes('FULL')) {
-            section = sidebarT.fullProject;
-            const stepNum = viewParts[1]?.replace('STEP', '') || '1';
-            // Maybe map step names?
-            if (viewParts.includes('STEP1')) sub = sidebarT.fullStep1;
-            else if (viewParts.includes('STEP2')) sub = sidebarT.module3_1; // Initiatives List match
-            else if (viewParts.includes('STEP3')) sub = sidebarT.module3_2; // Roadmap Builder match
-            else if (viewParts.includes('STEP4')) sub = sidebarT.module6;
-            else if (viewParts.includes('STEP5')) sub = sidebarT.module5; // Adjust as needed
-            else if (viewParts.includes('STEP6')) sub = sidebarT.module7;
-            else sub = `${sidebarT.fullProject} ${stepNum}`;
-        } else if (viewParts.includes('ADMIN')) {
-            section = sidebarT.adminPanel;
-            sub = viewParts[1] || 'Dashboard';
-        } else if (viewParts.includes('SETTINGS')) {
-            section = sidebarT.settings;
-            sub = viewParts[1] || 'Profile';
-        } else if (currentView === AppView.USER_DASHBOARD) {
-            section = sidebarT.dashboard;
+            sub = `${step1T.subtitle || 'Krok'} ${stepNum}`;
+        }
+        // Admin Views
+        else if (viewParts.includes('ADMIN')) {
+            section = sidebarT.adminPanel || 'Admin';
+            if (currentView === AppView.ADMIN_USERS) sub = sidebarT.adminUsers || 'Użytkownicy';
+            else if (currentView === AppView.ADMIN_PROJECTS) sub = sidebarT.adminProjects || 'Projekty';
+            else if (currentView === AppView.ADMIN_LLM) sub = sidebarT.adminLLM || 'Zarządzanie LLM';
+            else if (currentView === AppView.ADMIN_KNOWLEDGE) sub = sidebarT.adminKnowledge || 'Baza Wiedzy';
+            else if (currentView === AppView.ADMIN_FEEDBACK) sub = sidebarT.adminFeedback || 'Opinie';
+            else if (currentView === AppView.ADMIN_BILLING) sub = t('admin.billing.title', 'Płatności');
+            else if (currentView === AppView.ADMIN_ANALYTICS) sub = t('admin.analytics.title', 'Analityka');
+            else sub = 'Dashboard';
+        }
+        // Settings Views
+        else if (viewParts.includes('SETTINGS')) {
+            section = sidebarT.settings || 'Ustawienia';
+            if (currentView === AppView.SETTINGS_PROFILE) sub = t('settings.profile', 'Profil');
+            else if (currentView === AppView.SETTINGS_BILLING) sub = t('settings.billing', 'Płatności');
+            else if (currentView === AppView.SETTINGS_AI) sub = t('settings.ai', 'Ustawienia AI');
+            else if (currentView === AppView.SETTINGS_NOTIFICATIONS) sub = t('settings.notifications', 'Powiadomienia');
+            else if (currentView === AppView.SETTINGS_INTEGRATIONS) sub = t('settings.integrations', 'Integracje');
+            else if (currentView === AppView.SETTINGS_ORGANIZATION) sub = t('settings.organization', 'Organizacja');
+            else sub = 'Profil';
+        }
+        // Consultant Views
+        else if (currentView === AppView.CONSULTANT_PANEL) {
+            section = t('consultant.section', 'Konsultant');
+            sub = t('consultant.panel', 'Panel Konsultanta');
+        } else if (currentView === AppView.CONSULTANT_INVITES) {
+            section = t('consultant.section', 'Konsultant');
+            sub = t('consultant.invites', 'Zaproszenia');
+        }
+        // Dashboard Views
+        else if (currentView === AppView.USER_DASHBOARD || currentView === AppView.DASHBOARD) {
+            section = sidebarT.dashboard || 'Dashboard';
+            sub = '';
         } else if (currentView === AppView.DASHBOARD_OVERVIEW) {
-            section = sidebarT.dashboard;
-            sub = dashboardSubT.overview || 'Overview';
+            section = sidebarT.dashboard || 'Dashboard';
+            sub = dashboardSubT?.overview || 'Przegląd';
         } else if (currentView === AppView.DASHBOARD_SNAPSHOT) {
-            section = sidebarT.dashboard;
-            sub = dashboardSubT.snapshot || 'Execution Snapshot';
+            section = sidebarT.dashboard || 'Dashboard';
+            sub = dashboardSubT?.snapshot || 'Migawka Realizacji';
+        }
+        // Affiliate Dashboard
+        else if (currentView === AppView.AFFILIATE_DASHBOARD) {
+            section = sidebarT.dashboard || 'Dashboard';
+            sub = t('affiliate.title', 'Program Partnerski');
         }
 
         return [section, sub];
@@ -429,11 +532,13 @@ const AppContent: React.FC = () => {
             }
             return <ContextBuilderView initialTab={initialTab} />;
         }
-        // DRD Assessment (dedicated view)
+        // DRD Assessment (AssessmentModuleHub with 4 tabs)
         if (currentView === AppView.ASSESSMENT_DRD) {
             return (
                 <React.Suspense fallback={<LoadingScreen />}>
-                    <FullAssessmentView />
+                    <SplitLayout title="DRD Assessment" onSendMessage={() => { }}>
+                        <AssessmentModuleHub framework="DRD" />
+                    </SplitLayout>
                 </React.Suspense>
             );
         }
@@ -582,108 +687,49 @@ const AppContent: React.FC = () => {
             );
         }
 
-        // Assessment Module Views
+        // Assessment Module Views - All frameworks use AssessmentModuleHub with 4 tabs
 
-        // SIRI Assessment - Placeholder
+        // SIRI Assessment
         if (currentView === AppView.ASSESSMENT_SIRI) {
             return (
-                <div className="w-full h-full flex flex-col items-center justify-center p-8">
-                    <div className="max-w-md text-center">
-                        <Cpu className="w-16 h-16 mx-auto mb-4 text-blue-500" />
-                        <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">SIRI Assessment</h2>
-                        <p className="text-slate-500 dark:text-slate-400 mb-6">
-                            Smart Industry Readiness Index - {t('common.underConstruction', 'Strona w przygotowaniu')}
-                        </p>
-                        <button
-                            onClick={() => setCurrentView(AppView.ASSESSMENT_DRD)}
-                            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                        >
-                            {t('common.backToDashboard', 'Wróć do DRD')}
-                        </button>
-                    </div>
-                </div>
-            );
-        }
-
-        // ADMA Assessment - Placeholder
-        if (currentView === AppView.ASSESSMENT_ADMA) {
-            return (
-                <div className="w-full h-full flex flex-col items-center justify-center p-8">
-                    <div className="max-w-md text-center">
-                        <Database className="w-16 h-16 mx-auto mb-4 text-green-500" />
-                        <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">ADMA Assessment</h2>
-                        <p className="text-slate-500 dark:text-slate-400 mb-6">
-                            Advanced Digital Maturity Assessment - {t('common.underConstruction', 'Strona w przygotowaniu')}
-                        </p>
-                        <button
-                            onClick={() => setCurrentView(AppView.ASSESSMENT_DRD)}
-                            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                        >
-                            {t('common.backToDashboard', 'Wróć do DRD')}
-                        </button>
-                    </div>
-                </div>
-            );
-        }
-
-        // CMMI Assessment - Placeholder
-        if (currentView === AppView.ASSESSMENT_CMMI) {
-            return (
-                <div className="w-full h-full flex flex-col items-center justify-center p-8">
-                    <div className="max-w-md text-center">
-                        <Layers className="w-16 h-16 mx-auto mb-4 text-orange-500" />
-                        <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">CMMI-DMM Assessment</h2>
-                        <p className="text-slate-500 dark:text-slate-400 mb-6">
-                            Capability Maturity Model Integration - {t('common.underConstruction', 'Strona w przygotowaniu')}
-                        </p>
-                        <button
-                            onClick={() => setCurrentView(AppView.ASSESSMENT_DRD)}
-                            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                        >
-                            {t('common.backToDashboard', 'Wróć do DRD')}
-                        </button>
-                    </div>
-                </div>
-            );
-        }
-
-        // Lean 4.0 Assessment - RapidLean Wizard (also handles legacy ASSESSMENT_LEAN_EXTERNAL)
-        if (currentView === AppView.ASSESSMENT_LEAN || currentView === AppView.ASSESSMENT_LEAN_EXTERNAL) {
-            return (
                 <React.Suspense fallback={<LoadingScreen />}>
-                    <RapidLeanWizard
-                        onComplete={(responses, mode) => {
-                            console.log('RapidLean Assessment completed:', responses, 'Mode:', mode);
-                            // After completing, navigate to assessment summary
-                            setCurrentView(AppView.ASSESSMENT_SUMMARY);
-                        }}
-                        onCancel={() => {
-                            // Navigate back to user dashboard when canceling
-                            setCurrentView(AppView.USER_DASHBOARD);
-                        }}
-                    />
+                    <SplitLayout title="SIRI Assessment" onSendMessage={() => { }}>
+                        <AssessmentModuleHub framework="SIRI" />
+                    </SplitLayout>
                 </React.Suspense>
             );
         }
 
-        // Other Assessments - Placeholder
-        if (currentView === AppView.ASSESSMENT_OTHER) {
+        // ADMA Assessment
+        if (currentView === AppView.ASSESSMENT_ADMA) {
             return (
-                <div className="w-full h-full flex flex-col items-center justify-center p-8">
-                    <div className="max-w-md text-center">
-                        <Box className="w-16 h-16 mx-auto mb-4 text-purple-500" />
-                        <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">{t('sidebar.assessmentOther', 'Inne Oceny')}</h2>
-                        <p className="text-slate-500 dark:text-slate-400 mb-6">
-                            {t('common.underConstruction', 'Strona w przygotowaniu')}
-                        </p>
-                        <button
-                            onClick={() => setCurrentView(AppView.ASSESSMENT_DRD)}
-                            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                        >
-                            {t('common.backToDashboard', 'Wróć do DRD')}
-                        </button>
-                    </div>
-                </div>
+                <React.Suspense fallback={<LoadingScreen />}>
+                    <SplitLayout title="ADMA Assessment" onSendMessage={() => { }}>
+                        <AssessmentModuleHub framework="ADMA" />
+                    </SplitLayout>
+                </React.Suspense>
+            );
+        }
+
+        // CMMI Assessment
+        if (currentView === AppView.ASSESSMENT_CMMI) {
+            return (
+                <React.Suspense fallback={<LoadingScreen />}>
+                    <SplitLayout title="CMMI Assessment" onSendMessage={() => { }}>
+                        <AssessmentModuleHub framework="CMMI" />
+                    </SplitLayout>
+                </React.Suspense>
+            );
+        }
+
+        // Lean 4.0 Assessment
+        if (currentView === AppView.ASSESSMENT_LEAN || currentView === AppView.ASSESSMENT_LEAN_EXTERNAL) {
+            return (
+                <React.Suspense fallback={<LoadingScreen />}>
+                    <SplitLayout title="Lean 4.0 Assessment" onSendMessage={() => { }}>
+                        <AssessmentModuleHub framework="LEAN" />
+                    </SplitLayout>
+                </React.Suspense>
             );
         }
 
@@ -812,9 +858,13 @@ const AppContent: React.FC = () => {
                 )}
 
                 {isSessionView && (
-                    <div className={currentUser?.isDemo ? "pt-10" : ""}>
-                        <Sidebar />
-                    </div>
+                    <>
+                        <div className={currentUser?.isDemo ? "pt-10" : ""}>
+                            <Sidebar />
+                        </div>
+                        {/* Mobile Bottom Navigation */}
+                        <BottomNavigation />
+                    </>
                 )}
 
                 {/* 
@@ -828,7 +878,8 @@ const AppContent: React.FC = () => {
                     className={`
                         flex-1 flex flex-col overflow-hidden relative w-full h-full transition-all duration-300
                         ${isSessionView ? (isSidebarCollapsed ? 'lg:ltr:pl-16 lg:rtl:pr-16' : 'lg:ltr:pl-64 lg:rtl:pr-64') : ''}
-                        ${currentUser?.isDemo ? 'mt-10' : ''} 
+                        ${currentUser?.isDemo ? 'mt-10' : ''}
+                        ${isSessionView ? 'pb-16 md:pb-0' : ''} 
                     `}
                 >
                     {/* Top Bar for Session Views */}

@@ -1,39 +1,36 @@
-import React, { useState, useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { DRDAxis, AxisAssessment } from '../../types';
-import { ArrowRight, BarChart2, TrendingUp, Sparkles, Edit2, Save, MessageSquare, Plus, Loader2, X, Settings, Smartphone, Briefcase, Database, Users, Lock, BrainCircuit, Download } from 'lucide-react';
+import { BarChart2, TrendingUp, Settings, Smartphone, Briefcase, Database, Users, Lock, BrainCircuit, Pencil, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { AssessmentMatrixCard } from './AssessmentMatrixCard';
-import { sendMessageToAIStream, AIMessageHistory } from '../../services/ai/gemini';
-import { getQuestionsForAxis, DRD_STRUCTURE } from '../../services/drdStructure';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import { getQuestionsForAxis } from '../../services/drdStructure';
 import { ACTUAL_COLORS, TARGET_COLORS } from '../../utils/assessmentColors';
 
 interface AssessmentSummaryWorkspaceProps {
     assessment: Partial<Record<DRDAxis, AxisAssessment>>;
     onNavigate: (axis: DRDAxis) => void;
-}
-
-interface Comment {
-    id: string;
-    text: string;
-    date: Date;
-    author: string;
+    /** Name of the assessment */
+    assessmentName?: string;
+    /** Whether this is a new (unsaved) assessment */
+    isNewAssessment?: boolean;
+    /** Callback when name changes */
+    onNameChange?: (name: string) => void;
 }
 
 export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProps> = ({
     assessment,
-    onNavigate
+    onNavigate,
+    assessmentName = 'Nowy Assessment',
+    isNewAssessment = true,
+    onNameChange
 }) => {
     const { t: translate } = useTranslation();
     const tSidebar = translate('sidebar', { returnObjects: true }) as any;
     const componentRef = useRef<HTMLDivElement>(null);
 
-    const [summary, setSummary] = useState<string>('');
-    const [isGenerating, setIsGenerating] = useState(false);
-    const [isEditing, setIsEditing] = useState(false);
-    const [comments, setComments] = useState<Comment[]>([]);
-    const [newComment, setNewComment] = useState('');
+    // Local state for name editing
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [localName, setLocalName] = useState(assessmentName);
 
     const labels: Record<DRDAxis, string> = {
         processes: tSidebar.fullStep1_proc,
@@ -58,124 +55,65 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
 
     const avgMaturity = (axes.reduce((acc, axis) => acc + (assessment[axis]?.actual || 0), 0) / 7).toFixed(1);
 
-    const handleGenerateSummary = async () => {
-        setIsGenerating(true);
-        setSummary(''); // Clear previous summary
-
-        // Construct prompt context with detailed scores
-        const context = axes.map(axis => {
-            const data = assessment[axis];
-            return `- ${labels[axis]}: Actual Level ${data?.actual || 0} -> Target Level ${data?.target || 0}`;
-        }).join('\n');
-
-        const prompt = `
-            Act as a Senior Digital Transformation Consultant specialized in the DRD 2.0 (Digital Readiness Dashboard) methodology.
-            
-            Analyze the following Digital Readiness Assessment results for a client:
-            ${context}
-            
-            Total Gap Points: ${totalGap}
-            Average Maturity Level: ${avgMaturity}
-
-            Based on the DRD 2.0 methodology, providing a strategic executive summary that covers:
-            1. **Overall Assessment**: A high-level view of the organization's digital maturity.
-            2. **Critical Gaps**: Identify the axes with the largest gaps between Actual and Target states. These are the primary bottlenecks.
-            3. **Strategic Coherence**: Comment on the balance between different axes. Are they developing evenly? (e.g., Is 'Culture' lagging behind 'Technology'? Is 'Cybersecurity' neglected?)
-            4. **Recommendations**: Suggest 2-3 high-impact focus areas to prioritize innovation and stability.
-
-            Tone: Professional, insightful, and action-oriented.
-            Format: Use clear Markdown with headings, bullet points, and bold text for emphasis.
-            Length: Approximately 200-250 words.
-        `;
-
-        const history: AIMessageHistory[] = [];
-
-        await sendMessageToAIStream(
-            history,
-            prompt,
-            (chunk) => setSummary(prev => prev + chunk),
-            () => setIsGenerating(false)
-        );
-    };
-
-    const handleDownloadPDF = async () => {
-        if (!componentRef.current) return;
-
-        try {
-            const canvas = await html2canvas(componentRef.current, {
-                scale: 2, // Higher quality
-                useCORS: true,
-                logging: false,
-                backgroundColor: '#0f172a' // Match navy-900
-            });
-
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF({
-                orientation: 'p',
-                unit: 'mm',
-                format: 'a4'
-            });
-
-            const imgWidth = 210;
-            const pageHeight = 297;
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-            let heightLeft = imgHeight;
-            let position = 0;
-
-            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-            heightLeft -= pageHeight;
-
-            while (heightLeft >= 0) {
-                position = heightLeft - imgHeight;
-                pdf.addPage();
-                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                heightLeft -= pageHeight;
-            }
-
-            pdf.save(`DRD_Assessment_Summary_${new Date().toISOString().split('T')[0]}.pdf`);
-        } catch (error) {
-            console.error('Error generating PDF:', error);
-            // In a real app, show a toast notification here
-        }
-    };
-
-    const handleAddComment = () => {
-        if (!newComment.trim()) return;
-
-        const comment: Comment = {
-            id: Date.now().toString(),
-            text: newComment,
-            date: new Date(),
-            author: 'User' // In a real app, get from auth context
-        };
-
-        setComments([...comments, comment]);
-        setNewComment('');
-    };
-
     return (
         <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-900 text-navy-900 dark:text-white p-8 overflow-y-auto" ref={componentRef}>
 
-            {/* Header */}
+            {/* Header - Editable Assessment Name */}
             <div className="flex justify-between items-start mb-8">
-                <div>
-                    <h2 className="text-2xl font-bold mb-1 flex items-center gap-2">
-                        <TrendingUp className="text-purple-500" />
-                        Gap Map Analysis
-                    </h2>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm">
-                        Summary of digital maturity. These gaps will directly drive initiative generation.
-                    </p>
+                <div className="flex-1 min-w-0">
+                    {isEditingName || isNewAssessment ? (
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="text"
+                                value={localName}
+                                onChange={(e) => setLocalName(e.target.value)}
+                                onBlur={() => {
+                                    setIsEditingName(false);
+                                    if (onNameChange && localName.trim()) {
+                                        onNameChange(localName.trim());
+                                    }
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        setIsEditingName(false);
+                                        if (onNameChange && localName.trim()) {
+                                            onNameChange(localName.trim());
+                                        }
+                                    }
+                                }}
+                                autoFocus={isEditingName}
+                                placeholder="Nazwa assessmentu..."
+                                className="text-2xl font-bold bg-transparent border-b-2 border-purple-500 focus:border-purple-400 outline-none text-navy-900 dark:text-white placeholder-slate-400 w-full max-w-md"
+                            />
+                            <button
+                                onClick={() => {
+                                    setIsEditingName(false);
+                                    if (onNameChange && localName.trim()) {
+                                        onNameChange(localName.trim());
+                                    }
+                                }}
+                                className="p-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-500 rounded-lg transition-colors"
+                                title="Zatwierdź"
+                            >
+                                <Check size={18} />
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-2 group">
+                            <h2 className="text-2xl font-bold text-navy-900 dark:text-white truncate">
+                                {assessmentName}
+                            </h2>
+                            <button
+                                onClick={() => setIsEditingName(true)}
+                                className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 rounded-lg transition-all"
+                                title="Edytuj nazwę"
+                            >
+                                <Pencil size={14} />
+                            </button>
+                        </div>
+                    )}
                 </div>
                 <div className="flex gap-4">
-                    <button
-                        onClick={handleDownloadPDF}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-navy-900 dark:text-white rounded-lg text-sm font-semibold transition-colors border border-slate-300 dark:border-white/10"
-                        title="Download Report as PDF"
-                    >
-                        <Download size={16} />
-                        Export PDF
-                    </button>
                     <div className="bg-white dark:bg-navy-950/50 p-3 rounded-xl border border-slate-200 dark:border-white/5 text-center min-w-[100px]">
                         <div className="text-3xl font-bold text-blue-400">{avgMaturity}</div>
                         <div className="text-xs uppercase tracking-wide text-slate-500 font-bold">Avg Actual</div>
@@ -297,132 +235,19 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
                         const calculatedTarget = areaCount > 0 ? Number((totalTarget / areaCount).toFixed(1)) : 0;
 
                         return (
-                            <AssessmentMatrixCard
-                                key={axis}
-                                title={labels[axis]}
-                                icon={iconMap[axis]}
-                                actual={calculatedActual}
-                                target={calculatedTarget}
-                                areas={realAreas}
-                                scores={assessment[axis]?.areaScores}
-                                onNavigate={() => onNavigate(axis)}
-                            />
+                            <div key={axis} id={`matrix-card-${axis}`}>
+                                <AssessmentMatrixCard
+                                    title={labels[axis]}
+                                    icon={iconMap[axis]}
+                                    actual={calculatedActual}
+                                    target={calculatedTarget}
+                                    areas={realAreas}
+                                    scores={assessment[axis]?.areaScores}
+                                    onNavigate={() => onNavigate(axis)}
+                                />
+                            </div>
                         );
                     })}
-                </div>
-            </div>
-
-            {/* AI Summary Section - Refactored */}
-            <div className="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 border border-purple-200 dark:border-purple-500/20 rounded-xl p-6 mb-6">
-                <div className="flex items-start justify-between mb-4">
-                    <div className="flex gap-4 items-center">
-                        <div className="p-2 bg-purple-100 dark:bg-purple-500/20 rounded-lg text-purple-600 dark:text-purple-400">
-                            <Sparkles size={24} />
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-purple-900 dark:text-purple-200 text-lg">AI Assessment Summary</h3>
-                            <p className="text-xs text-purple-600/60 dark:text-purple-400/60">Powered by Gemini AI</p>
-                        </div>
-                    </div>
-                    <div className="flex gap-2" data-html2canvas-ignore>
-                        {!summary && !isGenerating && (
-                            <button
-                                onClick={handleGenerateSummary}
-                                className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm font-semibold transition-colors shadow-lg shadow-purple-900/30"
-                            >
-                                <Sparkles size={16} />
-                                Generate Summary
-                            </button>
-                        )}
-                        {summary && !isEditing && (
-                            <button
-                                onClick={() => setIsEditing(true)}
-                                className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-navy-900 dark:hover:text-white transition-colors"
-                                title="Edit Summary"
-                            >
-                                <Edit2 size={18} />
-                            </button>
-                        )}
-                        {summary && isEditing && (
-                            <button
-                                onClick={() => setIsEditing(false)}
-                                className="p-2 hover:bg-green-500/20 rounded-lg text-green-400 transition-colors"
-                                title="Save Changes"
-                            >
-                                <Save size={18} />
-                            </button>
-                        )}
-                    </div>
-                </div>
-
-                <div className="pl-[56px]">
-                    {isGenerating && (
-                        <div className="flex items-center gap-2 text-purple-300 animate-pulse py-4">
-                            <Loader2 className="animate-spin" size={18} />
-                            Generating expert analysis...
-                        </div>
-                    )}
-
-                    {!summary && !isGenerating && (
-                        <div className="text-slate-500 italic py-4 border-l-2 border-slate-300 dark:border-slate-700 pl-4">
-                            No summary generated yet. Click the button above to analyze your assessment results.
-                        </div>
-                    )}
-
-                    {summary && isEditing ? (
-                        <textarea
-                            value={summary}
-                            onChange={(e) => setSummary(e.target.value)}
-                            className="w-full h-40 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-lg p-4 text-navy-900 dark:text-slate-200 text-sm focus:outline-none focus:border-purple-500/50 transition-colors resize-none mb-4"
-                            autoFocus
-                        />
-                    ) : (
-                        summary && (
-                            <div className="prose prose-sm max-w-none text-slate-700 dark:text-slate-300">
-                                <div className="whitespace-pre-wrap leading-relaxed">{summary}</div>
-                            </div>
-                        )
-                    )}
-
-                    {/* Comments Section */}
-                    {summary && (
-                        <div className="mt-8 pt-6 border-t border-purple-200 dark:border-white/5">
-                            <h4 className="text-sm font-bold text-slate-500 dark:text-slate-400 mb-4 flex items-center gap-2">
-                                <MessageSquare size={16} />
-                                Comments ({comments.length})
-                            </h4>
-
-                            <div className="space-y-4 mb-4">
-                                {comments.map(comment => (
-                                    <div key={comment.id} className="bg-white dark:bg-navy-950/30 rounded-lg p-3 border border-slate-200 dark:border-white/5">
-                                        <div className="flex justify-between items-center mb-1">
-                                            <span className="text-xs font-bold text-blue-600 dark:text-blue-400">{comment.author}</span>
-                                            <span className="text-[10px] text-slate-500">{comment.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                        </div>
-                                        <p className="text-sm text-navy-900 dark:text-slate-300">{comment.text}</p>
-                                    </div>
-                                ))}
-                            </div>
-
-                            <div className="flex gap-2">
-                                <input
-                                    type="text"
-                                    value={newComment}
-                                    onChange={(e) => setNewComment(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
-                                    placeholder="Add a comment or observation..."
-                                    className="flex-1 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg px-4 py-2 text-sm text-navy-900 dark:text-white focus:outline-none focus:border-purple-500/50"
-                                />
-                                <button
-                                    onClick={handleAddComment}
-                                    disabled={!newComment.trim()}
-                                    className="p-2 bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-500 text-white rounded-lg transition-colors"
-                                >
-                                    <Plus size={18} />
-                                </button>
-                            </div>
-                        </div>
-                    )}
                 </div>
             </div>
         </div>

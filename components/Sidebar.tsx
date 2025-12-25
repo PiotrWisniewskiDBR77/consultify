@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { AppView, UserRole } from '../types';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../store/useAppStore';
+import { useDeviceType } from '../hooks/useDeviceType';
 
 import {
   Shield,
@@ -182,9 +183,12 @@ export const Sidebar: React.FC = () => {
   } = useAppStore();
 
   const { t } = useTranslation();
+  const { isTablet, isMobile, isTouchDevice } = useDeviceType();
 
+  // On tablet: default to collapsed sidebar unless manually expanded
   // Derived state: Show full content if Pinned (not collapsed)
-  const showFull = !isSidebarCollapsed;
+  // On tablet, we force mini mode unless user explicitly expands
+  const showFull = !isSidebarCollapsed && !isTablet;
 
   // Floating Menu State
   const [activeFloating, setActiveFloating] = useState<{ id: string; rect: DOMRect; items: MenuItem[]; title: string } | null>(null);
@@ -231,78 +235,36 @@ export const Sidebar: React.FC = () => {
       label: t('sidebar.assessment'),
       icon: <CheckCircle2 size={20} />,
       subItems: [
-        {
-          id: 'M2_DASHBOARD',
-          label: t('sidebar.assessmentDashboard', 'Dashboard'),
-          viewId: AppView.ASSESSMENT_DASHBOARD,
-          icon: <LayoutDashboard size={16} />
-        },
-        {
-          id: 'M2_ASSESSMENTS',
-          label: t('sidebar.myAssessments', 'My Assessments'),
-          viewId: AppView.MY_ASSESSMENTS,
-          icon: <FileText size={16} />
-        },
-        {
-          id: 'M2_REVIEWS',
-          label: t('sidebar.reviewerDashboard', 'Reviews'),
-          viewId: AppView.REVIEWER_DASHBOARD,
-          icon: <Eye size={16} />
-        },
-        {
-          id: 'M2_GAP_MAP',
-          label: t('sidebar.gapMap', 'Gap Map'),
-          viewId: AppView.GAP_MAP,
-          icon: <TrendingUp size={16} />
-        },
-        {
-          id: 'M2_REPORTS',
-          label: t('sidebar.assessmentReports', 'Reports'),
-          viewId: AppView.ASSESSMENT_REPORTS,
-          icon: <FileOutput size={16} />
-        },
-        // Assessment Types (collapsible submenu)
+        // Assessment Frameworks - each opens AssessmentModuleHub with 4 tabs
         {
           id: 'M2_DRD',
-          label: t('sidebar.assessmentDRD', 'DRD Assessment'),
+          label: 'DRD',
           viewId: AppView.ASSESSMENT_DRD,
           icon: <Activity size={16} />
         },
         {
           id: 'M2_SIRI',
-          label: t('sidebar.assessmentSIRI', 'SIRI'),
+          label: 'SIRI',
           viewId: AppView.ASSESSMENT_SIRI,
           icon: <Cpu size={16} />
         },
         {
           id: 'M2_ADMA',
-          label: t('sidebar.assessmentADMA', 'ADMA'),
+          label: 'ADMA',
           viewId: AppView.ASSESSMENT_ADMA,
           icon: <Database size={16} />
         },
         {
           id: 'M2_CMMI',
-          label: t('sidebar.assessmentCMMI', 'CMMI'),
+          label: 'CMMI',
           viewId: AppView.ASSESSMENT_CMMI,
           icon: <Layers size={16} />
         },
         {
           id: 'M2_LEAN',
-          label: t('sidebar.assessmentLean', 'Lean 4.0'),
+          label: 'Lean 4.0',
           viewId: AppView.ASSESSMENT_LEAN,
           icon: <Workflow size={16} />
-        },
-        {
-          id: 'M2_OTHER',
-          label: t('sidebar.assessmentOther', 'Other'),
-          viewId: AppView.ASSESSMENT_OTHER,
-          icon: <Box size={16} />
-        },
-        {
-          id: 'M2_GENERATOR',
-          label: t('sidebar.initiativeGenerator', 'Generate Initiatives'),
-          viewId: AppView.INITIATIVE_GENERATOR,
-          icon: <Sparkles size={16} />
         },
       ]
     },
@@ -507,20 +469,23 @@ export const Sidebar: React.FC = () => {
             if (isLocked) return;
             if (item.viewId) {
               setCurrentView(item.viewId);
-              // if mobile, close
-              if (window.innerWidth < 1024) setIsSidebarOpen(false);
+              // Close on mobile/tablet after navigation
+              if (isMobile || (isTablet && isSidebarOpen)) {
+                setIsSidebarOpen(false);
+              }
             }
           }}
           disabled={isLocked}
           className={`
-            w-full flex items-center py-2.5 text-sm transition-all relative group
+            w-full flex items-center text-sm transition-all relative group touch-ripple
+            ${isTouchDevice ? 'py-3 min-h-[44px]' : 'py-2.5'}
             ${paddingLeft}
             ${isLocked ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
             ${isActive
               ? 'bg-purple-600/10 text-purple-600 dark:text-purple-400 border-r-2 border-purple-600'
               : isParentActive
                 ? 'text-navy-900 dark:text-white font-medium bg-slate-50 dark:bg-white/5'
-                : 'text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'
+                : 'text-slate-500 dark:text-slate-400 active:text-navy-900 dark:active:text-white active:bg-slate-100 dark:active:bg-white/10 hover:text-navy-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'
             }
           `}
           title={getTooltip()}
@@ -559,11 +524,15 @@ export const Sidebar: React.FC = () => {
     );
   };
 
+  // Width class: 
+  // - Mobile: full width when open, hidden when closed
+  // - Tablet: mini mode (64px) by default
+  // - Desktop: full (256px) or mini based on user preference
   const sidebarWidthClass = showFull ? 'w-64' : 'w-16';
 
   return (
     <>
-      {/* Mobile Overlay */}
+      {/* Mobile/Tablet Overlay - shown when sidebar is open on touch devices */}
       {isSidebarOpen && (
         <div
           className="fixed inset-0 bg-navy-950/80 backdrop-blur-sm z-40 lg:hidden"
@@ -580,7 +549,15 @@ export const Sidebar: React.FC = () => {
           border-r border-slate-200 dark:border-white/5 shadow-2xl
           flex flex-col transition-all duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)]
           ${sidebarWidthClass}
-          ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          ${isSidebarOpen 
+            ? 'translate-x-0' 
+            : isMobile 
+              ? '-translate-x-full' 
+              : isTablet 
+                ? 'translate-x-0'  /* Tablet: always visible as mini */
+                : 'lg:translate-x-0 -translate-x-full' /* Desktop: visible from lg breakpoint */
+          }
+          safe-area-pt safe-area-pb
         `}
       >
         {/* Header */}

@@ -54,6 +54,90 @@
     .text-gray-500 {
         @apply text-gray-600 dark:text-gray-400;
     }
+
+    /* ========================================
+       Mobile/Tablet Touch-Friendly Utilities
+       ======================================== */
+
+    /* Touch target - minimum 44x44px for accessibility */
+    .touch-target {
+        @apply min-h-[44px] min-w-[44px];
+    }
+
+    /* Safe area insets for notched devices */
+    .safe-area-pb {
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    .safe-area-pt {
+        padding-top: env(safe-area-inset-top, 0px);
+    }
+
+    .safe-area-pl {
+        padding-left: env(safe-area-inset-left, 0px);
+    }
+
+    .safe-area-pr {
+        padding-right: env(safe-area-inset-right, 0px);
+    }
+
+    /* Hide scrollbar but keep functionality */
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Horizontal scroll snap for touch navigation */
+    .scroll-snap-x {
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .scroll-snap-item {
+        scroll-snap-align: start;
+    }
+
+    /* Touch feedback ripple effect */
+    .touch-ripple {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .touch-ripple::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+        opacity: 0;
+        transform: scale(0);
+        transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+    }
+
+    .touch-ripple:active::after {
+        opacity: 1;
+        transform: scale(2);
+    }
+
+    /* Prevent text selection on touch */
+    .no-select {
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+    }
+
+    /* Smooth momentum scrolling */
+    .momentum-scroll {
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+    }
+
+    /* Bottom navigation height placeholder */
+    .bottom-nav-spacer {
+        height: calc(64px + env(safe-area-inset-bottom, 0px));
+    }
 }
 
 @layer base {

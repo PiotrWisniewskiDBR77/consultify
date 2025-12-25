@@ -5,6 +5,8 @@ import { usePMOContextAutoFetch } from '../store/usePMOStore';
 import { ChatMessage, ChatOption } from '../types';
 import { useAIStream } from '../hooks/useAIStream';
 import { useAIContext } from '../contexts/AIContext';
+import { useDeviceType } from '../hooks/useDeviceType';
+import { X, Sparkles, MessageSquare } from 'lucide-react';
 
 interface SplitLayoutProps {
     children: React.ReactNode;
@@ -43,11 +45,18 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
     const { screenContext } = useAIContext();
     const { isStreaming, streamedContent, startStream } = useAIStream();
 
+    // Device detection
+    const { isTablet, isMobile, isTouchDevice } = useDeviceType();
+    const isCompact = isTablet || isMobile;
+
     // Resizable State (width comes from global store)
     const [isResizing, setIsResizing] = React.useState(false);
     const sidebarRef = React.useRef<HTMLDivElement>(null);
 
     const startResizing = React.useCallback((mouseDownEvent: React.MouseEvent) => {
+        // Disable resizing on touch devices
+        if (isTouchDevice) return;
+        
         setIsResizing(true);
         mouseDownEvent.preventDefault();
 
@@ -77,9 +86,9 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
         // Prevent selection while dragging
         document.body.style.cursor = 'col-resize';
         document.body.style.userSelect = 'none';
-    }, [chatPanelWidth, setChatPanelWidth]);
+    }, [chatPanelWidth, setChatPanelWidth, isTouchDevice]);
 
-    // Mobile/Responsive State
+    // Mobile/Tablet Chat State - Combined for touch devices
     const [isMobileChatOpen, setIsMobileChatOpen] = React.useState(false);
 
     // Default message handler if none provided
@@ -198,51 +207,111 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
                 </div>
             )}
 
-            {/* Mobile Chat Overlay */}
+            {/* Mobile/Tablet Chat Drawer - Slides from right */}
             {isMobileChatOpen && (
-                <div className="lg:hidden absolute inset-0 z-50 flex">
-                    <div className="w-full sm:w-96 bg-white dark:bg-navy-950 border-r border-white/10 h-full flex flex-col shadow-2xl relative">
-                        <ChatPanel
-                            messages={
-                                isStreaming
-                                    ? [...activeChatMessages, {
-                                        id: 'streaming-ai',
-                                        role: 'ai',
-                                        content: streamedContent,
-                                        timestamp: new Date()
-                                    } as ChatMessage]
-                                    : activeChatMessages
-                            }
-                            onSendMessage={handleSendMessage}
-                            onOptionSelect={handleOptionSelect}
-                            isTyping={isBotTyping}
-                        />
-                        <button
-                            onClick={() => setIsMobileChatOpen(false)}
-                            className="absolute top-4 right-4 p-2 bg-navy-900/50 rounded-full text-white"
-                        >
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                        </button>
+                <div className="lg:hidden fixed inset-0 z-50 flex justify-end">
+                    {/* Backdrop */}
+                    <div 
+                        className="absolute inset-0 bg-black/50 backdrop-blur-sm" 
+                        onClick={() => setIsMobileChatOpen(false)} 
+                    />
+                    
+                    {/* Chat Drawer - Different sizes for mobile vs tablet */}
+                    <div 
+                        className={`
+                            relative bg-white dark:bg-navy-900 h-full flex flex-col shadow-2xl
+                            transition-transform duration-300 ease-out transform
+                            ${isMobile ? 'w-full' : 'w-[400px] max-w-[80vw]'}
+                        `}
+                        style={{ 
+                            animation: 'slideInFromRight 0.3s ease-out forwards',
+                        }}
+                    >
+                        {/* Drawer Header */}
+                        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-white/10 shrink-0">
+                            <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                                    <Sparkles size={16} className="text-purple-600 dark:text-purple-400" />
+                                </div>
+                                <div>
+                                    <h3 className="text-sm font-bold text-navy-900 dark:text-white">AI Consultant</h3>
+                                    <p className="text-[10px] text-slate-400">Twój asystent transformacji</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setIsMobileChatOpen(false)}
+                                className="touch-target flex items-center justify-center w-10 h-10 rounded-lg bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+                        
+                        {/* Chat Panel */}
+                        <div className="flex-1 overflow-hidden">
+                            <ChatPanel
+                                messages={
+                                    isStreaming
+                                        ? [...activeChatMessages, {
+                                            id: 'streaming-ai',
+                                            role: 'ai',
+                                            content: streamedContent,
+                                            timestamp: new Date()
+                                        } as ChatMessage]
+                                        : activeChatMessages
+                                }
+                                onSendMessage={handleSendMessage}
+                                onOptionSelect={handleOptionSelect}
+                                isTyping={isBotTyping}
+                            />
+                        </div>
                     </div>
-                    <div className="flex-1 bg-black/50 backdrop-blur-sm" onClick={() => setIsMobileChatOpen(false)} />
                 </div>
             )}
 
             {/* Right Panel: Workspace */}
             <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden relative">
 
-                {/* Mobile Chat Toggle (Floating) */}
-                <button
-                    onClick={() => setIsMobileChatOpen(true)}
-                    className="lg:hidden absolute bottom-6 right-6 z-40 w-12 h-12 rounded-full bg-brand text-white shadow-lg shadow-brand/40 flex items-center justify-center animate-bounce-slow"
-                >
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                </button>
+                {/* Mobile/Tablet Chat FAB - Different position for tablet */}
+                {!hideSidebar && (
+                    <button
+                        onClick={() => setIsMobileChatOpen(true)}
+                        className={`
+                            lg:hidden fixed z-40 rounded-full bg-purple-600 text-white shadow-lg shadow-purple-600/30 
+                            flex items-center justify-center transition-all touch-ripple touch-target
+                            ${isMobile 
+                                ? 'bottom-20 right-4 w-14 h-14' /* Above bottom nav on mobile */
+                                : 'bottom-6 right-6 w-12 h-12' /* Normal position on tablet */
+                            }
+                            ${isMobileChatOpen ? 'scale-0' : 'scale-100'}
+                        `}
+                    >
+                        <MessageSquare size={isMobile ? 24 : 20} />
+                        
+                        {/* Notification dot if there are unread messages */}
+                        {activeChatMessages.length > 0 && activeChatMessages[activeChatMessages.length - 1]?.role === 'ai' && (
+                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                                <span className="w-2 h-2 bg-white rounded-full animate-ping" />
+                            </span>
+                        )}
+                    </button>
+                )}
 
-                <div className="flex-1 overflow-hidden relative">
+                <div className="flex-1 overflow-hidden relative momentum-scroll">
                     {children}
                 </div>
             </div>
+
+            {/* Add CSS for slide animation */}
+            <style>{`
+                @keyframes slideInFromRight {
+                    from {
+                        transform: translateX(100%);
+                    }
+                    to {
+                        transform: translateX(0);
+                    }
+                }
+            `}</style>
         </div>
     );
 };

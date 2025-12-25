@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bot, User, HelpCircle, Check, Send, ThumbsUp, ThumbsDown, Mic, MicOff, Square } from 'lucide-react';
+import { Bot, User, HelpCircle, Check, Send, ThumbsUp, ThumbsDown, Mic, MicOff, Square, Volume2, VolumeX, Square as StopIcon } from 'lucide-react';
 import { ChatMessage, ChatOption } from '../types';
 import { AIFeedbackButton } from './AIFeedbackButton';
 import { useAppStore } from '../store/useAppStore';
 import { useTranslation } from 'react-i18next';
+import { useVoiceChat } from '../hooks/useVoiceChat';
 
 interface ChatPanelProps {
   messages: ChatMessage[];
@@ -13,6 +14,10 @@ interface ChatPanelProps {
   isTyping: boolean;
   title?: React.ReactNode;
   subtitle?: React.ReactNode;
+  /** Enable automatic voice readback of AI responses */
+  enableVoice?: boolean;
+  /** Callback when voice readback should trigger (AI response complete) */
+  onVoiceRead?: (text: string) => void;
 }
 
 export const ChatPanel: React.FC<ChatPanelProps> = ({
@@ -22,7 +27,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   onMultiSelectSubmit,
   isTyping,
   title,
-  subtitle
+  subtitle,
+  enableVoice: externalVoiceEnabled,
+  onVoiceRead
 }) => {
   const { t } = useTranslation();
   const { aiFreezeStatus } = useAppStore();
@@ -34,6 +41,17 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   const [speechSupported, setSpeechSupported] = useState(false);
   const recognitionRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const lastMessageIdRef = useRef<string | null>(null);
+
+  // Voice Chat (TTS) Integration
+  const {
+    speak,
+    stopSpeaking,
+    isSpeaking,
+    voiceEnabled,
+    toggleVoice,
+    ttsSupported
+  } = useVoiceChat();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -42,6 +60,21 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   useEffect(() => {
     scrollToBottom();
   }, [messages, isTyping]);
+
+  // Auto-read AI responses when voice is enabled
+  useEffect(() => {
+    if (!voiceEnabled || !ttsSupported) return;
+
+    // Find the last AI message that isn't currently streaming
+    const lastAIMessage = [...messages].reverse().find(
+      msg => msg.role === 'ai' && msg.id !== 'stream'
+    );
+
+    if (lastAIMessage && lastAIMessage.id !== lastMessageIdRef.current && !isTyping) {
+      lastMessageIdRef.current = lastAIMessage.id;
+      speak(lastAIMessage.content);
+    }
+  }, [messages, voiceEnabled, ttsSupported, isTyping, speak]);
 
   // Initialize Speech Recognition
   useEffect(() => {
@@ -130,6 +163,20 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
           <h2 className="text-xs font-bold text-navy-900 dark:text-white tracking-wide uppercase">{displayTitle}</h2>
           <p className="text-[10px] text-slate-500 dark:text-slate-400">{displaySubtitle}</p>
         </div>
+        {/* Voice Toggle Button */}
+        {ttsSupported && (
+          <button
+            onClick={toggleVoice}
+            className={`p-2 rounded-lg transition-all flex items-center gap-1.5 text-xs ${voiceEnabled
+                ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-700'
+                : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
+              }`}
+            title={voiceEnabled ? 'Wyłącz głos AI' : 'Włącz głos AI'}
+          >
+            {voiceEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
+            <span className="hidden sm:inline">{voiceEnabled ? 'Głos ON' : 'Głos OFF'}</span>
+          </button>
+        )}
       </div>
 
       {/* Messages Area */}
@@ -158,10 +205,23 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                 </div>
               </div>
 
-              {/* Message Actions (Feedback) */}
+              {/* Message Actions (Feedback + Voice) */}
               {msg.role === 'ai' && msg.id !== 'stream' && (
                 <div className="ml-9 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <AIFeedbackButton context="chat" data={msg.content} />
+                  {/* Read aloud button */}
+                  {ttsSupported && (
+                    <button
+                      onClick={() => isSpeaking ? stopSpeaking() : speak(msg.content)}
+                      className={`p-1.5 rounded-md transition-all ${isSpeaking
+                          ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                          : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
+                        }`}
+                      title={isSpeaking ? 'Zatrzymaj' : 'Przeczytaj'}
+                    >
+                      {isSpeaking ? <Square size={12} /> : <Volume2 size={12} />}
+                    </button>
+                  )}
                 </div>
               )}
 

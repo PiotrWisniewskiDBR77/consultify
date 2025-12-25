@@ -135,7 +135,7 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed right-0 top-0 h-full w-80 bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-white/10 shadow-2xl z-40 flex flex-col animate-in slide-in-from-right duration-200">
+        <div className="fixed right-0 top-14 h-[calc(100vh-3.5rem)] w-80 bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-white/10 shadow-2xl z-40 flex flex-col animate-in slide-in-from-right duration-200">
             {/* Header */}
             <div className="h-14 flex items-center justify-between px-4 border-b border-slate-200 dark:border-white/10 shrink-0">
                 <h2 className="text-sm font-bold text-navy-900 dark:text-white flex items-center gap-2">

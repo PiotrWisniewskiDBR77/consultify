@@ -9,6 +9,19 @@ export default {
     ],
     darkMode: 'class',
     theme: {
+        screens: {
+            'xs': '375px',     // Small mobile (iPhone SE)
+            'sm': '640px',     // Large mobile
+            'md': '768px',     // Tablet portrait
+            'lg': '1024px',    // Tablet landscape / Desktop
+            'xl': '1280px',    // Desktop
+            '2xl': '1536px',   // Large desktop
+            // Custom aliases for semantic usage
+            'mobile': { 'max': '767px' },      // Mobile only
+            'tablet': { 'min': '768px', 'max': '1023px' }, // Tablet only
+            'touch': { 'max': '1023px' },      // Mobile + Tablet (touch devices)
+            'desktop': '1024px',               // Desktop and up
+        },
         extend: {
             colors: {
                 navy: {
