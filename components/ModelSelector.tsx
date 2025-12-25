@@ -105,16 +105,22 @@ export const ModelSelector: React.FC = () => {
 
         setCheckingConnection(true);
         try {
-            // Build config for currently selected model
-            const testConfig = {
-                provider: currentProvider,
-                model_id: currentModelId,
-                endpoint: currentUser?.aiConfig?.endpoint,
-                api_key: currentUser?.aiConfig?.apiKey,
-            };
-
-            const result = await Api.testLLMConnection(testConfig as any);
-            setLlmConnected(result.success);
+            // For system providers, just check if the provider exists in the public list
+            if (currentProvider === 'system') {
+                const systemProviders = await Api.getPublicLLMProviders();
+                const providerExists = systemProviders.some((p: any) => p.id === currentModelId);
+                setLlmConnected(providerExists && systemProviders.length > 0);
+            } else {
+                // For private models, test the actual connection
+                const testConfig = {
+                    provider: currentProvider,
+                    model_id: currentModelId,
+                    endpoint: currentUser?.aiConfig?.endpoint,
+                    api_key: currentUser?.aiConfig?.apiKey,
+                };
+                const result = await Api.testLLMConnection(testConfig as any);
+                setLlmConnected(result.success);
+            }
         } catch (err) {
             console.error('LLM connection check failed:', err);
             setLlmConnected(false);

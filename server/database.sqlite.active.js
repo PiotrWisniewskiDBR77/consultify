@@ -618,9 +618,13 @@ function initDb() {
             gap_analysis_summary TEXT,
             prioritized_gaps TEXT DEFAULT '[]',
             is_complete INTEGER DEFAULT 0,
+            assessment_status TEXT DEFAULT 'IN_PROGRESS', -- IN_PROGRESS | FINALIZED
+            report_id TEXT, -- Link to assessment_reports
+            finalized_at DATETIME,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
+            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+            FOREIGN KEY(report_id) REFERENCES assessment_reports(id) ON DELETE SET NULL
         )`);
 
         // Assessment Reports (DRD Report Archive)
@@ -667,6 +671,44 @@ function initDb() {
         });
         db.run(`ALTER TABLE assessment_reports ADD COLUMN custom_data TEXT DEFAULT '{}'`, (err) => {
             // Ignore if exists - Additional metadata JSON
+        });
+        
+        // Migration: Add report status and content for 3-phase workflow
+        db.run(`ALTER TABLE assessment_reports ADD COLUMN report_status TEXT DEFAULT 'DRAFT'`, (err) => {
+            // Ignore if exists - DRAFT | FINALIZED
+        });
+        db.run(`ALTER TABLE assessment_reports ADD COLUMN report_content TEXT DEFAULT '{}'`, (err) => {
+            // Ignore if exists - JSON: ReportContent with sections
+        });
+        db.run(`ALTER TABLE assessment_reports ADD COLUMN report_sections TEXT DEFAULT '[]'`, (err) => {
+            // Ignore if exists - JSON array of ReportSection
+        });
+        db.run(`ALTER TABLE assessment_reports ADD COLUMN recommendations TEXT DEFAULT '[]'`, (err) => {
+            // Ignore if exists - JSON array of Recommendation
+        });
+        db.run(`ALTER TABLE assessment_reports ADD COLUMN finalized_at DATETIME`, (err) => {
+            // Ignore if exists - Timestamp when report was finalized
+        });
+        db.run(`ALTER TABLE assessment_reports ADD COLUMN based_on_id TEXT`, (err) => {
+            // Ignore if exists - Link to source report if copied
+            // FOREIGN KEY(based_on_id) REFERENCES assessment_reports(id)
+        });
+        db.run(`ALTER TABLE assessment_reports ADD COLUMN version INTEGER DEFAULT 1`, (err) => {
+            // Ignore if exists - Version number for version control
+        });
+        db.run(`ALTER TABLE assessment_reports ADD COLUMN previous_version_id TEXT`, (err) => {
+            // Ignore if exists - Link to previous version
+        });
+        
+        // Migration: Add assessment status to maturity_assessments
+        db.run(`ALTER TABLE maturity_assessments ADD COLUMN assessment_status TEXT DEFAULT 'IN_PROGRESS'`, (err) => {
+            // Ignore if exists - IN_PROGRESS | FINALIZED
+        });
+        db.run(`ALTER TABLE maturity_assessments ADD COLUMN report_id TEXT`, (err) => {
+            // Ignore if exists - Link to assessment_reports
+        });
+        db.run(`ALTER TABLE maturity_assessments ADD COLUMN finalized_at DATETIME`, (err) => {
+            // Ignore if exists - Timestamp when assessment was finalized
         });
 
         // Report Templates

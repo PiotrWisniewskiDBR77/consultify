@@ -6,7 +6,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TrendingUp, CheckCircle, AlertTriangle } from 'lucide-react';
-import { ADKAR_DIMENSIONS, ADKAR_QUESTIONS } from '../../data/adkarQuestionnaire';
+import { ADKAR_QUESTIONNAIRE, ADKAR_QUESTIONS, ADKARDimension, ADKARQuestion } from '../../data/adkarQuestionnaire';
 import axios from 'axios';
 
 interface ADKARWorkspaceProps {
@@ -73,7 +73,7 @@ export const ADKARWorkspace: React.FC<ADKARWorkspaceProps> = ({
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
                     <h3 className="text-xl font-semibold mb-4">Dimension Breakdown</h3>
                     <div className="space-y-4">
-                        {ADKAR_DIMENSIONS.map(dim => {
+                        {ADKAR_QUESTIONNAIRE.map((dim: ADKARDimension) => {
                             const score = results[`${dim.id}_score`];
                             const percentage = (score / 5) * 100;
 
@@ -121,7 +121,7 @@ export const ADKARWorkspace: React.FC<ADKARWorkspaceProps> = ({
     }
 
     const currentQ = ADKAR_QUESTIONS[currentQuestion];
-    const currentDimension = ADKAR_DIMENSIONS.find(d => d.id === currentQ.dimension);
+    const currentDimension = ADKAR_QUESTIONNAIRE.find((d: ADKARDimension) => d.id === currentQ.dimension);
 
     return (
         <div className="p-6 max-w-3xl mx-auto">
@@ -171,8 +171,8 @@ export const ADKARWorkspace: React.FC<ADKARWorkspaceProps> = ({
                             key={option.value}
                             onClick={() => handleResponse(option.value)}
                             className={`w-full p-4 rounded-lg border-2 transition-all hover:scale-105 ${responses[currentQ.id] === option.value
-                                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                                    : 'border-gray-200 dark:border-gray-700 hover:border-blue-300'
+                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                : 'border-gray-200 dark:border-gray-700 hover:border-blue-300'
                                 }`}
                         >
                             <div className="flex items-center justify-between">

@@ -247,6 +247,92 @@ router.get('/reports/:reportId', (req, res) => {
     });
 });
 
+// UPDATE ASSESSMENT REPORT
+router.patch('/reports/:reportId', (req, res) => {
+    const { reportId } = req.params;
+    const { title, status, assessment_snapshot } = req.body;
+    const orgId = req.user.organizationId;
+
+    console.log(`[Reports] Updating report: ${reportId}`);
+
+    // Build dynamic update query
+    const updates = [];
+    const params = [];
+
+    if (title !== undefined) {
+        updates.push('title = ?');
+        params.push(title);
+    }
+    if (status !== undefined) {
+        updates.push('status = ?');
+        params.push(status);
+    }
+    if (assessment_snapshot !== undefined) {
+        updates.push('assessment_snapshot = ?');
+        params.push(JSON.stringify(assessment_snapshot));
+
+        // Recalculate metrics
+        const axes = ['processes', 'digitalProducts', 'businessModels', 'dataManagement', 'culture', 'cybersecurity', 'aiMaturity'];
+        let totalActual = 0, totalTarget = 0, count = 0;
+        axes.forEach(axis => {
+            if (assessment_snapshot[axis]) {
+                totalActual += assessment_snapshot[axis].actual || 0;
+                totalTarget += assessment_snapshot[axis].target || 0;
+                count++;
+            }
+        });
+        if (count > 0) {
+            updates.push('avg_actual = ?, avg_target = ?, gap_points = ?');
+            params.push(totalActual / count, totalTarget / count, Math.round((totalTarget - totalActual) / count * 10));
+        }
+    }
+
+    if (updates.length === 0) {
+        return res.status(400).json({ error: 'No fields to update' });
+    }
+
+    updates.push('updated_at = CURRENT_TIMESTAMP');
+    params.push(reportId, orgId);
+
+    const sql = `UPDATE assessment_reports SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?`;
+
+    db.run(sql, params, function (err) {
+        if (err) {
+            console.error('[Reports] Error updating report:', err.message);
+            return res.status(500).json({ error: err.message });
+        }
+
+        if (this.changes === 0) {
+            return res.status(404).json({ error: 'Report not found' });
+        }
+
+        res.json({ message: 'Report updated successfully' });
+    });
+});
+
+// DELETE ASSESSMENT REPORT
+router.delete('/reports/:reportId', (req, res) => {
+    const { reportId } = req.params;
+    const orgId = req.user.organizationId;
+
+    console.log(`[Reports] Deleting report: ${reportId}`);
+
+    const sql = `DELETE FROM assessment_reports WHERE id = ? AND organization_id = ?`;
+
+    db.run(sql, [reportId, orgId], function (err) {
+        if (err) {
+            console.error('[Reports] Error deleting report:', err.message);
+            return res.status(500).json({ error: err.message });
+        }
+
+        if (this.changes === 0) {
+            return res.status(404).json({ error: 'Report not found' });
+        }
+
+        res.json({ message: 'Report deleted successfully' });
+    });
+});
+
 // EXPORT REPORT TO PDF
 router.post('/reports/:reportId/export-pdf', async (req, res) => {
     const { reportId } = req.params;

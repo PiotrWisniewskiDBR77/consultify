@@ -1173,7 +1173,31 @@ Initiative: "${initiative.name}"(${initiative.strategicRole})
 
     testProviderConnection: async (config) => {
         try {
-            const { provider, api_key, model_id, endpoint } = config;
+            let { provider, api_key, model_id, endpoint } = config;
+
+            // If provider is 'system', fetch credentials from database
+            if (provider === 'system' && model_id) {
+                const providerRow = await new Promise((resolve, reject) => {
+                    deps.db.get(
+                        "SELECT provider, api_key, model_id, endpoint FROM llm_providers WHERE id = ? AND is_active = 1",
+                        [model_id],
+                        (err, row) => {
+                            if (err) reject(err);
+                            else resolve(row);
+                        }
+                    );
+                });
+
+                if (!providerRow) {
+                    return { success: false, message: `System provider ${model_id} not found or inactive.` };
+                }
+
+                // Override config with database values
+                provider = providerRow.provider;
+                api_key = providerRow.api_key;
+                model_id = providerRow.model_id;
+                endpoint = providerRow.endpoint || endpoint;
+            }
 
             if (!provider || (!api_key && provider !== 'ollama')) throw new Error("Missing provider or API key");
             console.log('[AiService] Testing connection for:', provider);

@@ -31,6 +31,12 @@ export enum AppView {
   ASSESSMENT_OTHER = 'ASSESSMENT_OTHER', // Other assessments
   ASSESSMENT_SUMMARY = 'ASSESSMENT_SUMMARY', // Assessment Hub dashboard
   ASSESSMENT_AUDITS = 'ASSESSMENT_AUDITS', // Generic reports/audits
+  MY_ASSESSMENTS = 'MY_ASSESSMENTS', // User's assessments list
+  REVIEWER_DASHBOARD = 'REVIEWER_DASHBOARD', // Reviewer pending reviews
+  ASSESSMENT_DASHBOARD = 'ASSESSMENT_DASHBOARD', // Assessment module dashboard
+  GAP_MAP = 'GAP_MAP', // Gap analysis dashboard
+  ASSESSMENT_REPORTS = 'ASSESSMENT_REPORTS', // Assessment reports archive
+  INITIATIVE_GENERATOR = 'INITIATIVE_GENERATOR', // Initiative generator wizard
 
   // DRD Axis Views (kept for backward compatibility)
   FULL_STEP1_PROCESSES = 'FULL_STEP1_PROCESSES',
@@ -2106,7 +2112,7 @@ export interface FullReport {
   executiveSummary: string;
   keyFindings: string[];
   recommendations: string[];
-  generatedAt: string;
+  generatedAt?: string;
 
   // New Fields for Comprehensive Report
   transformationDescription?: string;
@@ -2245,6 +2251,18 @@ export interface Report {
 export type DRDAxis = 'processes' | 'digitalProducts' | 'businessModels' | 'dataManagement' | 'culture' | 'cybersecurity' | 'aiMaturity';
 export type MaturityLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
+// Assessment Status
+export enum AssessmentStatus {
+  IN_PROGRESS = 'IN_PROGRESS',
+  FINALIZED = 'FINALIZED'
+}
+
+// Report Status
+export enum ReportStatus {
+  DRAFT = 'DRAFT',
+  FINALIZED = 'FINALIZED'
+}
+
 export interface AxisAssessment {
   actual: MaturityLevel;
   target: MaturityLevel;
@@ -2253,6 +2271,283 @@ export interface AxisAssessment {
   areaScores?: Record<string, number[]>; // [actual, target] for each sub-area
   areaNotes?: Record<string, string>; // Notes justification for each sub-area
 }
+
+// Report Section Types
+export type ReportSectionType = 'executive-summary' | 'gap-analysis' | 'recommendations' | 'benchmarks' | 'roadmap' | 'custom';
+
+export interface ReportSection {
+  id: string;
+  type: ReportSectionType;
+  title: string;
+  content: string; // Markdown/rich text
+  status: 'draft' | 'reviewing' | 'approved';
+  aiGenerated: boolean;
+  lastEditedBy: 'ai' | 'human';
+  lastEditedAt: Date;
+  comments?: Comment[];
+  suggestions?: AISuggestion[];
+  order: number;
+}
+
+export interface Comment {
+  id: string;
+  text: string;
+  date: Date;
+  author: string;
+  authorId: string;
+  sectionId: string;
+}
+
+export interface AISuggestion {
+  id: string;
+  type: 'expand' | 'condense' | 'refine' | 'add-data' | 'add-example' | 'restructure' | 'add-section';
+  text: string;
+  originalText: string;
+  sectionId: string;
+  accepted?: boolean;
+  rejected?: boolean;
+}
+
+// Report Content Structure
+export interface ReportContent {
+  executiveSummary: string;
+  gapAnalysis: string;
+  recommendations: Recommendation[];
+  benchmarks?: string;
+  roadmap?: string;
+  customSections?: ReportSection[];
+}
+
+// Recommendation Types
+export type RecommendationType = 'development' | 'balance' | 'stabilization';
+export type RecommendationPriority = 'high' | 'medium' | 'low';
+export type RecommendationImpact = 'high' | 'medium' | 'low';
+export type RecommendationEffort = 'high' | 'medium' | 'low';
+export type TransformationPhase = 'measure' | 'optimize' | 'automate';
+
+export interface Recommendation {
+  id: string;
+  type: RecommendationType;
+
+  // For development recommendations
+  axis?: DRDAxis;
+  currentLevel?: MaturityLevel;
+  targetLevel?: MaturityLevel;
+
+  // For balance recommendations
+  axes?: DRDAxis[];
+
+  // Common fields
+  priority: RecommendationPriority;
+  rationale: string;
+  impact: RecommendationImpact;
+  effort: RecommendationEffort;
+
+  // Transformation philosophy
+  transformationPhase: TransformationPhase;
+
+  // Link to initiative (after generation)
+  initiativeId?: string;
+
+  // Metadata
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Assessment Report Interface (extended version for new report system)
+export interface AssessmentReport {
+  id: string;
+  assessmentId: string; // Link to assessment/project
+  name: string; // "DRD – Sales Q1 2025"
+  type: 'DRD' | 'LEAN' | 'SIRI' | 'ADMA' | 'CMMI';
+  status: ReportStatus;
+
+  // Content
+  content: ReportContent;
+  sections: ReportSection[];
+
+  // Metadata
+  createdAt: Date;
+  updatedAt: Date;
+  generatedAt?: string; // Aligned with base FullReport interface - ISO string format
+  finalizedAt?: Date;
+  createdBy: string;
+
+  // Relationships
+  basedOnId?: string; // If copied from another report
+
+  // Version control
+  version: number;
+  previousVersionId?: string;
+}
+
+// Assessment Interface (extended)
+export interface Assessment {
+  id: string;
+  projectId: string;
+  name: string; // "DRD – Sales Q1 2025"
+  type: 'DRD' | 'LEAN' | 'SIRI' | 'ADMA' | 'CMMI';
+  status: AssessmentStatus;
+
+  // Scores
+  axes: Record<DRDAxis, AxisAssessment>;
+
+  // Report
+  report?: Report;
+  reportId?: string;
+
+  // Metadata
+  createdAt: Date;
+  updatedAt: Date;
+  finalizedAt?: Date;
+  createdBy: string;
+
+  // Relationships
+  basedOnId?: string; // If copied from another assessment
+
+  // Progress tracking
+  completedAxes: DRDAxis[];
+  totalAxes: number;
+}
+
+// =====================================================
+// ASSESSMENT WORKFLOW TYPES
+// =====================================================
+
+/** Workflow states for assessment approval process */
+export type WorkflowState = 'DRAFT' | 'IN_REVIEW' | 'AWAITING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'ARCHIVED';
+
+/** Review status for individual reviewers */
+export type ReviewStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'SKIPPED';
+
+/** Assessment workflow status */
+export interface AssessmentWorkflowStatus {
+  id: string;
+  assessmentId: string;
+  projectId: string;
+  organizationId: string;
+  status: WorkflowState;
+  currentVersion: number;
+  createdBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+  completedReviews: number;
+  totalReviews: number;
+  reviewProgress: number;
+  canSubmitForReview: boolean;
+  canApprove: boolean;
+  slaDeadline?: Date;
+  isOverdue?: boolean;
+}
+
+/** Assessment version for history tracking */
+export interface AssessmentVersion {
+  id: string;
+  assessmentId: string;
+  version: number;
+  data: Assessment;
+  createdAt: Date;
+  createdBy: string;
+  createdByName?: string;
+  changeLog?: string;
+}
+
+/** Assessment review by stakeholder */
+export interface AssessmentReview {
+  id: string;
+  workflowId: string;
+  assessmentId: string;
+  reviewerId: string;
+  reviewerName: string;
+  reviewerEmail?: string;
+  status: ReviewStatus;
+  feedback?: string;
+  rating?: number;
+  assignedAt: Date;
+  startedAt?: Date;
+  completedAt?: Date;
+}
+
+/** Workflow transition record */
+export interface WorkflowTransition {
+  id: string;
+  workflowId: string;
+  assessmentId: string;
+  fromStatus: WorkflowState;
+  toStatus: WorkflowState;
+  triggeredBy: string;
+  triggeredByName?: string;
+  reason?: string;
+  timestamp: Date;
+}
+
+/** Assessment comment on axis */
+export interface AssessmentComment {
+  id: string;
+  assessmentId: string;
+  axisId: string;
+  userId: string;
+  userName: string;
+  content: string;
+  parentId?: string;
+  createdAt: Date;
+  updatedAt?: Date;
+  resolved?: boolean;
+  resolvedBy?: string;
+  resolvedAt?: Date;
+}
+
+// =====================================================
+// INITIATIVE GENERATOR TYPES
+// =====================================================
+
+/** Risk level for initiatives */
+export type InitiativeRiskLevel = 'LOW' | 'MEDIUM' | 'HIGH';
+
+/** Status of generated initiative */
+export type GeneratedInitiativeStatus = 'DRAFT' | 'APPROVED' | 'TRANSFERRED';
+
+/** Initiative generated from assessment gaps */
+export interface GeneratedInitiative {
+  id: string;
+  assessmentId: string;
+  sourceAxisId: DRDAxis;
+  name: string;
+  description: string;
+  objectives: string[];
+  estimatedROI: number;
+  estimatedBudget: number;
+  timeline: string;
+  riskLevel: InitiativeRiskLevel;
+  priority: number;
+  status: GeneratedInitiativeStatus;
+  aiGenerated: boolean;
+  createdAt: Date;
+  updatedAt?: Date;
+}
+
+/** Constraints for AI initiative generation */
+export interface InitiativeGeneratorConstraints {
+  maxBudget?: number;
+  maxTimeline?: string;
+  teamSize?: string;
+  riskAppetite?: 'conservative' | 'moderate' | 'aggressive';
+  focusAreas?: DRDAxis[];
+}
+
+/** Gap data for initiative generation */
+export interface GapForGeneration {
+  axisId: DRDAxis;
+  axisName: string;
+  currentScore: number;
+  targetScore: number;
+  gap: number;
+  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  selected: boolean;
+}
+
+/** Assessment tab types */
+export type AssessmentTab = 'dashboard' | 'assessments' | 'reviews' | 'gap-map' | 'reports';
 
 export interface AdditionalAudit {
   id: string;
@@ -2292,8 +2587,13 @@ export interface FullSession {
 
   // Module 2 Assessment Data
   assessment: Partial<Record<DRDAxis, AxisAssessment>> & { completedAxes: AxisId[] };
+  assessmentStatus?: AssessmentStatus; // IN_PROGRESS | FINALIZED
   audits: AdditionalAudit[];
   gapMapAnalysis?: string; // AI generated summary of gaps
+
+  // Report Data
+  report?: Report;
+  reportId?: string;
 
   // Module 3 Data
   initiatives: FullInitiative[];
@@ -2302,7 +2602,6 @@ export interface FullSession {
   // Module 4 & 5 Data (Placeholders)
   kpiResults?: Record<string, string>;
   economics?: EconomicsSummary;
-  report?: FullReport;
 
   // Module 5: Rollout Execution Data
   rollout?: {

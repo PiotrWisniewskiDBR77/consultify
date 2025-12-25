@@ -4,20 +4,6 @@ const { v4: uuidv4 } = require('uuid');
 const db = require('../database');
 const verifyToken = require('../middleware/authMiddleware');
 
-// GET /api/llm/providers/public - Get providers visible to users (PUBLIC)
-router.get('/providers/public', async (req, res) => {
-    try {
-        const providers = await dbAll(
-            "SELECT id, name, provider, model_id, endpoint FROM llm_providers WHERE visibility = 'public' AND is_active = 1 ORDER BY name ASC"
-        );
-        res.json(providers);
-    } catch (err) {
-        res.status(500).json({ error: 'Failed to fetch public providers' });
-    }
-});
-
-router.use(verifyToken);
-
 // Helper: Run DB Run
 const dbRun = (query, params) => new Promise((resolve, reject) => {
     db.run(query, params, function (err) {
@@ -33,6 +19,123 @@ const dbAll = (query, params) => new Promise((resolve, reject) => {
         else resolve(rows);
     });
 });
+
+// Helper: Run DB Get
+const dbGet = (query, params) => new Promise((resolve, reject) => {
+    db.get(query, params, (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+    });
+});
+
+// GET /api/llm/diagnose - Self-diagnostic and auto-repair endpoint
+router.get('/diagnose', async (req, res) => {
+    const diagnostics = {
+        timestamp: new Date().toISOString(),
+        checks: [],
+        repairs: [],
+        status: 'OK'
+    };
+
+    try {
+        // 1. Check if llm_providers table exists
+        const tableCheck = await new Promise((resolve) => {
+            db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='llm_providers'", [], (err, row) => {
+                resolve(row ? true : false);
+            });
+        });
+
+        if (!tableCheck) {
+            diagnostics.checks.push({ name: 'llm_providers_table', status: 'MISSING' });
+            diagnostics.status = 'REPAIRED';
+
+            // Auto-repair: Create table
+            await dbRun(`CREATE TABLE IF NOT EXISTS llm_providers(
+                id TEXT PRIMARY KEY,
+                name TEXT,
+                provider TEXT,
+                api_key TEXT,
+                endpoint TEXT,
+                model_id TEXT,
+                cost_per_1k REAL DEFAULT 0,
+                input_cost_per_1k REAL DEFAULT 0,
+                output_cost_per_1k REAL DEFAULT 0,
+                markup_multiplier REAL DEFAULT 1.0,
+                is_active INTEGER DEFAULT 1,
+                is_default INTEGER DEFAULT 0,
+                visibility TEXT DEFAULT 'admin'
+            )`);
+            diagnostics.repairs.push('Created llm_providers table');
+        } else {
+            diagnostics.checks.push({ name: 'llm_providers_table', status: 'OK' });
+        }
+
+        // 2. Check if any providers exist
+        const providerCount = await dbGet("SELECT COUNT(*) as count FROM llm_providers");
+        diagnostics.checks.push({ name: 'providers_count', value: providerCount?.count || 0 });
+
+        if (!providerCount || providerCount.count === 0) {
+            diagnostics.status = 'REPAIRED';
+
+            // Auto-repair: Add default OpenAI provider (placeholder - user needs to add real key)
+            const defaultId = uuidv4();
+            await dbRun(`INSERT INTO llm_providers (id, name, provider, api_key, endpoint, model_id, is_active, is_default, visibility)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [defaultId, 'GPT-4o (Default)', 'openai', 'sk-REPLACE-WITH-YOUR-KEY', 'https://api.openai.com/v1', 'gpt-4o', 1, 1, 'public']
+            );
+            diagnostics.repairs.push('Added default OpenAI provider (needs API key configuration)');
+        }
+
+        // 3. Check active providers
+        const activeProviders = await dbAll("SELECT id, name, provider, is_active, visibility FROM llm_providers WHERE is_active = 1");
+        diagnostics.checks.push({ name: 'active_providers', value: activeProviders?.length || 0, details: activeProviders });
+
+        // 4. Check if any public providers exist
+        const publicProviders = await dbAll("SELECT id, name FROM llm_providers WHERE visibility = 'public' AND is_active = 1");
+        diagnostics.checks.push({ name: 'public_providers', value: publicProviders?.length || 0 });
+
+        if (publicProviders?.length === 0 && activeProviders?.length > 0) {
+            // Make first active provider public
+            await dbRun("UPDATE llm_providers SET visibility = 'public' WHERE id = ?", [activeProviders[0].id]);
+            diagnostics.repairs.push(`Made provider "${activeProviders[0].name}" public`);
+            diagnostics.status = 'REPAIRED';
+        }
+
+        // 5. Test connection to first active provider
+        if (activeProviders && activeProviders.length > 0) {
+            const testProvider = await dbGet("SELECT * FROM llm_providers WHERE is_active = 1 LIMIT 1");
+            if (testProvider && testProvider.api_key && !testProvider.api_key.includes('REPLACE')) {
+                diagnostics.checks.push({ name: 'api_key_configured', status: 'OK' });
+            } else {
+                diagnostics.checks.push({ name: 'api_key_configured', status: 'NEEDS_CONFIGURATION', message: 'API key needs to be set in Admin > LLM Providers' });
+                diagnostics.status = diagnostics.status === 'OK' ? 'NEEDS_CONFIG' : diagnostics.status;
+            }
+        }
+
+        res.json(diagnostics);
+    } catch (err) {
+        console.error('[LLM Diagnose] Error:', err);
+        diagnostics.status = 'ERROR';
+        diagnostics.error = err.message;
+        res.status(500).json(diagnostics);
+    }
+});
+
+// GET /api/llm/providers/public - Get providers visible to users (PUBLIC)
+router.get('/providers/public', async (req, res) => {
+    try {
+        const providers = await dbAll(
+            "SELECT id, name, provider, model_id, endpoint FROM llm_providers WHERE visibility = 'public' AND is_active = 1 ORDER BY name ASC"
+        );
+        res.json(providers || []);
+    } catch (err) {
+        // If table doesn't exist, return empty array instead of error
+        console.error('[LLM] providers/public error:', err.message);
+        res.json([]);
+    }
+});
+
+router.use(verifyToken);
 
 // GET /api/llm/providers
 router.get('/providers', async (req, res) => {

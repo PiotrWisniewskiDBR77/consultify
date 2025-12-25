@@ -9,13 +9,15 @@ interface LevelSelectorProps {
     actual: number | undefined;
     target: number | undefined;
     onSelect: (type: 'actual' | 'target', level: number) => void;
+    readOnly?: boolean;
 }
 
 export const LevelSelector: React.FC<LevelSelectorProps> = ({
     levels,
     actual,
     target,
-    onSelect
+    onSelect,
+    readOnly = false
 }) => {
     return (
         <div className="space-y-3 relative">
@@ -53,26 +55,30 @@ export const LevelSelector: React.FC<LevelSelectorProps> = ({
                             </div>
                         </div>
 
-                        {/* Selection Controls */}
-                        <div className="flex flex-col gap-2 shrink-0 pt-1">
-                            {/* Actual Button */}
-                            <button
-                                onClick={() => onSelect('actual', levelNum)}
-                                className={`px-3 py-1 text-xs font-bold rounded-full border transition-all flex items-center gap-1 ${isActual ? getAssessmentButtonClasses('actual', true).replace('px-6 py-3', 'px-3 py-1').replace('text-sm', 'text-xs') : 'bg-navy-950 border-white/10 text-slate-500 hover:border-blue-500/50 hover:text-blue-400 opacity-0 group-hover:opacity-100'}`}
-                            >
-                                {isActual && <Check size={12} />}
-                                ACTUAL
-                            </button>
+                        {/* Selection Controls - hidden in readOnly mode */}
+                        {!readOnly && (
+                            <div className="flex flex-col gap-2 shrink-0 pt-1">
+                                {/* Actual Button */}
+                                <button
+                                    onClick={() => onSelect('actual', levelNum)}
+                                    disabled={readOnly}
+                                    className={`px-3 py-1 text-xs font-bold rounded-full border transition-all flex items-center gap-1 ${isActual ? getAssessmentButtonClasses('actual', true).replace('px-6 py-3', 'px-3 py-1').replace('text-sm', 'text-xs') : 'bg-navy-950 border-white/10 text-slate-500 hover:border-blue-500/50 hover:text-blue-400 opacity-0 group-hover:opacity-100'}`}
+                                >
+                                    {isActual && <Check size={12} />}
+                                    ACTUAL
+                                </button>
 
-                            {/* Target Button */}
-                            <button
-                                onClick={() => onSelect('target', levelNum)}
-                                className={`px-3 py-1 text-xs font-bold rounded-full border transition-all flex items-center gap-1 ${isTarget ? getAssessmentButtonClasses('target', true).replace('px-6 py-3', 'px-3 py-1').replace('text-sm', 'text-xs') : 'bg-navy-950 border-white/10 text-slate-500 hover:border-purple-500/50 hover:text-purple-400 opacity-0 group-hover:opacity-100'}`}
-                            >
-                                {isTarget && <Check size={12} />}
-                                TARGET
-                            </button>
-                        </div>
+                                {/* Target Button */}
+                                <button
+                                    onClick={() => onSelect('target', levelNum)}
+                                    disabled={readOnly}
+                                    className={`px-3 py-1 text-xs font-bold rounded-full border transition-all flex items-center gap-1 ${isTarget ? getAssessmentButtonClasses('target', true).replace('px-6 py-3', 'px-3 py-1').replace('text-sm', 'text-xs') : 'bg-navy-950 border-white/10 text-slate-500 hover:border-purple-500/50 hover:text-purple-400 opacity-0 group-hover:opacity-100'}`}
+                                >
+                                    {isTarget && <Check size={12} />}
+                                    TARGET
+                                </button>
+                            </div>
+                        )}
                     </div>
                 );
             })}

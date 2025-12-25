@@ -1,0 +1,293 @@
+---
+description: Rules for working with Assessment Module code
+globs:
+  - "**/assessment/**"
+  - "**/assessment*.ts"
+  - "**/assessment*.tsx"
+  - "**/assessment*.js"
+  - "**/AssessmentWorkflow*"
+  - "**/AxisComments*"
+  - "**/DRD*"
+  - "**/maturity*"
+  - "**/rapidlean*"
+  - "**/RapidLean*"
+  - "**/aiAssessment*"
+alwaysApply: false
+---
+
+# Assessment Module Development Rules
+
+## Overview
+
+This module implements the **Digital Readiness Diagnosis (DRD)** and other assessment methodologies for ANTYGRACITY Consultify. Follow these rules when working with assessment-related code.
+
+## Module Statistics (v2.0)
+
+- **31 Components** in `components/assessment/`
+- **12+ Backend Services** in `server/services/`
+- **48+ API Endpoints** across 9 route files
+- **3 React Hooks** for assessment operations
+- **26 AI Functions** for intelligent assistance
+
+## DRD Axis IDs
+
+Always use these exact axis IDs:
+
+```typescript
+type DRDAxis = 
+  | 'processes'       // Digital Processes
+  | 'digitalProducts' // Digital Products
+  | 'businessModels'  // Business Models
+  | 'dataManagement'  // Data Management
+  | 'culture'         // Culture
+  | 'cybersecurity'   // Cybersecurity
+  | 'aiMaturity';     // AI Maturity
+```
+
+## Workflow States
+
+Use the `WORKFLOW_STATES` enum from `assessmentWorkflowService.js`:
+
+```typescript
+type WorkflowState = 
+  | 'DRAFT'              // Editable by owner
+  | 'IN_REVIEW'          // Stakeholder review phase
+  | 'AWAITING_APPROVAL'  // All reviews done
+  | 'APPROVED'           // Final approved
+  | 'REJECTED'           // Needs revision
+  | 'ARCHIVED';          // Historical version
+```
+
+## Score Scale
+
+All axis scores must be integers from 1-7:
+
+```typescript
+const validateScore = (score: number): boolean => {
+  return Number.isInteger(score) && score >= 1 && score <= 7;
+};
+```
+
+## Required Fields
+
+Every axis assessment MUST include:
+
+1. `actual` (1-7) - current maturity level
+2. `target` (1-7) - target maturity level
+3. `justification` (min 100 chars) - reasoning for the score
+
+## React Hooks
+
+Use the provided hooks for assessment operations:
+
+```typescript
+// Workflow management
+import { useAssessmentWorkflow } from '../hooks/useAssessmentWorkflow';
+const { workflowStatus, submitForReview, approve, reject } = useAssessmentWorkflow(assessmentId);
+
+// AI assistance
+import { useAssessmentAI } from '../hooks/useAssessmentAI';
+const { suggestJustification, generateGapAnalysis } = useAssessmentAI(projectId, axisId);
+
+// Real-time collaboration
+import { useAssessmentCollaboration } from '../hooks/useAssessmentCollaboration';
+const { activeUsers, broadcastActivity } = useAssessmentCollaboration(assessmentId);
+```
+
+## API Endpoints Pattern
+
+Follow these patterns:
+
+```
+# Assessment data
+/api/assessment/:projectId
+
+# AI endpoints
+/api/assessment/:projectId/ai/[action]
+
+# Workflow endpoints
+/api/assessment-workflow/:assessmentId/[action]
+```
+
+## Key Endpoints
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/assessment/:projectId` | GET/PUT | Assessment data |
+| `/api/assessment/:projectId/ai/suggest-justification` | POST | AI suggestion |
+| `/api/assessment/:projectId/ai/gap/:axisId` | POST | Gap analysis |
+| `/api/assessment-workflow/:id/submit-for-review` | POST | Submit for review |
+| `/api/assessment-workflow/:id/approve` | POST | Approve assessment |
+| `/api/assessment-workflow/:id/versions` | GET | Version history |
+
+## RBAC Middleware
+
+Always use `assessmentRBAC` middleware on protected routes:
+
+```javascript
+router.post('/:id/approve', authMiddleware, assessmentRBAC('update'), async (req, res) => {
+  // ...
+});
+```
+
+Permissions: `'create'`, `'read'`, `'update'`, `'delete'`, `'export'`
+
+## Backend Services
+
+### Core Services
+
+| Service | Purpose |
+|---------|---------|
+| `assessmentService.js` | Core assessment CRUD |
+| `assessmentWorkflowService.js` | Workflow state management |
+| `assessmentReportService.js` | PDF/Excel export |
+
+### AI Services
+
+| Service | Purpose |
+|---------|---------|
+| `aiAssessmentPartnerService.js` | Main AI assistant (16 methods) |
+| `aiAssessmentFormHelper.js` | Form validation & suggestions (6 methods) |
+| `aiAssessmentReportGenerator.js` | AI report generation (4 methods) |
+
+## Frontend Components
+
+### Key Components
+
+| Component | Purpose |
+|-----------|---------|
+| `AssessmentAxisWorkspace` | Main axis assessment UI |
+| `AssessmentWorkflowPanel` | Workflow status display |
+| `AIAssessmentSidebar` | AI assistant sidebar |
+| `AssessmentVersionHistory` | Version history viewer |
+| `ReviewerDashboard` | Reviewer pending items |
+| `MyAssessmentsList` | User's assessments list |
+
+### AppView Values
+
+```typescript
+// Assessment views
+AppView.ASSESSMENT_DRD
+AppView.ASSESSMENT_LEAN
+AppView.MY_ASSESSMENTS
+AppView.REVIEWER_DASHBOARD
+AppView.FULL_STEP1_ASSESSMENT
+
+// Axis views
+AppView.FULL_STEP1_PROCESSES
+AppView.FULL_STEP1_DIGITAL
+// ... etc
+```
+
+## AI Integration
+
+Use `aiAssessmentPartnerService.js` methods:
+
+```javascript
+// Form assistance
+suggestJustification(axisId, score, context)
+suggestEvidence(axisId, score, context)
+suggestTargetScore(axisId, currentScore, ambitionLevel)
+
+// Validation
+validateScoreConsistency(assessment, organizationContext)
+
+// Analysis
+generateGapAnalysis(axisId, currentScore, targetScore, justification)
+generateProactiveInsights(assessment, organizationContext)
+
+// Reports
+generateExecutiveSummary(assessment, options)
+generateStakeholderView(assessment, stakeholderRole)
+```
+
+## Audit Logging
+
+Log all significant actions:
+
+```javascript
+await AssessmentAuditLogger.log({
+  userId: req.user.id,
+  organizationId: req.user.organizationId,
+  action: 'ASSESSMENT_APPROVED',
+  resourceType: 'ASSESSMENT',
+  resourceId: assessmentId,
+  details: { notes },
+  ipAddress: req.ip,
+  userAgent: req.get('user-agent')
+});
+```
+
+## Versioning Rules
+
+- Every `submitForReview` creates a new version
+- Versions are immutable snapshots
+- `restoreVersion` creates a NEW version (non-destructive)
+
+## Database Tables
+
+Key tables:
+
+| Table | Purpose |
+|-------|---------|
+| `assessments` | Core assessment data |
+| `assessment_workflows` | Workflow state |
+| `assessment_reviews` | Stakeholder reviews |
+| `assessment_versions` | Version history |
+| `assessment_comments` | Axis comments |
+| `ai_sessions` | AI conversation context |
+
+## Error Handling
+
+Return consistent error responses:
+
+```javascript
+res.status(400).json({ error: 'Assessment must be in DRAFT status' }); // Validation
+res.status(404).json({ error: 'Assessment not found' });               // Not found
+res.status(403).json({ error: 'Insufficient permissions' });           // Permission
+res.status(500).json({ error: 'Internal server error' });              // Server error
+```
+
+## Testing Checklist
+
+Before submitting code:
+
+- [ ] All workflow state transitions tested
+- [ ] RBAC permissions verified
+- [ ] Audit logging implemented
+- [ ] TypeScript types correct
+- [ ] API response format consistent
+- [ ] Error handling complete
+- [ ] Hook state management correct
+- [ ] AI fallbacks working
+
+## Initiative Generator
+
+The Initiative Generator transforms assessment gaps into actionable initiatives:
+
+### Hook
+
+```typescript
+const { gaps, generatedInitiatives, generateWithAI, approveAndTransfer } = useInitiativeGenerator(assessmentId);
+```
+
+### Key Components
+
+- `InitiativeGeneratorWizard` - Multi-step wizard
+- `GeneratedInitiativeCard` - Initiative display
+- `InitiativeEditor` - Edit modal
+
+### API Endpoints
+
+- `POST /api/initiatives/generate/:assessmentId` - Generate from assessment
+- `POST /api/initiatives/approve` - Transfer to Module 3
+
+See `.cursor/INITIATIVE_GENERATOR.md` for full documentation.
+
+## Related Documentation
+
+- `.cursor/ASSESSMENT_MODULE_COMPLETE.md` - Full module documentation
+- `.cursor/ASSESSMENT_MODULE_WORKFLOW.md` - Workflow documentation
+- `.cursor/AI_ASSESSMENT_SYSTEM.md` - AI system documentation
+- `.cursor/INITIATIVE_GENERATOR.md` - Initiative Generator documentation
+- `.cursor/rules/ai-assessment.mdc` - AI-specific rules

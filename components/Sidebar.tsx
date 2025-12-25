@@ -46,6 +46,7 @@ import {
   Sparkles,
   Factory, // Organization
   Wrench, // Tools
+  FileOutput, // Reports export
 } from 'lucide-react';
 import { SidebarUsage } from './SidebarUsage';
 import { PhaseIndicator } from './PMO/PhaseIndicator';
@@ -231,8 +232,39 @@ export const Sidebar: React.FC = () => {
       icon: <CheckCircle2 size={20} />,
       subItems: [
         {
+          id: 'M2_DASHBOARD',
+          label: t('sidebar.assessmentDashboard', 'Dashboard'),
+          viewId: AppView.ASSESSMENT_DASHBOARD,
+          icon: <LayoutDashboard size={16} />
+        },
+        {
+          id: 'M2_ASSESSMENTS',
+          label: t('sidebar.myAssessments', 'My Assessments'),
+          viewId: AppView.MY_ASSESSMENTS,
+          icon: <FileText size={16} />
+        },
+        {
+          id: 'M2_REVIEWS',
+          label: t('sidebar.reviewerDashboard', 'Reviews'),
+          viewId: AppView.REVIEWER_DASHBOARD,
+          icon: <Eye size={16} />
+        },
+        {
+          id: 'M2_GAP_MAP',
+          label: t('sidebar.gapMap', 'Gap Map'),
+          viewId: AppView.GAP_MAP,
+          icon: <TrendingUp size={16} />
+        },
+        {
+          id: 'M2_REPORTS',
+          label: t('sidebar.assessmentReports', 'Reports'),
+          viewId: AppView.ASSESSMENT_REPORTS,
+          icon: <FileOutput size={16} />
+        },
+        // Assessment Types (collapsible submenu)
+        {
           id: 'M2_DRD',
-          label: t('sidebar.assessmentDRD', 'DRD'),
+          label: t('sidebar.assessmentDRD', 'DRD Assessment'),
           viewId: AppView.ASSESSMENT_DRD,
           icon: <Activity size={16} />
         },
@@ -262,9 +294,15 @@ export const Sidebar: React.FC = () => {
         },
         {
           id: 'M2_OTHER',
-          label: t('sidebar.assessmentOther', 'Inne'),
+          label: t('sidebar.assessmentOther', 'Other'),
           viewId: AppView.ASSESSMENT_OTHER,
           icon: <Box size={16} />
+        },
+        {
+          id: 'M2_GENERATOR',
+          label: t('sidebar.initiativeGenerator', 'Generate Initiatives'),
+          viewId: AppView.INITIATIVE_GENERATOR,
+          icon: <Sparkles size={16} />
         },
       ]
     },

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FolderOpen, X } from 'lucide-react';
+import { FileText, X } from 'lucide-react';
 import DocumentSidePanel from './DocumentSidePanel';
 import { useAIContext } from '../../contexts/AIContext';
 
@@ -10,25 +10,18 @@ export const DocumentToggleButton: React.FC = () => {
 
     return (
         <>
-            {/* Toggle Button - Fixed on right side */}
-            <button
-                onClick={() => setIsPanelOpen(!isPanelOpen)}
-                className={`fixed right-0 top-1/2 -translate-y-1/2 z-30 transition-all duration-200 ${isPanelOpen ? 'right-80' : 'right-0'
-                    }`}
-            >
-                <div className="flex items-center gap-1 bg-purple-600 hover:bg-purple-700 text-white px-2 py-3 rounded-l-lg shadow-lg transition-colors">
-                    {isPanelOpen ? (
-                        <X size={18} />
-                    ) : (
-                        <>
-                            <FolderOpen size={18} />
-                            <span className="text-xs font-medium writing-mode-vertical transform rotate-180" style={{ writingMode: 'vertical-rl' }}>
-                                Dokumenty
-                            </span>
-                        </>
-                    )}
-                </div>
-            </button>
+            {/* Toggle Button - Fixed on right side at 25% from top */}
+            {!isPanelOpen && (
+                <button
+                    onClick={() => setIsPanelOpen(true)}
+                    className="fixed right-0 top-[25%] z-30 group"
+                    title="Biblioteka dokumentów"
+                >
+                    <div className="flex items-center justify-center w-10 h-10 bg-slate-100 dark:bg-navy-800 hover:bg-purple-100 dark:hover:bg-purple-900/30 text-slate-400 hover:text-purple-500 dark:hover:text-purple-400 rounded-l-lg border border-r-0 border-slate-200 dark:border-white/10 shadow-sm transition-all">
+                        <FileText size={20} />
+                    </div>
+                </button>
+            )}
 
             {/* Side Panel */}
             <DocumentSidePanel

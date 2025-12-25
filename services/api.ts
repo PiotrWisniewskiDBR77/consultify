@@ -365,6 +365,23 @@ export const Api = {
         return data.report;
     },
 
+    updateAssessmentReport: async (reportId: string, updates: { title?: string; status?: string; assessment_snapshot?: object }): Promise<any> => {
+        const res = await trackedFetch(`${API_URL}/sessions/reports/${reportId}`, {
+            method: 'PATCH',
+            headers: getHeaders(),
+            body: JSON.stringify(updates)
+        });
+        return handleResponse(res, 'Failed to update report');
+    },
+
+    deleteAssessmentReport: async (reportId: string): Promise<{ message: string }> => {
+        const res = await trackedFetch(`${API_URL}/sessions/reports/${reportId}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to delete report');
+    },
+
     exportReportPDF: async (reportId: string, options?: { branding?: Record<string, unknown>; includeCharts?: boolean; includeSummary?: boolean }): Promise<{ pdfUrl: string; message: string }> => {
         const res = await trackedFetch(`${API_URL}/sessions/reports/${reportId}/export-pdf`, {
             method: 'POST',
@@ -820,6 +837,17 @@ export const Api = {
             headers: getHeaders()
         });
         if (!res.ok) throw new Error('Failed to delete provider');
+    },
+
+    // LLM Self-Diagnostic - auto-repairs missing tables and default providers
+    diagnoseLLM: async (): Promise<{ status: string; checks: any[]; repairs: string[]; error?: string }> => {
+        try {
+            const res = await trackedFetch(`${API_URL}/llm/diagnose`, { headers: getHeaders() });
+            return res.json();
+        } catch (error) {
+            console.error('[LLM] Diagnose failed:', error);
+            return { status: 'ERROR', checks: [], repairs: [], error: String(error) };
+        }
     },
 
     getPublicLLMProviders: async (): Promise<any[]> => {

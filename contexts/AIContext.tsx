@@ -5,7 +5,7 @@ import {
     validateScreenContext,
     ScreenContextSchema
 } from '../types/AIContract';
-import { AppView } from '../types';
+import { AppView, DRDAxis } from '../types';
 
 // --- PMO Context Types ---
 interface PMOContext {
@@ -17,6 +17,17 @@ interface PMOContext {
     selectedObject: { type: 'task' | 'initiative' | null; id: string | null };
     // AI Roles Model
     aiRole: 'ADVISOR' | 'MANAGER' | 'OPERATOR';
+}
+
+// --- Assessment Context Types ---
+interface AssessmentContext {
+    isInAssessmentMode: boolean;
+    currentAxis: DRDAxis | null;
+    currentScore: number | null;
+    targetScore: number | null;
+    justification: string | null;
+    completedAxes: DRDAxis[];
+    assessmentProgress: number; // 0-100
 }
 
 interface AIContextProps {
@@ -33,6 +44,13 @@ interface AIContextProps {
     triggerProjectSummary: () => void;
     autoSummaryEnabled: boolean;
     setAutoSummaryEnabled: (enabled: boolean) => void;
+    // NEW: Assessment Context
+    assessmentContext: AssessmentContext;
+    updateAssessmentContext: (update: Partial<AssessmentContext>) => void;
+    clearAssessmentContext: () => void;
+    // NEW: Assessment AI helpers
+    requestAssessmentGuidance: (axisId: DRDAxis) => void;
+    requestGapAnalysis: () => void;
 }
 
 const AIContext = createContext<AIContextProps | undefined>(undefined);
@@ -80,6 +98,115 @@ export const AIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
     // AI Roles Model: Project AI role state
     const [projectAIRole, setProjectAIRole] = useState<'ADVISOR' | 'MANAGER' | 'OPERATOR'>('ADVISOR');
+
+    // Assessment Context State
+    const [assessmentContext, setAssessmentContext] = useState<AssessmentContext>({
+        isInAssessmentMode: false,
+        currentAxis: null,
+        currentScore: null,
+        targetScore: null,
+        justification: null,
+        completedAxes: [],
+        assessmentProgress: 0
+    });
+
+    // Update assessment context
+    const updateAssessmentContext = useCallback((update: Partial<AssessmentContext>) => {
+        setAssessmentContext(prev => ({ ...prev, ...update }));
+    }, []);
+
+    // Clear assessment context
+    const clearAssessmentContext = useCallback(() => {
+        setAssessmentContext({
+            isInAssessmentMode: false,
+            currentAxis: null,
+            currentScore: null,
+            targetScore: null,
+            justification: null,
+            completedAxes: [],
+            assessmentProgress: 0
+        });
+    }, []);
+
+    // Request assessment guidance via chat
+    const requestAssessmentGuidance = useCallback(async (axisId: DRDAxis) => {
+        if (!currentProjectId) return;
+
+        const axisNames: Record<DRDAxis, string> = {
+            processes: 'Procesy Cyfrowe',
+            digitalProducts: 'Produkty Cyfrowe',
+            businessModels: 'Modele Biznesowe',
+            dataManagement: 'Zarządzanie Danymi',
+            culture: 'Kultura Organizacyjna',
+            cybersecurity: 'Cyberbezpieczeństwo',
+            aiMaturity: 'Dojrzałość AI'
+        };
+
+        const guidanceMsg = {
+            id: `guidance-${Date.now()}`,
+            role: 'ai' as const,
+            content: `🎯 **Wsparcie AI dla: ${axisNames[axisId]}**
+
+Jestem gotowy pomóc Ci z oceną tej osi. Mogę:
+- Zasugerować odpowiedni poziom na podstawie opisu sytuacji
+- Wyjaśnić różnice między poziomami
+- Pomóc sformułować uzasadnienie
+- Zasugerować dowody wspierające ocenę
+
+**Jak mogę Ci pomóc?** Opisz aktualny stan w Twojej organizacji, a ja pomogę określić właściwy poziom.`,
+            timestamp: new Date()
+        };
+
+        addChatMessage(guidanceMsg);
+        setIsChatOpen(true);
+    }, [currentProjectId, addChatMessage]);
+
+    // Request gap analysis via chat
+    const requestGapAnalysis = useCallback(async () => {
+        if (!currentProjectId) return;
+
+        const analysisMsg = {
+            id: `gap-${Date.now()}`,
+            role: 'ai' as const,
+            content: `📊 **Analiza Luk - Assessment**
+
+Analizuję Twoją ocenę dojrzałości cyfrowej...
+
+${assessmentContext.completedAxes.length > 0 
+    ? `✅ Ukończono ocenę ${assessmentContext.completedAxes.length} osi.`
+    : '⏳ Rozpocznij ocenę osi, aby zobaczyć analizę luk.'}
+
+${assessmentContext.currentAxis && assessmentContext.currentScore && assessmentContext.targetScore
+    ? `\n**Aktualna oś:** ${assessmentContext.currentAxis}
+**Obecny poziom:** ${assessmentContext.currentScore}/7
+**Cel:** ${assessmentContext.targetScore}/7
+**Gap:** ${assessmentContext.targetScore - assessmentContext.currentScore} poziomów`
+    : ''}
+
+Zapytaj mnie o:
+- Szczegółową ścieżkę rozwoju dla wybranej osi
+- Priorytetyzację obszarów do poprawy
+- Szacowany czas i zasoby potrzebne do osiągnięcia celu`,
+            timestamp: new Date()
+        };
+
+        addChatMessage(analysisMsg);
+        setIsChatOpen(true);
+    }, [currentProjectId, assessmentContext, addChatMessage]);
+
+    // Auto-detect assessment mode from view
+    useEffect(() => {
+        const isAssessmentView = currentView.includes('ASSESSMENT') || 
+                                  currentView.includes('FULL_STEP1') ||
+                                  currentView.includes('FULL_STEP2') ||
+                                  currentView.includes('FULL_STEP3') ||
+                                  currentView.includes('FULL_STEP4') ||
+                                  currentView.includes('FULL_STEP5');
+        
+        if (isAssessmentView !== assessmentContext.isInAssessmentMode) {
+            updateAssessmentContext({ isInAssessmentMode: isAssessmentView });
+        }
+    }, [currentView, assessmentContext.isInAssessmentMode, updateAssessmentContext]);
 
     // Compute PMO Context from store
     const pmoContext = useMemo<PMOContext>(() => ({
@@ -234,7 +361,9 @@ _Context: ${pmoContext.currentScreen}_`,
         user: currentUser,
         company: currentUser ? { name: currentUser.companyName } : null,
         // Include PMO context in global context for API calls
-        pmo: pmoContext
+        pmo: pmoContext,
+        // Include Assessment context for AI calls
+        assessment: assessmentContext
     };
 
     return (
@@ -248,7 +377,13 @@ _Context: ${pmoContext.currentScreen}_`,
             pmoContext,
             triggerProjectSummary,
             autoSummaryEnabled,
-            setAutoSummaryEnabled
+            setAutoSummaryEnabled,
+            // Assessment context
+            assessmentContext,
+            updateAssessmentContext,
+            clearAssessmentContext,
+            requestAssessmentGuidance,
+            requestGapAnalysis
         }}>
             {children}
         </AIContext.Provider>

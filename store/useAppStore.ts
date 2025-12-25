@@ -28,6 +28,11 @@ interface AppState {
     chatPanelWidth: number;
     setChatPanelWidth: (width: number) => void;
 
+    // Report Context (for report-centric assessment workflow)
+    currentReportId: string | null;
+    currentReportMode: 'new' | 'view' | 'edit';
+    setCurrentReport: (id: string | null, mode: 'new' | 'view' | 'edit') => void;
+
     // Chat State
     activeChatMessages: ChatMessage[];
     projectChatMessages: Record<string, ChatMessage[]>; // MED-01: Per-project chat storage
@@ -178,6 +183,11 @@ export const useAppStore = create<AppState>()(
             // Chat Panel Width (persisted across module changes)
             chatPanelWidth: 380,
             setChatPanelWidth: (width) => set({ chatPanelWidth: width }),
+
+            // Report Context (for report-centric assessment workflow)
+            currentReportId: null,
+            currentReportMode: 'new',
+            setCurrentReport: (id, mode) => set({ currentReportId: id, currentReportMode: mode }),
 
             setCurrentProjectId: (pid) => set((state) => {
                 // MED-01: Save current chat before switching projects

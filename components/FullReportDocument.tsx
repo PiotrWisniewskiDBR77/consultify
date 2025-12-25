@@ -27,7 +27,7 @@ export const FullReportDocument: React.FC<FullReportDocumentProps> = ({
             <FileText className="text-purple-500 mr-3" size={20} />
             <span className="font-semibold text-navy-900 dark:text-white tracking-wide">{t.header}</span>
             <span className="ml-auto text-xs text-slate-500 font-mono">
-               Generated: {new Date(report.generatedAt).toLocaleDateString()}
+               Generated: {report.generatedAt ? new Date(report.generatedAt).toLocaleDateString() : 'Date unknown'}
             </span>
          </div>
 

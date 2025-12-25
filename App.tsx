@@ -864,14 +864,14 @@ const AppContent: React.FC = () => {
                                     {/* AI Chat Toggle Button */}
                                     <button
                                         onClick={() => toggleChatCollapse()}
-                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs transition-all border
+                                        className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg font-medium text-xs transition-all
                                             ${isChatCollapsed
-                                                ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-300 dark:border-purple-500/30 hover:bg-purple-200 dark:hover:bg-purple-500/30 hover:border-purple-400'
-                                                : 'bg-purple-600 text-white border-purple-600 hover:bg-purple-700 shadow-md shadow-purple-500/30'
+                                                ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-500/30'
+                                                : 'text-slate-400 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
                                             }`}
                                         title={isChatCollapsed ? 'Show AI Chat' : 'Hide AI Chat'}
                                     >
-                                        <Sparkles size={14} />
+                                        <Sparkles size={16} />
                                         <span>AI</span>
                                     </button>
                                     <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>

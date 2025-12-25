@@ -144,9 +144,10 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({
                 </h2>
                 <button
                     onClick={onClose}
-                    className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-full hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+                    className="w-9 h-9 flex items-center justify-center text-slate-500 hover:text-red-500 dark:text-slate-300 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                    title="Zamknij"
                 >
-                    <X size={18} />
+                    <X size={20} />
                 </button>
             </div>
 
@@ -155,8 +156,8 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({
                 <button
                     onClick={() => setActiveTab('project')}
                     className={`flex-1 py-3 text-xs font-medium transition-colors flex items-center justify-center gap-1.5 ${activeTab === 'project'
-                            ? 'text-purple-600 dark:text-purple-400 border-b-2 border-purple-500'
-                            : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                        ? 'text-purple-600 dark:text-purple-400 border-b-2 border-purple-500'
+                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                         }`}
                 >
                     <FolderOpen size={14} />
@@ -165,8 +166,8 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({
                 <button
                     onClick={() => setActiveTab('user')}
                     className={`flex-1 py-3 text-xs font-medium transition-colors flex items-center justify-center gap-1.5 ${activeTab === 'user'
-                            ? 'text-purple-600 dark:text-purple-400 border-b-2 border-purple-500'
-                            : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                        ? 'text-purple-600 dark:text-purple-400 border-b-2 border-purple-500'
+                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                         }`}
                 >
                     <User size={14} />

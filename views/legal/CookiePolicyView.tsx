@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { LegalPageLayout } from '../../components/Legal/LegalPageLayout';
+import { LegalPageLayout } from '../../components/legal/LegalPageLayout';
 
 export const CookiePolicyView: React.FC = () => {
     const { t } = useTranslation();

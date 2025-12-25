@@ -1,0 +1,285 @@
+---
+description: Rules for working with AI Assessment features
+globs:
+  - "**/assessment/**"
+  - "**/hooks/useAssessmentAI*"
+  - "**/hooks/useAssessmentWorkflow*"
+  - "**/hooks/useAssessmentCollaboration*"
+  - "**/services/aiAssessment*"
+  - "**/routes/assessment*"
+  - "**/contexts/AIContext*"
+alwaysApply: false
+---
+
+# AI Assessment Module Rules
+
+## Overview
+
+This file contains rules for Cursor AI when working with the AI Assessment system.
+The system provides intelligent support for digital maturity assessments.
+
+## Module Status: 100% Complete (v2.0)
+
+- **26 AI Functions** across 3 services
+- **29 AI Endpoints** in assessment.js
+- **3 React Hooks** for frontend integration
+
+## Key Files
+
+### Backend Services
+- `server/services/aiAssessmentPartnerService.js` - Main AI service with all methods
+- `server/services/aiAssessmentFormHelper.js` - Form assistance service
+- `server/services/aiAssessmentReportGenerator.js` - Report generation service
+
+### API Routes
+- `server/routes/assessment.js` - All assessment + AI endpoints
+
+### Frontend
+- `hooks/useAssessmentAI.ts` - React hook for AI functions
+- `components/assessment/AssessmentAxisWorkspace.tsx` - Main assessment component with AI integration
+- `components/assessment/AIAssessmentSidebar.tsx` - Contextual AI sidebar panel
+- `contexts/AIContext.tsx` - AI context with assessment integration
+
+### Documentation
+- `.cursor/AI_ASSESSMENT_SYSTEM.md` - Full system documentation
+
+## Coding Standards
+
+### Backend AI Methods
+
+When adding new AI methods:
+
+```javascript
+// Follow this pattern:
+async methodName(param1, param2, context = {}) {
+    // 1. Validate inputs
+    if (!param1) {
+        return { error: 'param1 is required' };
+    }
+
+    // 2. Build prompt
+    const prompt = `
+        Your task description...
+        Parameter: ${param1}
+        Context: ${context.industry || 'Not specified'}
+        
+        Requirements:
+        1. Requirement one
+        2. Requirement two
+        
+        Return format: JSON array/object
+        Language: ${context.language || 'Polish'}
+    `;
+
+    // 3. Try AI, fallback gracefully
+    try {
+        if (!this.model) {
+            return { 
+                result: this._getFallbackMethodName(param1),
+                mode: 'FALLBACK'
+            };
+        }
+
+        const result = await this.model.generateContent(prompt);
+        const responseText = result.response.text();
+        
+        // 4. Parse response
+        const jsonMatch = responseText.match(/\[[\s\S]*\]|\{[\s\S]*\}/);
+        const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : fallback;
+        
+        return {
+            result: parsed,
+            mode: 'AI_GENERATED'
+        };
+    } catch (error) {
+        console.error('[AIPartner] Method error:', error);
+        return {
+            result: this._getFallbackMethodName(param1),
+            mode: 'FALLBACK',
+            error: error.message
+        };
+    }
+}
+
+// Always provide fallback
+_getFallbackMethodName(param1) {
+    return { /* sensible default */ };
+}
+```
+
+### API Endpoints
+
+When adding new AI endpoints:
+
+```javascript
+/**
+ * @route POST /api/assessment/:projectId/ai/new-feature
+ * @desc Description of what this endpoint does
+ */
+router.post('/:projectId/ai/new-feature', verifyToken, async (req, res) => {
+    try {
+        const { requiredParam } = req.body;
+
+        if (!requiredParam) {
+            return res.status(400).json({ error: 'requiredParam is required' });
+        }
+
+        const result = await aiAssessmentPartner.newMethod(
+            requiredParam,
+            { language: req.body.language || 'pl' }
+        );
+
+        res.json(result);
+    } catch (err) {
+        console.error('[AIPartner] New feature error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+```
+
+### Frontend Hook Methods
+
+When adding new hook methods:
+
+```typescript
+const newMethod = useCallback(async (
+    param1: string,
+    options: object = {}
+): Promise<ResultType> => {
+    const result = await apiCall<ResultType>('/ai/new-feature', 'POST', {
+        param1,
+        ...options
+    });
+    // Optionally update state
+    setState(prev => ({ ...prev, relevantState: result }));
+    return result;
+}, [apiCall]);
+```
+
+## DRD Axes Reference
+
+Always use these axis IDs:
+- `processes` - Digital Processes
+- `digitalProducts` - Digital Products & Services
+- `businessModels` - Digital Business Models
+- `dataManagement` - Data & Analytics
+- `culture` - Organizational Culture
+- `cybersecurity` - Cybersecurity & Risk
+- `aiMaturity` - AI & Machine Learning
+
+Maturity levels: 1-7 (integer)
+
+## AI Response Modes
+
+Always return `mode` field:
+- `AI_GENERATED` - Response from AI model
+- `FALLBACK` - Fallback when AI unavailable
+- `AI_CORRECTED` - AI corrected user input
+- `AI_COMPLETED` - AI completed partial input
+- `UNCHANGED` - No changes made
+
+## Error Handling
+
+### Backend
+```javascript
+try {
+    // AI call
+} catch (error) {
+    console.error('[AIPartner] Context:', error);
+    return {
+        result: fallbackValue,
+        mode: 'FALLBACK',
+        error: error.message
+    };
+}
+```
+
+### Frontend
+```typescript
+try {
+    const result = await ai.someMethod();
+} catch (err) {
+    if ((err as Error).name === 'AbortError') {
+        return; // Ignore cancelled requests
+    }
+    // Handle error
+}
+```
+
+## Language Support
+
+Default language is Polish (`pl`). Support:
+- `pl` - Polish
+- `en` - English
+- `de` - German
+
+Always pass `language` in context for AI prompts.
+
+## Testing Considerations
+
+When testing AI features:
+1. Test with AI unavailable (model = null)
+2. Test with API errors
+3. Test fallback responses
+4. Test request cancellation
+5. Test concurrent requests
+
+## Performance
+
+- Use `AbortController` to cancel pending requests
+- Debounce autocomplete calls (500ms recommended)
+- Cache AI responses where appropriate
+- Use `suggest-only` strategy for batch operations in read-only contexts
+
+## Security
+
+- All AI endpoints require `verifyToken` middleware
+- Some endpoints require additional permissions (`req.can('edit_project_settings')`)
+- Never expose raw AI prompts to users
+- Sanitize user input before including in prompts
+
+## Integration Points
+
+### With Chat Panel
+AI context is provided via `AIContext`:
+```typescript
+const { updateContext } = useAI();
+updateContext({
+    screen: 'assessment',
+    assessmentAxis: currentAxis,
+    assessmentScore: currentScore
+});
+```
+
+### With Workflow
+Assessment workflow status affects AI availability:
+- `DRAFT` - Full AI assistance
+- `IN_REVIEW` - Limited suggestions
+- `APPROVED` - Read-only, no AI modifications
+
+## Common Patterns
+
+### Suggesting with existing content
+```typescript
+// Append to existing
+const suggestion = await ai.suggestJustification(axis, score, existingText);
+if (suggestion.suggestion) {
+    setJustification(existing + '\n\n' + suggestion.suggestion);
+}
+```
+
+### Batch operations
+```typescript
+// Fill all missing fields at once
+const filled = await ai.fillMissingFields('conservative');
+// Apply selectively based on user preference
+```
+
+### Validation before submit
+```typescript
+const validation = await ai.validateConsistency();
+if (!validation.isValid) {
+    showWarnings(validation.warnings);
+    return; // Block submit
+}
+```

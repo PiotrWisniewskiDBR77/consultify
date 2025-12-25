@@ -1,4 +1,4 @@
-import { CheckCircle2, Circle, MessageSquare, AlertCircle, Sparkles, BrainCircuit } from 'lucide-react';
+import { CheckCircle2, Circle, MessageSquare, AlertCircle, Sparkles, BrainCircuit, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getAssessmentButtonClasses } from '../../utils/assessmentColors';
 
@@ -16,6 +16,7 @@ interface LevelDetailCardProps {
     notes?: string;
     onNotesChange: (notes: string) => void;
     onAiAssist?: () => void;
+    isAiLoading?: boolean;
 }
 
 export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
@@ -31,7 +32,8 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
     onSetNA,
     notes,
     onNotesChange,
-    onAiAssist
+    onAiAssist,
+    isAiLoading = false
 }) => {
     const { t } = useTranslation();
     const cardT = t('assessment.card', { returnObjects: true }) as any;
@@ -149,10 +151,19 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
                             {onAiAssist && (
                                 <button
                                     onClick={onAiAssist}
-                                    className="flex items-center gap-1.5 text-[10px] font-bold text-purple-400 hover:text-white bg-purple-500/20 hover:bg-purple-500 px-3 py-1.5 rounded-full transition-all border border-purple-500/30"
+                                    disabled={isAiLoading}
+                                    className={`flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-full transition-all border ${
+                                        isAiLoading 
+                                            ? 'text-purple-300 bg-purple-500/10 border-purple-500/20 cursor-wait'
+                                            : 'text-purple-400 hover:text-white bg-purple-500/20 hover:bg-purple-500 border-purple-500/30'
+                                    }`}
                                 >
-                                    <Sparkles size={12} />
-                                    {cardT.ai || 'AI'}
+                                    {isAiLoading ? (
+                                        <Loader2 size={12} className="animate-spin" />
+                                    ) : (
+                                        <Sparkles size={12} />
+                                    )}
+                                    {isAiLoading ? (cardT.thinking || 'Myślę...') : (cardT.ai || 'AI')}
                                 </button>
                             )}
                         </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { Api } from '../services/api';
 import { ChevronDown, Search, Check, Zap, Layers, Sparkles } from 'lucide-react';
@@ -10,22 +10,88 @@ interface LLMModel {
     model_id: string;
 }
 
+// Status indicator dot component
+const StatusDot: React.FC<{ isConnected: boolean; isLoading?: boolean }> = ({ isConnected, isLoading }) => {
+    if (isLoading) {
+        return (
+            <div className="w-2.5 h-2.5 rounded-full bg-yellow-500 animate-pulse" title="Sprawdzanie połączenia..." />
+        );
+    }
+    return (
+        <div
+            className={`w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}
+            title={isConnected ? 'Model LLM połączony' : 'Model LLM niedostępny'}
+        />
+    );
+};
+
 export const LLMSelector: React.FC = () => {
     const { aiConfig, setAIConfig, currentUser } = useAppStore();
     const [isOpen, setIsOpen] = useState(false);
     const [models, setModels] = useState<LLMModel[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(false);
+    const [llmConnected, setLlmConnected] = useState<boolean | null>(null);
+    const [checkingConnection, setCheckingConnection] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
+
+    // LLM Connection Health Check
+    const checkLLMConnection = useCallback(async () => {
+        if (!aiConfig.selectedModelId) {
+            setLlmConnected(false);
+            return;
+        }
+
+        setCheckingConnection(true);
+        try {
+            const testConfig = {
+                provider: 'system',
+                model_id: aiConfig.selectedModelId,
+            };
+            const result = await Api.testLLMConnection(testConfig as any);
+            setLlmConnected(result.success);
+        } catch (err) {
+            console.error('LLM connection check failed:', err);
+            setLlmConnected(false);
+        } finally {
+            setCheckingConnection(false);
+        }
+    }, [aiConfig.selectedModelId]);
+
+    // Check connection on mount and every 30 seconds
+    useEffect(() => {
+        checkLLMConnection();
+        const interval = setInterval(checkLLMConnection, 30000);
+        return () => clearInterval(interval);
+    }, [checkLLMConnection]);
 
     useEffect(() => {
         const fetchModels = async () => {
             setLoading(true);
             try {
-                const data = await Api.getPublicLLMProviders();
-                setModels(data);
+                let data = await Api.getPublicLLMProviders();
+
+                // Auto-diagnose: If no providers, trigger self-repair and retry
+                if (!data || data.length === 0) {
+                    console.log('[LLMSelector] No providers found, running auto-diagnose...');
+                    const diagnosis = await Api.diagnoseLLM();
+                    console.log('[LLMSelector] Diagnosis result:', diagnosis);
+
+                    // Retry fetching after repair
+                    if (diagnosis.status === 'REPAIRED' || diagnosis.repairs.length > 0) {
+                        data = await Api.getPublicLLMProviders();
+                    }
+                }
+
+                setModels(data || []);
             } catch (error) {
-                console.error('Failed to fetch models', error);
+                console.error('Failed to fetch models:', error);
+                // Try auto-diagnose on error too
+                try {
+                    await Api.diagnoseLLM();
+                } catch (diagError) {
+                    console.error('Diagnose also failed:', diagError);
+                }
             } finally {
                 setLoading(false);
             }
@@ -50,38 +116,22 @@ export const LLMSelector: React.FC = () => {
     const filteredModels = models.filter(m => {
         const matchesSearch = (m.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
             (m.provider?.toLowerCase() || '').includes(searchQuery.toLowerCase());
-
-        // Filter by user preference if defined and not empty
-        // If config implies "System" provider handling, we check this. 
-        // Note: Models list can come from 'ollama' or 'public' (system). 
-        // 'getPublicLLMProviders' implies system models.
-        // If user is in 'system' mode configuration effectively, we filter.
-        // Actually, LLM Selector shows ALL models normally? Or just the available ones?
-        // The requirement is "What user chooses enters their top list".
-        // So we should filter by `currentUser.aiConfig.visibleModelIds` if it exists.
-
         const userVisibleIds = currentUser?.aiConfig?.visibleModelIds;
         const isVisibleByUser = userVisibleIds && userVisibleIds.length > 0
             ? userVisibleIds.includes(m.id)
-            : true; // Show all if no preference set
-
+            : true;
         return matchesSearch && isVisibleByUser;
     });
-
-
 
     const handleModelSelect = (modelId: string) => {
         setAIConfig({ selectedModelId: modelId, autoMode: false });
         setIsOpen(false);
+        // Re-check connection after model change
+        setTimeout(checkLLMConnection, 500);
     };
 
-    // If no model is selected, and we have models, select the first one (or system default)
     useEffect(() => {
         if (!aiConfig.selectedModelId && models.length > 0) {
-            // Prefer one marked as default if possible, otherwise first
-            // Since we don't have is_default property easily exposed here without looking at raw data or guessing, 
-            // we'll just pick the first one to ensure "Unknown" isn't shown.
-            // Ideally backend returns 'is_default' but 'models' is simplified.
             setAIConfig({ selectedModelId: models[0].id });
         }
     }, [models, aiConfig.selectedModelId, setAIConfig]);
@@ -101,7 +151,7 @@ export const LLMSelector: React.FC = () => {
                 onClick={() => setIsOpen(!isOpen)}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all duration-200 ${isOpen ? 'bg-slate-100 dark:bg-white/10 border-brand/50' : 'bg-transparent border-slate-200 dark:border-white/10 hover:border-brand/50 hover:bg-slate-50 dark:hover:bg-white/5'} text-xs font-medium text-navy-900 dark:text-white`}
             >
-                <Sparkles size={14} className="text-purple-500" />
+                <StatusDot isConnected={llmConnected === true} isLoading={checkingConnection || llmConnected === null} />
                 <span>{getActiveLabel()}</span>
                 <ChevronDown size={12} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
             </button>

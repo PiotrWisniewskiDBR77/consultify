@@ -104,5 +104,52 @@ describe('RapidLeanWorkspace', () => {
             expect(viewResultsButton).toBeInTheDocument();
         });
     });
+
+    test('should handle observation workflow', async () => {
+        render(<RapidLeanWorkspace {...mockProps} />);
+
+        const startButton = screen.getByText(/Start Production Floor Observation/i);
+        fireEvent.click(startButton);
+
+        await waitFor(() => {
+            // Should show observation form
+            expect(screen.getByText('Value Stream Observation')).toBeInTheDocument();
+        });
+    });
+
+    test('should display all 6 templates in overview', () => {
+        render(<RapidLeanWorkspace {...mockProps} />);
+
+        const templates = [
+            'Value Stream Observation',
+            'Waste Identification',
+            'Flow & Pull Systems',
+            'Quality at Source',
+            'Continuous Improvement',
+            'Visual Management'
+        ];
+
+        templates.forEach(template => {
+            expect(screen.getByText(template)).toBeInTheDocument();
+        });
+    });
+
+    test('should show DRD integration card', () => {
+        render(<RapidLeanWorkspace {...mockProps} />);
+
+        expect(screen.getByText('DRD Integration')).toBeInTheDocument();
+        expect(screen.getByText(/Maps to DRD maturity levels/i)).toBeInTheDocument();
+    });
+
+    test('should handle error state', () => {
+        // Mock API error
+        const axios = require('axios');
+        axios.post.mockRejectedValueOnce(new Error('API Error'));
+
+        render(<RapidLeanWorkspace {...mockProps} />);
+
+        // Component should handle error gracefully
+        expect(screen.getByText('RapidLean Assessment')).toBeInTheDocument();
+    });
 });
 

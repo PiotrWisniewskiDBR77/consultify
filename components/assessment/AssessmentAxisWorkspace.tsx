@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { DRDAxis, MaturityLevel, AxisAssessment } from '../../types';
-import { ArrowRight, Info, CheckCircle2, AlertTriangle, BrainCircuit, TrendingUp, Lightbulb, ChevronRight, ChevronDown } from 'lucide-react';
+import { ArrowRight, Info, CheckCircle2, AlertTriangle, BrainCircuit, TrendingUp, Lightbulb, ChevronRight, ChevronDown, Sparkles, Loader2, RefreshCw, Target, FileText, Zap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { LevelNavigator } from './LevelNavigator';
 import { LevelSelector } from './LevelSelector';
 import { LevelDetailCard } from './LevelDetailCard';
+import { useAssessmentAI } from '../../hooks/useAssessmentAI';
+import { useAppStore } from '../../store/useAppStore';
 
 interface AssessmentAxisWorkspaceProps {
     axis: DRDAxis;
@@ -16,16 +18,63 @@ interface AssessmentAxisWorkspaceProps {
         challenges: string[];
         industry: string;
     };
+    readOnly?: boolean;
+    projectId?: string;
 }
+
+// AI Quick Action Button Component
+interface AIActionButtonProps {
+    onClick: () => void;
+    isLoading?: boolean;
+    icon: React.ReactNode;
+    label: string;
+    variant?: 'primary' | 'secondary';
+    disabled?: boolean;
+}
+
+const AIActionButton: React.FC<AIActionButtonProps> = ({
+    onClick,
+    isLoading,
+    icon,
+    label,
+    variant = 'secondary',
+    disabled
+}) => {
+    const baseClasses = "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all";
+    const variantClasses = variant === 'primary'
+        ? "bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-900/20"
+        : "bg-slate-100 dark:bg-navy-950/50 hover:bg-slate-200 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10";
+
+    return (
+        <button
+            onClick={onClick}
+            disabled={disabled || isLoading}
+            className={`${baseClasses} ${variantClasses} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
+            {isLoading ? <Loader2 size={14} className="animate-spin" /> : icon}
+            {label}
+        </button>
+    );
+};
 
 export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = ({
     axis,
     data,
     onChange,
     onNext,
-    context
+    context,
+    readOnly = false,
+    projectId
 }) => {
     const { t } = useTranslation();
+    const { currentProjectId } = useAppStore();
+    const effectiveProjectId = projectId || currentProjectId || '';
+
+    // AI Integration
+    const ai = useAssessmentAI(effectiveProjectId);
+    const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
+    const [aiEvidence, setAiEvidence] = useState<string[] | null>(null);
+    const [showAiPanel, setShowAiPanel] = useState(false);
 
     // Fetch translated content
     const axisContent = t(`assessment.axisContent.${axis}`, { returnObjects: true }) as { title: string; intro?: string; levels?: Record<string, string>, areas?: Record<string, { title: string, levels: Record<string, string> }> };
@@ -59,6 +108,116 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
             }
         }
     }, [hasSubAreas, data.actual, data.target, axisAreas]);
+
+    // =========================================================================
+    // AI ASSISTANCE FUNCTIONS
+    // =========================================================================
+
+    const handleAiSuggestJustification = useCallback(async () => {
+        const areaScore = currentAreaKey ? (data.areaScores?.[currentAreaKey]?.[0] || 0) : 0;
+        const currentScore = hasSubAreas ? areaScore : (data.actual || 0);
+        if (currentScore === 0) return;
+
+        try {
+            const result = await ai.suggestJustification(axis, currentScore, data.justification);
+            if (result.suggestion) {
+                setAiSuggestion(result.suggestion);
+                setShowAiPanel(true);
+            }
+        } catch (err) {
+            console.error('AI suggestion error:', err);
+        }
+    }, [ai, axis, hasSubAreas, currentAreaKey, data.areaScores, data.actual, data.justification]);
+
+    const handleAiSuggestEvidence = useCallback(async () => {
+        const areaScore = currentAreaKey ? (data.areaScores?.[currentAreaKey]?.[0] || 0) : 0;
+        const currentScore = hasSubAreas ? areaScore : (data.actual || 0);
+        if (currentScore === 0) return;
+
+        try {
+            const result = await ai.suggestEvidence(axis, currentScore);
+            if (result.evidence) {
+                setAiEvidence(result.evidence);
+                setShowAiPanel(true);
+            }
+        } catch (err) {
+            console.error('AI evidence error:', err);
+        }
+    }, [ai, axis, hasSubAreas, currentAreaKey, data.areaScores, data.actual]);
+
+    const handleAiSuggestTarget = useCallback(async () => {
+        const areaScore = currentAreaKey ? (data.areaScores?.[currentAreaKey]?.[0] || 0) : 0;
+        const currentScore = hasSubAreas ? areaScore : (data.actual || 0);
+        if (currentScore === 0) return;
+
+        try {
+            const result = await ai.suggestTarget(axis, currentScore);
+            if (result.suggestedTarget) {
+                // Apply suggested target
+                if (hasSubAreas && currentAreaKey) {
+                    const currentScores = data.areaScores?.[currentAreaKey] || [0, 0];
+                    const updatedAreaScores = {
+                        ...(data.areaScores || {}),
+                        [currentAreaKey]: [currentScores[0], result.suggestedTarget]
+                    };
+                    // Call onChange directly with aggregated scores
+                    let totalActual = 0, totalTarget = 0, countActual = 0, countTarget = 0;
+                    Object.values(updatedAreaScores).forEach((scores: number[]) => {
+                        if (scores[0] > 0) { totalActual += scores[0]; countActual++; }
+                        if (scores[1] > 0) { totalTarget += scores[1]; countTarget++; }
+                    });
+                    onChange({
+                        ...data,
+                        areaScores: updatedAreaScores,
+                        actual: countActual > 0 ? Math.round(totalActual / countActual) as MaturityLevel : undefined,
+                        target: countTarget > 0 ? Math.round(totalTarget / countTarget) as MaturityLevel : undefined
+                    });
+                } else {
+                    onChange({ ...data, target: result.suggestedTarget as MaturityLevel });
+                }
+            }
+        } catch (err) {
+            console.error('AI target suggestion error:', err);
+        }
+    }, [ai, axis, hasSubAreas, currentAreaKey, data, onChange]);
+
+    const handleAiCorrectText = useCallback(async () => {
+        if (!data.justification) return;
+
+        try {
+            const result = await ai.correctText(data.justification);
+            if (result.suggestion && result.mode === 'AI_CORRECTED') {
+                onChange({ ...data, justification: result.suggestion });
+            }
+        } catch (err) {
+            console.error('AI text correction error:', err);
+        }
+    }, [ai, data, onChange]);
+
+    const handleApplySuggestion = useCallback(() => {
+        if (aiSuggestion) {
+            const currentNotes = data.justification || '';
+            onChange({
+                ...data,
+                justification: currentNotes ? `${currentNotes}\n\n${aiSuggestion}` : aiSuggestion
+            });
+            setAiSuggestion(null);
+            setShowAiPanel(false);
+        }
+    }, [aiSuggestion, data, onChange]);
+
+    const handleApplyEvidence = useCallback(() => {
+        if (aiEvidence && aiEvidence.length > 0) {
+            const currentNotes = data.justification || '';
+            const evidenceText = `\n\n📋 Sugerowane dowody:\n${aiEvidence.map(e => `• ${e}`).join('\n')}`;
+            onChange({
+                ...data,
+                justification: currentNotes + evidenceText
+            });
+            setAiEvidence(null);
+            setShowAiPanel(false);
+        }
+    }, [aiEvidence, data, onChange]);
 
     // --- Logic ---
     const updateAggregateScores = (newAreaScores: Record<string, number[]>) => {
@@ -123,6 +282,15 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
             data-tour="drd-workspace"
             className="flex flex-col h-full bg-white dark:bg-navy-900 text-navy-900 dark:text-white overflow-hidden"
         >
+            {/* Read-Only Banner */}
+            {readOnly && (
+                <div className="px-4 py-2 bg-amber-50 dark:bg-amber-500/10 border-b border-amber-200 dark:border-amber-500/20 flex items-center gap-2">
+                    <Info size={14} className="text-amber-600 dark:text-amber-400" />
+                    <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                        {t('assessment.workspace.readOnlyMode', 'Read-only mode - viewing historical report')}
+                    </span>
+                </div>
+            )}
             {/* Header */}
             <div className="h-20 border-b border-slate-200 dark:border-white/5 flex items-center justify-between px-6 bg-white dark:bg-navy-900 shrink-0 z-20 relative">
                 <div className="flex items-center gap-6">
@@ -170,7 +338,43 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                     )}
                 </div>
 
-                <div className="flex items-center gap-6">
+                <div className="flex items-center gap-4">
+                    {/* AI Quick Actions */}
+                    {!readOnly && effectiveProjectId && (
+                        <div className="flex items-center gap-2 mr-2">
+                            <AIActionButton
+                                onClick={handleAiSuggestJustification}
+                                isLoading={ai.isLoading}
+                                icon={<Sparkles size={14} />}
+                                label="Sugeruj"
+                                variant="primary"
+                                disabled={!data.actual && !activeScores[0]}
+                            />
+                            <AIActionButton
+                                onClick={handleAiSuggestEvidence}
+                                isLoading={ai.isLoading}
+                                icon={<FileText size={14} />}
+                                label="Dowody"
+                                disabled={!data.actual && !activeScores[0]}
+                            />
+                            <AIActionButton
+                                onClick={handleAiSuggestTarget}
+                                isLoading={ai.isLoading}
+                                icon={<Target size={14} />}
+                                label="Cel"
+                                disabled={!data.actual && !activeScores[0]}
+                            />
+                            {data.justification && (
+                                <AIActionButton
+                                    onClick={handleAiCorrectText}
+                                    isLoading={ai.isLoading}
+                                    icon={<RefreshCw size={14} />}
+                                    label="Popraw"
+                                />
+                            )}
+                        </div>
+                    )}
+
                     {/* Overall Progress */}
                     <div className="flex items-center gap-3 bg-slate-100 dark:bg-navy-950/50 px-4 py-2 rounded-lg border border-slate-200 dark:border-white/5">
                         <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">{workspaceT.axisProgress || 'AXIS PROGRESS'}</span>
@@ -402,15 +606,77 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                             }}
                             notes={data.justification || ''} // Using justification as notes placeholder for now
                             onNotesChange={(text: string) => onChange({ ...data, justification: text })}
-                            onAiAssist={() => {
-                                // Placeholder for AI integration
-                                const currentNotes = data.justification || '';
-                                onChange({
-                                    ...data,
-                                    justification: currentNotes + (currentNotes ? "\n\n" : "") + "[Sugestia AI]: Biorąc pod uwagę Twój obecny poziom, warto skupić się najpierw na dokumentacji procesowej."
-                                });
-                            }}
+                            onAiAssist={handleAiSuggestJustification}
+                            isAiLoading={ai.isLoading}
                         />
+
+                        {/* AI Suggestion Panel */}
+                        {showAiPanel && (aiSuggestion || aiEvidence) && (
+                            <div className="mt-6 p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-500/30 rounded-xl">
+                                <div className="flex items-start gap-3">
+                                    <div className="p-2 bg-purple-100 dark:bg-purple-800/50 rounded-lg">
+                                        <Sparkles size={18} className="text-purple-600 dark:text-purple-400" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <h4 className="font-semibold text-purple-900 dark:text-purple-200 mb-2">
+                                            {aiSuggestion ? 'Sugestia AI' : 'Sugerowane dowody'}
+                                        </h4>
+
+                                        {aiSuggestion && (
+                                            <p className="text-sm text-purple-800 dark:text-purple-300 mb-3">
+                                                {aiSuggestion}
+                                            </p>
+                                        )}
+
+                                        {aiEvidence && (
+                                            <ul className="text-sm text-purple-800 dark:text-purple-300 space-y-1 mb-3">
+                                                {aiEvidence.map((e, i) => (
+                                                    <li key={i} className="flex items-start gap-2">
+                                                        <span className="text-purple-400">•</span>
+                                                        {e}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
+
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={aiSuggestion ? handleApplySuggestion : handleApplyEvidence}
+                                                className="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-medium rounded-lg transition-colors"
+                                            >
+                                                Zastosuj
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setAiSuggestion(null);
+                                                    setAiEvidence(null);
+                                                    setShowAiPanel(false);
+                                                }}
+                                                className="px-3 py-1.5 bg-purple-100 dark:bg-purple-800/50 hover:bg-purple-200 dark:hover:bg-purple-700/50 text-purple-700 dark:text-purple-300 text-xs font-medium rounded-lg transition-colors"
+                                            >
+                                                Odrzuć
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* AI Error Display */}
+                        {ai.error && (
+                            <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 rounded-lg">
+                                <div className="flex items-center gap-2 text-red-700 dark:text-red-400 text-sm">
+                                    <AlertTriangle size={14} />
+                                    <span>AI Error: {ai.error}</span>
+                                    <button
+                                        onClick={ai.clearError}
+                                        className="ml-auto text-xs underline"
+                                    >
+                                        Dismiss
+                                    </button>
+                                </div>
+                            </div>
+                        )}
 
                     </div>
                 </div>

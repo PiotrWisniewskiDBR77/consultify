@@ -195,5 +195,60 @@ describe('RapidLeanObservationMapper', () => {
             expect(insights).toHaveProperty('opportunities');
         });
     });
+
+    describe('analyzeNotesAndPhotos', () => {
+        test('should return null for now (placeholder for AI integration)', async () => {
+            const result = await RapidLeanObservationMapper.analyzeNotesAndPhotos(
+                'Test notes',
+                ['photo1.jpg'],
+                'value_stream'
+            );
+            expect(result).toBeNull();
+        });
+    });
+
+    describe('getAllQuestionIds', () => {
+        test('should return all 18 question IDs', () => {
+            const questionIds = RapidLeanObservationMapper.getAllQuestionIds();
+            expect(questionIds).toHaveLength(18);
+            expect(questionIds).toContain('value_stream_1');
+            expect(questionIds).toContain('visual_management_3');
+        });
+    });
+
+    describe('mapObservationsToResponses - edge cases', () => {
+        test('should handle empty observations array', () => {
+            const responses = RapidLeanObservationMapper.mapObservationsToResponses([]);
+            const allQuestionIds = RapidLeanObservationMapper.getAllQuestionIds();
+            allQuestionIds.forEach(qId => {
+                expect(responses[qId]).toBe(2); // Default score
+            });
+        });
+
+        test('should handle observations with missing answers', () => {
+            const observations = [
+                {
+                    templateId: 'value_stream_template',
+                    answers: {} // Empty answers
+                }
+            ];
+
+            const responses = RapidLeanObservationMapper.mapObservationsToResponses(observations);
+            expect(responses).toBeDefined();
+        });
+
+        test('should handle observations with photos', () => {
+            const observations = [
+                {
+                    templateId: 'value_stream_template',
+                    answers: { 'vs_1': true },
+                    photos: ['photo1.jpg', 'photo2.jpg']
+                }
+            ];
+
+            const responses = RapidLeanObservationMapper.mapObservationsToResponses(observations);
+            expect(responses).toBeDefined();
+        });
+    });
 });
 

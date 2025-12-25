@@ -14,7 +14,7 @@ export const FullStep6Workspace: React.FC<FullStep6WorkspaceProps> = ({
    const { t: translate } = useTranslation();
    const t = translate('fullReports', { returnObjects: true }) as any;
    const ts = translate('sidebar', { returnObjects: true }) as any;
-   const report = fullSession.report;
+   const report = fullSession.report as any; // Legacy report properties
 
    // 1. Maturity Calculations
    const scores = Object.entries(fullSession.assessment)
@@ -57,10 +57,10 @@ Date: ${new Date().toLocaleDateString()}
 ${report.executiveSummary}
 
 ## KEY FINDINGS
-${report.keyFindings.map(f => `- ${f}`).join('\n')}
+${report.keyFindings.map((f: string) => `- ${f}`).join('\n')}
 
 ## RECOMMENDATIONS
-${report.recommendations.map(r => `- ${r}`).join('\n')}
+${report.recommendations.map((r: string) => `- ${r}`).join('\n')}
 
 ## ECONOMICS
 Total Cost: $${econ.totalCost.toLocaleString()}k

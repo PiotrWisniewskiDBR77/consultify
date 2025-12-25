@@ -75,10 +75,12 @@ const { initTestDb, cleanTables, dbAll, dbRun } = require('../../helpers/dbHelpe
 
 ## 📊 Statystyki
 
-- **53 pliki testowe**
-- **68+ testów** (59 passing)
+- **~252 testy zaimplementowane** ✅
+- **~317+ testy do utworzenia** ⚠️
 - **5 poziomów testowania**
-- **Pokrycie**: Cel 90%
+- **Pokrycie**: ~44% (Cel: 90%)
+
+📈 **Szczegółowe statystyki**: Zobacz [TEST_INDEX.md](./TEST_INDEX.md)
 
 ---
 
@@ -101,6 +103,10 @@ const { initTestDb, cleanTables, dbAll, dbRun } = require('../../helpers/dbHelpe
 ## 📚 Więcej Informacji
 
 Zobacz:
+- **[TEST_STRUCTURE_COMPLETE.md](./TEST_STRUCTURE_COMPLETE.md)** - ✨ **Kompletna struktura testów** - Mapowanie wszystkich testów do utworzenia
+- **[TEST_INDEX.md](./TEST_INDEX.md)** - 📊 **Indeks testów** - Szybki przewodnik i statystyki
+- `README_COMPREHENSIVE.md` - Pełna dokumentacja systemu testów
+- `SUMMARY.md` - Podsumowanie systemu testów
 - `TEST_SYSTEM_COMPLETE.md` - Pełna dokumentacja systemu testów
 - `TEST_STRATEGY_5_LEVELS.md` - Strategia testów na 5 poziomach
 - `TEST_MIGRATION_PLAN.md` - Plan migracji na prawdziwą bazę danych

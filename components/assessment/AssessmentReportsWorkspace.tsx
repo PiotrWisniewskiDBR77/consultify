@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Download, Calendar, TrendingUp, TrendingDown, Loader2, AlertCircle } from 'lucide-react';
+import { FileText, Download, Calendar, TrendingUp, TrendingDown, Loader2, AlertCircle, Plus, ArrowRight } from 'lucide-react';
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 import { toast } from 'react-hot-toast';
@@ -12,10 +12,21 @@ interface AssessmentReport {
     avg_actual: number;
     avg_target: number;
     gap_points: number;
+    status?: 'draft' | 'finalized';
 }
 
-export const AssessmentReportsWorkspace: React.FC = () => {
-    const { currentProjectId } = useAppStore();
+interface AssessmentReportsWorkspaceProps {
+    onStartNewAssessment?: () => void;
+    onViewReport?: (reportId: string) => void;
+    onGenerateInitiatives?: (reportId: string) => void;
+}
+
+export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProps> = ({
+    onStartNewAssessment,
+    onViewReport,
+    onGenerateInitiatives
+}) => {
+    const { currentProjectId, setCurrentReport } = useAppStore();
     const { t } = useTranslation();
     const [reports, setReports] = useState<AssessmentReport[]>([]);
     const [filteredReports, setFilteredReports] = useState<AssessmentReport[]>([]);
@@ -270,14 +281,35 @@ export const AssessmentReportsWorkspace: React.FC = () => {
                         </p>
                     </div>
                     <button
-                        onClick={handleGenerateReport}
+                        onClick={async () => {
+                            if (!currentProjectId) return;
+                            try {
+                                setGenerating(true);
+                                // Create draft report via API
+                                const newReport = await Api.generateAssessmentReport(currentProjectId);
+                                if (newReport?.id) {
+                                    setCurrentReport(newReport.id, 'new');
+                                    toast.success(t('assessment.reports.draftCreated', 'Draft report created'));
+                                } else {
+                                    setCurrentReport(null, 'new');
+                                }
+                                onStartNewAssessment?.();
+                            } catch (error) {
+                                console.error('Failed to create draft report:', error);
+                                // Still allow switching to assessment tab even if draft creation fails
+                                setCurrentReport(null, 'new');
+                                onStartNewAssessment?.();
+                            } finally {
+                                setGenerating(false);
+                            }
+                        }}
                         disabled={generating}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-green-600 hover:bg-green-700 disabled:bg-slate-400 text-white rounded-lg text-sm font-semibold transition-colors"
+                        className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white rounded-lg text-sm font-semibold transition-colors shadow-lg shadow-purple-500/20"
                     >
                         {generating ? (
-                            <><Loader2 className="animate-spin" size={16} /> {t('assessment.reports.generating', 'Generating...')}</>
+                            <><Loader2 className="animate-spin" size={16} /> {t('common.creating', 'Creating...')}</>
                         ) : (
-                            <><FileText size={16} /> {t('assessment.reports.generateReport', 'Generate Report')}</>
+                            <><Plus size={16} /> {t('assessment.reports.newAssessment', 'New Assessment')}</>
                         )}
                     </button>
                 </div>
@@ -329,11 +361,10 @@ export const AssessmentReportsWorkspace: React.FC = () => {
                     </div>
                 ) : (
                     <div className="grid gap-3">
-                        {reports.map(report => (
+                        {filteredReports.map(report => (
                             <div
                                 key={report.id}
-                                onClick={() => handleViewReport(report.id)}
-                                className="bg-white dark:bg-navy-950 rounded-lg p-4 border border-slate-200 dark:border-white/10 hover:border-purple-300 dark:hover:border-purple-700 cursor-pointer transition-all group"
+                                className="bg-white dark:bg-navy-950 rounded-lg p-4 border border-slate-200 dark:border-white/10 hover:border-purple-300 dark:hover:border-purple-700 transition-all group"
                             >
                                 <div className="flex items-start justify-between">
                                     <div className="flex-1">
@@ -342,13 +373,18 @@ export const AssessmentReportsWorkspace: React.FC = () => {
                                             <h4 className="text-base font-semibold text-navy-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                                                 {report.title}
                                             </h4>
+                                            {report.status === 'draft' && (
+                                                <span className="px-2 py-0.5 text-xs font-medium bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 rounded">
+                                                    Draft
+                                                </span>
+                                            )}
                                         </div>
                                         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                                             <Calendar size={12} />
                                             {formatDate(report.generated_at)}
                                         </div>
                                     </div>
-                                    <div className="flex gap-3">
+                                    <div className="flex gap-3 items-center">
                                         <div className="text-center">
                                             <div className="text-xs text-slate-500 dark:text-slate-400">Current</div>
                                             <div className="text-base font-bold text-blue-600 dark:text-blue-400">
@@ -368,6 +404,31 @@ export const AssessmentReportsWorkspace: React.FC = () => {
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+                                {/* Action Buttons */}
+                                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100 dark:border-white/5">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setCurrentReport(report.id, 'view');
+                                            handleViewReport(report.id);
+                                        }}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-lg transition-colors"
+                                    >
+                                        <FileText size={14} />
+                                        {t('assessment.reports.viewDetails', 'View Details')}
+                                    </button>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setCurrentReport(report.id, 'view');
+                                            onGenerateInitiatives?.(report.id);
+                                        }}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+                                    >
+                                        <ArrowRight size={14} />
+                                        {t('assessment.reports.generateInitiatives', 'Generate Initiatives')}
+                                    </button>
                                 </div>
                             </div>
                         ))}

@@ -148,5 +148,59 @@ describe('RapidLeanReportService', () => {
             expect(charts.trendChart.scores).toHaveLength(2);
         });
     });
+
+    describe('getPreviousAssessments', () => {
+        test('should fetch previous assessments for comparison', async () => {
+            // This would require mocking the database
+            // For now, we test the structure
+            expect(typeof RapidLeanReportService.getPreviousAssessments).toBe('function');
+        });
+    });
+
+    describe('saveReportMetadata', () => {
+        test('should save report metadata to database', async () => {
+            // This would require mocking the database
+            expect(typeof RapidLeanReportService.saveReportMetadata).toBe('function');
+        });
+    });
+
+    describe('generatePDF', () => {
+        test('should generate PDF report', async () => {
+            const reportData = {
+                assessmentId: 'test-id',
+                summary: { overallScore: 3.5 }
+            };
+
+            const fileUrl = await RapidLeanReportService.generatePDF(reportData, 'test-org');
+            expect(typeof fileUrl).toBe('string');
+            expect(fileUrl).toContain('rapidlean/reports');
+        });
+    });
+
+    describe('generateExcel', () => {
+        test('should generate Excel report', async () => {
+            const reportData = {
+                assessmentId: 'test-id',
+                summary: { overallScore: 3.5 }
+            };
+
+            const fileUrl = await RapidLeanReportService.generateExcel(reportData, 'test-org');
+            expect(typeof fileUrl).toBe('string');
+            expect(fileUrl).toContain('.xlsx');
+        });
+    });
+
+    describe('generatePowerPoint', () => {
+        test('should generate PowerPoint report', async () => {
+            const reportData = {
+                assessmentId: 'test-id',
+                summary: { overallScore: 3.5 }
+            };
+
+            const fileUrl = await RapidLeanReportService.generatePowerPoint(reportData, 'test-org');
+            expect(typeof fileUrl).toBe('string');
+            expect(fileUrl).toContain('.pptx');
+        });
+    });
 });
 

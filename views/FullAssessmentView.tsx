@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { SplitLayout } from '../components/SplitLayout';
-import { AppView, DRDAxis, AxisAssessment, SessionMode, MaturityLevel, FullSession } from '../types';
+import { AppView, DRDAxis, AxisAssessment, SessionMode, MaturityLevel, FullSession, AssessmentTab } from '../types';
 import { useAppStore } from '../store/useAppStore';
 import { Api } from '../services/api';
 import { AIMessageHistory } from '../services/ai/gemini';
@@ -10,8 +10,14 @@ import { AssessmentAxisWorkspace } from '../components/assessment/AssessmentAxis
 import { AssessmentWizard } from '../components/assessment/AssessmentWizard';
 import { AssessmentSummaryWorkspace } from '../components/assessment/AssessmentSummaryWorkspace';
 import { AssessmentReportsWorkspace } from '../components/assessment/AssessmentReportsWorkspace';
+import { AIAssessmentSidebar } from '../components/assessment/AIAssessmentSidebar';
+import { AssessmentModuleLayout } from '../components/assessment/AssessmentModuleLayout';
+import { AssessmentDashboard } from '../components/assessment/AssessmentDashboard';
+import { MyAssessmentsList } from '../components/assessment/MyAssessmentsList';
+import { ReviewerDashboard } from '../components/assessment/ReviewerDashboard';
+import { GapAnalysisDashboard } from '../components/assessment/GapAnalysisDashboard';
 import { useTranslation } from 'react-i18next';
-import { Settings, Smartphone, Briefcase, Database, Users, Lock, BrainCircuit, ArrowRight } from 'lucide-react';
+import { Settings, Smartphone, Briefcase, Database, Users, Lock, BrainCircuit, ArrowRight, Brain } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 type AxisId = DRDAxis;
 export const FullAssessmentView: React.FC = () => {
@@ -24,10 +30,14 @@ export const FullAssessmentView: React.FC = () => {
     currentProjectId,
     addChatMessage,
     activeChatMessages: messages,
-    setIsBotTyping
+    setIsBotTyping,
+    currentReportId,
+    currentReportMode
   } = useAppStore();
   const { startStream } = useAIStream();
-  const [dashboardTab, setDashboardTab] = useState<'summary' | 'reports'>('summary');
+  const [dashboardTab, setDashboardTab] = useState<'summary' | 'reports'>('reports');
+  const [isAISidebarOpen, setIsAISidebarOpen] = useState(false);
+  const [activeModuleTab, setActiveModuleTab] = useState<AssessmentTab>('dashboard');
   // Load Session Data
   useEffect(() => {
     const loadSession = async () => {
@@ -44,7 +54,34 @@ export const FullAssessmentView: React.FC = () => {
     };
     loadSession();
   }, [currentUser, currentProjectId, updateFullSession]);
-  // View Mapping
+
+  // Load Report Snapshot when viewing historical report
+  useEffect(() => {
+    const loadReportSnapshot = async () => {
+      if (!currentReportId || currentReportMode !== 'view') return;
+
+      try {
+        const report = await Api.getAssessmentReport(currentReportId);
+        if (report && report.assessment_snapshot) {
+          // Apply the snapshot to the session view (read-only)
+          const snapshotSession: FullSession = {
+            ...fullSession,
+            assessment: {
+              ...report.assessment_snapshot,
+              completedAxes: Object.keys(report.assessment_snapshot).filter(k => k !== 'completedAxes')
+            }
+          };
+          updateFullSession(snapshotSession);
+          toast.success('Loaded historical report');
+        }
+      } catch (err) {
+        console.error('Failed to load report snapshot:', err);
+        toast.error('Failed to load report data');
+      }
+    };
+    loadReportSnapshot();
+  }, [currentReportId, currentReportMode]);
+
   const getAxisFromView = (view: AppView): DRDAxis | null => {
     switch (view) {
       case AppView.FULL_STEP1_PROCESSES: return 'processes';
@@ -147,118 +184,258 @@ export const FullAssessmentView: React.FC = () => {
     const axisData = fullSession.assessment?.[currentAxisId];
     return (
       <SplitLayout title={ta.header} onSendMessage={handleAiChat}>
-        <div className="flex flex-col h-full bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-white/5 w-full">
-          {/* Back Navigation Bar - Wizard Toggle Removed */}
-          <div className="h-12 border-b border-slate-200 dark:border-white/5 flex items-center justify-between px-4 bg-slate-50 dark:bg-navy-950/30">
-            <button
-              onClick={() => onNavigate(AppView.FULL_STEP1_ASSESSMENT)}
-              className="text-xs text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white flex items-center gap-1"
-            >
-              ← {tc.backToDashboard}
-            </button>
+        <div className="flex h-full">
+          <div className="flex flex-col flex-1 bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-white/5">
+            {/* Back Navigation Bar with AI Toggle */}
+            <div className="h-12 border-b border-slate-200 dark:border-white/5 flex items-center justify-between px-4 bg-slate-50 dark:bg-navy-950/30">
+              <button
+                onClick={() => onNavigate(AppView.FULL_STEP1_ASSESSMENT)}
+                className="text-xs text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white flex items-center gap-1"
+              >
+                ← {tc.backToDashboard}
+              </button>
+              <button
+                onClick={() => setIsAISidebarOpen(!isAISidebarOpen)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${isAISidebarOpen
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50'
+                  }`}
+              >
+                <Brain size={16} />
+                AI Assistant
+              </button>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <AssessmentAxisWorkspace
+                axis={currentAxisId}
+                data={axisData || { actual: 1, target: 1, justification: '' }}
+                onChange={(d) => handleAxisUpdate(currentAxisId, d)}
+                onNext={() => handleNextAxis(currentAxisId)}
+                readOnly={currentReportMode === 'view'}
+                projectId={currentProjectId || ''}
+                context={{
+                  goals: fullSession.contextSufficiency?.gaps ? [] : ['Growth', 'Efficiency'],
+                  challenges: [],
+                  industry: currentUser?.companyName || 'Unknown'
+                }}
+              />
+            </div>
           </div>
-          <div className="flex-1 overflow-hidden">
-            <AssessmentAxisWorkspace
-              axis={currentAxisId}
-              data={axisData || { actual: 1, target: 1, justification: '' }}
-              onChange={(d) => handleAxisUpdate(currentAxisId, d)}
-              onNext={() => handleNextAxis(currentAxisId)}
-              // PRO Features Props
-              context={{
-                goals: fullSession.contextSufficiency?.gaps ? [] : ['Growth', 'Efficiency'], // Mock or real if available
-                challenges: [],
-                industry: currentUser?.companyName || 'Unknown' // Ideally from profile
+
+          {/* AI Assessment Sidebar */}
+          {currentProjectId && (
+            <AIAssessmentSidebar
+              projectId={currentProjectId}
+              currentAxis={currentAxisId}
+              currentScore={axisData?.actual}
+              targetScore={axisData?.target}
+              isOpen={isAISidebarOpen}
+              onClose={() => setIsAISidebarOpen(false)}
+              onApplySuggestion={(suggestion) => {
+                handleAxisUpdate(currentAxisId, {
+                  justification: (axisData?.justification || '') + (axisData?.justification ? '\n\n' : '') + suggestion
+                });
+              }}
+              onNavigateToAxis={(axisId) => {
+                const viewMap: Record<DRDAxis, AppView> = {
+                  processes: AppView.FULL_STEP1_PROCESSES,
+                  digitalProducts: AppView.FULL_STEP1_DIGITAL,
+                  businessModels: AppView.FULL_STEP1_MODELS,
+                  dataManagement: AppView.FULL_STEP1_DATA,
+                  culture: AppView.FULL_STEP1_CULTURE,
+                  cybersecurity: AppView.FULL_STEP1_CYBERSECURITY,
+                  aiMaturity: AppView.FULL_STEP1_AI
+                };
+                if (viewMap[axisId as DRDAxis]) {
+                  onNavigate(viewMap[axisId as DRDAxis]);
+                }
               }}
             />
-          </div>
+          )}
         </div>
       </SplitLayout>
     );
   }
-  // Render 2. Dashboard View
+  // Helper: Render content based on active tab
+  const renderTabContent = () => {
+    switch (activeModuleTab) {
+      case 'dashboard':
+        return (
+          <AssessmentDashboard
+            onNavigate={onNavigate}
+            onNewAssessment={() => {
+              setActiveModuleTab('assessments');
+              // Could also start new assessment wizard here
+            }}
+          />
+        );
+      
+      case 'assessments':
+        return (
+          <MyAssessmentsList
+            onViewAssessment={(assessmentId, projectId) => {
+              // Navigate to view assessment
+              onNavigate(AppView.FULL_STEP1_ASSESSMENT);
+            }}
+            onEditAssessment={(assessmentId, projectId) => {
+              // Navigate to edit assessment
+              onNavigate(AppView.FULL_STEP1_ASSESSMENT);
+            }}
+            onCreateNew={() => {
+              // Start new assessment - go to summary tab
+              setDashboardTab('summary');
+              setActiveModuleTab('gap-map');
+            }}
+          />
+        );
+      
+      case 'reviews':
+        return (
+          <ReviewerDashboard
+            onNavigateToReview={(assessmentId, reviewId) => {
+              // Navigate to review the assessment
+              onNavigate(AppView.FULL_STEP1_ASSESSMENT);
+            }}
+          />
+        );
+      
+      case 'gap-map':
+        return (
+          <>
+            {/* Report Context Header */}
+            <div className="px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-200 dark:border-purple-500/20 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-purple-600 flex items-center justify-center">
+                  <Settings size={16} className="text-white" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-navy-900 dark:text-white">
+                    {currentReportMode === 'new'
+                      ? translate('assessment.workspace.newAssessment', 'New Assessment')
+                      : translate('assessment.workspace.viewingReport', 'Viewing Report')}
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {currentReportMode === 'new'
+                      ? translate('assessment.workspace.newAssessmentDesc', 'Fill in the 7 DRD axes to create your assessment report')
+                      : translate('assessment.workspace.viewingReportDesc', 'Read-only view of historical assessment')}
+                  </p>
+                </div>
+              </div>
+              {currentReportMode === 'new' && (
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-1 text-xs font-medium bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 rounded">
+                    Draft
+                  </span>
+                  <button
+                    onClick={async () => {
+                      if (!currentReportId || !currentProjectId) return;
+                      try {
+                        await Api.generateAssessmentReport(currentProjectId);
+                        toast.success(translate('assessment.reports.saved', 'Report saved'));
+                      } catch (err) {
+                        toast.error(translate('assessment.reports.saveFailed', 'Failed to save'));
+                      }
+                    }}
+                    className="px-3 py-1.5 text-xs font-medium bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 rounded-lg transition-colors"
+                  >
+                    {translate('assessment.reports.saveDraft', 'Save Draft')}
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!currentReportId || !currentProjectId) return;
+                      if (!confirm(translate('assessment.reports.finalizeConfirm', 'Finalize this report? This will lock it from further edits.'))) return;
+                      try {
+                        await Api.generateAssessmentReport(currentProjectId);
+                        toast.success(translate('assessment.reports.finalized', 'Report finalized'));
+                        setActiveModuleTab('reports');
+                      } catch (err) {
+                        toast.error(translate('assessment.reports.finalizeFailed', 'Failed to finalize'));
+                      }
+                    }}
+                    className="px-3 py-1.5 text-xs font-medium bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+                  >
+                    {translate('assessment.reports.finalize', 'Finalize Report')}
+                  </button>
+                </div>
+              )}
+            </div>
+            <div className="grid grid-cols-7 gap-1 p-4 bg-slate-50 dark:bg-navy-950/50 border-b border-slate-200 dark:border-white/5">
+              {(['processes', 'digitalProducts', 'businessModels', 'dataManagement', 'culture', 'cybersecurity', 'aiMaturity'] as DRDAxis[]).map(axis => (
+                <button
+                  key={axis}
+                  onClick={() => {
+                    const viewMap: Record<DRDAxis, AppView> = {
+                      processes: AppView.FULL_STEP1_PROCESSES,
+                      digitalProducts: AppView.FULL_STEP1_DIGITAL,
+                      businessModels: AppView.FULL_STEP1_MODELS,
+                      dataManagement: AppView.FULL_STEP1_DATA,
+                      culture: AppView.FULL_STEP1_CULTURE,
+                      cybersecurity: AppView.FULL_STEP1_CYBERSECURITY,
+                      aiMaturity: AppView.FULL_STEP1_AI
+                    };
+                    onNavigate(viewMap[axis]);
+                  }}
+                  className="p-2 rounded bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-center border border-slate-200 dark:border-white/5 transition-all group"
+                >
+                  <span className="block text-xs text-slate-500 dark:text-slate-400 group-hover:text-navy-900 dark:group-hover:text-white mb-1 truncate">{axis}</span>
+                  <div className="flex justify-center gap-1">
+                    <span className="w-5 h-5 rounded bg-slate-100 dark:bg-navy-900 flex items-center justify-center text-sm font-bold text-blue-600 dark:text-blue-400">
+                      {fullSession.assessment?.[axis]?.actual || '-'}
+                    </span>
+                    <span className="w-5 h-5 rounded bg-slate-100 dark:bg-navy-900 flex items-center justify-center text-sm font-bold text-purple-600 dark:text-purple-400">
+                      {fullSession.assessment?.[axis]?.target || '-'}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+            <AssessmentSummaryWorkspace
+              assessment={fullSession.assessment || {}}
+              onNavigate={(axis) => {
+                const viewMap: Record<DRDAxis, AppView> = {
+                  processes: AppView.FULL_STEP1_PROCESSES,
+                  digitalProducts: AppView.FULL_STEP1_DIGITAL,
+                  businessModels: AppView.FULL_STEP1_MODELS,
+                  dataManagement: AppView.FULL_STEP1_DATA,
+                  culture: AppView.FULL_STEP1_CULTURE,
+                  cybersecurity: AppView.FULL_STEP1_CYBERSECURITY,
+                  aiMaturity: AppView.FULL_STEP1_AI
+                };
+                onNavigate(viewMap[axis]);
+              }}
+            />
+          </>
+        );
+      
+      case 'reports':
+        return (
+          <AssessmentReportsWorkspace
+            onStartNewAssessment={() => setActiveModuleTab('gap-map')}
+            onGenerateInitiatives={(reportId) => {
+              // Navigate to initiatives with report context
+              onNavigate(AppView.INITIATIVE_GENERATOR);
+            }}
+          />
+        );
+      
+      default:
+        return null;
+    }
+  };
+
+  // Render 2. Dashboard View with Module Layout
   return (
     <SplitLayout title={ta.dashboardHeader} onSendMessage={handleAiChat}>
-      <div className="flex flex-col h-full bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-white/5 w-full">
-        {/* Tabs */}
-        <div className="h-16 border-b border-slate-200 dark:border-white/5 flex items-center px-8 bg-white dark:bg-navy-900 shrink-0 justify-between">
-          <div className="flex items-center gap-8 h-full">
-            <button
-              onClick={() => setDashboardTab('summary')}
-              className={`h-full px-6 border-b-2 text-base font-medium transition-colors ${dashboardTab === 'summary' ? 'border-purple-500 text-navy-900 dark:text-white' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-            >
-              {ta.tabs.summary}
-            </button>
-            <button
-              onClick={() => setDashboardTab('reports')}
-              className={`h-full px-6 border-b-2 text-base font-medium transition-colors ${dashboardTab === 'reports' ? 'border-purple-500 text-navy-900 dark:text-white' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-            >
-              {ta.tabs.reports || 'Reports'}
-            </button>
-          </div>
-          <button
-            onClick={handleGenerateInitiatives}
-            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white rounded-lg text-sm font-semibold shadow-lg shadow-green-900/20 transition-all"
-          >
-            <span>{ta.generateInitiatives}</span>
-            <ArrowRight size={16} />
-          </button>
+      <AssessmentModuleLayout
+        activeTab={activeModuleTab}
+        onTabChange={setActiveModuleTab}
+        showGenerateButton={activeModuleTab === 'gap-map'}
+        onGenerateClick={handleGenerateInitiatives}
+      >
+        <div className="h-full overflow-y-auto">
+          {renderTabContent()}
         </div>
-        <div className="flex-1 overflow-y-auto w-full">
-          {dashboardTab === 'summary' ? (
-            // Summary / Gap Map
-            <>
-              <div className="grid grid-cols-7 gap-1 p-4 bg-slate-50 dark:bg-navy-950/50 border-b border-slate-200 dark:border-white/5">
-                {(['processes', 'digitalProducts', 'businessModels', 'dataManagement', 'culture', 'cybersecurity', 'aiMaturity'] as DRDAxis[]).map(axis => (
-                  <button
-                    key={axis}
-                    onClick={() => {
-                      const viewMap: Record<DRDAxis, AppView> = {
-                        processes: AppView.FULL_STEP1_PROCESSES,
-                        digitalProducts: AppView.FULL_STEP1_DIGITAL,
-                        businessModels: AppView.FULL_STEP1_MODELS,
-                        dataManagement: AppView.FULL_STEP1_DATA,
-                        culture: AppView.FULL_STEP1_CULTURE,
-                        cybersecurity: AppView.FULL_STEP1_CYBERSECURITY,
-                        aiMaturity: AppView.FULL_STEP1_AI
-                      };
-                      onNavigate(viewMap[axis]);
-                    }}
-                    className="p-2 rounded bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-center border border-slate-200 dark:border-white/5 transition-all group"
-                  >
-                    <span className="block text-xs text-slate-500 dark:text-slate-400 group-hover:text-navy-900 dark:group-hover:text-white mb-1 truncate">{axis}</span>
-                    <div className="flex justify-center gap-1">
-                      <span className="w-5 h-5 rounded bg-slate-100 dark:bg-navy-900 flex items-center justify-center text-sm font-bold text-blue-600 dark:text-blue-400">
-                        {fullSession.assessment?.[axis]?.actual || '-'}
-                      </span>
-                      <span className="w-5 h-5 rounded bg-slate-100 dark:bg-navy-900 flex items-center justify-center text-sm font-bold text-purple-600 dark:text-purple-400">
-                        {fullSession.assessment?.[axis]?.target || '-'}
-                      </span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-              <AssessmentSummaryWorkspace
-                assessment={fullSession.assessment || {}}
-                onNavigate={(axis) => {
-                  const viewMap: Record<DRDAxis, AppView> = {
-                    processes: AppView.FULL_STEP1_PROCESSES,
-                    digitalProducts: AppView.FULL_STEP1_DIGITAL,
-                    businessModels: AppView.FULL_STEP1_MODELS,
-                    dataManagement: AppView.FULL_STEP1_DATA,
-                    culture: AppView.FULL_STEP1_CULTURE,
-                    cybersecurity: AppView.FULL_STEP1_CYBERSECURITY,
-                    aiMaturity: AppView.FULL_STEP1_AI
-                  };
-                  onNavigate(viewMap[axis]);
-                }}
-              />
-            </>
-          ) : (
-            // Reports View
-            <AssessmentReportsWorkspace />
-          )}
-        </div>
-      </div>
+      </AssessmentModuleLayout>
     </SplitLayout>
   );
 };

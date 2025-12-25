@@ -4,17 +4,20 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Target, TrendingDown, Zap, AlertCircle, PlusCircle, Activity } from 'lucide-react';
+import { Target, TrendingDown, Zap, AlertCircle, PlusCircle, Activity, Sparkles, ArrowRight } from 'lucide-react';
 import axios from 'axios';
+import { AppView } from '../../types';
 
 interface GapAnalysisDashboardProps {
     projectId: string;
     organizationId: string;
+    onNavigateToGenerator?: () => void;
 }
 
 export const GapAnalysisDashboard: React.FC<GapAnalysisDashboardProps> = ({
     projectId,
-    organizationId
+    organizationId,
+    onNavigateToGenerator
 }) => {
     const [overview, setOverview] = useState<any>(null);
     const [generatedInitiatives, setGeneratedInitiatives] = useState<any[]>([]);
@@ -92,36 +95,48 @@ export const GapAnalysisDashboard: React.FC<GapAnalysisDashboardProps> = ({
             </div>
 
             {/* Initiative Generator */}
-            <div className="bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-xl shadow-2xl p-8 mb-6">
-                <div className="flex items-center justify-between mb-4">
+            <div className="bg-gradient-to-br from-green-600 to-emerald-500 text-white rounded-xl shadow-2xl p-8 mb-6">
+                <div className="flex items-center justify-between">
                     <div>
                         <h3 className="text-2xl font-bold flex items-center gap-2">
-                            <Zap className="w-6 h-6" />
+                            <Sparkles className="w-6 h-6" />
                             AI Initiative Generator
                         </h3>
-                        <p className="text-blue-100 mt-2">
-                            {hasMultipleAssessments
-                                ? 'Generate actionable initiatives from identified gaps'
-                                : 'Complete at least 2 assessments to generate initiatives'}
+                        <p className="text-green-100 mt-2 max-w-xl">
+                            Transform assessment gaps into actionable transformation initiatives. 
+                            Our AI will analyze your maturity gaps and generate prioritized initiatives 
+                            with estimated ROI, budgets, and timelines.
                         </p>
                     </div>
-                    <button
-                        onClick={generateInitiatives}
-                        disabled={!hasMultipleAssessments || generating}
-                        className="px-6 py-3 bg-white text-blue-600 rounded-lg hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-semibold"
-                    >
-                        {generating ? (
-                            <>
-                                <Activity className="w-5 h-5 animate-spin" />
-                                Generating...
-                            </>
-                        ) : (
-                            <>
-                                <PlusCircle className="w-5 h-5" />
-                                Generate Initiatives
-                            </>
+                    <div className="flex flex-col gap-2">
+                        {onNavigateToGenerator && (
+                            <button
+                                onClick={onNavigateToGenerator}
+                                className="px-6 py-3 bg-white text-green-600 rounded-lg hover:bg-green-50 flex items-center gap-2 font-semibold shadow-lg transition-all hover:scale-105"
+                            >
+                                <Sparkles className="w-5 h-5" />
+                                Open Generator Wizard
+                                <ArrowRight className="w-4 h-4" />
+                            </button>
                         )}
-                    </button>
+                        <button
+                            onClick={generateInitiatives}
+                            disabled={!hasMultipleAssessments || generating}
+                            className="px-6 py-3 bg-white/20 border border-white/30 text-white rounded-lg hover:bg-white/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium transition-colors"
+                        >
+                            {generating ? (
+                                <>
+                                    <Activity className="w-5 h-5 animate-spin" />
+                                    Quick Generating...
+                                </>
+                            ) : (
+                                <>
+                                    <PlusCircle className="w-5 h-5" />
+                                    Quick Generate
+                                </>
+                            )}
+                        </button>
+                    </div>
                 </div>
             </div>
 

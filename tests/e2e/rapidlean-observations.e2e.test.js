@@ -137,5 +137,93 @@ test.describe('RapidLean Production Observations E2E', () => {
         const resultsCard = page.locator('[class*="Results"]');
         // Note: This would need actual assessment data to be visible
     });
+
+    test('should navigate between templates', async ({ page }) => {
+        await page.goto('/assessment/rapidlean');
+        
+        const startButton = page.locator('button:has-text("Start Production Floor Observation")');
+        if (await startButton.isVisible()) {
+            await startButton.click();
+        }
+
+        await page.waitForSelector('text=Value Stream Observation', { timeout: 5000 });
+
+        // Fill first template and move to next
+        const locationInput = page.locator('input[placeholder*="Location"]');
+        if (await locationInput.isVisible()) {
+            await locationInput.fill('Line A');
+        }
+
+        // Answer required questions
+        const yesButtons = page.locator('button:has-text("Yes")');
+        const yesButtonCount = await yesButtons.count();
+        for (let i = 0; i < Math.min(yesButtonCount, 3); i++) {
+            await yesButtons.nth(i).click();
+        }
+
+        // Fill notes
+        const notesTextarea = page.locator('textarea').first();
+        if (await notesTextarea.isVisible()) {
+            await notesTextarea.fill('Test notes');
+        }
+
+        // Verify template counter shows progress
+        const templateCounter = page.locator('text=/1 \\/ 6/');
+        await expect(templateCounter).toBeVisible({ timeout: 5000 });
+    });
+
+    test('should show progress bar during observation', async ({ page }) => {
+        await page.goto('/assessment/rapidlean');
+        
+        const startButton = page.locator('button:has-text("Start Production Floor Observation")');
+        if (await startButton.isVisible()) {
+            await startButton.click();
+        }
+
+        await page.waitForSelector('text=Value Stream Observation', { timeout: 5000 });
+
+        // Verify progress bar exists
+        const progressBar = page.locator('[class*="progress"], [class*="Progress"]');
+        await expect(progressBar.first()).toBeVisible({ timeout: 5000 });
+    });
+
+    test('should validate required fields', async ({ page }) => {
+        await page.goto('/assessment/rapidlean');
+        
+        const startButton = page.locator('button:has-text("Start Production Floor Observation")');
+        if (await startButton.isVisible()) {
+            await startButton.click();
+        }
+
+        await page.waitForSelector('text=Value Stream Observation', { timeout: 5000 });
+
+        // Try to save without filling required fields
+        const saveButton = page.locator('button:has-text("Save")');
+        if (await saveButton.isVisible()) {
+            const isDisabled = await saveButton.isDisabled();
+            // Save button should be disabled if required fields not filled
+            expect(isDisabled).toBe(true);
+        }
+    });
+
+    test('should handle cancel action', async ({ page }) => {
+        await page.goto('/assessment/rapidlean');
+        
+        const startButton = page.locator('button:has-text("Start Production Floor Observation")');
+        if (await startButton.isVisible()) {
+            await startButton.click();
+        }
+
+        await page.waitForSelector('text=Value Stream Observation', { timeout: 5000 });
+
+        // Click cancel
+        const cancelButton = page.locator('button:has-text("Cancel")');
+        if (await cancelButton.isVisible()) {
+            await cancelButton.click();
+        }
+
+        // Should return to overview
+        await page.waitForSelector('text=RapidLean Assessment', { timeout: 5000 });
+    });
 });
 

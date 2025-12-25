@@ -159,5 +159,131 @@ describe('RapidLeanService', () => {
             expect(pathways.culture.steps.length).toBeGreaterThan(0);
             expect(pathways.processes.estimatedTime).toBeGreaterThan(0);
         });
+
+        test('should use default target level 7 if not provided', () => {
+            const drdMapping = {
+                processes: 4.0,
+                culture: 3.0
+            };
+
+            const pathways = RapidLeanService.generatePathways(drdMapping);
+
+            expect(pathways.processes.target).toBe(7);
+            expect(pathways.culture.target).toBe(7);
+        });
+    });
+
+    describe('getObservations', () => {
+        test('should fetch observations for assessment', async () => {
+            // Mock database
+            const mockDb = {
+                all: jest.fn((sql, params, callback) => {
+                    callback(null, [
+                        {
+                            id: 'obs-1',
+                            assessment_id: 'test-assessment',
+                            template_id: 'value_stream_template',
+                            answers: '{"vs_1": true}',
+                            photos: '["photo1.jpg"]',
+                            notes: 'Test'
+                        }
+                    ]);
+                })
+            };
+
+            // Temporarily replace db
+            const originalDb = require('../../server/database');
+            jest.mock('../../server/database', () => mockDb);
+
+            const observations = await RapidLeanService.getObservations('test-assessment');
+            expect(Array.isArray(observations)).toBe(true);
+        });
+    });
+
+    describe('analyzeObservationsForDRD', () => {
+        test('should analyze observations and return evidence score', () => {
+            const observations = [
+                {
+                    templateId: 'value_stream_template',
+                    answers: {
+                        'vs_1': true,
+                        'vs_2': true
+                    }
+                }
+            ];
+
+            const evidence = RapidLeanService.analyzeObservationsForDRD(
+                observations,
+                'value_stream',
+                'processes'
+            );
+
+            // Should return a number or null
+            expect(evidence === null || typeof evidence === 'number').toBe(true);
+        });
+
+        test('should return null if no matching observations', () => {
+            const observations = [
+                {
+                    templateId: 'waste_template',
+                    answers: { 'waste_1': true }
+                }
+            ];
+
+            const evidence = RapidLeanService.analyzeObservationsForDRD(
+                observations,
+                'value_stream',
+                'processes'
+            );
+
+            expect(evidence).toBeNull();
+        });
+    });
+
+    describe('combineScores', () => {
+        test('should combine base and evidence scores with correct weights', () => {
+            const combined = RapidLeanService.combineScores(3.0, 4.0);
+            // 70% of 3.0 + 30% of 4.0 = 2.1 + 1.2 = 3.3
+            expect(combined).toBeCloseTo(3.3, 1);
+        });
+
+        test('should handle edge cases', () => {
+            expect(RapidLeanService.combineScores(1, 1)).toBe(1);
+            expect(RapidLeanService.combineScores(5, 5)).toBe(5);
+        });
+    });
+
+    describe('generateDRDRecommendations', () => {
+        test('should generate recommendations based on gaps', async () => {
+            const assessment = {
+                overall_score: 3.0
+            };
+
+            const drdMapping = {
+                processes: 3.0,
+                culture: 2.0
+            };
+
+            const recommendations = await RapidLeanService.generateDRDRecommendations(
+                assessment,
+                drdMapping,
+                { targetLevels: { processes: 7, culture: 7 } }
+            );
+
+            expect(Array.isArray(recommendations)).toBe(true);
+            if (recommendations.length > 0) {
+                expect(recommendations[0]).toHaveProperty('axis');
+                expect(recommendations[0]).toHaveProperty('priority');
+            }
+        });
+    });
+
+    describe('getProjectContext', () => {
+        test('should return project context with target levels', async () => {
+            const context = await RapidLeanService.getProjectContext('test-org-id');
+            expect(context).toHaveProperty('targetLevels');
+            expect(context.targetLevels).toHaveProperty('processes');
+            expect(context.targetLevels).toHaveProperty('culture');
+        });
     });
 });

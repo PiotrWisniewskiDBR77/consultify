@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Shield, Lock, Server, Eye, FileCheck, AlertTriangle } from 'lucide-react';
-import { LegalPageLayout } from '../../components/Legal/LegalPageLayout';
+import { LegalPageLayout } from '../../components/legal/LegalPageLayout';
 
 export const SecurityView: React.FC = () => {
     const { t } = useTranslation();
