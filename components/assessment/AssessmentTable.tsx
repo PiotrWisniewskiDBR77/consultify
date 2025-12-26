@@ -43,44 +43,41 @@ interface Assessment {
 
 type FilterStatus = 'all' | 'draft' | 'in_review' | 'approved';
 
-type AssessmentFramework = 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
-
 interface AssessmentTableProps {
     projectId: string;
-    framework?: AssessmentFramework;
     onOpenInMap: (assessmentId: string) => void;
     onNewAssessment: () => void;
     onCreateReport: (assessmentId: string) => void;
 }
 
 const STATUS_CONFIG: Record<WorkflowState, { label: string; color: string; icon: React.ReactNode }> = {
-    'DRAFT': {
-        label: 'Draft',
+    'DRAFT': { 
+        label: 'Draft', 
         color: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
         icon: <Edit size={14} />
     },
-    'IN_REVIEW': {
-        label: 'In Review',
+    'IN_REVIEW': { 
+        label: 'In Review', 
         color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
         icon: <Clock size={14} />
     },
-    'AWAITING_APPROVAL': {
-        label: 'Awaiting Approval',
+    'AWAITING_APPROVAL': { 
+        label: 'Awaiting Approval', 
         color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
         icon: <AlertCircle size={14} />
     },
-    'APPROVED': {
-        label: 'Approved',
+    'APPROVED': { 
+        label: 'Approved', 
         color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
         icon: <CheckCircle2 size={14} />
     },
-    'REJECTED': {
-        label: 'Rejected',
+    'REJECTED': { 
+        label: 'Rejected', 
         color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
         icon: <AlertCircle size={14} />
     },
-    'ARCHIVED': {
-        label: 'Archived',
+    'ARCHIVED': { 
+        label: 'Archived', 
         color: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-500',
         icon: <Clock size={14} />
     }
@@ -105,7 +102,11 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
         setIsLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`/api/assessments?projectId=${projectId}`, {
+            // Build URL with optional projectId filter
+            const url = projectId 
+                ? `/api/assessments?projectId=${projectId}` 
+                : '/api/assessments';
+            const response = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
@@ -121,13 +122,9 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
     }, [projectId]);
 
     useEffect(() => {
-        if (projectId) {
-            fetchAssessments();
-        } else {
-            // No project selected - stop loading and show empty state
-            setIsLoading(false);
-        }
-    }, [projectId, fetchAssessments]);
+        // Always fetch assessments, even without projectId (will return all user's assessments)
+        fetchAssessments();
+    }, [fetchAssessments]);
 
     // Filter assessments
     const filteredAssessments = assessments.filter(assessment => {
@@ -153,10 +150,10 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
     // Format date
     const formatDate = (dateStr: string) => {
         const date = new Date(dateStr);
-        return date.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric'
+        return date.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric', 
+            year: 'numeric' 
         });
     };
 
@@ -285,9 +282,9 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
                         <tbody className="divide-y divide-slate-200 dark:divide-white/10">
                             {filteredAssessments.map((assessment) => {
                                 const statusConfig = STATUS_CONFIG[assessment.status] || STATUS_CONFIG.DRAFT;
-
+                                
                                 return (
-                                    <tr
+                                    <tr 
                                         key={assessment.id}
                                         className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                                     >
@@ -318,7 +315,7 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
                                                     </span>
                                                 </div>
                                                 <div className="h-1.5 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
-                                                    <div
+                                                    <div 
                                                         className="h-full bg-purple-500 rounded-full"
                                                         style={{ width: `${assessment.progress}%` }}
                                                     />
@@ -358,10 +355,10 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
                                                     >
                                                         <MoreVertical size={16} />
                                                     </button>
-
+                                                    
                                                     {activeRowMenu === assessment.id && (
                                                         <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-navy-900 rounded-lg shadow-lg border border-slate-200 dark:border-white/10 py-1 z-10">
-                                                            <button
+                                                            <button 
                                                                 onClick={() => {
                                                                     onOpenInMap(assessment.id);
                                                                     setActiveRowMenu(null);
@@ -391,6 +388,4 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
         </div>
     );
 };
-
-export default AssessmentTable;
 

@@ -6,7 +6,7 @@
 module.exports = {
     // JWT Configuration
     JWT_SECRET: process.env.JWT_SECRET || 'supersecretkey_change_this_in_production',
-    JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d', // 7 days default, configurable
+    JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '365d', // 1 year for development
 
     // Refresh token settings (for future use)
     REFRESH_TOKEN_EXPIRES_IN: process.env.REFRESH_TOKEN_EXPIRES_IN || '30d',

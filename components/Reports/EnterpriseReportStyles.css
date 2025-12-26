@@ -1,0 +1,572 @@
+/**
+ * Enterprise Report Styles - BCG/McKinsey Professional Design
+ * These styles enhance the Tailwind prose class for rich HTML reports
+ */
+
+/* Base report container */
+.enterprise-report {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #1e293b;
+}
+
+/* Override prose defaults for tables */
+.prose table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.5rem 0;
+  font-size: 13px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.prose thead tr {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+  color: white;
+}
+
+.prose th {
+  padding: 12px 16px;
+  font-weight: 600;
+  text-align: left;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.prose td {
+  padding: 12px 16px;
+  border: 1px solid #e5e7eb;
+}
+
+.prose tbody tr:nth-child(even) {
+  background: #f8f9fa;
+}
+
+.prose tbody tr:hover {
+  background: #f1f5f9;
+}
+
+/* Dark mode tables */
+.dark .prose thead tr {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+}
+
+.dark .prose td {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark .prose tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.dark .prose tbody tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Cards and boxes */
+.prose [style*="border-radius"] {
+  margin: 1rem 0;
+}
+
+.prose [style*="border-left: 4px"] {
+  margin: 1rem 0;
+}
+
+/* Metrics cards */
+.prose [style*="grid-template-columns"] {
+  gap: 16px;
+}
+
+/* Cover page styling */
+.cover-page {
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+}
+
+.cover-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Priority badges */
+.priority-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.priority-badge.high {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.priority-badge.medium {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.priority-badge.low {
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+/* Progress bars */
+.progress-bar {
+  position: relative;
+  height: 24px;
+  background: #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 12px;
+  transition: width 0.5s ease;
+}
+
+.progress-bar-marker {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  width: 3px;
+  background: #10b981;
+  border-radius: 2px;
+}
+
+/* Heatmap cells */
+.heatmap-cell {
+  text-align: center;
+  padding: 12px;
+  font-weight: 600;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.heatmap-cell:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1;
+  position: relative;
+}
+
+/* BCG Matrix quadrants */
+.bcg-matrix {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  background: #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.bcg-quadrant {
+  padding: 20px;
+}
+
+.bcg-quadrant.quick-wins {
+  background: #ecfdf5;
+}
+
+.bcg-quadrant.strategic {
+  background: #dbeafe;
+}
+
+.bcg-quadrant.maintain {
+  background: #f1f5f9;
+}
+
+.bcg-quadrant.transformational {
+  background: #fef2f2;
+}
+
+/* Timeline visualization */
+.timeline {
+  position: relative;
+  padding: 40px 0;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 40px;
+  right: 40px;
+  top: 60px;
+  height: 4px;
+  background: #e5e7eb;
+  border-radius: 2px;
+}
+
+.timeline-item {
+  text-align: center;
+}
+
+.timeline-marker {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  margin: 0 auto;
+  border: 4px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Gantt chart */
+.gantt-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.gantt-table th,
+.gantt-table td {
+  border: 1px solid #e5e7eb;
+  padding: 8px;
+}
+
+.gantt-bar {
+  height: 100%;
+  min-height: 24px;
+}
+
+/* Initiative cards */
+.initiative-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 16px 0;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.initiative-card:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.initiative-card.critical {
+  border-left: 4px solid #ef4444;
+}
+
+.initiative-card.high {
+  border-left: 4px solid #f59e0b;
+}
+
+.initiative-card.medium {
+  border-left: 4px solid #10b981;
+}
+
+/* Metric boxes */
+.metric-box {
+  padding: 24px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.metric-box .value {
+  font-size: 48px;
+  font-weight: 700;
+}
+
+.metric-box .label {
+  font-size: 14px;
+  opacity: 0.9;
+  margin-top: 4px;
+}
+
+.metric-box .sublabel {
+  font-size: 12px;
+  opacity: 0.7;
+  margin-top: 4px;
+}
+
+/* Callouts and highlights */
+.callout {
+  padding: 16px 20px;
+  border-radius: 8px;
+  margin: 16px 0;
+}
+
+.callout.info {
+  background: #dbeafe;
+  border-left: 4px solid #3b82f6;
+}
+
+.callout.success {
+  background: #ecfdf5;
+  border-left: 4px solid #10b981;
+}
+
+.callout.warning {
+  background: #fef3c7;
+  border-left: 4px solid #f59e0b;
+}
+
+.callout.danger {
+  background: #fef2f2;
+  border-left: 4px solid #ef4444;
+}
+
+/* Dark mode support */
+.dark .enterprise-report {
+  color: #e2e8f0;
+}
+
+.dark .initiative-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark .callout.info {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.dark .callout.success {
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.dark .callout.warning {
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.dark .callout.danger {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* Print styles */
+@media print {
+  .enterprise-report {
+    font-size: 11pt;
+    color: black;
+  }
+
+  .cover-page {
+    page-break-after: always;
+  }
+
+  h2 {
+    page-break-before: always;
+  }
+
+  h3, h4 {
+    page-break-after: avoid;
+  }
+
+  table {
+    page-break-inside: avoid;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Animation utilities */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Scroll-triggered animations */
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes countUp {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-left {
+  animation: slideInFromLeft 0.5s ease-out forwards;
+}
+
+.animate-slide-in-right {
+  animation: slideInFromRight 0.5s ease-out forwards;
+}
+
+.animate-slide-in-bottom {
+  animation: slideInFromBottom 0.5s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.4s ease-out forwards;
+}
+
+/* Staggered animations */
+.stagger-animation > * {
+  opacity: 0;
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.stagger-animation > *:nth-child(1) { animation-delay: 0.05s; }
+.stagger-animation > *:nth-child(2) { animation-delay: 0.1s; }
+.stagger-animation > *:nth-child(3) { animation-delay: 0.15s; }
+.stagger-animation > *:nth-child(4) { animation-delay: 0.2s; }
+.stagger-animation > *:nth-child(5) { animation-delay: 0.25s; }
+.stagger-animation > *:nth-child(6) { animation-delay: 0.3s; }
+.stagger-animation > *:nth-child(7) { animation-delay: 0.35s; }
+.stagger-animation > *:nth-child(8) { animation-delay: 0.4s; }
+
+/* Collapsible section animations */
+.section-collapse-enter {
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+}
+
+.section-collapse-enter-active {
+  opacity: 1;
+  max-height: 2000px;
+  transition: all 0.3s ease-out;
+}
+
+.section-collapse-exit {
+  opacity: 1;
+  max-height: 2000px;
+}
+
+.section-collapse-exit-active {
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: all 0.3s ease-out;
+}
+
+/* Hover effects for interactive elements */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* Reading mode styles */
+body.reading-mode {
+  --reading-mode: 1;
+}
+
+body.reading-mode .sidebar,
+body.reading-mode .navigation-panel {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+body.reading-mode .report-content {
+  max-width: 800px;
+  margin: 0 auto;
+  font-size: var(--reading-font-size, 16px);
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Focus visible for accessibility */
+.focus-visible:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Gradient text for headers */
+.gradient-text {
+  background: linear-gradient(90deg, #60a5fa, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .prose [style*="grid-template-columns: repeat(4"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .prose [style*="grid-template-columns: repeat(3"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  .cover-page h1 {
+    font-size: 28px !important;
+  }
+
+  .metric-box .value {
+    font-size: 32px;
+  }
+}
+

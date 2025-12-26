@@ -121,5 +121,3 @@ export const AssessmentModuleLayout: React.FC<AssessmentModuleLayoutProps> = ({
     );
 };
 
-export default AssessmentModuleLayout;
-

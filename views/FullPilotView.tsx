@@ -36,7 +36,7 @@ export const FullPilotView: React.FC = () => {
 
   // Find pilot initiative (status = IN_EXECUTION or first initiative)
   const pilotInitiative = fullSession.initiatives.find(
-    (i: FullInitiative) => i.status === InitiativeStatus.IN_EXECUTION
+    (i: FullInitiative) => i.status === InitiativeStatus.EXECUTING
   ) || fullSession.initiatives[0];
 
   const handleUpdateInitiative = useCallback(async (initiative: FullInitiative) => {

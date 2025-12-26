@@ -7,6 +7,8 @@ const notificationsRouter = require('./notifications');
 const ActivityService = require('../services/activityService');
 const InitiativeService = require('../services/initiativeService');
 const cacheHelper = require('../utils/cacheHelper');
+const TaskAssignmentService = require('../services/taskAssignmentService');
+const ProjectMemberService = require('../services/projectMemberService');
 
 router.use(verifyToken);
 
@@ -678,6 +680,276 @@ router.delete('/:taskId/comments/:commentId', (req, res) => {
             res.json({ message: 'Comment deleted' });
         });
     });
+});
+
+// ==========================================
+// PMO TASK ASSIGNMENT & ESCALATION ENDPOINTS
+// Standards: ISO 21500, PMBOK 7, PRINCE2
+// ==========================================
+
+/**
+ * Assign a task to a user
+ * POST /api/tasks/:id/assign
+ */
+router.post('/:id/assign', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { assigneeId, slaHours } = req.body;
+        const assignedById = req.user.id;
+
+        if (!assigneeId) {
+            return res.status(400).json({ error: 'assigneeId is required' });
+        }
+
+        // Get task to check project
+        const task = await new Promise((resolve, reject) => {
+            db.get('SELECT project_id FROM tasks WHERE id = ?', [id], (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
+            });
+        });
+
+        if (!task) {
+            return res.status(404).json({ error: 'Task not found' });
+        }
+
+        // Check permission
+        const hasPermission = await ProjectMemberService.checkPermission(
+            task.project_id,
+            assignedById,
+            'canAssignTasks'
+        );
+
+        if (!hasPermission && req.user.role !== 'SUPERADMIN' && req.user.role !== 'ADMIN') {
+            return res.status(403).json({ error: 'You do not have permission to assign tasks' });
+        }
+
+        const result = await TaskAssignmentService.assignTask(id, assigneeId, {
+            assignedById,
+            slaHours
+        });
+
+        res.json(result);
+    } catch (err) {
+        console.error('[Tasks] Assign error:', err.message);
+        res.status(400).json({ error: err.message });
+    }
+});
+
+/**
+ * Reassign a task to a different user
+ * POST /api/tasks/:id/reassign
+ */
+router.post('/:id/reassign', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { assigneeId, reason, resetSla } = req.body;
+        const reassignedById = req.user.id;
+
+        if (!assigneeId) {
+            return res.status(400).json({ error: 'assigneeId is required' });
+        }
+
+        const result = await TaskAssignmentService.reassignTask(id, assigneeId, {
+            reassignedById,
+            reason,
+            resetSla
+        });
+
+        res.json(result);
+    } catch (err) {
+        console.error('[Tasks] Reassign error:', err.message);
+        res.status(400).json({ error: err.message });
+    }
+});
+
+/**
+ * Unassign a task
+ * POST /api/tasks/:id/unassign
+ */
+router.post('/:id/unassign', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const result = await TaskAssignmentService.unassignTask(id);
+        res.json(result);
+    } catch (err) {
+        console.error('[Tasks] Unassign error:', err.message);
+        res.status(400).json({ error: err.message });
+    }
+});
+
+/**
+ * Escalate a task
+ * POST /api/tasks/:id/escalate
+ */
+router.post('/:id/escalate', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { reason, triggerType } = req.body;
+        const escalatedById = req.user.id;
+
+        // Get task to check project
+        const task = await new Promise((resolve, reject) => {
+            db.get('SELECT project_id FROM tasks WHERE id = ?', [id], (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
+            });
+        });
+
+        if (!task) {
+            return res.status(404).json({ error: 'Task not found' });
+        }
+
+        // Check if user can escalate
+        const hasPermission = await ProjectMemberService.checkPermission(
+            task.project_id,
+            escalatedById,
+            'canEscalate'
+        );
+
+        if (!hasPermission && req.user.role !== 'SUPERADMIN' && req.user.role !== 'ADMIN') {
+            return res.status(403).json({ error: 'You do not have permission to escalate tasks' });
+        }
+
+        const result = await TaskAssignmentService.escalateTask(id, {
+            reason: reason || 'Manual escalation',
+            triggerType: triggerType || 'MANUAL',
+            escalatedById
+        });
+
+        res.json(result);
+    } catch (err) {
+        console.error('[Tasks] Escalate error:', err.message);
+        res.status(400).json({ error: err.message });
+    }
+});
+
+/**
+ * Resolve an escalation
+ * POST /api/tasks/:taskId/escalations/:escalationId/resolve
+ */
+router.post('/:taskId/escalations/:escalationId/resolve', async (req, res) => {
+    try {
+        const { escalationId } = req.params;
+        const { resolutionNote } = req.body;
+        const resolvedById = req.user.id;
+
+        const result = await TaskAssignmentService.resolveEscalation(escalationId, {
+            resolutionNote,
+            resolvedById
+        });
+
+        res.json(result);
+    } catch (err) {
+        console.error('[Tasks] Resolve escalation error:', err.message);
+        res.status(400).json({ error: err.message });
+    }
+});
+
+/**
+ * Get task escalation history
+ * GET /api/tasks/:id/escalations
+ */
+router.get('/:id/escalations', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const escalations = await TaskAssignmentService.getTaskEscalationHistory(id);
+        res.json(escalations);
+    } catch (err) {
+        console.error('[Tasks] Escalation history error:', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
+ * Get overdue tasks for a project
+ * GET /api/tasks/overdue
+ */
+router.get('/overdue', async (req, res) => {
+    try {
+        const { projectId, escalationLevel, limit } = req.query;
+        const orgId = req.user.organizationId;
+
+        if (!projectId) {
+            return res.status(400).json({ error: 'projectId is required' });
+        }
+
+        const tasks = await TaskAssignmentService.getOverdueTasks(projectId, {
+            escalationLevel: escalationLevel ? parseInt(escalationLevel) : undefined,
+            limit: limit ? parseInt(limit) : undefined
+        });
+
+        res.json(tasks);
+    } catch (err) {
+        console.error('[Tasks] Overdue error:', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
+ * Get tasks approaching SLA deadline
+ * GET /api/tasks/at-risk
+ */
+router.get('/at-risk', async (req, res) => {
+    try {
+        const { projectId, hoursAhead } = req.query;
+
+        if (!projectId) {
+            return res.status(400).json({ error: 'projectId is required' });
+        }
+
+        const tasks = await TaskAssignmentService.getTasksApproachingSLA(
+            projectId,
+            hoursAhead ? parseInt(hoursAhead) : 4
+        );
+
+        res.json(tasks);
+    } catch (err) {
+        console.error('[Tasks] At-risk error:', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
+ * Get user workload
+ * GET /api/tasks/workload/:userId
+ */
+router.get('/workload/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { projectId } = req.query;
+
+        const workload = await TaskAssignmentService.getUserWorkload(userId, {
+            projectId
+        });
+
+        res.json(workload);
+    } catch (err) {
+        console.error('[Tasks] Workload error:', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
+ * Get my workload (current user)
+ * GET /api/tasks/my-workload
+ */
+router.get('/my-workload', async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { projectId } = req.query;
+
+        const workload = await TaskAssignmentService.getUserWorkload(userId, {
+            projectId
+        });
+
+        res.json(workload);
+    } catch (err) {
+        console.error('[Tasks] My workload error:', err.message);
+        res.status(500).json({ error: err.message });
+    }
 });
 
 module.exports = router;

@@ -105,10 +105,25 @@ export const AssessmentMatrixCard: React.FC<AssessmentMatrixCardProps> = ({
                                 const areaActual = scores?.[areaId]?.[0] || 0;
                                 const areaTarget = scores?.[areaId]?.[1] || 0;
 
-                                // Bitwise check for level presence
-                                const levelBit = 1 << (level - 1);
-                                const isActual = (areaActual & levelBit) !== 0;
-                                const isTarget = (areaTarget & levelBit) !== 0;
+                                // Check if level is achieved
+                                // If score is stored as plain number: level <= score means achieved
+                                // If score is stored as bitmask: (score & (1 << (level-1))) !== 0
+                                // Auto-detect: if score > maxLevel, treat as bitmask; otherwise as plain number
+                                const isBitmask = areaActual > maxLevel || areaTarget > maxLevel;
+                                
+                                let isActual: boolean;
+                                let isTarget: boolean;
+                                
+                                if (isBitmask) {
+                                    // Bitmask mode
+                                    const levelBit = 1 << (level - 1);
+                                    isActual = (areaActual & levelBit) !== 0;
+                                    isTarget = (areaTarget & levelBit) !== 0;
+                                } else {
+                                    // Plain number mode - all levels up to the score are "achieved"
+                                    isActual = areaActual >= level;
+                                    isTarget = areaTarget >= level;
+                                }
 
                                 // Find title for this level from area data
                                 const levelInfo = area.levels.find(l => l.level === level);

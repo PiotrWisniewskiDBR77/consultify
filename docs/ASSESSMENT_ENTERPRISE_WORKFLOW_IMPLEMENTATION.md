@@ -129,6 +129,51 @@ Wizualne bramki zatwierdzania:
 - `PresenceIndicator` - awatary współpracowników
 - `ActivityFeed` - lista aktywności
 
+### 7. Workflow Status Bar
+
+**Plik:** `components/assessment/WorkflowStatusBar.tsx`
+
+**Funkcjonalności:**
+- Wizualny timeline stanów workflow: DRAFT → IN_REVIEW → AWAITING_APPROVAL → APPROVED
+- Color-coded status indicators (gray/blue/green)
+- Clickable stages z tooltipami
+- Integracja z useAssessmentCollaboration hook
+- Wskaźnik postępu recenzji
+
+### 8. Stage Gate Modal
+
+**Plik:** `components/assessment/modals/StageGateModal.tsx`
+
+**Funkcjonalności:**
+- Modal wrapper dla AssessmentStageGate
+- Checklist kryteriów bramki (DESIGN_GATE, PLANNING_GATE, etc.)
+- Status Pass/Fail z progress bar
+- Przycisk "Przejdź dalej" (enabled gdy wszystkie kryteria spełnione)
+- Integracja z zakładką Reports (wymagane przed tworzeniem raportu)
+
+### 9. UX Improvements
+
+**Toast Notifications:**
+- Integracja z `react-hot-toast`
+- Powiadomienia o zapisie assessmentu
+- Powiadomienia o wysłaniu do recenzji
+- Powiadomienia o eksporcie PDF/Excel
+
+**Keyboard Shortcuts:**
+- `Cmd/Ctrl + S` - Zapisz assessment
+- `Escape` - Zamknij panel historii wersji
+
+**Bulk Actions (Assessment Table):**
+- Checkbox column do multi-select
+- Bulk action bar: "Usuń wybrane"
+- Select All / Deselect All
+
+**Review SLA Tracking:**
+- Default SLA: 48 godzin (konfigurowalny)
+- Wskaźnik `isOverdue` w odpowiedzi API
+- Sortowanie recenzji wg terminu
+- Wizualne oznaczenie przeterminowanych recenzji
+
 ### 7. Enterprise Reports Service
 
 **Plik:** `server/services/assessmentReportService.js`
@@ -202,11 +247,16 @@ consultify/
 │   ├── routes/
 │   │   └── assessment-workflow.js          # ✅ NEW
 │   └── migrations/
-│       └── 010_assessment_workflow.sql     # ✅ NEW
+│       ├── 010_assessment_workflow.sql     # ✅ NEW
+│       └── 039_initiative_report_tracking.sql  # ✅ NEW (26.12.2025)
 ├── components/assessment/
 │   ├── AssessmentWorkflowPanel.tsx         # ✅ NEW
 │   ├── AxisCommentsPanel.tsx               # ✅ NEW
-│   └── AssessmentStageGate.tsx             # ✅ NEW
+│   ├── AssessmentStageGate.tsx             # ✅ NEW
+│   ├── WorkflowStatusBar.tsx               # ✅ NEW (26.12.2025)
+│   └── modals/
+│       ├── StageGateModal.tsx              # ✅ NEW (26.12.2025)
+│       └── ...
 ├── hooks/
 │   └── useAssessmentCollaboration.ts       # ✅ NEW
 └── docs/
@@ -263,14 +313,14 @@ consultify/
 1. **WebSocket dla real-time** - zastąpienie polling
 2. **Email notifications** - powiadomienia o recenzjach
 3. **Approval chains** - wielostopniowe zatwierdzenia
-4. **SLA tracking** - śledzenie czasu odpowiedzi
+4. ✅ **SLA tracking** - śledzenie czasu odpowiedzi (zrealizowane 26.12.2025, default 48h)
 5. **Analytics dashboard** - metryki workflow
 
 ### Integracje
 
 1. **Notifications module** - integracja z istniejącym systemem
 2. **RBAC refinement** - dodatkowe role dla workflow
-3. **Stage Gates** - integracja z stageGateService
+3. ✅ **Stage Gates** - integracja z stageGateService (zrealizowane 26.12.2025)
 
 ---
 

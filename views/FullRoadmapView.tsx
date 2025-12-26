@@ -252,7 +252,7 @@ export const FullRoadmapView: React.FC = () => {
   const confirmPilot = async (pilotId: string) => {
     // Mark initiative as PILOT (step4 -> IN_EXECUTION)
     const updated = fullSession.initiatives.map(i =>
-      i.id === pilotId ? { ...i, status: InitiativeStatus.IN_EXECUTION } : i
+      i.id === pilotId ? { ...i, status: InitiativeStatus.EXECUTING } : i
     );
     updateFullSession({ initiatives: updated, step3Completed: true });
     await Api.saveSession(currentUser!.id, SessionMode.FULL, { ...fullSession, initiatives: updated, step3Completed: true }, currentProjectId || undefined);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { DRDAxis, MaturityLevel, AxisAssessment } from '../../types';
-import { ArrowRight, Info, CheckCircle2, AlertTriangle, BrainCircuit, TrendingUp, Lightbulb, ChevronRight, ChevronDown, Sparkles, Loader2, RefreshCw, Target, FileText, Zap, MoreVertical, X } from 'lucide-react';
+import { ArrowRight, Info, CheckCircle2, AlertTriangle, BrainCircuit, TrendingUp, Lightbulb, ChevronRight, ChevronDown, Sparkles, Loader2, RefreshCw, Target, FileText, Zap, MoreVertical, X, MessageSquare } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { LevelNavigator } from './LevelNavigator';
 import { LevelSelector } from './LevelSelector';
@@ -8,6 +8,7 @@ import { LevelDetailCard } from './LevelDetailCard';
 import { useAssessmentAI } from '../../hooks/useAssessmentAI';
 import { useAppStore } from '../../store/useAppStore';
 import { useDeviceType } from '../../hooks/useDeviceType';
+import { CommentsSidePanel } from './panels/CommentsSidePanel';
 
 interface AssessmentAxisWorkspaceProps {
     axis: DRDAxis;
@@ -21,6 +22,7 @@ interface AssessmentAxisWorkspaceProps {
     };
     readOnly?: boolean;
     projectId?: string;
+    assessmentId?: string;
 }
 
 // AI Quick Action Button Component
@@ -58,6 +60,45 @@ const AIActionButton: React.FC<AIActionButtonProps> = ({
     );
 };
 
+// Helper: Get level value (handles both plain numbers and bitmasks)
+const getHighestLevel = (value: number): number => {
+    if (value === 0) return 0;
+    // If value is small (1-7), it's likely a plain number
+    // If value is larger (8+), it's likely a bitmask
+    if (value <= 7) {
+        return value; // Plain number
+    }
+    // Bitmask - find highest set bit
+    return Math.floor(Math.log2(value)) + 1;
+};
+
+// Helper: Calculate aggregate scores from areaScores bitmasks
+const calculateAggregatesFromBitmasks = (areaScores: Record<string, number[]>): { actual: number | undefined; target: number | undefined } => {
+    let totalActual = 0;
+    let totalTarget = 0;
+    let countActual = 0;
+    let countTarget = 0;
+
+    Object.values(areaScores).forEach(scores => {
+        const actualLevel = getHighestLevel(scores[0]);
+        const targetLevel = getHighestLevel(scores[1]);
+
+        if (actualLevel > 0) {
+            totalActual += actualLevel;
+            countActual++;
+        }
+        if (targetLevel > 0) {
+            totalTarget += targetLevel;
+            countTarget++;
+        }
+    });
+
+    return {
+        actual: countActual > 0 ? Math.round(totalActual / countActual) : undefined,
+        target: countTarget > 0 ? Math.round(totalTarget / countTarget) : undefined
+    };
+};
+
 export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = ({
     axis,
     data,
@@ -65,7 +106,8 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
     onNext,
     context,
     readOnly = false,
-    projectId
+    projectId,
+    assessmentId
 }) => {
     const { t } = useTranslation();
     const { currentProjectId } = useAppStore();
@@ -77,9 +119,14 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
     const [aiEvidence, setAiEvidence] = useState<string[] | null>(null);
     const [showAiPanel, setShowAiPanel] = useState(false);
 
+    // Comments
+    const [showComments, setShowComments] = useState(false);
+    const [commentCount, setCommentCount] = useState(0);
+
     // Fetch translated content
     const axisContent = t(`assessment.axisContent.${axis}`, { returnObjects: true }) as { title: string; intro?: string; levels?: Record<string, string>, areas?: Record<string, { title: string, levels: Record<string, string> }> };
     const workspaceT = t('assessment.workspace', { returnObjects: true }) as any;
+
 
     // Resolve areas
     const axisAreas = axisContent.areas || null;
@@ -324,7 +371,7 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                                     {t(`sidebar.fullStep1_${axis === 'cybersecurity' ? 'cyber' : axis === 'aiMaturity' ? 'ai' : axis === 'processes' ? 'proc' : axis === 'digitalProducts' ? 'prod' : axis === 'businessModels' ? 'model' : axis === 'dataManagement' ? 'data' : axis === 'culture' ? 'cult' : 'proc'}`) || axisContent?.title || axis}
                                 </h2>
                             </div>
-                            
+
                             {/* Compact Progress Indicator */}
                             <div className="flex items-center gap-2 px-2 py-1 bg-slate-100 dark:bg-navy-950/50 rounded-lg">
                                 <span className="text-xs font-bold text-blue-500">{progressStats.completed}/{progressStats.total}</span>
@@ -347,7 +394,7 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                                 className={`touch-target flex items-center justify-center w-10 h-10 rounded-lg transition-all ${data.actual && data.target
                                     ? 'bg-purple-600 text-white shadow-lg'
                                     : 'bg-slate-100 dark:bg-white/5 text-slate-400'
-                                }`}
+                                    }`}
                             >
                                 <ArrowRight size={18} />
                             </button>
@@ -414,116 +461,132 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                 ) : (
                     /* Desktop Header Layout */
                     <>
-                <div className="flex items-center gap-6">
-                    {/* Axis Label */}
-                    <div className="flex flex-col">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                            {workspaceT.assessmentArea || 'ASSESSMENT AREA'}
-                        </label>
-                        <h2 className="text-xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
-                            {t(`sidebar.fullStep1_${axis === 'cybersecurity' ? 'cyber' : axis === 'aiMaturity' ? 'ai' : axis === 'processes' ? 'proc' : axis === 'digitalProducts' ? 'prod' : axis === 'businessModels' ? 'model' : axis === 'dataManagement' ? 'data' : axis === 'culture' ? 'cult' : 'proc'}`) || axisContent?.title || axis}
-                            <Info size={14} className="text-slate-500 cursor-pointer hover:text-navy-900 dark:hover:text-white transition-colors" />
-                        </h2>
-                    </div>
+                        <div className="flex items-center gap-6">
+                            {/* Axis Label */}
+                            <div className="flex flex-col">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                                    {workspaceT.assessmentArea || 'ASSESSMENT AREA'}
+                                </label>
+                                <h2 className="text-xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
+                                    {t(`sidebar.fullStep1_${axis === 'cybersecurity' ? 'cyber' : axis === 'aiMaturity' ? 'ai' : axis === 'processes' ? 'proc' : axis === 'digitalProducts' ? 'prod' : axis === 'businessModels' ? 'model' : axis === 'dataManagement' ? 'data' : axis === 'culture' ? 'cult' : 'proc'}`) || axisContent?.title || axis}
+                                    <Info size={14} className="text-slate-500 cursor-pointer hover:text-navy-900 dark:hover:text-white transition-colors" />
+                                </h2>
+                            </div>
 
                             {/* Sub-Area Selector (Desktop - hover based) */}
-                    {hasSubAreas && (
-                        <div className="relative group ml-4 pl-4 border-l border-slate-200 dark:border-white/10">
-                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-0.5 block">{workspaceT.functionalArea || 'FUNCTIONAL AREA'}</span>
+                            {hasSubAreas && (
+                                <div className="relative group ml-4 pl-4 border-l border-slate-200 dark:border-white/10">
+                                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-0.5 block">{workspaceT.functionalArea || 'FUNCTIONAL AREA'}</span>
 
-                            {/* Dropdown Trigger */}
-                            <div className="flex items-center gap-2 cursor-pointer text-navy-900 dark:text-white font-bold text-sm bg-slate-100 dark:bg-navy-950/50 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20 transition-all">
-                                {activeArea?.title || workspaceT.selectArea || 'Select Area'}
-                                <ChevronDown size={14} className="text-slate-400" />
-                            </div>
+                                    {/* Dropdown Trigger */}
+                                    <div className="flex items-center gap-2 cursor-pointer text-navy-900 dark:text-white font-bold text-sm bg-slate-100 dark:bg-navy-950/50 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20 transition-all">
+                                        {activeArea?.title || workspaceT.selectArea || 'Select Area'}
+                                        <ChevronDown size={14} className="text-slate-400" />
+                                    </div>
 
-                            {/* Dropdown Menu */}
-                            <div className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl overflow-hidden invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all z-50">
-                                {Object.entries(axisAreas).map(([key, area]: [string, any]) => {
-                                    const scores = data.areaScores?.[key] || [0, 0];
-                                    const isCompleted = scores[0] > 0 && scores[1] > 0;
+                                    {/* Dropdown Menu */}
+                                    <div className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl overflow-hidden invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all z-50">
+                                        {Object.entries(axisAreas).map(([key, area]: [string, any]) => {
+                                            const scores = data.areaScores?.[key] || [0, 0];
+                                            const isCompleted = scores[0] > 0 && scores[1] > 0;
 
-                                    return (
-                                        <button
-                                            key={key}
-                                            onClick={() => setCurrentAreaKey(key)}
-                                            className={`w-full text-left px-4 py-3 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${key === currentAreaKey ? 'bg-purple-50 dark:bg-purple-600/10 text-purple-600 dark:text-purple-300' : 'text-slate-500 dark:text-slate-400'}`}
-                                        >
-                                            <span className="text-sm font-medium">{area.title}</span>
-                                            {isCompleted && <CheckCircle2 size={14} className="text-green-500" />}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                <div className="flex items-center gap-4">
-                            {/* AI Quick Actions (Desktop) */}
-                    {!readOnly && effectiveProjectId && (
-                        <div className="flex items-center gap-2 mr-2">
-                            <AIActionButton
-                                onClick={handleAiSuggestJustification}
-                                isLoading={ai.isLoading}
-                                icon={<Sparkles size={14} />}
-                                label="Sugeruj"
-                                variant="primary"
-                                disabled={!data.actual && !activeScores[0]}
-                            />
-                            <AIActionButton
-                                onClick={handleAiSuggestEvidence}
-                                isLoading={ai.isLoading}
-                                icon={<FileText size={14} />}
-                                label="Dowody"
-                                disabled={!data.actual && !activeScores[0]}
-                            />
-                            <AIActionButton
-                                onClick={handleAiSuggestTarget}
-                                isLoading={ai.isLoading}
-                                icon={<Target size={14} />}
-                                label="Cel"
-                                disabled={!data.actual && !activeScores[0]}
-                            />
-                            {data.justification && (
-                                <AIActionButton
-                                    onClick={handleAiCorrectText}
-                                    isLoading={ai.isLoading}
-                                    icon={<RefreshCw size={14} />}
-                                    label="Popraw"
-                                />
+                                            return (
+                                                <button
+                                                    key={key}
+                                                    onClick={() => setCurrentAreaKey(key)}
+                                                    className={`w-full text-left px-4 py-3 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${key === currentAreaKey ? 'bg-purple-50 dark:bg-purple-600/10 text-purple-600 dark:text-purple-300' : 'text-slate-500 dark:text-slate-400'}`}
+                                                >
+                                                    <span className="text-sm font-medium">{area.title}</span>
+                                                    {isCompleted && <CheckCircle2 size={14} className="text-green-500" />}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
                             )}
                         </div>
-                    )}
+
+                        <div className="flex items-center gap-4">
+                            {/* AI Quick Actions (Desktop) */}
+                            {!readOnly && effectiveProjectId && (
+                                <div className="flex items-center gap-2 mr-2">
+                                    <AIActionButton
+                                        onClick={handleAiSuggestJustification}
+                                        isLoading={ai.isLoading}
+                                        icon={<Sparkles size={14} />}
+                                        label="Sugeruj"
+                                        variant="primary"
+                                        disabled={!data.actual && !activeScores[0]}
+                                    />
+                                    <AIActionButton
+                                        onClick={handleAiSuggestEvidence}
+                                        isLoading={ai.isLoading}
+                                        icon={<FileText size={14} />}
+                                        label="Dowody"
+                                        disabled={!data.actual && !activeScores[0]}
+                                    />
+                                    <AIActionButton
+                                        onClick={handleAiSuggestTarget}
+                                        isLoading={ai.isLoading}
+                                        icon={<Target size={14} />}
+                                        label="Cel"
+                                        disabled={!data.actual && !activeScores[0]}
+                                    />
+                                    {data.justification && (
+                                        <AIActionButton
+                                            onClick={handleAiCorrectText}
+                                            isLoading={ai.isLoading}
+                                            icon={<RefreshCw size={14} />}
+                                            label="Popraw"
+                                        />
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Comments Button (Desktop) */}
+                            {assessmentId && (
+                                <button
+                                    onClick={() => setShowComments(true)}
+                                    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950/50 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                                >
+                                    <MessageSquare size={16} />
+                                    <span className="text-sm font-medium">Komentarze</span>
+                                    {commentCount > 0 && (
+                                        <span className="flex items-center justify-center w-5 h-5 rounded-full bg-purple-600 text-white text-xs font-bold">
+                                            {commentCount}
+                                        </span>
+                                    )}
+                                </button>
+                            )}
 
                             {/* Overall Progress (Desktop) */}
-                    <div className="flex items-center gap-3 bg-slate-100 dark:bg-navy-950/50 px-4 py-2 rounded-lg border border-slate-200 dark:border-white/5">
-                        <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">{workspaceT.axisProgress || 'AXIS PROGRESS'}</span>
-                        <div className="h-8 w-px bg-slate-200 dark:bg-white/10 mx-2"></div>
-                        <div className="flex gap-4 text-sm">
-                            <div>
-                                <span className="text-xs text-slate-500 block">{workspaceT.approved || 'Approved'}</span>
+                            <div className="flex items-center gap-3 bg-slate-100 dark:bg-navy-950/50 px-4 py-2 rounded-lg border border-slate-200 dark:border-white/5">
+                                <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">{workspaceT.axisProgress || 'AXIS PROGRESS'}</span>
+                                <div className="h-8 w-px bg-slate-200 dark:bg-white/10 mx-2"></div>
+                                <div className="flex gap-4 text-sm">
+                                    <div>
+                                        <span className="text-xs text-slate-500 block">{workspaceT.approved || 'Approved'}</span>
                                         <span className="font-bold text-blue-400">{progressStats.completed}/{progressStats.total}</span>
-                            </div>
-                            <div>
-                                <span className="text-xs text-slate-500 block">{workspaceT.remaining || 'Remaining'}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-xs text-slate-500 block">{workspaceT.remaining || 'Remaining'}</span>
                                         <span className="font-bold text-purple-400">{progressStats.remaining}</span>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
 
-                    <button
-                        onClick={onNext}
-                        disabled={!data.actual || !data.target}
-                        className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm transition-all shadow-lg ${data.actual && data.target
-                            ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-purple-900/30'
-                            : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-500 cursor-not-allowed'
-                            }`}
-                    >
-                        {workspaceT.confirmNext || 'Potwierdź i Dalej'}
-                        <ArrowRight size={16} />
-                    </button>
-                </div>
+                            <button
+                                onClick={onNext}
+                                disabled={!data.actual || !data.target}
+                                className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm transition-all shadow-lg ${data.actual && data.target
+                                    ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-purple-900/30'
+                                    : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                                    }`}
+                            >
+                                {workspaceT.confirmNext || 'Potwierdź i Dalej'}
+                                <ArrowRight size={16} />
+                            </button>
+                        </div>
                     </>
                 )}
             </div>
@@ -648,32 +711,16 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
 
                                     const newAreaScores = { ...(data.areaScores || {}), [currentAreaKey]: currentScores };
 
-                                    // Recalculate aggregates using Population Count (Number of set bits)
-                                    let totalActual = 0;
-                                    let totalTarget = 0;
-                                    let countActual = 0;
-                                    let countTarget = 0;
-                                    const popcount = (n: number) => n.toString(2).replace(/0/g, "").length;
-
-                                    Object.values(newAreaScores).forEach(scores => {
-                                        // Count "Done" if actual > 0
-                                        if (scores[0] > 0) {
-                                            totalActual += popcount(scores[0]);
-                                            countActual++;
-                                        }
-                                        if (scores[1] > 0) {
-                                            // For target, we might want max level or count. Let's use count for consistency.
-                                            totalTarget += popcount(scores[1]);
-                                            countTarget++;
-                                        }
-                                    });
+                                    // Recalculate aggregates using highest level from bitmask
+                                    const aggregates = calculateAggregatesFromBitmasks(newAreaScores);
 
                                     const updates: Partial<AxisAssessment> = {
                                         areaScores: newAreaScores,
-                                        actual: countActual > 0 ? Math.round(totalActual / countActual) as MaturityLevel : undefined,
-                                        target: countTarget > 0 ? Math.round(totalTarget / countTarget) as MaturityLevel : undefined
+                                        actual: aggregates.actual as MaturityLevel | undefined,
+                                        target: aggregates.target as MaturityLevel | undefined
                                     };
                                     onChange({ ...data, ...updates });
+
                                 } else {
                                     // Simple Mode
                                     let actual = (data.actual || 0) as number;
@@ -697,22 +744,13 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
 
                                     const newAreaScores = { ...(data.areaScores || {}), [currentAreaKey]: currentScores };
 
-                                    // Recalculate aggregates
-                                    let totalActual = 0;
-                                    let totalTarget = 0;
-                                    let countActual = 0;
-                                    let countTarget = 0;
-                                    const popcount = (n: number) => n.toString(2).replace(/0/g, "").length;
-
-                                    Object.values(newAreaScores).forEach(scores => {
-                                        if (scores[0] > 0) { totalActual += popcount(scores[0]); countActual++; }
-                                        if (scores[1] > 0) { totalTarget += popcount(scores[1]); countTarget++; }
-                                    });
+                                    // Recalculate aggregates using highest level from bitmask
+                                    const aggregates = calculateAggregatesFromBitmasks(newAreaScores);
 
                                     const updates: Partial<AxisAssessment> = {
                                         areaScores: newAreaScores,
-                                        actual: countActual > 0 ? Math.round(totalActual / countActual) as MaturityLevel : undefined,
-                                        target: countTarget > 0 ? Math.round(totalTarget / countTarget) as MaturityLevel : undefined
+                                        actual: aggregates.actual as MaturityLevel | undefined,
+                                        target: aggregates.target as MaturityLevel | undefined
                                     };
                                     onChange({ ...data, ...updates });
                                 } else {
@@ -734,22 +772,13 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
 
                                     const newAreaScores = { ...(data.areaScores || {}), [currentAreaKey]: currentScores };
 
-                                    // Recalculate aggregates
-                                    let totalActual = 0;
-                                    let totalTarget = 0;
-                                    let countActual = 0;
-                                    let countTarget = 0;
-                                    const popcount = (n: number) => n.toString(2).replace(/0/g, "").length;
-
-                                    Object.values(newAreaScores).forEach(scores => {
-                                        if (scores[0] > 0) { totalActual += popcount(scores[0]); countActual++; }
-                                        if (scores[1] > 0) { totalTarget += popcount(scores[1]); countTarget++; }
-                                    });
+                                    // Recalculate aggregates using highest level from bitmask
+                                    const aggregates = calculateAggregatesFromBitmasks(newAreaScores);
 
                                     const updates: Partial<AxisAssessment> = {
                                         areaScores: newAreaScores,
-                                        actual: countActual > 0 ? Math.round(totalActual / countActual) as MaturityLevel : undefined,
-                                        target: countTarget > 0 ? Math.round(totalTarget / countTarget) as MaturityLevel : undefined
+                                        actual: aggregates.actual as MaturityLevel | undefined,
+                                        target: aggregates.target as MaturityLevel | undefined
                                     };
                                     onChange({ ...data, ...updates });
                                 } else {
@@ -839,6 +868,18 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                 </div>
 
             </div>
+
+            {/* Comments Side Panel */}
+            {assessmentId && (
+                <CommentsSidePanel
+                    assessmentId={assessmentId}
+                    axisId={axis}
+                    isOpen={showComments}
+                    onClose={() => setShowComments(false)}
+                    onCommentCountChange={setCommentCount}
+                    isReadOnly={readOnly}
+                />
+            )}
         </div>
     );
 };

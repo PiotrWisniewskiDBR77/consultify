@@ -10,7 +10,10 @@ import {
     GapForGeneration, 
     GeneratedInitiative, 
     InitiativeGeneratorConstraints,
-    DRDAxis 
+    DRDAxis,
+    InitiativeTemplate,
+    AIGeneratedCharter,
+    AICharterRequest
 } from '../types';
 
 interface UseInitiativeGeneratorResult {
@@ -36,6 +39,12 @@ interface UseInitiativeGeneratorResult {
     approveAndTransfer: (projectId: string) => Promise<{ transferred: string[]; failed: string[] }>;
     validateInitiative: (initiative: GeneratedInitiative) => Promise<{ valid: boolean; errors: string[]; warnings: string[] }>;
     reset: () => void;
+    
+    // Charter & Template Actions
+    fetchTemplates: (category?: string) => Promise<InitiativeTemplate[]>;
+    generateCharter: (request: AICharterRequest) => Promise<AIGeneratedCharter>;
+    regenerateSection: (charterId: string, section: string, context: any) => Promise<any>;
+    applyTemplate: (templateId: string, charter: Partial<AIGeneratedCharter>) => Promise<AIGeneratedCharter>;
 }
 
 export function useInitiativeGenerator(assessmentId?: string): UseInitiativeGeneratorResult {
@@ -314,6 +323,98 @@ export function useInitiativeGenerator(assessmentId?: string): UseInitiativeGene
         setError(null);
     }, []);
 
+    // Fetch available templates
+    const fetchTemplates = useCallback(async (category?: string): Promise<InitiativeTemplate[]> => {
+        try {
+            const url = category 
+                ? `/api/initiatives/templates?category=${category}`
+                : '/api/initiatives/templates';
+            
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${getToken()}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch templates');
+            }
+
+            const data = await response.json();
+            return data.templates || [];
+        } catch (err) {
+            console.error('Failed to fetch templates:', err);
+            return [];
+        }
+    }, []);
+
+    // Generate full AI charter
+    const generateCharter = useCallback(async (request: AICharterRequest): Promise<AIGeneratedCharter> => {
+        const response = await fetch('/api/initiatives/charter/generate', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${getToken()}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(request)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || 'Failed to generate charter');
+        }
+
+        const data = await response.json();
+        return data.charter;
+    }, []);
+
+    // Regenerate a specific section of the charter
+    const regenerateSection = useCallback(async (charterId: string, section: string, context: any): Promise<any> => {
+        try {
+            const response = await fetch('/api/initiatives/charter/regenerate-section', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${getToken()}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    charter: { id: charterId },
+                    section,
+                    context
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to regenerate section');
+            }
+
+            const data = await response.json();
+            return data.data;
+        } catch (err) {
+            console.error('Failed to regenerate section:', err);
+            return null;
+        }
+    }, []);
+
+    // Apply template to charter
+    const applyTemplate = useCallback(async (templateId: string, charter: Partial<AIGeneratedCharter>): Promise<AIGeneratedCharter> => {
+        const response = await fetch(`/api/initiatives/templates/${templateId}/apply`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${getToken()}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ charter })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to apply template');
+        }
+
+        const data = await response.json();
+        return data.charter;
+    }, []);
+
     // Auto-load gaps if assessmentId is provided
     useEffect(() => {
         if (assessmentId) {
@@ -344,7 +445,13 @@ export function useInitiativeGenerator(assessmentId?: string): UseInitiativeGene
         loadDraft,
         approveAndTransfer,
         validateInitiative,
-        reset
+        reset,
+
+        // Charter & Template Actions
+        fetchTemplates,
+        generateCharter,
+        regenerateSection,
+        applyTemplate
     };
 }
 

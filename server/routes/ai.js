@@ -47,11 +47,26 @@ router.get('/context/:projectId', verifyToken, async (req, res) => {
 
 // POST /api/ai/chat/stream
 router.post('/chat/stream', verifyToken, async (req, res) => {
-    const { message, history, systemInstruction, context, roleName } = req.body;
+    const { message, history, systemInstruction, context, roleName, language } = req.body;
 
     if (!message) {
         return res.status(400).json({ error: 'message required' });
     }
+
+    // Build language instruction based on user's i18n setting
+    const languageMap = {
+        'pl': 'Polish (Polski)',
+        'en': 'English',
+        'de': 'German (Deutsch)',
+        'es': 'Spanish (Español)',
+        'ja': 'Japanese (日本語)',
+        'ar': 'Arabic (العربية)'
+    };
+    const langName = languageMap[language] || languageMap['pl'];
+    const languageInstruction = `\n\n[LANGUAGE INSTRUCTION: Always respond in ${langName}. This is critical - the user's interface is set to ${langName}, so ALL your responses MUST be in ${langName}.]\n`;
+
+    // Prepend language instruction to system instruction
+    const enhancedSystemInstruction = (systemInstruction || '') + languageInstruction;
 
     // Set headers for SSE
     res.setHeader('Content-Type', 'text/event-stream');
@@ -61,12 +76,12 @@ router.post('/chat/stream', verifyToken, async (req, res) => {
 
     try {
         const stream = AIOrchestrator.streamMessage ?
-            AIOrchestrator.streamMessage(message, req.userId, req.organizationId, context?.projectId, { ...context, roleName }) :
+            AIOrchestrator.streamMessage(message, req.userId, req.organizationId, context?.projectId, { ...context, roleName, language }) :
             // Fallback to direct service call if Orchestrator doesn't support stream yet (likely case based on file view)
             // Actually, let's use the AiService directly as seen in aiService.js
             require('../services/aiService').streamLLM(
                 message,
-                systemInstruction || '',
+                enhancedSystemInstruction,
                 history || [],
                 null,
                 req.userId,

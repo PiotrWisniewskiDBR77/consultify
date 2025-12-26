@@ -19,7 +19,8 @@ const FullROIView = React.lazy(() => import('./views/FullROIView').then(m => ({ 
 const FullExecutionView = React.lazy(() => import('./views/FullExecutionView').then(m => ({ default: m.FullExecutionView })));
 const FullPilotView = React.lazy(() => import('./views/FullPilotView').then(m => ({ default: m.FullPilotView })));
 const FullRolloutView = React.lazy(() => import('./views/FullRolloutView').then(m => ({ default: m.FullRolloutView })));
-const FullReportsView = React.lazy(() => import('./views/FullReportsView').then(m => ({ default: m.FullReportsView })))
+const FullReportsView = React.lazy(() => import('./views/FullReportsView').then(m => ({ default: m.FullReportsView })));
+const DRDAuditReportView = React.lazy(() => import('./views/DRDAuditReportView').then(m => ({ default: m.DRDAuditReportView })));
 const KpiOkrView = React.lazy(() => import('./views/KpiOkrView').then(m => ({ default: m.KpiOkrView })));
 const AdminView = React.lazy(() => import('./views/admin/AdminView').then(m => ({ default: m.AdminView })));
 const SettingsView = React.lazy(() => import('./views/SettingsView').then(m => ({ default: m.SettingsView })));
@@ -35,6 +36,7 @@ import { useAppStore } from './store/useAppStore';
 import { Toaster } from 'react-hot-toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Api } from './services/api';
+import './services/tokenService'; // Initialize token service for auto-refresh
 import { LLMSelector } from './components/LLMSelector';
 import { NotificationDropdown } from './components/NotificationDropdown';
 import { TaskDropdown } from './components/TaskDropdown';
@@ -174,17 +176,48 @@ const AppContent: React.FC = () => {
                 return;
             }
 
-            // If we have a token but no user, try to verify it
+            // If we have a token but no user, try to restore session
             if (!currentUser) {
+                // First try to restore from localStorage
+                const storedUser = localStorage.getItem('user');
+                if (storedUser) {
+                    try {
+                        const userData = JSON.parse(storedUser);
+                        const authenticatedUser: User = {
+                            ...userData,
+                            isAuthenticated: true
+                        };
+                        setCurrentUser(authenticatedUser);
+                        console.log('[Auth] User session restored from localStorage');
+                        return;
+                    } catch (e) {
+                        console.warn('[Auth] Failed to parse stored user data');
+                    }
+                }
+                
+                // If no stored user, try to fetch from API
                 try {
-                    const response = await Api.getUsers().catch(() => null);
-                    // If getUsers succeeds, we're authenticated but user wasn't loaded
-                    // This shouldn't happen normally, but handle it gracefully
+                    const user = await Api.getMe();
+                    if (user) {
+                        const authenticatedUser: User = {
+                            ...user,
+                            isAuthenticated: true
+                        };
+                        setCurrentUser(authenticatedUser);
+                        console.log('[Auth] User session restored from API');
+                    } else {
+                        // Token invalid - clear it
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('refreshToken');
+                        localStorage.removeItem('tokenExpiry');
+                        localStorage.removeItem('user');
+                    }
                 } catch (error) {
                     // Token invalid - clear it
                     localStorage.removeItem('token');
                     localStorage.removeItem('refreshToken');
                     localStorage.removeItem('tokenExpiry');
+                    localStorage.removeItem('user');
                 }
             }
         };
@@ -279,14 +312,17 @@ const AppContent: React.FC = () => {
         };
         setCurrentUser(authenticatedUser);
 
-        // Redirect logic
+        // Redirect logic - change URL to clear /login path
         if (validUser.role === 'SUPERADMIN') {
             setCurrentView(AppView.ADMIN_DASHBOARD);
+            window.history.pushState({}, '', '/admin');
         } else if (validUser.role === UserRole.ADMIN) {
             setCurrentView(AppView.ADMIN_DASHBOARD);
+            window.history.pushState({}, '', '/dashboard');
         } else {
             // Regular User -> Dashboard to select project
             setCurrentView(AppView.USER_DASHBOARD);
+            window.history.pushState({}, '', '/dashboard');
         }
     };
 
@@ -596,6 +632,13 @@ const AppContent: React.FC = () => {
             return (
                 <React.Suspense fallback={<LoadingScreen />}>
                     <FullReportsView />
+                </React.Suspense>
+            );
+        }
+        if (currentView === AppView.DRD_AUDIT_REPORT) {
+            return (
+                <React.Suspense fallback={<LoadingScreen />}>
+                    <DRDAuditReportView />
                 </React.Suspense>
             );
         }

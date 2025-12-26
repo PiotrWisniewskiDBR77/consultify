@@ -54,6 +54,7 @@ export enum AppView {
   FULL_PILOT_EXECUTION = 'FULL_PILOT_EXECUTION', // Module 4
   FULL_ROLLOUT = 'FULL_ROLLOUT', // Module 5
   FULL_STEP6_REPORTS = 'FULL_STEP6_REPORTS',
+  DRD_AUDIT_REPORT = 'DRD_AUDIT_REPORT', // DRD Audit Report Builder
   KPI_OKR_DASHBOARD = 'KPI_OKR_DASHBOARD', // Module: KPI/OKR post-implementation tracking
 
 
@@ -235,15 +236,41 @@ export interface GovernancePolicy {
 
 // 3.1 STANDARDIZED STATUS ENUMS
 
-/** Initiative Status Lifecycle (ENFORCED) */
+/** 
+ * Initiative Status Lifecycle (ENFORCED)
+ * 
+ * Module Flow:
+ * - DRAFT: Created in Assessment Module (Module 2)
+ * - PLANNING: Transferred to Initiative Management Module (Module 3)
+ * - REVIEW: Pending approval reviews
+ * - APPROVED: Ready for execution, transfers to Execution Module (Module 4/5)
+ * - EXECUTING: Active work in progress
+ * - BLOCKED: Temporarily blocked (requires reason)
+ * - DONE: Successfully completed
+ * - CANCELLED: Terminated before completion
+ * - ARCHIVED: Historical record (post-completion or post-cancellation)
+ * 
+ * Key Module Transitions:
+ * - DRAFT → PLANNING: Assessment → Initiative Management
+ * - APPROVED → EXECUTING: Initiative Management → Execution
+ */
 export enum InitiativeStatus {
+  // Assessment Module (Module 2)
   DRAFT = 'DRAFT',
-  PLANNED = 'PLANNED',
+  
+  // Initiative Management Module (Module 3)
+  PLANNING = 'PLANNING',
+  REVIEW = 'REVIEW',
   APPROVED = 'APPROVED',
-  IN_EXECUTION = 'IN_EXECUTION',
+  
+  // Execution Module (Module 4/5)
+  EXECUTING = 'EXECUTING',
   BLOCKED = 'BLOCKED',
-  COMPLETED = 'COMPLETED',
-  CANCELLED = 'CANCELLED'
+  DONE = 'DONE',
+  
+  // Terminal States
+  CANCELLED = 'CANCELLED',
+  ARCHIVED = 'ARCHIVED'
 }
 
 /** Task Status Lifecycle (ENFORCED) */
@@ -1972,6 +1999,57 @@ export interface ProblemStructured {
   costOfInaction: string;
 }
 
+// Initiative Comments for discussion threads
+export interface InitiativeComment {
+  id: string;
+  initiativeId: string;
+  userId: string;
+  user?: Pick<User, 'id' | 'firstName' | 'lastName' | 'avatarUrl'>;
+  content: string;
+  createdAt: string;
+  updatedAt?: string;
+  parentId?: string; // For threaded replies
+  reactions?: { emoji: string; userIds: string[] }[];
+}
+
+// Related/Linked Initiatives
+export interface RelatedInitiative {
+  id: string;
+  initiativeId: string;
+  relatedInitiativeId: string;
+  relationType: 'DEPENDS_ON' | 'BLOCKS' | 'RELATED_TO' | 'PARENT_OF' | 'CHILD_OF';
+  note?: string;
+  createdAt: string;
+  createdBy: string;
+}
+
+// Initiative Team Member Assignment
+export interface InitiativeTeamMember {
+  id: string;
+  initiativeId: string;
+  userId: string;
+  user?: Pick<User, 'id' | 'firstName' | 'lastName' | 'avatarUrl' | 'email'>;
+  role: 'CONTRIBUTOR' | 'REVIEWER' | 'OBSERVER' | 'SME' | 'STAKEHOLDER';
+  allocation?: number; // % allocation (0-100)
+  startDate?: string;
+  endDate?: string;
+  assignedAt: string;
+  assignedBy: string;
+}
+
+// Initiative Version Snapshot
+export interface InitiativeVersion {
+  id: string;
+  initiativeId: string;
+  version: number;
+  snapshot: Partial<FullInitiative>;
+  changeType: 'STATUS_CHANGE' | 'CONTENT_UPDATE' | 'APPROVAL' | 'MANUAL_SAVE';
+  changeSummary: string;
+  createdAt: string;
+  createdBy: string;
+  createdByUser?: Pick<User, 'id' | 'firstName' | 'lastName' | 'avatarUrl'>;
+}
+
 export interface FullInitiative {
   id: string;
   name: string;
@@ -2096,6 +2174,12 @@ export interface FullInitiative {
     [key: string]: number; // index signature
   };
   placementReason?: string; // Why is this scheduled here?
+
+  // Collaboration & History
+  comments?: InitiativeComment[];
+  teamMembers?: InitiativeTeamMember[];
+  relatedInitiatives?: RelatedInitiative[];
+  versions?: InitiativeVersion[];
 }
 
 // Alias Initiative to FullInitiative for backend compatibility
@@ -2546,6 +2630,75 @@ export interface GapForGeneration {
   selected: boolean;
 }
 
+/** Template categories for initiative generation */
+export type TemplateCategory = 'DATA' | 'PROCESS' | 'PRODUCT' | 'CULTURE' | 'SECURITY' | 'AI_ML' | 'CUSTOM';
+
+/** Initiative Template for reusable charter patterns */
+export interface InitiativeTemplate {
+  id: string;
+  name: string;
+  category: TemplateCategory;
+  description: string;
+  applicableAxes: DRDAxis[];
+  
+  // Pre-filled charter fields
+  problemStructured?: Partial<ProblemStructured>;
+  targetState?: Partial<TargetState>;
+  killCriteria?: string[];
+  suggestedTasks?: Partial<Task>[];
+  suggestedRoles?: { role: string; allocation: number }[];
+  typicalTimeline?: string;
+  typicalBudgetRange?: { min: number; max: number };
+  
+  isPublic: boolean;
+  organizationId?: string;
+  createdBy?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+/** AI Charter Generation Request */
+export interface AICharterRequest {
+  sourceType: 'GAP' | 'REPORT' | 'MANUAL';
+  gaps?: GapForGeneration[];
+  reportId?: string;
+  templateId?: string;
+  constraints: InitiativeGeneratorConstraints;
+  organizationContext?: {
+    industry: string;
+    size: string;
+    strategicGoals: string[];
+  };
+}
+
+/** AI Generated Charter (extends GeneratedInitiative with full charter data) */
+export interface AIGeneratedCharter extends GeneratedInitiative {
+  // Basic info
+  summary?: string;
+  applicantOneLiner?: string;
+  strategicIntent?: 'Grow' | 'Fix' | 'Stabilize' | 'De-risk' | 'Build Capability';
+  hypothesis?: string;
+  
+  // Structured sections
+  problemStructured: ProblemStructured;
+  targetState: TargetState;
+  killCriteria: string[];
+  suggestedTasks: Partial<Task>[];
+  suggestedTeam: InitiativeTeamMember[];
+  keyRisks: { risk: string; mitigation: string; metric: 'Low' | 'Medium' | 'High' }[];
+  deliverables: string[];
+  milestones: { name: string; targetDate: string }[];
+  
+  // Financials
+  capex?: number;
+  firstYearOpex?: number;
+  annualBenefit?: number;
+  
+  // Meta
+  templateId?: string;
+  generationConfidence: 'HIGH' | 'MEDIUM' | 'LOW';
+}
+
 /** Assessment tab types */
 export type AssessmentTab = 'dashboard' | 'assessments' | 'reviews' | 'gap-map' | 'reports';
 
@@ -2814,6 +2967,15 @@ export interface Task {
   initiativeId?: string;
   initiativeName?: string;
   why?: string;
+  
+  // Weight for progress calculation (1-5, default 1)
+  weight?: number;
+  weightReason?: string;
+  
+  // Evidence Sign-off
+  signedOff?: boolean;
+  signedOffAt?: string;
+  signedOffBy?: string;
 }
 
 export interface TaskComment {
@@ -3193,4 +3355,363 @@ export interface DocumentUploadOptions {
   projectId?: string;
   description?: string;
   tags?: string[];
+}
+
+// ==========================================
+// PMO PROJECT ROLES & WORKSTREAMS
+// ==========================================
+// Compliant with: ISO 21500:2021, PMI PMBOK 7th Edition, PRINCE2
+// See: docs/00_foundation/PMO_STANDARDS_COMPLIANCE.md
+
+/**
+ * PMO Project Role - Standardized role types aligned with global PMO standards
+ *
+ * ISO 21500 Mapping: Project Team Roles (Clause 4.6.2)
+ * PMBOK 7 Mapping: Team Performance Domain
+ * PRINCE2 Mapping: Organization Theme (Project Roles)
+ */
+export enum PMOProjectRole {
+  /** Strategic decisions, budget authority | ISO: Project Sponsor (4.3.2) | PMBOK: Sponsor | PRINCE2: Executive */
+  SPONSOR = 'SPONSOR',
+
+  /** Final decision authority | ISO: Decision Maker (4.3.4) | PMBOK: Project Decision Authority | PRINCE2: Project Board */
+  DECISION_OWNER = 'DECISION_OWNER',
+
+  /** Overall project coordination | ISO: Project Manager (4.3.3) | PMBOK: Project Manager | PRINCE2: Project Manager */
+  PMO_LEAD = 'PMO_LEAD',
+
+  /** Workstream delivery | ISO: Work Package Manager (4.4.4) | PMBOK: Work Package Lead | PRINCE2: Team Manager */
+  WORKSTREAM_OWNER = 'WORKSTREAM_OWNER',
+
+  /** Initiative delivery | ISO: Activity Owner (4.4.5) | PMBOK: Activity Owner | PRINCE2: Work Package Owner */
+  INITIATIVE_OWNER = 'INITIATIVE_OWNER',
+
+  /** Task execution | ISO: Resource (4.6.2) | PMBOK: Team Member | PRINCE2: Team Member */
+  TASK_ASSIGNEE = 'TASK_ASSIGNEE',
+
+  /** Domain expertise | ISO: Subject Matter Expert (4.6.3) | PMBOK: Specialist | PRINCE2: Technical Consultant */
+  SME = 'SME',
+
+  /** Assessment and review | ISO: Quality Reviewer (4.7.2) | PMBOK: Quality Assessor | PRINCE2: Quality Reviewer */
+  REVIEWER = 'REVIEWER',
+
+  /** Read-only visibility | ISO: Stakeholder (4.2.2) | PMBOK: Stakeholder | PRINCE2: Stakeholder */
+  OBSERVER = 'OBSERVER',
+
+  /** Limited scope advisory | ISO: External Advisor (4.6.4) | PMBOK: External Resource | PRINCE2: External Advisor */
+  CONSULTANT = 'CONSULTANT',
+
+  /** Notifications and updates | ISO: Stakeholder (4.2.2) | PMBOK: Stakeholder | PRINCE2: Stakeholder */
+  STAKEHOLDER = 'STAKEHOLDER'
+}
+
+/**
+ * RACI Type for responsibility matrix
+ *
+ * ISO 21500: Responsibility Matrix (Clause 4.6.5)
+ * PMBOK 7: RACI Chart
+ * PRINCE2: Organization Theme (Responsibility Assignment)
+ */
+export type RACIType = 'R' | 'A' | 'C' | 'I';
+
+/**
+ * Project Permissions - Granular permission flags for project members
+ */
+export interface ProjectPermissions {
+  // Viewing
+  canViewProject: boolean;
+  canViewTasks: boolean;
+  canViewInitiatives: boolean;
+  canViewDecisions: boolean;
+  canViewFinancials: boolean;
+
+  // Task Management
+  canCreateTasks: boolean;
+  canAssignTasks: boolean;
+  canUpdateTasks: boolean;
+  canDeleteTasks: boolean;
+
+  // Initiative Management
+  canCreateInitiatives: boolean;
+  canUpdateInitiatives: boolean;
+  canDeleteInitiatives: boolean;
+
+  // Decision Management
+  canRequestDecisions: boolean;
+  canApproveDecisions: boolean;
+
+  // Change Control
+  canSubmitChangeRequests: boolean;
+  canApproveChangeRequests: boolean;
+
+  // Governance
+  canManageTeam: boolean;
+  canManageWorkstreams: boolean;
+  canConfigureProject: boolean;
+
+  // Escalation
+  canEscalate: boolean;
+  canReceiveEscalations: boolean;
+}
+
+/**
+ * Default permissions by role
+ */
+export const DEFAULT_PERMISSIONS_BY_ROLE: Record<PMOProjectRole, ProjectPermissions> = {
+  [PMOProjectRole.SPONSOR]: {
+    canViewProject: true, canViewTasks: true, canViewInitiatives: true, canViewDecisions: true, canViewFinancials: true,
+    canCreateTasks: false, canAssignTasks: false, canUpdateTasks: false, canDeleteTasks: false,
+    canCreateInitiatives: false, canUpdateInitiatives: false, canDeleteInitiatives: false,
+    canRequestDecisions: false, canApproveDecisions: true,
+    canSubmitChangeRequests: false, canApproveChangeRequests: true,
+    canManageTeam: true, canManageWorkstreams: false, canConfigureProject: true,
+    canEscalate: false, canReceiveEscalations: true
+  },
+  [PMOProjectRole.DECISION_OWNER]: {
+    canViewProject: true, canViewTasks: true, canViewInitiatives: true, canViewDecisions: true, canViewFinancials: true,
+    canCreateTasks: false, canAssignTasks: false, canUpdateTasks: false, canDeleteTasks: false,
+    canCreateInitiatives: false, canUpdateInitiatives: false, canDeleteInitiatives: false,
+    canRequestDecisions: false, canApproveDecisions: true,
+    canSubmitChangeRequests: false, canApproveChangeRequests: true,
+    canManageTeam: false, canManageWorkstreams: false, canConfigureProject: false,
+    canEscalate: false, canReceiveEscalations: true
+  },
+  [PMOProjectRole.PMO_LEAD]: {
+    canViewProject: true, canViewTasks: true, canViewInitiatives: true, canViewDecisions: true, canViewFinancials: true,
+    canCreateTasks: true, canAssignTasks: true, canUpdateTasks: true, canDeleteTasks: true,
+    canCreateInitiatives: true, canUpdateInitiatives: true, canDeleteInitiatives: true,
+    canRequestDecisions: true, canApproveDecisions: false,
+    canSubmitChangeRequests: true, canApproveChangeRequests: false,
+    canManageTeam: true, canManageWorkstreams: true, canConfigureProject: true,
+    canEscalate: true, canReceiveEscalations: true
+  },
+  [PMOProjectRole.WORKSTREAM_OWNER]: {
+    canViewProject: true, canViewTasks: true, canViewInitiatives: true, canViewDecisions: true, canViewFinancials: false,
+    canCreateTasks: true, canAssignTasks: true, canUpdateTasks: true, canDeleteTasks: false,
+    canCreateInitiatives: true, canUpdateInitiatives: true, canDeleteInitiatives: false,
+    canRequestDecisions: true, canApproveDecisions: false,
+    canSubmitChangeRequests: true, canApproveChangeRequests: false,
+    canManageTeam: false, canManageWorkstreams: false, canConfigureProject: false,
+    canEscalate: true, canReceiveEscalations: true
+  },
+  [PMOProjectRole.INITIATIVE_OWNER]: {
+    canViewProject: true, canViewTasks: true, canViewInitiatives: true, canViewDecisions: true, canViewFinancials: false,
+    canCreateTasks: true, canAssignTasks: true, canUpdateTasks: true, canDeleteTasks: false,
+    canCreateInitiatives: false, canUpdateInitiatives: true, canDeleteInitiatives: false,
+    canRequestDecisions: true, canApproveDecisions: false,
+    canSubmitChangeRequests: true, canApproveChangeRequests: false,
+    canManageTeam: false, canManageWorkstreams: false, canConfigureProject: false,
+    canEscalate: true, canReceiveEscalations: true
+  },
+  [PMOProjectRole.TASK_ASSIGNEE]: {
+    canViewProject: true, canViewTasks: true, canViewInitiatives: true, canViewDecisions: false, canViewFinancials: false,
+    canCreateTasks: false, canAssignTasks: false, canUpdateTasks: true, canDeleteTasks: false,
+    canCreateInitiatives: false, canUpdateInitiatives: false, canDeleteInitiatives: false,
+    canRequestDecisions: false, canApproveDecisions: false,
+    canSubmitChangeRequests: false, canApproveChangeRequests: false,
+    canManageTeam: false, canManageWorkstreams: false, canConfigureProject: false,
+    canEscalate: true, canReceiveEscalations: false
+  },
+  [PMOProjectRole.SME]: {
+    canViewProject: true, canViewTasks: true, canViewInitiatives: true, canViewDecisions: true, canViewFinancials: false,
+    canCreateTasks: false, canAssignTasks: false, canUpdateTasks: false, canDeleteTasks: false,
+    canCreateInitiatives: false, canUpdateInitiatives: false, canDeleteInitiatives: false,
+    canRequestDecisions: false, canApproveDecisions: false,
+    canSubmitChangeRequests: false, canApproveChangeRequests: false,
+    canManageTeam: false, canManageWorkstreams: false, canConfigureProject: false,
+    canEscalate: false, canReceiveEscalations: false
+  },
+  [PMOProjectRole.REVIEWER]: {
+    canViewProject: true, canViewTasks: true, canViewInitiatives: true, canViewDecisions: true, canViewFinancials: false,
+    canCreateTasks: false, canAssignTasks: false, canUpdateTasks: false, canDeleteTasks: false,
+    canCreateInitiatives: false, canUpdateInitiatives: false, canDeleteInitiatives: false,
+    canRequestDecisions: false, canApproveDecisions: false,
+    canSubmitChangeRequests: false, canApproveChangeRequests: false,
+    canManageTeam: false, canManageWorkstreams: false, canConfigureProject: false,
+    canEscalate: false, canReceiveEscalations: false
+  },
+  [PMOProjectRole.OBSERVER]: {
+    canViewProject: true, canViewTasks: true, canViewInitiatives: true, canViewDecisions: false, canViewFinancials: false,
+    canCreateTasks: false, canAssignTasks: false, canUpdateTasks: false, canDeleteTasks: false,
+    canCreateInitiatives: false, canUpdateInitiatives: false, canDeleteInitiatives: false,
+    canRequestDecisions: false, canApproveDecisions: false,
+    canSubmitChangeRequests: false, canApproveChangeRequests: false,
+    canManageTeam: false, canManageWorkstreams: false, canConfigureProject: false,
+    canEscalate: false, canReceiveEscalations: false
+  },
+  [PMOProjectRole.CONSULTANT]: {
+    canViewProject: true, canViewTasks: true, canViewInitiatives: true, canViewDecisions: true, canViewFinancials: false,
+    canCreateTasks: false, canAssignTasks: false, canUpdateTasks: false, canDeleteTasks: false,
+    canCreateInitiatives: false, canUpdateInitiatives: false, canDeleteInitiatives: false,
+    canRequestDecisions: false, canApproveDecisions: false,
+    canSubmitChangeRequests: false, canApproveChangeRequests: false,
+    canManageTeam: false, canManageWorkstreams: false, canConfigureProject: false,
+    canEscalate: false, canReceiveEscalations: false
+  },
+  [PMOProjectRole.STAKEHOLDER]: {
+    canViewProject: true, canViewTasks: false, canViewInitiatives: true, canViewDecisions: false, canViewFinancials: false,
+    canCreateTasks: false, canAssignTasks: false, canUpdateTasks: false, canDeleteTasks: false,
+    canCreateInitiatives: false, canUpdateInitiatives: false, canDeleteInitiatives: false,
+    canRequestDecisions: false, canApproveDecisions: false,
+    canSubmitChangeRequests: false, canApproveChangeRequests: false,
+    canManageTeam: false, canManageWorkstreams: false, canConfigureProject: false,
+    canEscalate: false, canReceiveEscalations: false
+  }
+};
+
+/**
+ * Project Member - Individual team member assignment within a project
+ *
+ * ISO 21500: Project Team (Clause 4.6.2)
+ * PMBOK 7: Team Performance Domain
+ * PRINCE2: Organization Theme (Project Roles)
+ */
+export interface ProjectMember {
+  id: string;
+  projectId: string;
+  userId: string;
+
+  /** Role within this project */
+  projectRole: PMOProjectRole;
+
+  /** Optional workstream assignment */
+  workstreamId?: string;
+
+  /** Allocation percentage (0-100) */
+  allocationPercent: number;
+
+  /** Effective permissions (may be customized from defaults) */
+  permissions: ProjectPermissions;
+
+  /** Assignment period */
+  startDate?: string;
+  endDate?: string;
+
+  /** Audit fields */
+  createdAt: string;
+  updatedAt: string;
+  addedById?: string;
+}
+
+/**
+ * Workstream Status
+ */
+export type WorkstreamStatus = 'ACTIVE' | 'ON_HOLD' | 'COMPLETED' | 'CANCELLED';
+
+/**
+ * Workstream - Logical grouping of initiatives within a project
+ *
+ * ISO 21500: Work Breakdown Structure (Clause 4.4.3)
+ * PMBOK 7: Work Package Grouping
+ * PRINCE2: Work Package Cluster
+ */
+export interface Workstream {
+  id: string;
+  projectId: string;
+
+  /** Display name */
+  name: string;
+
+  /** Description */
+  description?: string;
+
+  /** Owner of this workstream (must have WORKSTREAM_OWNER role) */
+  ownerId: string;
+
+  /** Initiatives assigned to this workstream */
+  initiativeIds: string[];
+
+  /** Status */
+  status: WorkstreamStatus;
+
+  /** Color for UI display */
+  color?: string;
+
+  /** Order for sorting */
+  sortOrder: number;
+
+  /** Audit fields */
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Task Escalation Level
+ */
+export type EscalationLevel = 0 | 1 | 2 | 3;
+
+/**
+ * Task Escalation - Record of escalation event
+ *
+ * ISO 21500: Escalation (Clause 4.3.4)
+ * PMBOK 7: Escalation Path
+ * PRINCE2: Exception Report
+ */
+export interface TaskEscalation {
+  id: string;
+  taskId: string;
+  projectId: string;
+
+  /** Escalation level (0→1→2→3) */
+  fromLevel: EscalationLevel;
+  toLevel: EscalationLevel;
+
+  /** Who received the escalation */
+  escalatedToId: string;
+
+  /** Reason for escalation */
+  reason: string;
+
+  /** Type of escalation trigger */
+  triggerType: 'SLA_BREACH' | 'BLOCKED' | 'MANUAL' | 'PRIORITY_CHANGE';
+
+  /** Resolution (if resolved) */
+  resolvedAt?: string;
+  resolutionNote?: string;
+
+  /** Audit fields */
+  createdAt: string;
+}
+
+/**
+ * Extended Task with PMO fields
+ */
+export interface TaskPMOExtension {
+  /** Workstream this task belongs to */
+  workstreamId?: string;
+
+  /** SLA in hours (default 24) */
+  slaHours: number;
+
+  /** SLA due timestamp */
+  slaDueAt?: string;
+
+  /** Current escalation level (0 = not escalated) */
+  escalationLevel: EscalationLevel;
+
+  /** Who task was escalated to */
+  escalatedToId?: string;
+
+  /** Last escalation timestamp */
+  lastEscalatedAt?: string;
+}
+
+/**
+ * RACI Entry - Single RACI assignment
+ */
+export interface RACIEntry {
+  objectType: 'PROJECT' | 'INITIATIVE' | 'TASK' | 'DECISION' | 'CHANGE_REQUEST' | 'ASSESSMENT' | 'ROADMAP' | 'STAGE_GATE';
+  objectId?: string;
+  userId: string;
+  projectRole: PMOProjectRole;
+  raciType: RACIType;
+}
+
+/**
+ * RACI Matrix - Complete RACI view for a project
+ */
+export interface RACIMatrix {
+  projectId: string;
+  entries: RACIEntry[];
+  generatedAt: string;
 }

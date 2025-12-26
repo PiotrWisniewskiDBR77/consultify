@@ -441,6 +441,153 @@ POST /initiatives/generate-from-assessments
 }
 ```
 
+#### Get Single Initiative
+```http
+GET /initiatives/:id
+```
+
+**Response (200):**
+```json
+{
+  "id": "uuid",
+  "name": "Master Data Management Platform",
+  "axis": "dataManagement",
+  "area": "3A",
+  "summary": "...",
+  "description": "...",
+  "status": "APPROVED",
+  "progress": 45,
+  "businessValue": "HIGH",
+  "costCapex": 50000,
+  "costOpex": 15000,
+  "expectedRoi": 2.5,
+  "plannedStartDate": "2025-01-15",
+  "plannedEndDate": "2025-06-30",
+  "ownerBusiness": {
+    "id": "uuid",
+    "firstName": "John",
+    "lastName": "Doe",
+    "email": "john@example.com"
+  },
+  "ownerExecution": {
+    "id": "uuid",
+    "firstName": "Jane",
+    "lastName": "Smith",
+    "email": "jane@example.com"
+  },
+  "sourceAssessmentId": "uuid",
+  "assessmentName": "DRD Assessment Q4 2024",
+  "taskCount": 12,
+  "createdAt": "2024-12-15T10:00:00Z",
+  "updatedAt": "2024-12-20T14:30:00Z"
+}
+```
+
+#### Transfer Initiative to Roadmap
+```http
+POST /initiatives/:id/transfer-to-roadmap
+```
+
+**Request Body:**
+```json
+{
+  "plannedStartDate": "2025-01-15",
+  "plannedEndDate": "2025-06-30",
+  "roadmapId": "uuid",
+  "quarter": "Q1 2025"
+}
+```
+
+**Response (200):**
+```json
+{
+  "message": "Initiative transferred to roadmap successfully",
+  "initiativeId": "uuid"
+}
+```
+
+---
+
+### Assessment Reviews (SLA Tracking)
+
+#### Get Pending Reviews
+```http
+GET /assessment-workflow/pending-reviews
+```
+
+**Response (200):**
+```json
+{
+  "reviews": [
+    {
+      "id": "uuid",
+      "assessmentId": "uuid",
+      "assessmentName": "DRD Assessment Q4",
+      "projectName": "Digital Transformation",
+      "status": "PENDING",
+      "requestedAt": "2024-12-20T10:00:00Z",
+      "dueDate": "2024-12-22T10:00:00Z",
+      "isOverdue": false,
+      "hoursRemaining": 36
+    }
+  ]
+}
+```
+
+**Note:** Reviews have a default SLA of 48 hours. The `isOverdue` flag and `hoursRemaining` fields help track SLA compliance.
+
+---
+
+### Stage Gates
+
+#### Check Stage Gate Status
+```http
+GET /stage-gates/:projectId/check?from=Assessment&to=Reports
+```
+
+**Response (200):**
+```json
+{
+  "status": "READY",
+  "completionCriteria": [
+    {
+      "id": "1",
+      "criterion": "Assessment w statusie APPROVED",
+      "isMet": true,
+      "evidence": "Status sprawdzony"
+    },
+    {
+      "id": "2",
+      "criterion": "Wszystkie osie ocenione (7/7)",
+      "isMet": true,
+      "evidence": "Postęp 100%"
+    }
+  ],
+  "missingElements": []
+}
+```
+
+#### Pass Stage Gate
+```http
+POST /stage-gates/:projectId/pass
+```
+
+**Request Body:**
+```json
+{
+  "from": "Assessment",
+  "to": "Reports"
+}
+```
+
+**Response (200):**
+```json
+{
+  "message": "Gate passed successfully",
+  "nextPhase": "Reports"
+}
+```
+
 ---
 
 ## Error Codes

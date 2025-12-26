@@ -13,6 +13,10 @@ Lokalizacja: `tests/unit/backend/`
 | `assessmentService.test.js` | Testy serwisu oceny | Logika biznesowa, gap analysis |
 | `assessmentWorkflowService.test.js` | Testy serwisu workflow | Inicjalizacja, przejścia stanów, wersjonowanie |
 | `aiAssessmentPartnerService.test.js` | Testy serwisu AI | Guidance, walidacja, sugestie |
+| `aiAssessmentFormHelper.test.js` | Testy helpera formularzy AI | Sugestie pól, walidacja, autocomplete |
+| `aiAssessmentReportGenerator.test.js` | Testy generatora raportów AI | Raporty pełne, stakeholder, benchmark |
+| `initiativeGeneratorService.test.js` | Testy generatora inicjatyw | Generowanie z luk, priorytetyzacja |
+| `drdAxisValidation.test.js` | Testy walidacji osi DRD | Struktura osi, zależności, spójność ocen |
 | `assessmentRBAC.test.js` | Testy middleware RBAC | Kontrola dostępu, role |
 | `assessmentAuditLogger.test.js` | Testy logowania audytowego | Logowanie zdarzeń, historia |
 | `assessmentReportService.test.js` | Testy serwisu raportów | Generowanie PDF, Excel |
@@ -51,6 +55,7 @@ Lokalizacja: `tests/integration/`
 | `assessment-ai.integration.test.js` | Integracja AI | Wszystkie endpointy AI |
 | `assessment-rbac.integration.test.js` | Integracja RBAC | Autoryzacja, izolacja org |
 | `assessment-reports.integration.test.js` | Integracja raportów | Generowanie, eksport |
+| `assessment-api.integration.test.js` | Integracja API Assessment | Wszystkie endpointy, CRUD, AI |
 
 ### 📁 Testy E2E (End-to-End Tests)
 

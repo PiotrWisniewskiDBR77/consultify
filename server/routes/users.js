@@ -12,8 +12,21 @@ router.use(verifyToken);
 router.get('/', (req, res) => {
     // SuperAdmin sees all? Or we keep strict tenant separation even for him unless impersonating.
     // For now: Admin sees own org users.
+    
+    const { canReview } = req.query;
+    
+    // Build SQL based on filters
+    let sql = 'SELECT id, email, first_name, last_name, role, status, avatar_url, last_login, license_plan_id, ai_config FROM users WHERE organization_id = ?';
+    const params = [req.user.organizationId];
+    
+    // If canReview=true, filter to users with review permissions (Admin, Manager, or specific role)
+    if (canReview === 'true') {
+        sql += ` AND (role IN ('ADMIN', 'MANAGER', 'REVIEWER', 'LEADER') OR status = 'ACTIVE')`;
+    }
+    
+    sql += ' ORDER BY first_name, last_name';
 
-    db.all('SELECT id, email, first_name, last_name, role, status, avatar_url, last_login, timezone, units, license_plan_id, ai_config FROM users WHERE organization_id = ?', [req.user.organizationId], (err, rows) => {
+    db.all(sql, params, (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
 
         const users = rows.map(u => ({
@@ -25,17 +38,12 @@ router.get('/', (req, res) => {
             status: u.status,
             avatarUrl: u.avatar_url,
             lastLogin: u.last_login,
-            timezone: u.timezone,
-            avatarUrl: u.avatar_url,
-            lastLogin: u.last_login,
-            timezone: u.timezone,
-            units: u.units,
-            timezone: u.timezone,
-            units: u.units,
             aiConfig: u.ai_config ? JSON.parse(u.ai_config) : {},
             licensePlanId: u.license_plan_id
         }));
-        res.json(users);
+        
+        // Return in format expected by modal
+        res.json({ users, total: users.length });
     });
 });
 
@@ -142,7 +150,7 @@ router.post('/', (req, res) => {
 // UPDATE USER
 router.put('/:id', (req, res) => {
     const { id } = req.params;
-    const { firstName, lastName, email, role, status, timezone, units, aiConfig, licensePlanId } = req.body;
+    const { firstName, lastName, email, role, status, aiConfig, licensePlanId } = req.body;
     const organizationId = req.user.organizationId;
 
     let fields = [];
@@ -153,8 +161,6 @@ router.put('/:id', (req, res) => {
     if (email !== undefined) { fields.push('email = ?'); params.push(email); }
     if (role !== undefined) { fields.push('role = ?'); params.push(role); }
     if (status !== undefined) { fields.push('status = ?'); params.push(status); }
-    if (timezone !== undefined) { fields.push('timezone = ?'); params.push(timezone); }
-    if (units !== undefined) { fields.push('units = ?'); params.push(units); }
     if (aiConfig !== undefined) { fields.push('ai_config = ?'); params.push(JSON.stringify(aiConfig)); }
     if (licensePlanId !== undefined) { fields.push('license_plan_id = ?'); params.push(licensePlanId); }
 

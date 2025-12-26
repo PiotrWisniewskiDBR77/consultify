@@ -19,10 +19,12 @@ import {
     RefreshCw,
     Filter,
     BarChart3,
-    AlertCircle
+    AlertCircle,
+    FileEdit
 } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { AppView } from '../../types';
+import { ReviewFeedbackPanel } from './panels/ReviewFeedbackPanel';
 
 interface Review {
     id: string;
@@ -69,6 +71,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [reviewingReview, setReviewingReview] = useState<Review | null>(null);
 
     // Fetch reviews
     const fetchReviews = useCallback(async () => {
@@ -437,24 +440,46 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({
                                     )}
                                 </div>
 
-                                {/* Action Button */}
+                                {/* Action Buttons */}
                                 {review.status !== 'COMPLETED' && review.status !== 'SKIPPED' && (
-                                    <button
-                                        onClick={() => handleStartReview(review)}
-                                        className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg transition-colors shrink-0"
-                                    >
-                                        {review.status === 'PENDING' ? 'Rozpocznij' : 'Kontynuuj'}
-                                        <ChevronRight className="w-4 h-4" />
-                                    </button>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <button
+                                            onClick={() => handleStartReview(review)}
+                                            className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-300 font-medium rounded-lg transition-colors"
+                                        >
+                                            {review.status === 'PENDING' ? 'Podgląd' : 'Kontynuuj'}
+                                            <ChevronRight className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => setReviewingReview(review)}
+                                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg transition-colors"
+                                        >
+                                            <FileEdit className="w-4 h-4" />
+                                            Wystaw recenzję
+                                        </button>
+                                    </div>
                                 )}
                             </div>
                         </div>
                     ))
                 )}
             </div>
+
+            {/* Review Feedback Panel */}
+            {reviewingReview && (
+                <ReviewFeedbackPanel
+                    reviewId={reviewingReview.id}
+                    assessmentId={reviewingReview.assessmentId}
+                    assessmentName={reviewingReview.assessmentName || 'Assessment'}
+                    isOpen={!!reviewingReview}
+                    onClose={() => setReviewingReview(null)}
+                    onSubmitted={() => {
+                        fetchReviews();
+                        setReviewingReview(null);
+                    }}
+                />
+            )}
         </div>
     );
 };
-
-export default ReviewerDashboard;
 

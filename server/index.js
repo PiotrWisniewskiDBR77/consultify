@@ -334,6 +334,14 @@ app.use('/api/pmo', pmoRoutes);
 const pmoDomainsRoutes = require('./routes/pmoDomains');
 app.use('/api/pmo-domains', pmoDomainsRoutes);
 
+// PMO Project Members & Workstreams
+// ISO 21500 (4.6.2) / PMBOK 7 Team Performance Domain / PRINCE2 Organization Theme
+const projectMembersRoutes = require('./routes/project-members');
+app.use('/api/projects', projectMembersRoutes);
+
+const workstreamsRoutes = require('./routes/workstreams');
+app.use('/api', workstreamsRoutes);
+
 // SCMS Step 4: Roadmap, Sequencing & Capacity Routes
 const baselinesRoutes = require('./routes/baselines');
 app.use('/api/baselines', baselinesRoutes);

@@ -777,6 +777,60 @@ function initDb() {
         )`);
 
         // ==========================================
+        // DRD AUDIT REPORT SECTIONS
+        // Editable report sections with AI support
+        // ==========================================
+        
+        // Report Sections - Individual editable sections of a report
+        db.run(`CREATE TABLE IF NOT EXISTS report_sections (
+            id TEXT PRIMARY KEY,
+            report_id TEXT NOT NULL,
+            section_type TEXT NOT NULL,
+            axis_id TEXT,
+            area_id TEXT,
+            title TEXT NOT NULL,
+            content TEXT,
+            data_snapshot TEXT,
+            order_index INTEGER DEFAULT 0,
+            is_ai_generated INTEGER DEFAULT 0,
+            ai_model_used TEXT,
+            last_edited_by TEXT,
+            version INTEGER DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(report_id) REFERENCES assessment_reports(id) ON DELETE CASCADE,
+            FOREIGN KEY(last_edited_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        // Indexes for report_sections
+        db.run(`CREATE INDEX IF NOT EXISTS idx_report_sections_report_id ON report_sections(report_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_report_sections_type ON report_sections(report_id, section_type)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_report_sections_order ON report_sections(report_id, order_index)`);
+
+        // Section version history for tracking changes
+        db.run(`CREATE TABLE IF NOT EXISTS report_section_history (
+            id TEXT PRIMARY KEY,
+            section_id TEXT NOT NULL,
+            version INTEGER NOT NULL,
+            content TEXT,
+            data_snapshot TEXT,
+            edited_by TEXT,
+            edit_source TEXT,
+            ai_prompt TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(section_id) REFERENCES report_sections(id) ON DELETE CASCADE,
+            FOREIGN KEY(edited_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        // Index for version history
+        db.run(`CREATE INDEX IF NOT EXISTS idx_section_history_section ON report_section_history(section_id, version)`);
+
+        // Migration: Add template_id to assessment_reports for template-based generation
+        db.run(`ALTER TABLE assessment_reports ADD COLUMN template_id TEXT`, (err) => {
+            // Ignore if exists
+        });
+
+        // ==========================================
         // ASSESSMENT MODULE - PHASE 2 EXPANSION
         // Multi-Framework Assessment System
         // ==========================================
@@ -1172,6 +1226,9 @@ function initDb() {
         });
         db.run(`ALTER TABLE initiatives ADD COLUMN assessment_traceability TEXT DEFAULT '{}'`, (err) => {
             // JSON object: { drd_id, lean_id, external_ids[], report_ids[], generated_at }
+        });
+        db.run(`ALTER TABLE initiatives ADD COLUMN report_id TEXT`, (err) => {
+            // Link to assessment_reports for traceability
         });
 
         // ==========================================
@@ -2300,6 +2357,11 @@ function initDb() {
                 // Ignore error if column already exists
             });
         });
+
+        // Transfer to Roadmap columns (Assessment Integration)
+        db.run(`ALTER TABLE initiatives ADD COLUMN target_quarter TEXT`, (err) => { });
+        db.run(`ALTER TABLE initiatives ADD COLUMN roadmap_notes TEXT`, (err) => { });
+        db.run(`ALTER TABLE initiatives ADD COLUMN source_report_id TEXT`, (err) => { });
 
         // Task Dependencies
         db.run(`CREATE TABLE IF NOT EXISTS task_dependencies (

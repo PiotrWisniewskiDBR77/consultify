@@ -319,5 +319,3 @@ export const RapidLeanReportTemplate: React.FC<RapidLeanReportTemplateProps> = (
         </div>
     );
 };
-
-export default RapidLeanReportTemplate;

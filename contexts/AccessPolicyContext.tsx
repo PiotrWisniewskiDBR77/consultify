@@ -180,5 +180,3 @@ export const useIsTrialExpired = (): boolean => {
     const { snapshot } = usePolicySnapshot();
     return snapshot?.isTrialExpired ?? false;
 };
-
-export default AccessPolicyContext;

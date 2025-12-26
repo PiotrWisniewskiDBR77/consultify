@@ -427,6 +427,146 @@ Consultify implements a certifiable PMO model aligned with:
 
 ---
 
+## My Work Module
+
+### Overview
+
+**Purpose:** Personal productivity hub for managing tasks, inbox, focus planning, and notifications - designed with PMO best practices from McKinsey, BCG, Deloitte and tools like Jira, Linear, Asana.
+
+### Focus Board
+
+**Purpose:** Plan your day using time blocking methodology.
+
+**Features:**
+- **Focus Tasks:** Priority tasks for today
+- **Time Blocks:** Allocate specific hours to tasks
+- **Visual Schedule:** See your day at a glance
+- **Quick Prioritize:** Drag tasks from inbox to focus
+- **AI Suggestions:** Smart task prioritization recommendations
+
+**Best Practices:**
+- Limit to 3-5 focus tasks per day
+- Block morning hours for deep work
+- Include buffer time between blocks
+
+### Inbox Triage
+
+**Purpose:** Process new tasks efficiently using Inbox Zero methodology.
+
+**PMO Categories:**
+- 🔴 **Blocking Phase:** Tasks blocking phase gates
+- 🟠 **Blocking Initiative:** Tasks blocking initiative progress
+- 🟡 **Awaiting Decision:** Tasks waiting for stakeholder decisions
+- ⚫ **Overdue:** Past-due tasks
+- ✅ **Other:** Remaining tasks
+
+**Triage Actions:**
+- **Complete:** Mark task as done
+- **Prioritize:** Add to Focus Board
+- **Defer:** Postpone to later date
+- **Delegate:** Reassign to teammate
+- **Delete:** Remove task
+
+### All Tasks View
+
+**Features:**
+- **Multi-Select Filters:** Status, Priority, Due Date, PMO Category
+- **Virtualized List:** Smooth scrolling for large task lists
+- **Bulk Actions:** Select multiple tasks for batch operations
+- **Quick Search:** Find tasks by title, description, or labels
+
+### Personal Dashboard
+
+**Execution Score Card:**
+- Personal execution score (0-100)
+- Completed vs total tasks ratio
+- Overdue penalty (-5 per overdue task)
+- Trend indicator (up/down/stable)
+
+**Workload Heatmap:**
+- Team capacity visualization
+- Color-coded utilization (green/yellow/red)
+- 7-day or monthly view
+- Click to see specific tasks per day
+
+**Bottleneck Alerts:**
+- AI-detected blocking issues
+- Severity indicators (Warning/Critical)
+- Suggested resolutions
+- Quick action buttons
+
+**Velocity Chart:**
+- Weekly completed tasks trend
+- Average cycle time
+- Historical comparison
+
+### Notification System
+
+**Notification Types:**
+| Type | Severity | Description |
+|------|----------|-------------|
+| Task Assigned | INFO | New task assignment |
+| Task Overdue | WARNING | Task past due date |
+| Decision Required | WARNING | Stakeholder decision needed |
+| Initiative Blocked | CRITICAL | Initiative progress blocked |
+| AI Risk Detected | CRITICAL | AI identified project risk |
+| Gate Approaching | WARNING | Phase gate deadline near |
+
+**Notification Preferences:**
+- Mute by severity (Info/Warning/Critical)
+- Mute specific notification types
+- Email digest (daily/weekly)
+- Quiet hours configuration
+
+**Digest Emails:**
+- Daily or weekly summary
+- Configurable delivery time
+- Unread notifications compilation
+- Direct action links
+
+### Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Cmd/Ctrl + K` | Command palette |
+| `g + f` | Go to Focus |
+| `g + i` | Go to Inbox |
+| `g + t` | Go to All Tasks |
+| `c` | Create new task |
+| `d` | Complete task |
+| `?` | Show shortcuts help |
+
+### Mobile Experience
+
+**Touch Gestures:**
+- Swipe left → Quick actions (complete, delete)
+- Swipe right → Prioritize / add to focus
+- Pull down → Refresh list
+- Long press → Context menu
+
+**Mobile Optimizations:**
+- Large touch targets (44px minimum)
+- Bottom action bar for thumb access
+- Collapsible sections
+- Offline capability with sync
+
+### AI Integration
+
+**AI Capabilities:**
+- Smart task prioritization based on PMO context
+- Bottleneck detection and resolution suggestions
+- Workload balancing recommendations
+- Risk identification from task patterns
+- Proactive deadline warnings
+
+**AI Role:**
+- Monitors execution velocity
+- Flags potential blockers
+- Suggests task reordering
+- Identifies overloaded team members
+
+---
+
 ## User Management & Access Control
 
 ### User Roles

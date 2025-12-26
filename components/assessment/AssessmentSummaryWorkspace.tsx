@@ -3,7 +3,7 @@ import { DRDAxis, AxisAssessment } from '../../types';
 import { BarChart2, TrendingUp, Settings, Smartphone, Briefcase, Database, Users, Lock, BrainCircuit, Pencil, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { AssessmentMatrixCard } from './AssessmentMatrixCard';
-import { getQuestionsForAxis } from '../../services/drdStructure';
+import { DRDArea } from '../../services/drdStructure';
 import { ACTUAL_COLORS, TARGET_COLORS } from '../../utils/assessmentColors';
 
 interface AssessmentSummaryWorkspaceProps {
@@ -44,16 +44,98 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
 
     const axes: DRDAxis[] = ['processes', 'digitalProducts', 'businessModels', 'dataManagement', 'culture', 'cybersecurity', 'aiMaturity'];
 
-    // Calculate generic stats
+    // Helper: Get level value (handles both plain numbers and bitmasks)
+    const getHighestLevel = (value: number): number => {
+        if (value === 0) return 0;
+        // If value is small (1-7), it's likely a plain number
+        // If value is larger (8+), it's likely a bitmask
+        if (value <= 7) {
+            return value; // Plain number
+        }
+        // Bitmask - find highest set bit
+        return Math.floor(Math.log2(value)) + 1;
+    };
+
+    // Calculate axis progress (worked vs rated areas)
+    const calculateAxisProgress = (data: AxisAssessment | undefined) => {
+        if (!data?.areaScores) {
+            // Fallback to aggregate values
+            const hasActual = (data?.actual || 0) > 0;
+            const hasTarget = (data?.target || 0) > 0;
+            return {
+                worked: hasActual || hasTarget ? 1 : 0,
+                rated: hasActual && hasTarget ? 1 : 0,
+                total: 1
+            };
+        }
+
+        const areaKeys = Object.keys(data.areaScores);
+        let worked = 0; // At least one score set
+        let rated = 0;  // Both actual and target set
+
+        areaKeys.forEach(key => {
+            const scores = data.areaScores?.[key] || [0, 0];
+            if (scores[0] > 0 || scores[1] > 0) worked++;
+            if (scores[0] > 0 && scores[1] > 0) rated++;
+        });
+
+        return { worked, rated, total: areaKeys.length || 1 };
+    };
+
+    // Calculate overall progress across all axes
+    const overallProgress = axes.reduce((acc, axis) => {
+        const progress = calculateAxisProgress(assessment[axis]);
+        return {
+            axesWorked: acc.axesWorked + (progress.worked > 0 ? 1 : 0),
+            axesRated: acc.axesRated + (progress.rated === progress.total && progress.total > 0 ? 1 : 0),
+            totalAreas: acc.totalAreas + progress.total,
+            workedAreas: acc.workedAreas + progress.worked,
+            ratedAreas: acc.ratedAreas + progress.rated
+        };
+    }, { axesWorked: 0, axesRated: 0, totalAreas: 0, workedAreas: 0, ratedAreas: 0 });
+
+    // Calculate generic stats - improved algorithm
     const totalGap = axes.reduce((acc, axis) => {
         const data = assessment[axis];
-        if (data && data.actual && data.target) {
+        if (data?.areaScores) {
+            // Calculate from area scores
+            let axisGap = 0;
+            Object.values(data.areaScores).forEach(scores => {
+                const actual = getHighestLevel(scores[0]);
+                const target = getHighestLevel(scores[1]);
+                axisGap += Math.max(0, target - actual);
+            });
+            return acc + axisGap;
+        } else if (data && data.actual && data.target) {
             return acc + Math.max(0, data.target - data.actual);
         }
         return acc;
     }, 0);
 
-    const avgMaturity = (axes.reduce((acc, axis) => acc + (assessment[axis]?.actual || 0), 0) / 7).toFixed(1);
+    // Calculate average maturity from area scores when available
+    const avgMaturity = (() => {
+        let totalActual = 0;
+        let count = 0;
+
+        axes.forEach(axis => {
+            const data = assessment[axis];
+            if (data?.areaScores) {
+                Object.values(data.areaScores).forEach(scores => {
+                    const actual = getHighestLevel(scores[0]);
+                    if (actual > 0) {
+                        totalActual += actual;
+                        count++;
+                    }
+                });
+            } else if (data?.actual) {
+                totalActual += data.actual;
+                count++;
+            }
+        });
+
+        return count > 0 ? (totalActual / count).toFixed(1) : '0.0';
+    })();
+
 
     return (
         <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-900 text-navy-900 dark:text-white p-8 overflow-y-auto" ref={componentRef}>
@@ -114,25 +196,60 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
                     )}
                 </div>
                 <div className="flex gap-4">
+                    {/* Progress: Axes Worked */}
+                    <div className="bg-white dark:bg-navy-950/50 p-3 rounded-xl border border-slate-200 dark:border-white/5 text-center min-w-[100px]">
+                        <div className="text-3xl font-bold text-purple-500">{overallProgress.axesWorked}<span className="text-lg text-slate-400">/{axes.length}</span></div>
+                        <div className="text-xs uppercase tracking-wide text-slate-500 font-bold">Przepracowane</div>
+                        <div className="mt-1 h-1 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                            <div
+                                className="h-full bg-purple-500 rounded-full transition-all"
+                                style={{ width: `${(overallProgress.axesWorked / axes.length) * 100}%` }}
+                            />
+                        </div>
+                    </div>
+                    {/* Progress: Axes Rated */}
+                    <div className="bg-white dark:bg-navy-950/50 p-3 rounded-xl border border-slate-200 dark:border-white/5 text-center min-w-[100px]">
+                        <div className="text-3xl font-bold text-green-500">{overallProgress.axesRated}<span className="text-lg text-slate-400">/{axes.length}</span></div>
+                        <div className="text-xs uppercase tracking-wide text-slate-500 font-bold">Ocenione</div>
+                        <div className="mt-1 h-1 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                            <div
+                                className="h-full bg-green-500 rounded-full transition-all"
+                                style={{ width: `${(overallProgress.axesRated / axes.length) * 100}%` }}
+                            />
+                        </div>
+                    </div>
+                    {/* Avg Actual */}
                     <div className="bg-white dark:bg-navy-950/50 p-3 rounded-xl border border-slate-200 dark:border-white/5 text-center min-w-[100px]">
                         <div className="text-3xl font-bold text-blue-400">{avgMaturity}</div>
                         <div className="text-xs uppercase tracking-wide text-slate-500 font-bold">Avg Actual</div>
                     </div>
+                    {/* Total Gap */}
                     <div className="bg-white dark:bg-navy-950/50 p-3 rounded-xl border border-slate-200 dark:border-white/5 text-center min-w-[100px]">
                         <div className="text-3xl font-bold text-red-400">{totalGap}</div>
                         <div className="text-xs uppercase tracking-wide text-slate-500 font-bold">Total Gap Points</div>
                     </div>
                 </div>
+
             </div>
 
             {/* Main Chart / Table */}
             <div className="bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-xl p-6 mb-8">
-                <div className="flex items-center justify-between mb-6 border-b border-slate-200 dark:border-white/5 pb-4">
-                    <h3 className="text-xl font-bold text-navy-900 dark:text-white">Wizualizacja Luk (Gap Map)</h3>
-                    <div className="flex gap-4 text-xs font-mono">
-                        <div className="flex items-center gap-2"><div className={`w-3 h-3 rounded-sm ${ACTUAL_COLORS.bg}`}></div> Obecny</div>
-                        <div className="flex items-center gap-2"><div className={`w-3 h-3 ${TARGET_COLORS.bgLight} border ${TARGET_COLORS.border} rounded-sm`}></div> Docelowy</div>
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 bg-red-500/20 border border-dashed border-red-500 rounded-sm"></div> Luka</div>
+                <div className="mb-6 border-b border-slate-200 dark:border-white/5 pb-4">
+                    <h3 className="text-xl font-bold text-navy-900 dark:text-white mb-3">Wizualizacja Luk (Gap Map)</h3>
+                    {/* Legend - above chart */}
+                    <div className="flex items-center justify-center gap-6 text-xs font-mono">
+                        <div className="flex items-center gap-2">
+                            <div className={`w-3 h-3 rounded-sm ${ACTUAL_COLORS.bg}`}></div>
+                            <span className="text-slate-600 dark:text-slate-400">Obecny</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className={`w-3 h-3 ${TARGET_COLORS.bgLight} border ${TARGET_COLORS.border} rounded-sm`}></div>
+                            <span className="text-slate-600 dark:text-slate-400">Docelowy</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 bg-red-500/20 border border-dashed border-red-500 rounded-sm"></div>
+                            <span className="text-slate-600 dark:text-slate-400">Luka</span>
+                        </div>
                     </div>
                 </div>
 
@@ -199,32 +316,54 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
                             aiMaturity: <BrainCircuit size={18} />,
                         };
 
-                        const axisIdMap: Record<string, number> = {
-                            'processes': 1,
-                            'digitalProducts': 2,
-                            'businessModels': 3,
-                            'dataManagement': 4,
-                            'culture': 5,
-                            'cybersecurity': 6,
-                            'aiMaturity': 7
+                        // Get axis content from translations (same source as AssessmentAxisWorkspace)
+                        const axisContent = translate(`assessment.axisContent.${axis}`, { returnObjects: true }) as { 
+                            title: string; 
+                            intro?: string; 
+                            levels?: Record<string, string>; 
+                            areas?: Record<string, { title: string; levels: Record<string, string> }> 
                         };
-                        const realAreas = getQuestionsForAxis(axisIdMap[axis]);
+                        
+                        // Convert translation areas to DRDArea format
+                        const translatedAreas: DRDArea[] = axisContent.areas 
+                            ? Object.entries(axisContent.areas).map(([key, area]) => ({
+                                id: key, // Use translation key (e.g., "sales", "marketing")
+                                name: area.title,
+                                levels: Object.entries(area.levels).map(([levelKey, levelTitle]) => ({
+                                    level: parseInt(levelKey, 10),
+                                    title: levelTitle,
+                                    description: ''
+                                }))
+                            }))
+                            : [];
 
-                        // Calculate detailed averages from area scores
+                        // Get existing areaScores or create fallback from axis-level actual/target
+                        const axisData = assessment[axis];
+                        const existingAreaScores = axisData?.areaScores;
+                        
+                        // If no areaScores but we have axis-level scores, create uniform scores for all areas
+                        const effectiveScores: Record<string, number[]> = existingAreaScores && Object.keys(existingAreaScores).length > 0
+                            ? existingAreaScores
+                            : translatedAreas.reduce((acc, area) => {
+                                // Fallback: use axis-level actual/target for all areas
+                                acc[area.id] = [axisData?.actual || 0, axisData?.target || 0];
+                                return acc;
+                            }, {} as Record<string, number[]>);
+
+                        // Calculate detailed averages from area scores using translation keys
                         let totalActual = 0;
                         let totalTarget = 0;
                         let areaCount = 0;
 
-                        realAreas.forEach(area => {
-                            const scores = assessment[axis]?.areaScores?.[area.id] || [0, 0];
-                            const actualBitmask = scores[0];
-                            const targetBitmask = scores[1];
+                        translatedAreas.forEach(area => {
+                            // area.id is now the translation key (e.g., "sales")
+                            const scores = effectiveScores[area.id] || [0, 0];
+                            const actualValue = scores[0];
+                            const targetValue = scores[1];
 
-                            // Convert bitmask to highest level
-                            // Level 1 = bit 0 (1), Level 5 = bit 4 (16)
-                            // Math.log2(0) is -Infinity, so handle 0 case
-                            const actualLevel = actualBitmask > 0 ? Math.floor(Math.log2(actualBitmask)) + 1 : 0;
-                            const targetLevel = targetBitmask > 0 ? Math.floor(Math.log2(targetBitmask)) + 1 : 0;
+                            // Get level from value (handles both plain numbers and bitmasks)
+                            const actualLevel = getHighestLevel(actualValue);
+                            const targetLevel = getHighestLevel(targetValue);
 
                             totalActual += actualLevel;
                             totalTarget += targetLevel;
@@ -241,8 +380,8 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
                                     icon={iconMap[axis]}
                                     actual={calculatedActual}
                                     target={calculatedTarget}
-                                    areas={realAreas}
-                                    scores={assessment[axis]?.areaScores}
+                                    areas={translatedAreas}
+                                    scores={effectiveScores}
                                     onNavigate={() => onNavigate(axis)}
                                 />
                             </div>

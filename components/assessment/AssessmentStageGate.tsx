@@ -467,5 +467,3 @@ const GateDetailsPanel: React.FC<{
     );
 };
 
-export default AssessmentStageGate;
-

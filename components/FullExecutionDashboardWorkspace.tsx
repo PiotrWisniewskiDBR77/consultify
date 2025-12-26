@@ -76,7 +76,7 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
                 <StatCard
                     title="Active Initiatives"
                     value={fullSession.initiatives.length.toString()}
-                    subtext={`${fullSession.initiatives.filter(i => (i.status as string) === 'In Progress' || i.status === 'IN_EXECUTION').length} In Progress`}
+                    subtext={`${fullSession.initiatives.filter(i => (i.status as string) === 'In Progress' || i.status === 'EXECUTING').length} In Progress`}
                     icon={ListChecks}
                     color="blue"
                 />
@@ -213,8 +213,8 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
                                 </td>
                                 <td className="p-4">
                                     <span className={`px-2 py-1 rounded text-xs font-medium border
-                                        ${(init.status as string) === 'Done' || init.status === 'COMPLETED' ? 'bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 border-green-200 dark:border-green-500/20' :
-                                            (init.status as string) === 'In Progress' || init.status === 'IN_EXECUTION' ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/20' :
+                                        ${(init.status as string) === 'Done' || init.status === 'DONE' ? 'bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 border-green-200 dark:border-green-500/20' :
+                                            (init.status as string) === 'In Progress' || init.status === 'EXECUTING' ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/20' :
                                                 'bg-slate-100 dark:bg-white/5 text-slate-500 border-slate-200 dark:border-white/10'}`}>
                                         {init.status.replace('_', ' ')}
                                     </span>

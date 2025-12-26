@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Task, User, TaskStatus, FullInitiative, InitiativeStatus } from '../types';
 import { Button } from './Button';
-import { Plus, CheckCircle, Clock } from 'lucide-react';
+import { Plus, CheckCircle, Clock, CheckSquare, Square, ArrowRight, XCircle } from 'lucide-react';
 import { TaskDetailModal } from './TaskDetailModal';
 
 interface Props {
@@ -21,6 +21,8 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
+    const [isBulkUpdating, setIsBulkUpdating] = useState(false);
 
     const fetchTasks = useCallback(async () => {
         setLoading(true);
@@ -78,6 +80,47 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
     };
 
     const filteredTasks = tasks.filter(t => filterStatus === 'all' || t.status === filterStatus);
+
+    // Bulk Selection Handlers
+    const toggleTaskSelection = (taskId: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setSelectedTaskIds(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(taskId)) {
+                newSet.delete(taskId);
+            } else {
+                newSet.add(taskId);
+            }
+            return newSet;
+        });
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedTaskIds.size === filteredTasks.length) {
+            setSelectedTaskIds(new Set());
+        } else {
+            setSelectedTaskIds(new Set(filteredTasks.map(t => t.id)));
+        }
+    };
+
+    const handleBulkStatusChange = async (newStatus: TaskStatus) => {
+        if (selectedTaskIds.size === 0) return;
+        setIsBulkUpdating(true);
+        try {
+            for (const taskId of selectedTaskIds) {
+                const task = tasks.find(t => t.id === taskId);
+                if (task) {
+                    await Api.updateTask(taskId, { ...task, status: newStatus });
+                }
+            }
+            setSelectedTaskIds(new Set());
+            fetchTasks();
+        } catch (error) {
+            console.error("Failed to bulk update tasks", error);
+        } finally {
+            setIsBulkUpdating(false);
+        }
+    };
 
     // Initial empty task for creation
     const emptyTask: Partial<Task> = {
@@ -159,8 +202,66 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
                 </div>
             </div>
 
+            {/* Bulk Action Bar */}
+            {selectedTaskIds.size > 0 && (
+                <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-500/30 flex items-center justify-between animate-in slide-in-from-top-2 duration-200">
+                    <div className="flex items-center gap-3">
+                        <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                            {selectedTaskIds.size} task{selectedTaskIds.size > 1 ? 's' : ''} selected
+                        </span>
+                        <button 
+                            onClick={() => setSelectedTaskIds(new Set())}
+                            className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                        >
+                            Clear
+                        </button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs text-slate-500 dark:text-slate-400 mr-2">Set status:</span>
+                        {[
+                            { status: TaskStatus.TODO, label: 'Todo', color: 'bg-slate-500' },
+                            { status: TaskStatus.IN_PROGRESS, label: 'In Progress', color: 'bg-blue-500' },
+                            { status: TaskStatus.DONE, label: 'Done', color: 'bg-green-500' },
+                        ].map(({ status, label, color }) => (
+                            <button
+                                key={status}
+                                onClick={() => handleBulkStatusChange(status)}
+                                disabled={isBulkUpdating}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-medium text-white ${color} hover:opacity-90 transition-opacity flex items-center gap-1 ${isBulkUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                                {isBulkUpdating ? (
+                                    <div className="w-3 h-3 rounded-full border-2 border-t-transparent border-white animate-spin" />
+                                ) : (
+                                    <ArrowRight size={12} />
+                                )}
+                                {label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             {/* Task List */}
             <div className="flex-1 overflow-y-auto space-y-2 pr-2">
+                {/* Select All Header */}
+                {filteredTasks.length > 0 && (
+                    <div className="flex items-center gap-3 py-2 px-1 border-b border-slate-100 dark:border-white/5 mb-2">
+                        <button
+                            onClick={toggleSelectAll}
+                            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                        >
+                            {selectedTaskIds.size === filteredTasks.length ? (
+                                <CheckSquare size={16} className="text-blue-500" />
+                            ) : (
+                                <Square size={16} className="text-slate-400" />
+                            )}
+                        </button>
+                        <span className="text-xs text-slate-500">
+                            {selectedTaskIds.size === filteredTasks.length ? 'Deselect all' : 'Select all'}
+                        </span>
+                    </div>
+                )}
+
                 {loading ? (
                     <div className="text-center py-10 text-slate-500">Loading tasks...</div>
                 ) : filteredTasks.length === 0 ? (
@@ -173,33 +274,61 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
                         <div
                             key={task.id}
                             onClick={() => setSelectedTask(task)}
-                            className="bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/5 rounded-lg p-3 hover:border-blue-500/30 transition-colors cursor-pointer group flex items-center gap-4 shadow-sm dark:shadow-none"
+                            className={`bg-white dark:bg-navy-950 border rounded-lg p-3 hover:border-blue-500/30 transition-colors cursor-pointer group flex items-center gap-4 shadow-sm dark:shadow-none ${
+                                selectedTaskIds.has(task.id) 
+                                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/10' 
+                                    : 'border-slate-200 dark:border-white/5'
+                            }`}
                         >
+                            {/* Checkbox */}
+                            <button
+                                onClick={(e) => toggleTaskSelection(task.id, e)}
+                                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-white/10 transition-colors shrink-0"
+                            >
+                                {selectedTaskIds.has(task.id) ? (
+                                    <CheckSquare size={18} className="text-blue-500" />
+                                ) : (
+                                    <Square size={18} className="text-slate-300 dark:text-slate-600 group-hover:text-slate-400" />
+                                )}
+                            </button>
+
                             {/* Status Indicator */}
-                            <div className={`w - 2 h - full self - stretch rounded - full ${(task.status === TaskStatus.DONE ? 'bg-green-500' : task.status === TaskStatus.IN_PROGRESS ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-600')} `}></div>
+                            <div className={`w-2 h-full self-stretch rounded-full ${(task.status === TaskStatus.DONE ? 'bg-green-500' : task.status === TaskStatus.IN_PROGRESS ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-600')}`}></div>
 
                             <div className="flex-1">
                                 <div className="flex justify-between items-start">
                                     <h4 className="text-navy-900 dark:text-slate-200 font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{task.title}</h4>
-                                    <span className={`text - [10px] uppercase font - bold px - 1.5 py - 0.5 rounded border ${getStatusColor(task.status)} `}>
-                                        {task.status.replace('_', ' ')}
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        {task.weight && task.weight > 1 && (
+                                            <span className="text-[9px] font-bold text-purple-500 bg-purple-50 dark:bg-purple-500/10 px-1.5 py-0.5 rounded">
+                                                {task.weight}x
+                                            </span>
+                                        )}
+                                        <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border ${getStatusColor(task.status)}`}>
+                                            {task.status.replace('_', ' ')}
+                                        </span>
+                                    </div>
                                 </div>
                                 <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
                                     <span className="flex items-center gap-1">
                                         <div className="w-4 h-4 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[8px] text-navy-600 dark:text-white overflow-hidden">
                                             {task.assignee?.avatarUrl ? <img src={task.assignee.avatarUrl} className="w-full h-full object-cover" /> : (task.assignee?.firstName?.[0] || '?')}
                                         </div>
-                                        {task.assignee ? `${task.assignee.firstName} ${task.assignee.lastName} ` : 'Unassigned'}
+                                        {task.assignee ? `${task.assignee.firstName} ${task.assignee.lastName}` : 'Unassigned'}
                                     </span>
                                     {task.dueDate && (
                                         <span className="flex items-center gap-1">
                                             <Clock size={12} /> {new Date(task.dueDate).toLocaleDateString()}
                                         </span>
                                     )}
-                                    <span className={`uppercase ${task.priority === 'urgent' ? 'text-red-500 dark:text-red-400' : task.priority === 'high' ? 'text-orange-500 dark:text-orange-400' : 'text-slate-500'} `}>
+                                    <span className={`uppercase ${task.priority === 'urgent' ? 'text-red-500 dark:text-red-400' : task.priority === 'high' ? 'text-orange-500 dark:text-orange-400' : 'text-slate-500'}`}>
                                         {task.priority}
                                     </span>
+                                    {task.signedOff && (
+                                        <span className="flex items-center gap-1 text-green-500">
+                                            <CheckCircle size={12} /> Signed
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         </div>

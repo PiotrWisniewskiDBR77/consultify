@@ -24,9 +24,9 @@ const config = require('../config');
 
 // Configuration
 const CONFIG = {
-    ACCESS_TOKEN_EXPIRY: '15m', // Short-lived access token
-    ACCESS_TOKEN_EXPIRY_MS: 15 * 60 * 1000,
-    REFRESH_TOKEN_EXPIRY_DAYS: 7,
+    ACCESS_TOKEN_EXPIRY: '365d', // Long-lived for development
+    ACCESS_TOKEN_EXPIRY_MS: 365 * 24 * 60 * 60 * 1000, // 1 year
+    REFRESH_TOKEN_EXPIRY_DAYS: 365,
     MAX_SESSIONS_PER_USER: 10
 };
 
@@ -144,8 +144,62 @@ const RefreshTokenService = {
             );
 
             if (revokedToken) {
-                // Token was already used - revoke entire family (security breach)
-                console.warn(`[RefreshToken] SECURITY: Reused token detected for user ${revokedToken.user_id}`);
+                // Check if token was revoked very recently (within grace period)
+                // This handles multi-tab race conditions where multiple tabs try to refresh
+                const GRACE_PERIOD_SECONDS = 10;
+                const revokedAt = new Date(revokedToken.revoked_at).getTime();
+                const now = Date.now();
+                const secondsSinceRevoke = (now - revokedAt) / 1000;
+
+                if (revokedToken.revoked_reason === 'rotation' && secondsSinceRevoke < GRACE_PERIOD_SECONDS) {
+                    // Token was just rotated - this is likely a multi-tab race condition
+                    // Return the latest valid token from the same family instead of treating as theft
+                    console.log(`[RefreshToken] Grace period: Token was rotated ${secondsSinceRevoke.toFixed(1)}s ago, looking for new token in family`);
+                    
+                    const latestToken = await dbGet(
+                        `SELECT rt.*, u.email, u.role, u.organization_id, u.status as user_status
+                         FROM refresh_tokens rt
+                         JOIN users u ON rt.user_id = u.id
+                         WHERE rt.token_family = ? 
+                           AND rt.revoked_at IS NULL 
+                           AND rt.expires_at > datetime('now')
+                         ORDER BY rt.created_at DESC
+                         LIMIT 1`,
+                        [revokedToken.token_family]
+                    );
+
+                    if (latestToken) {
+                        // Found a valid token in the same family - return new tokens based on it
+                        // but DON'T rotate again (let the original refresh handle that)
+                        console.log(`[RefreshToken] Grace period: Found valid token in family, returning current tokens`);
+                        
+                        // Generate new access token only (don't rotate refresh token again)
+                        const jti = uuidv4();
+                        const accessToken = jwt.sign(
+                            {
+                                id: latestToken.user_id,
+                                email: latestToken.email,
+                                role: latestToken.role,
+                                organizationId: latestToken.organization_id,
+                                jti
+                            },
+                            config.JWT_SECRET,
+                            { expiresIn: CONFIG.ACCESS_TOKEN_EXPIRY }
+                        );
+
+                        // Return the existing refresh token from localStorage (client should still have it)
+                        // This prevents double-rotation issues
+                        return {
+                            accessToken,
+                            refreshToken: null, // Signal to client to keep existing refresh token
+                            expiresIn: CONFIG.ACCESS_TOKEN_EXPIRY_MS,
+                            gracePeriod: true
+                        };
+                    }
+                }
+
+                // Token was already used outside grace period - revoke entire family (security breach)
+                console.warn(`[RefreshToken] SECURITY: Reused token detected for user ${revokedToken.user_id} (${secondsSinceRevoke.toFixed(1)}s since revoke)`);
                 await this._revokeTokenFamily(revokedToken.token_family, 'security');
             }
 

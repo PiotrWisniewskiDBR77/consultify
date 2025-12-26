@@ -609,5 +609,3 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
     );
 };
 
-export default AIAssessmentSidebar;
-

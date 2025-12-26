@@ -25,7 +25,7 @@ export const FullPilotView: React.FC = () => {
     // We look for status 'IN_EXECUTION' (which replaced step4) AND Wave 1
     // For simplicity, let's assume the "Pilot" is the one passed from Roadmap.
 
-    const pilotInitiative = fullSession.initiatives.find(i => i.status === InitiativeStatus.IN_EXECUTION && i.wave === 'Wave 1');
+    const pilotInitiative = fullSession.initiatives.find(i => i.status === InitiativeStatus.EXECUTING && i.wave === 'Wave 1');
 
     const addUserMessage = (content: string) => {
         addMessage({ id: Date.now().toString(), role: 'user', content, timestamp: new Date() });
@@ -103,7 +103,7 @@ export const FullPilotView: React.FC = () => {
                                 // Mark Pilot Complete
                                 const updated = fullSession.initiatives.map(i =>
                                     i.id === pilotInitiative.id
-                                        ? { ...i, status: InitiativeStatus.COMPLETED }
+                                        ? { ...i, status: InitiativeStatus.DONE }
                                         : i
                                 );
                                 updateFullSession({ ...fullSession, initiatives: updated, step4Completed: true });
@@ -144,7 +144,7 @@ export const FullPilotView: React.FC = () => {
                                             console.log("Pilot selection - Clicked:", init.id);
                                             // Activate Pilot
                                             const updated = fullSession.initiatives.map(i =>
-                                                i.id === init.id ? { ...i, status: InitiativeStatus.IN_EXECUTION } : i
+                                                i.id === init.id ? { ...i, status: InitiativeStatus.EXECUTING } : i
                                             );
 
                                             updateFullSession({ initiatives: updated, step3Completed: true });
@@ -202,7 +202,7 @@ export const FullPilotView: React.FC = () => {
                                                 try {
                                                     // Activate Pilot
                                                     const updated = fullSession.initiatives.map(i =>
-                                                        i.id === init.id ? { ...i, status: InitiativeStatus.IN_EXECUTION } : i
+                                                        i.id === init.id ? { ...i, status: InitiativeStatus.EXECUTING } : i
                                                     );
 
                                                     updateFullSession({ initiatives: updated, step3Completed: true });

@@ -912,5 +912,3 @@ const RestoreVersionModal: React.FC<{
     </div>
 );
 
-export default AssessmentWorkflowPanel;
-

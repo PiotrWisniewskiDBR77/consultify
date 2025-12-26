@@ -1,6 +1,5 @@
-import { User, SessionMode, FullSession, FreeSession, LLMProvider, AIMessageHistory } from '../types';
-// FAZA 5: Frontend Metrics
-import { frontendMetrics } from '../utils/frontendMetrics';
+import { User, SessionMode, FullSession, LLMProvider } from '../types';
+import { tokenService } from './tokenService';
 
 // Use relative path to allow Vite proxy to handle the request (avoiding CORS)
 // or use env var if provided.
@@ -13,14 +12,7 @@ if (!correlationId) {
 }
 
 const getHeaders = () => {
-    const token = localStorage.getItem('token');
-
-    // Check if token is expired (if expiry time is stored)
-    const tokenExpiry = localStorage.getItem('tokenExpiry');
-    if (tokenExpiry && parseInt(tokenExpiry) < Date.now()) {
-        console.warn('[Auth] Token expired, will attempt refresh on next request');
-    }
-
+    const token = tokenService.getToken();
     return {
         'Content-Type': 'application/json',
         'Authorization': token ? `Bearer ${token}` : '',
@@ -28,56 +20,25 @@ const getHeaders = () => {
     };
 };
 
-// FAZA 5: Wrapper for fetch with metrics tracking and automatic token refresh
-const trackedFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
-    const startTime = Date.now();
-    const method = options.method || 'GET';
-    const headers = options.headers as Record<string, string> || {};
-    const hasAuth = headers['Authorization'] || (options.headers && 'Authorization' in options.headers);
+// Wrapper for fetch that handles 401 with automatic token refresh
+const fetchWithRetry = async (url: string, options: RequestInit = {}): Promise<Response> => {
+    const headers = { ...getHeaders(), ...(options.headers as Record<string, string> || {}) };
+    let res = await fetch(url, { ...options, headers });
 
-    try {
-        let response = await fetch(url, options);
-        const duration = Date.now() - startTime;
-
-        // Track API call metrics
-        frontendMetrics.trackApiCall(url, method, duration, response.status);
-
-        // If unauthorized and we have auth headers, try to refresh token
-        if (response.status === 401 && hasAuth) {
-            const errorData = await response.clone().json().catch(() => ({}));
-            if (errorData.error === 'Token expired' || errorData.error === 'Unauthorized') {
-                const newToken = await refreshAccessToken();
-                if (newToken) {
-                    // Retry with new token
-                    const retryHeaders = {
-                        ...headers,
-                        'Authorization': `Bearer ${newToken}`
-                    };
-                    const retryOptions = {
-                        ...options,
-                        headers: retryHeaders
-                    };
-                    response = await fetch(url, retryOptions);
-                    const retryDuration = Date.now() - startTime;
-                    frontendMetrics.trackApiCall(url, method, retryDuration, response.status);
-                }
-            }
+    // If 401, try to refresh token and retry once
+    if (res.status === 401) {
+        console.log('[Api] Got 401, attempting token refresh...');
+        const newToken = await tokenService.refreshToken();
+        if (newToken) {
+            headers['Authorization'] = `Bearer ${newToken}`;
+            res = await fetch(url, { ...options, headers });
+        } else {
+            // Token refresh failed, notify app
+            window.dispatchEvent(new CustomEvent('auth:token-expired'));
         }
-
-        return response;
-    } catch (error) {
-        const duration = Date.now() - startTime;
-
-        // Track failed API calls
-        frontendMetrics.trackApiCall(url, method, duration, 0);
-
-        // Track error
-        if (error instanceof Error) {
-            frontendMetrics.trackError(error, { url, method });
-        }
-
-        throw error;
     }
+
+    return res;
 };
 
 const handleResponse = async (res: Response, defaultError: string) => {
@@ -117,156 +78,54 @@ const handleResponse = async (res: Response, defaultError: string) => {
 };
 
 
-// Token refresh helper
-let isRefreshing = false;
-let refreshPromise: Promise<string | null> | null = null;
-
-const refreshAccessToken = async (): Promise<string | null> => {
-    if (isRefreshing && refreshPromise) {
-        return refreshPromise;
-    }
-
-    isRefreshing = true;
-    refreshPromise = (async () => {
-        try {
-            const refreshToken = localStorage.getItem('refreshToken');
-            if (!refreshToken) {
-                console.warn('[Auth] No refresh token available');
-                return null;
-            }
-
-            const res = await trackedFetch(`${API_URL}/auth/refresh`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ refreshToken })
-            });
-
-            if (!res.ok) {
-                // Refresh token expired or invalid - clear tokens and redirect to login
-                localStorage.removeItem('token');
-                localStorage.removeItem('refreshToken');
-                window.dispatchEvent(new CustomEvent('auth:token-expired'));
-                return null;
-            }
-
-            const data = await res.json();
-            if (data.token) {
-                localStorage.setItem('token', data.token);
-                if (data.refreshToken) {
-                    localStorage.setItem('refreshToken', data.refreshToken);
-                }
-                return data.token;
-            }
-            return null;
-        } catch (error) {
-            console.error('[Auth] Token refresh failed:', error);
-            localStorage.removeItem('token');
-            localStorage.removeItem('refreshToken');
-            window.dispatchEvent(new CustomEvent('auth:token-expired'));
-            return null;
-        } finally {
-            isRefreshing = false;
-            refreshPromise = null;
-        }
-    })();
-
-    return refreshPromise;
-};
-
-
 export const Api = {
     // --- AUTH ---
     login: async (email: string, password: string): Promise<User> => {
         console.log('Api.login called:', { email, url: `${API_URL}/auth/login` });
-
-        try {
-            const res = await trackedFetch(`${API_URL}/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-            });
-
-            const data = await handleResponse(res, 'Login failed');
-
-            // Validate response structure
-            if (!data || !data.user || !data.token) {
-                throw new Error('Invalid login response: missing user or token');
-            }
-
-            // Store tokens securely
-            localStorage.setItem('token', data.token);
-            if (data.refreshToken) {
-                localStorage.setItem('refreshToken', data.refreshToken);
-            }
-
-            // Store token expiry if provided
-            if (data.expiresIn) {
-                const expiryTime = Date.now() + (data.expiresIn * 1000);
-                localStorage.setItem('tokenExpiry', expiryTime.toString());
-            }
-
-            console.log('[Auth] Login successful, token stored');
+        const res = await fetch(`${API_URL}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        return handleResponse(res, 'Login failed').then(data => {
+            // Save both access token and refresh token
+            tokenService.saveTokens(data.token, data.refreshToken);
             return data.user;
-        } catch (error: any) {
-            console.error('[Auth] Login error:', error);
-            // Clear any partial tokens on error
-            localStorage.removeItem('token');
-            localStorage.removeItem('refreshToken');
-            localStorage.removeItem('tokenExpiry');
-            throw error;
-        }
+        });
     },
 
-    register: async (userData: Record<string, unknown> & { email: string; password: string }): Promise<User | { status: string; message?: string }> => {
-        const res = await trackedFetch(`${API_URL}/auth/register`, {
+    register: async (userData: any): Promise<User | any> => {
+        const res = await fetch(`${API_URL}/auth/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(userData)
         });
         const data = await handleResponse(res, 'Registration failed');
         if (data.status === 'pending') return data;
-        localStorage.setItem('token', data.token);
+        tokenService.saveTokens(data.token, data.refreshToken);
         return data.user;
     },
 
     logout: async (): Promise<void> => {
         try {
-            await trackedFetch(`${API_URL}/auth/logout`, {
+            await fetch(`${API_URL}/auth/logout`, {
                 method: 'POST',
                 headers: getHeaders()
             });
         } catch (error) {
             console.warn('Logout API call failed, clearing token anyway:', error);
-        } finally {
-            // Always clear tokens on logout
-            localStorage.removeItem('token');
-            localStorage.removeItem('refreshToken');
-            localStorage.removeItem('tokenExpiry');
         }
-    },
-
-    // --- DEMO ---
-    startDemo: async (language?: string): Promise<{ token: string; organizationId: string; userId: string; expiresAt: string }> => {
-        const res = await trackedFetch(`${API_URL}/demo/start`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ language: language || 'en' })
-        });
-        const data = await handleResponse(res, 'Failed to start demo');
-        if (data.token) {
-            localStorage.setItem('token', data.token);
-        }
-        return data;
+        tokenService.clearTokens();
     },
 
     // --- USERS (Admin) ---
     getUsers: async (): Promise<User[]> => {
-        const res = await trackedFetch(`${API_URL}/users`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/users`, { headers: getHeaders() });
         return handleResponse(res, 'Failed to fetch users');
     },
 
-    addUser: async (user: Record<string, unknown>): Promise<User> => {
-        const res = await trackedFetch(`${API_URL}/users`, {
+    addUser: async (user: any): Promise<User> => {
+        const res = await fetch(`${API_URL}/users`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify(user)
@@ -279,7 +138,7 @@ export const Api = {
         const formData = new FormData();
         formData.append('avatar', file);
 
-        const res = await trackedFetch(`${API_URL}/users/${userId}/avatar`, {
+        const res = await fetch(`${API_URL}/users/${userId}/avatar`, {
             method: 'POST',
             headers: {
                 // Content-Type: multipart/form-data is set automatically with boundary by fetch when body is FormData
@@ -292,8 +151,8 @@ export const Api = {
         return data;
     },
 
-    updateUser: async (id: string, updates: Record<string, unknown>): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/users/${id}`, {
+    updateUser: async (id: string, updates: any): Promise<void> => {
+        const res = await fetch(`${API_URL}/users/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
             body: JSON.stringify(updates)
@@ -302,7 +161,7 @@ export const Api = {
     },
 
     deleteUser: async (id: string): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/users/${id}`, {
+        const res = await fetch(`${API_URL}/users/${id}`, {
             method: 'DELETE',
             headers: getHeaders()
         });
@@ -310,29 +169,29 @@ export const Api = {
     },
 
     checkSystemHealth: async (): Promise<{ status: string, latency: number }> => {
-        const res = await trackedFetch(`${API_URL}/health`);
+        const res = await fetch(`${API_URL}/health`);
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Health check failed');
         return data;
     },
 
     // Session Management
-    getSession: async (userId: string, type: SessionMode, projectId?: string): Promise<FullSession | FreeSession | null> => {
+    getSession: async (userId: string, type: SessionMode, projectId?: string): Promise<any> => {
         let url = `${API_URL}/sessions/${userId}?type=${type}`;
         if (projectId) url += `&projectId=${projectId}`;
 
-        const res = await trackedFetch(url, { headers: getHeaders() });
+        const res = await fetch(url, { headers: getHeaders() });
         if (!res.ok) return null;
         const json = await res.json();
         return json.data;
     },
 
-    saveSession: async (userId: string, type: SessionMode, data: FullSession | FreeSession, projectId?: string): Promise<void> => {
+    saveSession: async (userId: string, type: SessionMode, data: any, projectId?: string): Promise<void> => {
         if (userId && projectId) {
             // We won't block session saves usually, but if we do:
             // Actually saveSession might be blocked.
         }
-        const res = await trackedFetch(`${API_URL}/sessions`, {
+        const res = await fetch(`${API_URL}/sessions`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ userId, type, data, projectId })
@@ -340,126 +199,11 @@ export const Api = {
         await handleResponse(res, `Failed to save session`);
     },
 
-    // Assessment Reports
-    generateAssessmentReport: async (projectId: string): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/sessions/${projectId}/reports`, {
-            method: 'POST',
-            headers: getHeaders()
-        });
-        return handleResponse(res, 'Failed to generate report');
-    },
-
-    getAssessmentReports: async (projectId: string): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/sessions/${projectId}/reports`, {
-            headers: getHeaders()
-        });
-        const data = await handleResponse(res, 'Failed to fetch reports');
-        return data.reports || [];
-    },
-
-    getAssessmentReport: async (reportId: string): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/sessions/reports/${reportId}`, {
-            headers: getHeaders()
-        });
-        const data = await handleResponse(res, 'Failed to fetch report');
-        return data.report;
-    },
-
-    updateAssessmentReport: async (reportId: string, updates: { title?: string; status?: string; assessment_snapshot?: object }): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/sessions/reports/${reportId}`, {
-            method: 'PATCH',
-            headers: getHeaders(),
-            body: JSON.stringify(updates)
-        });
-        return handleResponse(res, 'Failed to update report');
-    },
-
-    deleteAssessmentReport: async (reportId: string): Promise<{ message: string }> => {
-        const res = await trackedFetch(`${API_URL}/sessions/reports/${reportId}`, {
-            method: 'DELETE',
-            headers: getHeaders()
-        });
-        return handleResponse(res, 'Failed to delete report');
-    },
-
-    exportReportPDF: async (reportId: string, options?: { branding?: Record<string, unknown>; includeCharts?: boolean; includeSummary?: boolean }): Promise<{ pdfUrl: string; message: string }> => {
-        const res = await trackedFetch(`${API_URL}/sessions/reports/${reportId}/export-pdf`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify(options || {})
-        });
-        return handleResponse(res, 'Failed to export PDF');
-    },
-
-    exportReportExcel: async (reportId: string, options?: { includeCharts?: boolean; includeRawData?: boolean }): Promise<{ excelUrl: string; message: string }> => {
-        const res = await trackedFetch(`${API_URL}/sessions/reports/${reportId}/export-excel`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify(options || {})
-        });
-        return handleResponse(res, 'Failed to export Excel');
-    },
-
-    compareReports: async (reportIds: string[], saveName?: string): Promise<{ reports: Array<Record<string, unknown>>; comparisonData: Record<string, unknown> }> => {
-        const res = await trackedFetch(`${API_URL}/sessions/reports/compare`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify({ reportIds, saveName })
-        });
-        return handleResponse(res, 'Failed to compare reports');
-    },
-
-    archiveReport: async (reportId: string, archive: boolean): Promise<{ message: string }> => {
-        const res = await trackedFetch(`${API_URL}/sessions/reports/${reportId}/archive`, {
-            method: 'PUT',
-            headers: getHeaders(),
-            body: JSON.stringify({ archive })
-        });
-        return handleResponse(res, 'Failed to archive report');
-    },
-
-    addReportAnnotation: async (reportId: string, annotation: { annotationType?: string; section?: string; content: string; positionData?: Record<string, unknown> }): Promise<{ id: string; message: string }> => {
-        const res = await trackedFetch(`${API_URL}/sessions/reports/${reportId}/annotations`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify(annotation)
-        });
-        return handleResponse(res, 'Failed to add annotation');
-    },
-
-    getReportAnnotations: async (reportId: string): Promise<Array<{ id: string; annotationType?: string; section?: string; content: string; positionData?: Record<string, unknown>; createdAt?: string }>> => {
-        const res = await trackedFetch(`${API_URL}/sessions/reports/${reportId}/annotations`, {
-            headers: getHeaders()
-        });
-        const data = await handleResponse(res, 'Failed to fetch annotations');
-        return data.annotations || [];
-    },
-
-    shareReport: async (reportId: string, options?: { expiresIn?: number; maxAccessCount?: number }): Promise<{ shareToken: string; shareUrl: string; expiresAt?: string; message: string }> => {
-        const res = await trackedFetch(`${API_URL}/sessions/reports/${reportId}/share`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify(options || {})
-        });
-        return handleResponse(res, 'Failed to create share link');
-    },
-
-    getSharedReport: async (shareToken: string): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/sessions/reports/shared/${shareToken}`, {
-            method: 'GET'
-            // No auth headers for public endpoint
-        });
-        const data = await handleResponse(res, 'Failed to access shared report');
-        return data.report;
-    },
-
-
-
     // --- AI ---
     // --- AI ---
-    chatWithAI: async (message: string, history: AIMessageHistory[], systemInstruction?: string, roleName?: string): Promise<string> => {
+    chatWithAI: async (message: string, history: any[], systemInstruction?: string, roleName?: string) => {
         try {
-            const response = await trackedFetch(`${API_URL}/ai/chat`, {
+            const response = await fetch(`${API_URL}/ai/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message, history, systemInstruction, roleName })
@@ -474,20 +218,20 @@ export const Api = {
 
     chatWithAIStream: async (
         message: string,
-        history: AIMessageHistory[],
+        history: any[],
         onChunk: (text: string) => void,
         onDone: () => void,
         systemInstruction?: string,
-        context?: Record<string, unknown>,
+        context?: any,
         roleName?: string
-    ): Promise<void> => {
+    ) => {
         // #region agent log
         const token = localStorage.getItem('token');
         console.log('[DEBUG-A] chatWithAIStream entry:', { hasToken: !!token, tokenLength: token?.length || 0, historyLength: history?.length || 0, roleName });
         fetch('http://127.0.0.1:7242/ingest/690b8f02-96fa-4527-ae57-5d2b028e8181', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'api.ts:chatWithAIStream:entry', message: 'Stream request started', data: { hasToken: !!token, tokenLength: token?.length || 0, historyLength: history?.length || 0, hasContext: !!context, roleName }, timestamp: Date.now(), sessionId: 'debug-session', hypothesisId: 'A' }) }).catch(() => { });
         // #endregion
         try {
-            const response = await trackedFetch(`${API_URL}/ai/chat/stream`, {
+            const response = await fetch(`${API_URL}/ai/chat/stream`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message, history, systemInstruction, context, roleName })
@@ -551,7 +295,7 @@ export const Api = {
     },
     // --- SETTINGS ---
     saveSetting: async (key: string, value: string): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/settings`, {
+        const res = await fetch(`${API_URL}/settings`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ key, value })
@@ -561,13 +305,13 @@ export const Api = {
 
     // --- SUPER ADMIN ---
     getOrganizations: async (): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/superadmin/organizations`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/superadmin/organizations`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch organizations');
         return res.json();
     },
 
     updateOrganization: async (id: string, updates: { plan?: string; status?: string; discount_percent?: number }): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/superadmin/organizations/${id}`, {
+        const res = await fetch(`${API_URL}/superadmin/organizations/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
             body: JSON.stringify(updates)
@@ -576,7 +320,7 @@ export const Api = {
     },
 
     deleteOrganization: async (id: string): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/superadmin/organizations/${id}`, {
+        const res = await fetch(`${API_URL}/superadmin/organizations/${id}`, {
             method: 'DELETE',
             headers: getHeaders()
         });
@@ -584,7 +328,7 @@ export const Api = {
     },
 
     getOrganizationBillingDetails: async (orgId: string): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/superadmin/organizations/${orgId}/billing`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/superadmin/organizations/${orgId}/billing`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch organization billing details');
         return res.json();
     },
@@ -595,25 +339,25 @@ export const Api = {
         counts: { total_users: number; total_orgs: number; active_users_7d: number };
         live?: { total_active_connections: number };
     }> => {
-        const res = await trackedFetch(`${API_URL}/superadmin/dashboard`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/superadmin/dashboard`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch dashboard');
         return res.json();
     },
 
     getActivities: async (limit: number = 50): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/superadmin/activities?limit=${limit}`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/superadmin/activities?limit=${limit}`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch activities');
         return res.json();
     },
 
     getSuperAdminUsers: async (): Promise<User[]> => {
-        const res = await trackedFetch(`${API_URL}/superadmin/users`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/superadmin/users`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch users');
         return res.json();
     },
 
     updateSuperAdminUser: async (id: string, updates: { organizationId?: string; role?: string; status?: string }): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/superadmin/users/${id}`, {
+        const res = await fetch(`${API_URL}/superadmin/users/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
             body: JSON.stringify(updates)
@@ -621,8 +365,8 @@ export const Api = {
         if (!res.ok) throw new Error('Failed to update user');
     },
 
-    createSuperAdminUser: async (user: Record<string, unknown>): Promise<User> => {
-        const res = await trackedFetch(`${API_URL}/superadmin/users`, {
+    createSuperAdminUser: async (user: any): Promise<User> => {
+        const res = await fetch(`${API_URL}/superadmin/users`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify(user)
@@ -633,7 +377,7 @@ export const Api = {
     },
 
     inviteUser: async (email: string, role: string, organizationId: string): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/superadmin/users/invite`, {
+        const res = await fetch(`${API_URL}/superadmin/users/invite`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ email, role, organizationId })
@@ -644,7 +388,7 @@ export const Api = {
     },
 
     adminResetPassword: async (userId: string): Promise<{ resetLink: string, token: string }> => {
-        const res = await trackedFetch(`${API_URL}/superadmin/users/${userId}/reset-password`, {
+        const res = await fetch(`${API_URL}/superadmin/users/${userId}/reset-password`, {
             method: 'POST',
             headers: getHeaders()
         });
@@ -654,7 +398,7 @@ export const Api = {
     },
 
     adminGetDatabaseTables: async (): Promise<string[]> => {
-        const res = await trackedFetch(`${API_URL}/superadmin/database/tables`, {
+        const res = await fetch(`${API_URL}/superadmin/database/tables`, {
             headers: getHeaders()
         });
         const data = await res.json();
@@ -663,7 +407,7 @@ export const Api = {
     },
 
     adminGetTableRows: async (tableName: string): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/superadmin/database/rows/${tableName}`, {
+        const res = await fetch(`${API_URL}/superadmin/database/rows/${tableName}`, {
             headers: getHeaders()
         });
         const data = await res.json();
@@ -672,7 +416,7 @@ export const Api = {
     },
 
     adminGetStorageStats: async (): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/superadmin/storage/usage`, {
+        const res = await fetch(`${API_URL}/superadmin/storage/usage`, {
             headers: getHeaders()
         });
         const data = await res.json();
@@ -681,7 +425,7 @@ export const Api = {
     },
 
     adminGetOrgFiles: async (orgId: string): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/superadmin/storage/files/${orgId}`, {
+        const res = await fetch(`${API_URL}/superadmin/storage/files/${orgId}`, {
             headers: getHeaders()
         });
         const data = await res.json();
@@ -690,7 +434,7 @@ export const Api = {
     },
 
     adminDeleteFile: async (orgId: string, path: string): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/superadmin/storage/files`, {
+        const res = await fetch(`${API_URL}/superadmin/storage/files`, {
             method: 'DELETE',
             headers: {
                 ...getHeaders(),
@@ -709,7 +453,7 @@ export const Api = {
         // The generation is Admin, the consumption is Public.
         // I need to move the consumption endpoint to auth.js or a public route.
         // For now let's assume I fix it.
-        const res = await trackedFetch(`${API_URL}/auth/reset-password`, {
+        const res = await fetch(`${API_URL}/auth/reset-password`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ token, newPassword })
@@ -719,7 +463,7 @@ export const Api = {
     },
 
     revertImpersonation: async (): Promise<{ user: User; token: string }> => {
-        const res = await trackedFetch(`${API_URL}/auth/revert-impersonation`, {
+        const res = await fetch(`${API_URL}/auth/revert-impersonation`, {
             method: 'POST',
             headers: getHeaders()
         });
@@ -729,7 +473,7 @@ export const Api = {
     },
 
     impersonateUser: async (userId: string): Promise<{ user: User; token: string }> => {
-        const res = await trackedFetch(`${API_URL}/superadmin/impersonate`, {
+        const res = await fetch(`${API_URL}/superadmin/impersonate`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ userId })
@@ -740,20 +484,20 @@ export const Api = {
     },
 
     getSystemSettings: async (): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/settings`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/settings`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch settings');
         return res.json();
     },
 
     // --- PROJECTS ---
     getProjects: async (): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/projects`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/projects`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch projects');
         return res.json();
     },
 
     createProject: async (data: { name: string; ownerId?: string }): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/projects`, {
+        const res = await fetch(`${API_URL}/projects`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify(data)
@@ -764,7 +508,7 @@ export const Api = {
     },
 
     deleteProject: async (id: string): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/projects/${id}`, {
+        const res = await fetch(`${API_URL}/projects/${id}`, {
             method: 'DELETE',
             headers: getHeaders()
         });
@@ -773,7 +517,7 @@ export const Api = {
 
     // AI OBSERVATIONS
     generateGlobalBrainObservations: async () => {
-        const response = await trackedFetch(`${API_URL}/knowledge/observations/generate`, {
+        const response = await fetch(`${API_URL}/knowledge/observations/generate`, {
             method: 'GET',
             headers: getHeaders()
         });
@@ -783,13 +527,13 @@ export const Api = {
 
     // --- LLM MANAGEMENT ---
     getLLMProviders: async (): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/llm/providers`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/llm/providers`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch LLM providers');
         return res.json();
     },
 
-    addLLMProvider: async (provider: Partial<LLMProvider> & { name?: string; provider?: string;[key: string]: unknown }): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/llm/providers`, {
+    addLLMProvider: async (provider: any): Promise<void> => {
+        const res = await fetch(`${API_URL}/llm/providers`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify(provider)
@@ -798,7 +542,7 @@ export const Api = {
     },
 
     updateLLMProvider: async (id: string, data: Partial<LLMProvider>) => {
-        const res = await trackedFetch(`${API_URL}/llm/providers/${id}`, {
+        const res = await fetch(`${API_URL}/llm/providers/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
             body: JSON.stringify(data)
@@ -808,7 +552,7 @@ export const Api = {
     },
 
     testLLMConnection: async (config: Partial<LLMProvider>): Promise<{ success: boolean; message: string; response?: string }> => {
-        const res = await trackedFetch(`${API_URL}/llm/test`, {
+        const res = await fetch(`${API_URL}/llm/test`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify(config)
@@ -825,39 +569,28 @@ export const Api = {
         if (endDate) params.append('endDate', endDate);
         if (params.toString()) url += `? ${params.toString()}`;
 
-        const res = await trackedFetch(url, { headers: getHeaders() });
+        const res = await fetch(url, { headers: getHeaders() });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to fetch costs');
         return data.costs;
     },
 
     deleteLLMProvider: async (id: string): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/llm/providers/${id}`, {
+        const res = await fetch(`${API_URL}/llm/providers/${id}`, {
             method: 'DELETE',
             headers: getHeaders()
         });
         if (!res.ok) throw new Error('Failed to delete provider');
     },
 
-    // LLM Self-Diagnostic - auto-repairs missing tables and default providers
-    diagnoseLLM: async (): Promise<{ status: string; checks: any[]; repairs: string[]; error?: string }> => {
-        try {
-            const res = await trackedFetch(`${API_URL}/llm/diagnose`, { headers: getHeaders() });
-            return res.json();
-        } catch (error) {
-            console.error('[LLM] Diagnose failed:', error);
-            return { status: 'ERROR', checks: [], repairs: [], error: String(error) };
-        }
-    },
-
     getPublicLLMProviders: async (): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/llm/providers/public`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/llm/providers/public`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch public LLM providers');
         return res.json();
     },
 
-    testOllamaConnection: async (endpoint: string): Promise<{ success: boolean; message?: string; models?: Array<{ name: string;[key: string]: unknown }>; error?: string }> => {
-        const res = await trackedFetch(`${API_URL}/llm/test-ollama`, {
+    testOllamaConnection: async (endpoint: string): Promise<{ success: boolean; message?: string; models?: any[]; error?: string }> => {
+        const res = await fetch(`${API_URL}/llm/test-ollama`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ endpoint })
@@ -865,22 +598,22 @@ export const Api = {
         return res.json();
     },
 
-    getOllamaModels: async (endpoint: string): Promise<Array<{ name: string;[key: string]: unknown }>> => {
-        const res = await trackedFetch(`${API_URL}/llm/ollama-models?endpoint=${encodeURIComponent(endpoint)}`, {
+    getOllamaModels: async (endpoint: string): Promise<any[]> => {
+        const res = await fetch(`${API_URL}/llm/ollama-models?endpoint=${encodeURIComponent(endpoint)}`, {
             headers: getHeaders()
         });
         if (!res.ok) return [];
         return res.json();
     },
 
-    getOrganizationLLMConfig: async (orgId: string): Promise<{ activeProviderId: string | null; availableProviders: LLMProvider[] }> => {
-        const res = await trackedFetch(`${API_URL}/llm/organization-config/${orgId}`, { headers: getHeaders() });
+    getOrganizationLLMConfig: async (orgId: string): Promise<{ activeProviderId: string | null; availableProviders: any[] }> => {
+        const res = await fetch(`${API_URL}/llm/organization-config/${orgId}`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch organization LLM config');
         return res.json();
     },
 
     updateOrganizationLLMConfig: async (orgId: string, providerId: string | null): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/llm/organization-config/${orgId}`, {
+        const res = await fetch(`${API_URL}/llm/organization-config/${orgId}`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ providerId })
@@ -890,13 +623,13 @@ export const Api = {
 
     // --- KNOWLEDGE BASE ---
     getKnowledgeFiles: async (): Promise<{ docs: any[], availableFiles: string[] }> => {
-        const res = await trackedFetch(`${API_URL}/knowledge/files`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/knowledge/files`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch knowledge files');
         return res.json();
     },
 
     indexKnowledgeFiles: async (): Promise<{ message: string; indexedCount: number }> => {
-        const res = await trackedFetch(`${API_URL}/knowledge/index`, {
+        const res = await fetch(`${API_URL}/knowledge/index`, {
             method: 'POST',
             headers: getHeaders()
         });
@@ -919,13 +652,13 @@ export const Api = {
             if (filters.initiativeId) params.append('initiativeId', filters.initiativeId);
             if (params.toString()) url += `? ${params.toString()}`;
         }
-        const res = await trackedFetch(url, { headers: getHeaders() });
+        const res = await fetch(url, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch tasks');
         return res.json();
     },
 
     getTask: async (id: string): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/tasks/${id}`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/tasks/${id}`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch task');
         return res.json();
     },
@@ -946,7 +679,7 @@ export const Api = {
         why?: string;
         stepPhase?: 'design' | 'pilot' | 'rollout';
     }): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/tasks`, {
+        const res = await fetch(`${API_URL}/tasks`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify(task)
@@ -955,7 +688,7 @@ export const Api = {
     },
 
     updateTask: async (id: string, updates: any): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/tasks/${id}`, {
+        const res = await fetch(`${API_URL}/tasks/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
             body: JSON.stringify(updates)
@@ -964,7 +697,7 @@ export const Api = {
     },
 
     deleteTask: async (id: string): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/tasks/${id}`, {
+        const res = await fetch(`${API_URL}/tasks/${id}`, {
             method: 'DELETE',
             headers: getHeaders()
         });
@@ -972,13 +705,13 @@ export const Api = {
     },
 
     getTaskComments: async (taskId: string): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/tasks/${taskId}/comments`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/tasks/${taskId}/comments`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch comments');
         return res.json();
     },
 
     addTaskComment: async (taskId: string, content: string): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/tasks/${taskId}/comments`, {
+        const res = await fetch(`${API_URL}/tasks/${taskId}/comments`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ content })
@@ -989,7 +722,7 @@ export const Api = {
     },
 
     deleteTaskComment: async (taskId: string, commentId: string): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/tasks/${taskId}/comments/${commentId}`, {
+        const res = await fetch(`${API_URL}/tasks/${taskId}/comments/${commentId}`, {
             method: 'DELETE',
             headers: getHeaders()
         });
@@ -1000,19 +733,19 @@ export const Api = {
     // PHASE 1: TEAMS API
     // ==========================================
     getTeams: async (): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/teams`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/teams`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch teams');
         return res.json();
     },
 
     getTeam: async (id: string): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/teams/${id}`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/teams/${id}`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch team');
         return res.json();
     },
 
     createTeam: async (team: { name: string; description?: string; leadId?: string }): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/teams`, {
+        const res = await fetch(`${API_URL}/teams`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify(team)
@@ -1023,7 +756,7 @@ export const Api = {
     },
 
     updateTeam: async (id: string, updates: any): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/teams/${id}`, {
+        const res = await fetch(`${API_URL}/teams/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
             body: JSON.stringify(updates)
@@ -1032,7 +765,7 @@ export const Api = {
     },
 
     deleteTeam: async (id: string): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/teams/${id}`, {
+        const res = await fetch(`${API_URL}/teams/${id}`, {
             method: 'DELETE',
             headers: getHeaders()
         });
@@ -1040,7 +773,7 @@ export const Api = {
     },
 
     addTeamMember: async (teamId: string, userId: string, role: string = 'member'): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/teams/${teamId}/members`, {
+        const res = await fetch(`${API_URL}/teams/${teamId}/members`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ userId, role })
@@ -1049,7 +782,7 @@ export const Api = {
     },
 
     removeTeamMember: async (teamId: string, userId: string): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/teams/${teamId}/members/${userId}`, {
+        const res = await fetch(`${API_URL}/teams/${teamId}/members/${userId}`, {
             method: 'DELETE',
             headers: getHeaders()
         });
@@ -1063,20 +796,20 @@ export const Api = {
         const params = new URLSearchParams();
         if (unreadOnly) params.append('unreadOnly', 'true');
         params.append('limit', limit.toString());
-        const res = await trackedFetch(`${API_URL}/notifications?${params.toString()}`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/notifications?${params.toString()}`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch notifications');
         return res.json();
     },
 
     getUnreadNotificationCount: async (): Promise<number> => {
-        const res = await trackedFetch(`${API_URL}/notifications/unread-count`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/notifications/unread-count`, { headers: getHeaders() });
         if (!res.ok) return 0;
         const data = await res.json();
         return data.count;
     },
 
     markNotificationRead: async (id: string): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/notifications/${id}/read`, {
+        const res = await fetch(`${API_URL}/notifications/${id}/read`, {
             method: 'PUT',
             headers: getHeaders()
         });
@@ -1084,7 +817,7 @@ export const Api = {
     },
 
     markAllNotificationsRead: async (): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/notifications/read-all`, {
+        const res = await fetch(`${API_URL}/notifications/read-all`, {
             method: 'PUT',
             headers: getHeaders()
         });
@@ -1092,7 +825,7 @@ export const Api = {
     },
 
     deleteNotification: async (id: string): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/notifications/${id}`, {
+        const res = await fetch(`${API_URL}/notifications/${id}`, {
             method: 'DELETE',
             headers: getHeaders()
         });
@@ -1100,7 +833,7 @@ export const Api = {
     },
 
     deleteReadNotifications: async (): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/notifications`, {
+        const res = await fetch(`${API_URL}/notifications`, {
             method: 'DELETE',
             headers: getHeaders()
         });
@@ -1117,7 +850,7 @@ export const Api = {
         actionLabel?: string;
         link?: string;
     }): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/notifications`, {
+        const res = await fetch(`${API_URL}/notifications`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify(notification)
@@ -1132,13 +865,13 @@ export const Api = {
     getInitiatives: async (projectId?: string): Promise<any[]> => {
         let url = `${API_URL}/initiatives`;
         if (projectId) url += `? projectId=${projectId}`;
-        const res = await trackedFetch(url, { headers: getHeaders() });
+        const res = await fetch(url, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch initiatives');
         return res.json();
     },
 
     createInitiative: async (initiative: any): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/initiatives`, {
+        const res = await fetch(`${API_URL}/initiatives`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify(initiative)
@@ -1147,7 +880,7 @@ export const Api = {
     },
 
     updateInitiative: async (id: string, updates: any): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/initiatives/${id}`, {
+        const res = await fetch(`${API_URL}/initiatives/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
             body: JSON.stringify(updates)
@@ -1156,7 +889,7 @@ export const Api = {
     },
 
     validateInitiative: async (id: string) => {
-        const response = await trackedFetch(`${API_URL}/initiatives/${id}/validate`, {
+        const response = await fetch(`${API_URL}/initiatives/${id}/validate`, {
             method: 'POST',
             headers: getHeaders()
         });
@@ -1165,7 +898,7 @@ export const Api = {
     },
 
     enrichInitiative: async (id: string) => {
-        const response = await trackedFetch(`${API_URL}/initiatives/${id}/enrich`, {
+        const response = await fetch(`${API_URL}/initiatives/${id}/enrich`, {
             method: 'POST',
             headers: getHeaders()
         });
@@ -1175,7 +908,7 @@ export const Api = {
 
     // --- PROJECTS ---
     suggestInitiativeTasks: async (initiativeId: string): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/initiatives/${initiativeId}/tasks/suggest`, {
+        const res = await fetch(`${API_URL}/initiatives/${initiativeId}/tasks/suggest`, {
             method: 'POST',
             headers: getHeaders()
         });
@@ -1192,7 +925,7 @@ export const Api = {
 
     // LAYER 1: DIAGNOSIS
     aiDiagnose: async (axis: string, input: string): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/ai/diagnose`, {
+        const res = await fetch(`${API_URL}/ai/diagnose`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ axis, input })
@@ -1204,7 +937,7 @@ export const Api = {
 
     // LAYER 2: RECOMMENDATION
     aiRecommend: async (diagnosisReport: any): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/ai/recommend`, {
+        const res = await fetch(`${API_URL}/ai/recommend`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ diagnosisReport })
@@ -1216,7 +949,7 @@ export const Api = {
 
     // LAYER 3: ROADMAP
     aiRoadmap: async (initiatives: any[]): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/ai/roadmap`, {
+        const res = await fetch(`${API_URL}/ai/roadmap`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ initiatives })
@@ -1228,7 +961,7 @@ export const Api = {
 
     // LAYER 4: SIMULATION
     aiSimulate: async (initiatives: any[], revenue: number = 10000000): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/ai/simulate`, {
+        const res = await fetch(`${API_URL}/ai/simulate`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ initiatives, revenue })
@@ -1240,7 +973,7 @@ export const Api = {
 
     // VALIDATION & VERIFICATION
     aiValidate: async (initiative: any): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/ai/validate`, {
+        const res = await fetch(`${API_URL}/ai/validate`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ initiative })
@@ -1251,7 +984,7 @@ export const Api = {
     },
 
     aiVerify: async (query: string): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/ai/verify`, {
+        const res = await fetch(`${API_URL}/ai/verify`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ query })
@@ -1263,7 +996,7 @@ export const Api = {
 
     // FEEDBACK & LEARNING
     aiFeedback: async (feedback: { context: string; prompt: string; response: string; rating: number; correction?: string }): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/ai/feedback`, {
+        const res = await fetch(`${API_URL}/ai/feedback`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify(feedback)
@@ -1273,13 +1006,13 @@ export const Api = {
 
     // --- AI STRATEGIC BOARD ---
     getAIIdeas: async (): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/ai/ideas`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/ai/ideas`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch AI ideas');
         return res.json();
     },
 
     createAIIdea: async (idea: any): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/ai/ideas`, {
+        const res = await fetch(`${API_URL}/ai/ideas`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify(idea)
@@ -1289,7 +1022,7 @@ export const Api = {
     },
 
     updateAIIdea: async (id: string, updates: any): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/ai/ideas/${id}`, {
+        const res = await fetch(`${API_URL}/ai/ideas/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
             body: JSON.stringify(updates)
@@ -1299,7 +1032,7 @@ export const Api = {
     },
 
     deleteAIIdea: async (id: string): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/ai/ideas/${id}`, {
+        const res = await fetch(`${API_URL}/ai/ideas/${id}`, {
             method: 'DELETE',
             headers: getHeaders()
         });
@@ -1308,13 +1041,13 @@ export const Api = {
 
     // --- AI OBSERVATIONS ---
     getAIObservations: async (): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/ai/observations`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/ai/observations`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch observations');
         return res.json();
     },
 
     createAIObservation: async (observation: any): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/ai/observations`, {
+        const res = await fetch(`${API_URL}/ai/observations`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify(observation)
@@ -1325,14 +1058,14 @@ export const Api = {
 
     // --- AI REPORTS ---
     getAIDeepReports: async (): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/ai/reports/performance`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/ai/reports/performance`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch AI reports');
         return res.json();
     },
 
     // AI Detail Feedback (for inline rating buttons)
     aiDetailFeedback: async (feedback: { action: string; rating: number; user_comment?: string; original_prompt?: string }): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/ai/feedback`, {
+        const res = await fetch(`${API_URL}/ai/feedback`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({
@@ -1348,28 +1081,28 @@ export const Api = {
 
     // ADMIN ANALYTICS & CONTROLS
     aiGetStats: async (): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/ai/stats`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/ai/stats`, { headers: getHeaders() });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to fetch AI stats');
         return data;
     },
 
     getIndustryBenchmarks: async (industry: string = 'General'): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/ai/benchmarks?industry=${industry}`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/ai/benchmarks?industry=${industry}`, { headers: getHeaders() });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to fetch benchmarks');
         return data;
     },
 
     aiGetSystemPrompts: async (): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/ai/prompts`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/ai/prompts`, { headers: getHeaders() });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to fetch prompts');
         return data;
     },
 
     aiUpdateSystemPrompt: async (key: string, updates: any): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/ai/prompts/${key}`, {
+        const res = await fetch(`${API_URL}/ai/prompts/${key}`, {
             method: 'PUT',
             headers: getHeaders(),
             body: JSON.stringify(updates)
@@ -1379,7 +1112,7 @@ export const Api = {
 
     // --- AI LEARNING & KNOWLEDGE ---
     aiExtractInsights: async (text: string, source: string = 'chat'): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/ai/extract-insight`, {
+        const res = await fetch(`${API_URL}/ai/extract-insight`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ text, source })
@@ -1390,14 +1123,14 @@ export const Api = {
     },
 
     getKnowledgeCandidates: async (status: string = 'pending'): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/knowledge/candidates?status=${status}`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/knowledge/candidates?status=${status}`, { headers: getHeaders() });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to fetch candidates');
         return data;
     },
 
     submitKnowledgeCandidate: async (content: string, reasoning: string, source: string, topic?: string): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/knowledge/candidates`, {
+        const res = await fetch(`${API_URL}/knowledge/candidates`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ content, reasoning, source, relatedAxis: topic })
@@ -1406,7 +1139,7 @@ export const Api = {
     },
 
     updateCandidateStatus: async (id: string, status: string, adminComment?: string): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/knowledge/candidates/${id}/status`, {
+        const res = await fetch(`${API_URL}/knowledge/candidates/${id}/status`, {
             method: 'PUT',
             headers: getHeaders(),
             body: JSON.stringify({ status, adminComment })
@@ -1415,14 +1148,14 @@ export const Api = {
     },
 
     getGlobalStrategies: async (): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/knowledge/strategies`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/knowledge/strategies`, { headers: getHeaders() });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to fetch strategies');
         return data;
     },
 
     createGlobalStrategy: async (title: string, description: string): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/knowledge/strategies`, {
+        const res = await fetch(`${API_URL}/knowledge/strategies`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ title, description })
@@ -1431,7 +1164,7 @@ export const Api = {
     },
 
     toggleGlobalStrategy: async (id: string, isActive: boolean): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/knowledge/strategies/${id}/toggle`, {
+        const res = await fetch(`${API_URL}/knowledge/strategies/${id}/toggle`, {
             method: 'PUT',
             headers: getHeaders(),
             body: JSON.stringify({ isActive })
@@ -1442,7 +1175,7 @@ export const Api = {
     },
 
     getKnowledgeDocuments: async (): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/knowledge/documents`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/knowledge/documents`, { headers: getHeaders() });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to fetch docs');
         return data;
@@ -1456,7 +1189,7 @@ export const Api = {
         const headers = getHeaders();
         delete (headers as any)['Content-Type'];
 
-        const res = await trackedFetch(`${API_URL}/knowledge/documents`, {
+        const res = await fetch(`${API_URL}/knowledge/documents`, {
             method: 'POST',
             headers: headers,
             body: formData
@@ -1477,7 +1210,7 @@ export const Api = {
         const headers = getHeaders();
         delete (headers as any)['Content-Type']; // Let browser set boundary
 
-        const res = await trackedFetch(`${API_URL}/documents/upload`, {
+        const res = await fetch(`${API_URL}/documents/upload`, {
             method: 'POST',
             headers: headers,
             body: formData
@@ -1489,7 +1222,7 @@ export const Api = {
     },
     // --- FEEDBACK ---
     sendFeedback: async (data: { user_id: string; type: string; message: string; screenshot?: string; url?: string }): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/feedback`, {
+        const res = await fetch(`${API_URL}/feedback`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify(data)
@@ -1498,13 +1231,13 @@ export const Api = {
     },
 
     getFeedback: async (): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/feedback`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/feedback`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch feedback');
         return res.json();
     },
 
     updateFeedbackStatus: async (id: string, status: string): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/feedback/${id}/status`, {
+        const res = await fetch(`${API_URL}/feedback/${id}/status`, {
             method: 'PATCH',
             headers: getHeaders(),
             body: JSON.stringify({ status })
@@ -1525,7 +1258,7 @@ export const Api = {
         organizationName: string;
         requestType?: string;
     }): Promise<{ success: boolean; requestId: string; message: string }> => {
-        const res = await trackedFetch(`${API_URL}/access-control/requests`, {
+        const res = await fetch(`${API_URL}/access-control/requests`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
@@ -1542,7 +1275,7 @@ export const Api = {
         role?: string;
         reason?: string;
     }> => {
-        const res = await trackedFetch(`${API_URL}/access-control/codes/${code}/info`);
+        const res = await fetch(`${API_URL}/access-control/codes/${code}/info`);
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to verify code');
         return json;
@@ -1557,7 +1290,7 @@ export const Api = {
         lastName: string;
         phone?: string;
     }): Promise<{ success: boolean; user: User; message: string }> => {
-        const res = await trackedFetch(`${API_URL}/access-control/codes/register`, {
+        const res = await fetch(`${API_URL}/access-control/codes/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
@@ -1569,13 +1302,13 @@ export const Api = {
 
     // --- ACCESS CONTROL (Super Admin) ---
     getAccessRequests: async (): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/superadmin/access-requests`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/superadmin/access-requests`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch access requests');
         return res.json();
     },
 
     approveAccessRequest: async (id: string): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/superadmin/access-requests/${id}/approve`, {
+        const res = await fetch(`${API_URL}/superadmin/access-requests/${id}/approve`, {
             method: 'POST',
             headers: getHeaders()
         });
@@ -1583,7 +1316,7 @@ export const Api = {
     },
 
     rejectAccessRequest: async (id: string, reason: string): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/superadmin/access-requests/${id}/reject`, {
+        const res = await fetch(`${API_URL}/superadmin/access-requests/${id}/reject`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ reason })
@@ -1592,13 +1325,13 @@ export const Api = {
     },
 
     getAccessCodes: async (): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/superadmin/access-codes`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/superadmin/access-codes`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch access codes');
         return res.json();
     },
 
     generateAccessCode: async (data: { code?: string; role?: string; maxUses?: number; expiresAt?: string }): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/superadmin/access-codes`, {
+        const res = await fetch(`${API_URL}/superadmin/access-codes`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify(data)
@@ -1607,7 +1340,7 @@ export const Api = {
     },
 
     deactivateAccessCode: async (codeId: string): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/superadmin/access-codes/${codeId}/deactivate`, {
+        const res = await fetch(`${API_URL}/superadmin/access-codes/${codeId}/deactivate`, {
             method: 'POST',
             headers: getHeaders()
         });
@@ -1619,7 +1352,7 @@ export const Api = {
 
     // Generic HTTP methods for billing routes
     get: async (path: string): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}${path}`, {
+        const res = await fetch(`${API_URL}${path}`, {
             headers: getHeaders()
         });
         const json = await res.json();
@@ -1628,7 +1361,7 @@ export const Api = {
     },
 
     post: async (path: string, data: any): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}${path}`, {
+        const res = await fetch(`${API_URL}${path}`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify(data)
@@ -1639,7 +1372,7 @@ export const Api = {
     },
 
     put: async (path: string, data: any): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}${path}`, {
+        const res = await fetch(`${API_URL}${path}`, {
             method: 'PUT',
             headers: getHeaders(),
             body: JSON.stringify(data)
@@ -1650,7 +1383,7 @@ export const Api = {
     },
 
     delete: async (path: string): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}${path}`, {
+        const res = await fetch(`${API_URL}${path}`, {
             method: 'DELETE',
             headers: getHeaders()
         });
@@ -1661,7 +1394,7 @@ export const Api = {
 
     // Get subscription plans
     getSubscriptionPlans: async (): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/billing/plans`, {
+        const res = await fetch(`${API_URL}/billing/plans`, {
             headers: getHeaders()
         });
         const json = await res.json();
@@ -1671,7 +1404,7 @@ export const Api = {
 
     // Get user license plans
     getUserPlans: async (): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/billing/user-plans`, {
+        const res = await fetch(`${API_URL}/billing/user-plans`, {
             headers: getHeaders()
         });
         const json = await res.json();
@@ -1681,7 +1414,7 @@ export const Api = {
 
     // Get current billing info
     getCurrentBilling: async (): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/billing/current`, {
+        const res = await fetch(`${API_URL}/billing/current`, {
             headers: getHeaders()
         });
         const json = await res.json();
@@ -1691,7 +1424,7 @@ export const Api = {
 
     // Get current usage
     getUsage: async (): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/billing/usage`, {
+        const res = await fetch(`${API_URL}/billing/usage`, {
             headers: getHeaders()
         });
         const json = await res.json();
@@ -1701,7 +1434,7 @@ export const Api = {
 
     // Subscribe to plan
     subscribeToPlan: async (planId: string, paymentMethodId?: string): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/billing/subscribe`, {
+        const res = await fetch(`${API_URL}/billing/subscribe`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ planId, paymentMethodId })
@@ -1713,7 +1446,7 @@ export const Api = {
 
     // Change subscription plan
     changePlan: async (newPlanId: string): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/billing/change-plan`, {
+        const res = await fetch(`${API_URL}/billing/change-plan`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ newPlanId })
@@ -1725,7 +1458,7 @@ export const Api = {
 
     // Cancel subscription
     cancelSubscription: async (): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/billing/cancel`, {
+        const res = await fetch(`${API_URL}/billing/cancel`, {
             method: 'POST',
             headers: getHeaders()
         });
@@ -1736,7 +1469,7 @@ export const Api = {
 
     // Get invoices
     getInvoices: async (): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/billing/invoices`, {
+        const res = await fetch(`${API_URL}/billing/invoices`, {
             headers: getHeaders()
         });
         const json = await res.json();
@@ -1746,7 +1479,7 @@ export const Api = {
 
     // --- AI TASK GEN ---
     suggestTasks: async (initiative: any): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/ai/suggest-tasks`, {
+        const res = await fetch(`${API_URL}/ai/suggest-tasks`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ initiative })
@@ -1756,7 +1489,7 @@ export const Api = {
     },
 
     generateTaskInsight: async (task: any, initiative: any): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/ai/task-insight`, {
+        const res = await fetch(`${API_URL}/ai/task-insight`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ task, initiative })
@@ -1767,35 +1500,35 @@ export const Api = {
 
     // --- TOKEN BILLING ---
     getTokenBalance: async () => {
-        const res = await trackedFetch(`${API_URL}/token-billing/balance`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/token-billing/balance`, { headers: getHeaders() });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to get balance');
         return data.balance;
     },
 
     getTokenPackages: async () => {
-        const res = await trackedFetch(`${API_URL}/token-billing/packages`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/token-billing/packages`, { headers: getHeaders() });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to get packages');
         return data.packages;
     },
 
     getTokenTransactions: async (limit = 50, offset = 0) => {
-        const res = await trackedFetch(`${API_URL}/token-billing/transactions?limit=${limit} & offset=${offset}`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/token-billing/transactions?limit=${limit} & offset=${offset}`, { headers: getHeaders() });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to get transactions');
         return data.transactions;
     },
 
     getApiKeys: async () => {
-        const res = await trackedFetch(`${API_URL}/token-billing/api-keys`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/token-billing/api-keys`, { headers: getHeaders() });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to get API keys');
         return data.keys;
     },
 
     addApiKey: async (keyData: { provider: string, apiKey: string, displayName: string, modelPreference?: string }) => {
-        const res = await trackedFetch(`${API_URL}/token-billing/api-keys`, {
+        const res = await fetch(`${API_URL}/token-billing/api-keys`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify(keyData)
@@ -1806,7 +1539,7 @@ export const Api = {
     },
 
     deleteApiKey: async (keyId: string) => {
-        const res = await trackedFetch(`${API_URL}/token-billing/api-keys/${keyId}`, {
+        const res = await fetch(`${API_URL}/token-billing/api-keys/${keyId}`, {
             method: 'DELETE',
             headers: getHeaders()
         });
@@ -1816,7 +1549,7 @@ export const Api = {
     },
 
     purchaseTokens: async (packageId: string) => {
-        const res = await trackedFetch(`${API_URL}/token-billing/purchase`, {
+        const res = await fetch(`${API_URL}/token-billing/purchase`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ packageId })
@@ -1828,14 +1561,14 @@ export const Api = {
 
     // --- TOKEN BILLING ADMIN ---
     getBillingMargins: async () => {
-        const res = await trackedFetch(`${API_URL}/token-billing/margins`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/token-billing/margins`, { headers: getHeaders() });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to get margins');
         return data.margins;
     },
 
     updateBillingMargin: async (sourceType: string, marginData: any) => {
-        const res = await trackedFetch(`${API_URL}/token-billing/margins/${sourceType}`, {
+        const res = await fetch(`${API_URL}/token-billing/margins/${sourceType}`, {
             method: 'PUT',
             headers: getHeaders(),
             body: JSON.stringify(marginData)
@@ -1846,7 +1579,7 @@ export const Api = {
     },
 
     upsertTokenPackage: async (packageData: any) => {
-        const res = await trackedFetch(`${API_URL}/token-billing/packages`, {
+        const res = await fetch(`${API_URL}/token-billing/packages`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify(packageData)
@@ -1858,7 +1591,7 @@ export const Api = {
 
     getTokenAnalytics: async (startDate?: string, endDate?: string) => {
         const query = startDate && endDate ? `? startDate=${startDate} & endDate=${endDate}` : '';
-        const res = await trackedFetch(`${API_URL}/token-billing/analytics${query}`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/token-billing/analytics${query}`, { headers: getHeaders() });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to get analytics');
         return data.analytics;
@@ -1868,13 +1601,13 @@ export const Api = {
     // PMO CONTEXT API (UI Behavior Integration)
     // ==========================================
     getPMOContext: async (projectId: string): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/pmo-context/${projectId}`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/pmo-context/${projectId}`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch PMO context');
         return res.json();
     },
 
     getPMOTaskLabels: async (projectId: string): Promise<{ taskLabels: Record<string, any[]> }> => {
-        const res = await trackedFetch(`${API_URL}/pmo-context/${projectId}/task-labels`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/pmo-context/${projectId}/task-labels`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch PMO task labels');
         return res.json();
     },
@@ -1883,61 +1616,61 @@ export const Api = {
     // STEP 7: METRICS & CONVERSION INTELLIGENCE
     // ==========================================
     getMetricsOverview: async () => {
-        const res = await trackedFetch(`${API_URL}/metrics/overview`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/metrics/overview`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch metrics overview');
         return res.json();
     },
 
     getMetricsFunnels: async (days: number = 30) => {
-        const res = await trackedFetch(`${API_URL}/metrics/funnels?days=${days}`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/metrics/funnels?days=${days}`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch funnels');
         return res.json();
     },
 
     getMetricsCohorts: async (type: string = 'weekly', weeks: number = 12) => {
-        const res = await trackedFetch(`${API_URL}/metrics/cohorts?type=${type}&weeks=${weeks}`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/metrics/cohorts?type=${type}&weeks=${weeks}`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch cohorts');
         return res.json();
     },
 
     getMetricsHelp: async (days: number = 30) => {
-        const res = await trackedFetch(`${API_URL}/metrics/help?days=${days}`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/metrics/help?days=${days}`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch help metrics');
         return res.json();
     },
 
     getMetricsAttribution: async (days: number = 30) => {
-        const res = await trackedFetch(`${API_URL}/metrics/attribution?days=${days}`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/metrics/attribution?days=${days}`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch attribution');
         return res.json();
     },
 
     getMetricsPartners: async (days: number = 90) => {
-        const res = await trackedFetch(`${API_URL}/metrics/partners?days=${days}`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/metrics/partners?days=${days}`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch partner metrics');
         return res.json();
     },
 
     getMetricsWarnings: async () => {
-        const res = await trackedFetch(`${API_URL}/metrics/warnings`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/metrics/warnings`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch warnings');
         return res.json();
     },
 
     getOrgMetricsOverview: async () => {
-        const res = await trackedFetch(`${API_URL}/metrics/org/overview`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/metrics/org/overview`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch organization metrics');
         return res.json();
     },
 
     getOrgMetricsHelp: async () => {
-        const res = await trackedFetch(`${API_URL}/metrics/org/help`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/metrics/org/help`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch organization help metrics');
         return res.json();
     },
 
     getOrgMetricsTeam: async () => {
-        const res = await trackedFetch(`${API_URL}/metrics/org/team`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/metrics/org/team`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch organization team metrics');
         return res.json();
     },
@@ -1946,19 +1679,19 @@ export const Api = {
     // STEP 9: AI ADVISOR & ACTIONS
     // ==========================================
     getAIActionProposals: async (): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/ai/actions/proposals`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/ai/actions/proposals`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch AI action proposals');
         return res.json();
     },
 
     getAIActionAudit: async (): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/ai/actions/audit`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/ai/actions/audit`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch AI action audit log');
         return res.json();
     },
 
     recordAIActionDecision: async (data: { proposal_id: string, decision: string, reason?: string }): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/ai/actions/decide`, {
+        const res = await fetch(`${API_URL}/ai/actions/decide`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify(data)
@@ -1974,17 +1707,17 @@ export const Api = {
     // PHASE D: ORGANIZATION API
     // ==========================================
     getUserOrganizations: async (): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/organizations/current`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/organizations/current`, { headers: getHeaders() });
         return handleResponse(res, 'Failed to fetch organizations').then(data => data || []);
     },
 
     getOrganization: async (orgId: string): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/organizations/${orgId}`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/organizations/${orgId}`, { headers: getHeaders() });
         return handleResponse(res, 'Failed to fetch organization details');
     },
 
     getOrganizationMembers: async (orgId: string): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/organizations/${orgId}/members`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/organizations/${orgId}/members`, { headers: getHeaders() });
         return handleResponse(res, 'Failed to fetch organization members').then(data => data || []);
     },
 
@@ -1995,7 +1728,7 @@ export const Api = {
         // For MVP skeleton, we assume we might be adding by ID if we don't have invite flow,
         // BUT to be user friendly, we should probably implement invite.
         // I'll stick to passing the body as is, and update backend later if needed.
-        const res = await trackedFetch(`${API_URL}/organizations/${orgId}/members`, {
+        const res = await fetch(`${API_URL}/organizations/${orgId}/members`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ targetUserId: email, role })
@@ -2004,7 +1737,7 @@ export const Api = {
     },
 
     createOrganization: async (name: string): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/organizations`, {
+        const res = await fetch(`${API_URL}/organizations`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ name })
@@ -2013,7 +1746,7 @@ export const Api = {
     },
 
     activateBilling: async (orgId: string): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/organizations/${orgId}/billing/activate`, {
+        const res = await fetch(`${API_URL}/organizations/${orgId}/billing/activate`, {
             method: 'POST',
             headers: getHeaders()
         });
@@ -2022,12 +1755,12 @@ export const Api = {
 
     // Token Ledger API
     getOrgTokenBalance: async (orgId: string): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/organizations/${orgId}/tokens/balance`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/organizations/${orgId}/tokens/balance`, { headers: getHeaders() });
         return handleResponse(res, 'Failed to fetch token balance');
     },
 
     getOrgTokenLedger: async (orgId: string, limit = 50, offset = 0): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/organizations/${orgId}/tokens/ledger?limit=${limit}&offset=${offset}`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/organizations/${orgId}/tokens/ledger?limit=${limit}&offset=${offset}`, { headers: getHeaders() });
         return handleResponse(res, 'Failed to fetch token ledger').then(data => data?.ledger || []);
     },
 
@@ -2036,7 +1769,7 @@ export const Api = {
     // PHASE C: CONSULTANT MODE
     // ==========================================
     getConsultantOrgs: async (): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/consultants/orgs`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/consultants/orgs`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch consultant organizations');
         return res.json();
     },
@@ -2044,13 +1777,13 @@ export const Api = {
     getConsultantClients: async (orgId?: string): Promise<any[]> => {
         let url = `${API_URL}/consultants/clients`;
         if (orgId) url += `?orgId=${orgId}`;
-        const res = await trackedFetch(url, { headers: getHeaders() });
+        const res = await fetch(url, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch consultant clients');
         return res.json();
     },
 
     createConsultantInvite: async (data: { email: string; invitationType: string; firmName?: string; projectName?: string }): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/consultants/invites`, {
+        const res = await fetch(`${API_URL}/consultants/invites`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify(data)
@@ -2061,14 +1794,14 @@ export const Api = {
     },
 
     getConsultantInvites: async (): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/consultants/invites`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/consultants/invites`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch invites');
         return res.json();
     },
 
     // Org Admin: Invite a user (Member or Consultant)
     createOrganizationInvitation: async (email: string, role: string): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/invitations`, {
+        const res = await fetch(`${API_URL}/invitations`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ email, role })
@@ -2082,7 +1815,7 @@ export const Api = {
     // PHASE E: ONBOARDING API
     // ==========================================
     saveOnboardingContext: async (context: any): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/onboarding/context`, {
+        const res = await fetch(`${API_URL}/onboarding/context`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify(context)
@@ -2091,7 +1824,7 @@ export const Api = {
     },
 
     generateFirstValuePlan: async (): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/onboarding/generate-plan`, {
+        const res = await fetch(`${API_URL}/onboarding/generate-plan`, {
             method: 'POST',
             headers: getHeaders()
         });
@@ -2099,7 +1832,7 @@ export const Api = {
     },
 
     acceptFirstValuePlan: async (acceptedInitiativeIds: string[], idempotencyKey: string): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/onboarding/accept-plan`, {
+        const res = await fetch(`${API_URL}/onboarding/accept-plan`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ acceptedInitiativeIds, idempotencyKey })
@@ -2108,117 +1841,184 @@ export const Api = {
     },
 
     getOnboardingStatus: async (): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/onboarding/status`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/onboarding/status`, { headers: getHeaders() });
         return handleResponse(res, 'Failed to get onboarding status');
     },
 
     getOnboardingPlan: async (): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/onboarding/plan`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/onboarding/plan`, { headers: getHeaders() });
         return handleResponse(res, 'Failed to get onboarding plan');
     },
 
-    // --- PHASE G: REFERRALS ---
-    getUserReferrals: async (): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/referrals/my`, { headers: getHeaders() });
-        return handleResponse(res, 'Failed to fetch user referrals');
+    // ==========================================
+    // DRD AUDIT REPORT BUILDER API
+    // ==========================================
+
+    /**
+     * Get full report with all sections for the Report Builder
+     */
+    getFullReport: async (reportId: string): Promise<any> => {
+        const res = await fetch(`${API_URL}/assessment-reports/${reportId}/full`, { 
+            headers: getHeaders() 
+        });
+        return handleResponse(res, 'Failed to load report');
     },
 
-    getEcosystemStats: async (): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/referrals/stats`, { headers: getHeaders() });
-        return handleResponse(res, 'Failed to fetch ecosystem stats');
-    },
-
-    generateReferralCode: async (expiresInDays: number = 90): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/referrals/generate`, {
+    /**
+     * Generate full report with all sections from template
+     */
+    generateReport: async (reportId: string, options?: { templateId?: string; language?: string }): Promise<any> => {
+        const res = await fetch(`${API_URL}/assessment-reports/${reportId}/generate`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ expiresInDays })
+            body: JSON.stringify(options || {})
         });
-        return handleResponse(res, 'Failed to generate referral code');
+        return handleResponse(res, 'Failed to generate report');
     },
 
-    // --- ACCESS CODES ---
-    validateAccessCode: async (code: string): Promise<{ valid: boolean; type?: string; requiresEmailMatch?: boolean }> => {
-        const res = await trackedFetch(`${API_URL}/access-codes/validate/${code}`);
-        return res.json();
+    /**
+     * Get all sections for a report
+     */
+    getReportSections: async (reportId: string): Promise<any> => {
+        const res = await fetch(`${API_URL}/assessment-reports/${reportId}/sections`, { 
+            headers: getHeaders() 
+        });
+        return handleResponse(res, 'Failed to load sections');
     },
 
-    acceptAccessCode: async (code: string, email?: string): Promise<{ ok: boolean; type?: string; outcome?: string; organizationId?: string; error?: string }> => {
-        const res = await trackedFetch(`${API_URL}/access-codes/accept`, {
+    /**
+     * Add a new section to the report
+     */
+    addReportSection: async (reportId: string, data: { 
+        sectionType: string; 
+        axisId?: string; 
+        areaId?: string;
+        title?: string; 
+        content?: string; 
+        orderIndex?: number 
+    }): Promise<any> => {
+        const res = await fetch(`${API_URL}/assessment-reports/${reportId}/sections`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ code, email })
+            body: JSON.stringify(data)
         });
-        return res.json();
+        return handleResponse(res, 'Failed to add section');
     },
 
-    // --- DOCUMENTS LIBRARY ---
-    uploadDocumentToLibrary: async (file: File, options: { scope: 'project' | 'user'; projectId?: string; description?: string; tags?: string[] }): Promise<any> => {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('scope', options.scope);
-        if (options.projectId) formData.append('projectId', options.projectId);
-        if (options.description) formData.append('description', options.description);
-        if (options.tags) formData.append('tags', JSON.stringify(options.tags));
-
-        const token = localStorage.getItem('token');
-        const res = await trackedFetch(`${API_URL}/documents/upload`, {
-            method: 'POST',
-            headers: {
-                'Authorization': token ? `Bearer ${token}` : '',
-                'X-Correlation-ID': correlationId as string
-            },
-            body: formData
-        });
-        return handleResponse(res, 'Failed to upload document');
-    },
-
-    getProjectDocuments: async (projectId: string): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/documents/project/${projectId}`, {
-            headers: getHeaders()
-        });
-        return handleResponse(res, 'Failed to fetch project documents');
-    },
-
-    getUserDocuments: async (): Promise<any[]> => {
-        const res = await trackedFetch(`${API_URL}/documents/user`, {
-            headers: getHeaders()
-        });
-        return handleResponse(res, 'Failed to fetch user documents');
-    },
-
-    getAllDocuments: async (projectId?: string): Promise<any[]> => {
-        const url = projectId
-            ? `${API_URL}/documents/all?projectId=${projectId}`
-            : `${API_URL}/documents/all`;
-        const res = await trackedFetch(url, {
-            headers: getHeaders()
-        });
-        return handleResponse(res, 'Failed to fetch documents');
-    },
-
-    moveDocumentToProject: async (documentId: string, projectId: string): Promise<any> => {
-        const res = await trackedFetch(`${API_URL}/documents/${documentId}/move-to-project`, {
+    /**
+     * Update a section's content
+     */
+    updateReportSection: async (reportId: string, sectionId: string, data: { 
+        content: string; 
+        title?: string;
+        saveHistory?: boolean 
+    }): Promise<any> => {
+        const res = await fetch(`${API_URL}/assessment-reports/${reportId}/sections/${sectionId}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify({ projectId })
+            body: JSON.stringify(data)
         });
-        return handleResponse(res, 'Failed to move document');
+        return handleResponse(res, 'Failed to update section');
     },
 
-    deleteDocument: async (documentId: string): Promise<void> => {
-        const res = await trackedFetch(`${API_URL}/documents/${documentId}`, {
+    /**
+     * Delete a section from the report
+     */
+    deleteReportSection: async (reportId: string, sectionId: string): Promise<any> => {
+        const res = await fetch(`${API_URL}/assessment-reports/${reportId}/sections/${sectionId}`, {
             method: 'DELETE',
             headers: getHeaders()
         });
-        await handleResponse(res, 'Failed to delete document');
+        return handleResponse(res, 'Failed to delete section');
     },
 
-    downloadDocument: async (documentId: string): Promise<Blob> => {
-        const res = await trackedFetch(`${API_URL}/documents/${documentId}/download`, {
+    /**
+     * AI action on a section (expand, summarize, improve, translate, regenerate)
+     */
+    aiSectionAction: async (reportId: string, sectionId: string, data: { 
+        action: string; 
+        language?: string;
+        customPrompt?: string 
+    }): Promise<any> => {
+        const res = await fetch(`${API_URL}/assessment-reports/${reportId}/sections/${sectionId}/ai`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        return handleResponse(res, 'Failed to perform AI action');
+    },
+
+    /**
+     * Reorder sections
+     */
+    reorderReportSections: async (reportId: string, sectionOrder: { id: string; orderIndex: number }[]): Promise<any> => {
+        const res = await fetch(`${API_URL}/assessment-reports/${reportId}/sections/reorder`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify({ sectionOrder })
+        });
+        return handleResponse(res, 'Failed to reorder sections');
+    },
+
+    /**
+     * AI edit via chat - process natural language edit requests
+     */
+    aiEditReport: async (reportId: string, data: { message: string; focusSectionId?: string | null }): Promise<any> => {
+        const res = await fetch(`${API_URL}/assessment-reports/${reportId}/ai-edit`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        return handleResponse(res, 'Failed to process AI edit request');
+    },
+
+    /**
+     * Get section version history
+     */
+    getSectionHistory: async (reportId: string, sectionId: string): Promise<any> => {
+        const res = await fetch(`${API_URL}/assessment-reports/${reportId}/sections/${sectionId}/history`, { 
+            headers: getHeaders() 
+        });
+        return handleResponse(res, 'Failed to load section history');
+    },
+
+    /**
+     * Finalize a report (DRAFT -> FINAL)
+     */
+    finalizeReport: async (reportId: string): Promise<any> => {
+        const res = await fetch(`${API_URL}/assessment-reports/${reportId}/finalize`, {
+            method: 'POST',
             headers: getHeaders()
         });
-        if (!res.ok) throw new Error('Failed to download document');
+        return handleResponse(res, 'Failed to finalize report');
+    },
+
+    /**
+     * Export report as PDF
+     */
+    exportReportPDF: async (reportId: string): Promise<Blob> => {
+        const res = await fetch(`${API_URL}/assessment-reports/${reportId}/export/pdf`, { 
+            headers: getHeaders() 
+        });
+        if (!res.ok) {
+            throw new Error('Failed to export PDF');
+        }
+        return res.blob();
+    },
+
+    /**
+     * Export report as Excel
+     */
+    exportReportExcel: async (reportId: string): Promise<Blob> => {
+        const res = await fetch(`${API_URL}/assessment-reports/${reportId}/export/excel`, { 
+            headers: getHeaders() 
+        });
+        if (!res.ok) {
+            throw new Error('Failed to export Excel');
+        }
         return res.blob();
     }
 };
+
+// Export as 'api' for backwards compatibility with lowercase import
+export const api = Api;

@@ -9,7 +9,7 @@ describe('Component Test: InitiativeCard', () => {
         id: 'init-1',
         name: 'Test Initiative',
         description: 'Test description',
-        status: InitiativeStatus.PLANNED,
+        status: InitiativeStatus.PLANNING,
         priority: 'High',
         complexity: 'Medium',
         axis: 'processes',
@@ -89,7 +89,7 @@ describe('Component Test: InitiativeCard', () => {
 
     it('handles different status values', () => {
         const statuses: Array<Initiative['status']> = [
-            InitiativeStatus.PLANNED,
+            InitiativeStatus.PLANNING,
             InitiativeStatus.IN_EXECUTION,
             InitiativeStatus.COMPLETED,
             InitiativeStatus.BLOCKED

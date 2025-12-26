@@ -433,5 +433,3 @@ const CommentThread: React.FC<CommentThreadProps> = ({
     );
 };
 
-export default AxisCommentsPanel;
-

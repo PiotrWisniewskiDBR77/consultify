@@ -1,14 +1,38 @@
 // PMO Status State Machine - Validates status transitions
 // Step 3: PMO Objects, Statuses & Stage Gates
+// Updated 2024-12-26: New Initiative Lifecycle with module transitions
 
+/**
+ * Initiative Lifecycle States
+ * 
+ * Module Flow:
+ * - DRAFT: Created in Assessment Module (Module 2)
+ * - PLANNING: Transferred to Initiative Management Module (Module 3)
+ * - REVIEW: Pending approval reviews
+ * - APPROVED: Ready for execution, transfers to Execution Module (Module 4/5)
+ * - EXECUTING: Active work in progress
+ * - BLOCKED: Temporarily blocked (requires reason)
+ * - DONE: Successfully completed
+ * - CANCELLED: Terminated before completion
+ * - ARCHIVED: Historical record (post-completion or post-cancellation)
+ */
 const INITIATIVE_STATUSES = {
+    // Assessment Module (Module 2)
     DRAFT: 'DRAFT',
-    PLANNED: 'PLANNED',
+    
+    // Initiative Management Module (Module 3)
+    PLANNING: 'PLANNING',
+    REVIEW: 'REVIEW',
     APPROVED: 'APPROVED',
-    IN_EXECUTION: 'IN_EXECUTION',
+    
+    // Execution Module (Module 4/5)
+    EXECUTING: 'EXECUTING',
     BLOCKED: 'BLOCKED',
-    COMPLETED: 'COMPLETED',
-    CANCELLED: 'CANCELLED'
+    DONE: 'DONE',
+    
+    // Terminal States
+    CANCELLED: 'CANCELLED',
+    ARCHIVED: 'ARCHIVED'
 };
 
 const TASK_STATUSES = {
@@ -24,15 +48,57 @@ const DECISION_STATUSES = {
     REJECTED: 'REJECTED'
 };
 
-// Valid Initiative Transitions
+/**
+ * Valid Initiative Transitions
+ * 
+ * Key Module Boundaries:
+ * - DRAFT → PLANNING: Transfers from Assessment to Initiative Management
+ * - APPROVED → EXECUTING: Transfers from Initiative Management to Execution
+ * - DONE/CANCELLED → ARCHIVED: Historical archival
+ */
 const INITIATIVE_TRANSITIONS = {
-    [INITIATIVE_STATUSES.DRAFT]: [INITIATIVE_STATUSES.PLANNED, INITIATIVE_STATUSES.CANCELLED],
-    [INITIATIVE_STATUSES.PLANNED]: [INITIATIVE_STATUSES.APPROVED, INITIATIVE_STATUSES.DRAFT, INITIATIVE_STATUSES.CANCELLED],
-    [INITIATIVE_STATUSES.APPROVED]: [INITIATIVE_STATUSES.IN_EXECUTION, INITIATIVE_STATUSES.BLOCKED, INITIATIVE_STATUSES.CANCELLED],
-    [INITIATIVE_STATUSES.IN_EXECUTION]: [INITIATIVE_STATUSES.BLOCKED, INITIATIVE_STATUSES.COMPLETED, INITIATIVE_STATUSES.CANCELLED],
-    [INITIATIVE_STATUSES.BLOCKED]: [INITIATIVE_STATUSES.IN_EXECUTION, INITIATIVE_STATUSES.CANCELLED],
-    [INITIATIVE_STATUSES.COMPLETED]: [], // Terminal state
-    [INITIATIVE_STATUSES.CANCELLED]: []  // Terminal state
+    // Assessment Module (Module 2)
+    [INITIATIVE_STATUSES.DRAFT]: [
+        INITIATIVE_STATUSES.PLANNING,    // Transfer to Initiative Management (Module 3)
+        INITIATIVE_STATUSES.CANCELLED    // Cancel before planning
+    ],
+    
+    // Initiative Management Module (Module 3)
+    [INITIATIVE_STATUSES.PLANNING]: [
+        INITIATIVE_STATUSES.REVIEW,      // Submit for approval
+        INITIATIVE_STATUSES.DRAFT,       // Return to draft
+        INITIATIVE_STATUSES.CANCELLED    // Cancel during planning
+    ],
+    [INITIATIVE_STATUSES.REVIEW]: [
+        INITIATIVE_STATUSES.APPROVED,    // Approved - ready for execution
+        INITIATIVE_STATUSES.PLANNING,    // Revision required - back to planning
+        INITIATIVE_STATUSES.CANCELLED    // Cancel during review
+    ],
+    [INITIATIVE_STATUSES.APPROVED]: [
+        INITIATIVE_STATUSES.EXECUTING,   // Transfer to Execution Module (Module 4/5)
+        INITIATIVE_STATUSES.PLANNING,    // Reopen for changes
+        INITIATIVE_STATUSES.CANCELLED    // Cancel before execution
+    ],
+    
+    // Execution Module (Module 4/5)
+    [INITIATIVE_STATUSES.EXECUTING]: [
+        INITIATIVE_STATUSES.BLOCKED,     // Blocked by issue
+        INITIATIVE_STATUSES.DONE,        // Successfully completed
+        INITIATIVE_STATUSES.CANCELLED    // Cancel during execution
+    ],
+    [INITIATIVE_STATUSES.BLOCKED]: [
+        INITIATIVE_STATUSES.EXECUTING,   // Unblocked - resume execution
+        INITIATIVE_STATUSES.CANCELLED    // Cancel while blocked
+    ],
+    
+    // Terminal States
+    [INITIATIVE_STATUSES.DONE]: [
+        INITIATIVE_STATUSES.ARCHIVED     // Archive completed initiative
+    ],
+    [INITIATIVE_STATUSES.CANCELLED]: [
+        INITIATIVE_STATUSES.ARCHIVED     // Archive cancelled initiative
+    ],
+    [INITIATIVE_STATUSES.ARCHIVED]: []   // Final state - no transitions
 };
 
 // Valid Task Transitions
@@ -79,8 +145,8 @@ const StatusMachine = {
             return { valid: false, reason: 'Blocked status requires a reason' };
         }
 
-        // Transition to COMPLETED requires all tasks done
-        if (to === INITIATIVE_STATUSES.COMPLETED) {
+        // Transition to DONE requires all tasks done
+        if (to === INITIATIVE_STATUSES.DONE) {
             if (context.pendingTasks > 0) {
                 return { valid: false, reason: `Cannot complete: ${context.pendingTasks} tasks still pending` };
             }
@@ -89,10 +155,29 @@ const StatusMachine = {
             }
         }
 
-        // Transition from PLANNED to APPROVED may require governance check
-        if (from === INITIATIVE_STATUSES.PLANNED && to === INITIATIVE_STATUSES.APPROVED) {
+        // Transition PLANNING → REVIEW: Submit for approval
+        if (from === INITIATIVE_STATUSES.PLANNING && to === INITIATIVE_STATUSES.REVIEW) {
+            // Check minimum charter completeness
+            if (context.charterCompleteness !== undefined && context.charterCompleteness < 60) {
+                return { valid: false, reason: `Charter completeness too low (${context.charterCompleteness}%). Minimum 60% required.` };
+            }
+        }
+
+        // Transition REVIEW → APPROVED: Requires all reviews completed
+        if (from === INITIATIVE_STATUSES.REVIEW && to === INITIATIVE_STATUSES.APPROVED) {
             if (context.requiresApproval && !context.isApproved) {
                 return { valid: false, reason: 'Governance approval required for this transition' };
+            }
+            if (context.pendingReviews > 0) {
+                return { valid: false, reason: `Cannot approve: ${context.pendingReviews} reviews still pending` };
+            }
+        }
+
+        // Transition APPROVED → EXECUTING: Entering execution module
+        if (from === INITIATIVE_STATUSES.APPROVED && to === INITIATIVE_STATUSES.EXECUTING) {
+            // Optionally check if scheduled in roadmap
+            if (context.requiresScheduling && !context.isScheduled) {
+                return { valid: false, reason: 'Initiative must be scheduled in roadmap before execution' };
             }
         }
 
@@ -129,6 +214,67 @@ const StatusMachine = {
 
     getAllowedTaskTransitions: (currentStatus) => {
         return TASK_TRANSITIONS[currentStatus] || [];
+    },
+
+    /**
+     * Get the module an initiative belongs to based on status
+     * @param {string} status - Current initiative status
+     * @returns {'ASSESSMENT' | 'INITIATIVE_MANAGEMENT' | 'EXECUTION' | 'TERMINAL'}
+     */
+    getInitiativeModule: (status) => {
+        switch (status) {
+            case INITIATIVE_STATUSES.DRAFT:
+                return 'ASSESSMENT';
+            case INITIATIVE_STATUSES.PLANNING:
+            case INITIATIVE_STATUSES.REVIEW:
+            case INITIATIVE_STATUSES.APPROVED:
+                return 'INITIATIVE_MANAGEMENT';
+            case INITIATIVE_STATUSES.EXECUTING:
+            case INITIATIVE_STATUSES.BLOCKED:
+                return 'EXECUTION';
+            case INITIATIVE_STATUSES.DONE:
+            case INITIATIVE_STATUSES.CANCELLED:
+            case INITIATIVE_STATUSES.ARCHIVED:
+                return 'TERMINAL';
+            default:
+                return 'UNKNOWN';
+        }
+    },
+
+    /**
+     * Check if transition crosses module boundary
+     * @param {string} from - Current status
+     * @param {string} to - Target status
+     * @returns {{ crossesModule: boolean, fromModule: string, toModule: string }}
+     */
+    isModuleTransition: (from, to) => {
+        const fromModule = StatusMachine.getInitiativeModule(from);
+        const toModule = StatusMachine.getInitiativeModule(to);
+        return {
+            crossesModule: fromModule !== toModule,
+            fromModule,
+            toModule
+        };
+    },
+
+    /**
+     * Get display label for status
+     * @param {string} status - Initiative status
+     * @returns {string}
+     */
+    getStatusLabel: (status) => {
+        const labels = {
+            [INITIATIVE_STATUSES.DRAFT]: 'Draft',
+            [INITIATIVE_STATUSES.PLANNING]: 'Planning',
+            [INITIATIVE_STATUSES.REVIEW]: 'In Review',
+            [INITIATIVE_STATUSES.APPROVED]: 'Approved',
+            [INITIATIVE_STATUSES.EXECUTING]: 'Executing',
+            [INITIATIVE_STATUSES.BLOCKED]: 'Blocked',
+            [INITIATIVE_STATUSES.DONE]: 'Done',
+            [INITIATIVE_STATUSES.CANCELLED]: 'Cancelled',
+            [INITIATIVE_STATUSES.ARCHIVED]: 'Archived'
+        };
+        return labels[status] || status;
     }
 };
 

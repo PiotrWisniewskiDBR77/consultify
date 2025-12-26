@@ -858,14 +858,29 @@ class InitiativeGeneratorService {
      * @param {Array} initiatives - Initiatives to approve
      * @param {string} projectId - Project ID
      * @param {string} userId - User ID
+     * @param {string} organizationId - Organization ID (REQUIRED for initiatives table)
      * @returns {Promise<Object>} Transfer result
      */
-    static async approveAndTransfer(initiatives, projectId, userId) {
+    static async approveAndTransfer(initiatives, projectId, userId, organizationId) {
         const results = {
             transferred: [],
             failed: [],
             total: initiatives.length
         };
+
+        // Validate organizationId is provided
+        if (!organizationId) {
+            console.error('[InitiativeGenerator] organizationId is required but not provided');
+            return {
+                transferred: [],
+                failed: initiatives.map(i => ({
+                    id: i.id,
+                    name: i.name,
+                    errors: ['Organization ID is required']
+                })),
+                total: initiatives.length
+            };
+        }
 
         for (const initiative of initiatives) {
             try {
@@ -880,51 +895,64 @@ class InitiativeGeneratorService {
                     continue;
                 }
 
-                // Insert into initiatives table
+                // Map priority from risk level
+                const priority = initiative.riskLevel === 'HIGH' ? 'Critical' :
+                    initiative.riskLevel === 'MEDIUM' ? 'High' : 'Medium';
+
+                // Map business value from ROI
+                const businessValue = initiative.estimatedROI > 2 ? 'High' :
+                    initiative.estimatedROI > 1 ? 'Medium' : 'Low';
+
+                // Insert into initiatives table with ALL required fields
                 const sql = `
                     INSERT INTO initiatives (
-                        id, project_id, name, summary, hypothesis,
-                        axis, priority, business_value, status,
-                        derived_from_assessments, gap_justification,
-                        created_from, created_by, created_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+                        id, organization_id, project_id, name, summary, hypothesis,
+                        axis, area, priority, business_value, status,
+                        cost_capex, expected_roi,
+                        source_assessment_id,
+                        problem_statement, created_from, created_by, created_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
                 `;
 
                 await new Promise((resolve, reject) => {
                     db.run(sql, [
                         initiative.id,
+                        organizationId,                                    // ADDED: organization_id (NOT NULL)
                         projectId,
                         initiative.name,
-                        initiative.description,
-                        initiative.objectives?.join('; ') || '',
-                        initiative.sourceAxisId,
-                        initiative.riskLevel === 'HIGH' ? 'Critical' :
-                        initiative.riskLevel === 'MEDIUM' ? 'High' : 'Medium',
-                        initiative.estimatedROI > 2 ? 'High' :
-                        initiative.estimatedROI > 1 ? 'Medium' : 'Low',
+                        initiative.description || initiative.summary || '',
+                        initiative.objectives?.join('; ') || initiative.hypothesis || '',
+                        initiative.sourceAxisId || initiative.axis || null,
+                        initiative.area || null,                          // ADDED: area
+                        priority,
+                        businessValue,
                         'APPROVED',
-                        JSON.stringify({
-                            assessmentId: initiative.assessmentId,
-                            sourceAxis: initiative.sourceAxisId,
-                            estimatedROI: initiative.estimatedROI,
-                            estimatedBudget: initiative.estimatedBudget
-                        }),
-                        `AI-generated from ${initiative.sourceAxisId} gap analysis`,
+                        initiative.estimatedBudget || null,               // ADDED: cost_capex
+                        initiative.estimatedROI || null,                  // ADDED: expected_roi
+                        initiative.assessmentId || null,                  // ADDED: source_assessment_id
+                        initiative.problemStatement || `AI-generated from ${initiative.sourceAxisId || 'assessment'} gap analysis`,
                         'AI_ASSESSMENT',
                         userId
                     ], function(err) {
-                        if (err) return reject(err);
+                        if (err) {
+                            console.error('[InitiativeGenerator] SQL Error:', err.message);
+                            return reject(err);
+                        }
                         resolve();
                     });
                 });
 
                 // Link initiative to assessment
-                await this.linkInitiativeToAssessment(initiative.id, initiative.assessmentId);
+                if (initiative.assessmentId) {
+                    await this.linkInitiativeToAssessment(initiative.id, initiative.assessmentId);
+                }
 
                 results.transferred.push({
                     id: initiative.id,
                     name: initiative.name
                 });
+
+                console.log(`[InitiativeGenerator] Successfully transferred: ${initiative.name}`);
 
             } catch (error) {
                 console.error(`[InitiativeGenerator] Transfer failed for ${initiative.name}:`, error.message);

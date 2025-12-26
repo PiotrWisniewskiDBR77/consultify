@@ -336,5 +336,3 @@ export const AssessmentVersionHistory: React.FC<AssessmentVersionHistoryProps> =
     );
 };
 
-export default AssessmentVersionHistory;
-

@@ -1672,6 +1672,315 @@ Initiatives: ${JSON.stringify(initiatives.map(i => ({ id: i.id, name: i.name, qu
             ],
             sentimentScore: 4.2 // Mocked average sentiment
         };
+    },
+
+    // =========================================================================
+    // DRD AUDIT REPORT - AI EDITING FUNCTIONS
+    // =========================================================================
+
+    /**
+     * Process a natural language request to edit a report section
+     * @param {string} reportId - Report ID
+     * @param {string} message - User's edit request
+     * @param {Object} context - Report context (sections, axisData, etc.)
+     * @returns {Object} - Parsed intent and suggested action
+     */
+    parseReportEditIntent: async (message, context) => {
+        const lowerMessage = message.toLowerCase();
+        const { sections, focusSectionId } = context;
+        
+        // Intent detection patterns (Polish and English)
+        const intents = {
+            expand: ['rozwiń', 'rozszerz', 'więcej', 'expand', 'elaborate', 'more details', 'add more'],
+            summarize: ['skróć', 'podsumuj', 'streść', 'summarize', 'shorten', 'condense', 'make shorter'],
+            improve: ['ulepsz', 'popraw', 'poprawi', 'improve', 'enhance', 'better', 'refine'],
+            translate: ['przetłumacz', 'translate', 'po polsku', 'in english', 'po angielsku'],
+            regenerate: ['regeneruj', 'wygeneruj ponownie', 'regenerate', 'recreate', 'start over'],
+            rewrite: ['przepisz', 'napisz od nowa', 'rewrite', 'rephrase'],
+            formal: ['formalny', 'formal', 'oficjalny', 'official'],
+            casual: ['luźny', 'nieformalny', 'casual', 'informal'],
+            add_table: ['dodaj tabelę', 'add table', 'tabela', 'table'],
+            add_section: ['dodaj sekcję', 'add section', 'nowa sekcja', 'new section'],
+            delete: ['usuń', 'delete', 'remove']
+        };
+
+        // Detect intent
+        let detectedIntent = 'improve'; // default
+        for (const [intent, patterns] of Object.entries(intents)) {
+            if (patterns.some(p => lowerMessage.includes(p))) {
+                detectedIntent = intent;
+                break;
+            }
+        }
+
+        // Identify target section
+        let targetSection = focusSectionId ? sections.find(s => s.id === focusSectionId) : null;
+        
+        if (!targetSection) {
+            // Try to find section by name in message
+            for (const section of sections) {
+                const sectionNameLower = section.title.toLowerCase();
+                if (lowerMessage.includes(sectionNameLower)) {
+                    targetSection = section;
+                    break;
+                }
+                // Check section type keywords
+                const typeKeywords = {
+                    'executive_summary': ['summary', 'podsumowanie', 'executive'],
+                    'methodology': ['metodologia', 'methodology'],
+                    'maturity_overview': ['maturity', 'dojrzałość', 'overview'],
+                    'axis_detail': ['oś', 'axis', 'procesy', 'produkty', 'dane', 'kultura', 'cyber', 'ai'],
+                    'gap_analysis': ['gap', 'luka', 'analiza luk'],
+                    'initiatives': ['inicjatywy', 'initiatives', 'rekomendacje'],
+                    'roadmap': ['roadmap', 'roadmapa', 'plan'],
+                    'appendix': ['załącznik', 'appendix']
+                };
+                for (const [type, keywords] of Object.entries(typeKeywords)) {
+                    if (section.sectionType === type && keywords.some(k => lowerMessage.includes(k))) {
+                        targetSection = section;
+                        break;
+                    }
+                }
+                if (targetSection) break;
+            }
+        }
+
+        // Map intent to action
+        const actionMap = {
+            expand: 'expand',
+            summarize: 'summarize',
+            improve: 'improve',
+            translate: 'translate',
+            regenerate: 'regenerate',
+            rewrite: 'improve',
+            formal: 'improve',
+            casual: 'improve',
+            add_table: 'expand',
+            add_section: 'add_section',
+            delete: 'delete'
+        };
+
+        return {
+            success: true,
+            intent: detectedIntent,
+            action: actionMap[detectedIntent] || 'improve',
+            targetSection: targetSection?.id || null,
+            targetSectionTitle: targetSection?.title || null,
+            targetSectionType: targetSection?.sectionType || null,
+            customPrompt: message,
+            confidence: targetSection ? 0.9 : 0.5
+        };
+    },
+
+    /**
+     * Generate AI content for a report section with full context
+     * @param {string} action - Action type (expand, summarize, improve, translate, regenerate)
+     * @param {string} currentContent - Current section content
+     * @param {Object} context - Full context including axisData, company info
+     * @returns {string} - Generated content
+     */
+    generateReportSectionContent: async (action, currentContent, context, organizationId, userId) => {
+        const { sectionType, axisId, title, axisData, organizationName, language = 'pl' } = context;
+        const isPolish = language === 'pl';
+
+        // Build prompt based on action
+        let systemPrompt = `You are an expert DRD (Digital Readiness Diagnosis) report writer. 
+You create professional, insightful audit reports for digital transformation assessments.
+Your writing is clear, data-driven, and actionable.
+Output in ${isPolish ? 'Polish' : 'English'} language.
+Use Markdown formatting for structure.`;
+
+        let userPrompt = '';
+
+        switch (action) {
+            case 'expand':
+                userPrompt = `Expand the following section with more details, examples, and analysis.
+Keep the same tone and structure but add depth.
+Section: "${title}"
+Current content:
+${currentContent}
+
+${axisId && axisData[axisId] ? `
+Axis data:
+- Current level: ${axisData[axisId].actual || 'N/A'}
+- Target level: ${axisData[axisId].target || 'N/A'}
+- Gap: ${(axisData[axisId].target || 0) - (axisData[axisId].actual || 0)}
+` : ''}
+
+Provide an expanded version with additional insights and recommendations.`;
+                break;
+
+            case 'summarize':
+                userPrompt = `Summarize the following section to be more concise while keeping key points.
+Reduce length by about 50% while maintaining the essential information.
+Section: "${title}"
+Current content:
+${currentContent}
+
+Provide a condensed version.`;
+                break;
+
+            case 'improve':
+                userPrompt = `Improve the following report section to be more professional, clear, and impactful.
+Enhance the language, structure, and analysis quality.
+Section: "${title}"
+Current content:
+${currentContent}
+
+${context.customPrompt ? `Additional instructions: ${context.customPrompt}` : ''}
+
+Provide an improved version.`;
+                break;
+
+            case 'translate':
+                const targetLang = isPolish ? 'English' : 'Polish';
+                userPrompt = `Translate the following report section to ${targetLang}.
+Maintain professional business terminology appropriate for audit reports.
+Section: "${title}"
+Current content:
+${currentContent}
+
+Provide the translation.`;
+                break;
+
+            case 'regenerate':
+                userPrompt = `Regenerate the following report section from scratch based on the assessment data.
+Section type: ${sectionType}
+Section title: "${title}"
+Organization: ${organizationName || 'Not specified'}
+
+${axisId && axisData[axisId] ? `
+Axis: ${axisId}
+Current level: ${axisData[axisId].actual || 'N/A'}
+Target level: ${axisData[axisId].target || 'N/A'}
+Justification: ${axisData[axisId].justification || 'Not provided'}
+` : ''}
+
+${Object.keys(axisData).length > 0 ? `
+Full assessment data:
+${Object.entries(axisData).map(([id, data]) => 
+    `- ${id}: Current ${data.actual || 0}, Target ${data.target || 0}, Gap ${(data.target || 0) - (data.actual || 0)}`
+).join('\n')}
+` : ''}
+
+Generate a complete, professional section content.`;
+                break;
+
+            default:
+                userPrompt = `Improve the following report section:
+${currentContent}
+
+${context.customPrompt || ''}`;
+        }
+
+        try {
+            // Get model and generate
+            const modelInfo = await deps.ModelRouter.selectModel({
+                organizationId,
+                capability: 'writing',
+                preferredModel: 'gemini-1.5-flash'
+            });
+
+            const genAI = new deps.GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+            const model = genAI.getGenerativeModel({ 
+                model: modelInfo?.modelId || 'gemini-1.5-flash',
+                systemInstruction: systemPrompt
+            });
+
+            const result = await model.generateContent(userPrompt);
+            const response = await result.response;
+            const generatedText = response.text();
+
+            // Log usage
+            if (deps.TokenBillingService && userId && organizationId) {
+                await deps.TokenBillingService.logUsage({
+                    organizationId,
+                    userId,
+                    model: modelInfo?.modelId || 'gemini-1.5-flash',
+                    promptTokens: userPrompt.length / 4, // estimate
+                    completionTokens: generatedText.length / 4,
+                    feature: 'report_editing'
+                });
+            }
+
+            return generatedText;
+        } catch (error) {
+            console.error('[AI Service] Report section generation error:', error);
+            // Return original content on error
+            return currentContent;
+        }
+    },
+
+    /**
+     * Build comprehensive context for report AI operations
+     * @param {string} reportId - Report ID
+     * @param {string} organizationId - Organization ID
+     * @returns {Object} - Full report context
+     */
+    buildReportAIContext: async (reportId, organizationId) => {
+        return new Promise((resolve, reject) => {
+            const sql = `
+                SELECT 
+                    r.*,
+                    a.name as assessment_name,
+                    a.axis_data,
+                    a.progress,
+                    p.name as project_name,
+                    o.name as organization_name,
+                    o.transformation_context,
+                    o.industry,
+                    o.size as organization_size
+                FROM assessment_reports r
+                LEFT JOIN assessments a ON r.assessment_id = a.id
+                LEFT JOIN projects p ON r.project_id = p.id
+                LEFT JOIN organizations o ON r.organization_id = o.id
+                WHERE r.id = ? AND r.organization_id = ?
+            `;
+
+            deps.db.get(sql, [reportId, organizationId], (err, report) => {
+                if (err) return reject(err);
+                if (!report) return resolve(null);
+
+                // Get sections
+                deps.db.all(
+                    'SELECT * FROM report_sections WHERE report_id = ? ORDER BY order_index',
+                    [reportId],
+                    (err, sections) => {
+                        if (err) sections = [];
+
+                        // Parse JSON fields
+                        let axisData = {};
+                        let transformationContext = {};
+                        try {
+                            axisData = report.axis_data ? JSON.parse(report.axis_data) : {};
+                            transformationContext = report.transformation_context ? JSON.parse(report.transformation_context) : {};
+                        } catch (e) {}
+
+                        resolve({
+                            reportId: report.id,
+                            reportName: report.name,
+                            status: report.status,
+                            assessmentId: report.assessment_id,
+                            assessmentName: report.assessment_name,
+                            projectName: report.project_name,
+                            organizationName: report.organization_name,
+                            industry: report.industry,
+                            organizationSize: report.organization_size,
+                            axisData,
+                            transformationContext,
+                            sections: (sections || []).map(s => ({
+                                id: s.id,
+                                type: s.section_type,
+                                axisId: s.axis_id,
+                                title: s.title,
+                                contentPreview: s.content ? s.content.substring(0, 200) + '...' : '',
+                                isAiGenerated: s.is_ai_generated === 1
+                            }))
+                        });
+                    }
+                );
+            });
+        });
     }
 };
 

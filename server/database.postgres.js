@@ -649,12 +649,14 @@ function initDb() {
                 scope_in TEXT DEFAULT '[]',
                 scope_out TEXT DEFAULT '[]',
                 key_risks TEXT DEFAULT '[]',
+                report_id TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
                 FOREIGN KEY(owner_business_id) REFERENCES users(id) ON DELETE SET NULL,
                 FOREIGN KEY(owner_execution_id) REFERENCES users(id) ON DELETE SET NULL,
-                FOREIGN KEY(sponsor_id) REFERENCES users(id) ON DELETE SET NULL
+                FOREIGN KEY(sponsor_id) REFERENCES users(id) ON DELETE SET NULL,
+                FOREIGN KEY(report_id) REFERENCES assessment_reports(id) ON DELETE SET NULL
             )`);
 
             // Task Dependencies

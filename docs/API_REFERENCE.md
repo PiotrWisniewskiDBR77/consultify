@@ -392,9 +392,57 @@ This document provides a reference for the Consultify API endpoints.
 
 | Method | Endpoint | Description | Roles |
 |--------|----------|-------------|-------|
-| GET | `/dashboard` | Get my work dashboard | Member |
-| GET | `/tasks` | Get my tasks | Member |
+| GET | `/` | Get aggregated My Work dashboard | Member |
+| GET | `/tasks` | Get all my tasks | Member |
 | GET | `/decisions` | Get pending decisions | Member |
+| GET | `/alerts` | Get my alerts | Member |
+
+### My Work - Focus (`/api/my-work/focus`)
+
+| Method | Endpoint | Description | Roles |
+|--------|----------|-------------|-------|
+| GET | `/` | Get focus tasks with time blocks | Member |
+| POST | `/tasks` | Add task to focus board | Member |
+| DELETE | `/tasks/:focusTaskId` | Remove task from focus | Member |
+| PUT | `/tasks/:focusTaskId/order` | Update task order | Member |
+| POST | `/tasks/:focusTaskId/time-blocks` | Add time block | Member |
+| PUT | `/time-blocks/:timeBlockId` | Update time block | Member |
+| DELETE | `/time-blocks/:timeBlockId` | Remove time block | Member |
+
+### My Work - Inbox (`/api/my-work/inbox`)
+
+| Method | Endpoint | Description | Roles |
+|--------|----------|-------------|-------|
+| GET | `/` | Get inbox tasks for triage | Member |
+| POST | `/triage/:taskId` | Perform triage action | Member |
+| PUT | `/tasks/:taskId/complete` | Toggle task completion | Member |
+| DELETE | `/tasks/:taskId` | Delete inbox task | Member |
+
+### My Work - Notifications (`/api/my-work/notifications`)
+
+| Method | Endpoint | Description | Roles |
+|--------|----------|-------------|-------|
+| GET | `/` | Get notifications (with filters) | Member |
+| GET | `/counts` | Get unread counts by severity | Member |
+| PUT | `/:notificationId/read` | Mark notification as read | Member |
+| POST | `/mark-all-read` | Mark all as read | Member |
+| DELETE | `/:notificationId` | Delete notification | Member |
+
+### My Work - Preferences (`/api/my-work/preferences`)
+
+| Method | Endpoint | Description | Roles |
+|--------|----------|-------------|-------|
+| GET | `/notifications` | Get notification settings | Member |
+| PUT | `/notifications` | Update notification settings | Member |
+
+### My Work - Dashboard Analytics (`/api/my-work/dashboard`)
+
+| Method | Endpoint | Description | Roles |
+|--------|----------|-------------|-------|
+| GET | `/execution-score` | Get personal execution score | Member |
+| GET | `/workload-heatmap` | Get team workload heatmap | Member |
+| GET | `/bottleneck-alerts` | Get bottleneck alerts | Member |
+| GET | `/velocity-chart` | Get velocity chart data | Member |
 
 ### Settings (`/api/settings`)
 

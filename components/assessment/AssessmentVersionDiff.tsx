@@ -450,5 +450,3 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
     );
 };
 
-export default AssessmentVersionDiff;
-

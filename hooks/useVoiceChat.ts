@@ -43,12 +43,38 @@ export const useVoiceChat = (): UseVoiceChatReturn => {
             // Load voices (may be async on some browsers)
             const loadVoices = () => {
                 const voices = synthRef.current?.getVoices() || [];
+
+                // Get current language from i18n
+                const i18nLang = localStorage.getItem('i18nextLng') || 'pl';
+                const langCodeMap: Record<string, string> = {
+                    'pl': 'pl',
+                    'en': 'en',
+                    'de': 'de',
+                    'es': 'es',
+                    'ja': 'ja',
+                    'ar': 'ar'
+                };
+                const targetLang = langCodeMap[i18nLang] || 'pl';
+
+                // Find best voice for target language
+                let targetVoice = voices.find(v => v.lang.startsWith(targetLang) && v.name.includes('Google'));
+                if (!targetVoice) {
+                    targetVoice = voices.find(v => v.lang.startsWith(targetLang));
+                }
+                // Fallback to Polish
+                if (!targetVoice) {
+                    targetVoice = voices.find(v => v.lang.startsWith('pl'));
+                }
+
+                console.log('[VoiceChat] Available voices:', voices.length);
+                console.log('[VoiceChat] Target language:', targetLang);
+                console.log('[VoiceChat] Selected voice:', targetVoice?.name || 'fallback');
+
                 setState(prev => ({
                     ...prev,
                     availableVoices: voices,
-                    // Prefer Polish voice, fallback to first available
                     selectedVoiceURI: prev.selectedVoiceURI ||
-                        voices.find(v => v.lang.startsWith('pl'))?.voiceURI ||
+                        targetVoice?.voiceURI ||
                         voices[0]?.voiceURI || null
                 }));
             };

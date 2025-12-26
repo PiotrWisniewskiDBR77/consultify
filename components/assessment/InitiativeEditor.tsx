@@ -362,5 +362,3 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
     );
 };
 
-export default InitiativeEditor;
-

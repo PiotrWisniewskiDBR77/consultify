@@ -102,12 +102,40 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 dark:bg-navy-950/90 backdrop-blur-sm p-4 animate-in fade-in duration-200">
             <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col h-[85vh]">
 
+                {/* Initiative Context Banner */}
+                {initiative && (
+                    <div className="px-4 py-2.5 border-b border-slate-200 dark:border-white/5 bg-gradient-to-r from-blue-50 via-purple-50/50 to-transparent dark:from-blue-900/20 dark:via-purple-900/10 dark:to-transparent flex items-center gap-3 shrink-0">
+                        <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded bg-blue-600 flex items-center justify-center">
+                                <Target size={12} className="text-white" />
+                            </div>
+                            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Initiative:</span>
+                            <span className="text-sm font-bold text-navy-900 dark:text-white">{initiative.name}</span>
+                        </div>
+                        <div className="flex-1" />
+                        <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                            initiative.status === 'DRAFT' ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300' :
+                            initiative.status === 'PLANNING' ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400' :
+                            initiative.status === 'REVIEW' ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-400' :
+                            initiative.status === 'APPROVED' ? 'bg-teal-100 dark:bg-teal-500/20 text-teal-700 dark:text-teal-400' :
+                            initiative.status === 'EXECUTING' ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400' :
+                            initiative.status === 'DONE' ? 'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400' :
+                            'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                        }`}>
+                            {initiative.status}
+                        </span>
+                        <span className="text-xs text-slate-500 dark:text-slate-500">
+                            {initiative.priority} Priority • {initiative.axis}
+                        </span>
+                    </div>
+                )}
+
                 {/* Header */}
                 <div className="p-4 border-b border-slate-200 dark:border-white/10 flex justify-between items-start bg-slate-50 dark:bg-navy-950 shrink-0">
                     <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
                             <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500">
-                                {task.projectId ? 'Project Task' : 'Initiative Task'}
+                                {task.projectId ? 'Project Task' : initiative ? 'Initiative Task' : 'Standalone Task'}
                             </span>
                             <div className="h-4 w-[1px] bg-slate-300 dark:bg-white/10"></div>
                             <select
@@ -336,6 +364,44 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(({
                                         placeholder="Use markdown for detailed execution steps..."
                                     />
                                 </div>
+
+                                {/* Task Weight for Progress Calculation */}
+                                <div className="p-4 rounded-lg bg-purple-50 dark:bg-purple-900/10 border border-purple-200 dark:border-purple-500/20">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h3 className="text-xs font-bold text-purple-700 dark:text-purple-400 flex items-center gap-2">
+                                            <Target size={14} /> Task Weight (Progress Impact)
+                                        </h3>
+                                        <span className="text-lg font-bold text-purple-600 dark:text-purple-400">
+                                            {task.weight || 1}x
+                                        </span>
+                                    </div>
+                                    <p className="text-[10px] text-slate-500 mb-3">
+                                        Higher weight = more contribution to initiative progress when completed
+                                    </p>
+                                    <div className="flex gap-2">
+                                        {[1, 2, 3, 4, 5].map(w => (
+                                            <button
+                                                key={w}
+                                                onClick={() => setTask({ ...task, weight: w })}
+                                                className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
+                                                    (task.weight || 1) === w
+                                                        ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/30'
+                                                        : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-white/10 hover:border-purple-500/30'
+                                                }`}
+                                            >
+                                                {w}x
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <input
+                                        type="text"
+                                        value={task.weightReason || ''}
+                                        onChange={e => setTask({ ...task, weightReason: e.target.value })}
+                                        className="mt-3 w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-xs text-navy-900 dark:text-slate-300 placeholder:text-slate-400 dark:placeholder:text-slate-600 outline-none focus:border-purple-500/30"
+                                        placeholder="Reason for weight (e.g., Critical path item, High risk...)"
+                                    />
+                                </div>
+
                                 <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-500/10">
                                     <h3 className="text-xs font-bold text-red-600 dark:text-red-400 mb-2 flex items-center gap-2">
                                         <AlertTriangle size={14} /> Blocking Issues / Risks
@@ -393,6 +459,69 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(({
                                         className="w-full h-40 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-navy-900 dark:text-slate-300 focus:border-green-500/30 outline-none resize-none placeholder:text-slate-400 dark:placeholder:text-slate-600"
                                         placeholder="- [ ] Metric A > 50%&#10;- [ ] User Flow Tested"
                                     />
+                                </div>
+
+                                {/* Evidence Sign-off */}
+                                <div className={`p-5 rounded-xl border-2 transition-all ${
+                                    task.signedOff 
+                                        ? 'bg-green-50 dark:bg-green-500/10 border-green-500' 
+                                        : 'bg-amber-50 dark:bg-amber-500/10 border-amber-500/50'
+                                }`}>
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <h4 className="text-sm font-bold text-navy-900 dark:text-white flex items-center gap-2">
+                                                {task.signedOff ? (
+                                                    <>
+                                                        <CheckSquare size={16} className="text-green-600" />
+                                                        Evidence Signed Off
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Shield size={16} className="text-amber-500" />
+                                                        Evidence Awaiting Sign-off
+                                                    </>
+                                                )}
+                                            </h4>
+                                            {task.signedOff && task.signedOffAt && (
+                                                <p className="text-xs text-slate-500 mt-1">
+                                                    Signed by {users.find(u => u.id === task.signedOffBy)?.firstName || 'Unknown'} {users.find(u => u.id === task.signedOffBy)?.lastName || ''} on {new Date(task.signedOffAt).toLocaleDateString()}
+                                                </p>
+                                            )}
+                                            {!task.signedOff && (
+                                                <p className="text-xs text-slate-500 mt-1">
+                                                    I confirm all required evidence has been collected and criteria met.
+                                                </p>
+                                            )}
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                if (task.signedOff) {
+                                                    // Remove sign-off
+                                                    setTask({ 
+                                                        ...task, 
+                                                        signedOff: false, 
+                                                        signedOffAt: undefined, 
+                                                        signedOffBy: undefined 
+                                                    });
+                                                } else {
+                                                    // Add sign-off
+                                                    setTask({ 
+                                                        ...task, 
+                                                        signedOff: true, 
+                                                        signedOffAt: new Date().toISOString(), 
+                                                        signedOffBy: currentUser.id 
+                                                    });
+                                                }
+                                            }}
+                                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                                task.signedOff 
+                                                    ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-red-100 dark:hover:bg-red-500/20 hover:text-red-600' 
+                                                    : 'bg-green-600 hover:bg-green-500 text-white shadow-lg shadow-green-500/30'
+                                            }`}
+                                        >
+                                            {task.signedOff ? 'Revoke Sign-off' : '✓ Sign Off Evidence'}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         )}

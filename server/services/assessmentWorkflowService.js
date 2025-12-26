@@ -37,7 +37,9 @@ const WORKFLOW_CONFIG = {
     // Require justification for all axes
     requireJustification: true,
     // Maximum review period in days
-    maxReviewDays: 14
+    maxReviewDays: 14,
+    // Default SLA for review completion (in hours)
+    reviewSlaHours: 48
 };
 
 class AssessmentWorkflowService {
@@ -126,11 +128,13 @@ class AssessmentWorkflowService {
         for (const reviewer of reviewers) {
             const reviewId = uuidv4();
             await new Promise((resolve, reject) => {
+                // Use SLA from config (48 hours by default)
+                const slaHours = WORKFLOW_CONFIG.reviewSlaHours;
                 db.run(`
                     INSERT INTO assessment_reviews (
                         id, workflow_id, reviewer_id, reviewer_role,
                         status, requested_at, due_date
-                    ) VALUES (?, ?, ?, ?, 'PENDING', datetime('now'), datetime('now', '+14 days'))
+                    ) VALUES (?, ?, ?, ?, 'PENDING', datetime('now'), datetime('now', '+${slaHours} hours'))
                 `, [reviewId, workflow.id, reviewer.userId, reviewer.role], function(err) {
                     if (err) return reject(err);
                     reviewIds.push(reviewId);
@@ -151,11 +155,63 @@ class AssessmentWorkflowService {
             });
         });
 
+        // Get assessment name for notification
+        const assessment = await new Promise((resolve, reject) => {
+            db.get('SELECT name, project_id FROM assessments WHERE id = ?', [assessmentId], (err, row) => {
+                if (err) return reject(err);
+                resolve(row);
+            });
+        });
+
+        // Get submitter name
+        const submitter = await new Promise((resolve, reject) => {
+            db.get('SELECT first_name, last_name FROM users WHERE id = ?', [submittedBy], (err, row) => {
+                if (err) return reject(err);
+                resolve(row);
+            });
+        });
+
+        // Send notifications to reviewers
+        const submitterName = submitter ? `${submitter.first_name} ${submitter.last_name}` : 'Someone';
+        const assessmentName = assessment?.name || 'Assessment';
+        
+        for (const reviewer of reviewers) {
+            try {
+                await new Promise((resolve, reject) => {
+                    db.run(`
+                        INSERT INTO notifications (
+                            id, user_id, type, title, message, data, created_at
+                        ) VALUES (?, ?, 'REVIEW_REQUEST', ?, ?, ?, datetime('now'))
+                    `, [
+                        uuidv4(),
+                        reviewer.userId,
+                        '📋 Review Request',
+                        `${submitterName} requested your review on "${assessmentName}"`,
+                        JSON.stringify({
+                            assessmentId,
+                            workflowId: workflow.id,
+                            submittedBy,
+                            assessmentName
+                        })
+                    ], function(err) {
+                        if (err) {
+                            console.warn('[Notification] Failed to create notification:', err.message);
+                            // Don't fail the whole operation if notification fails
+                        }
+                        resolve();
+                    });
+                });
+            } catch (notifError) {
+                console.warn('[Notification] Error creating notification:', notifError);
+            }
+        }
+
         return {
             workflowId: workflow.id,
             status: WORKFLOW_STATES.IN_REVIEW,
             reviewIds,
-            reviewersCount: reviewers.length
+            reviewersCount: reviewers.length,
+            notificationsSent: reviewers.length
         };
     }
 
@@ -388,7 +444,17 @@ class AssessmentWorkflowService {
                 w.assessment_id,
                 a.name as assessment_name,
                 p.name as project_name,
-                u.name as submitter_name
+                u.name as submitter_name,
+                CASE 
+                    WHEN r.due_date IS NOT NULL AND datetime(r.due_date) < datetime('now') 
+                    THEN 1 
+                    ELSE 0 
+                END as is_overdue,
+                CASE 
+                    WHEN r.due_date IS NOT NULL 
+                    THEN ROUND((julianday(r.due_date) - julianday('now')) * 24)
+                    ELSE NULL 
+                END as hours_remaining
             FROM assessment_reviews r
             JOIN assessment_workflows w ON r.workflow_id = w.id
             JOIN maturity_assessments a ON w.assessment_id = a.id
@@ -397,13 +463,21 @@ class AssessmentWorkflowService {
             WHERE r.reviewer_id = ?
             AND r.status IN ('PENDING', 'IN_PROGRESS')
             AND w.organization_id = ?
-            ORDER BY r.requested_at ASC
+            ORDER BY r.due_date ASC NULLS LAST, r.requested_at ASC
         `;
 
         return new Promise((resolve, reject) => {
             db.all(sql, [userId, organizationId], (err, rows) => {
                 if (err) return reject(err);
-                resolve(rows || []);
+                
+                // Transform rows to include isOverdue boolean
+                const reviews = (rows || []).map(row => ({
+                    ...row,
+                    isOverdue: row.is_overdue === 1,
+                    hoursRemaining: row.hours_remaining
+                }));
+                
+                resolve(reviews);
             });
         });
     }

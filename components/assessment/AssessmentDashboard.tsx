@@ -459,5 +459,3 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
     );
 };
 
-export default AssessmentDashboard;
-

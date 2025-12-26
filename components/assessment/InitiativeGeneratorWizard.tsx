@@ -4,12 +4,14 @@
  * Multi-step wizard for generating initiatives from assessment gaps.
  * Steps:
  * 1. Gap Selection - Select which gaps to address
- * 2. AI Constraints - Set budget, timeline, risk appetite
- * 3. Review & Edit - Review generated initiatives
- * 4. Approve & Transfer - Send to Module 3
+ * 2. Template Selection - Choose optional template
+ * 3. AI Constraints - Set budget, timeline, risk appetite
+ * 4. AI Charter - Review AI-generated full charter
+ * 5. Review & Edit - Review generated initiatives
+ * 6. Approve & Transfer - Send to Module 3
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
     ArrowRight,
     ArrowLeft,
@@ -24,20 +26,26 @@ import {
     AlertCircle,
     Plus,
     CheckCircle2,
-    Send
+    Send,
+    FileText,
+    Brain
 } from 'lucide-react';
 import { useInitiativeGenerator } from '../../hooks/useInitiativeGenerator';
 import { GeneratedInitiativeCard } from './GeneratedInitiativeCard';
 import { InitiativeEditor } from './InitiativeEditor';
+import { TemplateLibrary } from './TemplateLibrary';
+import { AICharterPreview } from './AICharterPreview';
 import { 
     GapForGeneration, 
     GeneratedInitiative, 
     InitiativeGeneratorConstraints,
     DRDAxis,
-    AppView 
+    AppView,
+    InitiativeTemplate,
+    AIGeneratedCharter
 } from '../../types';
 
-type WizardStep = 'gaps' | 'constraints' | 'review' | 'approve';
+type WizardStep = 'gaps' | 'template' | 'constraints' | 'ai-charter' | 'review' | 'approve';
 
 interface InitiativeGeneratorWizardProps {
     assessmentId: string;
@@ -48,7 +56,9 @@ interface InitiativeGeneratorWizardProps {
 
 const STEPS: { id: WizardStep; label: string; icon: React.ReactNode }[] = [
     { id: 'gaps', label: 'Select Gaps', icon: <Target size={18} /> },
-    { id: 'constraints', label: 'Set Constraints', icon: <Shield size={18} /> },
+    { id: 'template', label: 'Template', icon: <FileText size={18} /> },
+    { id: 'constraints', label: 'Constraints', icon: <Shield size={18} /> },
+    { id: 'ai-charter', label: 'AI Charter', icon: <Brain size={18} /> },
     { id: 'review', label: 'Review', icon: <Sparkles size={18} /> },
     { id: 'approve', label: 'Approve', icon: <Send size={18} /> }
 ];
@@ -70,6 +80,13 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
     });
     const [editingInitiative, setEditingInitiative] = useState<GeneratedInitiative | null>(null);
     const [transferResult, setTransferResult] = useState<{ transferred: string[]; failed: string[] } | null>(null);
+    
+    // Template & Charter state
+    const [templates, setTemplates] = useState<InitiativeTemplate[]>([]);
+    const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
+    const [selectedTemplate, setSelectedTemplate] = useState<InitiativeTemplate | null>(null);
+    const [generatedCharter, setGeneratedCharter] = useState<AIGeneratedCharter | null>(null);
+    const [isGeneratingCharter, setIsGeneratingCharter] = useState(false);
 
     // Hook
     const {
@@ -86,8 +103,30 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
         removeInitiative,
         addCustomInitiative,
         saveDraft,
-        approveAndTransfer
+        approveAndTransfer,
+        generateCharter,
+        regenerateSection,
+        fetchTemplates
     } = useInitiativeGenerator(assessmentId);
+
+    // Fetch templates when entering template step
+    useEffect(() => {
+        if (currentStep === 'template' && templates.length === 0) {
+            loadTemplates();
+        }
+    }, [currentStep]);
+
+    const loadTemplates = async () => {
+        setIsLoadingTemplates(true);
+        try {
+            const loaded = await fetchTemplates();
+            setTemplates(loaded || []);
+        } catch (err) {
+            console.error('Failed to load templates:', err);
+        } finally {
+            setIsLoadingTemplates(false);
+        }
+    };
 
     // Derived state
     const selectedGapsCount = useMemo(() => gaps.filter(g => g.selected).length, [gaps]);
@@ -104,9 +143,32 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
     // Handlers
     const handleNext = async () => {
         if (currentStep === 'gaps') {
+            setCurrentStep('template');
+        } else if (currentStep === 'template') {
             setCurrentStep('constraints');
         } else if (currentStep === 'constraints') {
-            await generateWithAI(constraints);
+            // Generate full AI charter
+            setIsGeneratingCharter(true);
+            try {
+                const charter = await generateCharter({
+                    sourceType: 'GAP',
+                    gaps: gaps.filter(g => g.selected),
+                    templateId: selectedTemplate?.id,
+                    constraints
+                });
+                setGeneratedCharter(charter);
+                setCurrentStep('ai-charter');
+            } catch (err) {
+                console.error('Charter generation failed:', err);
+            } finally {
+                setIsGeneratingCharter(false);
+            }
+        } else if (currentStep === 'ai-charter') {
+            // Convert charter to initiatives and move to review
+            if (generatedCharter) {
+                // The charter itself becomes the main initiative
+                await generateWithAI(constraints);
+            }
             setCurrentStep('review');
         } else if (currentStep === 'review') {
             setCurrentStep('approve');
@@ -117,6 +179,34 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
         const stepIndex = STEPS.findIndex(s => s.id === currentStep);
         if (stepIndex > 0) {
             setCurrentStep(STEPS[stepIndex - 1].id);
+        }
+    };
+
+    const handleTemplateSelect = (template: InitiativeTemplate | null) => {
+        setSelectedTemplate(template);
+    };
+
+    const handleTemplateSkip = () => {
+        setSelectedTemplate(null);
+        setCurrentStep('constraints');
+    };
+
+    const handleCharterUpdate = (updates: Partial<AIGeneratedCharter>) => {
+        if (generatedCharter) {
+            setGeneratedCharter({ ...generatedCharter, ...updates });
+        }
+    };
+
+    const handleRegenerateSection = async (section: string) => {
+        if (generatedCharter) {
+            const context = {
+                gaps: gaps.filter(g => g.selected),
+                constraints
+            };
+            const newData = await regenerateSection(generatedCharter.id, section, context);
+            if (newData) {
+                handleCharterUpdate({ [section]: newData });
+            }
         }
     };
 
@@ -140,8 +230,12 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
         switch (currentStep) {
             case 'gaps':
                 return selectedGapsCount > 0;
+            case 'template':
+                return true; // Can skip template
             case 'constraints':
                 return true;
+            case 'ai-charter':
+                return generatedCharter !== null;
             case 'review':
                 return generatedInitiatives.length > 0;
             case 'approve':
@@ -156,8 +250,12 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
         switch (currentStep) {
             case 'gaps':
                 return renderGapSelection();
+            case 'template':
+                return renderTemplateSelection();
             case 'constraints':
                 return renderConstraints();
+            case 'ai-charter':
+                return renderAICharter();
             case 'review':
                 return renderReview();
             case 'approve':
@@ -165,6 +263,62 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
             default:
                 return null;
         }
+    };
+
+    // Template Selection Step
+    const renderTemplateSelection = () => (
+        <TemplateLibrary
+            templates={templates}
+            isLoading={isLoadingTemplates}
+            selectedTemplateId={selectedTemplate?.id || null}
+            onSelect={handleTemplateSelect}
+            onSkip={handleTemplateSkip}
+        />
+    );
+
+    // AI Charter Step
+    const renderAICharter = () => {
+        if (isGeneratingCharter) {
+            return (
+                <div className="flex flex-col items-center justify-center py-16">
+                    <div className="relative">
+                        <div className="w-20 h-20 rounded-full border-4 border-purple-200 dark:border-purple-800" />
+                        <div className="absolute inset-0 w-20 h-20 rounded-full border-4 border-purple-500 border-t-transparent animate-spin" />
+                        <Brain size={32} className="absolute inset-0 m-auto text-purple-500" />
+                    </div>
+                    <h3 className="mt-6 text-lg font-semibold text-navy-900 dark:text-white">
+                        Generating Full Charter
+                    </h3>
+                    <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 text-center max-w-md">
+                        AI is analyzing gaps, applying template patterns, and creating a comprehensive initiative charter...
+                    </p>
+                    <div className="mt-6 flex gap-4 text-xs text-slate-400">
+                        <span className="flex items-center gap-1"><Check size={12} className="text-green-500" /> Problem Analysis</span>
+                        <span className="flex items-center gap-1"><Loader2 size={12} className="animate-spin" /> Target State</span>
+                        <span className="flex items-center gap-1 opacity-50">Tasks</span>
+                        <span className="flex items-center gap-1 opacity-50">Financials</span>
+                    </div>
+                </div>
+            );
+        }
+
+        if (!generatedCharter) {
+            return (
+                <div className="text-center py-12 text-slate-500 dark:text-slate-400">
+                    <AlertCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p>Charter generation failed. Please go back and try again.</p>
+                </div>
+            );
+        }
+
+        return (
+            <AICharterPreview
+                charter={generatedCharter}
+                isGenerating={isGeneratingCharter}
+                onUpdate={handleCharterUpdate}
+                onRegenerateSection={handleRegenerateSection}
+            />
+        );
     };
 
     // Gap Selection Step
@@ -621,18 +775,32 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
                         {currentStep !== 'approve' ? (
                             <button
                                 onClick={handleNext}
-                                disabled={!canProceed() || isGenerating}
+                                disabled={!canProceed() || isGenerating || isGeneratingCharter}
                                 className="flex items-center gap-2 px-6 py-2.5 bg-purple-600 hover:bg-purple-500 disabled:bg-slate-400 text-white rounded-lg font-medium transition-colors"
                             >
-                                {isGenerating ? (
+                                {isGenerating || isGeneratingCharter ? (
                                     <>
                                         <Loader2 size={18} className="animate-spin" />
-                                        Generating...
+                                        {isGeneratingCharter ? 'Generating Charter...' : 'Generating...'}
                                     </>
                                 ) : (
                                     <>
-                                        {currentStep === 'constraints' ? 'Generate' : 'Next'}
-                                        <ArrowRight size={18} />
+                                        {currentStep === 'constraints' ? (
+                                            <>
+                                                <Brain size={18} />
+                                                Generate Charter
+                                            </>
+                                        ) : currentStep === 'ai-charter' ? (
+                                            <>
+                                                Continue to Review
+                                                <ArrowRight size={18} />
+                                            </>
+                                        ) : (
+                                            <>
+                                                Next
+                                                <ArrowRight size={18} />
+                                            </>
+                                        )}
                                     </>
                                 )}
                             </button>
@@ -678,6 +846,4 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
         </div>
     );
 };
-
-export default InitiativeGeneratorWizard;
 

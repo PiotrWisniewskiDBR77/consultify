@@ -45,10 +45,10 @@ export const FullStep5Workspace: React.FC<FullStep5WorkspaceProps> = ({
          // Filter: Blocked Only
          if (showBlockedOnly && i.status !== InitiativeStatus.BLOCKED && status !== 'Blocked') return false;
 
-         if (status === 'To Do') return [InitiativeStatus.DRAFT, InitiativeStatus.PLANNED, InitiativeStatus.APPROVED].includes(i.status);
-         if (status === 'In Progress') return i.status === InitiativeStatus.IN_EXECUTION;
+         if (status === 'To Do') return [InitiativeStatus.DRAFT, InitiativeStatus.PLANNING, InitiativeStatus.APPROVED].includes(i.status);
+         if (status === 'In Progress') return i.status === InitiativeStatus.EXECUTING;
          if (status === 'Blocked') return i.status === InitiativeStatus.BLOCKED;
-         if (status === 'Done') return i.status === InitiativeStatus.COMPLETED;
+         if (status === 'Done') return i.status === InitiativeStatus.DONE;
          return false;
       });
    };
@@ -59,7 +59,7 @@ export const FullStep5Workspace: React.FC<FullStep5WorkspaceProps> = ({
 
    // KPIs
    const total = initiatives.length;
-   const doneCount = initiatives.filter(i => i.status === InitiativeStatus.COMPLETED).length;
+   const doneCount = initiatives.filter(i => i.status === InitiativeStatus.DONE).length;
    const blockedCount = initiatives.filter(i => i.status === InitiativeStatus.BLOCKED).length;
    const completionRate = total > 0 ? (doneCount / total) * 100 : 0;
 

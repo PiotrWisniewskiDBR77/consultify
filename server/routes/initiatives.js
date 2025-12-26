@@ -17,15 +17,14 @@ router.use(verifyToken);
 router.get('/', asyncHandler(async (req, res) => {
     const orgId = req.user.organizationId;
 
+    // Simplified SQL - sponsor_id doesn't exist in initiatives table
     const sql = `
         SELECT i.*, 
             ob.first_name as ob_first_name, ob.last_name as ob_last_name, ob.avatar_url as ob_avatar,
-            oe.first_name as oe_first_name, oe.last_name as oe_last_name, oe.avatar_url as oe_avatar,
-            s.first_name as sp_first_name, s.last_name as sp_last_name, s.avatar_url as sp_avatar
+            oe.first_name as oe_first_name, oe.last_name as oe_last_name, oe.avatar_url as oe_avatar
         FROM initiatives i
         LEFT JOIN users ob ON i.owner_business_id = ob.id
         LEFT JOIN users oe ON i.owner_execution_id = oe.id
-        LEFT JOIN users s ON i.sponsor_id = s.id
         WHERE i.organization_id = ?
         ORDER BY i.created_at DESC
     `;
@@ -46,23 +45,18 @@ router.get('/', asyncHandler(async (req, res) => {
             progress: i.progress || 0,
             currentStage: i.current_stage,
             businessValue: i.business_value,
-            competenciesRequired: i.competencies_required ? JSON.parse(i.competencies_required) : [],
-            marketContext: i.market_context,
             costCapex: i.cost_capex,
             costOpex: i.cost_opex,
             expectedRoi: i.expected_roi,
-            expectedRoi: i.expected_roi,
-            socialImpact: i.social_impact,
             valueDriver: i.value_driver,
             confidenceLevel: i.confidence_level,
             valueTiming: i.value_timing,
-            startDate: i.start_date,
-            pilotEndDate: i.pilot_end_date,
-            startDate: i.start_date,
-            pilotEndDate: i.pilot_end_date,
-            endDate: i.end_date,
+            plannedStartDate: i.planned_start_date,
+            plannedEndDate: i.planned_end_date,
+            actualStartDate: i.actual_start_date,
+            actualEndDate: i.actual_end_date,
 
-            // New Professional Card Fields
+            // Professional Card Fields
             problemStatement: i.problem_statement,
             deliverables: i.deliverables ? JSON.parse(i.deliverables) : [],
             successCriteria: i.success_criteria ? JSON.parse(i.success_criteria) : [],
@@ -82,15 +76,9 @@ router.get('/', asyncHandler(async (req, res) => {
                 lastName: i.oe_last_name,
                 avatarUrl: i.oe_avatar
             } : null,
-            sponsor: i.sponsor_id ? {
-                id: i.sponsor_id,
-                firstName: i.sp_first_name,
-                lastName: i.sp_last_name,
-                avatarUrl: i.sp_avatar
-            } : null,
 
             createdAt: i.created_at,
-            updatedAt: i.updated_at
+            description: i.description
         }));
 
         res.json({ initiatives, total: initiatives.length });
@@ -105,23 +93,115 @@ router.get('/', asyncHandler(async (req, res) => {
 }));
 
 // ==========================================
-// GET SINGLE INITIATIVE
+// GET SINGLE INITIATIVE (with full details)
 // ==========================================
 router.get('/:id', asyncHandler(async (req, res) => {
     const orgId = req.user.organizationId;
     const { id } = req.params;
 
-    const sql = `SELECT * FROM initiatives WHERE id = ? AND organization_id = ?`;
+    const sql = `
+        SELECT i.*, 
+            ob.first_name as ob_first_name, ob.last_name as ob_last_name, ob.email as ob_email, ob.avatar_url as ob_avatar,
+            oe.first_name as oe_first_name, oe.last_name as oe_last_name, oe.email as oe_email, oe.avatar_url as oe_avatar,
+            a.name as assessment_name
+        FROM initiatives i
+        LEFT JOIN users ob ON i.owner_business_id = ob.id
+        LEFT JOIN users oe ON i.owner_execution_id = oe.id
+        LEFT JOIN assessments a ON i.source_assessment_id = a.id
+        WHERE i.id = ? AND i.organization_id = ?
+    `;
 
     try {
-        const row = await queryHelpers.queryOne(sql, [id, orgId]);
-        if (!row) {
+        const i = await queryHelpers.queryOne(sql, [id, orgId]);
+        if (!i) {
             return res.status(404).json({ error: 'Initiative not found' });
         }
 
-        // Return structured object (simplified for brevity, similar map as above)
-        // For detailed view, we might want to fetch stats like task counts
-        res.json(row);
+        // Get task count for this initiative
+        let taskCount = 0;
+        try {
+            const taskResult = await queryHelpers.queryOne(
+                `SELECT COUNT(*) as count FROM tasks WHERE initiative_id = ?`,
+                [id]
+            );
+            taskCount = taskResult?.count || 0;
+        } catch (e) {
+            // Tasks table might not exist
+        }
+
+        // Return structured object with all details
+        const initiative = {
+            id: i.id,
+            organizationId: i.organization_id,
+            projectId: i.project_id,
+            name: i.name,
+            axis: i.axis,
+            area: i.area,
+            summary: i.summary,
+            description: i.description,
+            hypothesis: i.hypothesis,
+            status: i.status,
+            progress: i.progress || 0,
+            currentStage: i.current_stage,
+            
+            // Financial metrics
+            businessValue: i.business_value,
+            costCapex: i.cost_capex,
+            costOpex: i.cost_opex,
+            expectedRoi: i.expected_roi,
+            valueDriver: i.value_driver,
+            confidenceLevel: i.confidence_level,
+            valueTiming: i.value_timing,
+            
+            // Dates
+            plannedStartDate: i.planned_start_date || i.start_date,
+            plannedEndDate: i.planned_end_date || i.end_date,
+            actualStartDate: i.actual_start_date,
+            actualEndDate: i.actual_end_date,
+            pilotEndDate: i.pilot_end_date,
+
+            // Professional Card Fields
+            problemStatement: i.problem_statement,
+            deliverables: i.deliverables ? JSON.parse(i.deliverables) : [],
+            successCriteria: i.success_criteria ? JSON.parse(i.success_criteria) : [],
+            scopeIn: i.scope_in ? JSON.parse(i.scope_in) : [],
+            scopeOut: i.scope_out ? JSON.parse(i.scope_out) : [],
+            keyRisks: i.key_risks ? JSON.parse(i.key_risks) : [],
+            competenciesRequired: i.competencies_required ? JSON.parse(i.competencies_required) : [],
+
+            // Market context
+            marketContext: i.market_context,
+            socialImpact: i.social_impact,
+
+            // Owners
+            ownerBusiness: i.owner_business_id ? {
+                id: i.owner_business_id,
+                firstName: i.ob_first_name,
+                lastName: i.ob_last_name,
+                email: i.ob_email,
+                avatarUrl: i.ob_avatar
+            } : null,
+            ownerExecution: i.owner_execution_id ? {
+                id: i.owner_execution_id,
+                firstName: i.oe_first_name,
+                lastName: i.oe_last_name,
+                email: i.oe_email,
+                avatarUrl: i.oe_avatar
+            } : null,
+
+            // Source
+            sourceAssessmentId: i.source_assessment_id,
+            assessmentName: i.assessment_name,
+            createdFrom: i.created_from,
+
+            // Stats
+            taskCount,
+
+            createdAt: i.created_at,
+            updatedAt: i.updated_at
+        };
+
+        res.json(initiative);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -283,6 +363,72 @@ router.put('/:id', asyncHandler(async (req, res) => {
 
     await queryHelpers.queryRun(sql, params);
     res.json({ message: 'Initiative updated' });
+}));
+
+// ==========================================
+// TRANSFER TO ROADMAP
+// ==========================================
+router.post('/:id/transfer-to-roadmap', asyncHandler(async (req, res) => {
+    const orgId = req.user.organizationId;
+    const { id } = req.params;
+    const { quarter, priority, notes } = req.body;
+
+    if (!quarter) {
+        return res.status(400).json({ error: 'Quarter is required' });
+    }
+
+    // Check if initiative exists and is approved
+    const checkSql = `SELECT * FROM initiatives WHERE id = ? AND organization_id = ?`;
+    const initiative = await queryHelpers.queryOne(checkSql, [id, orgId]);
+
+    if (!initiative) {
+        return res.status(404).json({ error: 'Initiative not found' });
+    }
+
+    if (initiative.status !== 'APPROVED') {
+        return res.status(400).json({ error: 'Only approved initiatives can be transferred to roadmap' });
+    }
+
+    // Parse quarter to get start date
+    const [year, q] = quarter.split('-Q');
+    const quarterStartMonth = (parseInt(q) - 1) * 3;
+    const plannedStartDate = new Date(parseInt(year), quarterStartMonth, 1).toISOString();
+    const plannedEndDate = new Date(parseInt(year), quarterStartMonth + 3, 0).toISOString();
+
+    const now = new Date().toISOString();
+
+    const updateSql = `
+        UPDATE initiatives SET 
+            status = 'PLANNED',
+            priority = ?,
+            roadmap_notes = ?,
+            planned_start_date = ?,
+            planned_end_date = ?,
+            target_quarter = ?,
+            updated_at = ?
+        WHERE id = ? AND organization_id = ?
+    `;
+
+    await queryHelpers.queryRun(updateSql, [
+        priority || 'MEDIUM',
+        notes || null,
+        plannedStartDate,
+        plannedEndDate,
+        quarter,
+        now,
+        id,
+        orgId
+    ]);
+
+    res.json({
+        success: true,
+        message: 'Initiative transferred to roadmap',
+        id,
+        status: 'PLANNED',
+        quarter,
+        plannedStartDate,
+        plannedEndDate
+    });
 }));
 
 // ==========================================

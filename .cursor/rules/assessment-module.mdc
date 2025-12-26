@@ -284,6 +284,123 @@ const { gaps, generatedInitiatives, generateWithAI, approveAndTransfer } = useIn
 
 See `.cursor/INITIATIVE_GENERATOR.md` for full documentation.
 
+---
+
+## Initiative Lifecycle (Cross-Module)
+
+Initiatives follow a lifecycle that spans multiple modules:
+
+### Status Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  Module 2: Assessment                                                       │
+│  ┌─────────┐                                                                │
+│  │  DRAFT  │ ──────────────────────────────────────────────────────────┐   │
+│  └─────────┘                                                            │   │
+└─────────────────────────────────────────────────────────────────────────│───┘
+                                                                          │
+                                                                          ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  Module 3: Initiative Management                                            │
+│  ┌──────────┐    ┌────────┐    ┌──────────┐                                │
+│  │ PLANNING │───▶│ REVIEW │───▶│ APPROVED │ ────────────────────────┐      │
+│  └──────────┘    └────────┘    └──────────┘                         │      │
+│       ▲              │                                               │      │
+│       └──────────────┘ (revision required)                          │      │
+└─────────────────────────────────────────────────────────────────────│──────┘
+                                                                       │
+                                                                       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  Module 4/5: Execution                                                      │
+│  ┌───────────┐    ┌─────────┐    ┌──────┐                                  │
+│  │ EXECUTING │◀──▶│ BLOCKED │───▶│ DONE │ ──▶ ARCHIVED                     │
+│  └───────────┘    └─────────┘    └──────┘                                  │
+│       │                                                                     │
+│       └──▶ CANCELLED ──▶ ARCHIVED                                          │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Status Definitions
+
+| Status | Module | Description |
+|--------|--------|-------------|
+| `DRAFT` | Assessment (2) | Initial creation from gap analysis |
+| `PLANNING` | Initiative Mgmt (3) | Charter development in progress |
+| `REVIEW` | Initiative Mgmt (3) | Pending approval reviews |
+| `APPROVED` | Initiative Mgmt (3) | Ready for execution |
+| `EXECUTING` | Execution (4/5) | Active work in progress |
+| `BLOCKED` | Execution (4/5) | Temporarily blocked (requires reason) |
+| `DONE` | Terminal | Successfully completed |
+| `CANCELLED` | Terminal | Terminated before completion |
+| `ARCHIVED` | Terminal | Historical record |
+
+### Key Module Transitions
+
+1. **DRAFT → PLANNING**: Initiative transfers from Assessment to Initiative Management
+2. **APPROVED → EXECUTING**: Initiative transfers to Execution module
+
+### Progress Calculation
+
+Initiative progress is calculated as weighted percentage of closed tasks:
+- Default: Each task has weight = 1
+- Custom: Task weights 1-5x configurable in Task Detail Modal (Execution tab)
+- Formula: `(Σ completed_task_weight) / (Σ total_task_weight) * 100`
+
+### Task Types (Supported)
+
+```typescript
+type TaskType = 'ANALYSIS' | 'DESIGN' | 'BUILD' | 'PILOT' | 'VALIDATION' | 'DECISION' | 'CHANGE_MGMT';
+```
+
+### Evidence Standards
+
+Task completion requires:
+1. Person declaration/sign-off (Evidence tab in Task Detail Modal)
+2. Sign-off records: who signed, when, revocable
+3. Optional acceptance criteria checklist
+
+### Initiative Charter Tabs (Complete)
+
+```typescript
+const INITIATIVE_TABS = [
+  'overview',      // Executive summary, problem, target state
+  'tasks',         // Task list with bulk actions
+  'definition',    // Scope in/out, deliverables, success criteria
+  'execution',     // Timeline, risks, kill criteria
+  'economics',     // CAPEX, OPEX, ROI, benefits
+  'governance',    // Roles, workflow timeline, audit trail
+  'team',          // Resource allocation, related initiatives
+  'comments',      // Discussion thread
+  'history',       // Version snapshots, export, clone
+  'intelligence'   // AI insights, strategic fit
+];
+```
+
+### Collaboration Features
+
+- **Comments**: Threaded discussion per initiative
+- **Team Members**: Assign with role (Contributor, Reviewer, SME, Stakeholder, Observer) and % allocation
+- **Related Initiatives**: Link with relationship types (DEPENDS_ON, BLOCKS, RELATED_TO, PARENT_OF, CHILD_OF)
+- **Version History**: Manual snapshots, change tracking by type (STATUS_CHANGE, CONTENT_UPDATE, APPROVAL)
+- **Export**: Charter export to JSON (PDF planned)
+- **Clone**: Duplicate initiative as template
+
+### Readiness Score (v2)
+
+Charter readiness is calculated across 7 categories:
+- **Strategic (15pts)**: Name, Intent, Axis, One-liner
+- **Problem (15pts)**: Symptom, Root cause, Cost of inaction, Stakeholders
+- **Target (15pts)**: Process, Behavior, Capability changes
+- **Execution (15pts)**: Kill criteria, Risks, Deliverables
+- **Value (15pts)**: Business value, CAPEX, ROI
+- **Governance (15pts)**: Business Owner, Execution Owner, Sponsor
+- **Timeline (10pts)**: Start, End dates, Milestones
+
+Threshold: 80% = Ready for Review
+
+---
+
 ## Related Documentation
 
 - `.cursor/ASSESSMENT_MODULE_COMPLETE.md` - Full module documentation
@@ -291,3 +408,4 @@ See `.cursor/INITIATIVE_GENERATOR.md` for full documentation.
 - `.cursor/AI_ASSESSMENT_SYSTEM.md` - AI system documentation
 - `.cursor/INITIATIVE_GENERATOR.md` - Initiative Generator documentation
 - `.cursor/rules/ai-assessment.mdc` - AI-specific rules
+- `.cursor/BACKLOG.md` - Future features and settings backlog

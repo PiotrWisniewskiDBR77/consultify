@@ -1,0 +1,420 @@
+---
+description: Rules for working with My Work Module - Task Management, Inbox, Focus, and Notifications
+globs:
+  - "**/MyWork/**"
+  - "**/my-work/**"
+  - "**/myWork/**"
+  - "**/useFocus*"
+  - "**/useInbox*"
+  - "**/useExecutionScore*"
+  - "**/useNotificationPreferences*"
+  - "**/useKeyboardShortcuts*"
+  - "**/FocusBoard*"
+  - "**/InboxTriage*"
+  - "**/NotificationCenter*"
+  - "**/ExecutionScore*"
+  - "**/WorkloadHeatmap*"
+alwaysApply: false
+---
+
+# My Work Module Development Rules
+
+## Overview
+
+This module implements the **Personal Task & Notification Management** system for ANTYGRACITY Consultify. It provides a PMO-class personal productivity hub inspired by McKinsey/BCG/Deloitte standards and tools like Jira, Linear, Asana, and Notion.
+
+## Module Statistics (v1.0)
+
+- **15+ Components** in `components/MyWork/`
+- **5+ Backend Services** in `server/services/`
+- **12+ API Endpoints** in `my-work.js` route
+- **6 React Hooks** for My Work operations
+- **Keyboard Shortcuts** system with `Cmd+K` command palette
+
+## Core Concepts
+
+### PMO Task Labels
+
+Tasks can have PMO-specific labels indicating their strategic importance:
+
+```typescript
+type PMOTaskLabel = {
+  code: 'BLOCKING_PHASE' | 'BLOCKING_INITIATIVE' | 'GATE_BLOCKER' | 
+        'AWAITING_DECISION' | 'DECISION_REQUIRED' | 'OVERDUE' | 
+        'UNASSIGNED' | 'BLOCKED';
+  text: string;
+  severity: 'info' | 'warning' | 'critical';
+};
+```
+
+### PMO Categories
+
+Tasks are grouped by PMO impact:
+
+```typescript
+type PMOCategory = 
+  | 'blocking_phase'       // Tasks blocking phase gate
+  | 'blocking_initiative'  // Tasks blocking initiative progress
+  | 'awaiting_decision'    // Tasks awaiting stakeholder decision
+  | 'overdue'              // Overdue tasks
+  | 'today_focus'          // Today's focus tasks
+  | 'other';               // All other tasks
+```
+
+### Notification Severity
+
+```typescript
+type NotificationSeverity = 'INFO' | 'WARNING' | 'CRITICAL';
+```
+
+### Notification Types
+
+```typescript
+const NOTIFICATION_TYPES = {
+  TASK_ASSIGNED: 'TASK_ASSIGNED',
+  TASK_COMPLETED: 'TASK_COMPLETED',
+  TASK_OVERDUE: 'TASK_OVERDUE',
+  DECISION_REQUIRED: 'DECISION_REQUIRED',
+  INITIATIVE_BLOCKED: 'INITIATIVE_BLOCKED',
+  AI_RISK_DETECTED: 'AI_RISK_DETECTED',
+  GATE_APPROACHING: 'GATE_APPROACHING',
+  DIGEST_SUMMARY: 'DIGEST_SUMMARY'
+};
+```
+
+## React Hooks
+
+Use the provided hooks for My Work operations:
+
+```typescript
+// Focus board management
+import { useFocus } from '../hooks/useFocus';
+const { focusTasks, loading, addFocusTask, removeFocusTask, addTimeBlock, removeTimeBlock } = useFocus();
+
+// Inbox triage
+import { useInbox } from '../hooks/useInbox';
+const { inboxTasks, loading, triageTask, markTaskComplete, deleteTask } = useInbox();
+
+// Execution score
+import { useExecutionScore } from '../hooks/useExecutionScore';
+const { score, loading, fetchExecutionScore } = useExecutionScore();
+
+// Notification preferences
+import { useNotificationPreferences } from '../hooks/useNotificationPreferences';
+const { preferences, loading, updatePreferences } = useNotificationPreferences();
+
+// Keyboard shortcuts
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
+useKeyboardShortcuts(shortcuts);
+```
+
+## API Endpoints Pattern
+
+Follow these patterns:
+
+```
+# Focus board
+GET   /api/my-work/focus
+POST  /api/my-work/focus/tasks
+DELETE /api/my-work/focus/tasks/:focusTaskId
+POST  /api/my-work/focus/tasks/:focusTaskId/time-blocks
+DELETE /api/my-work/focus/time-blocks/:timeBlockId
+
+# Inbox triage
+GET   /api/my-work/inbox
+POST  /api/my-work/inbox/triage/:taskId
+PUT   /api/my-work/inbox/tasks/:taskId/complete
+DELETE /api/my-work/inbox/tasks/:taskId
+
+# Notifications
+GET   /api/my-work/notifications
+PUT   /api/my-work/notifications/:id/read
+POST  /api/my-work/notifications/mark-all-read
+DELETE /api/my-work/notifications/:id
+
+# Preferences
+GET   /api/my-work/preferences/notifications
+PUT   /api/my-work/preferences/notifications
+
+# Dashboard
+GET   /api/my-work/dashboard/execution-score
+GET   /api/my-work/dashboard/workload-heatmap
+GET   /api/my-work/dashboard/bottleneck-alerts
+GET   /api/my-work/dashboard/velocity-chart
+```
+
+## Key Endpoints
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/my-work/focus` | GET | Get focus tasks with time blocks |
+| `/api/my-work/inbox` | GET | Get inbox tasks for triage |
+| `/api/my-work/inbox/triage/:taskId` | POST | Perform triage action |
+| `/api/my-work/notifications` | GET | Get user notifications |
+| `/api/my-work/preferences/notifications` | GET/PUT | Notification settings |
+| `/api/my-work/dashboard/execution-score` | GET | Personal execution score |
+
+## Backend Services
+
+### Core Services
+
+| Service | Purpose |
+|---------|---------|
+| `focusService.js` | Focus board CRUD, time blocks |
+| `inboxService.js` | Inbox tasks, triage logic |
+| `notificationService.js` | Notification CRUD, muting |
+| `notificationBatchingService.js` | Digest emails, batching |
+| `executionMonitorService.js` | Execution score calculation |
+
+### Triage Actions
+
+```javascript
+// Available triage actions
+const TRIAGE_ACTIONS = ['complete', 'defer', 'prioritize', 'delegate', 'delete'];
+
+// Usage
+await InboxService.triageTask(userId, taskId, action, details);
+```
+
+## Frontend Components
+
+### Component Structure
+
+```
+components/MyWork/
+├── Focus/
+│   └── FocusBoard.tsx          # Main focus board
+├── Inbox/
+│   └── InboxTriage.tsx         # Inbox triage view
+├── Tasks/
+│   └── TaskFiltersBar.tsx      # Multi-select filters
+├── Notifications/
+│   ├── NotificationCenter.tsx  # Notification list
+│   └── NotificationPreferences.tsx # Settings
+├── Dashboard/
+│   ├── ExecutionScoreCard.tsx  # Score widget
+│   ├── WorkloadHeatmap.tsx     # Team workload
+│   ├── BottleneckAlerts.tsx    # Blocking issues
+│   └── VelocityChart.tsx       # Velocity trends
+├── shared/
+│   ├── PMOPriorityBadge.tsx    # Priority + labels badge
+│   ├── DueDateIndicator.tsx    # Due date display
+│   ├── QuickActions.tsx        # Action buttons
+│   └── EmptyState.tsx          # Empty state UI
+└── index.ts                     # Barrel exports
+```
+
+### AppView Values
+
+```typescript
+// My Work views
+AppView.MY_WORK           // Main My Work view
+AppView.MY_WORK_FOCUS     // Focus tab
+AppView.MY_WORK_INBOX     // Inbox tab
+AppView.MY_WORK_TASKS     // All tasks tab
+AppView.MY_WORK_DASHBOARD // Dashboard tab
+```
+
+## Keyboard Shortcuts
+
+### Global Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Cmd/Ctrl + K` | Open command palette |
+| `g + f` | Go to Focus board |
+| `g + i` | Go to Inbox |
+| `g + t` | Go to All Tasks |
+| `g + d` | Go to Dashboard |
+| `c` | Create new task |
+| `/` | Focus search |
+| `?` | Show shortcuts help |
+
+### Task Actions
+
+| Shortcut | Action |
+|----------|--------|
+| `Enter` | Open selected task |
+| `e` | Edit task |
+| `d` | Complete task |
+| `Backspace` | Delete task |
+| `p 1-4` | Set priority (urgent/high/medium/low) |
+| `Tab` | Defer task |
+
+## Swipe Gestures (Mobile)
+
+| Gesture | Action |
+|---------|--------|
+| Swipe left | Show quick actions (complete, delete) |
+| Swipe right | Prioritize / add to focus |
+| Pull down | Refresh list |
+
+## Accessibility
+
+### WCAG 2.1 AA Requirements
+
+- All interactive elements have `aria-label`
+- Focus indicators visible (ring-2 ring-blue-500)
+- Color contrast ratio ≥ 4.5:1
+- Touch targets ≥ 44px
+- Screen reader announcements for actions
+
+### Focus Management
+
+```typescript
+// Use focus trap for modals
+import { FocusTrap } from '../components/shared/FocusTrap';
+
+// Announce to screen readers
+import { useAnnounce } from '../hooks/useAnnounce';
+const announce = useAnnounce();
+announce('Task marked as complete');
+```
+
+## Performance Optimization
+
+### Virtualization
+
+Use virtual lists for long task lists:
+
+```typescript
+import { VirtualizedTaskList } from '../components/MyWork/shared/VirtualizedTaskList';
+
+<VirtualizedTaskList 
+  tasks={tasks} 
+  itemHeight={80} 
+  overscan={5} 
+/>
+```
+
+### Memoization
+
+```typescript
+// Memoize expensive components
+const TaskCard = React.memo(({ task, onEdit, onComplete }) => {
+  // ...
+});
+
+// Memoize callbacks
+const handleComplete = useCallback((taskId) => {
+  markTaskComplete(taskId);
+}, [markTaskComplete]);
+```
+
+## Database Tables
+
+| Table | Purpose |
+|-------|---------|
+| `focus_tasks` | User's focus board tasks |
+| `focus_time_blocks` | Time blocks for focus tasks |
+| `notifications` | User notifications |
+| `user_notification_settings` | Notification preferences |
+| `tasks` | Core task data (extended) |
+
+## Design Tokens
+
+### Colors
+
+```css
+/* PMO Priority Colors */
+--color-priority-urgent: theme('colors.red.500');
+--color-priority-high: theme('colors.orange.500');
+--color-priority-medium: theme('colors.blue.500');
+--color-priority-low: theme('colors.slate.400');
+
+/* PMO Category Colors */
+--color-blocking-phase: theme('colors.red.500');
+--color-blocking-initiative: theme('colors.orange.500');
+--color-awaiting-decision: theme('colors.amber.500');
+--color-overdue: theme('colors.slate.600');
+```
+
+### Touch Targets
+
+```css
+.touch-target {
+  @apply min-h-[44px] min-w-[44px];
+}
+```
+
+## TypeScript Types
+
+Key types in `types/myWork.ts`:
+
+```typescript
+interface FocusTask extends Task {
+  timeBlocks: TimeBlock[];
+}
+
+interface InboxTask extends Task {
+  isActionable: boolean;
+  actionType?: 'triage' | 'decision' | 'review';
+}
+
+interface TimeBlock {
+  id: string;
+  startTime: string; // "HH:MM"
+  endTime: string;   // "HH:MM"
+  taskId: string;
+  taskTitle: string;
+  color: string;
+}
+
+interface ExecutionScore {
+  score: number;
+  completed: number;
+  total: number;
+  overdue: number;
+  blocked: number;
+  trend: 'up' | 'down' | 'stable';
+  insights: string[];
+}
+
+interface UserNotificationSettings {
+  userId: string;
+  muteInfo: boolean;
+  muteWarning: boolean;
+  muteCritical: boolean;
+  mutedTypes: string[];
+  digestEnabled: boolean;
+  digestFrequency: 'daily' | 'weekly';
+  digestTime: string;
+}
+```
+
+## Error Handling
+
+Return consistent error responses:
+
+```javascript
+res.status(400).json({ error: 'Invalid triage action' });     // Validation
+res.status(404).json({ error: 'Task not found' });            // Not found
+res.status(403).json({ error: 'Cannot modify others tasks' }); // Permission
+res.status(500).json({ error: 'Internal server error' });     // Server error
+```
+
+## Testing Checklist
+
+Before submitting code:
+
+- [ ] Keyboard shortcuts working (test with `?` help modal)
+- [ ] Touch gestures working on mobile
+- [ ] Accessibility audit passed (axe-core)
+- [ ] Virtual list scrolling smooth
+- [ ] Focus management correct in modals
+- [ ] Screen reader announces actions
+- [ ] Memoization applied to list items
+- [ ] API responses match TypeScript types
+- [ ] Error toasts show for failures
+- [ ] Empty states displayed correctly
+
+## Related Documentation
+
+- `.cursor/rules/pmo-standards.mdc` - PMO standards reference
+- `docs/api/my-work-api.md` - API documentation
+- `docs/user-guide-my-work.md` - User guide
+- `docs/20_execution/20_UI_RULES.md` - UI rules
+
+---
+
+*Last Updated: December 26, 2024*

@@ -577,5 +577,3 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
     );
 };
 
-export default MyAssessmentsList;
-

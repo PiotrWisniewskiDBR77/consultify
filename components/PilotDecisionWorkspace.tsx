@@ -33,7 +33,7 @@ export const PilotDecisionWorkspace: React.FC<PilotDecisionWorkspaceProps> = ({
         if (selectedPilotId) {
             const init = initiatives.find(i => i.id === selectedPilotId);
             if (init) {
-                onUpdateInitiative({ ...init, status: InitiativeStatus.IN_EXECUTION }); // 'step4' usually indicates Pilot Execution phase?
+                onUpdateInitiative({ ...init, status: InitiativeStatus.EXECUTING }); // 'step4' usually indicates Pilot Execution phase?
                 // Actually 'step4' in types is InitiativeStatus. Let's use 'In Progress' or a specialized tag. 
                 // Or just proceed. The main thing is identifying the scope for Module 4.
             }

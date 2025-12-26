@@ -1,7 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LayoutDashboard, CheckSquare, Users, BarChart2, Bell, Plus, Brain, FileQuestion } from 'lucide-react';
+import { 
+    Target, 
+    Inbox, 
+    CheckSquare, 
+    FileQuestion, 
+    BarChart2, 
+    Settings, 
+    Plus, 
+    Brain,
+    Loader2
+} from 'lucide-react';
 import { SplitLayout } from '../components/SplitLayout';
+// New PMO components
+import { FocusBoard } from '../components/MyWork/Focus/FocusBoard';
+import { InboxTriage } from '../components/MyWork/Inbox/InboxTriage';
+// Legacy components (kept for backward compatibility)
 import { TodayDashboard } from '../components/MyWork/TodayDashboard';
 import { TaskInbox } from '../components/MyWork/TaskInbox';
 import { WorkloadView } from '../components/MyWork/WorkloadView';
@@ -9,29 +23,35 @@ import { NotificationSettings } from '../components/MyWork/NotificationSettings'
 import { ProgressView } from '../components/MyWork/ProgressView';
 import { TaskDetailModal } from '../components/MyWork/TaskDetailModal';
 import { DecisionsPanel } from '../components/MyWork/DecisionsPanel';
-import { LocationFilter } from '../components/MyWork/LocationFilter'; // CRIT-04
+import { LocationFilter } from '../components/MyWork/LocationFilter';
 import { usePMOContext } from '../hooks/usePMOContext';
+import { useInbox } from '../hooks/useInbox';
 
-type Tab = 'today' | 'inbox' | 'decisions' | 'workload' | 'progress' | 'settings';
+// Tab types - new PMO structure
+type Tab = 'focus' | 'inbox' | 'tasks' | 'decisions' | 'dashboard' | 'preferences';
 
 export const MyWorkView: React.FC = () => {
     const { t } = useTranslation();
-    const [activeTab, setActiveTab] = useState<Tab>('today');
+    const [activeTab, setActiveTab] = useState<Tab>('focus');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
-    const [locationFilter, setLocationFilter] = useState<string[]>([]); // CRIT-04
+    const [locationFilter, setLocationFilter] = useState<string[]>([]);
 
-    // Initialize PMO context - auto-fetches when project changes
+    // Initialize PMO context
     usePMOContext();
+    
+    // Get inbox counts for badge
+    const { totalCount: inboxCount, criticalCount } = useInbox({ autoLoad: true });
 
+    // New PMO tab structure
     const tabs = [
-        { id: 'today', label: t('myWork.tabs.today', 'Today'), icon: LayoutDashboard },
-        { id: 'inbox', label: t('myWork.tabs.inbox', 'Inbox'), icon: CheckSquare },
+        { id: 'focus', label: t('myWork.tabs.focus', 'Focus'), icon: Target },
+        { id: 'inbox', label: t('myWork.tabs.inbox', 'Inbox'), icon: Inbox, badge: inboxCount > 0 ? inboxCount : undefined, critical: criticalCount > 0 },
+        { id: 'tasks', label: t('myWork.tabs.tasks', 'All Tasks'), icon: CheckSquare },
         { id: 'decisions', label: t('myWork.tabs.decisions', 'Decisions'), icon: FileQuestion },
-        { id: 'workload', label: t('myWork.tabs.workload', 'Workload'), icon: Users },
-        { id: 'progress', label: t('myWork.tabs.progress', 'Progress'), icon: BarChart2 },
-        { id: 'settings', label: t('myWork.tabs.settings', 'Notifications'), icon: Bell },
+        { id: 'dashboard', label: t('myWork.tabs.dashboard', 'Dashboard'), icon: BarChart2 },
+        { id: 'preferences', label: t('myWork.tabs.preferences', 'Preferences'), icon: Settings },
     ];
 
     const handleCreateTask = () => {
@@ -87,21 +107,32 @@ export const MyWorkView: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Tabs */}
-                <div className="flex px-6 border-b border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 shrink-0">
+                {/* Tabs with badges */}
+                <div className="flex px-6 border-b border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 shrink-0 overflow-x-auto scrollbar-hide">
                     {tabs.map(tab => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id as Tab)}
                             className={`
-                                flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors
+                                relative flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
                                 ${activeTab === tab.id
-                                    ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                                    ? 'border-brand text-brand dark:text-brand'
                                     : 'border-transparent text-slate-500 hover:text-navy-900 dark:text-slate-400 dark:hover:text-white'}
                             `}
                         >
                             <tab.icon size={16} />
                             {tab.label}
+                            {/* Badge for inbox */}
+                            {'badge' in tab && tab.badge && (
+                                <span className={`
+                                    ml-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold flex items-center justify-center
+                                    ${tab.critical 
+                                        ? 'bg-red-500 text-white' 
+                                        : 'bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-300'}
+                                `}>
+                                    {tab.badge}
+                                </span>
+                            )}
                         </button>
                     ))}
                 </div>
@@ -109,12 +140,46 @@ export const MyWorkView: React.FC = () => {
                 {/* Content Area */}
                 <div className="flex-1 overflow-auto p-6">
                     <div className="mx-auto max-w-7xl h-full">
-                        {activeTab === 'today' && <TodayDashboard onEditTask={handleEditTask} onCreateTask={handleCreateTask} refreshTrigger={refreshTrigger} />}
-                        {activeTab === 'inbox' && <TaskInbox onEditTask={handleEditTask} onCreateTask={handleCreateTask} />}
+                        {/* New PMO Focus Board */}
+                        {activeTab === 'focus' && (
+                            <FocusBoard
+                                onTaskClick={handleEditTask}
+                                onTaskComplete={() => setRefreshTrigger(prev => prev + 1)}
+                            />
+                        )}
+                        
+                        {/* New Inbox Triage */}
+                        {activeTab === 'inbox' && (
+                            <InboxTriage
+                                onItemClick={(item) => {
+                                    if (item.linkedTaskId) {
+                                        handleEditTask(item.linkedTaskId);
+                                    }
+                                }}
+                            />
+                        )}
+                        
+                        {/* Legacy Tasks View (enhanced with filters) */}
+                        {activeTab === 'tasks' && (
+                            <TaskInbox 
+                                onEditTask={handleEditTask} 
+                                onCreateTask={handleCreateTask} 
+                            />
+                        )}
+                        
+                        {/* Decisions Panel */}
                         {activeTab === 'decisions' && <DecisionsPanel />}
-                        {activeTab === 'workload' && <WorkloadView />}
-                        {activeTab === 'progress' && <ProgressView />}
-                        {activeTab === 'settings' && <NotificationSettings />}
+                        
+                        {/* Dashboard - combines Progress and Workload */}
+                        {activeTab === 'dashboard' && (
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <ProgressView />
+                                <WorkloadView />
+                            </div>
+                        )}
+                        
+                        {/* Preferences / Notification Settings */}
+                        {activeTab === 'preferences' && <NotificationSettings />}
                     </div>
                 </div>
 

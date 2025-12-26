@@ -3,7 +3,7 @@ import { Initiative, InitiativeStatus } from '../types';
 
 import {
     Target, Users, DollarSign, TrendingUp,
-    CheckCircle, Clock,
+    CheckCircle, Clock, Play, Flag, UserPlus,
     MoreHorizontal, ChevronRight, Globe,
     Zap, Layers, Anchor, ArrowUpCircle, RefreshCw
 } from 'lucide-react';
@@ -12,10 +12,12 @@ interface InitiativeCardProps {
     initiative: Initiative;
     onClick: () => void;
     onEnrich?: (id: string) => Promise<void>;
-
+    onQuickAdvance?: (id: string) => void;
+    onQuickAssign?: (id: string) => void;
+    onQuickFlag?: (id: string) => void;
 }
 
-export const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick, onEnrich }) => {
+export const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick, onEnrich, onQuickAdvance, onQuickAssign, onQuickFlag }) => {
     const [isEnriching, setIsEnriching] = useState(false);
 
     const handleEnrich = async (e: React.MouseEvent) => {
@@ -33,13 +35,15 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onCl
     // Helpers for Status Colors
     const getStatusColor = (status: InitiativeStatus) => {
         switch (status) {
-            case InitiativeStatus.DRAFT:
-            case InitiativeStatus.PLANNED: return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+            case InitiativeStatus.DRAFT: return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+            case InitiativeStatus.PLANNING: return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+            case InitiativeStatus.REVIEW: return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
             case InitiativeStatus.APPROVED: return 'bg-teal-500/10 text-teal-400 border-teal-500/20';
-            case InitiativeStatus.IN_EXECUTION: return 'bg-blue-500/10 text-blue-400 border-blue-500/20'; // Execution
-            case InitiativeStatus.COMPLETED: return 'bg-green-500/10 text-green-400 border-green-500/20';
+            case InitiativeStatus.EXECUTING: return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
             case InitiativeStatus.BLOCKED: return 'bg-red-500/10 text-red-400 border-red-500/20';
+            case InitiativeStatus.DONE: return 'bg-green-500/10 text-green-400 border-green-500/20';
             case InitiativeStatus.CANCELLED: return 'bg-slate-300/10 text-slate-400 border-slate-300/20';
+            case InitiativeStatus.ARCHIVED: return 'bg-slate-200/10 text-slate-500 border-slate-200/20';
             default: return 'bg-slate-500/10 text-slate-400';
         }
     };
@@ -47,12 +51,14 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onCl
     const getStatusLabel = (status: InitiativeStatus) => {
         const labels: Record<string, string> = {
             [InitiativeStatus.DRAFT]: 'Draft',
-            [InitiativeStatus.PLANNED]: 'Planned (Step 3)',
+            [InitiativeStatus.PLANNING]: 'Planning',
+            [InitiativeStatus.REVIEW]: 'In Review',
             [InitiativeStatus.APPROVED]: 'Approved',
-            [InitiativeStatus.IN_EXECUTION]: 'In Execution',
-            [InitiativeStatus.COMPLETED]: 'Done & Verified',
+            [InitiativeStatus.EXECUTING]: 'Executing',
             [InitiativeStatus.BLOCKED]: 'Blocked',
-            [InitiativeStatus.CANCELLED]: 'Cancelled'
+            [InitiativeStatus.DONE]: 'Done',
+            [InitiativeStatus.CANCELLED]: 'Cancelled',
+            [InitiativeStatus.ARCHIVED]: 'Archived'
         };
         return labels[status] || status;
     };
@@ -300,21 +306,52 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onCl
             {/* Progress Footer */}
             <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-white/5">
                 <div className="flex items-center gap-3 text-[10px] text-slate-500 font-medium">
-                    <div className={`flex items-center gap-1 ${initiative.status !== InitiativeStatus.PLANNED && initiative.status !== InitiativeStatus.DRAFT ? 'text-blue-500' : ''}`}>
+                    <div className={`flex items-center gap-1 ${initiative.status !== InitiativeStatus.PLANNING && initiative.status !== InitiativeStatus.DRAFT ? 'text-blue-500' : ''}`}>
                         <CheckCircle size={12} />
                         <span>Plan</span>
                     </div>
-                    <div className={`flex items-center gap-1 ${initiative.status === InitiativeStatus.IN_EXECUTION || initiative.status === InitiativeStatus.COMPLETED ? 'text-blue-500' : ''}`}>
+                    <div className={`flex items-center gap-1 ${initiative.status === InitiativeStatus.EXECUTING || initiative.status === InitiativeStatus.DONE ? 'text-blue-500' : ''}`}>
                         <Clock size={12} />
                         <span>Pilot</span>
                     </div>
-                    <div className={`flex items-center gap-1 ${initiative.status === InitiativeStatus.IN_EXECUTION || initiative.status === InitiativeStatus.COMPLETED ? 'text-blue-500' : ''}`}>
+                    <div className={`flex items-center gap-1 ${initiative.status === InitiativeStatus.EXECUTING || initiative.status === InitiativeStatus.DONE ? 'text-blue-500' : ''}`}>
                         <Target size={12} />
                         <span>Scale</span>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-2">
+                    {/* Quick Actions - visible on hover */}
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        {onQuickAdvance && initiative.status !== InitiativeStatus.DONE && initiative.status !== InitiativeStatus.CANCELLED && (
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onQuickAdvance(initiative.id); }}
+                                className="p-1.5 rounded-lg bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-500/20 border border-green-200 dark:border-green-500/20 transition-all"
+                                title="Advance to next status"
+                            >
+                                <Play size={12} />
+                            </button>
+                        )}
+                        {onQuickAssign && (
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onQuickAssign(initiative.id); }}
+                                className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/20 border border-blue-200 dark:border-blue-500/20 transition-all"
+                                title="Assign owners"
+                            >
+                                <UserPlus size={12} />
+                            </button>
+                        )}
+                        {onQuickFlag && (
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onQuickFlag(initiative.id); }}
+                                className="p-1.5 rounded-lg bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-500/20 border border-amber-200 dark:border-amber-500/20 transition-all"
+                                title="Flag for attention"
+                            >
+                                <Flag size={12} />
+                            </button>
+                        )}
+                    </div>
+
                     {onEnrich && !initiative.aiConfidence && (
                         <button
                             onClick={handleEnrich}

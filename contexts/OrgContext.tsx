@@ -140,5 +140,3 @@ export const useCurrentOrg = (): Organization | null => {
     const { currentOrg } = useOrgContext();
     return currentOrg;
 };
-
-export default OrgContext;

@@ -659,6 +659,11 @@ function initDb() {
             });
         });
 
+        // Add report_id for traceability
+        db.run(`ALTER TABLE initiatives ADD COLUMN report_id TEXT`, (err) => {
+            // Ignore if exists - Link to assessment_reports
+        });
+
         // Task Dependencies
         db.run(`CREATE TABLE IF NOT EXISTS task_dependencies (
             id TEXT PRIMARY KEY,

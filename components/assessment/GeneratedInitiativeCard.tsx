@@ -231,5 +231,3 @@ export const GeneratedInitiativeCard: React.FC<GeneratedInitiativeCardProps> = (
     );
 };
 
-export default GeneratedInitiativeCard;
-

@@ -257,32 +257,42 @@ class AssessmentOverviewService {
     /**
      * Get list of assessments for AssessmentTable component
      * @param {string} organizationId - Organization ID
-     * @param {string} projectId - Project ID
+     * @param {string} projectId - Project ID (optional)
+     * @param {string} currentUserId - Current user ID for review detection
      * @returns {Promise<Array>} List of assessments
      */
-    static async getAssessmentsList(organizationId, projectId) {
+    static async getAssessmentsList(organizationId, projectId, currentUserId = null) {
         return new Promise((resolve, reject) => {
+            // Build SQL with review information
             let sql = `
                 SELECT 
                     aw.id,
                     aw.assessment_id,
                     aw.project_id,
-                    aw.workflow_state as status,
+                    aw.status,
                     aw.created_at,
                     aw.updated_at,
                     p.name as project_name,
-                    u.first_name || ' ' || u.last_name as created_by,
+                    u.first_name || ' ' || u.last_name as created_by_name,
                     ma.overall_as_is,
                     ma.overall_to_be,
-                    ma.is_complete
+                    ma.is_complete,
+                    -- Review information for current user
+                    CASE WHEN ar_me.reviewer_id IS NOT NULL THEN 1 ELSE 0 END AS review_requested_for_me,
+                    ar_me.status AS my_review_status,
+                    -- Total reviewers count
+                    (SELECT COUNT(*) FROM assessment_reviews ar2 WHERE ar2.workflow_id = aw.id) AS reviewers_count,
+                    -- Pending reviews count
+                    (SELECT COUNT(*) FROM assessment_reviews ar3 WHERE ar3.workflow_id = aw.id AND ar3.status = 'PENDING') AS pending_reviews_count
                 FROM assessment_workflows aw
                 LEFT JOIN projects p ON aw.project_id = p.id
                 LEFT JOIN users u ON aw.created_by = u.id
                 LEFT JOIN maturity_assessments ma ON aw.project_id = ma.project_id
+                LEFT JOIN assessment_reviews ar_me ON aw.id = ar_me.workflow_id AND ar_me.reviewer_id = ?
                 WHERE aw.organization_id = ?
             `;
 
-            const params = [organizationId];
+            const params = [currentUserId || '', organizationId];
 
             if (projectId) {
                 sql += ` AND aw.project_id = ?`;
@@ -311,8 +321,13 @@ class AssessmentOverviewService {
                     totalAxes: 7,
                     createdAt: row.created_at,
                     updatedAt: row.updated_at,
-                    createdBy: row.created_by || 'System',
-                    canCreateReport: row.status === 'APPROVED'
+                    createdBy: row.created_by_name || 'System',
+                    canCreateReport: row.status === 'APPROVED',
+                    // Review fields
+                    reviewRequestedForMe: row.review_requested_for_me === 1,
+                    myReviewStatus: row.my_review_status || null,
+                    reviewersCount: row.reviewers_count || 0,
+                    pendingReviewsCount: row.pending_reviews_count || 0
                 }));
 
                 resolve(assessments);
@@ -329,21 +344,21 @@ class AssessmentOverviewService {
      */
     static async getReportsList(organizationId, projectId) {
         return new Promise((resolve, reject) => {
+            // assessment_reports table columns: title, report_status, generated_at, based_on_id, project_id
             let sql = `
                 SELECT 
                     ar.id,
-                    ar.name,
-                    ar.assessment_id,
-                    ar.status,
-                    ar.created_at,
-                    ar.updated_at,
-                    aw.project_id,
+                    ar.title as name,
+                    ar.based_on_id as assessment_id,
+                    COALESCE(ar.report_status, 'DRAFT') as status,
+                    ar.generated_at as created_at,
+                    ar.generated_at as updated_at,
+                    ar.project_id,
                     p.name as project_name,
                     u.first_name || ' ' || u.last_name as created_by,
-                    (SELECT COUNT(*) FROM initiatives i WHERE i.report_id = ar.id) as initiatives_count
+                    (SELECT COUNT(*) FROM initiatives i WHERE i.project_id = ar.project_id) as initiatives_count
                 FROM assessment_reports ar
-                LEFT JOIN assessment_workflows aw ON ar.assessment_id = aw.assessment_id
-                LEFT JOIN projects p ON aw.project_id = p.id
+                LEFT JOIN projects p ON ar.project_id = p.id
                 LEFT JOIN users u ON ar.created_by = u.id
                 WHERE ar.organization_id = ?
             `;
@@ -351,11 +366,11 @@ class AssessmentOverviewService {
             const params = [organizationId];
 
             if (projectId) {
-                sql += ` AND aw.project_id = ?`;
+                sql += ` AND ar.project_id = ?`;
                 params.push(projectId);
             }
 
-            sql += ` ORDER BY ar.updated_at DESC`;
+            sql += ` ORDER BY ar.generated_at DESC`;
 
             db.all(sql, params, (err, rows) => {
                 if (err) {
@@ -384,6 +399,123 @@ class AssessmentOverviewService {
             });
         });
     }
+
+    /**
+     * Get full assessment details for Map view
+     * @param {string} assessmentId - Assessment ID (from assessment_workflows)
+     * @returns {Promise<Object|null>} Full assessment details or null
+     */
+    static async getAssessmentDetails(assessmentId) {
+        return new Promise((resolve, reject) => {
+            const sql = `
+                SELECT 
+                    aw.id,
+                    aw.assessment_id,
+                    aw.project_id,
+                    aw.status,
+                    aw.created_at,
+                    aw.updated_at,
+                    p.name as project_name,
+                    ma.axis_scores,
+                    ma.overall_as_is,
+                    ma.overall_to_be,
+                    ma.is_complete
+                FROM assessment_workflows aw
+                LEFT JOIN projects p ON aw.project_id = p.id
+                LEFT JOIN maturity_assessments ma ON aw.project_id = ma.project_id
+                WHERE aw.id = ? OR aw.assessment_id = ?
+            `;
+
+            db.get(sql, [assessmentId, assessmentId], (err, row) => {
+                if (err) return reject(err);
+                if (!row) return resolve(null);
+
+                // Parse axis_scores from JSON
+                let axisData = {};
+                try {
+                    const scores = JSON.parse(row.axis_scores || '[]');
+                    // Convert DB format to frontend format
+                    axisData = AssessmentOverviewService.convertAxisScoresToFrontendFormat(scores);
+                } catch (e) {
+                    console.warn('[AssessmentOverview] Could not parse axis_scores:', e);
+                }
+
+                resolve({
+                    id: row.assessment_id || row.id,
+                    name: `DRD Assessment - ${new Date(row.created_at).toLocaleDateString()}`,
+                    projectId: row.project_id,
+                    projectName: row.project_name || 'Unknown Project',
+                    status: row.status || 'DRAFT',
+                    createdAt: row.created_at,
+                    updatedAt: row.updated_at,
+                    axisData: axisData,
+                    overallAsIs: row.overall_as_is,
+                    overallToBe: row.overall_to_be,
+                    isComplete: row.is_complete === 1
+                });
+            });
+        });
+    }
+
+    /**
+     * Convert DB axis_scores format to frontend AxisAssessment format
+     * @param {Array|Object} scores - Axis scores from DB
+     * @returns {Object} Frontend-compatible axis data
+     */
+    static convertAxisScoresToFrontendFormat(scores) {
+        const axisMapping = {
+            'processes': 'processes',
+            'digitalProducts': 'digitalProducts',
+            'businessModels': 'businessModels',
+            'dataManagement': 'dataManagement',
+            'culture': 'culture',
+            'cybersecurity': 'cybersecurity',
+            'aiMaturity': 'aiMaturity'
+        };
+
+        const result = {};
+
+        // Initialize all axes with defaults
+        Object.values(axisMapping).forEach(axis => {
+            result[axis] = {
+                actual: 1,
+                target: 1,
+                justification: '',
+                notes: ''
+            };
+        });
+
+        // Handle array format from DB
+        if (Array.isArray(scores)) {
+            scores.forEach(score => {
+                const axis = score.axis || score.axisId;
+                if (axisMapping[axis]) {
+                    result[axisMapping[axis]] = {
+                        actual: score.asIs || score.actual || 1,
+                        target: score.toBe || score.target || 1,
+                        justification: score.justification || '',
+                        notes: score.notes || ''
+                    };
+                }
+            });
+        } else if (typeof scores === 'object' && scores !== null) {
+            // Handle object format
+            Object.keys(scores).forEach(axis => {
+                if (axisMapping[axis]) {
+                    const data = scores[axis];
+                    result[axisMapping[axis]] = {
+                        actual: data.asIs || data.actual || 1,
+                        target: data.toBe || data.target || 1,
+                        justification: data.justification || '',
+                        notes: data.notes || ''
+                    };
+                }
+            });
+        }
+
+        return result;
+    }
 }
 
 module.exports = AssessmentOverviewService;
+

@@ -25,8 +25,8 @@ export const FullExecutionView: React.FC = () => {
 `as Record<string, any>`
 
   // --- AI CONTEXT INJECTION ---
-  const todoCount = fullSession.initiatives.filter(i => [InitiativeStatus.DRAFT, InitiativeStatus.PLANNED, InitiativeStatus.APPROVED].includes(i.status)).length;
-  const inProgCount = fullSession.initiatives.filter(i => i.status === InitiativeStatus.IN_EXECUTION).length;
+  const todoCount = fullSession.initiatives.filter(i => [InitiativeStatus.DRAFT, InitiativeStatus.PLANNING, InitiativeStatus.APPROVED].includes(i.status)).length;
+  const inProgCount = fullSession.initiatives.filter(i => i.status === InitiativeStatus.EXECUTING).length;
   const blockedCount = fullSession.initiatives.filter(i => i.status === InitiativeStatus.BLOCKED).length;
 
   useScreenContext(
@@ -68,8 +68,8 @@ export const FullExecutionView: React.FC = () => {
       }));
 
       // Context: Execution
-      const todo = fullSession.initiatives.filter(i => [InitiativeStatus.DRAFT, InitiativeStatus.PLANNED, InitiativeStatus.APPROVED].includes(i.status)).length;
-      const inProg = fullSession.initiatives.filter(i => i.status === InitiativeStatus.IN_EXECUTION).length;
+      const todo = fullSession.initiatives.filter(i => [InitiativeStatus.DRAFT, InitiativeStatus.PLANNING, InitiativeStatus.APPROVED].includes(i.status)).length;
+      const inProg = fullSession.initiatives.filter(i => i.status === InitiativeStatus.EXECUTING).length;
       const blocked = fullSession.initiatives.filter(i => i.status === InitiativeStatus.BLOCKED).length;
 
       const context = `
@@ -98,7 +98,7 @@ export const FullExecutionView: React.FC = () => {
     if (needsInit) {
       const initializedInitiatives = fullSession.initiatives.map(i => ({
         ...i,
-        status: Object.values(InitiativeStatus).includes(i.status) ? i.status : InitiativeStatus.PLANNED,
+        status: Object.values(InitiativeStatus).includes(i.status) ? i.status : InitiativeStatus.PLANNING,
         progress: i.progress || 0
       }));
 

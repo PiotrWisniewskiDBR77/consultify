@@ -84,7 +84,19 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       const recognition = new SpeechRecognition();
       recognition.continuous = false;
       recognition.interimResults = true;
-      recognition.lang = 'pl-PL'; // Polish by default, will also recognize English
+
+      // Set language based on i18n setting
+      const i18nLang = localStorage.getItem('i18nextLng') || 'pl';
+      const langMap: Record<string, string> = {
+        'pl': 'pl-PL',
+        'en': 'en-US',
+        'de': 'de-DE',
+        'es': 'es-ES',
+        'ja': 'ja-JP',
+        'ar': 'ar-SA'
+      };
+      recognition.lang = langMap[i18nLang] || 'pl-PL';
+      console.log('[ChatPanel] Speech recognition language:', recognition.lang);
 
       recognition.onresult = (event: any) => {
         const transcript = Array.from(event.results)
@@ -168,8 +180,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
           <button
             onClick={toggleVoice}
             className={`p-2 rounded-lg transition-all flex items-center gap-1.5 text-xs ${voiceEnabled
-                ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-700'
-                : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
+              ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-700'
+              : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
               }`}
             title={voiceEnabled ? 'Wyłącz głos AI' : 'Włącz głos AI'}
           >
@@ -214,8 +226,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                     <button
                       onClick={() => isSpeaking ? stopSpeaking() : speak(msg.content)}
                       className={`p-1.5 rounded-md transition-all ${isSpeaking
-                          ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
-                          : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
+                        ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                        : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
                         }`}
                       title={isSpeaking ? 'Zatrzymaj' : 'Przeczytaj'}
                     >
@@ -312,21 +324,21 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             )}
           </div>
 
-          {/* Microphone Button */}
-          {speechSupported && (
-            <button
-              type="button"
-              onClick={toggleRecording}
-              disabled={aiFreezeStatus.isFrozen}
-              className={`p-2.5 rounded-lg transition-all flex items-center justify-center ${isRecording
-                ? 'bg-red-500 text-white hover:bg-red-600 shadow-md shadow-red-500/30'
-                : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700 hover:text-slate-700 dark:hover:text-slate-200'
-                } ${aiFreezeStatus.isFrozen ? 'opacity-50 cursor-not-allowed' : ''}`}
-              title={isRecording ? 'Stop recording' : 'Start voice input'}
-            >
-              {isRecording ? <Square size={16} /> : <Mic size={16} />}
-            </button>
-          )}
+          {/* Microphone Button - always visible */}
+          <button
+            type="button"
+            onClick={toggleRecording}
+            disabled={aiFreezeStatus.isFrozen || !speechSupported}
+            className={`p-2.5 rounded-lg transition-all flex items-center justify-center ${isRecording
+              ? 'bg-red-500 text-white hover:bg-red-600 shadow-md shadow-red-500/30'
+              : speechSupported
+                ? 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700 hover:text-slate-700 dark:hover:text-slate-200'
+                : 'bg-slate-100 dark:bg-navy-800 text-slate-300 dark:text-slate-600 cursor-not-allowed'
+              } ${aiFreezeStatus.isFrozen ? 'opacity-50 cursor-not-allowed' : ''}`}
+            title={!speechSupported ? 'Voice input not supported in this browser' : isRecording ? 'Stop recording' : 'Start voice input'}
+          >
+            {isRecording ? <Square size={16} /> : <Mic size={16} />}
+          </button>
 
           {/* Send Button */}
           <button

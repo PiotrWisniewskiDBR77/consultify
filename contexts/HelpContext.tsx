@@ -272,5 +272,3 @@ export const useHelpHint = (featureKey: string) => {
 
     return { hint, loading };
 };
-
-export default HelpContext;

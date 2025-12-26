@@ -40,8 +40,8 @@ export const FullStep6Workspace: React.FC<FullStep6WorkspaceProps> = ({
    // 3. Execution
    const initiatives = fullSession.initiatives || [];
    const total = initiatives.length;
-   const done = initiatives.filter(i => i.status === InitiativeStatus.COMPLETED).length;
-   const inProg = initiatives.filter(i => i.status === InitiativeStatus.IN_EXECUTION).length;
+   const done = initiatives.filter(i => i.status === InitiativeStatus.DONE).length;
+   const inProg = initiatives.filter(i => i.status === InitiativeStatus.EXECUTING).length;
    const blocked = initiatives.filter(i => i.status === InitiativeStatus.BLOCKED).length;
    const completion = total > 0 ? (done / total) * 100 : 0;
 

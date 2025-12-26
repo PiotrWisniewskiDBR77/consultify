@@ -344,6 +344,58 @@ Every generated initiative shows:
 
 ---
 
+## Workflow & Collaboration
+
+### Workflow Status Bar
+
+When editing an assessment in the Map tab, you'll see a visual workflow status bar at the top showing:
+- **DRAFT** → **IN_REVIEW** → **AWAITING_APPROVAL** → **APPROVED**
+
+Color indicators:
+- Gray: Pending stage
+- Blue: Current stage
+- Green: Completed stage
+
+### Keyboard Shortcuts
+
+Speed up your workflow with these shortcuts:
+
+| Shortcut | Action |
+|----------|--------|
+| `Cmd/Ctrl + S` | Save assessment |
+| `Escape` | Close version history panel |
+
+### Auto-Save
+
+The system automatically saves your work every 30 seconds when you have unsaved changes. You'll see:
+- "Niezapisane zmiany (auto-save za 30s)" - when changes are pending
+- "Auto-saved [time]" - confirmation of last save
+
+### Stage Gates
+
+Before creating a report from an approved assessment, you'll encounter a Stage Gate:
+- **DESIGN_GATE**: Verifies assessment is 100% complete and approved
+- View the checklist of criteria that must be met
+- Green checkmarks indicate passed criteria
+- Click "Przejdź dalej" when all criteria are met
+
+### Bulk Actions
+
+In the Assessment Table, you can select multiple assessments:
+1. Click the checkbox in the first column
+2. Use "Select All" in the header to select all visible assessments
+3. A purple action bar appears with bulk options:
+   - **Delete Selected**: Remove multiple assessments at once
+
+### Review SLA Tracking
+
+When you submit an assessment for review:
+- Reviewers have **48 hours** (default SLA) to complete their review
+- Overdue reviews are highlighted in red
+- Reviewers see remaining time in their dashboard
+
+---
+
 ## FAQ
 
 ### General
@@ -394,4 +446,4 @@ A: Typically 3-7, depending on gaps found.
 
 ---
 
-*Last Updated: December 2024*
+*Last Updated: December 26, 2024*

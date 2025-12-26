@@ -9,6 +9,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import toast from 'react-hot-toast';
 import {
     Plus,
     Search,
@@ -24,8 +25,13 @@ import {
     Loader2,
     FileText,
     Trash2,
-    AlertCircle
+    AlertCircle,
+    User,
+    ArrowRight
 } from 'lucide-react';
+import { NewReportModal } from './modals/NewReportModal';
+import { ReportEditor } from './ReportEditor';
+import { StageGateModal } from './modals/StageGateModal';
 
 interface Report {
     id: string;
@@ -50,21 +56,22 @@ interface ReportsTableProps {
     framework?: AssessmentFramework;
     onCreateInitiatives: (reportId: string) => void;
     pendingAssessmentId?: string | null;
+    onOpenReport?: (reportId: string, reportName: string, status?: string) => void;
 }
 
 const STATUS_CONFIG = {
-    'DRAFT': { 
-        label: 'Draft', 
+    'DRAFT': {
+        label: 'Draft',
         color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
         icon: <Edit size={14} />
     },
-    'FINAL': { 
-        label: 'Final', 
+    'FINAL': {
+        label: 'Final',
         color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
         icon: <CheckCircle2 size={14} />
     },
-    'ARCHIVED': { 
-        label: 'Archived', 
+    'ARCHIVED': {
+        label: 'Archived',
         color: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-500',
         icon: <Clock size={14} />
     }
@@ -73,7 +80,8 @@ const STATUS_CONFIG = {
 export const ReportsTable: React.FC<ReportsTableProps> = ({
     projectId,
     onCreateInitiatives,
-    pendingAssessmentId
+    pendingAssessmentId,
+    onOpenReport
 }) => {
     // State
     const [reports, setReports] = useState<Report[]>([]);
@@ -83,13 +91,19 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
     const [activeRowMenu, setActiveRowMenu] = useState<string | null>(null);
     const [showNewReportModal, setShowNewReportModal] = useState(!!pendingAssessmentId);
     const [isCreatingReport, setIsCreatingReport] = useState(false);
+    const [editingReportId, setEditingReportId] = useState<string | null>(null);
+    const [showStageGate, setShowStageGate] = useState(false);
 
     // Fetch reports
     const fetchReports = useCallback(async () => {
         setIsLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`/api/assessment-reports?projectId=${projectId}`, {
+            // Fetch all reports for org, optionally filter by project
+            const url = projectId
+                ? `/api/assessment-reports?projectId=${projectId}`
+                : `/api/assessment-reports`;
+            const response = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
@@ -105,10 +119,9 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
     }, [projectId]);
 
     useEffect(() => {
-        if (projectId) {
-            fetchReports();
-        }
-    }, [projectId, fetchReports]);
+        // Always fetch - projectId is optional filter
+        fetchReports();
+    }, [fetchReports]);
 
     // Create report from assessment
     const handleCreateReport = async (assessmentId: string, name: string) => {
@@ -117,7 +130,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
             const token = localStorage.getItem('token');
             const response = await fetch('/api/assessment-reports', {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
@@ -149,6 +162,64 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
         }
     };
 
+    // Export PDF
+    const handleExportPDF = async (reportId: string, reportName: string) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`/api/assessment-reports/${reportId}/export/pdf`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${reportName.replace(/\s+/g, '_')}_Report.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                toast.success('Eksport PDF zakończony');
+            } else {
+                console.error('PDF export failed');
+                toast.error('Nie udało się wyeksportować PDF');
+            }
+        } catch (err) {
+            console.error('[ReportsTable] PDF Export error:', err);
+            toast.error('Błąd eksportu PDF');
+        }
+    };
+
+    // Export Excel
+    const handleExportExcel = async (reportId: string, reportName: string) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`/api/assessment-reports/${reportId}/export/excel`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${reportName.replace(/\s+/g, '_')}_Report.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                toast.success('Eksport Excel zakończony');
+            } else {
+                console.error('Excel export failed');
+                toast.error('Nie udało się wyeksportować Excel');
+            }
+        } catch (err) {
+            console.error('[ReportsTable] Excel Export error:', err);
+            toast.error('Błąd eksportu Excel');
+        }
+    };
+
     // Filter reports
     const filteredReports = reports.filter(report => {
         // Status filter
@@ -172,10 +243,10 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
     // Format date
     const formatDate = (dateStr: string) => {
         const date = new Date(dateStr);
-        return date.toLocaleDateString('en-US', { 
-            month: 'short', 
-            day: 'numeric', 
-            year: 'numeric' 
+        return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
         });
     };
 
@@ -185,6 +256,21 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
         draft: reports.filter(r => r.status === 'DRAFT').length,
         final: reports.filter(r => r.status === 'FINAL').length
     };
+
+    // If editing a report, show the editor
+    if (editingReportId) {
+        return (
+            <ReportEditor
+                reportId={editingReportId}
+                onClose={() => setEditingReportId(null)}
+                onSaved={() => fetchReports()}
+                onFinalized={() => {
+                    fetchReports();
+                    setEditingReportId(null);
+                }}
+            />
+        );
+    }
 
     return (
         <div className="h-full flex flex-col">
@@ -200,11 +286,15 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                         </p>
                     </div>
                     <button
-                        onClick={() => setShowNewReportModal(true)}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg transition-colors"
+                        onClick={() => setShowStageGate(true)}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg transition-colors group relative"
+                        title="Approved Assessment → Draft Report → Final Report → Generate Initiatives"
                     >
                         <Plus size={18} />
                         New Report
+                        <span className="hidden group-hover:block absolute top-full right-0 mt-2 px-3 py-2 bg-navy-900 dark:bg-navy-800 text-white text-xs rounded-lg shadow-lg whitespace-nowrap z-50">
+                            Workflow: Assessment → Report → Initiatives
+                        </span>
                     </button>
                 </div>
 
@@ -274,16 +364,19 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                                 <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                     Report
                                 </th>
-                                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                    Author
+                                </th>
+                                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                     Assessment
                                 </th>
-                                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                     Status
                                 </th>
-                                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                     Initiatives
                                 </th>
-                                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                     Updated
                                 </th>
                                 <th className="text-right px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
@@ -294,9 +387,9 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                         <tbody className="divide-y divide-slate-200 dark:divide-white/10">
                             {filteredReports.map((report) => {
                                 const statusConfig = STATUS_CONFIG[report.status] || STATUS_CONFIG.DRAFT;
-                                
+
                                 return (
-                                    <tr 
+                                    <tr
                                         key={report.id}
                                         className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                                     >
@@ -305,21 +398,56 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                                                 <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
                                                     <FileText className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                                                 </div>
-                                                <p className="font-medium text-navy-900 dark:text-white">
+                                                <button
+                                                    onClick={() => {
+                                                        if (onOpenReport) {
+                                                            onOpenReport(report.id, report.name, report.status);
+                                                        } else {
+                                                            setEditingReportId(report.id);
+                                                        }
+                                                    }}
+                                                    className="font-medium text-navy-900 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors text-left"
+                                                >
                                                     {report.name}
-                                                </p>
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        if (onOpenReport) {
+                                                            onOpenReport(report.id, report.name, report.status);
+                                                        } else {
+                                                            setEditingReportId(report.id);
+                                                        }
+                                                    }}
+                                                    className="p-1 text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded transition-colors"
+                                                    title="Open report"
+                                                >
+                                                    <ArrowRight size={14} />
+                                                </button>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
+                                        <td className="px-4 py-4">
+                                            <div 
+                                                className="flex items-center gap-2 cursor-default"
+                                                title={report.createdBy}
+                                            >
+                                                <div className="w-7 h-7 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-xs font-medium text-purple-700 dark:text-purple-300">
+                                                    {report.createdBy.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                                                </div>
+                                                <span className="text-sm text-slate-600 dark:text-slate-400 truncate max-w-[60px]">
+                                                    {report.createdBy.split(' ')[0]}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-4 text-sm text-slate-500 dark:text-slate-400">
                                             {report.assessmentName}
                                         </td>
-                                        <td className="px-6 py-4">
+                                        <td className="px-4 py-4">
                                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusConfig.color}`}>
                                                 {statusConfig.icon}
                                                 {statusConfig.label}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4">
+                                        <td className="px-4 py-4">
                                             {report.initiativesGenerated ? (
                                                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
                                                     <Lightbulb size={12} />
@@ -329,47 +457,59 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                                                 <span className="text-sm text-slate-400">—</span>
                                             )}
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
+                                        <td className="px-4 py-4 text-sm text-slate-500 dark:text-slate-400">
                                             {formatDate(report.updatedAt)}
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="flex items-center justify-end gap-2">
-                                                {/* Edit/View */}
-                                                <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors">
-                                                    {report.status === 'DRAFT' ? <Edit size={14} /> : <Eye size={14} />}
-                                                    {report.status === 'DRAFT' ? 'Edit' : 'View'}
-                                                </button>
-
-                                                {/* Finalize - only for draft */}
-                                                {report.status === 'DRAFT' && (
+                                            <div className="flex items-center justify-end gap-1">
+                                                {/* Primary Action - context-dependent */}
+                                                {report.status === 'DRAFT' ? (
+                                                    // Draft - Finalize is primary
                                                     <button
                                                         onClick={() => handleFinalizeReport(report.id)}
-                                                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                                                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-green-600 hover:bg-green-500 text-white rounded-lg transition-colors"
                                                     >
                                                         <CheckCircle2 size={14} />
                                                         Finalize
                                                     </button>
-                                                )}
-
-                                                {/* Generate Initiatives - only for final */}
-                                                {report.status === 'FINAL' && !report.initiativesGenerated && (
+                                                ) : report.status === 'FINAL' && !report.initiativesGenerated ? (
+                                                    // Final without initiatives - Generate is primary
                                                     <button
                                                         onClick={() => onCreateInitiatives(report.id)}
-                                                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+                                                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors"
                                                     >
                                                         <Lightbulb size={14} />
-                                                        Generate Initiatives
+                                                        Initiatives
+                                                    </button>
+                                                ) : (
+                                                    // Default - View
+                                                    <button 
+                                                        onClick={() => {
+                                                            if (onOpenReport) {
+                                                                onOpenReport(report.id, report.name, report.status);
+                                                            } else {
+                                                                setEditingReportId(report.id);
+                                                            }
+                                                        }}
+                                                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+                                                    >
+                                                        <Eye size={14} />
+                                                        View
                                                     </button>
                                                 )}
 
-                                                {/* Download */}
+                                                {/* Download PDF - for final reports */}
                                                 {report.status === 'FINAL' && (
-                                                    <button className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded">
+                                                    <button 
+                                                        onClick={() => handleExportPDF(report.id, report.name)}
+                                                        className="p-1.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded"
+                                                        title="Download PDF"
+                                                    >
                                                         <Download size={16} />
                                                     </button>
                                                 )}
 
-                                                {/* More menu */}
+                                                {/* More menu - all secondary actions */}
                                                 <div className="relative">
                                                     <button
                                                         onClick={() => setActiveRowMenu(activeRowMenu === report.id ? null : report.id)}
@@ -377,22 +517,80 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                                                     >
                                                         <MoreVertical size={16} />
                                                     </button>
-                                                    
+
                                                     {activeRowMenu === report.id && (
                                                         <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-navy-900 rounded-lg shadow-lg border border-slate-200 dark:border-white/10 py-1 z-10">
-                                                            <button className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5">
+                                                            <button 
+                                                                onClick={() => {
+                                                                    if (onOpenReport) {
+                                                                        onOpenReport(report.id, report.name, report.status);
+                                                                    } else {
+                                                                        setEditingReportId(report.id);
+                                                                    }
+                                                                    setActiveRowMenu(null);
+                                                                }}
+                                                                className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2"
+                                                            >
+                                                                {report.status === 'DRAFT' ? <Edit size={14} /> : <Eye size={14} />}
+                                                                {report.status === 'DRAFT' ? 'Edit' : 'View'} Report
+                                                            </button>
+                                                            {report.status === 'DRAFT' && (
+                                                                <button
+                                                                    onClick={() => {
+                                                                        handleFinalizeReport(report.id);
+                                                                        setActiveRowMenu(null);
+                                                                    }}
+                                                                    className="w-full text-left px-4 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/10 flex items-center gap-2"
+                                                                >
+                                                                    <CheckCircle2 size={14} />
+                                                                    Finalize
+                                                                </button>
+                                                            )}
+                                                            {report.status === 'FINAL' && !report.initiativesGenerated && (
+                                                                <button
+                                                                    onClick={() => {
+                                                                        onCreateInitiatives(report.id);
+                                                                        setActiveRowMenu(null);
+                                                                    }}
+                                                                    className="w-full text-left px-4 py-2 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/10 flex items-center gap-2"
+                                                                >
+                                                                    <Lightbulb size={14} />
+                                                                    Generate Initiatives
+                                                                </button>
+                                                            )}
+                                                            <div className="border-t border-slate-200 dark:border-white/10 my-1" />
+                                                            <button 
+                                                                onClick={() => {
+                                                                    handleExportPDF(report.id, report.name);
+                                                                    setActiveRowMenu(null);
+                                                                }}
+                                                                className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2"
+                                                            >
+                                                                <FileText size={14} />
                                                                 Export PDF
                                                             </button>
-                                                            <button className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5">
+                                                            <button 
+                                                                onClick={() => {
+                                                                    handleExportExcel(report.id, report.name);
+                                                                    setActiveRowMenu(null);
+                                                                }}
+                                                                className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2"
+                                                            >
+                                                                <FileOutput size={14} />
                                                                 Export Excel
                                                             </button>
-                                                            <button className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5">
+                                                            <button className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2">
+                                                                <RefreshCw size={14} />
                                                                 Duplicate
                                                             </button>
                                                             {report.status === 'DRAFT' && (
-                                                                <button className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10">
-                                                                    Delete
-                                                                </button>
+                                                                <>
+                                                                    <div className="border-t border-slate-200 dark:border-white/10 my-1" />
+                                                                    <button className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-2">
+                                                                        <Trash2 size={14} />
+                                                                        Delete
+                                                                    </button>
+                                                                </>
                                                             )}
                                                         </div>
                                                     )}
@@ -407,15 +605,35 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                 )}
             </div>
 
-            {/* Workflow hint */}
-            <div className="shrink-0 px-6 py-3 border-t border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-navy-950">
-                <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
-                    <span className="font-medium">Workflow:</span> Approved Assessment → Draft Report → Final Report → Generate Initiatives
-                </p>
-            </div>
+            {/* Stage Gate Modal */}
+            {showStageGate && (
+                <StageGateModal
+                    projectId={projectId}
+                    assessmentId={pendingAssessmentId || ''}
+                    gateType="DESIGN_GATE"
+                    fromPhase="Assessment"
+                    toPhase="Reports"
+                    onClose={() => setShowStageGate(false)}
+                    onProceed={() => {
+                        setShowStageGate(false);
+                        setShowNewReportModal(true);
+                    }}
+                />
+            )}
+
+            {/* New Report Modal */}
+            {showNewReportModal && (
+                <NewReportModal
+                    projectId={projectId}
+                    preselectedAssessmentId={pendingAssessmentId || undefined}
+                    onClose={() => setShowNewReportModal(false)}
+                    onCreated={(reportId) => {
+                        fetchReports();
+                        setShowNewReportModal(false);
+                    }}
+                />
+            )}
         </div>
     );
 };
-
-export default ReportsTable;
 

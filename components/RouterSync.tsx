@@ -80,7 +80,13 @@ export const RouterSync: React.FC = () => {
             console.log('[RouterSync] Public Share Link accessed');
             // No state change needed - App.tsx will handle this route
         } else if (path === '/login' || path === '/auth') {
-            // Login/Auth route - show auth view
+            // Login/Auth route - show auth view ONLY if not authenticated
+            // If user is already authenticated, redirect to dashboard
+            if (currentUser?.isAuthenticated) {
+                console.log('[RouterSync] User authenticated, redirecting to dashboard');
+                navigate('/', { replace: true });
+                return;
+            }
             if (currentView !== AppView.AUTH) {
                 console.log('[RouterSync] Navigating to AUTH/LOGIN');
                 setAuthInitialStep(AuthStep.LOGIN);
