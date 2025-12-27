@@ -14,3 +14,5 @@ ALTER TABLE initiatives ADD COLUMN source_report_id TEXT REFERENCES assessment_r
 CREATE INDEX IF NOT EXISTS idx_initiatives_target_quarter ON initiatives(target_quarter);
 CREATE INDEX IF NOT EXISTS idx_initiatives_source_report ON initiatives(source_report_id);
 
+
+

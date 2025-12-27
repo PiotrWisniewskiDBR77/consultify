@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, Mock } from 'vitest';
 import { useScreenContext } from '../../../hooks/useScreenContext';
 import { useAIContext } from '../../../contexts/AIContext';
 
@@ -11,7 +11,7 @@ describe('Hook Test: useScreenContext', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         vi.useFakeTimers();
-`(useAIContext as jest.Mock).mockReturnValue({`
+        (useAIContext as Mock).mockReturnValue({
             setScreenContext: mockSetScreenContext,
         });
     });
@@ -43,7 +43,7 @@ describe('Hook Test: useScreenContext', () => {
     });
 
     it('updates context when data changes', () => {
-`renderHook<{ data: unknown }>(`
+        const { rerender } = renderHook<{ data: unknown }, unknown>(
             ({ data }) => useScreenContext('screen-1', 'Test', data),
             { initialProps: { data: { initial: 'data' } } }
         );
@@ -57,4 +57,3 @@ describe('Hook Test: useScreenContext', () => {
         expect(mockSetScreenContext).toHaveBeenCalledTimes(2);
     });
 });
-

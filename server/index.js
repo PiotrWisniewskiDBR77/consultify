@@ -298,6 +298,10 @@ app.use('/api/assessment-workflow', assessmentWorkflowRoutes);
 app.use('/api/assessments', assessmentHubRoutes);
 app.use('/api/assessment-reports', assessmentReportsRoutes);
 
+// Premium Reports (McKinsey/BCG-grade PDF generation)
+const premiumReportsRoutes = require('./routes/premiumReports');
+app.use('/api/reports/premium', premiumReportsRoutes);
+
 
 // SCMS Roadmap Routes (Step 5)
 const roadmapRoutes = require('./routes/roadmap');

@@ -26,7 +26,9 @@ import {
     Building2,
     Target,
     Sparkles,
-    Lock
+    Lock,
+    Maximize2,
+    Minimize2
 } from 'lucide-react';
 
 interface ReportHeaderProps {
@@ -40,12 +42,14 @@ interface ReportHeaderProps {
     isLoading: boolean;
     createdAt?: string;
     updatedAt?: string;
+    isFullscreen?: boolean;
     onBack: () => void;
     onSave: () => void;
     onFinalize: () => void;
     onRegenerate: () => void;
     onExportPdf: () => void;
     onExportExcel: () => void;
+    onFullscreen?: () => void;
 }
 
 // Status badge configuration
@@ -81,12 +85,14 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
     isLoading,
     createdAt,
     updatedAt,
+    isFullscreen,
     onBack,
     onSave,
     onFinalize,
     onRegenerate,
     onExportPdf,
-    onExportExcel
+    onExportExcel,
+    onFullscreen
 }) => {
     const { t, i18n } = useTranslation();
     const isPolish = i18n.language === 'pl';
@@ -169,6 +175,24 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
 
                     {/* Right side: Actions */}
                     <div className="flex items-center gap-2 flex-shrink-0">
+                        {/* Fullscreen button */}
+                        {onFullscreen && (
+                            <button
+                                onClick={onFullscreen}
+                                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                                title={isPolish ? (isFullscreen ? 'Zamknij pełny ekran' : 'Pełny ekran') : (isFullscreen ? 'Exit fullscreen' : 'Fullscreen')}
+                            >
+                                {isFullscreen ? (
+                                    <Minimize2 className="w-4 h-4" />
+                                ) : (
+                                    <Maximize2 className="w-4 h-4" />
+                                )}
+                                <span className="hidden sm:inline">
+                                    {isPolish ? (isFullscreen ? 'Zamknij' : 'Pełny ekran') : (isFullscreen ? 'Exit' : 'Fullscreen')}
+                                </span>
+                            </button>
+                        )}
+
                         {/* Export dropdown */}
                         <div className="relative">
                             <button

@@ -74,3 +74,5 @@ Consultify follows a **trust-first, AI-disciplined, organization-centric** appro
 *For detailed functional requirements and methodology, see [docs/functional_requirements_full.txt](functional_requirements_full.txt) and [docs/00_foundation/](00_foundation/).*
 
 
+
+

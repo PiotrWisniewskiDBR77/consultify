@@ -1,0 +1,255 @@
+{{!-- Premium Report Template --}}
+{{!-- McKinsey/BCG Grade Enterprise Report --}}
+
+{{!-- COVER PAGE --}}
+<div class="cover-page">
+    <div class="cover-gradient"></div>
+
+    {{#if organizationLogo}}
+    <img src="{{organizationLogo}}" alt="Logo" class="org-logo" />
+    {{/if}}
+
+    <h1>{{name}}</h1>
+    <p class="subtitle">Digital Readiness Assessment</p>
+
+    <div class="cover-meta">
+        <span class="assessment-name">{{assessmentName}}</span>
+        <span class="divider">•</span>
+        <span class="date">{{formatDate createdAt}}</span>
+    </div>
+
+    <div class="organization-name">{{organizationName}}</div>
+
+    <div class="confidential-badge">CONFIDENTIAL</div>
+</div>
+
+{{!-- TABLE OF CONTENTS --}}
+<div class="section toc">
+    <h2>Spis Treści</h2>
+    <div class="toc-list">
+        <div class="toc-item">
+            <span class="toc-title">Executive Summary</span>
+            <span class="toc-dots"></span>
+            <span class="toc-page">3</span>
+        </div>
+        <div class="toc-item">
+            <span class="toc-title">Przegląd Metodologii</span>
+            <span class="toc-dots"></span>
+            <span class="toc-page">5</span>
+        </div>
+        <div class="toc-item">
+            <span class="toc-title">Aktualny Stan Dojrzałości</span>
+            <span class="toc-dots"></span>
+            <span class="toc-page">6</span>
+        </div>
+        <div class="toc-item">
+            <span class="toc-title">Analiza Luk</span>
+            <span class="toc-dots"></span>
+            <span class="toc-page">10</span>
+        </div>
+        <div class="toc-item">
+            <span class="toc-title">Strategiczne Rekomendacje</span>
+            <span class="toc-dots"></span>
+            <span class="toc-page">15</span>
+        </div>
+        <div class="toc-item">
+            <span class="toc-title">Roadmapa Transformacji</span>
+            <span class="toc-dots"></span>
+            <span class="toc-page">20</span>
+        </div>
+        <div class="toc-item">
+            <span class="toc-title">Analiza ROI</span>
+            <span class="toc-dots"></span>
+            <span class="toc-page">24</span>
+        </div>
+        {{#if includeAppendix}}
+        <div class="toc-item">
+            <span class="toc-title">Załączniki</span>
+            <span class="toc-dots"></span>
+            <span class="toc-page">26</span>
+        </div>
+        {{/if}}
+    </div>
+</div>
+
+{{!-- EXECUTIVE SUMMARY --}}
+<div class="section executive-summary">
+    <h2>Executive Summary</h2>
+
+    {{!-- Key Metrics --}}
+    <div class="metrics-grid">
+        <div class="metric-card primary">
+            <span class="metric-value">{{metrics.overallMaturity}}</span>
+            <span class="metric-label">Obecny Poziom Dojrzałości</span>
+            <span class="metric-sublabel">na skali 1-7</span>
+        </div>
+        <div class="metric-card">
+            <span class="metric-value">{{metrics.targetMaturity}}</span>
+            <span class="metric-label">Cel Dojrzałości</span>
+            <span class="metric-sublabel">do osiągnięcia</span>
+        </div>
+        <div class="metric-card warning">
+            <span class="metric-value">{{metrics.totalGapPoints}}</span>
+            <span class="metric-label">Punkty Luki</span>
+            <span class="metric-sublabel">do zamknięcia</span>
+        </div>
+        <div class="metric-card success">
+            <span class="metric-value">{{metrics.estimatedROI}}</span>
+            <span class="metric-label">Szacowany ROI</span>
+            <span class="metric-sublabel">w 18 miesięcy</span>
+        </div>
+    </div>
+
+    {{!-- Radar Chart Placeholder --}}
+    <div class="chart-container radar-chart">
+        <h3>Przegląd Dojrzałości Cyfrowej</h3>
+        <div class="chart-note">
+            <em>Wykres radarowy pokazujący poziomy dojrzałości we wszystkich 7 osiach</em>
+        </div>
+
+        {{!-- SVG Radar representation --}}
+        <svg viewBox="0 0 400 300" class="radar-svg">
+            <circle cx="200" cy="150" r="100" fill="none" stroke="#e5e7eb" stroke-width="1" />
+            <circle cx="200" cy="150" r="70" fill="none" stroke="#e5e7eb" stroke-width="1" />
+            <circle cx="200" cy="150" r="40" fill="none" stroke="#e5e7eb" stroke-width="1" />
+
+            {{!-- Legend --}}
+            <g transform="translate(10, 270)">
+                <rect x="0" y="0" width="12" height="12" fill="rgba(99, 102, 241, 0.5)" />
+                <text x="18" y="10" font-size="10" fill="#475569">Obecny poziom</text>
+                <rect x="100" y="0" width="12" height="12" fill="none" stroke="#10b981" stroke-width="2"
+                    stroke-dasharray="3" />
+                <text x="118" y="10" font-size="10" fill="#475569">Cel</text>
+            </g>
+        </svg>
+    </div>
+
+    {{!-- Key Insights --}}
+    <div class="key-insights">
+        <h3>Kluczowe Wnioski</h3>
+        <div class="insight-box">
+            <p class="insight-lead">
+                Przeprowadzona ocena dojrzałości cyfrowej ujawnia znaczące możliwości transformacji.
+                Organizacja {{organizationName}} aktualnie osiąga średni poziom dojrzałości
+                <strong>{{metrics.overallMaturity}}/7</strong>, z celem strategicznym na poziomie
+                <strong>{{metrics.targetMaturity}}/7</strong>.
+            </p>
+        </div>
+
+        <h4>Priorytety Strategiczne</h4>
+        <ol class="priority-list">
+            {{#each axes}}
+            {{#if (gt gap 1.5)}}
+            <li>
+                <strong>{{name}}</strong> — luka {{formatNumber gap}} pkt
+                <span class="priority-indicator critical">Krytyczny</span>
+            </li>
+            {{/if}}
+            {{/each}}
+        </ol>
+    </div>
+</div>
+
+{{!-- MATURITY OVERVIEW --}}
+<div class="section maturity-overview">
+    <h2>Aktualny Stan Dojrzałości</h2>
+
+    <p class="section-intro">
+        Poniższa analiza przedstawia szczegółowy przegląd dojrzałości cyfrowej organizacji
+        w podziale na 7 kluczowych osi oceny Framework DRD.
+    </p>
+
+    {{!-- Axis Table --}}
+    <table class="maturity-table">
+        <thead>
+            <tr>
+                <th>Oś Dojrzałości</th>
+                <th class="center">Obecny</th>
+                <th class="center">Cel</th>
+                <th class="center">Luka</th>
+                <th>Wizualizacja</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each axes}}
+            <tr>
+                <td class="axis-name">{{name}}</td>
+                <td class="center">{{formatNumber actual}}</td>
+                <td class="center">{{formatNumber target}}</td>
+                <td class="center">
+                    <span class="gap-badge"
+                        style="background-color: {{getGapColor gap}}20; color: {{getGapColor gap}};">
+                        {{formatNumber gap}}
+                    </span>
+                </td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {{multiply actual 14.28}}%"></div>
+                        <div class="progress-target" style="left: {{multiply target 14.28}}%"></div>
+                    </div>
+                </td>
+            </tr>
+            {{/each}}
+        </tbody>
+    </table>
+</div>
+
+{{!-- GAP ANALYSIS --}}
+<div class="section gap-analysis">
+    <h2>Analiza Luk</h2>
+
+    <div class="gap-summary">
+        <p>
+            Całkowita luka dojrzałości wynosi <strong>{{metrics.totalGapPoints}} punktów</strong>,
+            co wskazuje na znaczący potencjał rozwojowy we wszystkich ocenianych obszarach.
+        </p>
+    </div>
+
+    {{!-- Gap Priority Matrix --}}
+    <div class="priority-matrix">
+        <h3>Matryca Priorytetyzacji</h3>
+
+        <div class="matrix-grid">
+            <div class="matrix-quadrant quick-wins">
+                <h4>🎯 Quick Wins</h4>
+                <p>Wysoki wpływ, niski wysiłek</p>
+            </div>
+            <div class="matrix-quadrant strategic">
+                <h4>🚀 Strategiczne</h4>
+                <p>Wysoki wpływ, wysoki wysiłek</p>
+            </div>
+            <div class="matrix-quadrant maintain">
+                <h4>✅ Utrzymaj</h4>
+                <p>Niski wpływ, niski wysiłek</p>
+            </div>
+            <div class="matrix-quadrant avoid">
+                <h4>⚠️ Rozważ</h4>
+                <p>Niski wpływ, wysoki wysiłek</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{!-- SECTIONS FROM EDITOR --}}
+{{#each sections}}
+<div class="section user-section" data-type="{{sectionType}}">
+    <h2>{{title}}</h2>
+
+    {{#if content}}
+    <div class="section-content">
+        {{{content}}}
+    </div>
+    {{/if}}
+</div>
+{{/each}}
+
+{{!-- FOOTER --}}
+<div class="report-footer">
+    <p class="generated-info">
+        Raport wygenerowany: {{formatDate generatedAt}}
+    </p>
+    <p class="disclaimer">
+        Ten raport jest poufny i przeznaczony wyłącznie dla {{organizationName}}.
+        Nieautoryzowane rozpowszechnianie jest zabronione.
+    </p>
+</div>

@@ -67,6 +67,88 @@ global.DOMMatrix = class DOMMatrix {
     constructor() { }
 };
 
+// Mock Google Generative AI SDK - prevent real API calls in tests
+vi.mock('@google/generative-ai', () => ({
+    GoogleGenerativeAI: vi.fn().mockImplementation(() => ({
+        getGenerativeModel: vi.fn().mockReturnValue({
+            generateContent: vi.fn().mockResolvedValue({
+                response: {
+                    text: () => 'Mock AI Response for testing',
+                    candidates: [{ content: { parts: [{ text: 'Mock AI Response' }] } }]
+                }
+            }),
+            generateContentStream: vi.fn().mockImplementation(async function* () {
+                yield { text: () => 'Mock' };
+                yield { text: () => ' AI' };
+                yield { text: () => ' Response' };
+            }),
+            countTokens: vi.fn().mockResolvedValue({ totalTokens: 100 })
+        })
+    })),
+    HarmCategory: { HARM_CATEGORY_HARASSMENT: 'HARM_CATEGORY_HARASSMENT' },
+    HarmBlockThreshold: { BLOCK_MEDIUM_AND_ABOVE: 'BLOCK_MEDIUM_AND_ABOVE' }
+}));
+
+// Mock OpenAI SDK
+vi.mock('openai', () => ({
+    default: vi.fn().mockImplementation(() => ({
+        chat: {
+            completions: {
+                create: vi.fn().mockResolvedValue({
+                    choices: [{ message: { content: 'Mock OpenAI Response' } }],
+                    usage: { prompt_tokens: 100, completion_tokens: 50, total_tokens: 150 }
+                })
+            }
+        }
+    }))
+}));
+
+// Mock html2canvas for PDF export tests
+vi.mock('html2canvas', () => ({
+    default: vi.fn().mockResolvedValue({
+        toDataURL: vi.fn().mockReturnValue('data:image/png;base64,mockImageData'),
+        width: 800,
+        height: 600
+    })
+}));
+
+// Mock canvas for PDF rendering
+if (typeof window !== 'undefined') {
+    const mockCanvas = {
+        getContext: vi.fn().mockReturnValue({
+            fillRect: vi.fn(),
+            drawImage: vi.fn(),
+            getImageData: vi.fn().mockReturnValue({ data: new Uint8ClampedArray(4) }),
+            putImageData: vi.fn(),
+            createImageData: vi.fn(),
+            setTransform: vi.fn(),
+            save: vi.fn(),
+            restore: vi.fn(),
+            scale: vi.fn(),
+            rotate: vi.fn(),
+            translate: vi.fn(),
+            transform: vi.fn(),
+            fillText: vi.fn(),
+            strokeText: vi.fn(),
+            measureText: vi.fn().mockReturnValue({ width: 100 }),
+            clearRect: vi.fn(),
+            beginPath: vi.fn(),
+            closePath: vi.fn(),
+            moveTo: vi.fn(),
+            lineTo: vi.fn(),
+            stroke: vi.fn(),
+            fill: vi.fn(),
+            arc: vi.fn(),
+            rect: vi.fn()
+        }),
+        toDataURL: vi.fn().mockReturnValue('data:image/png;base64,mockCanvasData'),
+        width: 800,
+        height: 600
+    };
+    HTMLCanvasElement.prototype.getContext = mockCanvas.getContext;
+    HTMLCanvasElement.prototype.toDataURL = mockCanvas.toDataURL;
+}
+
 // Handle uncaught exceptions from async database operations during tests
 // This prevents non-test-related FK constraint errors from causing CI exit code 1
 if (typeof process !== 'undefined' && process.on) {

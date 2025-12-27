@@ -20,3 +20,5 @@ SET report_id = (
 )
 WHERE source_assessment_id IS NOT NULL AND report_id IS NULL;
 
+
+

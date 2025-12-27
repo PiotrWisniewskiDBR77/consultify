@@ -3,54 +3,64 @@
  * Tests file upload handling for observation photos
  */
 
-const { createRapidLeanUpload, rapidLeanPhotoUpload } = require('../../../server/middleware/rapidLeanUploadMiddleware');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock fs
-jest.mock('fs');
-jest.mock('multer');
+// Mock fs and multer
+const mockFs = {
+    existsSync: vi.fn().mockReturnValue(false),
+    mkdirSync: vi.fn()
+};
+
+vi.mock('fs', () => mockFs);
+vi.mock('multer', () => {
+    const mockSingle = vi.fn().mockReturnValue((req, res, next) => next());
+    const mockDiskStorage = vi.fn().mockReturnValue({});
+    return {
+        default: vi.fn().mockReturnValue({ single: mockSingle }),
+        diskStorage: mockDiskStorage
+    };
+});
+
+// Import after mocks
+const { createRapidLeanUpload, rapidLeanPhotoUpload } = require('../../../server/middleware/rapidLeanUploadMiddleware');
 
 describe('RapidLean Upload Middleware', () => {
     beforeEach(() => {
-        jest.clearAllMocks();
-        fs.existsSync.mockReturnValue(false);
-        fs.mkdirSync.mockImplementation(() => {});
+        vi.clearAllMocks();
+        mockFs.existsSync.mockReturnValue(false);
     });
 
     describe('createRapidLeanUpload', () => {
-        test('should create multer instance with correct configuration', () => {
+        it('should create multer instance with correct configuration', () => {
             const upload = createRapidLeanUpload('test-org-id', 'test-assessment-id');
-            
+
             expect(upload).toBeDefined();
-            expect(fs.mkdirSync).toHaveBeenCalled();
+            expect(mockFs.mkdirSync).toHaveBeenCalled();
         });
 
-        test('should create directory if it does not exist', () => {
-            fs.existsSync.mockReturnValue(false);
-            
+        it('should create directory if it does not exist', () => {
+            mockFs.existsSync.mockReturnValue(false);
+
             createRapidLeanUpload('test-org-id', 'test-assessment-id');
-            
-            expect(fs.mkdirSync).toHaveBeenCalled();
+
+            expect(mockFs.mkdirSync).toHaveBeenCalled();
         });
 
-        test('should use temp directory if assessmentId not provided', () => {
+        it('should use temp directory if assessmentId not provided', () => {
             createRapidLeanUpload('test-org-id');
-            
-            expect(fs.mkdirSync).toHaveBeenCalled();
-            const callPath = fs.mkdirSync.mock.calls[0][0];
+
+            expect(mockFs.mkdirSync).toHaveBeenCalled();
+            const callPath = mockFs.mkdirSync.mock.calls[0][0];
             expect(callPath).toContain('temp');
         });
     });
 
     describe('rapidLeanPhotoUpload', () => {
-        test('should be a function', () => {
+        it('should be a function', () => {
             expect(typeof rapidLeanPhotoUpload).toBe('function');
         });
 
-        test('should handle organizationId from req.user', () => {
-            // This is tested in integration tests
+        it('should handle organizationId from req.user', () => {
             expect(rapidLeanPhotoUpload).toBeDefined();
         });
     });

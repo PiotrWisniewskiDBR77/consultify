@@ -179,3 +179,5 @@ INSERT OR IGNORE INTO notification_preferences (user_id, category_settings)
 SELECT id, '{"task_assigned":{"inapp":true,"push":true,"email":false},"task_overdue":{"inapp":true,"push":true,"email":true},"decision_required":{"inapp":true,"push":true,"email":true},"mention":{"inapp":true,"push":true,"email":false},"blocking_alert":{"inapp":true,"push":true,"email":true}}'
 FROM users;
 
+
+

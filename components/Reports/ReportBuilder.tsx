@@ -125,8 +125,9 @@ export const ReportBuilder: React.FC<ReportBuilderProps> = ({
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
-  // State
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(report.sections.map(s => s.id)));
+  // State - defensive coding for sections
+  const sections = report?.sections || [];
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(sections.map(s => s.id)));
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [showAddMenu, setShowAddMenu] = useState<number | null>(null);
   const [draggedSection, setDraggedSection] = useState<string | null>(null);
@@ -157,7 +158,7 @@ export const ReportBuilder: React.FC<ReportBuilderProps> = ({
 
   // Expand all sections
   const expandAll = () => {
-    setExpandedSections(new Set(report.sections.map(s => s.id)));
+    setExpandedSections(new Set(sections.map(s => s.id)));
   };
 
   // Collapse all sections
@@ -207,7 +208,7 @@ export const ReportBuilder: React.FC<ReportBuilderProps> = ({
     e.preventDefault();
     if (readOnly || !draggedSection) return;
 
-    const sourceIndex = report.sections.findIndex(s => s.id === draggedSection);
+    const sourceIndex = sections.findIndex(s => s.id === draggedSection);
     if (sourceIndex === targetIndex || sourceIndex === targetIndex - 1) {
       setDraggedSection(null);
       setDragOverIndex(null);
@@ -215,7 +216,7 @@ export const ReportBuilder: React.FC<ReportBuilderProps> = ({
     }
 
     // Calculate new order
-    const newSections = [...report.sections];
+    const newSections = [...sections];
     const [removed] = newSections.splice(sourceIndex, 1);
     const insertIndex = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex;
     newSections.splice(insertIndex, 0, removed);
@@ -281,7 +282,7 @@ export const ReportBuilder: React.FC<ReportBuilderProps> = ({
 
         {/* Report info bar */}
         <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
-          <span>{report.sections.length} {t('reports.sections', 'sections')}</span>
+          <span>{sections.length} {t('reports.sections', 'sections')}</span>
           <span>•</span>
           <span>{t('reports.lastUpdated', 'Last updated')}: {new Date(report.updatedAt).toLocaleDateString()}</span>
           {readOnly && (
@@ -297,7 +298,7 @@ export const ReportBuilder: React.FC<ReportBuilderProps> = ({
 
       {/* Sections */}
       <div className="space-y-4">
-        {report.sections.map((section, index) => {
+        {sections.map((section, index) => {
           const Icon = getSectionIcon(section);
           const isExpanded = expandedSections.has(section.id);
           const isEditing = editingSection === section.id;
@@ -463,10 +464,10 @@ export const ReportBuilder: React.FC<ReportBuilderProps> = ({
         {/* Final drop zone */}
         {draggedSection && (
           <div
-            onDragOver={(e) => handleDragOver(e, report.sections.length)}
-            onDrop={(e) => handleDrop(e, report.sections.length)}
+            onDragOver={(e) => handleDragOver(e, sections.length)}
+            onDrop={(e) => handleDrop(e, sections.length)}
             className={`h-20 border-2 border-dashed rounded-xl flex items-center justify-center transition-colors ${
-              dragOverIndex === report.sections.length 
+              dragOverIndex === sections.length 
                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10' 
                 : 'border-slate-200 dark:border-white/10'
             }`}
@@ -478,17 +479,17 @@ export const ReportBuilder: React.FC<ReportBuilderProps> = ({
         )}
 
         {/* Add section button at end */}
-        {!readOnly && report.sections.length > 0 && (
+        {!readOnly && sections.length > 0 && (
           <div className="flex justify-center pt-4">
             <button
-              onClick={() => setShowAddMenu(showAddMenu === report.sections.length ? null : report.sections.length)}
+              onClick={() => setShowAddMenu(showAddMenu === sections.length ? null : sections.length)}
               className="inline-flex items-center gap-2 px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg transition-colors"
             >
               <Plus className="w-4 h-4" />
               {t('reports.addSectionEnd', 'Add Section')}
             </button>
             
-            {showAddMenu === report.sections.length && (
+            {showAddMenu === sections.length && (
               <div className="absolute mt-10 z-10 w-64 bg-white dark:bg-navy-800 rounded-xl shadow-xl border border-slate-200 dark:border-white/10 py-2 max-h-80 overflow-auto">
                 <p className="px-3 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   {t('reports.addSection', 'Add Section')}
@@ -498,7 +499,7 @@ export const ReportBuilder: React.FC<ReportBuilderProps> = ({
                   return (
                     <button
                       key={type}
-                      onClick={() => handleAddSection(type, report.sections.length - 1)}
+                      onClick={() => handleAddSection(type, sections.length - 1)}
                       className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                     >
                       <TypeIcon className="w-4 h-4 text-slate-400" />

@@ -201,30 +201,55 @@ const AiService = {
                 let innerModelUsed = '';
 
                 if (!providerConfig) {
-                    // Fallback: GeminiEnv
-                    const fallbackKey = process.env.GEMINI_API_KEY;
-                    if (!fallbackKey) throw new Error("AI Provider not configured.");
+                    // Fallback: Check OpenAI Env First (Higher Quality)
+                    const openAIKey = process.env.OPENAI_API_KEY;
+                    const geminiKey = process.env.GEMINI_API_KEY;
 
-                    innerModelUsed = 'gemini-pro-vision (fallback)';
-                    const genAI = new deps.GoogleGenerativeAI(fallbackKey);
-                    const modelName = (images.length > 0) ? "gemini-1.5-flash" : "gemini-pro";
-                    const model = genAI.getGenerativeModel({ model: modelName });
+                    if (openAIKey) {
+                        // Fallback: OpenAI Env
+                        innerModelUsed = 'gpt-4o (env)';
+                        const messages = history.map(h => ({
+                            role: h.role === 'user' ? 'user' : 'assistant',
+                            content: h.text || h.content || ''
+                        }));
+                        if (systemInstruction) messages.unshift({ role: 'system', content: systemInstruction });
+                        const userContent = formatOpenAIVisionInfo(prompt, images);
+                        messages.push({ role: 'user', content: userContent });
 
-                    if (images.length > 0) {
-                        const parts = formatGeminiVisionParts(prompt, images);
-                        if (systemInstruction) parts.unshift({ text: `System: ${systemInstruction}` });
-                        const result = await model.generateContent(parts);
-                        innerResponseText = result.response.text();
-                    } else {
-                        const chatSession = model.startChat({
-                            history: history.map(h => ({
-                                role: h.role === 'user' ? 'user' : 'model',
-                                parts: [{ text: h.text || h.content || '' }]
-                            })),
-                            systemInstruction: systemInstruction ? { role: "system", parts: [{ text: systemInstruction }] } : undefined
+                        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openAIKey}` },
+                            body: JSON.stringify({ model: 'gpt-4o', messages })
                         });
-                        const result = await chatSession.sendMessage(prompt);
-                        innerResponseText = (await result.response).text();
+                        if (!response.ok) throw new Error(`OpenAI Env Fallback error: ${response.statusText}`);
+                        const data = await response.json();
+                        innerResponseText = data.choices[0]?.message?.content || '';
+
+                    } else if (geminiKey) {
+                        // Fallback: GeminiEnv
+                        innerModelUsed = 'gemini-pro-vision (fallback)';
+                        const genAI = new deps.GoogleGenerativeAI(geminiKey);
+                        const modelName = (images.length > 0) ? "gemini-1.5-flash" : "gemini-pro";
+                        const model = genAI.getGenerativeModel({ model: modelName });
+
+                        if (images.length > 0) {
+                            const parts = formatGeminiVisionParts(prompt, images);
+                            if (systemInstruction) parts.unshift({ text: `System: ${systemInstruction}` });
+                            const result = await model.generateContent(parts);
+                            innerResponseText = result.response.text();
+                        } else {
+                            const chatSession = model.startChat({
+                                history: history.map(h => ({
+                                    role: h.role === 'user' ? 'user' : 'model',
+                                    parts: [{ text: h.text || h.content || '' }]
+                                })),
+                                systemInstruction: systemInstruction ? { role: "system", parts: [{ text: systemInstruction }] } : undefined
+                            });
+                            const result = await chatSession.sendMessage(prompt);
+                            innerResponseText = (await result.response).text();
+                        }
+                    } else {
+                        throw new Error("AI Provider not configured (No DB config, no Env keys).");
                     }
 
                 } else {
@@ -418,37 +443,85 @@ const AiService = {
 
             try {
                 if (!providerConfig) {
-                    // Fallback: GeminiEnv
-                    const fallbackKey = process.env.GEMINI_API_KEY;
-                    if (!fallbackKey) throw new Error("AI Provider not configured.");
-                    modelUsed = 'gemini-1.5-flash (fallback)';
-                    const genAI = new deps.GoogleGenerativeAI(fallbackKey);
-                    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+                    // Fallback: Check OpenAI Env First
+                    const openAIKey = process.env.OPENAI_API_KEY;
+                    const geminiKey = process.env.GEMINI_API_KEY;
 
-                    const chatSession = model.startChat({
-                        history: history.map(h => ({
-                            role: h.role === 'user' ? 'user' : 'model',
-                            parts: [{ text: h.text || h.content || '' }]
-                        })),
-                        systemInstruction: systemInstruction ? { role: "system", parts: [{ text: systemInstruction }] } : undefined
-                    });
+                    if (openAIKey) {
+                        // Fallback: OpenAI Env Streaming
+                        modelUsed = 'gpt-4o (env-stream)';
+                        const messages = history.map(h => ({
+                            role: h.role === 'user' ? 'user' : 'assistant',
+                            content: h.text || h.content || ''
+                        }));
+                        if (systemInstruction) messages.unshift({ role: 'system', content: systemInstruction });
+                        const userContent = formatOpenAIVisionInfo(prompt, images);
+                        messages.push({ role: 'user', content: userContent });
 
-                    if (images.length > 0) {
-                        const parts = formatGeminiVisionParts(prompt, images);
-                        if (systemInstruction) parts.unshift({ text: `System: ${systemInstruction}` });
-                        const result = await model.generateContentStream(parts);
-                        for await (const chunk of result.stream) {
-                            const chunkText = chunk.text();
-                            fullResponse += chunkText;
-                            yield chunkText;
+                        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openAIKey}` },
+                            body: JSON.stringify({ model: 'gpt-4o', messages, stream: true })
+                        });
+
+                        if (!response.ok) throw new Error(`OpenAI Env Stream error: ${response.statusText}`);
+
+                        const reader = response.body.getReader();
+                        const decoder = new TextDecoder();
+                        while (true) {
+                            const { done, value } = await reader.read();
+                            if (done) break;
+                            const chunk = decoder.decode(value);
+                            const lines = chunk.split('\n');
+                            for (const line of lines) {
+                                if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+                                    try {
+                                        const data = JSON.parse(line.substring(6));
+                                        const content = data.choices && data.choices[0]?.delta?.content;
+                                        if (content) {
+                                            fullResponse += content;
+                                            yield content;
+                                        }
+                                    } catch (e) { }
+                                }
+                            }
+                        }
+
+                    } else if (geminiKey) {
+                        // Fallback: GeminiEnv
+                        // const fallbackKey = process.env.GEMINI_API_KEY; // Already defined
+                        // if (!fallbackKey) throw new Error("AI Provider not configured."); // Handled in else
+                        modelUsed = 'gemini-1.5-flash (fallback)';
+                        const genAI = new deps.GoogleGenerativeAI(geminiKey);
+                        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+                        const chatSession = model.startChat({
+                            history: history.map(h => ({
+                                role: h.role === 'user' ? 'user' : 'model',
+                                parts: [{ text: h.text || h.content || '' }]
+                            })),
+                            systemInstruction: systemInstruction ? { role: "system", parts: [{ text: systemInstruction }] } : undefined
+                        });
+
+                        if (images.length > 0) {
+                            const parts = formatGeminiVisionParts(prompt, images);
+                            if (systemInstruction) parts.unshift({ text: `System: ${systemInstruction}` });
+                            const result = await model.generateContentStream(parts);
+                            for await (const chunk of result.stream) {
+                                const chunkText = chunk.text();
+                                fullResponse += chunkText;
+                                yield chunkText;
+                            }
+                        } else {
+                            const result = await chatSession.sendMessageStream(prompt);
+                            for await (const chunk of result.stream) {
+                                const chunkText = chunk.text();
+                                fullResponse += chunkText;
+                                yield chunkText;
+                            }
                         }
                     } else {
-                        const result = await chatSession.sendMessageStream(prompt);
-                        for await (const chunk of result.stream) {
-                            const chunkText = chunk.text();
-                            fullResponse += chunkText;
-                            yield chunkText;
-                        }
+                        throw new Error("AI Provider not configured (No DB config, no Env keys).");
                     }
 
                 } else {
@@ -1688,7 +1761,7 @@ Initiatives: ${JSON.stringify(initiatives.map(i => ({ id: i.id, name: i.name, qu
     parseReportEditIntent: async (message, context) => {
         const lowerMessage = message.toLowerCase();
         const { sections, focusSectionId } = context;
-        
+
         // Intent detection patterns (Polish and English)
         const intents = {
             expand: ['rozwiń', 'rozszerz', 'więcej', 'expand', 'elaborate', 'more details', 'add more'],
@@ -1715,7 +1788,7 @@ Initiatives: ${JSON.stringify(initiatives.map(i => ({ id: i.id, name: i.name, qu
 
         // Identify target section
         let targetSection = focusSectionId ? sections.find(s => s.id === focusSectionId) : null;
-        
+
         if (!targetSection) {
             // Try to find section by name in message
             for (const section of sections) {
@@ -1858,9 +1931,9 @@ Justification: ${axisData[axisId].justification || 'Not provided'}
 
 ${Object.keys(axisData).length > 0 ? `
 Full assessment data:
-${Object.entries(axisData).map(([id, data]) => 
-    `- ${id}: Current ${data.actual || 0}, Target ${data.target || 0}, Gap ${(data.target || 0) - (data.actual || 0)}`
-).join('\n')}
+${Object.entries(axisData).map(([id, data]) =>
+                    `- ${id}: Current ${data.actual || 0}, Target ${data.target || 0}, Gap ${(data.target || 0) - (data.actual || 0)}`
+                ).join('\n')}
 ` : ''}
 
 Generate a complete, professional section content.`;
@@ -1882,7 +1955,7 @@ ${context.customPrompt || ''}`;
             });
 
             const genAI = new deps.GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-            const model = genAI.getGenerativeModel({ 
+            const model = genAI.getGenerativeModel({
                 model: modelInfo?.modelId || 'gemini-1.5-flash',
                 systemInstruction: systemPrompt
             });
@@ -1954,7 +2027,7 @@ ${context.customPrompt || ''}`;
                         try {
                             axisData = report.axis_data ? JSON.parse(report.axis_data) : {};
                             transformationContext = report.transformation_context ? JSON.parse(report.transformation_context) : {};
-                        } catch (e) {}
+                        } catch (e) { }
 
                         resolve({
                             reportId: report.id,

@@ -1,5 +1,5 @@
 // SCMS Governance Service Tests
-// Tests for StatusMachine
+// Tests for StatusMachine - Updated to new status names
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
@@ -21,32 +21,39 @@ describe('StatusMachine', () => {
     });
 
     describe('Initiative Status Transitions', () => {
-        it('should allow DRAFT to PLANNED transition', () => {
-            expect(StatusMachine.canTransitionInitiative('DRAFT', 'PLANNED')).toBe(true);
+        it('should allow DRAFT to PLANNING transition', () => {
+            // Updated from PLANNED to PLANNING
+            expect(StatusMachine.canTransitionInitiative('DRAFT', 'PLANNING')).toBe(true);
         });
 
-        it('should allow PLANNED to APPROVED transition', () => {
-            expect(StatusMachine.canTransitionInitiative('PLANNED', 'APPROVED')).toBe(true);
+        it('should allow PLANNING_COMPLETE to APPROVED transition', () => {
+            // Updated: PLANNING_COMPLETE -> APPROVED is the new flow
+            expect(StatusMachine.canTransitionInitiative('PLANNING_COMPLETE', 'APPROVED')).toBe(true);
         });
 
-        it('should allow APPROVED to IN_EXECUTION transition', () => {
-            expect(StatusMachine.canTransitionInitiative('APPROVED', 'IN_EXECUTION')).toBe(true);
+        it('should allow APPROVED to EXECUTING transition', () => {
+            // Updated from IN_EXECUTION to EXECUTING
+            expect(StatusMachine.canTransitionInitiative('APPROVED', 'EXECUTING')).toBe(true);
         });
 
-        it('should allow IN_EXECUTION to BLOCKED transition', () => {
-            expect(StatusMachine.canTransitionInitiative('IN_EXECUTION', 'BLOCKED')).toBe(true);
+        it('should allow EXECUTING to BLOCKED transition', () => {
+            // Updated from IN_EXECUTION to EXECUTING
+            expect(StatusMachine.canTransitionInitiative('EXECUTING', 'BLOCKED')).toBe(true);
         });
 
-        it('should allow IN_EXECUTION to COMPLETED transition', () => {
-            expect(StatusMachine.canTransitionInitiative('IN_EXECUTION', 'COMPLETED')).toBe(true);
+        it('should allow EXECUTING to DONE transition', () => {
+            // Updated from COMPLETED to DONE
+            expect(StatusMachine.canTransitionInitiative('EXECUTING', 'DONE')).toBe(true);
         });
 
-        it('should disallow COMPLETED to DRAFT transition', () => {
-            expect(StatusMachine.canTransitionInitiative('COMPLETED', 'DRAFT')).toBe(false);
+        it('should disallow DONE to DRAFT transition', () => {
+            // Updated from COMPLETED to DONE
+            expect(StatusMachine.canTransitionInitiative('DONE', 'DRAFT')).toBe(false);
         });
 
         it('should disallow invalid status transition', () => {
-            expect(StatusMachine.canTransitionInitiative('DRAFT', 'COMPLETED')).toBe(false);
+            // DRAFT -> DONE is not a valid direct transition
+            expect(StatusMachine.canTransitionInitiative('DRAFT', 'DONE')).toBe(false);
         });
     });
 
@@ -74,13 +81,15 @@ describe('StatusMachine', () => {
 
     describe('Blocked Status Validation', () => {
         it('should require blocked reason for BLOCKED initiative status', () => {
-            const validation = StatusMachine.validateInitiativeTransition('IN_EXECUTION', 'BLOCKED', {});
+            // Updated from IN_EXECUTION to EXECUTING
+            const validation = StatusMachine.validateInitiativeTransition('EXECUTING', 'BLOCKED', {});
             expect(validation.valid).toBe(false);
             expect(validation.reason).toContain('reason');
         });
 
         it('should accept blocked reason for BLOCKED status', () => {
-            const validation = StatusMachine.validateInitiativeTransition('IN_EXECUTION', 'BLOCKED', { blockedReason: 'Waiting for approval' });
+            // Updated from IN_EXECUTION to EXECUTING
+            const validation = StatusMachine.validateInitiativeTransition('EXECUTING', 'BLOCKED', { blockedReason: 'Waiting for approval' });
             expect(validation.valid).toBe(true);
         });
     });

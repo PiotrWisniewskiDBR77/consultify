@@ -78,3 +78,5 @@ echo "   2. Otwórz http://localhost:3000 i kliknij przycisk 'LinkedIn' w formul
 echo "   3. Jeśli masz problemy, sprawdź przewodnik: LINKEDIN_OAUTH_SETUP.md"
 
 
+
+

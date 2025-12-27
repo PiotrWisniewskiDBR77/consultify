@@ -46,3 +46,5 @@ CREATE TABLE IF NOT EXISTS ai_charter_generations (
 CREATE INDEX IF NOT EXISTS idx_charter_gen_initiative ON ai_charter_generations(initiative_id);
 CREATE INDEX IF NOT EXISTS idx_charter_gen_template ON ai_charter_generations(template_id);
 
+
+

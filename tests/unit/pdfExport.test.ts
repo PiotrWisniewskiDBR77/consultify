@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, Mock } from 'vitest';
 import { exportReportToPDF, exportDashboardToPDF } from '../../services/pdf/pdfExport';
 import html2canvas from 'html2canvas';
 
@@ -59,7 +59,7 @@ describe('Service Test: pdfExport', () => {
             toDataURL: vi.fn(() => 'data:image/png;base64,test'),
         };
 
-`(html2canvas as jest.Mock).mockResolvedValue(mockCanvas);`
+        (html2canvas as Mock).mockResolvedValue(mockCanvas);
     });
 
     // Explicit cleaning
@@ -86,7 +86,7 @@ describe('Service Test: pdfExport', () => {
         });
 
         it('handles errors gracefully', async () => {
-`(html2canvas as jest.Mock).mockRejectedValue(new Error('Canvas error'));`
+            (html2canvas as Mock).mockRejectedValue(new Error('Canvas error'));
 
             const result = await exportReportToPDF('test-element', 'test.pdf');
 

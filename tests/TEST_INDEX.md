@@ -244,3 +244,5 @@ npm run test:unit -- tests/unit/backend/service.test.js
 **Ostatnia aktualizacja**: 2024
 **Status**: W trakcie implementacji
 
+
+

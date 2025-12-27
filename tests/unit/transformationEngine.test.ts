@@ -54,7 +54,7 @@ describe('Service Test: transformationEngine', () => {
 
         // All initiatives should target levels above current assessment
         initiatives.forEach(initiative => {
-`as { actual: number }`
+            const axisData = session.assessment[initiative.axis as keyof typeof session.assessment] as { actual: number } | undefined;
             if (axisData && axisData.actual) {
                 // The initiative should be for advancing beyond current level
                 expect(initiative.name).toContain('Level');
@@ -67,7 +67,10 @@ describe('Service Test: transformationEngine', () => {
         // Set all axes to level 5 (maximum)
         Object.keys(session.assessment).forEach(key => {
             if (key !== 'completedAxes') {
-`(session.assessment as Record<string, { actual: number }>)[key].actual = 5;`
+                const assessmentRecord = session.assessment as Record<string, { actual: number }>;
+                if (assessmentRecord[key]?.actual !== undefined) {
+                    assessmentRecord[key].actual = 5;
+                }
             }
         });
 
@@ -97,4 +100,3 @@ describe('Service Test: transformationEngine', () => {
         });
     });
 });
-

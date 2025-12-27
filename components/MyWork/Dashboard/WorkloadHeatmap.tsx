@@ -237,3 +237,5 @@ export const WorkloadHeatmap: React.FC<ExtendedWorkloadHeatmapProps> = ({
 
 export default WorkloadHeatmap;
 
+
+

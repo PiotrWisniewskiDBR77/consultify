@@ -4,14 +4,14 @@ import StatusMachine from '../../../server/services/statusMachine.js';
 describe('StatusMachine', () => {
     describe('canTransitionInitiative', () => {
         it('should allow valid transition', () => {
-            const result = StatusMachine.canTransitionInitiative('DRAFT', 'PLANNED');
+            // DRAFT -> PLANNING is the correct transition now
+            const result = StatusMachine.canTransitionInitiative('DRAFT', 'PLANNING');
             expect(result).toBe(true);
         });
 
         it('should block invalid transition', () => {
-            // DRAFT -> IN_EXECUTION is not allowed directly (must be PLANNED -> APPROVED)
-            // Checking map: DRAFT -> [PLANNED, CANCELLED]
-            const result = StatusMachine.canTransitionInitiative('DRAFT', 'IN_EXECUTION');
+            // DRAFT -> EXECUTING is not allowed directly
+            const result = StatusMachine.canTransitionInitiative('DRAFT', 'EXECUTING');
             expect(result).toBe(false);
         });
     });
@@ -30,29 +30,33 @@ describe('StatusMachine', () => {
 
     describe('validateInitiativeTransition', () => {
         it('should return valid for simple allowed transition', () => {
-            const result = StatusMachine.validateInitiativeTransition('DRAFT', 'PLANNED');
+            // Updated to new status names
+            const result = StatusMachine.validateInitiativeTransition('DRAFT', 'PLANNING');
             expect(result.valid).toBe(true);
         });
 
         it('should require reason for blocking', () => {
-            const result = StatusMachine.validateInitiativeTransition('IN_EXECUTION', 'BLOCKED');
+            // Updated: EXECUTING is the new name for IN_EXECUTION
+            const result = StatusMachine.validateInitiativeTransition('EXECUTING', 'BLOCKED');
             expect(result.valid).toBe(false);
             expect(result.reason).toContain('requires a reason');
         });
 
         it('should allow blocking with reason', () => {
-            const result = StatusMachine.validateInitiativeTransition('IN_EXECUTION', 'BLOCKED', { blockedReason: 'Wait for resources' });
+            const result = StatusMachine.validateInitiativeTransition('EXECUTING', 'BLOCKED', { blockedReason: 'Wait for resources' });
             expect(result.valid).toBe(true);
         });
 
         it('should prevent completion if pending tasks exist', () => {
-            const result = StatusMachine.validateInitiativeTransition('IN_EXECUTION', 'COMPLETED', { pendingTasks: 5 });
+            // Updated: DONE is the new name for COMPLETED
+            const result = StatusMachine.validateInitiativeTransition('EXECUTING', 'DONE', { pendingTasks: 5 });
             expect(result.valid).toBe(false);
             expect(result.reason).toContain('tasks still pending');
         });
 
         it('should prevent approved state if governance failed', () => {
-            const result = StatusMachine.validateInitiativeTransition('PLANNED', 'APPROVED', { requiresApproval: true, isApproved: false });
+            // Updated: PLANNING_COMPLETE -> APPROVED needs approval
+            const result = StatusMachine.validateInitiativeTransition('PLANNING_COMPLETE', 'APPROVED', { requiresApproval: true, isApproved: false });
             expect(result.valid).toBe(false);
             expect(result.reason).toContain('Governance approval required');
         });

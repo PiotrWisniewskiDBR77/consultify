@@ -22,9 +22,10 @@ import { ReportBuilder } from '../Reports/ReportBuilder';
 import { TableOfContents } from '../Reports/TableOfContents';
 import { ReportHeader } from '../Reports/ReportHeader';
 import { StickyNavigation } from '../Reports/StickyNavigation';
+import { ChatPanel } from '../ChatPanel';
 import { useReportSections, type AIAction } from '../../hooks/useReportSections';
 import { useAppStore } from '../../store/useAppStore';
-import { Loader2, FileWarning, RefreshCw, Sparkles, AlertCircle } from 'lucide-react';
+import { Loader2, FileWarning, RefreshCw, Sparkles, AlertCircle, Maximize2, Minimize2, MessageSquare, X } from 'lucide-react';
 
 interface ReportBuilderWorkspaceProps {
     reportId: string;
@@ -39,7 +40,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
     const isPolish = i18n.language === 'pl';
     
     // Global state for chat
-    const { addChatMessage, setIsBotTyping, activeChatMessages } = useAppStore();
+    const { addChatMessage, setIsBotTyping, isBotTyping, activeChatMessages } = useAppStore();
     
     // Report sections hook
     const {
@@ -70,9 +71,12 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
     const [isRegenerating, setIsRegenerating] = useState(false);
     const [isFinalizing, setIsFinalizing] = useState(false);
     const [isReadingMode, setIsReadingMode] = useState(false);
+    const [isFullscreen, setIsFullscreen] = useState(false);
+    const [showChat, setShowChat] = useState(true);
 
     // Memoize section info for StickyNavigation
     const sectionInfos = useMemo(() => {
+        if (!sections) return [];
         return sections.map(s => ({
             id: s.id,
             title: s.title,
@@ -323,7 +327,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
     }
 
     // Empty report state
-    if (report && sections.length === 0) {
+    if (report && (!sections || sections.length === 0)) {
         return (
             <div className="h-full flex flex-col bg-slate-50 dark:bg-navy-950">
                 <ReportHeader
@@ -404,12 +408,14 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
                 isLoading={isLoading || isRegenerating || isFinalizing}
                 createdAt={report.createdAt}
                 updatedAt={report.updatedAt}
-                onBack={onClose}
+                isFullscreen={isFullscreen}
+                onBack={isFullscreen ? () => setIsFullscreen(false) : onClose}
                 onSave={handleSave}
                 onFinalize={handleFinalize}
                 onRegenerate={handleRegenerate}
                 onExportPdf={handleExportPdf}
                 onExportExcel={handleExportExcel}
+                onFullscreen={() => setIsFullscreen(!isFullscreen)}
             />
 
             {/* Main content */}
@@ -418,7 +424,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
                     {/* Table of Contents */}
                     <div className="mb-6">
                         <TableOfContents
-                            sections={sections.map(s => ({
+                            sections={(sections || []).map(s => ({
                                 id: s.id,
                                 sectionType: s.sectionType,
                                 axisId: s.axisId,
@@ -443,7 +449,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
                             projectName: report.projectName,
                             organizationName: report.organizationName,
                             axisData: report.axisData,
-                            sections: sections.map(s => ({
+                            sections: (sections || []).map(s => ({
                                 id: s.id,
                                 reportId: s.reportId,
                                 sectionType: s.sectionType,
@@ -492,23 +498,86 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
         </div>
     );
 
+    // Fullscreen overlay (portal-like modal over existing content)
+    const fullscreenOverlay = isFullscreen && report ? (
+        <div className="fixed inset-0 z-[9999] bg-slate-50 dark:bg-navy-950 flex">
+            {/* Chat sidebar - left */}
+            {showChat && (
+                <div className="w-96 border-r border-slate-200 dark:border-white/10 flex flex-col bg-white dark:bg-navy-900 flex-shrink-0">
+                    <div className="p-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <MessageSquare className="w-5 h-5 text-purple-500" />
+                            <span className="font-semibold text-navy-900 dark:text-white">
+                                {isPolish ? 'Czat AI' : 'AI Chat'}
+                            </span>
+                        </div>
+                        <button
+                            onClick={() => setShowChat(false)}
+                            className="p-1.5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                            title={isPolish ? 'Ukryj czat' : 'Hide chat'}
+                        >
+                            <X className="w-4 h-4 text-slate-500" />
+                        </button>
+                    </div>
+                    <div className="flex-1 overflow-hidden">
+                        <ChatPanel
+                            messages={activeChatMessages}
+                            onSendMessage={(text) => {
+                                addChatMessage({ role: 'user', text });
+                            }}
+                            onOptionSelect={() => {}}
+                            isTyping={isBotTyping}
+                            title={isPolish ? 'Czat AI' : 'AI Chat'}
+                            subtitle={isPolish ? 'Edytuj raport przez czat' : 'Edit report via chat'}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* Main report area */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+                {/* Show chat toggle if hidden */}
+                {!showChat && (
+                    <div className="absolute top-4 left-4 z-10">
+                        <button
+                            onClick={() => setShowChat(true)}
+                            className="flex items-center gap-2 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg shadow-lg transition-colors"
+                        >
+                            <MessageSquare className="w-4 h-4" />
+                            <span className="text-sm font-medium">{isPolish ? 'Pokaż czat' : 'Show chat'}</span>
+                        </button>
+                    </div>
+                )}
+
+                {/* Report content - uses the same reportContent which has the ReportHeader */}
+                <div className="flex-1 overflow-auto">
+                    {reportContent}
+                </div>
+            </div>
+        </div>
+    ) : null;
+
+    // Normal mode - fullscreen button is now in the ReportHeader
     return (
-        <SplitLayout
-            title={
-                <span className="flex items-center gap-2">
-                    <span>{report.name}</span>
-                    {report.status === 'FINAL' && (
-                        <span className="px-2 py-0.5 text-xs bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 rounded-full">
-                            {isPolish ? 'Finalny' : 'Final'}
-                        </span>
-                    )}
-                </span>
-            }
-            subtitle={isPolish ? 'Edytor Raportu DRD' : 'DRD Report Editor'}
-            hideSidebar={true}
-        >
-            {reportContent}
-        </SplitLayout>
+        <>
+            {fullscreenOverlay}
+            <SplitLayout
+                title={
+                    <span className="flex items-center gap-2">
+                        <span>{report.name}</span>
+                        {report.status === 'FINAL' && (
+                            <span className="px-2 py-0.5 text-xs bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 rounded-full">
+                                {isPolish ? 'Finalny' : 'Final'}
+                            </span>
+                        )}
+                    </span>
+                }
+                subtitle={isPolish ? 'Edytor Raportu DRD' : 'DRD Report Editor'}
+                hideSidebar={true}
+            >
+                {reportContent}
+            </SplitLayout>
+        </>
     );
 };
 
