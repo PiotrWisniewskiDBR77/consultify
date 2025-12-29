@@ -23,6 +23,7 @@ const DEFAULT_QUOTAS = {
 
 class QuotaService {
     constructor() {
+        this.isPg = process.env.DB_TYPE === 'postgres';
         this.ensureTable();
     }
 
@@ -32,9 +33,18 @@ class QuotaService {
     async ensureTable() {
         if (!db || !db.run) return;
 
+        // Use PostgreSQL-compatible syntax if using PostgreSQL
+        const idColumn = this.isPg 
+            ? 'id SERIAL PRIMARY KEY'
+            : 'id INTEGER PRIMARY KEY AUTOINCREMENT';
+        
+        // For PostgreSQL, use TIMESTAMP for created_at/updated_at, but keep TEXT for date strings
+        const createdAtType = this.isPg ? 'TIMESTAMP' : 'TEXT';
+        const updatedAtType = this.isPg ? 'TIMESTAMP' : 'TEXT';
+
         const sql = `
             CREATE TABLE IF NOT EXISTS ai_usage_quotas (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ${idColumn},
                 entity_type TEXT NOT NULL,
                 entity_id TEXT NOT NULL,
                 daily_token_limit INTEGER NOT NULL,
@@ -43,8 +53,8 @@ class QuotaService {
                 tokens_used_month INTEGER DEFAULT 0,
                 last_reset_daily TEXT,
                 last_reset_monthly TEXT,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                created_at ${createdAtType} DEFAULT CURRENT_TIMESTAMP,
+                updated_at ${updatedAtType} DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(entity_type, entity_id)
             )
         `;
