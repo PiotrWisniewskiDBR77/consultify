@@ -22,7 +22,7 @@ import {
     ManagementReport,
     ManagementReportStatus 
 } from '../../../types';
-import { useAppStore } from '../../../store';
+import { useAppStore } from '../../../store/useAppStore';
 import { Api } from '../../../services/api';
 
 // Import sub-components
@@ -67,7 +67,8 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({
 
     // Store
     const currentProjectId = useAppStore(state => state.currentProjectId);
-    const currentOrganizationId = useAppStore(state => state.currentOrganizationId);
+    const currentUser = useAppStore(state => state.currentUser);
+    const currentOrganizationId = currentUser?.organizationId;
 
     // Mocked projects list (replace with actual API call)
     const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
@@ -152,7 +153,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({
         } finally {
             setGenerating(false);
         }
-    }, [reportType, scope, selectedProjectId, currentOrganizationId, periodDays]);
+    }, [reportType, scope, selectedProjectId, currentOrganizationId, periodDays, includeSections, excludeSections]);
 
     // Export handlers
     const handleExportPDF = async () => {
