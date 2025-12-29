@@ -22,6 +22,13 @@ const RECONNECT_BASE_DELAY = 1000; // 1 second
  * @returns {Promise<object|null>} Redis client or null if unavailable
  */
 async function initRedis(redisUrl) {
+    // Check if Railway variable expansion didn't work (still contains ${{)
+    if (redisUrl && redisUrl.includes('${{')) {
+        aiLogger.warn('Redis', `REDIS_URL appears to contain unexpanded Railway variable: ${redisUrl}`);
+        aiLogger.warn('Redis', 'Falling back to in-memory fallback');
+        redisUrl = null;
+    }
+    
     if (!redisUrl) {
         aiLogger.info('Redis', 'No REDIS_URL configured, using in-memory fallback');
         return null;
@@ -36,9 +43,14 @@ async function initRedis(redisUrl) {
     try {
         const redis = require('redis');
         
+        const connectTimeout = parseInt(process.env.REDIS_CONNECT_TIMEOUT || '30000', 10); // 30 seconds default for Railway
+        const commandTimeout = parseInt(process.env.REDIS_COMMAND_TIMEOUT || '10000', 10); // 10 seconds for commands
+        
         redisClient = redis.createClient({
             url: redisUrl,
             socket: {
+                connectTimeout: connectTimeout,
+                commandTimeout: commandTimeout,
                 reconnectStrategy: (retries) => {
                     if (retries > MAX_RECONNECT_ATTEMPTS) {
                         aiLogger.error('Redis', `Max reconnection attempts (${MAX_RECONNECT_ATTEMPTS}) exceeded`);

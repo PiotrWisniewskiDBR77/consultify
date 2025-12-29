@@ -11,7 +11,14 @@ try {
     redisAvailable = false;
 }
 
-const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+let redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+
+// Check if Railway variable expansion didn't work (still contains ${{)
+if (redisUrl && redisUrl.includes('${{')) {
+    console.warn('[Redis] REDIS_URL appears to contain unexpanded Railway variable:', redisUrl);
+    console.warn('[Redis] Falling back to individual REDIS_* variables or mock client');
+    redisUrl = null; // Force fallback
+}
 
 console.log('[Redis] Initializing client...');
 
@@ -33,20 +40,39 @@ const createMockClient = () => ({
     // Add other used methods as needed, or use Proxy for catch-all
 });
 
-if (process.env.MOCK_REDIS === 'true' || !redisAvailable) {
-    console.log('[Redis] Using Mock Client');
+if (process.env.MOCK_REDIS === 'true' || !redisAvailable || !redisUrl) {
+    if (!redisUrl) {
+        console.log('[Redis] No REDIS_URL configured, using Mock Client');
+    } else {
+        console.log('[Redis] Using Mock Client');
+    }
     client = createMockClient();
 } else {
+    const connectTimeout = parseInt(process.env.REDIS_CONNECT_TIMEOUT || '30000', 10); // 30 seconds default for Railway
+    const commandTimeout = parseInt(process.env.REDIS_COMMAND_TIMEOUT || '10000', 10); // 10 seconds for commands
+    
+    console.log(`[Redis] Connecting to: ${redisUrl.replace(/:[^:@]+@/, ':****@')}`); // Hide password in logs
+    
     client = createClient({
         url: redisUrl,
         socket: {
-            connectTimeout: 2000, // 2 second timeout
-            reconnectStrategy: false // Don't reconnect - fail fast
+            connectTimeout: connectTimeout,
+            commandTimeout: commandTimeout,
+            reconnectStrategy: (retries) => {
+                if (retries > 10) {
+                    console.error('[Redis] Max reconnection attempts exceeded');
+                    return new Error('Max reconnection attempts exceeded');
+                }
+                const delay = Math.min(1000 * Math.pow(2, retries), 30000);
+                console.log(`[Redis] Reconnecting in ${delay}ms (attempt ${retries})`);
+                return delay;
+            }
         }
     });
 
     client.on('error', (err) => console.error('[Redis] Client Error', err.message));
-    client.on('connect', () => console.log('[Redis] Connected'));
+    client.on('connect', () => console.log('[Redis] Connecting...'));
+    client.on('ready', () => console.log('[Redis] Connected and ready'));
 
     // Connect immediately with timeout
     (async () => {
@@ -55,7 +81,7 @@ if (process.env.MOCK_REDIS === 'true' || !redisAvailable) {
                 // Add timeout to prevent hanging
                 const connectPromise = client.connect();
                 const timeoutPromise = new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error('Redis connection timeout')), 2000)
+                    setTimeout(() => reject(new Error('Redis connection timeout')), connectTimeout)
                 );
                 await Promise.race([connectPromise, timeoutPromise]);
                 console.log('[Redis] Successfully connected');

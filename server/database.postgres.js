@@ -4,12 +4,34 @@ const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 
 console.log('[Postgres] Initializing connection pool...');
+console.log('[Postgres] Config:', {
+    host: config.postgres?.host,
+    port: config.postgres?.port,
+    database: config.postgres?.database,
+    user: config.postgres?.user,
+    ssl: config.postgres?.ssl,
+    connectionTimeoutMillis: config.postgres?.connectionTimeoutMillis,
+    max: config.postgres?.max
+});
 
 const pool = new Pool(config.postgres);
 
 pool.on('error', (err, client) => {
-    console.error('Unexpected error on idle client', err);
-    process.exit(-1);
+    console.error('[Postgres] Unexpected error on idle client:', err.message);
+    console.error('[Postgres] Error code:', err.code);
+    // Don't exit - allow retry
+});
+
+pool.on('connect', (client) => {
+    console.log('[Postgres] Client connected');
+});
+
+pool.on('acquire', (client) => {
+    console.log('[Postgres] Client acquired from pool');
+});
+
+pool.on('remove', (client) => {
+    console.log('[Postgres] Client removed from pool');
 });
 
 // Helper to convert SQLite params (?) to Postgres params ($1, $2)
@@ -193,6 +215,29 @@ const db = {
     }
 };
 
+// Test connection with retry
+async function testConnection(retries = 3, delay = 2000) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            console.log(`[Postgres] Testing connection (attempt ${i + 1}/${retries})...`);
+            const result = await pool.query('SELECT NOW() as current_time');
+            console.log('[Postgres] Connection test successful:', result.rows[0]);
+            return true;
+        } catch (err) {
+            console.error(`[Postgres] Connection test failed (attempt ${i + 1}/${retries}):`, err.message);
+            if (i < retries - 1) {
+                console.log(`[Postgres] Retrying in ${delay}ms...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                delay *= 2; // Exponential backoff
+            } else {
+                console.error('[Postgres] All connection attempts failed');
+                return false;
+            }
+        }
+    }
+    return false;
+}
+
 // Initialize Database Schema
 function initDb() {
     console.log('[Postgres] Checking/Initializing Schema...');
@@ -204,6 +249,12 @@ function initDb() {
 
     (async () => {
         try {
+            // Test connection first
+            const connected = await testConnection();
+            if (!connected) {
+                console.error('[Postgres] Cannot proceed with schema initialization - connection failed');
+                return;
+            }
             // Organizations Table
             await query(`CREATE TABLE IF NOT EXISTS organizations (
                 id TEXT PRIMARY KEY,

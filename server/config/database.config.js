@@ -8,7 +8,14 @@
 const path = require('path');
 
 const isProduction = process.env.NODE_ENV === 'production';
-const databaseUrl = process.env.DATABASE_URL;
+let databaseUrl = process.env.DATABASE_URL;
+
+// Check if Railway variable expansion didn't work (still contains ${{)
+if (databaseUrl && databaseUrl.includes('${{')) {
+    console.warn('[DB Config] DATABASE_URL appears to contain unexpanded Railway variable:', databaseUrl);
+    console.warn('[DB Config] Falling back to individual DB_* variables');
+    databaseUrl = null; // Force fallback to individual variables
+}
 
 // Determine database type
 // Determine database type
@@ -74,7 +81,15 @@ function parsePostgresUrl(url) {
             ssl: sslConfig,
             max: parseInt(process.env.DB_POOL_SIZE || '10'),
             idleTimeoutMillis: 30000,
-            connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT || '10000')
+            connectionTimeoutMillis: (() => {
+                const timeout = parseInt(process.env.DB_CONNECTION_TIMEOUT || '30000', 10);
+                if (timeout < 10000) {
+                    console.warn(`[DB Config] WARNING: DB_CONNECTION_TIMEOUT=${timeout}ms is too short for Railway. Minimum recommended: 30000ms (30 seconds)`);
+                    return 30000; // Force minimum 30 seconds
+                }
+                return timeout;
+            })(),
+            statement_timeout: parseInt(process.env.DB_STATEMENT_TIMEOUT || '60000', 10) // 60 seconds for queries
         };
     } catch (e) {
         console.error('Failed to parse DATABASE_URL:', e.message);
@@ -116,7 +131,15 @@ const config = {
             ssl: sslConfig,
             max: parseInt(process.env.DB_POOL_SIZE || '10'),
             idleTimeoutMillis: 30000,
-            connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT || '10000')
+            connectionTimeoutMillis: (() => {
+                const timeout = parseInt(process.env.DB_CONNECTION_TIMEOUT || '30000', 10);
+                if (timeout < 10000) {
+                    console.warn(`[DB Config] WARNING: DB_CONNECTION_TIMEOUT=${timeout}ms is too short for Railway. Minimum recommended: 30000ms (30 seconds)`);
+                    return 30000; // Force minimum 30 seconds
+                }
+                return timeout;
+            })(),
+            statement_timeout: parseInt(process.env.DB_STATEMENT_TIMEOUT || '60000', 10) // 60 seconds for queries
         };
     })(),
 
