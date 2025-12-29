@@ -941,6 +941,21 @@ function initDb() {
             await query(`CREATE INDEX IF NOT EXISTS idx_refresh_tokens_family ON refresh_tokens(token_family)`);
             await query(`CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires ON refresh_tokens(expires_at)`);
 
+            // Scheduled Emails Table (for report email scheduling)
+            await query(`CREATE TABLE IF NOT EXISTS scheduled_emails (
+                id TEXT PRIMARY KEY,
+                report_id TEXT NOT NULL,
+                recipients TEXT NOT NULL,
+                scheduled_time TIMESTAMP NOT NULL,
+                status TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'SENT', 'FAILED')),
+                sent_at TIMESTAMP,
+                error TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )`);
+
+            await query(`CREATE INDEX IF NOT EXISTS idx_scheduled_emails_status_time ON scheduled_emails(status, scheduled_time)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_scheduled_emails_report ON scheduled_emails(report_id)`);
+
             // Add MFA columns to existing tables if they don't exist (migration)
             // Users table MFA columns
             await query(`

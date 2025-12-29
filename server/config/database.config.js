@@ -74,7 +74,7 @@ function parsePostgresUrl(url) {
             ssl: sslConfig,
             max: parseInt(process.env.DB_POOL_SIZE || '10'),
             idleTimeoutMillis: 30000,
-            connectionTimeoutMillis: 2000
+            connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT || '10000')
         };
     } catch (e) {
         console.error('Failed to parse DATABASE_URL:', e.message);
@@ -116,7 +116,7 @@ const config = {
             ssl: sslConfig,
             max: parseInt(process.env.DB_POOL_SIZE || '10'),
             idleTimeoutMillis: 30000,
-            connectionTimeoutMillis: 2000
+            connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT || '10000')
         };
     })(),
 
