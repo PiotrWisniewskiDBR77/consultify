@@ -6,6 +6,8 @@ import { useAIStream } from '../../hooks/useAIStream';
 import { MessageCircle, X, Cpu, MapPin, Shield, Maximize2 } from 'lucide-react';
 import { ChatMessage, ChatOption, AppView } from '../../types';
 import { AIRoleBadge } from './AIRoleBadge';
+import { LLMSelector } from '../LLMSelector';
+import { AIUsageIndicator } from '../AIUsageIndicator';
 
 export const ChatOverlay: React.FC = () => {
     const { isChatOpen, toggleChat, screenContext, pmoContext, globalContext } = useAIContext();
@@ -139,7 +141,11 @@ export const ChatOverlay: React.FC = () => {
                             </div>
                         </div>
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-2">
+                        {/* LLM Model Selector */}
+                        <LLMSelector />
+                        {/* AI Usage Indicator */}
+                        <AIUsageIndicator compact />
                         {/* Expand to fullscreen button */}
                         <button
                             onClick={() => {

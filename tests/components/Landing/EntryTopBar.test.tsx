@@ -1,0 +1,31 @@
+/**
+ * @vitest-environment jsdom
+ */
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { EntryTopBar } from '../../../components/Landing/EntryTopBar';
+
+describe('EntryTopBar Component', () => {
+    const user = userEvent.setup();
+
+    it('renders top bar', () => {
+        render(<EntryTopBar />);
+
+        expect(screen.getByText(/Consultify/i) || screen.getByRole('banner')).toBeInTheDocument();
+    });
+
+    it('displays login button', () => {
+        render(<EntryTopBar />);
+
+        expect(screen.getByRole('button', { name: /Login/i }) || screen.getByRole('button', { name: /Sign In/i })).toBeInTheDocument();
+    });
+
+    it('handles login click', async () => {
+        render(<EntryTopBar />);
+
+        const loginButton = screen.getByRole('button', { name: /Login/i }) || screen.getByRole('button', { name: /Sign In/i });
+        await user.click(loginButton);
+    });
+});
+

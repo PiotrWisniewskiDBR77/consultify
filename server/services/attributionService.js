@@ -11,8 +11,13 @@
  * Follows the same pattern as organization_events, legal_events, invitation_events.
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+const defaultDb = require('../database');
+const { v4: defaultUuidv4 } = require('uuid');
+
+const deps = {
+    db: defaultDb,
+    uuidv4: defaultUuidv4
+};
 
 const SOURCE_TYPES = {
     PROMO_CODE: 'PROMO_CODE',
@@ -24,6 +29,14 @@ const SOURCE_TYPES = {
 
 const AttributionService = {
     SOURCE_TYPES,
+
+    /**
+     * Dependency injection for testing
+     * @param {object} newDeps 
+     */
+    setDependencies: (newDeps) => {
+        Object.assign(deps, newDeps);
+    },
 
     /**
      * Record a new attribution event (append-only, never updates)
@@ -39,7 +52,7 @@ const AttributionService = {
      * @returns {Promise<{eventId: string}>}
      */
     recordAttribution: async (params) => {
-        if (db.initPromise) await db.initPromise;
+        if (deps.db.initPromise) await deps.db.initPromise;
         const {
             organizationId,
             userId = null,
@@ -59,10 +72,10 @@ const AttributionService = {
             throw new Error(`Invalid source type: ${sourceType}`);
         }
 
-        const eventId = uuidv4();
+        const eventId = deps.uuidv4();
 
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `INSERT INTO attribution_events (id, organization_id, user_id, source_type, source_id, campaign, partner_code, medium, metadata)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [eventId, organizationId, userId, sourceType, sourceId, campaign, partnerCode, medium, JSON.stringify(metadata)],
@@ -86,7 +99,7 @@ const AttributionService = {
      */
     getOrganizationAttribution: async (organizationId) => {
         return new Promise((resolve, reject) => {
-            db.all(
+            deps.db.all(
                 `SELECT ae.*, u.email as user_email, u.first_name, u.last_name
                  FROM attribution_events ae
                  LEFT JOIN users u ON u.id = ae.user_id
@@ -122,7 +135,7 @@ const AttributionService = {
      */
     getFirstAttribution: async (organizationId) => {
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT ae.*, u.email as user_email
                  FROM attribution_events ae
                  LEFT JOIN users u ON u.id = ae.user_id
@@ -159,7 +172,7 @@ const AttributionService = {
      */
     hasAttribution: async (organizationId) => {
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT COUNT(*) as count FROM attribution_events WHERE organization_id = ?`,
                 [organizationId],
                 (err, row) => {
@@ -213,7 +226,7 @@ const AttributionService = {
         query += ` ORDER BY ae.created_at DESC`;
 
         return new Promise((resolve, reject) => {
-            db.all(query, params, (err, rows) => {
+            deps.db.all(query, params, (err, rows) => {
                 if (err) return reject(err);
                 resolve((rows || []).map(row => ({
                     eventId: row.id,
@@ -267,7 +280,7 @@ const AttributionService = {
         query += ` GROUP BY ae.partner_code ORDER BY organization_count DESC`;
 
         return new Promise((resolve, reject) => {
-            db.all(query, params, (err, rows) => {
+            deps.db.all(query, params, (err, rows) => {
                 if (err) return reject(err);
                 resolve((rows || []).map(row => ({
                     partnerCode: row.partner_code,

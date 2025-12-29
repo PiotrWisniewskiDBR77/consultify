@@ -58,12 +58,7 @@ export const Module1ContextView: React.FC<Module1ContextViewProps> = ({ currentU
         }
     }, [sufficiency, fullSession, setFullSession, currentUser.id]);
     const analyzeSufficiency = async (history: ChatMessage[]) => {
-        // Mock Sufficiency Analysis for immediate feedback loop (Real implementation would call a specialized LLM prompt)
-        // Here we simulate the AI "Checking" the context.
-        // In a real scenario, we would send the conversation to the LLM with a hidden system prompt asking to rate the context.
-        // For this prototype, we'll increment score based on message count + length as a heuristic,
-        // OR better yet, ask the AI to output a JSON block in a separate hidden call.
-        // Let's do a hidden AI call to evaluate context.
+        // Real AI call to evaluate context sufficiency
         const evaluationPrompt = `
         ACT AS A SENIOR STRATEGY CONSULTANT AUDITOR.
         Analyze the conversation history provided.
@@ -72,26 +67,41 @@ export const Module1ContextView: React.FC<Module1ContextViewProps> = ({ currentU
         2. Business Goals (Quantifiable targets)
         3. Key Challenges (Pain points)
         4. Financial/Risk Context (Budget, constraints)
-        Output a JSON ONLY:
-        {
-            "score": number (0-100),
-            "gaps": string[] (list of missing areas),
-            "reasoning": string (brief explanation)
-        }
+        
+        Conversation:
+        ${history.map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n')}
+        
+        Output ONLY a valid JSON object (no markdown, no explanation):
+        {"score": number (0-100), "gaps": ["list of missing areas"], "reasoning": "brief explanation"}
         `;
-        // This is a simplified call to get the JSON. In production we might split this.
-        // For now, we simulate "progress" to not block the user indefinitely in this demo.
-        const msgCount = history.filter(m => m.role === 'user').length;
-        const mockScore = Math.min(10 + (msgCount * 20), 100);
-        let mockGaps: string[] = [];
-        if (mockScore < 40) mockGaps = ["Strategic Drivers", "Business Goals", "Financial Context"];
-        else if (mockScore < 70) mockGaps = ["Business Goals", "Financial Context"];
-        else if (mockScore < 90) mockGaps = ["Financial Context"];
-        setSufficiency({
-            score: mockScore,
-            gaps: mockGaps,
-            isReady: mockScore >= 80
-        });
+        
+        try {
+            const response = await Api.chatWithAI(evaluationPrompt, [], 'You are a context evaluator. Output only valid JSON.');
+            // Parse the JSON response
+            const jsonMatch = response.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                const parsed = JSON.parse(jsonMatch[0]);
+                setSufficiency({
+                    score: parsed.score || 0,
+                    gaps: parsed.gaps || [],
+                    isReady: (parsed.score || 0) >= 80
+                });
+            }
+        } catch (error) {
+            console.error('Failed to analyze sufficiency:', error);
+            // Fallback: use message count heuristic if AI fails
+            const msgCount = history.filter(m => m.role === 'user').length;
+            const fallbackScore = Math.min(10 + (msgCount * 15), 100);
+            let fallbackGaps: string[] = [];
+            if (fallbackScore < 40) fallbackGaps = ["Strategic Drivers", "Business Goals", "Financial Context"];
+            else if (fallbackScore < 70) fallbackGaps = ["Business Goals", "Financial Context"];
+            else if (fallbackScore < 90) fallbackGaps = ["Financial Context"];
+            setSufficiency({
+                score: fallbackScore,
+                gaps: fallbackGaps,
+                isReady: fallbackScore >= 80
+            });
+        }
     };
     const handleSendMessage = async (text: string) => {
         addChatMessage({ id: Date.now().toString(), role: 'user', content: text, timestamp: new Date() });

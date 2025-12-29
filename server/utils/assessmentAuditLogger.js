@@ -3,15 +3,29 @@
  * Logs all assessment-related actions for compliance
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+const defaultDb = require('../database');
+const { v4: defaultUuidv4 } = require('uuid');
 
 class AssessmentAuditLogger {
+    constructor() {
+        this.db = defaultDb;
+        this.uuidv4 = defaultUuidv4;
+    }
+
+    /**
+     * Inject dependencies for testing
+     * @param {Object} deps 
+     */
+    setDependencies(deps) {
+        if (deps.db) this.db = deps.db;
+        if (deps.uuidv4) this.uuidv4 = deps.uuidv4;
+    }
+
     /**
      * Log assessment action
      * @param {Object} params - Audit parameters
      */
-    static async log({
+    async log({
         userId,
         organizationId,
         action,
@@ -22,7 +36,7 @@ class AssessmentAuditLogger {
         userAgent
     }) {
         try {
-            const auditId = uuidv4();
+            const auditId = this.uuidv4();
 
             const sql = `
                 INSERT INTO audit_logs (
@@ -34,7 +48,7 @@ class AssessmentAuditLogger {
             `;
 
             await new Promise((resolve, reject) => {
-                db.run(sql, [
+                this.db.run(sql, [
                     auditId,
                     userId,
                     organizationId,
@@ -60,7 +74,7 @@ class AssessmentAuditLogger {
     /**
      * Log assessment creation
      */
-    static async logCreation(req, assessmentId, assessmentType) {
+    async logCreation(req, assessmentId, assessmentType) {
         return this.log({
             userId: req.user.id,
             organizationId: req.user.organizationId,
@@ -76,7 +90,7 @@ class AssessmentAuditLogger {
     /**
      * Log file upload
      */
-    static async logFileUpload(req, fileId, fileName, fileSize) {
+    async logFileUpload(req, fileId, fileName, fileSize) {
         return this.log({
             userId: req.user.id,
             organizationId: req.user.organizationId,
@@ -92,7 +106,7 @@ class AssessmentAuditLogger {
     /**
      * Log assessment deletion
      */
-    static async logDeletion(req, assessmentId, assessmentType) {
+    async logDeletion(req, assessmentId, assessmentType) {
         return this.log({
             userId: req.user.id,
             organizationId: req.user.organizationId,
@@ -106,4 +120,7 @@ class AssessmentAuditLogger {
     }
 }
 
-module.exports = AssessmentAuditLogger;
+// Export singleton instance
+module.exports = new AssessmentAuditLogger();
+
+

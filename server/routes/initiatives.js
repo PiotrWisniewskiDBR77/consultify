@@ -1,5 +1,8 @@
 const AiService = require('../services/aiService');
 const AccessPolicyService = require('../services/accessPolicyService');
+const InitiativeStatusService = require('../services/initiativeStatusService');
+const StatusMachine = require('../services/statusMachine');
+const NotificationService = require('../services/notificationService');
 const express = require('express');
 const router = express.Router();
 const db = require('../database');
@@ -9,6 +12,23 @@ const { asyncHandler } = require('../utils/errorHandler');
 const queryHelpers = require('../utils/queryHelpers');
 
 router.use(verifyToken);
+
+// ==========================================
+// SAFE JSON PARSING HELPER
+// Prevents crashes when JSON fields contain invalid data
+// ==========================================
+const safeJsonParse = (str, defaultValue = []) => {
+    if (!str || str === '' || str === 'null' || str === 'undefined') {
+        return defaultValue;
+    }
+    try {
+        const parsed = JSON.parse(str);
+        return parsed || defaultValue;
+    } catch (e) {
+        console.warn('[initiatives] Failed to parse JSON:', str?.substring?.(0, 100));
+        return defaultValue;
+    }
+};
 
 // ==========================================
 // GET INITIATIVES
@@ -56,13 +76,13 @@ router.get('/', asyncHandler(async (req, res) => {
             actualStartDate: i.actual_start_date,
             actualEndDate: i.actual_end_date,
 
-            // Professional Card Fields
+            // Professional Card Fields (using safe JSON parsing)
             problemStatement: i.problem_statement,
-            deliverables: i.deliverables ? JSON.parse(i.deliverables) : [],
-            successCriteria: i.success_criteria ? JSON.parse(i.success_criteria) : [],
-            scopeIn: i.scope_in ? JSON.parse(i.scope_in) : [],
-            scopeOut: i.scope_out ? JSON.parse(i.scope_out) : [],
-            keyRisks: i.key_risks ? JSON.parse(i.key_risks) : [],
+            deliverables: safeJsonParse(i.deliverables, []),
+            successCriteria: safeJsonParse(i.success_criteria, []),
+            scopeIn: safeJsonParse(i.scope_in, []),
+            scopeOut: safeJsonParse(i.scope_out, []),
+            keyRisks: safeJsonParse(i.key_risks, []),
 
             ownerBusiness: i.owner_business_id ? {
                 id: i.owner_business_id,
@@ -160,14 +180,14 @@ router.get('/:id', asyncHandler(async (req, res) => {
             actualEndDate: i.actual_end_date,
             pilotEndDate: i.pilot_end_date,
 
-            // Professional Card Fields
+            // Professional Card Fields (using safe JSON parsing to prevent crashes)
             problemStatement: i.problem_statement,
-            deliverables: i.deliverables ? JSON.parse(i.deliverables) : [],
-            successCriteria: i.success_criteria ? JSON.parse(i.success_criteria) : [],
-            scopeIn: i.scope_in ? JSON.parse(i.scope_in) : [],
-            scopeOut: i.scope_out ? JSON.parse(i.scope_out) : [],
-            keyRisks: i.key_risks ? JSON.parse(i.key_risks) : [],
-            competenciesRequired: i.competencies_required ? JSON.parse(i.competencies_required) : [],
+            deliverables: safeJsonParse(i.deliverables, []),
+            successCriteria: safeJsonParse(i.success_criteria, []),
+            scopeIn: safeJsonParse(i.scope_in, []),
+            scopeOut: safeJsonParse(i.scope_out, []),
+            keyRisks: safeJsonParse(i.key_risks, []),
+            competenciesRequired: safeJsonParse(i.competencies_required, []),
 
             // Market context
             marketContext: i.market_context,
@@ -362,7 +382,210 @@ router.put('/:id', asyncHandler(async (req, res) => {
     const sql = `UPDATE initiatives SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?`;
 
     await queryHelpers.queryRun(sql, params);
+    
+    // Update charter completeness after any update
+    await InitiativeStatusService.updateCompleteness(id, orgId);
+    
     res.json({ message: 'Initiative updated' });
+}));
+
+// ==========================================
+// STATUS TRANSITION (PATCH /api/initiatives/:id/status)
+// Core endpoint for initiative lifecycle management
+// ==========================================
+router.patch('/:id/status', asyncHandler(async (req, res) => {
+    const orgId = req.user.organizationId;
+    const userId = req.user.id;
+    const { id } = req.params;
+    const { status: newStatus, reason, comment } = req.body;
+
+    if (!newStatus) {
+        return res.status(400).json({ error: 'New status is required' });
+    }
+
+    // Validate that newStatus is a valid initiative status
+    if (!Object.values(StatusMachine.INITIATIVE_STATUSES).includes(newStatus)) {
+        return res.status(400).json({ 
+            error: 'Invalid status',
+            validStatuses: Object.values(StatusMachine.INITIATIVE_STATUSES)
+        });
+    }
+
+    // Perform transition with validation
+    const result = await InitiativeStatusService.transitionStatus(
+        id, 
+        orgId, 
+        userId, 
+        newStatus,
+        { reason, comment }
+    );
+
+    if (!result.success) {
+        return res.status(400).json({ error: result.error });
+    }
+
+    // Send notification for module transitions
+    if (result.initiative.moduleTransition?.crossesModule) {
+        try {
+            await NotificationService.createNotification({
+                type: 'INITIATIVE_STATUS_CHANGE',
+                title: `Initiative moved to ${result.initiative.moduleTransition.toModule}`,
+                message: `Initiative status changed from ${result.initiative.previousStatus} to ${result.initiative.status}`,
+                initiativeId: id,
+                organizationId: orgId,
+                createdBy: userId
+            });
+        } catch (e) {
+            console.warn('[Initiatives] Failed to send notification:', e.message);
+        }
+    }
+
+    res.json({
+        success: true,
+        message: `Status changed to ${newStatus}`,
+        initiative: result.initiative
+    });
+}));
+
+// ==========================================
+// GET ALLOWED TRANSITIONS
+// Returns valid next statuses for current initiative
+// ==========================================
+router.get('/:id/transitions', asyncHandler(async (req, res) => {
+    const orgId = req.user.organizationId;
+    const { id } = req.params;
+
+    // Get initiative with context
+    const initiative = await InitiativeStatusService.getInitiativeWithContext(id, orgId);
+    
+    if (!initiative) {
+        return res.status(404).json({ error: 'Initiative not found' });
+    }
+
+    const currentStatus = initiative.status || 'DRAFT';
+    const allowedTransitions = InitiativeStatusService.getAllowedTransitions(currentStatus);
+
+    res.json({
+        currentStatus,
+        currentModule: StatusMachine.getInitiativeModule(currentStatus),
+        charterCompleteness: initiative.charterCompleteness,
+        taskStats: initiative.taskStats,
+        allowedTransitions
+    });
+}));
+
+// ==========================================
+// GET STATUS HISTORY
+// Returns audit trail of status changes
+// ==========================================
+router.get('/:id/status-history', asyncHandler(async (req, res) => {
+    const orgId = req.user.organizationId;
+    const { id } = req.params;
+
+    // Verify access
+    const initiative = await queryHelpers.queryOne(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+    );
+
+    if (!initiative) {
+        return res.status(404).json({ error: 'Initiative not found' });
+    }
+
+    const history = await InitiativeStatusService.getStatusHistory(id);
+    res.json({ history });
+}));
+
+// ==========================================
+// GET INITIATIVES BY STATUS (filtered view)
+// Supports module-based filtering
+// ==========================================
+router.get('/by-status/:status', asyncHandler(async (req, res) => {
+    const orgId = req.user.organizationId;
+    const { status } = req.params;
+    const { projectId, locationId } = req.query;
+
+    let sql = `
+        SELECT i.*, 
+            ob.first_name as ob_first_name, ob.last_name as ob_last_name, ob.avatar_url as ob_avatar,
+            oe.first_name as oe_first_name, oe.last_name as oe_last_name, oe.avatar_url as oe_avatar,
+            p.name as project_name,
+            l.name as location_name
+        FROM initiatives i
+        LEFT JOIN users ob ON i.owner_business_id = ob.id
+        LEFT JOIN users oe ON i.owner_execution_id = oe.id
+        LEFT JOIN projects p ON i.project_id = p.id
+        LEFT JOIN locations l ON i.location_id = l.id
+        WHERE i.organization_id = ?
+    `;
+    
+    const params = [orgId];
+
+    // Handle multiple statuses (comma-separated)
+    const statuses = status.split(',').map(s => s.trim().toUpperCase());
+    sql += ` AND i.status IN (${statuses.map(() => '?').join(',')})`;
+    params.push(...statuses);
+
+    if (projectId) {
+        sql += ` AND i.project_id = ?`;
+        params.push(projectId);
+    }
+
+    if (locationId) {
+        sql += ` AND i.location_id = ?`;
+        params.push(locationId);
+    }
+
+    sql += ` ORDER BY i.updated_at DESC`;
+
+    try {
+        const rows = await queryHelpers.queryAll(sql, params);
+
+        const initiatives = rows.map(i => ({
+            id: i.id,
+            organizationId: i.organization_id,
+            projectId: i.project_id,
+            projectName: i.project_name,
+            locationId: i.location_id,
+            locationName: i.location_name,
+            name: i.name,
+            axis: i.axis,
+            area: i.area,
+            summary: i.summary,
+            status: i.status,
+            progress: i.progress || 0,
+            charterCompleteness: i.charter_completeness || 0,
+            businessValue: i.business_value,
+            costCapex: i.cost_capex,
+            costOpex: i.cost_opex,
+            expectedRoi: i.expected_roi,
+            plannedStartDate: i.planned_start_date,
+            plannedEndDate: i.planned_end_date,
+            targetQuarter: i.target_quarter,
+            blockedReason: i.blocked_reason,
+            ownerBusiness: i.owner_business_id ? {
+                id: i.owner_business_id,
+                firstName: i.ob_first_name,
+                lastName: i.ob_last_name,
+                avatarUrl: i.ob_avatar
+            } : null,
+            ownerExecution: i.owner_execution_id ? {
+                id: i.owner_execution_id,
+                firstName: i.oe_first_name,
+                lastName: i.oe_last_name,
+                avatarUrl: i.oe_avatar
+            } : null,
+            createdAt: i.created_at,
+            updatedAt: i.updated_at
+        }));
+
+        res.json({ initiatives, total: initiatives.length });
+    } catch (error) {
+        if (error.message?.includes('no such table')) {
+            return res.json({ initiatives: [], total: 0 });
+        }
+        throw error;
+    }
 }));
 
 // ==========================================
@@ -528,6 +751,281 @@ router.post('/:id/enrich', asyncHandler(async (req, res) => {
         console.error("Enrichment failed", error);
         res.status(500).json({ error: 'Enrichment failed' });
     }
+}));
+
+// ==========================================
+// KPI MANAGEMENT
+// For Benefits Tracking module
+// ==========================================
+
+// GET KPIs for initiative
+router.get('/:id/kpis', asyncHandler(async (req, res) => {
+    const orgId = req.user.organizationId;
+    const { id } = req.params;
+
+    // Verify initiative access
+    const initiative = await queryHelpers.queryOne(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+    );
+
+    if (!initiative) {
+        return res.status(404).json({ error: 'Initiative not found' });
+    }
+
+    try {
+        const kpis = await queryHelpers.queryAll(`
+            SELECT k.*, 
+                (SELECT value FROM kpi_measurements WHERE kpi_id = k.id ORDER BY measured_at DESC LIMIT 1) as latest_value,
+                (SELECT measured_at FROM kpi_measurements WHERE kpi_id = k.id ORDER BY measured_at DESC LIMIT 1) as latest_measurement_date
+            FROM initiative_kpis k
+            WHERE k.initiative_id = ?
+            ORDER BY k.is_primary DESC, k.sort_order ASC
+        `, [id]);
+
+        res.json({
+            kpis: kpis.map(k => ({
+                id: k.id,
+                name: k.name,
+                description: k.description,
+                targetValue: k.target_value,
+                unit: k.unit,
+                measurementFrequency: k.measurement_frequency,
+                alertThreshold: k.alert_threshold,
+                alertDirection: k.alert_direction,
+                isPrimary: !!k.is_primary,
+                sortOrder: k.sort_order,
+                latestValue: k.latest_value,
+                latestMeasurementDate: k.latest_measurement_date,
+                isOnTarget: k.alert_direction === 'BELOW' 
+                    ? (k.latest_value || 0) >= (k.alert_threshold || 0)
+                    : (k.latest_value || 0) <= (k.alert_threshold || 0),
+                createdAt: k.created_at
+            }))
+        });
+    } catch (error) {
+        if (error.message?.includes('no such table')) {
+            return res.json({ kpis: [] });
+        }
+        throw error;
+    }
+}));
+
+// CREATE KPI for initiative
+router.post('/:id/kpis', asyncHandler(async (req, res) => {
+    const orgId = req.user.organizationId;
+    const { id } = req.params;
+    const { 
+        name, description, targetValue, unit, 
+        measurementFrequency, alertThreshold, alertDirection, isPrimary 
+    } = req.body;
+
+    if (!name) {
+        return res.status(400).json({ error: 'KPI name is required' });
+    }
+
+    // Verify initiative access
+    const initiative = await queryHelpers.queryOne(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+    );
+
+    if (!initiative) {
+        return res.status(404).json({ error: 'Initiative not found' });
+    }
+
+    const kpiId = uuidv4();
+    const now = new Date().toISOString();
+
+    // Get next sort order
+    const lastKpi = await queryHelpers.queryOne(
+        `SELECT MAX(sort_order) as max_order FROM initiative_kpis WHERE initiative_id = ?`,
+        [id]
+    );
+    const sortOrder = (lastKpi?.max_order || 0) + 1;
+
+    await queryHelpers.queryRun(`
+        INSERT INTO initiative_kpis 
+        (id, initiative_id, name, description, target_value, unit, measurement_frequency, 
+         alert_threshold, alert_direction, is_primary, sort_order, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+        kpiId, id, name, description || null, targetValue || null, unit || null,
+        measurementFrequency || 'MONTHLY', alertThreshold || null, 
+        alertDirection || 'BELOW', isPrimary ? 1 : 0, sortOrder, now, now
+    ]);
+
+    res.json({
+        id: kpiId,
+        name,
+        message: 'KPI created successfully'
+    });
+}));
+
+// UPDATE KPI
+router.put('/:id/kpis/:kpiId', asyncHandler(async (req, res) => {
+    const orgId = req.user.organizationId;
+    const { id, kpiId } = req.params;
+    const body = req.body;
+
+    // Verify access
+    const initiative = await queryHelpers.queryOne(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+    );
+
+    if (!initiative) {
+        return res.status(404).json({ error: 'Initiative not found' });
+    }
+
+    const updates = [];
+    const params = [];
+
+    const allowedFields = [
+        'name', 'description', 'target_value', 'unit', 
+        'measurement_frequency', 'alert_threshold', 'alert_direction', 'is_primary', 'sort_order'
+    ];
+
+    allowedFields.forEach(field => {
+        const bodyKey = field.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
+        if (body[bodyKey] !== undefined) {
+            updates.push(`${field} = ?`);
+            params.push(field === 'is_primary' ? (body[bodyKey] ? 1 : 0) : body[bodyKey]);
+        }
+    });
+
+    if (updates.length === 0) {
+        return res.json({ message: 'No changes' });
+    }
+
+    updates.push('updated_at = ?');
+    params.push(new Date().toISOString());
+    params.push(kpiId);
+    params.push(id);
+
+    await queryHelpers.queryRun(
+        `UPDATE initiative_kpis SET ${updates.join(', ')} WHERE id = ? AND initiative_id = ?`,
+        params
+    );
+
+    res.json({ message: 'KPI updated' });
+}));
+
+// DELETE KPI
+router.delete('/:id/kpis/:kpiId', asyncHandler(async (req, res) => {
+    const orgId = req.user.organizationId;
+    const { id, kpiId } = req.params;
+
+    // Verify access
+    const initiative = await queryHelpers.queryOne(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+    );
+
+    if (!initiative) {
+        return res.status(404).json({ error: 'Initiative not found' });
+    }
+
+    await queryHelpers.queryRun(
+        `DELETE FROM initiative_kpis WHERE id = ? AND initiative_id = ?`,
+        [kpiId, id]
+    );
+
+    res.json({ message: 'KPI deleted' });
+}));
+
+// ADD KPI MEASUREMENT
+router.post('/:id/kpis/:kpiId/measurements', asyncHandler(async (req, res) => {
+    const orgId = req.user.organizationId;
+    const userId = req.user.id;
+    const { id, kpiId } = req.params;
+    const { value, measuredAt, notes, explanation, actionItems } = req.body;
+
+    if (value === undefined || value === null) {
+        return res.status(400).json({ error: 'Value is required' });
+    }
+
+    // Verify access
+    const initiative = await queryHelpers.queryOne(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+    );
+
+    if (!initiative) {
+        return res.status(404).json({ error: 'Initiative not found' });
+    }
+
+    // Verify KPI exists
+    const kpi = await queryHelpers.queryOne(
+        `SELECT id FROM initiative_kpis WHERE id = ? AND initiative_id = ?`,
+        [kpiId, id]
+    );
+
+    if (!kpi) {
+        return res.status(404).json({ error: 'KPI not found' });
+    }
+
+    const measurementId = uuidv4();
+    const now = new Date().toISOString();
+
+    await queryHelpers.queryRun(`
+        INSERT INTO kpi_measurements 
+        (id, kpi_id, value, measured_at, notes, explanation, action_items, created_by, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+        measurementId, kpiId, value, 
+        measuredAt || now, notes || null, explanation || null,
+        actionItems ? JSON.stringify(actionItems) : null,
+        userId, now
+    ]);
+
+    res.json({
+        id: measurementId,
+        message: 'Measurement recorded'
+    });
+}));
+
+// GET KPI MEASUREMENTS (history)
+router.get('/:id/kpis/:kpiId/measurements', asyncHandler(async (req, res) => {
+    const orgId = req.user.organizationId;
+    const { id, kpiId } = req.params;
+    const { limit = 50 } = req.query;
+
+    // Verify access
+    const initiative = await queryHelpers.queryOne(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+    );
+
+    if (!initiative) {
+        return res.status(404).json({ error: 'Initiative not found' });
+    }
+
+    const measurements = await queryHelpers.queryAll(`
+        SELECT m.*, u.first_name, u.last_name
+        FROM kpi_measurements m
+        LEFT JOIN users u ON m.created_by = u.id
+        WHERE m.kpi_id = ?
+        ORDER BY m.measured_at DESC
+        LIMIT ?
+    `, [kpiId, parseInt(limit)]);
+
+    res.json({
+        measurements: measurements.map(m => ({
+            id: m.id,
+            value: m.value,
+            measuredAt: m.measured_at,
+            notes: m.notes,
+            explanation: m.explanation,
+            actionItems: m.action_items ? safeJsonParse(m.action_items, []) : [],
+            createdBy: m.created_by ? {
+                id: m.created_by,
+                firstName: m.first_name,
+                lastName: m.last_name
+            } : null,
+            createdAt: m.created_at
+        }))
+    });
 }));
 
 module.exports = router;

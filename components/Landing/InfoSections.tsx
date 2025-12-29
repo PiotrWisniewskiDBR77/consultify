@@ -1,24 +1,360 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { CheckCircle, ShieldCheck, Cpu, BarChart3, Users, Zap } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { CheckCircle, ShieldCheck, Cpu, BarChart3, Users, Zap, ChevronDown, HelpCircle, Bell, CheckSquare, Rocket, GitBranch, ChevronLeft, ChevronRight, Clock, AlertTriangle, Target, TrendingUp, GraduationCap, Map } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { DemoButton, RegionalDemoButtons } from './DemoButton';
+
+// App Feature Carousel Slides
+const AppFeatureSlide: React.FC<{ type: 'notifications' | 'tasks' | 'initiatives' | 'decisions' }> = ({ type }) => {
+    if (type === 'notifications') {
+        return (
+            <div className="h-full flex flex-col">
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
+                            <Bell size={20} className="text-purple-400" />
+                        </div>
+                        <span className="text-white font-bold text-lg">Notifications</span>
+                    </div>
+                    <span className="px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-xs font-bold">3 New</span>
+                </div>
+                <div className="space-y-3 flex-1">
+                    {[
+                        { icon: AlertTriangle, color: 'text-amber-400', bg: 'bg-amber-500/10', title: 'Initiative Deadline', desc: 'Industry 4.0 Roadmap due in 2 days', time: '2h ago' },
+                        { icon: CheckSquare, color: 'text-emerald-400', bg: 'bg-emerald-500/10', title: 'Task Completed', desc: 'Assessment phase finished by team', time: '4h ago' },
+                        { icon: Users, color: 'text-blue-400', bg: 'bg-blue-500/10', title: 'New Comment', desc: 'Dr. Kowalski commented on ROI analysis', time: '6h ago' },
+                    ].map((item, i) => (
+                        <motion.div
+                            key={i}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: i * 0.1 }}
+                            className={`p-4 rounded-2xl ${item.bg} border border-white/5 flex items-start gap-3`}
+                        >
+                            <div className={`w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0`}>
+                                <item.icon size={16} className={item.color} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-white font-semibold text-sm">{item.title}</p>
+                                <p className="text-slate-400 text-xs truncate">{item.desc}</p>
+                            </div>
+                            <span className="text-slate-500 text-[10px] flex-shrink-0">{item.time}</span>
+                        </motion.div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
+    if (type === 'tasks') {
+        return (
+            <div className="h-full flex flex-col">
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                            <CheckSquare size={20} className="text-blue-400" />
+                        </div>
+                        <span className="text-white font-bold text-lg">My Tasks</span>
+                    </div>
+                    <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs font-bold">12 Active</span>
+                </div>
+                <div className="space-y-3 flex-1">
+                    {[
+                        { status: 'in_progress', title: 'Complete DRD Assessment', priority: 'High', progress: 75 },
+                        { status: 'pending', title: 'Review ROI Projections', priority: 'Medium', progress: 0 },
+                        { status: 'in_progress', title: 'Prepare Stage-Gate Report', priority: 'High', progress: 40 },
+                    ].map((task, i) => (
+                        <motion.div
+                            key={i}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.1 }}
+                            className="p-4 rounded-2xl bg-white/5 border border-white/5"
+                        >
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                    <div className={`w-2 h-2 rounded-full ${task.status === 'in_progress' ? 'bg-blue-400' : 'bg-slate-500'}`} />
+                                    <span className="text-white font-semibold text-sm">{task.title}</span>
+                                </div>
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${task.priority === 'High' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'}`}>
+                                    {task.priority}
+                                </span>
+                            </div>
+                            <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                <motion.div
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${task.progress}%` }}
+                                    transition={{ delay: 0.3 + i * 0.1, duration: 0.5 }}
+                                    className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"
+                                />
+                            </div>
+                        </motion.div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
+    if (type === 'initiatives') {
+        return (
+            <div className="h-full flex flex-col">
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                            <Rocket size={20} className="text-emerald-400" />
+                        </div>
+                        <span className="text-white font-bold text-lg">Initiatives</span>
+                    </div>
+                    <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-xs font-bold">4 Active</span>
+                </div>
+                <div className="space-y-3 flex-1">
+                    {[
+                        { name: 'Industry 4.0 Roadmap', status: 'On Track', roi: '+240%', phase: 'Execution' },
+                        { name: 'Digital Twin Implementation', status: 'At Risk', roi: '+180%', phase: 'Planning' },
+                        { name: 'Supply Chain Optimization', status: 'On Track', roi: '+95%', phase: 'Assessment' },
+                    ].map((init, i) => (
+                        <motion.div
+                            key={i}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: i * 0.1 }}
+                            className="p-4 rounded-2xl bg-white/5 border border-white/5"
+                        >
+                            <div className="flex items-center justify-between mb-3">
+                                <span className="text-white font-semibold text-sm">{init.name}</span>
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${init.status === 'On Track' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
+                                    {init.status}
+                                </span>
+                            </div>
+                            <div className="flex items-center justify-between text-xs">
+                                <div className="flex items-center gap-1 text-slate-400">
+                                    <GitBranch size={12} />
+                                    <span>{init.phase}</span>
+                                </div>
+                                <div className="flex items-center gap-1 text-emerald-400 font-bold">
+                                    <TrendingUp size={12} />
+                                    <span>ROI {init.roi}</span>
+                                </div>
+                            </div>
+                        </motion.div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
+    // decisions
+    return (
+        <div className="h-full flex flex-col">
+            <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
+                        <Target size={20} className="text-amber-400" />
+                    </div>
+                    <span className="text-white font-bold text-lg">Decisions</span>
+                </div>
+                <span className="px-3 py-1 bg-amber-500/20 text-amber-400 rounded-full text-xs font-bold">2 Pending</span>
+            </div>
+            <div className="space-y-3 flex-1">
+                {[
+                    { title: 'Approve Q2 Budget Allocation', type: 'Financial', votes: '4/5', deadline: '2 days' },
+                    { title: 'Select Technology Partner', type: 'Strategic', votes: '2/5', deadline: '5 days' },
+                    { title: 'Phase 2 Go/No-Go', type: 'Stage-Gate', votes: '5/5', deadline: 'Completed' },
+                ].map((dec, i) => (
+                    <motion.div
+                        key={i}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.1 }}
+                        className="p-4 rounded-2xl bg-white/5 border border-white/5"
+                    >
+                        <div className="flex items-start justify-between mb-2">
+                            <span className="text-white font-semibold text-sm">{dec.title}</span>
+                            <span className="px-2 py-0.5 bg-white/10 rounded text-[10px] font-medium text-slate-300">{dec.type}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-1 text-slate-400">
+                                    <Users size={12} />
+                                    <span>{dec.votes} votes</span>
+                                </div>
+                                <div className="flex items-center gap-1 text-slate-400">
+                                    <Clock size={12} />
+                                    <span>{dec.deadline}</span>
+                                </div>
+                            </div>
+                            {dec.deadline === 'Completed' && (
+                                <CheckCircle size={16} className="text-emerald-400" />
+                            )}
+                        </div>
+                    </motion.div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+// Feature Carousel Component
+const FeatureCarousel: React.FC = () => {
+    const { t } = useTranslation();
+    const [currentSlide, setCurrentSlide] = useState(0);
+    const slides: Array<'notifications' | 'tasks' | 'initiatives' | 'decisions'> = ['notifications', 'tasks', 'initiatives', 'decisions'];
+    const slideLabels = ['Notifications', 'Tasks', 'Initiatives', 'Decisions'];
+
+    // Auto-advance slides
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setCurrentSlide((prev) => (prev + 1) % slides.length);
+        }, 5000);
+        return () => clearInterval(timer);
+    }, []);
+
+    return (
+        <div className="relative">
+            {/* Human Control Badge */}
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
+                <div className="px-4 py-1.5 bg-emerald-500/20 border border-emerald-500/30 rounded-full backdrop-blur-xl">
+                    <span className="text-emerald-400 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5">
+                        <Users size={12} />
+                        {t('landing.trust.carouselTagline', 'AI analyzes. You command.')}
+                    </span>
+                </div>
+            </div>
+
+            {/* Main Card */}
+            <div className="aspect-[4/5] bg-white/5 backdrop-blur-3xl rounded-[3rem] shadow-2xl border border-white/10 p-8 flex flex-col overflow-hidden">
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={currentSlide}
+                        initial={{ opacity: 0, x: 50 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -50 }}
+                        transition={{ duration: 0.3 }}
+                        className="flex-1"
+                    >
+                        <AppFeatureSlide type={slides[currentSlide]} />
+                    </motion.div>
+                </AnimatePresence>
+
+                {/* Navigation Dots */}
+                <div className="flex items-center justify-center gap-2 mt-4 pt-4 border-t border-white/10">
+                    {slides.map((_, idx) => (
+                        <button
+                            key={idx}
+                            onClick={() => setCurrentSlide(idx)}
+                            className={`transition-all duration-300 ${
+                                idx === currentSlide
+                                    ? 'w-8 h-2 bg-purple-500 rounded-full'
+                                    : 'w-2 h-2 bg-white/20 rounded-full hover:bg-white/40'
+                            }`}
+                        />
+                    ))}
+                </div>
+            </div>
+
+            {/* Navigation Arrows */}
+            <button
+                onClick={() => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length)}
+                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-10 h-10 bg-white/10 backdrop-blur-xl rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10"
+            >
+                <ChevronLeft size={20} />
+            </button>
+            <button
+                onClick={() => setCurrentSlide((prev) => (prev + 1) % slides.length)}
+                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-10 h-10 bg-white/10 backdrop-blur-xl rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10"
+            >
+                <ChevronRight size={20} />
+            </button>
+
+            {/* Slide Label */}
+            <div className="absolute -bottom-8 left-1/2 -translate-x-1/2">
+                <span className="text-slate-400 text-xs font-medium uppercase tracking-wider">
+                    {slideLabels[currentSlide]}
+                </span>
+            </div>
+        </div>
+    );
+};
+
+// FAQ Accordion Item
+const FAQItem: React.FC<{ question: string; answer: string; isOpen: boolean; onClick: () => void }> = ({
+    question, answer, isOpen, onClick
+}) => (
+    <div className="border-b border-slate-200 dark:border-white/10 last:border-0">
+        <button
+            onClick={onClick}
+            className="w-full py-5 flex items-center justify-between text-left group"
+        >
+            <span className="font-bold text-navy-950 dark:text-white pr-8 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                {question}
+            </span>
+            <ChevronDown
+                size={20}
+                className={`text-slate-400 transition-transform duration-300 flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
+            />
+        </button>
+        <AnimatePresence>
+            {isOpen && (
+                <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="overflow-hidden"
+                >
+                    <p className="pb-5 text-slate-600 dark:text-slate-400 leading-relaxed">
+                        {answer}
+                    </p>
+                </motion.div>
+            )}
+        </AnimatePresence>
+    </div>
+);
 
 export const InfoSections: React.FC = () => {
     const { t } = useTranslation();
+    const [openFAQ, setOpenFAQ] = useState<number | null>(0);
+
+    const faqs = [
+        {
+            q: t('landing.faq.items.0.q', 'What is Consultinity?'),
+            a: t('landing.faq.items.0.a', 'Consultinity is an AI-powered strategic consulting platform that helps industrial organizations navigate digital transformation. It combines artificial intelligence with human governance to deliver actionable roadmaps, not just reports.')
+        },
+        {
+            q: t('landing.faq.items.1.q', 'How is this different from traditional consulting?'),
+            a: t('landing.faq.items.1.a', 'Traditional consulting delivers PowerPoint decks. Consultinity delivers a living system. Our AI continuously analyzes your context, generates initiatives, and tracks execution. You get real-time strategic guidance, not a one-time report that sits on a shelf.')
+        },
+        {
+            q: t('landing.faq.items.2.q', 'Is my data secure?'),
+            a: t('landing.faq.items.2.a', 'Absolutely. We are GDPR compliant with EU data residency. All data is encrypted at rest (AES-256) and in transit (TLS 1.3). We never train AI models on your proprietary data. Enterprise customers can use their own API keys (BYOK).')
+        },
+        {
+            q: t('landing.faq.items.3.q', 'Do I need technical expertise to use it?'),
+            a: t('landing.faq.items.3.a', 'No. Consultinity is designed for business leaders, not IT specialists. The interface is intuitive, and our AI guides you through every step. We also offer onboarding support and training for your team.')
+        },
+        {
+            q: t('landing.faq.items.4.q', 'Can I try before I buy?'),
+            a: t('landing.faq.items.4.a', 'Yes! We offer a 14-day free trial with full access to all features. No credit card required. You can also request a personalized demo with our team to see the platform in action with your specific use case.')
+        },
+        {
+            q: t('landing.faq.items.5.q', 'What industries do you serve?'),
+            a: t('landing.faq.items.5.a', 'We specialize in manufacturing and industrial sectors, including automotive, aerospace, electronics, food & beverage, and heavy industry. Our assessment frameworks are tailored to Industry 4.0 transformation challenges.')
+        },
+    ];
 
     const steps = [
         {
-            icon: Cpu,
+            icon: GraduationCap,
             title: t('landing.steps.diagnostic.title'),
             desc: t('landing.steps.diagnostic.desc')
         },
         {
-            icon: BarChart3,
+            icon: Map,
             title: t('landing.steps.roadmap.title'),
             desc: t('landing.steps.roadmap.desc')
         },
         {
-            icon: Users,
+            icon: Rocket,
             title: t('landing.steps.approval.title'),
             desc: t('landing.steps.approval.desc')
         }
@@ -67,6 +403,24 @@ export const InfoSections: React.FC = () => {
                             );
                         })}
                     </div>
+
+                    {/* Regional Demo CTAs after methodology */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="mt-20"
+                    >
+                        <div className="text-center mb-8">
+                            <h4 className="text-lg font-bold text-navy-950 dark:text-white mb-2">
+                                {t('landing.regional.title', 'Schedule a')} <span className="bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">{t('landing.regional.demo', 'Demo')}</span> {t('landing.regional.titleEnd', 'in Your Region')}
+                            </h4>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                                {t('landing.regional.subtitle', 'Choose your timezone for the best experience')}
+                            </p>
+                        </div>
+                        <RegionalDemoButtons />
+                    </motion.div>
                 </div>
             </section>
 
@@ -81,17 +435,20 @@ export const InfoSections: React.FC = () => {
                         <div className="space-y-8">
                             <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 text-[10px] font-black text-white uppercase tracking-[0.2em]">
                                 <ShieldCheck size={16} className="text-emerald-400" />
-                                {t('landing.trust.badge')}
+                                {t('landing.trust.badge', 'Enterprise Integrity')}
                             </div>
                             <h3 className="text-4xl lg:text-5xl font-black text-white leading-[1.1] tracking-tight">
-                                {t('landing.trust.heading')}
+                                {t('landing.trust.heading', 'Intelligence Guided by Human Approval.')}
                             </h3>
                             <p className="text-lg text-slate-400 leading-relaxed font-medium">
-                                {t('landing.trust.description')}
+                                {t('landing.trust.description', 'AI is a partner, not an authority. Consultinity implements a strict governance layer where every strategic move requires high-level human validation.')}
                             </p>
 
                             <ul className="space-y-4">
-                                {(t('landing.trust.points', { returnObjects: true }) as string[]).map((item: string, i: number) => (
+                                {(Array.isArray(t('landing.trust.points', { returnObjects: true }))
+                                    ? t('landing.trust.points', { returnObjects: true }) as string[]
+                                    : ['Full accountability for every roadmap item', 'Multi-tenant data isolation & military-grade security', 'SOC2 compliant infrastructure logic']
+                                ).map((item: string, i: number) => (
                                     <li key={i} className="flex items-center gap-4 text-base font-bold text-slate-200">
                                         <div className="w-6 h-6 rounded-full bg-purple-600/20 flex items-center justify-center">
                                             <CheckCircle size={16} className="text-purple-400" />
@@ -102,52 +459,69 @@ export const InfoSections: React.FC = () => {
                             </ul>
 
                             <div className="pt-4">
-                                <button className="px-8 py-4 bg-white text-navy-950 rounded-full text-sm font-black uppercase tracking-widest hover:bg-slate-100 transition-all shadow-xl shadow-white/5 active:scale-95">
-                                    {t('landing.trust.cta')}
-                                </button>
+                                <a 
+                                    href="/security" 
+                                    className="inline-block px-8 py-4 bg-white text-navy-950 rounded-full text-sm font-black uppercase tracking-widest hover:bg-slate-100 transition-all shadow-xl shadow-white/5 active:scale-95"
+                                >
+                                    {t('landing.trust.cta', 'View Security Overview')}
+                                </a>
                             </div>
                         </div>
 
                         <div className="relative">
-                            {/* Glassmorphism Logic Visualization */}
-                            <div className="aspect-[4/5] bg-white/5 backdrop-blur-3xl rounded-[3rem] shadow-2xl border border-white/10 p-10 flex flex-col justify-between group overflow-hidden">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                            {/* Feature Carousel */}
+                            <FeatureCarousel />
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-                                <div className="space-y-8">
-                                    <div className="flex justify-between items-center">
-                                        <div className="h-6 w-32 bg-white/20 rounded-full" />
-                                        <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
-                                            <Zap size={20} className="text-purple-400" />
-                                        </div>
-                                    </div>
+            {/* FAQ Section */}
+            <section className="px-6 relative z-10">
+                <div className="max-w-3xl mx-auto">
+                    <div className="text-center mb-16">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            whileInView={{ opacity: 1 }}
+                            viewport={{ once: true }}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 dark:bg-purple-900/30 rounded-full text-purple-600 dark:text-purple-400 text-xs font-black uppercase tracking-widest mb-6"
+                        >
+                            <HelpCircle size={14} />
+                            {t('landing.faq.badge', 'FAQ')}
+                        </motion.div>
+                        <h3 className="text-4xl lg:text-5xl font-black text-navy-950 dark:text-white tracking-tight">
+                            {t('landing.faq.heading', 'Questions? Answers.')}
+                        </h3>
+                    </div>
 
-                                    <div className="space-y-4">
-                                        <div className="h-3 w-full bg-white/10 rounded-full overflow-hidden">
-                                            <motion.div
-                                                animate={{ x: ['100%', '-100%'] }}
-                                                transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
-                                                className="w-1/2 h-full bg-gradient-to-r from-transparent via-purple-400 to-transparent"
-                                            />
-                                        </div>
-                                        <div className="h-3 w-3/4 bg-white/10 rounded-full" />
-                                        <div className="h-3 w-1/2 bg-white/10 rounded-full" />
-                                    </div>
-                                </div>
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="bg-white dark:bg-navy-900 rounded-3xl p-8 border border-slate-200 dark:border-white/10 shadow-xl"
+                    >
+                        {faqs.map((faq, idx) => (
+                            <FAQItem
+                                key={idx}
+                                question={faq.q}
+                                answer={faq.a}
+                                isOpen={openFAQ === idx}
+                                onClick={() => setOpenFAQ(openFAQ === idx ? null : idx)}
+                            />
+                        ))}
+                    </motion.div>
 
-                                <div className="space-y-6">
-                                    <div className="flex -space-x-3">
-                                        {[1, 2, 3, 4].map(i => (
-                                            <div key={i} className="w-12 h-12 rounded-full border-4 border-navy-950 bg-slate-800 flex items-center justify-center overflow-hidden">
-                                                <div className="w-full h-full bg-gradient-to-br from-slate-700 to-slate-900" />
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest">{t('landing.trust.status.awaiting')}</span>
-                                        <div className="px-6 py-3 bg-emerald-500 text-navy-950 text-[10px] font-black uppercase rounded-2xl shadow-lg shadow-emerald-500/20">{t('landing.trust.status.approved')}</div>
-                                    </div>
-                                </div>
-                            </div>
+                    <div className="text-center mt-8 space-y-6">
+                        <p className="text-slate-500 dark:text-slate-400">
+                            {t('landing.faq.more', 'Have more questions?')}{' '}
+                            <a href="/contact" className="text-purple-600 dark:text-purple-400 font-semibold hover:underline">
+                                {t('landing.faq.contact', 'Contact us')}
+                            </a>
+                        </p>
+                        
+                        {/* Demo CTA after FAQ - framed button */}
+                        <div className="pt-6">
+                            <DemoButton variant="framed" />
                         </div>
                     </div>
                 </div>

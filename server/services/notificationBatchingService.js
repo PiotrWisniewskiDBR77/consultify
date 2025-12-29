@@ -15,16 +15,16 @@ const BaseService = require('./BaseService');
 const NotificationService = require('./notificationService');
 
 const NotificationBatchingService = Object.assign({}, BaseService, {
-    
+
     /**
      * Get user notification preferences
      * @param {string} userId - User ID
      * @returns {Promise<Object>} User preferences
      */
-    getPreferences: async function(userId) {
+    getPreferences: async function (userId) {
         const sql = `SELECT * FROM notification_preferences WHERE user_id = ?`;
         const prefs = await this.queryOne(sql, [userId]);
-        
+
         if (!prefs) {
             // Return defaults
             return {
@@ -62,7 +62,7 @@ const NotificationBatchingService = Object.assign({}, BaseService, {
                 }
             };
         }
-        
+
         // Parse JSON fields
         let categories = {};
         try {
@@ -70,7 +70,7 @@ const NotificationBatchingService = Object.assign({}, BaseService, {
         } catch (e) {
             categories = {};
         }
-        
+
         return {
             userId,
             categories,
@@ -102,10 +102,10 @@ const NotificationBatchingService = Object.assign({}, BaseService, {
      * @param {Object} prefs - Preferences to save
      * @returns {Promise<Object>} Updated preferences
      */
-    setPreferences: async function(userId, prefs) {
+    setPreferences: async function (userId, prefs) {
         const current = await this.getPreferences(userId);
         const merged = { ...current, ...prefs };
-        
+
         return new Promise((resolve, reject) => {
             db.run(
                 `INSERT INTO notification_preferences 
@@ -157,22 +157,22 @@ const NotificationBatchingService = Object.assign({}, BaseService, {
      * @param {string} severity - Notification severity
      * @returns {Promise<Object>} Delivery channels
      */
-    checkDeliveryChannels: async function(userId, category, severity) {
+    checkDeliveryChannels: async function (userId, category, severity) {
         const prefs = await this.getPreferences(userId);
         const categoryPrefs = prefs.categories[category] || { inapp: true, push: false, email: false };
-        
+
         // Check quiet hours
         if (prefs.quietHours?.enabled && severity !== 'CRITICAL') {
             const now = new Date();
             const hours = now.getHours();
             const minutes = now.getMinutes();
             const currentTime = hours * 60 + minutes;
-            
+
             const [startH, startM] = (prefs.quietHours.start || '20:00').split(':').map(Number);
             const [endH, endM] = (prefs.quietHours.end || '08:00').split(':').map(Number);
             const startTime = startH * 60 + startM;
             const endTime = endH * 60 + endM;
-            
+
             // Check if current time is in quiet hours
             let inQuietHours = false;
             if (startTime > endTime) {
@@ -181,20 +181,20 @@ const NotificationBatchingService = Object.assign({}, BaseService, {
             } else {
                 inQuietHours = currentTime >= startTime && currentTime <= endTime;
             }
-            
+
             if (inQuietHours) {
                 // Only allow in-app during quiet hours
                 return { inapp: categoryPrefs.inapp, push: false, email: false };
             }
         }
-        
+
         // Check weekend settings
         const day = new Date().getDay();
         const isWeekend = day === 0 || day === 6;
         if (isWeekend && prefs.weekendSettings?.criticalOnly && severity !== 'CRITICAL') {
             return { inapp: categoryPrefs.inapp, push: false, email: false };
         }
-        
+
         return categoryPrefs;
     },
 
@@ -203,18 +203,18 @@ const NotificationBatchingService = Object.assign({}, BaseService, {
      * @param {Object} notification - Notification to queue
      * @returns {Promise<Object>} Queued notification
      */
-    queueNotification: async function(notification) {
+    queueNotification: async function (notification) {
         const channels = await this.checkDeliveryChannels(
-            notification.userId, 
-            notification.type, 
+            notification.userId,
+            notification.type,
             notification.severity
         );
-        
+
         // Always create in-app notification immediately
         if (channels.inapp) {
             await NotificationService.create(notification);
         }
-        
+
         // Queue push/email for batching (if enabled)
         if (channels.push || channels.email) {
             await new Promise((resolve, reject) => {
@@ -227,7 +227,7 @@ const NotificationBatchingService = Object.assign({}, BaseService, {
                 );
             });
         }
-        
+
         return { queued: true, channels };
     },
 
@@ -236,34 +236,34 @@ const NotificationBatchingService = Object.assign({}, BaseService, {
      * @param {string} userId - User ID
      * @returns {Promise<Object>} Digest content
      */
-    generateDailyDigest: async function(userId) {
+    generateDailyDigest: async function (userId) {
         const FocusService = require('./focusService');
         const InboxService = require('./inboxService');
-        
+
         // Get yesterday's and today's data
         const today = new Date().toISOString().split('T')[0];
         const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-        
+
         // Get execution history
         const history = await FocusService.getExecutionHistory(userId, 2);
         const todayScore = history[0]?.score || 0;
         const yesterdayScore = history[1]?.score || 0;
-        
+
         // Get inbox counts
         const inboxCounts = await InboxService.getInboxCounts(userId);
-        
+
         // Get overdue tasks
         const overdueSql = `
             SELECT t.id, t.title, t.due_date
             FROM tasks t
             WHERE t.assignee_id = ? 
             AND t.due_date < ? 
-            AND t.status NOT IN ('done', 'completed', 'DONE', 'COMPLETED')
+            AND t.status != 'DONE'
             ORDER BY t.due_date
             LIMIT 5
         `;
         const overdueTasks = await this.queryAll(overdueSql, [userId, today]);
-        
+
         // Get upcoming deadlines (next 3 days)
         const upcomingSql = `
             SELECT t.id, t.title, t.due_date
@@ -271,12 +271,12 @@ const NotificationBatchingService = Object.assign({}, BaseService, {
             WHERE t.assignee_id = ? 
             AND t.due_date >= ? 
             AND t.due_date <= date(?, '+3 days')
-            AND t.status NOT IN ('done', 'completed', 'DONE', 'COMPLETED')
+            AND t.status != 'DONE'
             ORDER BY t.due_date
             LIMIT 5
         `;
         const upcomingTasks = await this.queryAll(upcomingSql, [userId, today, today]);
-        
+
         // Get pending decisions
         const decisionsSql = `
             SELECT id, title FROM decisions 
@@ -284,10 +284,10 @@ const NotificationBatchingService = Object.assign({}, BaseService, {
             LIMIT 5
         `;
         const decisions = await this.queryAll(decisionsSql, [userId]);
-        
+
         // Build highlights
         const highlights = [];
-        
+
         // Execution streak check
         const recentHistory = await FocusService.getExecutionHistory(userId, 7);
         const streakDays = recentHistory.filter(h => h.score >= 80).length;
@@ -298,7 +298,7 @@ const NotificationBatchingService = Object.assign({}, BaseService, {
                 description: `You've completed all focus tasks for ${streakDays} days in a row`
             });
         }
-        
+
         // Score improvement
         if (todayScore > yesterdayScore + 10) {
             highlights.push({
@@ -307,7 +307,7 @@ const NotificationBatchingService = Object.assign({}, BaseService, {
                 description: `Your execution score improved by ${todayScore - yesterdayScore} points`
             });
         }
-        
+
         // Warning for overdue
         if (overdueTasks.length > 0) {
             highlights.push({
@@ -316,7 +316,7 @@ const NotificationBatchingService = Object.assign({}, BaseService, {
                 description: `You have ${overdueTasks.length} overdue task(s) that need attention`
             });
         }
-        
+
         const digest = {
             period: 'daily',
             generatedAt: new Date().toISOString(),
@@ -337,7 +337,7 @@ const NotificationBatchingService = Object.assign({}, BaseService, {
             inboxCounts,
             aiInsights: [] // Would be populated by AI service
         };
-        
+
         return digest;
     },
 
@@ -346,31 +346,31 @@ const NotificationBatchingService = Object.assign({}, BaseService, {
      * @param {string} userId - User ID
      * @returns {Promise<Object>} Weekly digest content
      */
-    generateWeeklyDigest: async function(userId) {
+    generateWeeklyDigest: async function (userId) {
         const FocusService = require('./focusService');
-        
+
         // Get week's history
         const history = await FocusService.getExecutionHistory(userId, 7);
-        
+
         // Calculate week stats
         const totalCompleted = history.reduce((sum, h) => sum + h.completedCount, 0);
         const totalTasks = history.reduce((sum, h) => sum + h.totalCount, 0);
-        const avgScore = history.length > 0 
+        const avgScore = history.length > 0
             ? Math.round(history.reduce((sum, h) => sum + h.score, 0) / history.length)
             : 0;
-        
+
         // Best and worst days
         const sortedByScore = [...history].sort((a, b) => b.score - a.score);
         const bestDay = sortedByScore[0];
         const worstDay = sortedByScore[sortedByScore.length - 1];
-        
+
         // Trend comparison with previous week
         const prevWeekHistory = await FocusService.getExecutionHistory(userId, 14);
         const prevWeek = prevWeekHistory.slice(7, 14);
         const prevAvgScore = prevWeek.length > 0
             ? Math.round(prevWeek.reduce((sum, h) => sum + h.score, 0) / prevWeek.length)
             : 0;
-        
+
         const digest = {
             period: 'weekly',
             generatedAt: new Date().toISOString(),
@@ -391,16 +391,16 @@ const NotificationBatchingService = Object.assign({}, BaseService, {
             })),
             recommendations: this._generateWeeklyRecommendations(history, avgScore)
         };
-        
+
         return digest;
     },
 
     /**
      * Generate personalized recommendations based on week's performance
      */
-    _generateWeeklyRecommendations: function(history, avgScore) {
+    _generateWeeklyRecommendations: function (history, avgScore) {
         const recommendations = [];
-        
+
         if (avgScore < 50) {
             recommendations.push('Consider focusing on fewer, higher-priority tasks each day');
             recommendations.push('Review your task estimation - are tasks taking longer than expected?');
@@ -409,13 +409,13 @@ const NotificationBatchingService = Object.assign({}, BaseService, {
         } else {
             recommendations.push('Excellent week! Consider taking on a strategic initiative');
         }
-        
+
         // Check for patterns
         const lowDays = history.filter(h => h.score < 50);
         if (lowDays.length >= 2) {
             recommendations.push(`Consider reviewing your workload on ${lowDays.map(d => d.date).join(', ')}`);
         }
-        
+
         return recommendations;
     },
 
@@ -423,13 +423,13 @@ const NotificationBatchingService = Object.assign({}, BaseService, {
      * Process pending notification batches
      * This should be called by a cron job
      */
-    processBatches: async function() {
+    processBatches: async function () {
         const pendingBatches = await this.queryAll(
             `SELECT * FROM notification_batches 
              WHERE status = 'pending' AND scheduled_at <= datetime('now')
              LIMIT 100`
         );
-        
+
         for (const batch of pendingBatches) {
             try {
                 // Mark as processing
@@ -440,14 +440,14 @@ const NotificationBatchingService = Object.assign({}, BaseService, {
                         (err) => err ? reject(err) : resolve()
                     );
                 });
-                
+
                 // Process based on batch type
                 const content = JSON.parse(batch.content || '{}');
-                
+
                 // TODO: Implement actual push/email sending
                 // await PushService.send(content.notification, content.channels);
                 // await EmailService.send(content.notification, content.channels);
-                
+
                 // Mark as sent
                 await new Promise((resolve, reject) => {
                     db.run(
@@ -467,12 +467,14 @@ const NotificationBatchingService = Object.assign({}, BaseService, {
                 });
             }
         }
-        
+
         return { processed: pendingBatches.length };
     }
 });
 
 module.exports = NotificationBatchingService;
+
+
 
 
 

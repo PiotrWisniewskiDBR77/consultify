@@ -50,33 +50,9 @@ router.post('/generate-from-assessments', async (req, res) => {
 // =====================================================
 
 /**
- * Generate initiatives from single assessment with constraints
- * POST /api/initiatives/generate/:assessmentId
- */
-router.post('/generate/:assessmentId', async (req, res) => {
-    try {
-        const { assessmentId } = req.params;
-        const constraints = req.body;
-
-        const initiatives = await InitiativeGeneratorService.generateFromAssessment(
-            assessmentId,
-            constraints
-        );
-
-        res.json({
-            success: true,
-            initiatives,
-            count: initiatives.length
-        });
-    } catch (error) {
-        console.error('[InitiativeGenerator API] Generate error:', error.message);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-/**
  * AI-powered generation with custom parameters
  * POST /api/initiatives/generate/ai
+ * IMPORTANT: This route must be defined BEFORE /generate/:assessmentId
  */
 router.post('/generate/ai', async (req, res) => {
     try {
@@ -99,6 +75,31 @@ router.post('/generate/ai', async (req, res) => {
         });
     } catch (error) {
         console.error('[InitiativeGenerator API] AI Generate error:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * Generate initiatives from single assessment with constraints
+ * POST /api/initiatives/generate/:assessmentId
+ */
+router.post('/generate/:assessmentId', async (req, res) => {
+    try {
+        const { assessmentId } = req.params;
+        const constraints = req.body;
+
+        const initiatives = await InitiativeGeneratorService.generateFromAssessment(
+            assessmentId,
+            constraints
+        );
+
+        res.json({
+            success: true,
+            initiatives,
+            count: initiatives.length
+        });
+    } catch (error) {
+        console.error('[InitiativeGenerator API] Generate error:', error.message);
         res.status(500).json({ error: error.message });
     }
 });

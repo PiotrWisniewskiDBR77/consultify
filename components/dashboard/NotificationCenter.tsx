@@ -40,15 +40,9 @@ export const NotificationCenter: React.FC = () => {
 
     const fetchNotifications = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:3005/api/notifications', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (response.ok) {
-                const data = await response.json();
-                // Sort by date desc
-                setNotifications(data.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
-            }
+            const data = await Api.fetchNotifications();
+            // Sort by date desc
+            setNotifications(data.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
         } catch (error) {
             console.error('Failed to fetch notifications', error);
         } finally {
@@ -59,11 +53,7 @@ export const NotificationCenter: React.FC = () => {
     const markAsRead = async (id: string, event?: React.MouseEvent) => {
         event?.stopPropagation();
         try {
-            const token = localStorage.getItem('token');
-            await fetch(`http://localhost:3005/api/notifications/${id}/read`, {
-                method: 'PUT',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            await Api.markNotificationRead(id);
             setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
         } catch (error) {
             console.error('Failed to mark read', error);
@@ -72,11 +62,7 @@ export const NotificationCenter: React.FC = () => {
 
     const markAllRead = async () => {
         try {
-            const token = localStorage.getItem('token');
-            await fetch('http://localhost:3005/api/notifications/read-all', {
-                method: 'PUT',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            await Api.markAllNotificationsRead();
             setNotifications(prev => prev.map(n => ({ ...n, read: true })));
         } catch (error) {
             console.error('Failed to mark all read', error);
@@ -86,11 +72,7 @@ export const NotificationCenter: React.FC = () => {
     const deleteNotification = async (id: string, event: React.MouseEvent) => {
         event.stopPropagation();
         try {
-            const token = localStorage.getItem('token');
-            await fetch(`http://localhost:3005/api/notifications/${id}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            await Api.deleteNotification(id);
             setNotifications(prev => prev.filter(n => n.id !== id));
         } catch (error) {
             console.error('Failed to delete', error);
@@ -179,25 +161,25 @@ export const NotificationCenter: React.FC = () => {
 
     return (
         <div className="bg-white dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm h-full flex flex-col">
-            {/* Header */}
-            <div className="p-5 border-b border-slate-200 dark:border-white/5">
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-lg shadow-sm">
-                            <Bell size={20} />
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-navy-900 dark:text-white">Notification Center</h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">Manage your alerts & updates</p>
-                        </div>
+            {/* Header - Title Row (h-16 = 64px) - aligned with TaskInbox */}
+            <div className="h-16 px-5 flex items-center justify-between border-b border-slate-200 dark:border-white/5 shrink-0">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-lg shadow-sm">
+                        <Bell size={20} />
                     </div>
+                    <div>
+                        <h3 className="font-bold text-navy-900 dark:text-white">Notification Center</h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Manage your alerts & updates</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2">
                     <button
                         onClick={markAllRead}
                         className="text-xs font-medium text-slate-500 hover:text-purple-600 dark:text-slate-400 dark:hover:text-purple-400 transition-colors"
                     >
                         Mark all read
                     </button>
-                    {/* Broadcast Button (Visible for admins ideally, but here for all as requested) */}
+                    {/* Broadcast Button */}
                     <button
                         onClick={() => setIsBroadcastOpen(true)}
                         className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-500/20 rounded-md transition-colors"
@@ -206,90 +188,90 @@ export const NotificationCenter: React.FC = () => {
                         <Megaphone size={16} />
                     </button>
                 </div>
+            </div>
 
-                {/* Filters - Dropdowns */}
-                <div className="flex items-center gap-2">
-                    {/* Priority Dropdown */}
-                    <div className="relative">
-                        <button
-                            onClick={() => toggleFilter('priority')}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${activePriority !== 'all'
-                                ? 'bg-purple-50 border-purple-200 text-purple-700 dark:bg-purple-500/10 dark:border-purple-500/20 dark:text-purple-300'
-                                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 dark:bg-navy-900 dark:border-white/10 dark:text-slate-300'
-                                }`}
-                        >
-                            <span className="opacity-70">Priority:</span>
-                            <span className="capitalize">{activePriority}</span>
-                            <Filter size={12} className="opacity-50" />
-                        </button>
+            {/* Filter Row (h-12 = 48px) - aligned with TaskInbox */}
+            <div className="h-12 px-5 flex items-center justify-between border-b border-slate-100 dark:border-white/5 shrink-0">
+                {/* Priority Dropdown */}
+                <div className="relative">
+                    <button
+                        onClick={() => toggleFilter('priority')}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${activePriority !== 'all'
+                            ? 'bg-purple-50 border-purple-200 text-purple-700 dark:bg-purple-500/10 dark:border-purple-500/20 dark:text-purple-300'
+                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 dark:bg-navy-900 dark:border-white/10 dark:text-slate-300'
+                            }`}
+                    >
+                        <span className="opacity-70">Priority:</span>
+                        <span className="capitalize">{activePriority}</span>
+                        <Filter size={12} className="opacity-50" />
+                    </button>
 
-                        {openFilter === 'priority' && (
-                            <>
-                                <div className="fixed inset-0 z-10" onClick={() => setOpenFilter(null)}></div>
-                                <div className="absolute top-full left-0 mt-1 w-32 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-slate-200 dark:border-white/10 z-20 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                                    {[
-                                        { id: 'all', label: 'All' },
-                                        { id: 'high', label: 'High', color: 'text-red-600' },
-                                        { id: 'normal', label: 'Normal', color: 'text-blue-600' },
-                                        { id: 'low', label: 'Low', color: 'text-slate-600' },
-                                    ].map((opt) => (
-                                        <button
-                                            key={opt.id}
-                                            onClick={() => {
-                                                setActivePriority(opt.id as any);
-                                                setOpenFilter(null);
-                                            }}
-                                            className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center gap-2 ${activePriority === opt.id ? 'font-semibold bg-slate-50 dark:bg-white/5' : ''
-                                                } ${opt.color || 'text-slate-700 dark:text-slate-200'}`}
-                                        >
-                                            <div className={`w-1.5 h-1.5 rounded-full ${opt.id === 'all' ? 'bg-slate-400' : opt.id === 'high' ? 'bg-red-500' : opt.id === 'normal' ? 'bg-blue-500' : 'bg-slate-500'} `}></div>
-                                            {opt.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            </>
-                        )}
-                    </div>
+                    {openFilter === 'priority' && (
+                        <>
+                            <div className="fixed inset-0 z-10" onClick={() => setOpenFilter(null)}></div>
+                            <div className="absolute top-full left-0 mt-1 w-32 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-slate-200 dark:border-white/10 z-20 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                {[
+                                    { id: 'all', label: 'All' },
+                                    { id: 'high', label: 'High', color: 'text-red-600' },
+                                    { id: 'normal', label: 'Normal', color: 'text-blue-600' },
+                                    { id: 'low', label: 'Low', color: 'text-slate-600' },
+                                ].map((opt) => (
+                                    <button
+                                        key={opt.id}
+                                        onClick={() => {
+                                            setActivePriority(opt.id as any);
+                                            setOpenFilter(null);
+                                        }}
+                                        className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center gap-2 ${activePriority === opt.id ? 'font-semibold bg-slate-50 dark:bg-white/5' : ''
+                                            } ${opt.color || 'text-slate-700 dark:text-slate-200'}`}
+                                    >
+                                        <div className={`w-1.5 h-1.5 rounded-full ${opt.id === 'all' ? 'bg-slate-400' : opt.id === 'high' ? 'bg-red-500' : opt.id === 'normal' ? 'bg-blue-500' : 'bg-slate-500'} `}></div>
+                                        {opt.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </>
+                    )}
+                </div>
 
-                    {/* Date Dropdown */}
-                    <div className="relative">
-                        <button
-                            onClick={() => toggleFilter('date')}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${activeDate !== 'all'
-                                ? 'bg-purple-50 border-purple-200 text-purple-700 dark:bg-purple-500/10 dark:border-purple-500/20 dark:text-purple-300'
-                                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 dark:bg-navy-900 dark:border-white/10 dark:text-slate-300'
-                                }`}
-                        >
-                            <span className="opacity-70">Time:</span>
-                            <span>{activeDate === 'all' ? 'Any Time' : activeDate === 'today' ? 'Today' : 'Last 7 Days'}</span>
-                            <Filter size={12} className="opacity-50" />
-                        </button>
+                {/* Date Dropdown */}
+                <div className="relative">
+                    <button
+                        onClick={() => toggleFilter('date')}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${activeDate !== 'all'
+                            ? 'bg-purple-50 border-purple-200 text-purple-700 dark:bg-purple-500/10 dark:border-purple-500/20 dark:text-purple-300'
+                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 dark:bg-navy-900 dark:border-white/10 dark:text-slate-300'
+                            }`}
+                    >
+                        <span className="opacity-70">Time:</span>
+                        <span>{activeDate === 'all' ? 'Any Time' : activeDate === 'today' ? 'Today' : 'Last 7 Days'}</span>
+                        <Filter size={12} className="opacity-50" />
+                    </button>
 
-                        {openFilter === 'date' && (
-                            <>
-                                <div className="fixed inset-0 z-10" onClick={() => setOpenFilter(null)}></div>
-                                <div className="absolute top-full left-0 mt-1 w-32 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-slate-200 dark:border-white/10 z-20 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                                    {[
-                                        { id: 'all', label: 'Any Time' },
-                                        { id: 'today', label: 'Today' },
-                                        { id: 'week', label: 'Last 7 Days' },
-                                    ].map((opt) => (
-                                        <button
-                                            key={opt.id}
-                                            onClick={() => {
-                                                setActiveDate(opt.id as any);
-                                                setOpenFilter(null);
-                                            }}
-                                            className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${activeDate === opt.id ? 'font-semibold bg-slate-50 dark:bg-white/5 text-purple-600 dark:text-purple-400' : 'text-slate-700 dark:text-slate-200'
-                                                }`}
-                                        >
-                                            {opt.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            </>
-                        )}
-                    </div>
+                    {openFilter === 'date' && (
+                        <>
+                            <div className="fixed inset-0 z-10" onClick={() => setOpenFilter(null)}></div>
+                            <div className="absolute top-full right-0 mt-1 w-32 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-slate-200 dark:border-white/10 z-20 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                {[
+                                    { id: 'all', label: 'Any Time' },
+                                    { id: 'today', label: 'Today' },
+                                    { id: 'week', label: 'Last 7 Days' },
+                                ].map((opt) => (
+                                    <button
+                                        key={opt.id}
+                                        onClick={() => {
+                                            setActiveDate(opt.id as any);
+                                            setOpenFilter(null);
+                                        }}
+                                        className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${activeDate === opt.id ? 'font-semibold bg-slate-50 dark:bg-white/5 text-purple-600 dark:text-purple-400' : 'text-slate-700 dark:text-slate-200'
+                                            }`}
+                                    >
+                                        {opt.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Api } from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { Lightbulb, Target, Check, X, MessageSquare, Plus, Trash2, Power, BrainCircuit, Activity, FileText, Upload, RefreshCw } from 'lucide-react';
+import { InfoButton } from '../../components/shared/InfoButton';
 
 export const AdminKnowledgeView: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'candidates' | 'strategies' | 'documents' | 'observations'>('candidates');
@@ -115,8 +116,8 @@ export const AdminKnowledgeView: React.FC = () => {
     };
 
     return (
-        <div className="space-y-6">
-
+        <div className="space-y-6 relative">
+            <InfoButton cardId="admin-knowledge" position="top-right" />
             {/* Header */}
             <div className="flex justify-between items-center">
                 <div>

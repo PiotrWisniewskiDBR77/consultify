@@ -1,266 +1,184 @@
 /**
  * Legal Documents Seed Script
- * Seeds initial legal document templates for all required document types.
+ * Seeds legal documents from /Legal markdown files into the database.
  * 
  * Run: node server/seeds/legalDocuments.js
  */
 
 const db = require('../database');
 const { v4: uuidv4 } = require('uuid');
+const fs = require('fs');
+const path = require('path');
 
-const LEGAL_DOCUMENTS = [
+// Legal documents root directory
+const LEGAL_DIR = path.join(__dirname, '../../Legal');
+
+// Document definitions mapping to files in /Legal folder
+const LEGAL_DOCUMENT_DEFS = [
     {
         docType: 'TOS',
         title: 'Terms of Service',
-        contentMd: `# Terms of Service
-
-Last Updated: ${new Date().toISOString().split('T')[0]}
-
-## 1. Acceptance of Terms
-
-By accessing or using our service, you agree to be bound by these Terms of Service.
-
-## 2. Description of Service
-
-Our platform provides digital transformation consulting and project management tools.
-
-## 3. User Accounts
-
-- You must provide accurate registration information
-- You are responsible for maintaining account security
-- You must be at least 18 years old to use this service
-
-## 4. Acceptable Use
-
-You agree not to:
-- Violate any laws or regulations
-- Infringe intellectual property rights
-- Attempt to gain unauthorized access
-
-## 5. Intellectual Property
-
-All content and materials remain our property or licensed to us.
-
-## 6. Limitation of Liability
-
-We are not liable for indirect, incidental, or consequential damages.
-
-## 7. Changes to Terms
-
-We may modify these terms at any time with notice.
-
-## 8. Contact
-
-For questions, contact legal@example.com`
+        file: 'terms-of-service.md',
+        required: true, // Users must accept
     },
     {
         docType: 'PRIVACY',
         title: 'Privacy Policy',
-        contentMd: `# Privacy Policy
-
-Last Updated: ${new Date().toISOString().split('T')[0]}
-
-## 1. Information We Collect
-
-We collect:
-- Account information (name, email)
-- Usage data
-- Device information
-
-## 2. How We Use Information
-
-We use your information to:
-- Provide and improve our services
-- Communicate with you
-- Ensure security
-
-## 3. Data Sharing
-
-We do not sell your data. We may share with:
-- Service providers
-- Legal authorities when required
-
-## 4. Data Security
-
-We implement industry-standard security measures.
-
-## 5. Your Rights
-
-You have the right to:
-- Access your data
-- Request deletion
-- Export your data
-
-## 6. Cookies
-
-We use cookies for functionality and analytics.
-
-## 7. Contact
-
-Privacy Officer: privacy@example.com`
+        file: 'privacy-policy.md',
+        required: true,
     },
     {
         docType: 'COOKIES',
         title: 'Cookie Policy',
-        contentMd: `# Cookie Policy
-
-Last Updated: ${new Date().toISOString().split('T')[0]}
-
-## What Are Cookies
-
-Cookies are small text files stored on your device.
-
-## Types of Cookies We Use
-
-### Essential Cookies
-Required for basic functionality.
-
-### Analytics Cookies
-Help us understand how you use our service.
-
-### Preference Cookies
-Remember your settings.
-
-## Managing Cookies
-
-You can control cookies through your browser settings.
-
-## Contact
-
-For questions: privacy@example.com`
+        file: 'cookie-policy.md',
+        required: false,
     },
     {
         docType: 'AUP',
         title: 'Acceptable Use Policy',
-        contentMd: `# Acceptable Use Policy
-
-Last Updated: ${new Date().toISOString().split('T')[0]}
-
-## Purpose
-
-This policy defines acceptable use of our platform.
-
-## Prohibited Activities
-
-You may NOT:
-- Upload malicious content
-- Attempt unauthorized access
-- Harass other users
-- Share illegal content
-- Abuse system resources
-
-## Enforcement
-
-Violations may result in:
-- Account suspension
-- Account termination
-- Legal action
-
-## Reporting
-
-Report violations to: abuse@example.com`
+        file: 'acceptable-use-policy.md',
+        required: false,
     },
     {
         docType: 'AI_POLICY',
         title: 'AI Usage Policy',
-        contentMd: `# AI Usage Policy
-
-Last Updated: ${new Date().toISOString().split('T')[0]}
-
-## 1. AI Features Overview
-
-Our platform uses AI to:
-- Provide recommendations
-- Analyze data
-- Generate insights
-
-## 2. Data Usage for AI
-
-- AI may process your project data
-- We do not use your data to train public models
-- AI outputs are suggestions, not guarantees
-
-## 3. AI Limitations
-
-- AI recommendations are advisory only
-- Human oversight is required for decisions
-- AI may produce inaccurate outputs
-
-## 4. Your Controls
-
-You can:
-- Disable AI features in settings
-- Request AI audit logs
-- Opt out of AI-assisted features
-
-## 5. Contact
-
-AI questions: ai-support@example.com`
+        file: 'ai-usage-policy.md',
+        required: false,
     },
     {
         docType: 'DPA',
         title: 'Data Processing Addendum',
-        contentMd: `# Data Processing Addendum (DPA)
-
-Last Updated: ${new Date().toISOString().split('T')[0]}
-
-## 1. Parties
-
-This DPA is between the Customer (Data Controller) and Service Provider (Data Processor).
-
-## 2. Definitions
-
-- "Personal Data" means data relating to identified individuals
-- "Processing" means any operation performed on Personal Data
-
-## 3. Data Processing
-
-We process data only:
-- On your documented instructions
-- For providing contracted services
-
-## 4. Security Measures
-
-We implement:
-- Encryption in transit and at rest
-- Access controls
-- Regular security audits
-
-## 5. Sub-processors
-
-Current sub-processors are listed in our Trust Center.
-
-## 6. Data Subject Rights
-
-We assist with data subject requests within 30 days.
-
-## 7. Data Breach Notification
-
-We notify within 72 hours of confirmed breach.
-
-## 8. GDPR Compliance
-
-This DPA addresses GDPR requirements for data processing.
-
-## 9. Contact
-
-DPA questions: legal@example.com`
-    }
+        file: 'data-processing-addendum.md',
+        required: false, // Enterprise only
+    },
+    {
+        docType: 'SUBSCRIPTION',
+        title: 'Subscription Agreement',
+        file: 'subscription-agreement.md',
+        required: false,
+    },
+    {
+        docType: 'SLA',
+        title: 'Service Level Agreement',
+        file: 'service-level-agreement.md',
+        required: false, // Scale+ only
+    },
+    {
+        docType: 'REFUND',
+        title: 'Refund & Cancellation Policy',
+        file: 'refund-cancellation-policy.md',
+        required: false,
+    },
+    {
+        docType: 'SECURITY',
+        title: 'Security Overview',
+        file: 'security-overview.md',
+        required: false,
+    },
+    {
+        docType: 'CUSTOMER_SECURITY',
+        title: 'Customer Data Security',
+        file: 'customer-data-security.md',
+        required: false,
+    },
+    {
+        docType: 'SUBPROCESSORS',
+        title: 'Sub-processor List',
+        file: 'subprocessor-list.md',
+        required: false,
+    },
 ];
 
+/**
+ * Load document content from markdown file
+ */
+function loadDocumentContent(filename) {
+    const filePath = path.join(LEGAL_DIR, filename);
+    try {
+        if (fs.existsSync(filePath)) {
+            return fs.readFileSync(filePath, 'utf-8');
+        }
+        console.warn(`[Seed] File not found: ${filePath}`);
+        return null;
+    } catch (err) {
+        console.error(`[Seed] Error reading ${filename}:`, err.message);
+        return null;
+    }
+}
+
+/**
+ * Load and prepare all legal documents
+ */
+function prepareLegalDocuments() {
+    const documents = [];
+    
+    for (const def of LEGAL_DOCUMENT_DEFS) {
+        const content = loadDocumentContent(def.file);
+        
+        if (content) {
+            documents.push({
+                docType: def.docType,
+                title: def.title,
+                contentMd: content,
+                required: def.required,
+            });
+        } else {
+            // Use fallback minimal content if file doesn't exist
+            console.log(`[Seed] Using fallback for ${def.docType}`);
+            documents.push({
+                docType: def.docType,
+                title: def.title,
+                contentMd: generateFallbackContent(def),
+                required: def.required,
+            });
+        }
+    }
+    
+    return documents;
+}
+
+/**
+ * Generate fallback content for documents without files
+ */
+function generateFallbackContent(def) {
+    const today = new Date().toISOString().split('T')[0];
+    return `# ${def.title}
+
+**Effective Date:** ${today}
+**Version:** 1.0
+
+This document is pending legal review. Please contact legal@dbr77.com for questions.
+
+## Contact
+
+**DBR77 Robotics Sp. z o.o.**
+ul. Żółkiewskiego 31
+87-100 Toruń, Poland
+
+Email: legal@dbr77.com
+`;
+}
+
+/**
+ * Seed legal documents to database
+ */
 async function seedLegalDocuments() {
     console.log('[Seed] Starting legal documents seed...');
+    console.log(`[Seed] Legal directory: ${LEGAL_DIR}`);
 
     const today = new Date().toISOString().split('T')[0];
-    const version = `${today}.1`;
+    const version = '1.0';
+    
+    const documents = prepareLegalDocuments();
+    console.log(`[Seed] Prepared ${documents.length} documents`);
 
-    for (const doc of LEGAL_DOCUMENTS) {
+    for (const doc of documents) {
         const id = uuidv4();
 
-        await new Promise((resolve, reject) => {
+        await new Promise((resolve) => {
             // First, check if active document exists
             db.get(
-                'SELECT id FROM legal_documents WHERE doc_type = ? AND is_active = 1',
+                'SELECT id, version FROM legal_documents WHERE doc_type = ? AND is_active = 1',
                 [doc.docType],
                 (err, existing) => {
                     if (err) {
@@ -270,7 +188,7 @@ async function seedLegalDocuments() {
                     }
 
                     if (existing) {
-                        console.log(`[Seed] ${doc.docType} already has active version, skipping`);
+                        console.log(`[Seed] ${doc.docType} already has active version (${existing.version}), skipping`);
                         resolve();
                         return;
                     }
@@ -285,7 +203,7 @@ async function seedLegalDocuments() {
                             if (err) {
                                 console.error(`[Seed] Error inserting ${doc.docType}:`, err);
                             } else {
-                                console.log(`[Seed] Created ${doc.docType} v${version}`);
+                                console.log(`[Seed] Created ${doc.docType} v${version} (${doc.contentMd.length} chars)`);
                             }
                             resolve();
                         }
@@ -298,15 +216,124 @@ async function seedLegalDocuments() {
     console.log('[Seed] Legal documents seed complete');
 }
 
+/**
+ * Update existing documents with new content from files
+ * Use this to refresh content without changing versions
+ */
+async function updateLegalDocuments() {
+    console.log('[Seed] Updating legal documents from files...');
+    
+    const documents = prepareLegalDocuments();
+    
+    for (const doc of documents) {
+        await new Promise((resolve) => {
+            db.run(
+                `UPDATE legal_documents 
+                SET content_md = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE doc_type = ? AND is_active = 1`,
+                [doc.contentMd, doc.docType],
+                function(err) {
+                    if (err) {
+                        console.error(`[Seed] Error updating ${doc.docType}:`, err);
+                    } else if (this.changes > 0) {
+                        console.log(`[Seed] Updated ${doc.docType} content`);
+                    } else {
+                        console.log(`[Seed] No active ${doc.docType} to update`);
+                    }
+                    resolve();
+                }
+            );
+        });
+    }
+    
+    console.log('[Seed] Update complete');
+}
+
+/**
+ * Create new version of documents (for major updates)
+ */
+async function createNewVersion(newVersion = '1.1') {
+    console.log(`[Seed] Creating new version ${newVersion} of all documents...`);
+    
+    const today = new Date().toISOString().split('T')[0];
+    const documents = prepareLegalDocuments();
+    
+    for (const doc of documents) {
+        const id = uuidv4();
+        
+        await new Promise((resolve) => {
+            // Deactivate old version
+            db.run(
+                `UPDATE legal_documents SET is_active = 0 WHERE doc_type = ? AND is_active = 1`,
+                [doc.docType],
+                (err) => {
+                    if (err) {
+                        console.error(`[Seed] Error deactivating old ${doc.docType}:`, err);
+                        resolve();
+                        return;
+                    }
+                    
+                    // Insert new version
+                    db.run(
+                        `INSERT INTO legal_documents 
+                        (id, doc_type, version, title, content_md, effective_from, created_by, is_active)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
+                        [id, doc.docType, newVersion, doc.title, doc.contentMd, today, 'system'],
+                        (err) => {
+                            if (err) {
+                                console.error(`[Seed] Error creating ${doc.docType} v${newVersion}:`, err);
+                            } else {
+                                console.log(`[Seed] Created ${doc.docType} v${newVersion}`);
+                            }
+                            resolve();
+                        }
+                    );
+                }
+            );
+        });
+    }
+    
+    console.log('[Seed] New version creation complete');
+}
+
+// Export for use in other scripts
+const LEGAL_DOCUMENTS = prepareLegalDocuments();
+
 // Run if executed directly
 if (require.main === module) {
+    const args = process.argv.slice(2);
+    const command = args[0] || 'seed';
+    
     // Wait for DB init
-    setTimeout(() => {
-        seedLegalDocuments().then(() => {
+    setTimeout(async () => {
+        try {
+            switch (command) {
+                case 'seed':
+                    await seedLegalDocuments();
+                    break;
+                case 'update':
+                    await updateLegalDocuments();
+                    break;
+                case 'new-version':
+                    const version = args[1] || '1.1';
+                    await createNewVersion(version);
+                    break;
+                default:
+                    console.log('Usage: node legalDocuments.js [seed|update|new-version <version>]');
+            }
             console.log('[Seed] Done');
             process.exit(0);
-        });
+        } catch (err) {
+            console.error('[Seed] Error:', err);
+            process.exit(1);
+        }
     }, 1000);
 }
 
-module.exports = { seedLegalDocuments, LEGAL_DOCUMENTS };
+module.exports = { 
+    seedLegalDocuments, 
+    updateLegalDocuments,
+    createNewVersion,
+    LEGAL_DOCUMENTS,
+    LEGAL_DOCUMENT_DEFS,
+};

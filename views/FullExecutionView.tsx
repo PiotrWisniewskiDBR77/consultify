@@ -115,7 +115,7 @@ export const FullExecutionView: React.FC = () => {
   };
 
   return (
-    <SplitLayout title="Execution Dashboard" onSendMessage={handleAiChat}>
+    <SplitLayout title="Execution Dashboard">
       <div className="w-full h-full flex flex-col relative">
         <div className="absolute top-2 right-4 z-20">
           <AIFeedbackButton context="execution" data={fullSession.initiatives} />

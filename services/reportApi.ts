@@ -1,5 +1,7 @@
 import { Report, ReportBlock, BlockType } from '../types';
-const API_URL = 'http://127.0.0.1:3005/api';
+
+// Use relative path to allow Vite proxy to handle the request (avoiding CORS)
+const API_URL = '/api';
 const getHeaders = () => {
     const token = localStorage.getItem('token');
     return {

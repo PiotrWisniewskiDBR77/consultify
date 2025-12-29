@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { UserCircle, Mail, Phone, Building2, Save, Loader2, CheckCircle, Globe } from 'lucide-react';
 import { Api } from '../../services/api';
 import { MFASetup } from '../../components/Profile/MFASetup';
+import { InfoButton } from '../shared/InfoButton';
 
 interface ProfileSettingsProps {
     currentUser: User;
@@ -56,9 +57,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            // Simulate API call or real API call
-            await new Promise(resolve => setTimeout(resolve, 800));
-            // In real app: await Api.updateUser(currentUser.id, formState);
+            await Api.updateUser(currentUser.id, formState);
             onUpdateUser(formState);
             setSaveStatus('success');
             setTimeout(() => setSaveStatus('idle'), 2000);
@@ -70,11 +69,12 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
     };
 
     return (
-        <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
+            <InfoButton cardId="settings-profile" position="top-right" />
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold text-navy-900 dark:text-white">{t('settings.profile.header')}</h2>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">{t('settings.profile.manage')}</p>
+                    <h2 className="text-2xl font-bold text-navy-900 dark:text-white">{t('settings.profile.header', 'Personal Information')}</h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">{t('settings.profile.manage', 'Manage your personal information and preferences')}</p>
                 </div>
                 <button
                     onClick={handleSave}
@@ -82,8 +82,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                     className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-500/20"
                 >
                     {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                    {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                    {isSaving ? t('settings.profile.saving') : t('settings.profile.save')}
+                    {isSaving ? t('settings.profile.saving', 'Saving...') : t('settings.profile.save', 'Save Changes')}
                 </button>
             </div>
 
@@ -100,7 +99,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                                 )}
                             </div>
                             <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                <span className="text-white text-xs font-medium">{t('settings.profile.changePhoto')}</span>
+                                <span className="text-white text-xs font-medium">{t('settings.profile.changePhoto', 'Change Photo')}</span>
                             </div>
                         </div>
                         <h3 className="text-lg font-bold text-navy-900 dark:text-white">{currentUser.firstName} {currentUser.lastName}</h3>
@@ -121,10 +120,10 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                 {/* Right Column: Edit Form */}
                 <div className="md:col-span-2 space-y-6">
                     <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg p-6">
-                        <h4 className="text-sm font-bold text-navy-900 dark:text-white mb-6 uppercase tracking-wider border-b border-slate-100 dark:border-white/5 pb-2">{t('settings.profile.header')}</h4>
+                        <h4 className="text-sm font-bold text-navy-900 dark:text-white mb-6 uppercase tracking-wider border-b border-slate-100 dark:border-white/5 pb-2">{t('settings.profile.header', 'Personal Information')}</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-1.5">
-                                <label className="text-xs font-medium text-slate-500 dark:text-slate-400">{t('settings.profile.firstName')}</label>
+                                <label className="text-xs font-medium text-slate-500 dark:text-slate-400">{t('settings.profile.firstName', 'First Name')}</label>
                                 <input
                                     value={formState.firstName}
                                     onChange={e => setFormState({ ...formState, firstName: e.target.value })}
@@ -132,7 +131,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                                 />
                             </div>
                             <div className="space-y-1.5">
-                                <label className="text-xs font-medium text-slate-500 dark:text-slate-400">{t('settings.profile.lastName')}</label>
+                                <label className="text-xs font-medium text-slate-500 dark:text-slate-400">{t('settings.profile.lastName', 'Last Name')}</label>
                                 <input
                                     value={formState.lastName}
                                     onChange={e => setFormState({ ...formState, lastName: e.target.value })}
@@ -151,7 +150,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                                 </div>
                             </div>
                             <div className="space-y-1.5">
-                                <label className="text-xs font-medium text-slate-500 dark:text-slate-400">{t('settings.profile.company')}</label>
+                                <label className="text-xs font-medium text-slate-500 dark:text-slate-400">{t('settings.profile.company', 'Company')}</label>
                                 <div className="relative">
                                     <Building2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                                     <input
@@ -166,12 +165,12 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
 
                     {/* PREFERENCES (Now stripped of Language) */}
                     <div>
-                        <label className="text-xs font-medium text-slate-500 mb-2 block uppercase tracking-wider">{t('settings.profile.preferences')}</label>
+                        <label className="text-xs font-medium text-slate-500 mb-2 block uppercase tracking-wider">{t('settings.profile.preferences', 'Preferences')}</label>
                         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg p-6 space-y-6">
 
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <label className="text-sm font-medium text-navy-900 dark:text-white flex items-center gap-2">{t('settings.profile.theme')}</label>
+                                    <label className="text-sm font-medium text-navy-900 dark:text-white flex items-center gap-2">{t('settings.profile.theme', 'Interface Theme')}</label>
                                     <p className="text-xs text-slate-500 mt-1">Select your interface color theme.</p>
                                 </div>
                                 <div className="flex bg-slate-100 dark:bg-navy-950 p-1 rounded-lg">
@@ -179,13 +178,13 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                                         onClick={() => toggleTheme('light')}
                                         className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${theme === 'light' ? 'bg-white shadow text-navy-900' : 'text-slate-500'}`}
                                     >
-                                        {t('settings.profile.light')}
+                                        {t('settings.profile.light', 'Light')}
                                     </button>
                                     <button
                                         onClick={() => toggleTheme('dark')}
                                         className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${theme === 'dark' ? 'bg-navy-800 shadow text-white' : 'text-slate-500'}`}
                                     >
-                                        {t('settings.profile.dark')}
+                                        {t('settings.profile.dark', 'Dark')}
                                     </button>
                                     <button
                                         onClick={() => toggleTheme('system')}
@@ -198,7 +197,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
 
                             <div className="flex items-center justify-between pt-6 border-t border-slate-100 dark:border-white/5">
                                 <div>
-                                    <label className="text-sm font-medium text-navy-900 dark:text-white flex items-center gap-2">{t('settings.profile.language')}</label>
+                                    <label className="text-sm font-medium text-navy-900 dark:text-white flex items-center gap-2">{t('settings.profile.language', 'Language')}</label>
                                     <p className="text-xs text-slate-500 mt-1">Select your preferred language.</p>
                                 </div>
                                 <div className="flex bg-slate-100 dark:bg-navy-950 p-1 rounded-lg">
@@ -206,31 +205,37 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                                         onClick={() => i18n.changeLanguage('en')}
                                         className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${i18n.language === 'en' ? 'bg-white shadow text-navy-900' : 'text-slate-500 hover:text-navy-700'}`}
                                     >
-                                        English
+                                        {t('common.languages.en')}
                                     </button>
                                     <button
                                         onClick={() => i18n.changeLanguage('pl')}
                                         className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${i18n.language === 'pl' ? 'bg-white shadow text-navy-900' : 'text-slate-500 hover:text-navy-700'}`}
                                     >
-                                        Polski
+                                        {t('common.languages.pl')}
                                     </button>
                                     <button
                                         onClick={() => i18n.changeLanguage('de')}
                                         className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${i18n.language === 'de' ? 'bg-white shadow text-navy-900' : 'text-slate-500 hover:text-navy-700'}`}
                                     >
-                                        Deutsch
+                                        {t('common.languages.de')}
                                     </button>
                                     <button
                                         onClick={() => i18n.changeLanguage('ar')}
                                         className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${i18n.language === 'ar' ? 'bg-white shadow text-navy-900' : 'text-slate-500 hover:text-navy-700'}`}
                                     >
-                                        العربية
+                                        {t('common.languages.ar')}
                                     </button>
                                     <button
                                         onClick={() => i18n.changeLanguage('ja')}
                                         className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${i18n.language === 'ja' ? 'bg-white shadow text-navy-900' : 'text-slate-500 hover:text-navy-700'}`}
                                     >
-                                        日本語
+                                        {t('common.languages.ja')}
+                                    </button>
+                                    <button
+                                        onClick={() => i18n.changeLanguage('es')}
+                                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${i18n.language === 'es' ? 'bg-white shadow text-navy-900' : 'text-slate-500 hover:text-navy-700'}`}
+                                    >
+                                        {t('common.languages.es')}
                                     </button>
                                 </div>
                             </div>
@@ -255,7 +260,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
             {saveStatus === 'success' && (
                 <div className="fixed bottom-8 right-8 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
                     <CheckCircle size={16} />
-                    {t('settings.profile.saved')}
+                    {t('settings.profile.saved', 'Saved!')}
                 </div>
             )}
         </div>

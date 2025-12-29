@@ -10,6 +10,7 @@ import { generateInitiatives as engineGenerate } from '../services/transformatio
 import { Api } from '../services/api';
 import { useAIStream } from '../hooks/useAIStream';
 import { AIFeedbackButton } from '../components/AIFeedbackButton';
+import { formatChatError } from '../services/ai/errorMessages';
 export const FullInitiativesView: React.FC = () => {
   const {
     currentUser,
@@ -104,7 +105,7 @@ export const FullInitiativesView: React.FC = () => {
       addAiMessage(`I have generated ${newInitiatives.length} strategic initiatives. Note that each is linked to a specific gap found in your assessment.`);
     } catch (e) {
       console.error("Initiative Gen Error", e);
-      addAiMessage("I encountered an issue generating custom initiatives. Using standard recommendations instead.");
+      addAiMessage(formatChatError(e as Error, 'initiative_generation'));
       // Fallback on error
       const fallback = engineGenerate(fullSession);
       updateFullSession({ initiatives: fallback });
@@ -158,7 +159,7 @@ export const FullInitiativesView: React.FC = () => {
     }
   };
   return (
-    <SplitLayout title="Strategic Initiatives" onSendMessage={handleAiChat}>
+    <SplitLayout title="Strategic Initiatives">
       <div className="w-full h-full bg-gray-50 dark:bg-navy-900 flex flex-col overflow-hidden relative">
         <div className="absolute top-2 right-4 z-20">
           <AIFeedbackButton context="recommendation" data={fullSession.initiatives} />

@@ -2,15 +2,194 @@
  * SSO Routes
  * 
  * API endpoints for SSO configuration and authentication.
+ * Includes SuperAdmin routes for managing all organization SSO configs.
  */
 
 const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
+const jwt = require('jsonwebtoken');
+const config = require('../config');
 const authMiddleware = require('../middleware/authMiddleware');
+const verifySuperAdmin = require('../middleware/superAdminMiddleware');
 const { requireOrgAccess } = require('../middleware/rbac');
 const SSOService = require('../services/ssoService');
 const AuditService = require('../services/auditService');
+
+// ==========================================
+// SUPERADMIN ROUTES
+// ==========================================
+
+/**
+ * GET /api/sso/superadmin/configs
+ * List all SSO configurations (SuperAdmin only)
+ */
+router.get('/superadmin/configs', authMiddleware, verifySuperAdmin, async (req, res) => {
+    try {
+        const configs = await SSOService.listAllConfigurations();
+        res.json({ configs });
+    } catch (error) {
+        console.error('[SSO] List all configs error:', error);
+        res.status(500).json({ error: 'Failed to list SSO configurations' });
+    }
+});
+
+/**
+ * POST /api/sso/superadmin/google/config
+ * Create Google SSO config for any organization (SuperAdmin only)
+ */
+router.post('/superadmin/google/config', authMiddleware, verifySuperAdmin, async (req, res) => {
+    try {
+        const { organizationId, clientId, clientSecret, allowedDomains } = req.body;
+        
+        if (!organizationId || !clientId) {
+            return res.status(400).json({ error: 'organizationId and clientId are required' });
+        }
+        
+        const result = await SSOService.createGoogleConfig(
+            organizationId, 
+            { clientId, clientSecret, allowedDomains },
+            req.user.id
+        );
+        
+        res.json({ success: true, ...result });
+    } catch (error) {
+        console.error('[SSO] Create Google config error:', error);
+        res.status(400).json({ error: error.message });
+    }
+});
+
+/**
+ * PUT /api/sso/superadmin/google/config/:orgId
+ * Update Google SSO config for any organization (SuperAdmin only)
+ */
+router.put('/superadmin/google/config/:orgId', authMiddleware, verifySuperAdmin, async (req, res) => {
+    try {
+        const { orgId } = req.params;
+        await SSOService.updateGoogleConfig(orgId, req.body, req.user.id);
+        res.json({ success: true });
+    } catch (error) {
+        console.error('[SSO] Update Google config error:', error);
+        res.status(400).json({ error: error.message });
+    }
+});
+
+/**
+ * PUT /api/sso/superadmin/config/:configId/toggle
+ * Toggle SSO config active status (SuperAdmin only)
+ */
+router.put('/superadmin/config/:configId/toggle', authMiddleware, verifySuperAdmin, async (req, res) => {
+    try {
+        const { configId } = req.params;
+        const { isActive } = req.body;
+        
+        await SSOService.toggleConfiguration(configId, isActive);
+        res.json({ success: true });
+    } catch (error) {
+        console.error('[SSO] Toggle config error:', error);
+        res.status(400).json({ error: error.message });
+    }
+});
+
+/**
+ * DELETE /api/sso/superadmin/config/:configId
+ * Delete SSO configuration (SuperAdmin only)
+ */
+router.delete('/superadmin/config/:configId', authMiddleware, verifySuperAdmin, async (req, res) => {
+    try {
+        const { configId } = req.params;
+        await SSOService.deleteConfiguration(configId);
+        res.json({ success: true });
+    } catch (error) {
+        console.error('[SSO] Delete config error:', error);
+        res.status(400).json({ error: error.message });
+    }
+});
+
+/**
+ * GET /api/sso/superadmin/config/:orgId
+ * Get SSO config for specific org (SuperAdmin only)
+ */
+router.get('/superadmin/config/:orgId', authMiddleware, verifySuperAdmin, async (req, res) => {
+    try {
+        const { orgId } = req.params;
+        const ssoConfig = await SSOService.getConfiguration(orgId);
+        
+        if (!ssoConfig) {
+            return res.json({ configured: false });
+        }
+        
+        res.json({ configured: true, config: ssoConfig });
+    } catch (error) {
+        console.error('[SSO] Get config error:', error);
+        res.status(500).json({ error: 'Failed to get SSO configuration' });
+    }
+});
+
+// ==========================================
+// GOOGLE OIDC ROUTES
+// ==========================================
+
+/**
+ * GET /api/sso/google/login/:organizationId
+ * Initiate Google SSO login
+ */
+router.get('/google/login/:organizationId', async (req, res) => {
+    try {
+        const { organizationId } = req.params;
+        const authUrl = await SSOService.getGoogleAuthUrl(organizationId);
+        res.redirect(authUrl);
+    } catch (error) {
+        console.error('[SSO] Google login error:', error);
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        res.redirect(`${frontendUrl}/sso/error?message=${encodeURIComponent(error.message)}`);
+    }
+});
+
+/**
+ * GET /api/sso/google/callback
+ * Google OAuth callback handler
+ */
+router.get('/google/callback', async (req, res) => {
+    try {
+        const { code, state, error: oauthError } = req.query;
+        
+        if (oauthError) {
+            throw new Error(oauthError);
+        }
+        
+        if (!code || !state) {
+            throw new Error('Missing authorization code or state');
+        }
+        
+        // Decode state to get organizationId
+        const stateData = JSON.parse(Buffer.from(state, 'base64').toString());
+        const { organizationId } = stateData;
+        
+        const result = await SSOService.processGoogleCallback(organizationId, code, {
+            ip: req.ip,
+            userAgent: req.get('user-agent'),
+        });
+        
+        // Generate JWT token
+        const token = jwt.sign({
+            id: result.user.id,
+            email: result.user.email,
+            role: result.user.role,
+            organizationId: result.user.organizationId,
+            ssoSessionId: result.sessionId,
+        }, config.JWT_SECRET, { expiresIn: '8h' });
+        
+        // Redirect to frontend with token
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        res.redirect(`${frontendUrl}/sso/callback?token=${token}`);
+        
+    } catch (error) {
+        console.error('[SSO] Google callback error:', error);
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        res.redirect(`${frontendUrl}/sso/error?message=${encodeURIComponent(error.message)}`);
+    }
+});
 
 /**
  * GET /api/sso/config
@@ -137,9 +316,6 @@ router.post('/callback/:organizationId', async (req, res) => {
         });
 
         // Generate JWT token
-        const jwt = require('jsonwebtoken');
-        const config = require('../config');
-
         const token = jwt.sign({
             id: result.user.id,
             email: result.user.email,
@@ -149,12 +325,12 @@ router.post('/callback/:organizationId', async (req, res) => {
         }, config.JWT_SECRET, { expiresIn: '8h' });
 
         // Redirect to frontend with token
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
         res.redirect(`${frontendUrl}/sso/callback?token=${token}`);
 
     } catch (error) {
         console.error('[SSO] Callback error:', error);
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
         res.redirect(`${frontendUrl}/sso/error?message=${encodeURIComponent(error.message)}`);
     }
 });

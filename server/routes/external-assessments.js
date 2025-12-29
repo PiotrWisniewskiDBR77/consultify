@@ -6,7 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const ExternalAssessmentService = require('../services/externalAssessmentService');
-const upload = require('../middleware/fileUploadMiddleware');
+const { upload } = require('../middleware/fileUploadMiddleware');
 const verifyToken = require('../middleware/authMiddleware');
 
 router.use(verifyToken);

@@ -28,7 +28,7 @@ describe('AIAssessmentPartnerService', () => {
         vi.resetModules();
         vi.clearAllMocks();
 
-        // Set environment variable
+        // Set environment variable (won't be used since we disable model below)
         process.env.GEMINI_API_KEY = 'test-api-key';
 
         const module = await import('../../../server/services/aiAssessmentPartnerService.js');
@@ -36,6 +36,13 @@ describe('AIAssessmentPartnerService', () => {
         aiAssessmentPartner = module.aiAssessmentPartner;
         DRD_AXES = module.DRD_AXES;
         AI_PARTNER_CONFIG = module.AI_PARTNER_CONFIG;
+
+        // IMPORTANT: Disable AI model to force fallback mode
+        // vi.mock doesn't work here because the service imports from server/node_modules
+        // which is separate from the main node_modules where mocks are applied
+        if (aiAssessmentPartner) {
+            aiAssessmentPartner.model = null;
+        }
     });
 
     afterEach(() => {
@@ -701,6 +708,8 @@ describe('AIAssessmentPartnerService', () => {
         });
     });
 });
+
+
 
 
 

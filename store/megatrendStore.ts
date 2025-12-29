@@ -20,15 +20,14 @@ export const useMegatrendStore = create<MegatrendState>((set) => ({
     fetchMegatrends: async (industry = 'automotive') => {
         set({ loading: true, error: null });
         try {
-            // Use absolute URL to match services/api.ts and ensure correct port (3005)
-            // Also add Authorization header
+            // Use relative path to allow Vite proxy to handle the request (avoiding CORS)
             const token = localStorage.getItem('token');
             const headers = {
                 'Content-Type': 'application/json',
                 'Authorization': token ? `Bearer ${token}` : ''
             };
 
-            const res = await fetch(`http://127.0.0.1:3005/api/megatrends/baseline?industry=${encodeURIComponent(industry)}`, {
+            const res = await fetch(`/api/megatrends/baseline?industry=${encodeURIComponent(industry)}`, {
                 headers
             });
 

@@ -179,7 +179,7 @@ export const FullAssessmentView: React.FC = () => {
   if (currentAxisId) {
     const axisData = fullSession.assessment?.[currentAxisId];
     return (
-      <SplitLayout title={ta.header} onSendMessage={handleAiChat}>
+      <SplitLayout title={ta.header}>
         <div className="flex h-full">
           <div className="flex flex-col flex-1 bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-white/5">
             {/* Back Navigation Bar with AI Toggle */}

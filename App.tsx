@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useParams, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { RouterSync } from './components/RouterSync';
 const PublicReportView = React.lazy(() => import('./views/reports/PublicReportView'));
@@ -16,8 +16,9 @@ const FullAssessmentView = React.lazy(() => import('./views/FullAssessmentView')
 const FullInitiativesView = React.lazy(() => import('./views/FullInitiativesView').then(m => ({ default: m.FullInitiativesView })));
 const FullRoadmapView = React.lazy(() => import('./views/FullRoadmapView').then(m => ({ default: m.FullRoadmapView })));
 const FullROIView = React.lazy(() => import('./views/FullROIView').then(m => ({ default: m.FullROIView })));
+const EconomicsView = React.lazy(() => import('./views/EconomicsView').then(m => ({ default: m.EconomicsView })));
 const FullExecutionView = React.lazy(() => import('./views/FullExecutionView').then(m => ({ default: m.FullExecutionView })));
-const FullPilotView = React.lazy(() => import('./views/FullPilotView').then(m => ({ default: m.FullPilotView })));
+const ImplementationView = React.lazy(() => import('./views/ImplementationView').then(m => ({ default: m.ImplementationView })));
 const FullRolloutView = React.lazy(() => import('./views/FullRolloutView').then(m => ({ default: m.FullRolloutView })));
 const FullReportsView = React.lazy(() => import('./views/FullReportsView').then(m => ({ default: m.FullReportsView })));
 const DRDAuditReportView = React.lazy(() => import('./views/DRDAuditReportView').then(m => ({ default: m.DRDAuditReportView })));
@@ -30,6 +31,8 @@ const Module1ContextView = React.lazy(() => import('./views/Module1ContextView')
 const ContextBuilderView = React.lazy(() => import('./views/ContextBuilder/ContextBuilderView').then(m => ({ default: m.ContextBuilderView })));
 const MyWorkView = React.lazy(() => import('./views/MyWorkView').then(m => ({ default: m.MyWorkView })));
 const ActionProposalView = React.lazy(() => import('./views/ActionProposalView').then(m => ({ default: m.ActionProposalView })));
+const InitiativeManagementView = React.lazy(() => import('./views/InitiativeManagementView').then(m => ({ default: m.InitiativeManagementView })));
+const BenefitsRealizationView = React.lazy(() => import('./views/BenefitsRealizationView').then(m => ({ default: m.BenefitsRealizationView })));
 import { AppView, SessionMode, AuthStep, User, UserRole } from './types';
 import { Menu, UserCircle, ChevronRight, Loader2, LogOut, CreditCard, Cpu, Sun, Moon, Monitor, Languages, Bot, Database, Layers, Box, Sparkles } from 'lucide-react';
 import { useAppStore } from './store/useAppStore';
@@ -55,8 +58,11 @@ import { TrialExpiredGate } from './components/Trial/TrialExpiredGate';
 import { AccessPolicyProvider } from './contexts/AccessPolicyContext';
 import { TourProvider } from './components/Onboarding/TourProvider';
 import { AIFreezeBanner } from './components/AIFreezeBanner';
+import { DemoWelcomeTour, ExitIntentModal, useExitIntent } from './components/demo';
 import { DocumentToggleButton } from './components/documents/DocumentToggleButton';
 import { BottomNavigation } from './components/navigation';
+import { HelpToggleButton } from './components/Help/HelpToggleButton';
+import { HelpSidePanel } from './components/Help/HelpSidePanel';
 
 
 // Help system wrapper component
@@ -67,6 +73,23 @@ const HelpButtonWrapper = () => {
             <HelpButton onClick={openPanel} />
             <HelpPanel isOpen={isPanelOpen} onClose={closePanel} />
         </>
+    );
+};
+
+// Invitation acceptance wrapper component
+const AcceptInvitationView = React.lazy(() => import('./views/AcceptInvitationView'));
+const InviteRouteWrapper = () => {
+    const { token } = useParams<{ token: string }>();
+    const navigate = useNavigate();
+
+    return (
+        <React.Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-indigo-500" /></div>}>
+            <AcceptInvitationView
+                token={token || ''}
+                onAccepted={() => navigate('/login')}
+                onError={(error) => console.error('Invitation error:', error)}
+            />
+        </React.Suspense>
     );
 };
 
@@ -120,6 +143,25 @@ const AppContent: React.FC = () => {
 
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const profileRef = useRef<HTMLDivElement>(null);
+
+    // Demo Welcome Tour State
+    const [showDemoTour, setShowDemoTour] = useState(false);
+
+    // Exit Intent for demo users - triggers when they try to leave
+    const { showExitIntent, dismissExitIntent } = useExitIntent({
+        delayMs: 30000, // Wait 30 seconds before allowing trigger
+        triggerOnce: true,
+        disabled: !currentUser?.isDemo // Only enable for demo users
+    });
+
+    // Show tour when demo user logs in for the first time
+    useEffect(() => {
+        if (currentUser?.isDemo && !localStorage.getItem('demo_tour_completed') && !localStorage.getItem('demo_tour_skipped')) {
+            // Small delay to let the UI settle
+            const timer = setTimeout(() => setShowDemoTour(true), 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [currentUser?.isDemo]);
 
     // Close on click outside
     useEffect(() => {
@@ -194,7 +236,7 @@ const AppContent: React.FC = () => {
                         console.warn('[Auth] Failed to parse stored user data');
                     }
                 }
-                
+
                 // If no stored user, try to fetch from API
                 try {
                     const user = await Api.getMe();
@@ -356,80 +398,83 @@ const AppContent: React.FC = () => {
 
         // My Work View
         if (currentView === AppView.MY_WORK) {
-            section = sidebarT.dashboard || 'Dashboard';
-            sub = t('myWork.title', 'My Work');
+            section = t('sidebar.dashboard');
+            sub = t('myWork.title');
         }
         // Assessment Module Views
         else if (currentView === AppView.ASSESSMENT_DRD) {
-            section = sidebarT.assessment || 'Ocena';
-            sub = sidebarT.assessmentDRD || 'DRD';
+            section = t('sidebar.assessment');
+            sub = t('sidebar.assessmentDRD');
         } else if (currentView === AppView.ASSESSMENT_SIRI) {
-            section = sidebarT.assessment || 'Ocena';
-            sub = sidebarT.assessmentSIRI || 'SIRI';
+            section = t('sidebar.assessment');
+            sub = t('sidebar.assessmentSIRI');
         } else if (currentView === AppView.ASSESSMENT_ADMA) {
-            section = sidebarT.assessment || 'Ocena';
-            sub = sidebarT.assessmentADMA || 'ADMA';
+            section = t('sidebar.assessment');
+            sub = t('sidebar.assessmentADMA');
         } else if (currentView === AppView.ASSESSMENT_CMMI) {
-            section = sidebarT.assessment || 'Ocena';
-            sub = sidebarT.assessmentCMMI || 'CMMI';
+            section = t('sidebar.assessment');
+            sub = t('sidebar.assessmentCMMI');
         } else if (currentView === AppView.ASSESSMENT_LEAN || currentView === AppView.ASSESSMENT_LEAN_EXTERNAL) {
-            section = sidebarT.assessment || 'Ocena';
-            sub = sidebarT.assessmentLean || 'Lean 4.0';
+            section = t('sidebar.assessment');
+            sub = t('sidebar.assessmentLean');
         } else if (currentView === AppView.ASSESSMENT_SUMMARY || currentView === AppView.ASSESSMENT_OVERVIEW) {
-            section = sidebarT.assessment || 'Ocena';
-            sub = t('assessment.workspace.dashboardHeader', 'Pulpit Oceny');
+            section = t('sidebar.assessment');
+            sub = t('assessment.workspace.dashboardHeader');
         } else if (currentView === AppView.ASSESSMENT_AUDITS) {
-            section = sidebarT.assessment || 'Ocena';
-            sub = sidebarT.otherAssessments || 'Inne';
+            section = t('sidebar.assessment');
+            sub = t('sidebar.otherAssessments');
         }
         // Context Builder Views
         else if (currentView.startsWith('CONTEXT_BUILDER')) {
-            section = sidebarT.module1 || 'Oczekiwania i Wyzwania';
+            section = t('sidebar.module1');
             if (currentView === AppView.CONTEXT_BUILDER_PROFILE) {
-                sub = sidebarT.context?.profile || 'Profil Firmy';
+                sub = t('sidebar.context.profile');
             } else if (currentView === AppView.CONTEXT_BUILDER_GOALS) {
-                sub = sidebarT.context?.goals || 'Cele i Oczekiwania';
+                sub = t('sidebar.context.goals');
             } else if (currentView === AppView.CONTEXT_BUILDER_CHALLENGES) {
-                sub = sidebarT.context?.challenges || 'Mapa Wyzwań';
+                sub = t('sidebar.context.challenges');
             } else if (currentView === AppView.CONTEXT_BUILDER_MEGATRENDS) {
-                sub = sidebarT.context?.megatrends || 'Skaner Megatrendów';
+                sub = t('sidebar.context.megatrends');
             } else if (currentView === AppView.CONTEXT_BUILDER_STRATEGY) {
-                sub = sidebarT.context?.strategy || 'Synteza Strategiczna';
+                sub = t('sidebar.context.strategy');
             } else {
-                sub = sidebarT.context?.profile || 'Profil Firmy';
+                sub = t('sidebar.context.profile');
             }
         }
         // Full Transformation Views
         else if (currentView === AppView.FULL_STEP1_CONTEXT) {
-            section = sidebarT.fullProject || 'Pełna Transformacja';
-            sub = sidebarT.module1 || 'Oczekiwania i Wyzwania';
+            section = t('sidebar.fullProject');
+            sub = t('sidebar.module1');
         } else if (currentView === AppView.FULL_STEP1_ASSESSMENT || currentView.startsWith('FULL_STEP1_')) {
-            section = sidebarT.fullProject || 'Pełna Transformacja';
-            sub = sidebarT.fullStep1 || 'Ocena (DRD)';
+            section = t('sidebar.fullProject');
+            sub = t('sidebar.fullStep1');
         } else if (currentView === AppView.FULL_STEP2_INITIATIVES) {
-            section = sidebarT.fullProject || 'Pełna Transformacja';
-            sub = sidebarT.fullStep2 || 'Generator Inicjatyw';
+            section = t('sidebar.fullProject');
+            sub = t('sidebar.fullStep2');
         } else if (currentView === AppView.FULL_STEP3_ROADMAP) {
-            section = sidebarT.fullProject || 'Pełna Transformacja';
-            sub = sidebarT.fullStep3 || 'Mapa Drogowa';
+            section = t('sidebar.fullProject');
+            sub = t('sidebar.fullStep3');
         } else if (currentView === AppView.FULL_STEP4_ROI) {
-            section = sidebarT.fullProject || 'Pełna Transformacja';
-            sub = sidebarT.fullStep4 || 'Ekonomia i ROI';
+            section = t('sidebar.fullProject');
+            sub = t('sidebar.fullStep4');
+        } else if (currentView === AppView.ECONOMICS) {
+            section = t('sidebar.fullProject');
+            sub = t('sidebar.economics');
         } else if (currentView === AppView.FULL_STEP5_EXECUTION) {
-            section = sidebarT.fullProject || 'Pełna Transformacja';
-            sub = sidebarT.fullStep5 || 'Dashboard Realizacji';
-        } else if (currentView === AppView.FULL_PILOT_EXECUTION) {
-            section = sidebarT.fullProject || 'Pełna Transformacja';
-            sub = sidebarT.pilotPhase || 'Pilotaż';
+            section = t('sidebar.fullProject');
+            sub = t('sidebar.fullStep5');
+        } else if (currentView === AppView.IMPLEMENTATION) {
+            section = t('sidebar.fullProject');
+            sub = t('sidebar.implementation');
         } else if (currentView === AppView.FULL_ROLLOUT) {
-            section = sidebarT.fullProject || 'Pełna Transformacja';
-            sub = sidebarT.fullImplementation || 'Wdrożenie';
+            section = t('sidebar.fullProject');
+            sub = t('sidebar.fullImplementation');
         } else if (currentView === AppView.FULL_STEP6_REPORTS) {
-            section = sidebarT.fullProject || 'Pełna Transformacja';
-            sub = sidebarT.fullStep6 || 'Raporty';
+            section = t('sidebar.fullProject');
+            sub = t('sidebar.fullStep6');
         } else if (currentView === AppView.KPI_OKR_DASHBOARD) {
-            section = sidebarT.fullProject || 'Pełna Transformacja';
-            sub = sidebarT.kpiOkr || 'KPI/OKR';
+            section = t('sidebar.fullProject');
+            sub = t('sidebar.kpiOkr');
         }
         // Quick Assessment Views
         else if (viewParts.includes('QUICK')) {
@@ -439,50 +484,54 @@ const AppContent: React.FC = () => {
         }
         // Admin Views
         else if (viewParts.includes('ADMIN')) {
-            section = sidebarT.adminPanel || 'Admin';
-            if (currentView === AppView.ADMIN_USERS) sub = sidebarT.adminUsers || 'Użytkownicy';
-            else if (currentView === AppView.ADMIN_PROJECTS) sub = sidebarT.adminProjects || 'Projekty';
-            else if (currentView === AppView.ADMIN_LLM) sub = sidebarT.adminLLM || 'Zarządzanie LLM';
-            else if (currentView === AppView.ADMIN_KNOWLEDGE) sub = sidebarT.adminKnowledge || 'Baza Wiedzy';
-            else if (currentView === AppView.ADMIN_FEEDBACK) sub = sidebarT.adminFeedback || 'Opinie';
-            else if (currentView === AppView.ADMIN_BILLING) sub = t('admin.billing.title', 'Płatności');
-            else if (currentView === AppView.ADMIN_ANALYTICS) sub = t('admin.analytics.title', 'Analityka');
-            else sub = 'Dashboard';
+            section = t('sidebar.adminPanel');
+            if (currentView === AppView.ADMIN_USERS) sub = t('sidebar.adminUsers');
+            else if (currentView === AppView.ADMIN_PROJECTS) sub = t('sidebar.adminProjects');
+            else if (currentView === AppView.ADMIN_LLM) sub = t('sidebar.adminLLM');
+            else if (currentView === AppView.ADMIN_KNOWLEDGE) sub = t('sidebar.adminKnowledge');
+            else if (currentView === AppView.ADMIN_FEEDBACK) sub = t('sidebar.adminFeedback');
+            else if (currentView === AppView.ADMIN_BILLING) sub = t('admin.billing.title');
+            else if (currentView === AppView.ADMIN_ANALYTICS) sub = t('admin.analytics.title');
+            else sub = t('sidebar.dashboard');
         }
         // Settings Views
         else if (viewParts.includes('SETTINGS')) {
-            section = sidebarT.settings || 'Ustawienia';
-            if (currentView === AppView.SETTINGS_PROFILE) sub = t('settings.profile', 'Profil');
-            else if (currentView === AppView.SETTINGS_BILLING) sub = t('settings.billing', 'Płatności');
-            else if (currentView === AppView.SETTINGS_AI) sub = t('settings.ai', 'Ustawienia AI');
-            else if (currentView === AppView.SETTINGS_NOTIFICATIONS) sub = t('settings.notifications', 'Powiadomienia');
-            else if (currentView === AppView.SETTINGS_INTEGRATIONS) sub = t('settings.integrations', 'Integracje');
-            else if (currentView === AppView.SETTINGS_ORGANIZATION) sub = t('settings.organization', 'Organizacja');
-            else sub = 'Profil';
+            section = t('sidebar.settings');
+            if (currentView === AppView.SETTINGS_PROFILE) sub = t('settings.menu.myProfile');
+            else if (currentView === AppView.SETTINGS_BILLING) sub = t('settings.menu.billing');
+            else if (currentView === AppView.SETTINGS_AI) sub = t('settings.menu.aiConfig');
+            else if (currentView === AppView.SETTINGS_NOTIFICATIONS) sub = t('settings.menu.notifications');
+            else if (currentView === AppView.SETTINGS_INTEGRATIONS) sub = t('settings.menu.integrations');
+            else if (currentView === AppView.SETTINGS_ORGANIZATION) sub = t('settings.menu.organization');
+            else if (currentView === AppView.SETTINGS_WORK_PREFERENCES) sub = t('settings.menu.workPreferences');
+            else if (currentView === AppView.SETTINGS_DASHBOARD_PREFERENCES) sub = t('settings.menu.dashboardPreferences');
+            else if (currentView === AppView.SETTINGS_ACCESSIBILITY) sub = t('settings.menu.accessibility');
+            else if (currentView === AppView.SETTINGS_PRIVACY) sub = t('settings.menu.privacy');
+            else sub = t('settings.menu.myProfile');
         }
         // Consultant Views
         else if (currentView === AppView.CONSULTANT_PANEL) {
-            section = t('consultant.section', 'Konsultant');
-            sub = t('consultant.panel', 'Panel Konsultanta');
+            section = t('consultant.section');
+            sub = t('consultant.panel');
         } else if (currentView === AppView.CONSULTANT_INVITES) {
-            section = t('consultant.section', 'Konsultant');
-            sub = t('consultant.invites', 'Zaproszenia');
+            section = t('consultant.section');
+            sub = t('consultant.invites');
         }
         // Dashboard Views
         else if (currentView === AppView.USER_DASHBOARD || currentView === AppView.DASHBOARD) {
-            section = sidebarT.dashboard || 'Dashboard';
+            section = t('sidebar.dashboard');
             sub = '';
         } else if (currentView === AppView.DASHBOARD_OVERVIEW) {
-            section = sidebarT.dashboard || 'Dashboard';
-            sub = dashboardSubT?.overview || 'Przegląd';
+            section = t('sidebar.dashboard');
+            sub = t('sidebar.dashboardSub.overview');
         } else if (currentView === AppView.DASHBOARD_SNAPSHOT) {
-            section = sidebarT.dashboard || 'Dashboard';
-            sub = dashboardSubT?.snapshot || 'Migawka Realizacji';
+            section = t('sidebar.dashboard');
+            sub = t('sidebar.dashboardSub.snapshot');
         }
         // Affiliate Dashboard
         else if (currentView === AppView.AFFILIATE_DASHBOARD) {
-            section = sidebarT.dashboard || 'Dashboard';
-            sub = t('affiliate.title', 'Program Partnerski');
+            section = t('sidebar.dashboard');
+            sub = t('sidebar.affiliateDashboard');
         }
 
         return [section, sub];
@@ -572,7 +621,7 @@ const AppContent: React.FC = () => {
         if (currentView === AppView.ASSESSMENT_DRD) {
             return (
                 <React.Suspense fallback={<LoadingScreen />}>
-                    <SplitLayout title="DRD Assessment" onSendMessage={() => { }}>
+                    <SplitLayout title="DRD Assessment">
                         <AssessmentModuleHub framework="DRD" />
                     </SplitLayout>
                 </React.Suspense>
@@ -607,6 +656,13 @@ const AppContent: React.FC = () => {
                 </React.Suspense>
             );
         }
+        if (currentView === AppView.ECONOMICS) {
+            return (
+                <React.Suspense fallback={<LoadingScreen />}>
+                    <EconomicsView />
+                </React.Suspense>
+            );
+        }
         if (currentView === AppView.FULL_STEP5_EXECUTION) {
             return (
                 <React.Suspense fallback={<LoadingScreen />}>
@@ -614,10 +670,10 @@ const AppContent: React.FC = () => {
                 </React.Suspense>
             );
         }
-        if (currentView === AppView.FULL_PILOT_EXECUTION) {
+        if (currentView === AppView.IMPLEMENTATION) {
             return (
                 <React.Suspense fallback={<LoadingScreen />}>
-                    <FullPilotView />
+                    <ImplementationView />
                 </React.Suspense>
             );
         }
@@ -658,6 +714,24 @@ const AppContent: React.FC = () => {
             );
         }
 
+        // Initiative Management Module
+        if (currentView === AppView.INITIATIVE_MANAGEMENT) {
+            return (
+                <React.Suspense fallback={<LoadingScreen />}>
+                    <InitiativeManagementView />
+                </React.Suspense>
+            );
+        }
+
+        // Benefits Realization Module
+        if (currentView === AppView.BENEFITS_REALIZATION) {
+            return (
+                <React.Suspense fallback={<LoadingScreen />}>
+                    <BenefitsRealizationView />
+                </React.Suspense>
+            );
+        }
+
         // Consultant Views
         if (currentView === AppView.CONSULTANT_PANEL) {
             return (
@@ -693,7 +767,7 @@ const AppContent: React.FC = () => {
         // Phase E: Onboarding Wizard
         if (currentView === AppView.ONBOARDING_WIZARD) {
             return (
-                <React.Suspense fallback={<div className="p-8 text-center text-slate-500"><Loader2 className="animate-spin mx-auto mb-2" />Loading Onboarding...</div>}>
+                <React.Suspense fallback={<div className="p-8 text-center text-slate-500"><Loader2 className="animate-spin mx-auto mb-2" />{t('common.loadingOnboarding')}</div>}>
                     <OnboardingWizard />
                 </React.Suspense>
             );
@@ -736,7 +810,7 @@ const AppContent: React.FC = () => {
         if (currentView === AppView.ASSESSMENT_SIRI) {
             return (
                 <React.Suspense fallback={<LoadingScreen />}>
-                    <SplitLayout title="SIRI Assessment" onSendMessage={() => { }}>
+                    <SplitLayout title="SIRI Assessment">
                         <AssessmentModuleHub framework="SIRI" />
                     </SplitLayout>
                 </React.Suspense>
@@ -747,7 +821,7 @@ const AppContent: React.FC = () => {
         if (currentView === AppView.ASSESSMENT_ADMA) {
             return (
                 <React.Suspense fallback={<LoadingScreen />}>
-                    <SplitLayout title="ADMA Assessment" onSendMessage={() => { }}>
+                    <SplitLayout title="ADMA Assessment">
                         <AssessmentModuleHub framework="ADMA" />
                     </SplitLayout>
                 </React.Suspense>
@@ -758,7 +832,7 @@ const AppContent: React.FC = () => {
         if (currentView === AppView.ASSESSMENT_CMMI) {
             return (
                 <React.Suspense fallback={<LoadingScreen />}>
-                    <SplitLayout title="CMMI Assessment" onSendMessage={() => { }}>
+                    <SplitLayout title="CMMI Assessment">
                         <AssessmentModuleHub framework="CMMI" />
                     </SplitLayout>
                 </React.Suspense>
@@ -769,7 +843,7 @@ const AppContent: React.FC = () => {
         if (currentView === AppView.ASSESSMENT_LEAN || currentView === AppView.ASSESSMENT_LEAN_EXTERNAL) {
             return (
                 <React.Suspense fallback={<LoadingScreen />}>
-                    <SplitLayout title="Lean 4.0 Assessment" onSendMessage={() => { }}>
+                    <SplitLayout title="Lean 4.0 Assessment">
                         <AssessmentModuleHub framework="LEAN" />
                     </SplitLayout>
                 </React.Suspense>
@@ -865,23 +939,43 @@ const AppContent: React.FC = () => {
                    Using standard import at top is better. Let's assume standard import.
                 */}
 
-                {/* Help System - Global floating button + panel */}
+                {/* Help System - Global floating buttons + panel */}
                 {isSessionView && (
                     <>
-                        <HelpButtonWrapper />
-                        <DocumentToggleButton />
+                        {/* Floating action buttons - positioned together on the right */}
+                        <div className="fixed right-0 top-1/3 z-50 flex flex-col gap-3 items-end translate-x-0 pointer-events-none">
+                            <div className="pointer-events-auto"><DocumentToggleButton /></div>
+                            <div className="pointer-events-auto"><HelpToggleButton /></div>
+                        </div>
+                        <HelpSidePanel />
                     </>
                 )}
 
-                {/* Demo Banner */}
+                {/* Demo Banner - SmartDemoBanner with timer and upgrade CTA */}
                 {currentUser?.isDemo && (
-                    <div className="fixed top-0 left-0 right-0 z-[60]">
-                        <React.Suspense fallback={null}>
-                            {import('./components/DemoBanner').then(mod => ({ default: mod.default })).then(Component => (
-                                <Component.default />
-                            )) as any}
-                        </React.Suspense>
-                    </div>
+                    <React.Suspense fallback={null}>
+                        {React.createElement(
+                            React.lazy(() => import('./components/demo').then(mod => ({ default: mod.SmartDemoBanner }))),
+                            { demoEmail: currentUser.email }
+                        )}
+                    </React.Suspense>
+                )}
+
+                {/* Demo Welcome Tour */}
+                {currentUser?.isDemo && (
+                    <DemoWelcomeTour
+                        isOpen={showDemoTour}
+                        onClose={() => setShowDemoTour(false)}
+                        onComplete={() => setShowDemoTour(false)}
+                    />
+                )}
+
+                {/* Exit Intent Modal for Demo Users */}
+                {currentUser?.isDemo && (
+                    <ExitIntentModal
+                        isOpen={showExitIntent}
+                        onClose={dismissExitIntent}
+                    />
                 )}
 
                 {/* Impersonation Banner */}
@@ -935,7 +1029,7 @@ const AppContent: React.FC = () => {
                             <TrialBanner />
 
 
-                            <div className="h-12 border-b border-slate-200 dark:border-white/5 bg-white dark:bg-navy-950 flex items-center justify-between px-3 transition-colors duration-300">
+                            <div className="h-12 border-b border-slate-200 dark:border-white/5 bg-white dark:bg-navy-950 shadow-sm dark:shadow-none flex items-center justify-between px-3 transition-colors duration-300">
                                 {/* ... existing top bar content ... */}
                                 <div className="flex items-center gap-3">
                                     <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden text-navy-700 dark:text-white mr-2">
@@ -1206,6 +1300,118 @@ export const App = () => (
                 element={
                     <React.Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-green-500" /></div>}>
                         {React.createElement(React.lazy(() => import('./views/auth/VerifyEmail')))}
+                    </React.Suspense>
+                }
+            />
+            {/* Invitation Acceptance Route */}
+            <Route
+                path="/invite/:token"
+                element={<InviteRouteWrapper />}
+            />
+            {/* Legal Pages - Public Routes */}
+            <Route
+                path="/privacy"
+                element={
+                    <React.Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-purple-500" /></div>}>
+                        {React.createElement(React.lazy(() => import('./views/legal/PrivacyPolicyView')))}
+                    </React.Suspense>
+                }
+            />
+            <Route
+                path="/terms"
+                element={
+                    <React.Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-purple-500" /></div>}>
+                        {React.createElement(React.lazy(() => import('./views/legal/TermsOfServiceView')))}
+                    </React.Suspense>
+                }
+            />
+            <Route
+                path="/about"
+                element={
+                    <React.Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-purple-500" /></div>}>
+                        {React.createElement(React.lazy(() => import('./views/legal/AboutView')))}
+                    </React.Suspense>
+                }
+            />
+            <Route
+                path="/cookies"
+                element={
+                    <React.Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-purple-500" /></div>}>
+                        {React.createElement(React.lazy(() => import('./views/legal/CookiePolicyView')))}
+                    </React.Suspense>
+                }
+            />
+            <Route
+                path="/security"
+                element={
+                    <React.Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-purple-500" /></div>}>
+                        {React.createElement(React.lazy(() => import('./views/legal/SecurityView')))}
+                    </React.Suspense>
+                }
+            />
+            <Route
+                path="/contact"
+                element={
+                    <React.Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-purple-500" /></div>}>
+                        {React.createElement(React.lazy(() => import('./views/legal/ContactView')))}
+                    </React.Suspense>
+                }
+            />
+            <Route
+                path="/pricing"
+                element={
+                    <React.Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-purple-500" /></div>}>
+                        {React.createElement(React.lazy(() => import('./views/PricingView')))}
+                    </React.Suspense>
+                }
+            />
+            {/* Legal Document Routes (Public) */}
+            <Route
+                path="/legal"
+                element={
+                    <React.Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-purple-500" /></div>}>
+                        {React.createElement(React.lazy(() => import('./views/LegalIndexView')))}
+                    </React.Suspense>
+                }
+            />
+            <Route
+                path="/legal/:docSlug"
+                element={
+                    <React.Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-purple-500" /></div>}>
+                        {React.createElement(React.lazy(() => import('./views/LegalDocumentView')))}
+                    </React.Suspense>
+                }
+            />
+            {/* Help System Routes */}
+            <Route
+                path="/docs"
+                element={
+                    <React.Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-purple-500" /></div>}>
+                        {React.createElement(React.lazy(() => import('./views/KnowledgeBaseView')))}
+                    </React.Suspense>
+                }
+            />
+            <Route
+                path="/docs/:category/:article"
+                element={
+                    <React.Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-purple-500" /></div>}>
+                        {React.createElement(React.lazy(() => import('./views/KnowledgeBaseView')))}
+                    </React.Suspense>
+                }
+            />
+            <Route
+                path="/status"
+                element={
+                    <React.Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-purple-500" /></div>}>
+                        {React.createElement(React.lazy(() => import('./views/StatusPageView')))}
+                    </React.Suspense>
+                }
+            />
+            <Route
+                path="/changelog"
+                element={
+                    <React.Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-purple-500" /></div>}>
+                        {React.createElement(React.lazy(() => import('./views/ChangelogView')))}
                     </React.Suspense>
                 }
             />

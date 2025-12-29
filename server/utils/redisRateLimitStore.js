@@ -1,4 +1,4 @@
-const client = require('./redisClient');
+const { getRedisClient, isRedisConnected } = require('../services/ai/redisClient');
 
 /**
  * A simple Redis store for express-rate-limit
@@ -17,11 +17,12 @@ class RedisStore {
     async increment(key) {
         const rKey = this.prefix + key;
         try {
+            const client = getRedisClient();
+
             // Check connectivity
-            if (!client.isOpen) {
-                // Fallback to memory-like behavior (return 1 to allow request but warn)
-                // Or easier: throw error to let RateLimit handle it (it might not handle store errors gracefully without config)
-                // Better: Just return a safe object.
+            if (!isRedisConnected() || !client) {
+                // Fallback to memory-like behavior (fail open)
+                // Return a safe object to allow traffic
                 return { totalHits: 1, resetTime: new Date(Date.now() + this.windowMs) };
             }
 
@@ -37,15 +38,19 @@ class RedisStore {
             };
         } catch (error) {
             console.error('[RateLimit] Redis error:', error);
-            // Fail open
-            return { totalHits: 0, resetTime: new Date() };
+            // Fail open - must return a positive integer for totalHits (v8 requirement)
+            return {
+                totalHits: 1,
+                resetTime: new Date(Date.now() + (this.windowMs || 60000))
+            };
         }
     }
 
     async decrement(key) {
         const rKey = this.prefix + key;
         try {
-            if (client.isOpen) {
+            const client = getRedisClient();
+            if (isRedisConnected() && client) {
                 await client.decr(rKey);
             }
         } catch (error) {
@@ -56,7 +61,8 @@ class RedisStore {
     async resetKey(key) {
         const rKey = this.prefix + key;
         try {
-            if (client.isOpen) {
+            const client = getRedisClient();
+            if (isRedisConnected() && client) {
                 await client.del(rKey);
             }
         } catch (error) {

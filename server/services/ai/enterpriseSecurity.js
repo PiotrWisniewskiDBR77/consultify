@@ -1,0 +1,429 @@
+/**
+ * Enterprise Security Service for AI
+ * 
+ * Provides security, compliance, and audit features for enterprise deployments.
+ * Features:
+ * - Audit logging
+ * - Data access tracking
+ * - Rate limiting per organization
+ * - Content filtering
+ * - PII detection
+ */
+
+const db = require('../../database');
+const { aiLogger } = require('./logger');
+
+// PII patterns for detection
+const PII_PATTERNS = {
+    email: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,
+    phone: /(?:\+48[\s-]?)?\d{3}[\s-]?\d{3}[\s-]?\d{3}/g,
+    pesel: /\b\d{11}\b/g,
+    nip: /\b\d{3}[-]?\d{3}[-]?\d{2}[-]?\d{2}\b/g,
+    creditCard: /\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/g,
+    iban: /[A-Z]{2}\d{2}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}/g
+};
+
+// Risk assessment rules
+const RISK_RULES = {
+    HIGH: [
+        { pattern: /password|hasło|tajne|secret|credential/i, reason: 'Sensitive keyword detected' },
+        { pattern: /delete|usuń|kasuj|wymaż/i, reason: 'Destructive action requested' },
+        { pattern: /admin|root|superuser/i, reason: 'Admin access mentioned' }
+    ],
+    MEDIUM: [
+        { pattern: /export|eksport|download|pobierz/i, reason: 'Data export requested' },
+        { pattern: /share|udostępnij|send|wyślij/i, reason: 'Data sharing action' }
+    ]
+};
+
+class EnterpriseSecurityService {
+    constructor() {
+        this.rateLimitCache = new Map();
+        this.auditBuffer = [];
+        this.flushInterval = 5000; // 5 seconds
+        
+        // Start buffer flush interval
+        this.startFlushInterval();
+    }
+
+    /**
+     * Log AI audit entry
+     */
+    async logAudit(entry) {
+        const {
+            userId,
+            organizationId,
+            action,
+            resourceType,
+            resourceId,
+            requestSummary,
+            responseSummary,
+            modelUsed,
+            tokensUsed,
+            costUsd,
+            ipAddress,
+            userAgent
+        } = entry;
+
+        // Assess risk level
+        const riskAssessment = this.assessRisk(requestSummary, responseSummary);
+
+        const auditEntry = {
+            id: require('crypto').randomUUID(),
+            timestamp: new Date().toISOString(),
+            user_id: userId,
+            organization_id: organizationId,
+            action,
+            resource_type: resourceType,
+            resource_id: resourceId,
+            request_summary: this.sanitizePII(requestSummary),
+            response_summary: this.sanitizePII(responseSummary, true), // Truncate response
+            model_used: modelUsed,
+            tokens_used: tokensUsed,
+            cost_usd: costUsd,
+            ip_address: ipAddress,
+            user_agent: userAgent,
+            risk_level: riskAssessment.level,
+            flagged: riskAssessment.flagged,
+            flag_reason: riskAssessment.reason
+        };
+
+        // Add to buffer for batch insert
+        this.auditBuffer.push(auditEntry);
+
+        // Alert on high risk
+        if (riskAssessment.flagged) {
+            aiLogger.warn('EnterpriseSecurity', 
+                `Flagged AI request: ${riskAssessment.reason} (user: ${userId})`);
+        }
+
+        return riskAssessment;
+    }
+
+    /**
+     * Assess risk level of request
+     */
+    assessRisk(request, response) {
+        const content = `${request || ''} ${response || ''}`.toLowerCase();
+        
+        // Check high risk patterns
+        for (const rule of RISK_RULES.HIGH) {
+            if (rule.pattern.test(content)) {
+                return {
+                    level: 'HIGH',
+                    flagged: true,
+                    reason: rule.reason
+                };
+            }
+        }
+
+        // Check medium risk patterns
+        for (const rule of RISK_RULES.MEDIUM) {
+            if (rule.pattern.test(content)) {
+                return {
+                    level: 'MEDIUM',
+                    flagged: false,
+                    reason: rule.reason
+                };
+            }
+        }
+
+        // Check for PII
+        const piiFound = this.detectPII(content);
+        if (piiFound.length > 0) {
+            return {
+                level: 'MEDIUM',
+                flagged: piiFound.length > 3,
+                reason: `PII detected: ${piiFound.join(', ')}`
+            };
+        }
+
+        return {
+            level: 'LOW',
+            flagged: false,
+            reason: null
+        };
+    }
+
+    /**
+     * Detect PII in content
+     */
+    detectPII(content) {
+        const found = [];
+        
+        for (const [type, pattern] of Object.entries(PII_PATTERNS)) {
+            if (pattern.test(content)) {
+                found.push(type);
+            }
+        }
+
+        return found;
+    }
+
+    /**
+     * Sanitize PII from content
+     */
+    sanitizePII(content, truncate = false) {
+        if (!content) return content;
+
+        let sanitized = content;
+
+        for (const [type, pattern] of Object.entries(PII_PATTERNS)) {
+            sanitized = sanitized.replace(pattern, `[${type.toUpperCase()}_REDACTED]`);
+        }
+
+        if (truncate && sanitized.length > 500) {
+            sanitized = sanitized.substring(0, 500) + '... [TRUNCATED]';
+        }
+
+        return sanitized;
+    }
+
+    /**
+     * Check rate limit for organization
+     */
+    async checkRateLimit(organizationId, action = 'all') {
+        const cacheKey = `${organizationId}:${action}`;
+        
+        // Get limits from database (with caching)
+        const limits = await this.getOrganizationLimits(organizationId, action);
+        
+        if (!limits || limits.length === 0) {
+            return { allowed: true, remaining: Infinity };
+        }
+
+        for (const limit of limits) {
+            const usage = await this.getUsage(organizationId, action, limit.limit_type);
+            
+            if (usage >= limit.limit_value) {
+                return {
+                    allowed: false,
+                    remaining: 0,
+                    resetAt: this.getResetTime(limit.limit_type),
+                    limitType: limit.limit_type,
+                    limit: limit.limit_value
+                };
+            }
+        }
+
+        return { allowed: true, remaining: limits[0]?.limit_value - 1 || Infinity };
+    }
+
+    /**
+     * Get organization rate limits
+     */
+    async getOrganizationLimits(organizationId, action) {
+        try {
+            return await db.all(`
+                SELECT * FROM ai_rate_limits
+                WHERE organization_id = ? AND (applies_to = 'all' OR applies_to = ?)
+            `, [organizationId, action]);
+        } catch (error) {
+            aiLogger.debug('EnterpriseSecurity', `Limit fetch failed: ${error.message}`);
+            return [];
+        }
+    }
+
+    /**
+     * Get usage count
+     */
+    async getUsage(organizationId, action, limitType) {
+        const timeWindow = this.getTimeWindow(limitType);
+        
+        try {
+            const result = await db.get(`
+                SELECT COUNT(*) as count FROM ai_audit_log
+                WHERE organization_id = ? 
+                  AND timestamp > datetime('now', ?)
+                  AND (? = 'all' OR action = ?)
+            `, [organizationId, timeWindow, action, action]);
+            
+            return result?.count || 0;
+        } catch (error) {
+            aiLogger.debug('EnterpriseSecurity', `Usage fetch failed: ${error.message}`);
+            return 0;
+        }
+    }
+
+    /**
+     * Get time window for limit type
+     */
+    getTimeWindow(limitType) {
+        switch (limitType) {
+            case 'per_minute': return '-1 minute';
+            case 'per_hour': return '-1 hour';
+            case 'per_day': return '-1 day';
+            case 'per_month': return '-1 month';
+            default: return '-1 day';
+        }
+    }
+
+    /**
+     * Get reset time for limit type
+     */
+    getResetTime(limitType) {
+        const now = new Date();
+        switch (limitType) {
+            case 'per_minute':
+                return new Date(now.getTime() + 60000);
+            case 'per_hour':
+                return new Date(now.getTime() + 3600000);
+            case 'per_day':
+                return new Date(now.setHours(24, 0, 0, 0));
+            case 'per_month':
+                return new Date(now.getFullYear(), now.getMonth() + 1, 1);
+            default:
+                return new Date(now.getTime() + 3600000);
+        }
+    }
+
+    /**
+     * Log data access
+     */
+    async logDataAccess(entry) {
+        const { userId, organizationId, dataType, dataId, accessType, purpose, aiRequestId } = entry;
+
+        try {
+            await db.run(`
+                INSERT INTO ai_data_access_log 
+                (id, user_id, organization_id, data_type, data_id, access_type, purpose, ai_request_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            `, [
+                require('crypto').randomUUID(),
+                userId, organizationId, dataType, dataId,
+                accessType, purpose, aiRequestId
+            ]);
+        } catch (error) {
+            aiLogger.debug('EnterpriseSecurity', `Data access log failed: ${error.message}`);
+        }
+    }
+
+    /**
+     * Get audit log entries
+     */
+    async getAuditLog(filters = {}) {
+        const { organizationId, userId, action, riskLevel, flagged, limit = 100, offset = 0 } = filters;
+
+        let query = `SELECT * FROM ai_audit_log WHERE 1=1`;
+        const params = [];
+
+        if (organizationId) {
+            query += ` AND organization_id = ?`;
+            params.push(organizationId);
+        }
+        if (userId) {
+            query += ` AND user_id = ?`;
+            params.push(userId);
+        }
+        if (action) {
+            query += ` AND action = ?`;
+            params.push(action);
+        }
+        if (riskLevel) {
+            query += ` AND risk_level = ?`;
+            params.push(riskLevel);
+        }
+        if (flagged !== undefined) {
+            query += ` AND flagged = ?`;
+            params.push(flagged ? 1 : 0);
+        }
+
+        query += ` ORDER BY timestamp DESC LIMIT ? OFFSET ?`;
+        params.push(limit, offset);
+
+        try {
+            return await db.all(query, params);
+        } catch (error) {
+            aiLogger.debug('EnterpriseSecurity', `Audit log fetch failed: ${error.message}`);
+            return [];
+        }
+    }
+
+    /**
+     * Flush audit buffer to database
+     */
+    async flushAuditBuffer() {
+        if (this.auditBuffer.length === 0) return;
+
+        const entries = [...this.auditBuffer];
+        this.auditBuffer = [];
+
+        try {
+            for (const entry of entries) {
+                await db.run(`
+                    INSERT INTO ai_audit_log 
+                    (id, timestamp, user_id, organization_id, action, resource_type, resource_id,
+                     request_summary, response_summary, model_used, tokens_used, cost_usd,
+                     ip_address, user_agent, risk_level, flagged, flag_reason)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `, [
+                    entry.id, entry.timestamp, entry.user_id, entry.organization_id,
+                    entry.action, entry.resource_type, entry.resource_id,
+                    entry.request_summary, entry.response_summary, entry.model_used,
+                    entry.tokens_used, entry.cost_usd, entry.ip_address, entry.user_agent,
+                    entry.risk_level, entry.flagged ? 1 : 0, entry.flag_reason
+                ]);
+            }
+        } catch (error) {
+            aiLogger.error('EnterpriseSecurity', `Audit buffer flush failed: ${error.message}`);
+            // Re-add entries to buffer
+            this.auditBuffer.push(...entries);
+        }
+    }
+
+    /**
+     * Start buffer flush interval
+     */
+    startFlushInterval() {
+        setInterval(() => {
+            this.flushAuditBuffer();
+        }, this.flushInterval);
+    }
+
+    /**
+     * Get security summary for organization
+     */
+    async getSecuritySummary(organizationId) {
+        try {
+            const today = await db.get(`
+                SELECT 
+                    COUNT(*) as total_requests,
+                    SUM(CASE WHEN flagged = 1 THEN 1 ELSE 0 END) as flagged_requests,
+                    SUM(CASE WHEN risk_level = 'HIGH' THEN 1 ELSE 0 END) as high_risk,
+                    SUM(CASE WHEN risk_level = 'MEDIUM' THEN 1 ELSE 0 END) as medium_risk
+                FROM ai_audit_log
+                WHERE organization_id = ? AND timestamp > datetime('now', '-1 day')
+            `, [organizationId]);
+
+            const dataAccess = await db.get(`
+                SELECT COUNT(*) as count, COUNT(DISTINCT data_type) as types
+                FROM ai_data_access_log
+                WHERE organization_id = ? AND timestamp > datetime('now', '-1 day')
+            `, [organizationId]);
+
+            return {
+                period: 'last_24h',
+                totalRequests: today?.total_requests || 0,
+                flaggedRequests: today?.flagged_requests || 0,
+                highRiskCount: today?.high_risk || 0,
+                mediumRiskCount: today?.medium_risk || 0,
+                dataAccessCount: dataAccess?.count || 0,
+                dataTypesAccessed: dataAccess?.types || 0
+            };
+        } catch (error) {
+            aiLogger.debug('EnterpriseSecurity', `Summary failed: ${error.message}`);
+            return { error: error.message };
+        }
+    }
+}
+
+// Singleton instance
+const enterpriseSecurity = new EnterpriseSecurityService();
+
+module.exports = {
+    EnterpriseSecurityService,
+    enterpriseSecurity,
+    PII_PATTERNS,
+    RISK_RULES
+};
+

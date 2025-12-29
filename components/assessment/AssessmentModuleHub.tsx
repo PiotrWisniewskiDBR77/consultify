@@ -50,6 +50,15 @@ import { ReportBuilderWorkspace } from './ReportBuilderWorkspace';
 import { InitiativeDetailsModal } from './modals/InitiativeDetailsModal';
 import { DRDAxis } from '../../types';
 
+// Multi-framework assessment maps
+import { SIRIAssessmentMap } from './maps/SIRIAssessmentMap';
+import { ADMAAssessmentMap } from './maps/ADMAAssessmentMap';
+import { CMPracticeMap } from './maps/CMPracticeMap';
+import { DBR77LeanMap } from './maps/DBR77LeanMap';
+
+// Multi-framework store
+import { useMultiFrameworkStore, AssessmentFramework } from '../../store/useMultiFrameworkStore';
+
 // Type for axis selection including dashboard
 type AxisSelection = 'dashboard' | DRDAxis;
 
@@ -57,7 +66,7 @@ type AxisSelection = 'dashboard' | DRDAxis;
 type WorkflowStatus = 'DRAFT' | 'IN_REVIEW' | 'AWAITING_APPROVAL' | 'APPROVED' | 'REJECTED';
 
 export type HubTab = 'assessment' | 'map' | 'reports' | 'initiatives';
-export type AssessmentFramework = 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
+// REMOVED DUPLICATE TYPE DEFINITION: export type AssessmentFramework = 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
 
 interface TabConfig {
     id: HubTab;
@@ -94,7 +103,7 @@ const TABS: TabConfig[] = [
 ];
 
 // Framework metadata
-const FRAMEWORK_CONFIG: Record<AssessmentFramework, { name: string; icon: React.ReactNode; color: string; description: string }> = {
+const FRAMEWORK_CONFIG: Record<string, { name: string; icon: React.ReactNode; color: string; description: string }> = {
     DRD: {
         name: 'Digital Readiness Diagnosis',
         icon: <Activity size={24} />,
@@ -141,7 +150,26 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
     onNavigate
 }) => {
     const { currentProjectId, setCurrentView } = useAppStore();
+    // SAFE ACCESS: Handle potential missing config
     const frameworkConfig = FRAMEWORK_CONFIG[framework];
+
+    // Safety check - if framework is unknown, show error instead of crashing
+    if (!frameworkConfig) {
+        return (
+            <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-navy-950 p-8">
+                <div className="text-center max-w-md bg-white dark:bg-navy-900 p-8 rounded-xl shadow-lg border border-red-200 dark:border-red-900/30">
+                    <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center mx-auto mb-4 text-red-600 dark:text-red-400">
+                        <AlertCircle size={32} />
+                    </div>
+                    <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-2">Unknown Framework</h2>
+                    <p className="text-slate-500 dark:text-slate-400">
+                        The assessment framework "{framework}" is not recognized or configured.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
     const { isTablet, isMobile, isTouchDevice } = useDeviceType();
     const isCompact = isTablet || isMobile;
 
@@ -275,7 +303,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
     // Clear tabs when switching main tabs (Assessment/Map/Reports/Initiatives)
     const handleTabChange = useCallback((tab: HubTab) => {
         // Only clear tabs when switching between Reports and Initiatives
-        if ((activeTab === 'reports' || activeTab === 'initiatives') && 
+        if ((activeTab === 'reports' || activeTab === 'initiatives') &&
             (tab === 'reports' || tab === 'initiatives') &&
             activeTab !== tab) {
             setOpenDocuments([]);
@@ -495,8 +523,8 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
         }
     }, [activeTab, selectedAssessmentId, loadAssessmentData]);
 
-    // Check if framework is implemented (only DRD for now)
-    const isFrameworkImplemented = framework === 'DRD';
+    // Check if framework is implemented - all frameworks now supported
+    const isFrameworkImplemented = ['DRD', 'SIRI', 'ADMA', 'CMMI', 'LEAN'].includes(framework);
 
     // Render content based on active tab
     const renderContent = () => {
@@ -608,6 +636,74 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                         />
                     );
                 }
+
+                // SIRI Assessment Map
+                if (framework === 'SIRI') {
+                    const siriData = useMultiFrameworkStore.getState().siriData;
+                    const setSIRIData = (data: any) => {
+                        setHasUnsavedChanges(true);
+                        useMultiFrameworkStore.getState().setFrameworkData('SIRI', data);
+                    };
+                    return (
+                        <SIRIAssessmentMap
+                            data={siriData || undefined}
+                            onChange={setSIRIData}
+                            readOnly={false}
+                            showLegalNotice={true}
+                        />
+                    );
+                }
+
+                // ADMA Assessment Map
+                if (framework === 'ADMA') {
+                    const admaData = useMultiFrameworkStore.getState().admaData;
+                    const setADMAData = (data: any) => {
+                        setHasUnsavedChanges(true);
+                        useMultiFrameworkStore.getState().setFrameworkData('ADMA', data);
+                    };
+                    return (
+                        <ADMAAssessmentMap
+                            data={admaData || undefined}
+                            onChange={setADMAData}
+                            readOnly={false}
+                            showLegalNotice={true}
+                        />
+                    );
+                }
+
+                // CMMI Assessment Map
+                if (framework === 'CMMI') {
+                    const cmmiData = useMultiFrameworkStore.getState().cmmiData;
+                    const setCMMIData = (data: any) => {
+                        setHasUnsavedChanges(true);
+                        useMultiFrameworkStore.getState().setFrameworkData('CMMI', data);
+                    };
+                    return (
+                        <CMPracticeMap
+                            data={cmmiData || undefined}
+                            onChange={setCMMIData}
+                            readOnly={false}
+                            showLegalNotice={true}
+                        />
+                    );
+                }
+
+                // Lean 4.0 / DBR77 Assessment Map
+                if (framework === 'LEAN') {
+                    const leanData = useMultiFrameworkStore.getState().leanData;
+                    const setLeanData = (data: any) => {
+                        setHasUnsavedChanges(true);
+                        useMultiFrameworkStore.getState().setFrameworkData('LEAN', data);
+                    };
+                    return (
+                        <DBR77LeanMap
+                            data={leanData || undefined}
+                            onChange={setLeanData}
+                            readOnly={false}
+                        />
+                    );
+                }
+
                 return null;
 
             case 'reports': {
@@ -833,7 +929,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
             {/* Document Tabs Bar - visible for Reports and Initiatives tabs when documents are open */}
             {(activeTab === 'reports' || activeTab === 'initiatives') && (
                 <DocumentTabsBar
-                    openDocuments={openDocuments.filter(doc => 
+                    openDocuments={openDocuments.filter(doc =>
                         activeTab === 'reports' ? doc.type === 'report' : doc.type === 'initiative'
                     )}
                     activeDocumentId={activeDocumentId}

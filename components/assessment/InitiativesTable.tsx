@@ -1,37 +1,34 @@
 /**
  * InitiativesTable
  * 
- * Table view for transformation initiatives:
- * - Generated from approved reports
- * - Can be edited, approved, or deleted
- * - Each initiative can be opened for detailed editing
+ * Table view for transformation initiatives in Assessment Module:
+ * - Shows only DRAFT and PLANNING status initiatives
+ * - When status changes to REVIEW, initiative moves to Initiative Management module
+ * - Includes status dropdown for transitions and completeness checker
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Plus,
     Search,
     Lightbulb,
     Edit,
     Eye,
     Trash2,
-    CheckCircle2,
-    Clock,
-    AlertTriangle,
     MoreVertical,
     RefreshCw,
     Loader2,
-    Target,
     TrendingUp,
-    DollarSign,
     ArrowRight,
     Sparkles,
-    User,
-    MapPin
+    MapPin,
+    Building2
 } from 'lucide-react';
 import { InitiativeDetailsModal } from './modals/InitiativeDetailsModal';
 import { TransferToRoadmapModal } from './modals/TransferToRoadmapModal';
 import { GenerateInitiativesModal } from './modals/GenerateInitiativesModal';
+import { StatusTransitionDropdown } from '../PMO/StatusTransitionDropdown';
+import { InitiativeCompletenessChecker } from '../PMO/InitiativeCompletenessChecker';
+import { InitiativeStatus } from '../../types';
 
 interface Initiative {
     id: string;
@@ -39,15 +36,37 @@ interface Initiative {
     description: string;
     reportId: string;
     reportName: string;
+    projectId?: string;
+    projectName?: string;
+    locationId?: string;
+    locationName?: string;
     axis: string;
-    status: 'DRAFT' | 'APPROVED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'PLANNED';
+    status: InitiativeStatus;
     priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
     estimatedROI: number;
     estimatedBudget: number;
     timeline: string;
+    charterCompleteness?: number;
+    ownerBusiness?: { id: string; firstName: string; lastName: string; avatarUrl?: string };
+    ownerExecution?: { id: string; firstName: string; lastName: string; avatarUrl?: string };
     createdAt: string;
     updatedAt: string;
     createdBy?: string;
+    // Charter fields for completeness check
+    summary?: string;
+    problemStatement?: string;
+    hypothesis?: string;
+    businessValue?: string | number;
+    costCapex?: number;
+    costOpex?: number;
+    expectedRoi?: number;
+    ownerBusinessId?: string;
+    ownerExecutionId?: string;
+    plannedStartDate?: string;
+    plannedEndDate?: string;
+    deliverables?: string[];
+    successCriteria?: string[];
+    keyRisks?: string[];
 }
 
 // Map API response to Initiative interface
@@ -55,32 +74,41 @@ const mapApiToInitiative = (item: any): Initiative => ({
     id: item.id,
     name: item.name || 'Unnamed Initiative',
     description: item.summary || item.description || '',
+    summary: item.summary,
+    problemStatement: item.problemStatement,
+    hypothesis: item.hypothesis,
+    businessValue: item.businessValue,
     reportId: item.reportId || '',
     reportName: item.reportName || item.projectId || '',
+    projectId: item.projectId,
+    projectName: item.projectName,
+    locationId: item.locationId,
+    locationName: item.locationName,
     axis: item.axis || '',
-    status: normalizeStatus(item.status),
+    status: item.status as InitiativeStatus || InitiativeStatus.DRAFT,
     priority: (item.priority || item.businessValue || 'MEDIUM').toUpperCase() as Initiative['priority'],
     estimatedROI: item.expectedRoi || item.estimatedROI || 0,
     estimatedBudget: item.costCapex || item.estimatedBudget || 0,
+    costCapex: item.costCapex,
+    costOpex: item.costOpex,
+    expectedRoi: item.expectedRoi,
     timeline: item.timeline || 'Q1-Q4 2025',
+    charterCompleteness: item.charterCompleteness || 0,
+    ownerBusiness: item.ownerBusiness,
+    ownerExecution: item.ownerExecution,
+    ownerBusinessId: item.ownerBusinessId || item.ownerBusiness?.id,
+    ownerExecutionId: item.ownerExecutionId || item.ownerExecution?.id,
+    plannedStartDate: item.plannedStartDate,
+    plannedEndDate: item.plannedEndDate,
+    deliverables: item.deliverables || [],
+    successCriteria: item.successCriteria || [],
+    keyRisks: item.keyRisks || [],
     createdAt: item.createdAt,
     updatedAt: item.updatedAt || item.createdAt,
     createdBy: item.createdBy || undefined
 });
 
-// Normalize status from various formats
-const normalizeStatus = (status: string): Initiative['status'] => {
-    if (!status) return 'DRAFT';
-    const upper = status.toUpperCase();
-    if (upper.includes('PROGRESS') || upper.includes('EXECUTION') || upper === 'STEP4_PILOT' || upper === 'STEP5_FULL') return 'IN_PROGRESS';
-    if (upper.includes('APPROVED')) return 'APPROVED';
-    if (upper.includes('COMPLETE')) return 'COMPLETED';
-    if (upper.includes('CANCEL')) return 'CANCELLED';
-    if (upper.includes('PLANNED') || upper === 'STEP3_LIST') return 'PLANNED';
-    return 'DRAFT';
-};
-
-type FilterStatus = 'all' | 'draft' | 'approved' | 'in_progress';
+type FilterStatus = 'all' | 'draft' | 'planning';
 
 type AssessmentFramework = 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
 
@@ -90,39 +118,6 @@ interface InitiativesTableProps {
     pendingReportId?: string | null;
     onOpenInitiative?: (initiativeId: string, initiativeName: string, status?: string) => void;
 }
-
-const STATUS_CONFIG = {
-    'DRAFT': {
-        label: 'Draft',
-        color: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
-        icon: <Edit size={14} />
-    },
-    'PLANNED': {
-        label: 'Planned',
-        color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-        icon: <Target size={14} />
-    },
-    'APPROVED': {
-        label: 'Approved',
-        color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-        icon: <CheckCircle2 size={14} />
-    },
-    'IN_PROGRESS': {
-        label: 'In Progress',
-        color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-        icon: <Clock size={14} />
-    },
-    'COMPLETED': {
-        label: 'Completed',
-        color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-        icon: <CheckCircle2 size={14} />
-    },
-    'CANCELLED': {
-        label: 'Cancelled',
-        color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-        icon: <AlertTriangle size={14} />
-    }
-};
 
 const PRIORITY_CONFIG = {
     'LOW': 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
@@ -141,21 +136,23 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
+    const [filterProject, setFilterProject] = useState<string>('');
+    const [filterLocation, setFilterLocation] = useState<string>('');
     const [activeRowMenu, setActiveRowMenu] = useState<string | null>(null);
     const [editingInitiative, setEditingInitiative] = useState<Initiative | null>(null);
     const [showGenerateModal, setShowGenerateModal] = useState(!!pendingReportId);
     const [viewingInitiativeId, setViewingInitiativeId] = useState<string | null>(null);
     const [transferringInitiativeId, setTransferringInitiativeId] = useState<string | null>(null);
+    const [projects, setProjects] = useState<{id: string; name: string}[]>([]);
+    const [locations, setLocations] = useState<{id: string; name: string}[]>([]);
 
-    // Fetch initiatives
+    // Fetch initiatives - only DRAFT and PLANNING for Assessment module
     const fetchInitiatives = useCallback(async () => {
         setIsLoading(true);
         try {
             const token = localStorage.getItem('token');
-            // Fetch all initiatives for org, optionally filter by project
-            const url = projectId
-                ? `/api/initiatives?projectId=${projectId}`
-                : `/api/initiatives`;
+            // Fetch only DRAFT and PLANNING initiatives for Assessment module
+            const url = `/api/initiatives/by-status/DRAFT,PLANNING${projectId ? `?projectId=${projectId}` : ''}`;
             const response = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -165,6 +162,20 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                 // Map API response to Initiative interface
                 const mapped = (data.initiatives || []).map(mapApiToInitiative);
                 setInitiatives(mapped);
+
+                // Extract unique projects and locations for filters
+                const uniqueProjects = new Map<string, string>();
+                const uniqueLocations = new Map<string, string>();
+                mapped.forEach((i: Initiative) => {
+                    if (i.projectId && i.projectName) {
+                        uniqueProjects.set(i.projectId, i.projectName);
+                    }
+                    if (i.locationId && i.locationName) {
+                        uniqueLocations.set(i.locationId, i.locationName);
+                    }
+                });
+                setProjects(Array.from(uniqueProjects, ([id, name]) => ({ id, name })));
+                setLocations(Array.from(uniqueLocations, ([id, name]) => ({ id, name })));
             }
         } catch (err) {
             console.error('[InitiativesTable] Error:', err);
@@ -174,23 +185,22 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
     }, [projectId]);
 
     useEffect(() => {
-        // Always fetch - projectId is optional filter
         fetchInitiatives();
     }, [fetchInitiatives]);
 
-    // Approve initiative
-    const handleApprove = async (initiativeId: string) => {
-        try {
-            const token = localStorage.getItem('token');
-            await fetch(`/api/initiatives/${initiativeId}/approve`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            await fetchInitiatives();
-        } catch (err) {
-            console.error('[InitiativesTable] Approve error:', err);
+    // Handle status change from dropdown
+    const handleStatusChange = useCallback((initiativeId: string, newStatus: InitiativeStatus, moduleTransition?: any) => {
+        // If initiative moved to REVIEW, it leaves this module
+        if (newStatus === InitiativeStatus.REVIEW) {
+            // Remove from list (it's now in Initiative Management module)
+            setInitiatives(prev => prev.filter(i => i.id !== initiativeId));
+        } else {
+            // Update status locally
+            setInitiatives(prev => prev.map(i => 
+                i.id === initiativeId ? { ...i, status: newStatus } : i
+            ));
         }
-    };
+    }, []);
 
     // Delete initiative
     const handleDelete = async (initiativeId: string) => {
@@ -208,73 +218,28 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
         }
     };
 
-    // Add to Roadmap - Transfer initiative to Module 3 (Roadmap/Planning)
-    const handleAddToRoadmap = async (initiative: Initiative) => {
-        try {
-            const token = localStorage.getItem('token');
-            
-            // First, update initiative status to IN_PROGRESS
-            await fetch(`/api/initiatives/${initiative.id}`, {
-                method: 'PUT',
-                headers: { 
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    status: 'IN_PROGRESS'
-                })
-            });
-
-            // Then, create corresponding task/project in Module 3
-            const response = await fetch('/api/roadmap/from-initiative', {
-                method: 'POST',
-                headers: { 
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    initiativeId: initiative.id,
-                    name: initiative.name,
-                    description: initiative.description,
-                    budget: initiative.estimatedBudget,
-                    expectedRoi: initiative.estimatedROI,
-                    timeline: initiative.timeline,
-                    priority: initiative.priority,
-                    axis: initiative.axis,
-                    projectId: projectId
-                })
-            });
-
-            if (response.ok) {
-                alert(`Initiative "${initiative.name}" has been added to Roadmap and is now In Progress.`);
-                await fetchInitiatives();
-            } else {
-                // Even if roadmap endpoint doesn't exist, just update status
-                alert(`Initiative "${initiative.name}" status updated to In Progress.`);
-                await fetchInitiatives();
-            }
-        } catch (err) {
-            console.error('[InitiativesTable] Add to Roadmap error:', err);
-            // Still refresh in case status was updated
-            await fetchInitiatives();
-        }
-    };
-
     // Filter initiatives
     const filteredInitiatives = initiatives.filter(initiative => {
         // Status filter
         if (filterStatus !== 'all') {
-            if (filterStatus === 'draft' && initiative.status !== 'DRAFT') return false;
-            if (filterStatus === 'approved' && initiative.status !== 'APPROVED') return false;
-            if (filterStatus === 'in_progress' && initiative.status !== 'IN_PROGRESS') return false;
+            if (filterStatus === 'draft' && initiative.status !== InitiativeStatus.DRAFT) return false;
+            if (filterStatus === 'planning' && initiative.status !== InitiativeStatus.PLANNING) return false;
         }
+
+        // Project filter
+        if (filterProject && initiative.projectId !== filterProject) return false;
+
+        // Location filter
+        if (filterLocation && initiative.locationId !== filterLocation) return false;
 
         // Search filter
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
             return (
                 initiative.name.toLowerCase().includes(query) ||
-                initiative.description.toLowerCase().includes(query)
+                initiative.description.toLowerCase().includes(query) ||
+                (initiative.projectName || '').toLowerCase().includes(query) ||
+                (initiative.locationName || '').toLowerCase().includes(query)
             );
         }
 
@@ -292,28 +257,12 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
         return `${amount} PLN`;
     };
 
-    // Format date
-    const formatDate = (dateStr: string) => {
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric'
-        });
-    };
-
     // Stats
     const stats = {
         total: initiatives.length,
-        draft: initiatives.filter(i => i.status === 'DRAFT').length,
-        approved: initiatives.filter(i => i.status === 'APPROVED').length,
-        inProgress: initiatives.filter(i => i.status === 'IN_PROGRESS').length
+        draft: initiatives.filter(i => i.status === InitiativeStatus.DRAFT).length,
+        planning: initiatives.filter(i => i.status === InitiativeStatus.PLANNING).length
     };
-
-    // Calculate totals
-    const totals = initiatives.reduce((acc, i) => ({
-        budget: acc.budget + i.estimatedBudget,
-        avgROI: acc.avgROI + i.estimatedROI
-    }), { budget: 0, avgROI: 0 });
 
     return (
         <div className="h-full flex flex-col">
@@ -322,92 +271,107 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                 <div className="flex items-center justify-between">
                     <div>
                         <h2 className="text-xl font-bold text-navy-900 dark:text-white">
-                            Initiatives
+                            Strategic Initiatives Board
                         </h2>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
-                            Transformation initiatives from assessment reports
+                            Initiatives in draft and planning phase • {stats.total} total
                         </p>
                     </div>
                     <button
                         onClick={() => setShowGenerateModal(true)}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg transition-colors group relative"
-                        title="Draft → Approve → In Progress → Complete"
+                        className="flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg transition-colors"
                     >
                         <Sparkles size={18} />
                         Generate from Report
-                        <span className="hidden group-hover:block absolute top-full right-0 mt-2 px-3 py-2 bg-navy-900 dark:bg-navy-800 text-white text-xs rounded-lg shadow-lg whitespace-nowrap z-50">
-                            Workflow: Draft → Approve → Execute → Complete
-                        </span>
                     </button>
                 </div>
 
-                {/* Summary Cards */}
-                <div className="grid grid-cols-4 gap-4 mt-4">
-                    <div className="p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
-                        <p className="text-xs text-slate-500 dark:text-slate-400">Total Initiatives</p>
-                        <p className="text-xl font-bold text-navy-900 dark:text-white">{stats.total}</p>
+                {/* Filters Row */}
+                <div className="flex flex-wrap items-center gap-3 mt-4">
+                    {/* Status Tabs */}
+                    <div className="flex items-center bg-slate-100 dark:bg-navy-950 rounded-lg p-1">
+                        <button
+                            onClick={() => setFilterStatus('all')}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                                filterStatus === 'all' 
+                                    ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm' 
+                                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                            }`}
+                        >
+                            All ({stats.total})
+                        </button>
+                        <button
+                            onClick={() => setFilterStatus('draft')}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                                filterStatus === 'draft' 
+                                    ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm' 
+                                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                            }`}
+                        >
+                            Draft ({stats.draft})
+                        </button>
+                        <button
+                            onClick={() => setFilterStatus('planning')}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                                filterStatus === 'planning' 
+                                    ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm' 
+                                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                            }`}
+                        >
+                            Planning ({stats.planning})
+                        </button>
                     </div>
-                    <div className="p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
-                        <p className="text-xs text-slate-500 dark:text-slate-400">Total Budget</p>
-                        <p className="text-xl font-bold text-navy-900 dark:text-white">{formatCurrency(totals.budget)}</p>
-                    </div>
-                    <div className="p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
-                        <p className="text-xs text-slate-500 dark:text-slate-400">Avg. ROI</p>
-                        <p className="text-xl font-bold text-green-600 dark:text-green-400">
-                            {initiatives.length > 0 ? (totals.avgROI / initiatives.length).toFixed(1) : '0'}x
-                        </p>
-                    </div>
-                    <div className="p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
-                        <p className="text-xs text-slate-500 dark:text-slate-400">In Progress</p>
-                        <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{stats.inProgress}</p>
-                    </div>
-                </div>
 
-                {/* Filters */}
-                <div className="flex items-center gap-6 mt-4">
-                    <button
-                        onClick={() => setFilterStatus('all')}
-                        className={`text-sm ${filterStatus === 'all' ? 'text-purple-600 dark:text-purple-400 font-medium' : 'text-slate-500'}`}
-                    >
-                        All ({stats.total})
-                    </button>
-                    <button
-                        onClick={() => setFilterStatus('draft')}
-                        className={`text-sm ${filterStatus === 'draft' ? 'text-purple-600 dark:text-purple-400 font-medium' : 'text-slate-500'}`}
-                    >
-                        Draft ({stats.draft})
-                    </button>
-                    <button
-                        onClick={() => setFilterStatus('approved')}
-                        className={`text-sm ${filterStatus === 'approved' ? 'text-purple-600 dark:text-purple-400 font-medium' : 'text-slate-500'}`}
-                    >
-                        Approved ({stats.approved})
-                    </button>
-                    <button
-                        onClick={() => setFilterStatus('in_progress')}
-                        className={`text-sm ${filterStatus === 'in_progress' ? 'text-purple-600 dark:text-purple-400 font-medium' : 'text-slate-500'}`}
-                    >
-                        In Progress ({stats.inProgress})
-                    </button>
-                </div>
+                    <div className="h-6 w-px bg-slate-200 dark:bg-white/10" />
 
-                {/* Search */}
-                <div className="flex items-center gap-3 mt-4">
-                    <div className="relative flex-1 max-w-md">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    {/* Project Filter */}
+                    {projects.length > 0 && (
+                        <select
+                            value={filterProject}
+                            onChange={(e) => setFilterProject(e.target.value)}
+                            className="px-3 py-1.5 text-xs bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white"
+                        >
+                            <option value="">All Projects</option>
+                            {projects.map(p => (
+                                <option key={p.id} value={p.id}>{p.name}</option>
+                            ))}
+                        </select>
+                    )}
+
+                    {/* Location Filter */}
+                    {locations.length > 0 && (
+                        <select
+                            value={filterLocation}
+                            onChange={(e) => setFilterLocation(e.target.value)}
+                            className="px-3 py-1.5 text-xs bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white"
+                        >
+                            <option value="">All Locations</option>
+                            {locations.map(l => (
+                                <option key={l.id} value={l.id}>{l.name}</option>
+                            ))}
+                        </select>
+                    )}
+
+                    <div className="flex-1" />
+
+                    {/* Search */}
+                    <div className="relative w-64">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                         <input
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Search initiatives..."
-                            className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
+                            className="w-full pl-9 pr-4 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
                         />
                     </div>
+
                     <button
                         onClick={fetchInitiatives}
-                        className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
+                        className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
+                        title="Refresh"
                     >
-                        <RefreshCw size={18} />
+                        <RefreshCw size={16} />
                     </button>
                 </div>
             </div>
@@ -436,19 +400,19 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                                     Initiative
                                 </th>
                                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                    Author
+                                    Status
                                 </th>
                                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                    Status
+                                    Completeness
+                                </th>
+                                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                    Owner
                                 </th>
                                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                     Priority
                                 </th>
                                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                    ROI / Budget
-                                </th>
-                                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                    Timeline
+                                    Budget
                                 </th>
                                 <th className="text-right px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                     Actions
@@ -457,8 +421,6 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                         </thead>
                         <tbody className="divide-y divide-slate-200 dark:divide-white/10">
                             {filteredInitiatives.map((initiative) => {
-                                const statusConfig = STATUS_CONFIG[initiative.status] || STATUS_CONFIG.DRAFT;
-
                                 return (
                                     <tr
                                         key={initiative.id}
@@ -500,32 +462,68 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                                                     <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-1">
                                                         {initiative.description}
                                                     </p>
-                                                    <p className="text-xs text-slate-400 mt-1">
-                                                        {initiative.axis} • {initiative.reportName}
-                                                    </p>
+                                                    <div className="flex items-center gap-2 text-xs text-slate-400 mt-1">
+                                                        <span>{initiative.axis}</span>
+                                                        {initiative.projectName && (
+                                                            <>
+                                                                <span>•</span>
+                                                                <span className="flex items-center gap-1">
+                                                                    <Building2 size={10} />
+                                                                    {initiative.projectName}
+                                                                </span>
+                                                            </>
+                                                        )}
+                                                        {initiative.locationName && (
+                                                            <>
+                                                                <span>•</span>
+                                                                <span className="flex items-center gap-1">
+                                                                    <MapPin size={10} />
+                                                                    {initiative.locationName}
+                                                                </span>
+                                                            </>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-4 py-4">
-                                            {initiative.createdBy && (
-                                                <div 
-                                                    className="flex items-center gap-2 cursor-default"
-                                                    title={initiative.createdBy}
-                                                >
-                                                    <div className="w-7 h-7 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-xs font-medium text-purple-700 dark:text-purple-300">
-                                                        {initiative.createdBy.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-                                                    </div>
-                                                    <span className="text-sm text-slate-600 dark:text-slate-400 truncate max-w-[60px]">
-                                                        {initiative.createdBy.split(' ')[0]}
-                                                    </span>
-                                                </div>
-                                            )}
+                                            <StatusTransitionDropdown
+                                                initiativeId={initiative.id}
+                                                currentStatus={initiative.status}
+                                                charterCompleteness={initiative.charterCompleteness}
+                                                onStatusChange={(newStatus, moduleTransition) => 
+                                                    handleStatusChange(initiative.id, newStatus, moduleTransition)
+                                                }
+                                                size="sm"
+                                            />
                                         </td>
                                         <td className="px-4 py-4">
-                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusConfig.color}`}>
-                                                {statusConfig.icon}
-                                                {statusConfig.label}
-                                            </span>
+                                            <InitiativeCompletenessChecker
+                                                initiative={initiative}
+                                                compact
+                                                className="w-24"
+                                            />
+                                        </td>
+                                        <td className="px-4 py-4">
+                                            {initiative.ownerBusiness ? (
+                                                <div 
+                                                    className="flex items-center gap-2 cursor-default"
+                                                    title={`${initiative.ownerBusiness.firstName} ${initiative.ownerBusiness.lastName}`}
+                                                >
+                                                    <div className="w-7 h-7 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-xs font-medium text-purple-700 dark:text-purple-300 overflow-hidden">
+                                                        {initiative.ownerBusiness.avatarUrl ? (
+                                                            <img src={initiative.ownerBusiness.avatarUrl} alt="" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            `${initiative.ownerBusiness.firstName[0]}${initiative.ownerBusiness.lastName[0]}`
+                                                        )}
+                                                    </div>
+                                                    <span className="text-sm text-slate-600 dark:text-slate-400 truncate max-w-[80px]">
+                                                        {initiative.ownerBusiness.firstName}
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <span className="text-xs text-slate-400 italic">Unassigned</span>
+                                            )}
                                         </td>
                                         <td className="px-4 py-4">
                                             <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${PRIORITY_CONFIG[initiative.priority]}`}>
@@ -533,57 +531,36 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                                             </span>
                                         </td>
                                         <td className="px-4 py-4">
-                                            <div className="flex items-center gap-2">
-                                                <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
-                                                    <TrendingUp size={14} />
-                                                    <span className="text-sm font-medium">{initiative.estimatedROI}x</span>
-                                                </div>
-                                                <span className="text-slate-300 dark:text-slate-600">/</span>
-                                                <span className="text-xs text-slate-500">{formatCurrency(initiative.estimatedBudget)}</span>
+                                            <div className="text-sm">
+                                                <span className="font-medium text-navy-900 dark:text-white">
+                                                    {formatCurrency(initiative.estimatedBudget)}
+                                                </span>
+                                                {initiative.estimatedROI > 0 && (
+                                                    <div className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                                                        <TrendingUp size={12} />
+                                                        <span>{initiative.estimatedROI}x ROI</span>
+                                                    </div>
+                                                )}
                                             </div>
-                                        </td>
-                                        <td className="px-4 py-4 text-sm text-slate-500 dark:text-slate-400">
-                                            {initiative.timeline}
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center justify-end gap-1">
-                                                {/* Primary Action - context-dependent */}
-                                                {initiative.status === 'DRAFT' ? (
-                                                    // Draft - Approve is primary
-                                                    <button
-                                                        onClick={() => handleApprove(initiative.id)}
-                                                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-green-600 hover:bg-green-500 text-white rounded-lg transition-colors"
-                                                    >
-                                                        <CheckCircle2 size={14} />
-                                                        Approve
-                                                    </button>
-                                                ) : initiative.status === 'APPROVED' ? (
-                                                    // Approved - Add to Roadmap is primary
-                                                    <button
-                                                        onClick={() => setTransferringInitiativeId(initiative.id)}
-                                                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors"
-                                                    >
-                                                        <MapPin size={14} />
-                                                        Roadmap
-                                                    </button>
-                                                ) : (
-                                                    // Default - Edit
-                                                    <button
-                                                        onClick={() => {
-                                                            if (onOpenInitiative) {
-                                                                onOpenInitiative(initiative.id, initiative.name, initiative.status);
-                                                            } else {
-                                                                setEditingInitiative(initiative);
-                                                            }
-                                                        }}
-                                                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
-                                                    >
-                                                        <Edit size={14} />
-                                                        Edit
-                                                    </button>
-                                                )}
+                                                {/* Edit Button */}
+                                                <button
+                                                    onClick={() => {
+                                                        if (onOpenInitiative) {
+                                                            onOpenInitiative(initiative.id, initiative.name, initiative.status);
+                                                        } else {
+                                                            setViewingInitiativeId(initiative.id);
+                                                        }
+                                                    }}
+                                                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+                                                >
+                                                    <Edit size={14} />
+                                                    Edit
+                                                </button>
 
-                                                {/* More menu - all secondary actions */}
+                                                {/* More menu */}
                                                 <div className="relative">
                                                     <button
                                                         onClick={() => setActiveRowMenu(activeRowMenu === initiative.id ? null : initiative.id)}
@@ -608,49 +585,11 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                                                                 <Eye size={14} />
                                                                 View Details
                                                             </button>
-                                                            <button 
-                                                                onClick={() => {
-                                                                    if (onOpenInitiative) {
-                                                                        onOpenInitiative(initiative.id, initiative.name, initiative.status);
-                                                                    } else {
-                                                                        setEditingInitiative(initiative);
-                                                                    }
-                                                                    setActiveRowMenu(null);
-                                                                }}
-                                                                className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2"
-                                                            >
-                                                                <Edit size={14} />
-                                                                Edit
-                                                            </button>
                                                             <button className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2">
                                                                 <RefreshCw size={14} />
                                                                 Duplicate
                                                             </button>
-                                                            {initiative.status === 'DRAFT' && (
-                                                                <button
-                                                                    onClick={() => {
-                                                                        handleApprove(initiative.id);
-                                                                        setActiveRowMenu(null);
-                                                                    }}
-                                                                    className="w-full text-left px-4 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/10 flex items-center gap-2"
-                                                                >
-                                                                    <CheckCircle2 size={14} />
-                                                                    Approve
-                                                                </button>
-                                                            )}
-                                                            {initiative.status === 'APPROVED' && (
-                                                                <button 
-                                                                    onClick={() => {
-                                                                        setTransferringInitiativeId(initiative.id);
-                                                                        setActiveRowMenu(null);
-                                                                    }}
-                                                                    className="w-full text-left px-4 py-2 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/10 flex items-center gap-2"
-                                                                >
-                                                                    <MapPin size={14} />
-                                                                    Add to Roadmap
-                                                                </button>
-                                                            )}
-                                                            {initiative.status === 'DRAFT' && (
+                                                            {(initiative.status === InitiativeStatus.DRAFT || initiative.status === InitiativeStatus.PLANNING) && (
                                                                 <>
                                                                     <div className="border-t border-slate-200 dark:border-white/10 my-1" />
                                                                     <button
@@ -690,16 +629,12 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                         }
                         setViewingInitiativeId(null);
                     }}
-                    onApprove={(id) => {
-                        handleApprove(id);
-                        setViewingInitiativeId(null);
-                    }}
                     onDelete={(id) => {
                         handleDelete(id);
                         setViewingInitiativeId(null);
                     }}
-                    onAddToRoadmap={(id) => {
-                        setTransferringInitiativeId(id);
+                    onStatusChange={(initiativeId, newStatus) => {
+                        handleStatusChange(initiativeId, newStatus as InitiativeStatus);
                         setViewingInitiativeId(null);
                     }}
                 />

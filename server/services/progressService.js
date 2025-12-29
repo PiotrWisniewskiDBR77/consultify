@@ -20,8 +20,8 @@ const ProgressService = {
             const sql = `
                 SELECT 
                     COUNT(*) as total,
-                    SUM(CASE WHEN status = 'done' OR status = 'DONE' THEN 1 ELSE 0 END) as completed,
-                    SUM(CASE WHEN status = 'blocked' OR status = 'BLOCKED' THEN 1 ELSE 0 END) as blocked
+                    SUM(CASE WHEN status = 'DONE' THEN 1 ELSE 0 END) as completed,
+                    SUM(CASE WHEN status = 'BLOCKED' THEN 1 ELSE 0 END) as blocked
                 FROM tasks 
                 WHERE initiative_id = ?
             `;
@@ -71,7 +71,7 @@ const ProgressService = {
                 JOIN initiatives i ON d.from_initiative_id = i.id
                 WHERE d.to_initiative_id = ? 
                   AND d.type = 'FINISH_TO_START'
-                  AND i.status NOT IN ('COMPLETED', 'CANCELLED')
+                  AND i.status NOT IN ('DONE', 'CANCELLED')
             `;
 
             deps.db.all(sql, [initiativeId], (err, rows) => {
@@ -89,9 +89,9 @@ const ProgressService = {
             const sql = `
                 SELECT 
                     COUNT(*) as total,
-                    SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) as completed,
+                    SUM(CASE WHEN status = 'DONE' THEN 1 ELSE 0 END) as completed,
                     SUM(CASE WHEN status = 'BLOCKED' THEN 1 ELSE 0 END) as blocked,
-                    SUM(CASE WHEN status = 'IN_EXECUTION' THEN 1 ELSE 0 END) as in_progress,
+                    SUM(CASE WHEN status = 'EXECUTING' THEN 1 ELSE 0 END) as in_progress,
                     AVG(progress) as avg_progress
                 FROM initiatives 
                 WHERE project_id = ?
@@ -117,7 +117,7 @@ const ProgressService = {
                     blockedInitiatives: blocked,
                     inProgressInitiatives: inProgress,
                     progress: weightedProgress,
-                    healthStatus: blocked > 0 ? 'AT_RISK' : (completed === total && total > 0 ? 'COMPLETED' : 'ON_TRACK')
+                    healthStatus: blocked > 0 ? 'AT_RISK' : (completed === total && total > 0 ? 'DONE' : 'ON_TRACK')
                 });
             });
         });
@@ -132,7 +132,7 @@ const ProgressService = {
                 SELECT 
                     COUNT(*) as total_projects,
                     SUM(CASE WHEN status = 'ACTIVE' THEN 1 ELSE 0 END) as active,
-                    SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) as completed,
+                    SUM(CASE WHEN status = 'DONE' THEN 1 ELSE 0 END) as completed,
                     AVG(progress) as avg_progress
                 FROM projects 
                 WHERE organization_id = ?
@@ -145,7 +145,7 @@ const ProgressService = {
                 const initSql = `
                     SELECT 
                         COUNT(*) as total,
-                        SUM(CASE WHEN i.status = 'COMPLETED' THEN 1 ELSE 0 END) as completed,
+                        SUM(CASE WHEN i.status = 'DONE' THEN 1 ELSE 0 END) as completed,
                         SUM(CASE WHEN i.status = 'BLOCKED' THEN 1 ELSE 0 END) as blocked
                     FROM initiatives i
                     JOIN projects p ON i.project_id = p.id

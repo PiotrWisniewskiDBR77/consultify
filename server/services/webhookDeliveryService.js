@@ -129,6 +129,196 @@ class WebhookDeliveryService {
 
         return { id, secret };
     }
+    
+    /**
+     * List all subscriptions for organization
+     */
+    async listSubscriptions(orgId) {
+        return new Promise((resolve, reject) => {
+            db.all(
+                `SELECT * FROM webhook_subscriptions WHERE organization_id = ? ORDER BY created_at DESC`,
+                [orgId],
+                (err, rows) => {
+                    if (err) return reject(err);
+                    resolve(rows || []);
+                }
+            );
+        });
+    }
+    
+    /**
+     * Get subscription by ID
+     */
+    async getSubscription(subscriptionId) {
+        return new Promise((resolve, reject) => {
+            db.get(
+                `SELECT * FROM webhook_subscriptions WHERE id = ?`,
+                [subscriptionId],
+                (err, row) => {
+                    if (err) return reject(err);
+                    resolve(row);
+                }
+            );
+        });
+    }
+    
+    /**
+     * Update subscription
+     */
+    async updateSubscription(subscriptionId, updates) {
+        const fields = [];
+        const params = [];
+        
+        if (updates.name !== undefined) {
+            fields.push('name = ?');
+            params.push(updates.name);
+        }
+        if (updates.targetUrl !== undefined) {
+            fields.push('target_url = ?');
+            params.push(updates.targetUrl);
+        }
+        if (updates.eventTypes !== undefined) {
+            fields.push('event_types = ?');
+            params.push(JSON.stringify(updates.eventTypes));
+        }
+        if (updates.isActive !== undefined) {
+            fields.push('is_active = ?');
+            params.push(updates.isActive ? 1 : 0);
+        }
+        
+        if (fields.length === 0) return { success: true };
+        
+        fields.push('updated_at = datetime("now")');
+        params.push(subscriptionId);
+        
+        return new Promise((resolve, reject) => {
+            db.run(
+                `UPDATE webhook_subscriptions SET ${fields.join(', ')} WHERE id = ?`,
+                params,
+                (err) => err ? reject(err) : resolve({ success: true })
+            );
+        });
+    }
+    
+    /**
+     * Delete subscription
+     */
+    async deleteSubscription(subscriptionId) {
+        return new Promise((resolve, reject) => {
+            db.run(
+                `DELETE FROM webhook_subscriptions WHERE id = ?`,
+                [subscriptionId],
+                (err) => err ? reject(err) : resolve({ success: true })
+            );
+        });
+    }
+    
+    /**
+     * Test webhook URL
+     */
+    async testWebhook(targetUrl, secret = null) {
+        const testPayload = JSON.stringify({
+            id: uuidv4(),
+            event: 'test',
+            created_at: new Date().toISOString(),
+            data: {
+                message: 'This is a test webhook from Consultify',
+                timestamp: new Date().toISOString()
+            }
+        });
+        
+        const testSecret = secret || crypto.randomBytes(32).toString('hex');
+        const signature = crypto
+            .createHmac('sha256', testSecret)
+            .update(testPayload)
+            .digest('hex');
+        
+        try {
+            const start = Date.now();
+            const response = await axios.post(targetUrl, testPayload, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Consultify-Event': 'test',
+                    'X-Consultify-Signature': `sha256=${signature}`,
+                    'User-Agent': 'Consultify-Webhook/1.0'
+                },
+                timeout: 10000
+            });
+            const duration = Date.now() - start;
+            
+            return {
+                success: true,
+                statusCode: response.status,
+                duration,
+                message: 'Webhook test successful'
+            };
+        } catch (error) {
+            return {
+                success: false,
+                statusCode: error.response?.status || 0,
+                error: error.message,
+                message: 'Webhook test failed'
+            };
+        }
+    }
+    
+    /**
+     * Get delivery logs for subscription
+     */
+    async getDeliveryLogs(subscriptionId, limit = 50) {
+        return new Promise((resolve, reject) => {
+            db.all(
+                `SELECT * FROM webhook_delivery_attempts 
+                 WHERE subscription_id = ? 
+                 ORDER BY created_at DESC 
+                 LIMIT ?`,
+                [subscriptionId, limit],
+                (err, rows) => {
+                    if (err) return reject(err);
+                    resolve(rows || []);
+                }
+            );
+        });
+    }
+    
+    /**
+     * Get available event types
+     */
+    getAvailableEvents() {
+        return [
+            // Task events
+            { category: 'Tasks', events: [
+                { type: 'task.created', description: 'A new task was created' },
+                { type: 'task.updated', description: 'A task was updated' },
+                { type: 'task.completed', description: 'A task was marked as complete' },
+                { type: 'task.assigned', description: 'A task was assigned to a user' },
+                { type: 'task.deleted', description: 'A task was deleted' },
+            ]},
+            // Initiative events
+            { category: 'Initiatives', events: [
+                { type: 'initiative.created', description: 'A new initiative was created' },
+                { type: 'initiative.status_changed', description: 'Initiative status changed' },
+                { type: 'initiative.phase_changed', description: 'Initiative moved to new phase' },
+            ]},
+            // Approval events
+            { category: 'Approvals', events: [
+                { type: 'approval.requested', description: 'An approval was requested' },
+                { type: 'approval.approved', description: 'An approval was granted' },
+                { type: 'approval.rejected', description: 'An approval was rejected' },
+            ]},
+            // User events
+            { category: 'Users', events: [
+                { type: 'user.invited', description: 'A user was invited' },
+                { type: 'user.joined', description: 'A user joined the organization' },
+                { type: 'user.removed', description: 'A user was removed' },
+            ]},
+            // Assessment events
+            { category: 'Assessments', events: [
+                { type: 'assessment.started', description: 'An assessment was started' },
+                { type: 'assessment.completed', description: 'An assessment was completed' },
+            ]},
+        ];
+    }
 }
 
 module.exports = new WebhookDeliveryService();

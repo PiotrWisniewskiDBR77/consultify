@@ -8,10 +8,15 @@ export default defineConfig({
     resolve: {
         alias: {
             '@': path.resolve(__dirname, './src'),
+            // Ensure AI SDK mocks work for server/* tests
+            // This routes server/node_modules/@google/generative-ai to main node_modules
+            // '@google/generative-ai': path.resolve(__dirname, 'node_modules/@google/generative-ai'),
+            // 'openai': path.resolve(__dirname, 'node_modules/openai'),
         },
     },
     // Disable .env loading in tests to avoid permission issues
     envPrefix: [],
+    envDir: undefined, // Don't load .env files
     test: {
         globals: true,
         environment: 'jsdom',

@@ -52,7 +52,7 @@ export const UserTaskList: React.FC<UserTaskListProps> = ({ session, onNavigate 
     const handleNavigate = (task: Task) => {
         if (onNavigate) {
             if (task.stepPhase === 'design') onNavigate(AppView.FULL_STEP1_CONTEXT);
-            else if (task.stepPhase === 'pilot') onNavigate(AppView.FULL_PILOT_EXECUTION); // Updated to valid enum
+            else if (task.stepPhase === 'pilot' || task.stepPhase === 'execution') onNavigate(AppView.IMPLEMENTATION);
             else onNavigate(AppView.FULL_STEP1_CONTEXT);
         }
     };

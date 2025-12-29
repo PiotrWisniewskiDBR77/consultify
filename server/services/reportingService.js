@@ -47,7 +47,7 @@ const ReportingService = Object.assign({}, BaseService, {
                 // Initiative variance
                 this.queryOne(`SELECT 
                     COUNT(*) as total,
-                    SUM(CASE WHEN status IN ('COMPLETED', 'IN_EXECUTION') THEN 1 ELSE 0 END) as onTrack,
+                    SUM(CASE WHEN status IN ('DONE', 'EXECUTING') THEN 1 ELSE 0 END) as onTrack,
                     SUM(CASE WHEN status = 'BLOCKED' THEN 1 ELSE 0 END) as delayed
                     FROM initiatives i
                     JOIN projects p ON i.project_id = p.id
@@ -128,7 +128,7 @@ const ReportingService = Object.assign({}, BaseService, {
 
                 // Capacity stress (users with >100% utilization)
                 this.queryOne(`SELECT COUNT(DISTINCT assignee_id) as overloaded FROM tasks 
-                    WHERE project_id = ? AND status NOT IN ('done', 'DONE')
+                    WHERE project_id = ? AND status != 'DONE'
                     GROUP BY assignee_id HAVING COUNT(*) > 10`, [projectId])
             ]);
 
@@ -284,7 +284,7 @@ const ReportingService = Object.assign({}, BaseService, {
             db.all(`SELECT i.title as initiative, t.title as task, t.blocked_reason
                     FROM tasks t
                     JOIN initiatives i ON t.initiative_id = i.id
-                    WHERE i.org_id = ? AND t.status = 'blocked'
+                    WHERE i.org_id = ? AND t.status = 'BLOCKED'
                     LIMIT 10`,
                 [organizationId], (err, rows) => {
                     if (err) reject(err);
@@ -297,7 +297,7 @@ const ReportingService = Object.assign({}, BaseService, {
             db.all(`SELECT t.title, t.due_date, i.title as initiative
                     FROM tasks t
                     JOIN initiatives i ON t.initiative_id = i.id
-                    WHERE i.org_id = ? AND t.status IN ('todo', 'in_progress')
+                    WHERE i.org_id = ? AND t.status IN ('TODO', 'IN_PROGRESS')
                     ORDER BY t.due_date ASC
                     LIMIT 10`,
                 [organizationId], (err, rows) => {
@@ -361,7 +361,7 @@ const ReportingService = Object.assign({}, BaseService, {
                     LEFT JOIN users u ON t.assignee_id = u.id
                     WHERE t.initiative_id = ?
                     ORDER BY 
-                        CASE t.status WHEN 'blocked' THEN 1 WHEN 'in_progress' THEN 2 WHEN 'todo' THEN 3 ELSE 4 END,
+                        CASE t.status WHEN 'BLOCKED' THEN 1 WHEN 'IN_PROGRESS' THEN 2 WHEN 'TODO' THEN 3 ELSE 4 END,
                         t.due_date ASC`,
                 [initiativeId], (err, rows) => {
                     if (err) reject(err);
@@ -372,10 +372,10 @@ const ReportingService = Object.assign({}, BaseService, {
         // Calculate stats
         const taskStats = {
             total: tasks.length,
-            completed: tasks.filter(t => t.status === 'done').length,
-            inProgress: tasks.filter(t => t.status === 'in_progress').length,
-            blocked: tasks.filter(t => t.status === 'blocked').length,
-            todo: tasks.filter(t => t.status === 'todo').length
+            completed: tasks.filter(t => t.status === 'DONE').length,
+            inProgress: tasks.filter(t => t.status === 'IN_PROGRESS').length,
+            blocked: tasks.filter(t => t.status === 'BLOCKED').length,
+            todo: tasks.filter(t => t.status === 'TODO').length
         };
 
         const progress = taskStats.total > 0
@@ -384,12 +384,12 @@ const ReportingService = Object.assign({}, BaseService, {
 
         // Blockers
         const blockers = tasks
-            .filter(t => t.status === 'blocked')
+            .filter(t => t.status === 'BLOCKED')
             .map(t => ({ task: t.title, reason: t.blocked_reason }));
 
         // Upcoming deadlines
         const upcomingDeadlines = tasks
-            .filter(t => t.due_date && t.status !== 'done')
+            .filter(t => t.due_date && t.status !== 'DONE')
             .slice(0, 5)
             .map(t => ({ task: t.title, dueDate: t.due_date, assignee: t.assignee_name }));
 

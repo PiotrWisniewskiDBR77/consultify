@@ -14,8 +14,13 @@
  * - Rate limiting handled at route level
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+const defaultDb = require('../database');
+const { v4: defaultUuidv4 } = require('uuid');
+
+const deps = {
+    db: defaultDb,
+    uuidv4: defaultUuidv4
+};
 
 const PROMO_TYPES = {
     DISCOUNT: 'DISCOUNT',
@@ -34,6 +39,14 @@ const PromoCodeService = {
     DISCOUNT_TYPES,
 
     /**
+     * Dependency injection for testing
+     * @param {object} newDeps 
+     */
+    setDependencies: (newDeps) => {
+        Object.assign(deps, newDeps);
+    },
+
+    /**
      * Validate a promo code without consuming it
      * @param {string} code - The promo code to validate
      * @returns {Promise<{valid: boolean, code?: object, reason?: string}>}
@@ -46,7 +59,7 @@ const PromoCodeService = {
         const normalizedCode = code.trim().toUpperCase();
 
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT * FROM promo_codes WHERE code = ? AND is_active = 1`,
                 [normalizedCode],
                 (err, row) => {
@@ -110,7 +123,7 @@ const PromoCodeService = {
         const normalizedCode = code.trim().toUpperCase();
 
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT pcu.id FROM promo_code_usage pcu
                  JOIN promo_codes pc ON pc.id = pcu.promo_code_id
                  WHERE pc.code = ? AND pcu.organization_id = ?`,
@@ -146,9 +159,9 @@ const PromoCodeService = {
         }
 
         return new Promise((resolve, reject) => {
-            db.serialize(() => {
+            deps.db.serialize(() => {
                 // Atomic increment of used_count
-                db.run(
+                deps.db.run(
                     `UPDATE promo_codes SET used_count = used_count + 1 WHERE code = ?`,
                     [normalizedCode],
                     function (err) {
@@ -162,8 +175,8 @@ const PromoCodeService = {
                         }
 
                         // Log usage
-                        const usageId = uuidv4();
-                        db.run(
+                        const usageId = deps.uuidv4();
+                        deps.db.run(
                             `INSERT INTO promo_code_usage (id, promo_code_id, organization_id, user_id) VALUES (?, ?, ?, ?)`,
                             [usageId, validation.codeId, organizationId, userId],
                             (err) => {
@@ -227,10 +240,10 @@ const PromoCodeService = {
         }
 
         const normalizedCode = code.trim().toUpperCase();
-        const promoId = uuidv4();
+        const promoId = deps.uuidv4();
 
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `INSERT INTO promo_codes (id, code, type, discount_type, discount_value, valid_from, valid_until, max_uses, created_by_user_id, metadata)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [promoId, normalizedCode, type, discountType, discountValue, validFrom, validUntil, maxUses, createdByUserId, JSON.stringify(metadata)],
@@ -289,7 +302,7 @@ const PromoCodeService = {
         params.push(limit, offset);
 
         return new Promise((resolve, reject) => {
-            db.all(query, params, (err, rows) => {
+            deps.db.all(query, params, (err, rows) => {
                 if (err) return reject(err);
                 resolve((rows || []).map(row => ({
                     id: row.id,
@@ -317,7 +330,7 @@ const PromoCodeService = {
      */
     deactivatePromoCode: async (codeId) => {
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `UPDATE promo_codes SET is_active = 0 WHERE id = ?`,
                 [codeId],
                 function (err) {
@@ -335,7 +348,7 @@ const PromoCodeService = {
      */
     getUsageHistory: async (codeId) => {
         return new Promise((resolve, reject) => {
-            db.all(
+            deps.db.all(
                 `SELECT pcu.*, o.name as organization_name, u.email as user_email
                  FROM promo_code_usage pcu
                  LEFT JOIN organizations o ON o.id = pcu.organization_id

@@ -1028,6 +1028,29 @@ function initDb() {
                 insertProject.finalize();
 
                 console.log('Seeded DBR77 Organization with Admin (piotr.wisniewski@dbr77.com) and User (justyna.laskowska@dbr77.com).');
+
+                // --- SEED DEMO ORGANIZATION: Legolex Demo ---
+                const demoOrgId = 'org-legolex-demo';
+                const demoAdminId = 'user-demo-admin';
+
+                // Create Demo Organization
+                const insertDemoOrg = db.prepare(`INSERT INTO organizations(id, name, plan, status) VALUES(?, ?, ?, ?)`);
+                insertDemoOrg.run(demoOrgId, 'Legolex Demo Corp', 'enterprise', 'active');
+                insertDemoOrg.finalize();
+
+                // Create Demo Admin user
+                const demoPassword = bcrypt.hashSync('Demo123!', 8);
+                const insertDemoAdmin = db.prepare(`INSERT INTO users(id, organization_id, email, password, first_name, last_name, role, status) VALUES(?, ?, ?, ?, ?, ?, ?, ?)`);
+                insertDemoAdmin.run(demoAdminId, demoOrgId, 'demo@legolex.com', demoPassword, 'Demo', 'User', 'ADMIN', 'active');
+                insertDemoAdmin.finalize();
+
+                // Create a sample project for Demo
+                const demoProjectId = 'project-demo-001';
+                const insertDemoProject = db.prepare(`INSERT INTO projects(id, organization_id, name, status, owner_id) VALUES(?, ?, ?, ?, ?)`);
+                insertDemoProject.run(demoProjectId, demoOrgId, 'Strategic Transformation Demo', 'active', demoAdminId);
+                insertDemoProject.finalize();
+
+                console.log('Seeded Demo Organization with Admin (demo@legolex.com).');
             }
         });
     });

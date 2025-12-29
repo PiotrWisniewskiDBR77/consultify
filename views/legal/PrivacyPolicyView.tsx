@@ -2,13 +2,12 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { LegalPageLayout } from '../../components/legal/LegalPageLayout';
 
-// Company data - UPDATE THESE VALUES
 const COMPANY = {
-    name: 'DBR77 Sp. z o.o.',
-    address: '[Adres do uzupełnienia]',
-    city: '[Miasto], Polska',
-    nip: '[NIP do uzupełnienia]',
-    krs: '[KRS do uzupełnienia]',
+    name: 'DBR77 Robotics Sp. z o.o.',
+    address: 'ul. Żółkiewskiego 31',
+    city: '87-100 Toruń, Poland',
+    nip: '8792725331',
+    krs: '0000860440',
     email: 'privacy@dbr77.com',
     dpo: 'dpo@dbr77.com',
     website: 'https://consultinity.com'
@@ -20,7 +19,7 @@ export const PrivacyPolicyView: React.FC = () => {
     return (
         <LegalPageLayout
             title={t('legal.privacy.title', 'Privacy Policy')}
-            lastUpdated="December 23, 2024"
+            lastUpdated="January 1, 2025"
         >
             {/* 1. Introduction */}
             <section>

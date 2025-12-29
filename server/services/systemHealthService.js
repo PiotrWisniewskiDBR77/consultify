@@ -40,9 +40,25 @@ class SystemHealthService {
     }
 
     async getErrorRate() {
-        // Mock error rate calculation from logs or Sentry stub
-        // In real app, query Sentry API or parse logs
-        return 0.05; // 0.05% dummy value
+        // Calculate error rate from recent API requests (last hour)
+        // Query from audit_log or error_log table if available
+        return new Promise((resolve) => {
+            db.get(`
+                SELECT 
+                    COUNT(CASE WHEN status >= 400 THEN 1 END) as errors,
+                    COUNT(*) as total
+                FROM audit_logs
+                WHERE created_at > datetime('now', '-1 hour')
+            `, [], (err, row) => {
+                if (err || !row || row.total === 0) {
+                    // If no audit_logs table or no data, return 0
+                    resolve(0);
+                    return;
+                }
+                const errorRate = (row.errors / row.total) * 100;
+                resolve(Math.round(errorRate * 100) / 100); // Round to 2 decimal places
+            });
+        });
     }
 }
 

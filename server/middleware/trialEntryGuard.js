@@ -12,7 +12,7 @@
  * @module trialEntryGuard
  */
 
-const db = require('../database');
+let db = require('../database');
 
 /**
  * List of blocked routes for Trial Entry users
@@ -86,6 +86,7 @@ const trialEntryGuard = async (req, res, next) => {
         // Check if user is in Trial Entry
         const isTrialEntry = await isTrialEntryUser(req.user.id);
 
+
         if (!isTrialEntry) {
             return next();
         }
@@ -143,5 +144,6 @@ module.exports = {
     trialEntryGuard,
     requireOrgContext,
     isTrialEntryUser,
-    BLOCKED_ROUTES
+    BLOCKED_ROUTES,
+    _setDb: (mock) => { db = mock; }
 };

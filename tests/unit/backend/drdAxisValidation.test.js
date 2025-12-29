@@ -6,15 +6,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Mock Google AI
-vi.mock('@google/generative-ai', () => ({
-    GoogleGenerativeAI: vi.fn().mockImplementation(() => ({
-        getGenerativeModel: vi.fn().mockReturnValue({
-            generateContent: vi.fn().mockResolvedValue({
-                response: { text: () => '{}' }
-            })
-        })
-    }))
-}));
+// Mock Google AI - Rely on global mock in setup.ts
+// vi.mock('@google/generative-ai');
 
 describe('DRD Axis Validation', () => {
     let DRD_AXES;
@@ -162,7 +155,7 @@ describe('DRD Axis Validation', () => {
                 const result = await aiAssessmentPartner.validateScoreConsistency(assessment);
 
                 expect(result.hasInconsistencies).toBe(true);
-                expect(result.inconsistencies.some(i => 
+                expect(result.inconsistencies.some(i =>
                     i.type === 'DEPENDENCY_MISMATCH' &&
                     i.axes.includes('aiMaturity') &&
                     i.axes.includes('dataManagement')
@@ -350,7 +343,7 @@ describe('DRD Axis Validation', () => {
             const result = await aiAssessmentPartner.validateScoreConsistency(assessment);
 
             expect(result.hasInconsistencies).toBe(true);
-            const dependency = result.inconsistencies.find(i => 
+            const dependency = result.inconsistencies.find(i =>
                 i.axes.includes('aiMaturity') && i.axes.includes('dataManagement')
             );
             expect(dependency).toBeDefined();
@@ -365,7 +358,7 @@ describe('DRD Axis Validation', () => {
             const result = await aiAssessmentPartner.validateScoreConsistency(assessment);
 
             expect(result.hasInconsistencies).toBe(true);
-            const dependency = result.inconsistencies.find(i => 
+            const dependency = result.inconsistencies.find(i =>
                 i.axes.includes('digitalProducts') && i.axes.includes('processes')
             );
             expect(dependency).toBeDefined();
@@ -382,7 +375,7 @@ describe('DRD Axis Validation', () => {
             const result = await aiAssessmentPartner.validateScoreConsistency(assessment);
 
             expect(result.hasInconsistencies).toBe(true);
-            expect(result.inconsistencies.some(i => 
+            expect(result.inconsistencies.some(i =>
                 i.type === 'RISK_GAP' && i.axes.includes('cybersecurity')
             )).toBe(true);
         });
@@ -396,7 +389,7 @@ describe('DRD Axis Validation', () => {
             const result = await aiAssessmentPartner.validateScoreConsistency(assessment);
 
             expect(result.hasInconsistencies).toBe(true);
-            expect(result.inconsistencies.some(i => 
+            expect(result.inconsistencies.some(i =>
                 i.type === 'CULTURE_GAP'
             )).toBe(true);
         });
@@ -416,7 +409,7 @@ describe('DRD Axis Validation', () => {
 
             const result = await aiAssessmentPartner.generateProactiveInsights(assessment);
 
-            expect(result.insights.some(i => 
+            expect(result.insights.some(i =>
                 i.type === 'STRENGTH' && i.axis === 'processes'
             )).toBe(true);
         });
@@ -430,7 +423,7 @@ describe('DRD Axis Validation', () => {
 
             const result = await aiAssessmentPartner.generateProactiveInsights(assessment);
 
-            expect(result.insights.some(i => 
+            expect(result.insights.some(i =>
                 i.type === 'PRIORITY_GAP' && i.axis === 'culture'
             )).toBe(true);
         });
@@ -443,7 +436,7 @@ describe('DRD Axis Validation', () => {
 
             const result = await aiAssessmentPartner.generateProactiveInsights(assessment);
 
-            expect(result.insights.some(i => 
+            expect(result.insights.some(i =>
                 i.type === 'OPPORTUNITY' && i.title.toLowerCase().includes('quick win')
             )).toBe(true);
         });
@@ -456,7 +449,7 @@ describe('DRD Axis Validation', () => {
 
             const result = await aiAssessmentPartner.generateProactiveInsights(assessment);
 
-            expect(result.insights.some(i => 
+            expect(result.insights.some(i =>
                 i.type === 'RISK' && i.title.toLowerCase().includes('ambitious')
             )).toBe(true);
         });

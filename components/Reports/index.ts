@@ -27,3 +27,6 @@ export type { AreaDetailData, InterviewData, AreaLevelInfo } from './AreaDetailC
 export { AxisReportSection } from './AxisReportSection';
 export type { AxisInfo, AxisReportData } from './AxisReportSection';
 
+// Management Reports Module (Team Meeting & Steering Committee)
+export * from './Management';
+

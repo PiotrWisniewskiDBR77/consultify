@@ -36,6 +36,9 @@ router.post('/', async (req, res) => {
             userId
         });
 
+        // Initialize observation count for new assessment
+        assessment.observation_count = 0;
+
         console.log(`[RapidLean API] Assessment created: ${assessment.id}`);
         res.status(201).json(assessment);
     } catch (error) {
@@ -44,49 +47,26 @@ router.post('/', async (req, res) => {
     }
 });
 
-/**
- * Get RapidLean Assessment by ID
- * GET /api/rapidlean/:assessmentId
- */
-router.get('/:assessmentId', async (req, res) => {
-    try {
-        const { assessmentId } = req.params;
-        const organizationId = req.user.organizationId;
-
-        const assessment = await RapidLeanService.getAssessment(assessmentId, organizationId);
-
-        // Get observations if available
-        const observations = await RapidLeanService.getObservations(assessmentId);
-        
-        // Add DRD mapping with observations
-        const drdMapping = await RapidLeanService.mapToDRD(assessment, observations);
-
-        res.json({
-            assessment,
-            drdMapping,
-            observations,
-            benchmark: assessment.industry_benchmark
-        });
-    } catch (error) {
-        console.error('[RapidLean API] Error:', error.message);
-        res.status(404).json({ error: error.message });
-    }
-});
 
 /**
- * Get all RapidLean Assessments for a project
- * GET /api/rapidlean/project/:projectId
+ * Get available observation templates
+ * GET /api/rapidlean/templates
  */
-router.get('/project/:projectId', async (req, res) => {
+router.get('/templates', (req, res) => {
     try {
-        const { projectId } = req.params;
-        const organizationId = req.user.organizationId;
+        console.log('[RapidLean API] Fetching templates...');
+        const templateData = require('../data/rapidLeanObservationTemplates');
+        if (!templateData || typeof templateData.getAllTemplates !== 'function') {
+            console.error('[RapidLean API] Template data invalid:', templateData);
+            throw new Error('Template module invalid');
+        }
+        const templates = templateData.getAllTemplates();
+        console.log(`[RapidLean API] Templates fetched: ${templates.length}`);
 
-        const assessments = await RapidLeanService.getProjectAssessments(projectId, organizationId);
-        res.json({ assessments });
+        res.json({ templates });
     } catch (error) {
-        console.error('[RapidLean API] Error:', error.message);
-        res.status(500).json({ error: error.message });
+        console.error('[RapidLean API] Templates error:', error.message, error.stack);
+        res.status(500).json({ error: error.message, stack: error.stack });
     }
 });
 
@@ -96,17 +76,16 @@ router.get('/project/:projectId', async (req, res) => {
  */
 router.get('/benchmark/:industry', (req, res) => {
     const { industry } = req.params;
-    const benchmark = RapidLeanService.INDUSTRY_BENCHMARKS[industry.toUpperCase()]
-        || RapidLeanService.INDUSTRY_BENCHMARKS.DEFAULT;
+    const benchmark = RapidLeanService.INDUSTRY_BENCHMARKS[industry.toUpperCase()] || RapidLeanService.INDUSTRY_BENCHMARKS.DEFAULT;
 
     res.json({
-        industry: industry.toUpperCase(),
-        avgScore: benchmark,
-        distributionByDimension: {
-            value_stream: benchmark * 0.95,
-            waste_elimination: benchmark * 0.90,
-            flow_pull: benchmark * 1.05,
-            quality_source: benchmark * 1.0,
+        industry,
+        benchmark,
+        breakdown: {
+            value_stream: benchmark * 1.1,
+            waste_elimination: benchmark * 1.2,
+            flow_pull: benchmark * 0.9,
+            quality_source: benchmark,
             continuous_improvement: benchmark * 0.85,
             visual_management: benchmark * 0.95
         }
@@ -138,8 +117,8 @@ router.post('/observations', rapidLeanPhotoUpload, async (req, res) => {
         // Process uploaded photos
         const photoUrls = (req.files || []).map(file => {
             // Extract relative path from full path
-            const relativePath = file.path.includes('rapidlean') 
-                ? file.path.split('rapidlean/')[1] 
+            const relativePath = file.path.includes('rapidlean')
+                ? file.path.split('rapidlean/')[1]
                 : file.filename;
             return `/uploads/organizations/${organizationId}/rapidlean/${relativePath}`;
         });
@@ -173,13 +152,16 @@ router.post('/observations', rapidLeanPhotoUpload, async (req, res) => {
 
         // Generate comprehensive report
         const report = RapidLeanObservationMapper.generateObservationReport(observations, assessment);
-        
+
         // Generate PDF report
         const pdfReport = await RapidLeanReportService.generateReport(
             assessment.id,
             organizationId,
             { format: 'pdf', template: 'detailed', includeCharts: true }
         );
+
+        // Update in-memory assessment object for response
+        assessment.observation_count = observations.length;
 
         res.json({
             assessment,
@@ -204,7 +186,7 @@ router.get('/observations/:assessmentId', async (req, res) => {
 
         // Verify assessment belongs to organization
         const assessment = await RapidLeanService.getAssessment(assessmentId, organizationId);
-        
+
         // Get observations
         const observations = await RapidLeanService.getObservations(assessmentId);
 
@@ -239,18 +221,48 @@ router.post('/:id/report', async (req, res) => {
 });
 
 /**
- * Get available observation templates
- * GET /api/rapidlean/templates
+ * Get all RapidLean Assessments for a project
+ * GET /api/rapidlean/project/:projectId
  */
-router.get('/templates', (req, res) => {
+router.get('/project/:projectId', async (req, res) => {
     try {
-        const { getAllTemplates } = require('../data/rapidLeanObservationTemplates');
-        const templates = getAllTemplates();
-        
-        res.json({ templates });
+        const { projectId } = req.params;
+        const organizationId = req.user.organizationId;
+
+        const assessments = await RapidLeanService.getProjectAssessments(projectId, organizationId);
+        res.json({ assessments });
     } catch (error) {
-        console.error('[RapidLean API] Error fetching templates:', error.message);
+        console.error('[RapidLean API] Error:', error.message);
         res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * Get RapidLean Assessment by ID
+ * GET /api/rapidlean/:assessmentId
+ */
+router.get('/:assessmentId', async (req, res) => {
+    try {
+        const { assessmentId } = req.params;
+        const organizationId = req.user.organizationId;
+
+        const assessment = await RapidLeanService.getAssessment(assessmentId, organizationId);
+
+        // Get observations if available
+        const observations = await RapidLeanService.getObservations(assessmentId);
+
+        // Add DRD mapping with observations
+        const drdMapping = await RapidLeanService.mapToDRD(assessment, observations);
+
+        res.json({
+            assessment,
+            drdMapping,
+            observations,
+            benchmark: assessment.industry_benchmark
+        });
+    } catch (error) {
+        console.error('[RapidLean API] Error:', error.message);
+        res.status(404).json({ error: error.message });
     }
 });
 
@@ -292,14 +304,14 @@ async function saveObservations(observations, assessmentId, organizationId, user
                 location, timestamp, answers, photos, notes, created_by, created_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
         `;
-        
+
         let completed = 0;
         let hasError = false;
 
         observations.forEach(obs => {
             const observationId = uuidv4();
             const projectId = obs.projectId || null;
-            
+
             db.run(sql, [
                 observationId,
                 assessmentId,

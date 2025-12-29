@@ -68,47 +68,51 @@ router.post('/chat/stream', verifyToken, async (req, res) => {
     // Prepend language instruction to system instruction
     const enhancedSystemInstruction = (systemInstruction || '') + languageInstruction;
 
-    // Set headers for SSE
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.flushHeaders();
+    // Use New Professional AIPipeline
+    const { AIPipeline } = require('../services/ai/aiPipeline');
+    const aiPipeline = new AIPipeline();
 
     try {
-        const stream = AIOrchestrator.streamMessage ?
-            AIOrchestrator.streamMessage(message, req.userId, req.organizationId, context?.projectId, { ...context, roleName, language }) :
-            // Fallback to direct service call if Orchestrator doesn't support stream yet (likely case based on file view)
-            // Actually, let's use the AiService directly as seen in aiService.js
-            require('../services/aiService').streamLLM(
-                message,
-                enhancedSystemInstruction,
-                history || [],
-                null,
-                req.userId,
-                'chat'
-            );
+        const pipelineRequest = {
+            type: 'chat',
+            userId: req.userId,
+            organizationId: req.organizationId,
+            prompt: message,
+            messages: (history || []).map(m => ({
+                role: m.role === 'model' ? 'assistant' : m.role,
+                content: m.parts?.[0]?.text || m.content || ''
+            })),
+            capability: 'chat',
+            screenContext: context?.screenContext || req.body.screenContext,
+            stream: true,
+            options: {
+                role: roleName,
+                systemInstruction: enhancedSystemInstruction
+            }
+        };
 
-        for await (const chunk of stream) {
-            res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
-            // res.flush() is not needed in Node http/express usually, but good practice if compression is off
+        const response = await aiPipeline.process(pipelineRequest);
+
+        // Set headers for SSE
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+
+        if (response.stream) {
+            for await (const chunk of response.stream) {
+                if (chunk) res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
+            }
+            res.write('data: [DONE]\n\n');
+            res.end();
+        } else {
+            res.write(`data: ${JSON.stringify({ text: response.content || '' })}\n\n`);
+            res.write('data: [DONE]\n\n');
+            res.end();
         }
-
-        res.write('data: [DONE]\n\n');
-        res.end();
-
-        // TODO: Log interaction via AuditLogger (async)
 
     } catch (err) {
         console.error('Stream Error:', err);
-        if (err.isBudgetError) {
-            res.write(`data: ${JSON.stringify({
-                error: err.message,
-                code: 'AI_BUDGET_EXHAUSTED',
-                budgetStatus: err.budgetStatus
-            })}\n\n`);
-        } else {
-            res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
-        }
+        res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
         res.end();
     }
 });
@@ -371,7 +375,234 @@ router.get('/actions/proposals', verifyToken, async (req, res) => {
     }
 });
 
-// ==================== AUDIT ====================
+// LAYER 2: RECOMMEND (Generate initiatives from diagnosis/assessment)
+router.post('/recommend', verifyToken, async (req, res) => {
+    const { diagnosisReport } = req.body;
+
+    if (!diagnosisReport) {
+        return res.status(400).json({ error: 'diagnosisReport required' });
+    }
+
+    try {
+        const { AIPipeline } = require('../services/ai/aiPipeline');
+        const aiPipeline = new AIPipeline();
+
+        // Build a rich prompt for initiative generation
+        const assessment = diagnosisReport.assessment || {};
+        const goals = diagnosisReport.goals || ['Digital Transformation'];
+        const painPoints = diagnosisReport.painPoints || [];
+        const industry = diagnosisReport.industry || 'General';
+
+        const initiativesPrompt = `You are a strategic transformation consultant. Based on the assessment data and business context, generate specific transformation initiatives.
+
+BUSINESS CONTEXT:
+- Industry: ${industry}
+- Strategic Goals: ${goals.join(', ')}
+- Pain Points: ${painPoints.join(', ')}
+
+ASSESSMENT DATA:
+${JSON.stringify(assessment, null, 2)}
+
+Generate 5-10 strategic initiatives. For each initiative, provide:
+1. name: Clear, actionable initiative name
+2. description: Brief description of what the initiative involves
+3. axis: Which assessment axis it addresses (processes, digitalProducts, businessModels, dataManagement, culture, cybersecurity, aiMaturity)
+4. priority: HIGH, MEDIUM, or LOW
+5. complexity: Low, Medium, or High
+6. estimatedROI: Expected ROI multiplier (e.g., 1.5x, 2x, 3x)
+7. estimatedBudget: Rough budget range in PLN
+8. hypothesis: The expected outcome/benefit
+
+Return as a JSON array of initiatives.`;
+
+        const response = await aiPipeline.process({
+            type: 'chat',
+            capability: 'strategic',
+            userId: req.userId,
+            organizationId: req.organizationId,
+            prompt: initiativesPrompt,
+            stream: false
+        });
+
+        // Parse the response - try to extract JSON from the text
+        let initiatives = [];
+        try {
+            const text = response.text || response.content || '';
+            // Try to find JSON array in response
+            const jsonMatch = text.match(/\[[\s\S]*\]/);
+            if (jsonMatch) {
+                initiatives = JSON.parse(jsonMatch[0]);
+            }
+        } catch (parseErr) {
+            console.warn('[AI Recommend] Failed to parse AI response as JSON:', parseErr);
+        }
+
+        // If no valid initiatives, generate fallback based on assessment
+        if (!initiatives || initiatives.length === 0) {
+            console.warn('[AI Recommend] No initiatives parsed, using fallback generation');
+            initiatives = generateFallbackInitiatives(assessment, goals, industry);
+        }
+
+        // Ensure each initiative has required fields and a unique ID
+        const { v4: uuidv4 } = require('uuid');
+        initiatives = initiatives.map((init, idx) => ({
+            id: init.id || uuidv4(),
+            name: init.name || `Initiative ${idx + 1}`,
+            description: init.description || init.summary || '',
+            hypothesis: init.hypothesis || init.description || '',
+            axis: init.axis || 'processes',
+            area: init.area || null,
+            priority: init.priority || 'MEDIUM',
+            complexity: init.complexity || 'Medium',
+            estimatedROI: parseFloat(init.estimatedROI) || 1.5,
+            estimatedBudget: parseInt(init.estimatedBudget) || 100000,
+            status: 'DRAFT',
+            progress: 0,
+            quarter: 'Q1',
+            wave: 'Wave 1'
+        }));
+
+        res.json(initiatives);
+    } catch (err) {
+        console.error('[AI Recommend] Error:', err);
+        
+        // Return fallback initiatives instead of error
+        const fallbackInitiatives = generateFallbackInitiatives(
+            diagnosisReport.assessment || {},
+            diagnosisReport.goals || ['Digital Transformation'],
+            diagnosisReport.industry || 'General'
+        );
+        res.json(fallbackInitiatives);
+    }
+});
+
+// Fallback initiative generator
+function generateFallbackInitiatives(assessment, goals, industry) {
+    const { v4: uuidv4 } = require('uuid');
+    const axes = ['processes', 'digitalProducts', 'businessModels', 'dataManagement', 'culture', 'cybersecurity', 'aiMaturity'];
+    
+    const templates = {
+        processes: { name: 'Process Automation Initiative', priority: 'HIGH', roi: 2.0, budget: 200000 },
+        digitalProducts: { name: 'Digital Product Development', priority: 'MEDIUM', roi: 2.5, budget: 300000 },
+        businessModels: { name: 'Business Model Innovation', priority: 'MEDIUM', roi: 3.0, budget: 250000 },
+        dataManagement: { name: 'Data Governance Implementation', priority: 'HIGH', roi: 1.8, budget: 150000 },
+        culture: { name: 'Digital Culture Transformation', priority: 'MEDIUM', roi: 1.5, budget: 100000 },
+        cybersecurity: { name: 'Cybersecurity Enhancement Program', priority: 'HIGH', roi: 1.5, budget: 180000 },
+        aiMaturity: { name: 'AI Adoption Roadmap', priority: 'MEDIUM', roi: 2.2, budget: 220000 }
+    };
+
+    // Generate initiatives for axes with gaps (or all if no assessment)
+    const initiativesToGenerate = Object.keys(assessment).length > 0 
+        ? axes.filter(axis => assessment[axis]?.current < assessment[axis]?.target)
+        : axes.slice(0, 5);
+
+    return initiativesToGenerate.map(axis => {
+        const template = templates[axis] || templates.processes;
+        return {
+            id: uuidv4(),
+            name: template.name,
+            description: `${template.name} for ${industry}`,
+            hypothesis: `Implementing this initiative will improve ${axis} maturity and support: ${goals[0]}`,
+            axis,
+            area: null,
+            priority: template.priority,
+            complexity: 'Medium',
+            estimatedROI: template.roi,
+            estimatedBudget: template.budget,
+            status: 'DRAFT',
+            progress: 0,
+            quarter: 'Q1',
+            wave: 'Wave 1'
+        };
+    });
+}
+
+// LAYER 3: ROADMAP
+router.post('/roadmap', verifyToken, async (req, res) => {
+    const { initiatives } = req.body;
+
+    if (!initiatives || !Array.isArray(initiatives)) {
+        return res.status(400).json({ error: 'initiatives array required' });
+    }
+
+    try {
+        const { AIPipeline } = require('../services/ai/aiPipeline');
+        const aiPipeline = new AIPipeline();
+
+        // Format initiatives for the prompt
+        const initiativesSummary = initiatives.map((init, idx) => 
+            `${idx + 1}. "${init.name}" - Priority: ${init.priority || 'Medium'}, Complexity: ${init.complexity || 'Medium'}, ROI: ${init.expectedRoi || init.roi || 'Unknown'}`
+        ).join('\n');
+
+        const roadmapPrompt = `You are a strategic transformation consultant. Create an optimized implementation roadmap for the following initiatives.
+
+INITIATIVES TO SCHEDULE:
+${initiativesSummary}
+
+RULES:
+1. High priority + Low complexity initiatives should go in Q1-Q2 Year 1 (quick wins)
+2. High priority + High complexity initiatives should start Q2 Year 1 with longer duration
+3. Medium/Low priority can be scheduled in Year 2-3
+4. Consider dependencies - foundation initiatives before dependent ones
+5. Balance workload across quarters - no more than 3-4 major initiatives per quarter
+6. Return the EXACT initiative names as provided (case-sensitive)
+
+Return a structured roadmap assigning each initiative to a specific quarter.`;
+
+        const response = await aiPipeline.process({
+            type: 'structured',
+            capability: 'strategic',
+            userId: req.userId,
+            organizationId: req.organizationId,
+            prompt: roadmapPrompt,
+            schema: 'roadmap',
+            stream: false
+        });
+
+        // Ensure we have a valid response structure
+        const roadmapData = response.object || response;
+        
+        // Validate response has required structure
+        if (!roadmapData.year1) {
+            console.warn('[AI Roadmap] Invalid response structure, using fallback');
+            // Fallback: distribute initiatives evenly
+            const fallback = {
+                year1: { q1: [], q2: [], q3: [], q4: [] },
+                year2: { q1: [], q2: [], q3: [], q4: [] },
+                reasoning: 'Fallback distribution due to AI response error'
+            };
+            
+            initiatives.forEach((init, idx) => {
+                const quarter = idx % 4;
+                const year = idx < 8 ? 'year1' : 'year2';
+                const qKey = `q${quarter + 1}`;
+                fallback[year][qKey].push(init.name);
+            });
+            
+            return res.json(fallback);
+        }
+
+        res.json(roadmapData);
+    } catch (err) {
+        console.error('[AI Roadmap] Error:', err);
+        
+        // Return fallback roadmap instead of error
+        const fallback = {
+            year1: { q1: [], q2: [], q3: [], q4: [] },
+            year2: { q1: [], q2: [], q3: [], q4: [] },
+            reasoning: 'Fallback distribution due to error: ' + err.message
+        };
+        
+        initiatives.forEach((init, idx) => {
+            const quarter = idx % 4;
+            const year = idx < 8 ? 'year1' : 'year2';
+            const qKey = `q${quarter + 1}`;
+            fallback[year][qKey].push(init.name);
+        });
+        
+        res.json(fallback);
+    }
+});
 
 // GET /api/ai/audit
 router.get('/audit', verifyToken, async (req, res) => {

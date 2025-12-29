@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '../../types';
 import { useTranslation } from 'react-i18next';
-import { Building2, Plus, CreditCard, Users, CheckCircle, AlertCircle, Coins, ShieldCheck, UserCircle } from 'lucide-react';
+import { Building2, Plus, CreditCard, Users, CheckCircle, AlertCircle, Coins, ShieldCheck, UserCircle, X, Loader2 } from 'lucide-react';
 import { Api } from '../../services/api';
 import { toast } from 'react-hot-toast';
+import { InfoButton } from '../shared/InfoButton';
 
 interface OrganizationSettingsProps {
     currentUser: User;
@@ -16,6 +17,11 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
     const [organizations, setOrganizations] = useState<any[]>([]);
     const [selectedOrg, setSelectedOrg] = useState<any>(null);
     const [members, setMembers] = useState<any[]>([]);
+
+    // Create Organization Modal
+    const [isCreateOrgModalOpen, setIsCreateOrgModalOpen] = useState(false);
+    const [newOrgName, setNewOrgName] = useState('');
+    const [creatingOrg, setCreatingOrg] = useState(false);
 
     // Member Add Form
     const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
@@ -108,29 +114,100 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
         return <div className="p-8 text-center text-slate-500">Loading organization details...</div>;
     }
 
+    const handleCreateOrganization = async () => {
+        if (!newOrgName.trim()) {
+            toast.error('Organization name is required');
+            return;
+        }
+        setCreatingOrg(true);
+        try {
+            await Api.createOrganization(newOrgName.trim());
+            toast.success('Organization created successfully!');
+            setIsCreateOrgModalOpen(false);
+            setNewOrgName('');
+            await fetchOrganizations();
+        } catch (error: any) {
+            toast.error(error.message || 'Failed to create organization');
+        } finally {
+            setCreatingOrg(false);
+        }
+    };
+
     if (organizations.length === 0) {
         return (
-            <div className="p-8 text-center bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
-                <Building2 size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
-                <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">No Organization Found</h3>
-                <p className="text-slate-500 dark:text-slate-400 mb-6 max-w-md mx-auto">
-                    You are not currently a member of any organization. Create one to get started with team collaboration and token sharing.
-                </p>
-                <button
-                    onClick={() => {
-                        const name = prompt('Enter organization name:');
-                        if (name) Api.createOrganization(name).then(() => fetchOrganizations());
-                    }}
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-                >
-                    Create Organization
-                </button>
-            </div>
+            <>
+                <div className="p-8 text-center bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
+                    <Building2 size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+                    <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">No Organization Found</h3>
+                    <p className="text-slate-500 dark:text-slate-400 mb-6 max-w-md mx-auto">
+                        You are not currently a member of any organization. Create one to get started with team collaboration and token sharing.
+                    </p>
+                    <button
+                        onClick={() => setIsCreateOrgModalOpen(true)}
+                        className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                    >
+                        Create Organization
+                    </button>
+                </div>
+
+                {/* Create Organization Modal */}
+                {isCreateOrgModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-in fade-in">
+                        <div className="bg-white dark:bg-navy-800 rounded-xl max-w-md w-full p-6 shadow-2xl animate-in zoom-in-95">
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
+                                    <Building2 size={20} className="text-purple-500" />
+                                    Create Organization
+                                </h3>
+                                <button
+                                    onClick={() => setIsCreateOrgModalOpen(false)}
+                                    className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                        Organization Name
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={newOrgName}
+                                        onChange={(e) => setNewOrgName(e.target.value)}
+                                        placeholder="e.g., Acme Corporation"
+                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-navy-900 dark:text-white"
+                                        onKeyDown={(e) => e.key === 'Enter' && handleCreateOrganization()}
+                                        autoFocus
+                                    />
+                                </div>
+                                <div className="flex gap-3 justify-end pt-4">
+                                    <button
+                                        onClick={() => setIsCreateOrgModalOpen(false)}
+                                        className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg font-medium"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleCreateOrganization}
+                                        disabled={creatingOrg || !newOrgName.trim()}
+                                        className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                    >
+                                        {creatingOrg && <Loader2 size={16} className="animate-spin" />}
+                                        {creatingOrg ? 'Creating...' : 'Create Organization'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </>
         );
     }
 
     return (
-        <div className="space-y-6 max-w-4xl mx-auto">
+        <div className="space-y-6 max-w-4xl mx-auto relative">
+            <InfoButton cardId="settings-organization" position="top-right" />
             {/* Header / Selector */}
             <div className="flex items-center justify-between">
                 <div>

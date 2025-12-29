@@ -9,7 +9,7 @@ const PermissionService = require('../services/permissionService');
 
 // Middleware to check if user is authenticated
 // Assuming 'auth' middleware populates req.user
-// const auth = require('../middleware/auth'); 
+// const auth = require('../middleware/authMiddleware'); 
 // For now we will assume req.user is populated by global middleware or we add it here if needed.
 // Based on file list, there is middleware folder. Let's assume standard pattern.
 

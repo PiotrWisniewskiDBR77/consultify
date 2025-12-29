@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '../../types';
 import { Bell, Mail, Check, AlertCircle, Slack, MessageCircle, Trello, Database, CheckCircle, Hash } from 'lucide-react';
+import { Api } from '../../services/api';
+import { InfoButton } from '../shared/InfoButton';
 
 interface NotificationSettingsProps {
     currentUser: User;
@@ -54,12 +56,9 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ curr
     useEffect(() => {
         const fetchPrefs = async () => {
             try {
-                const res = await fetch(`http://localhost:3005/api/settings/notifications?userId=${currentUser.id}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data && Object.keys(data).length > 0) {
-                        setPreferences(data);
-                    }
+                const data = await Api.getNotificationPreferences(currentUser.id);
+                if (data && Object.keys(data).length > 0) {
+                    setPreferences(data);
                 }
             } catch (err) {
                 console.error("Failed to fetch notification preferences", err);
@@ -73,13 +72,9 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ curr
         const fetchIntegrations = async () => {
             if (!currentUser.organizationId) return;
             try {
-                // In a real app, we might want to cache this or pass it down from parent
-                const res = await fetch(`http://localhost:3005/api/settings/integrations?organizationId=${currentUser.organizationId}`);
-                if (res.ok) {
-                    const data: Integration[] = await res.json();
-                    // Filter only active integrations
-                    setIntegrations(data.filter(i => i.status === 'active' || !i.status)); // Assume active if status missing for now
-                }
+                const data: Integration[] = await Api.getIntegrations(currentUser.organizationId);
+                // Filter only active integrations
+                setIntegrations(data.filter(i => i.status === 'active' || !i.status)); // Assume active if status missing for now
             } catch (err) {
                 console.error("Failed to fetch integrations", err);
             }
@@ -91,14 +86,7 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ curr
         setLoading(true);
         setMessage(null);
         try {
-            const res = await fetch('http://localhost:3005/api/settings/notifications', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: currentUser.id, preferences })
-            });
-
-            if (!res.ok) throw new Error('Failed to save');
-
+            await Api.saveNotificationPreferences(currentUser.id, preferences);
             setMessage({ type: 'success', text: 'Notification preferences saved successfully.' });
             onUpdateUser({ ...currentUser, ...{ notification_preferences: JSON.stringify(preferences) } } as any);
         } catch (err) {
@@ -119,7 +107,8 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ curr
     };
 
     return (
-        <div className="max-w-4xl mx-auto space-y-6">
+        <div className="max-w-4xl mx-auto space-y-6 relative">
+            <InfoButton cardId="settings-notifications" position="top-right" />
             <div className="mb-6">
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Notification Preferences</h2>
                 <p className="text-slate-500 dark:text-slate-400">Manage how and when you receive notifications across all channels.</p>

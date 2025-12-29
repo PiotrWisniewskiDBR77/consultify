@@ -2,229 +2,98 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { LegalPageLayout } from '../../components/legal/LegalPageLayout';
 
+const COMPANY = {
+    name: 'DBR77 Robotics Sp. z o.o.',
+    email: 'contact@dbr77.com',
+    website: 'https://consultinity.com'
+};
+
+/**
+ * Simple cookie list - only essential cookies used by the application
+ */
+const COOKIES = {
+    essential: [
+        { name: 'session', purpose: 'Maintains your login session', duration: 'Session' },
+        { name: 'auth_token', purpose: 'Secure authentication', duration: '7 days' },
+        { name: 'csrf_token', purpose: 'Security protection', duration: 'Session' },
+    ],
+    functional: [
+        { name: 'theme', purpose: 'Your theme preference (light/dark)', duration: '1 year' },
+        { name: 'language', purpose: 'Your language preference', duration: '1 year' },
+        { name: 'sidebar', purpose: 'Sidebar state', duration: '1 year' },
+    ],
+};
+
 export const CookiePolicyView: React.FC = () => {
     const { t } = useTranslation();
+
+    const renderCookieTable = (cookies: typeof COOKIES.essential) => (
+        <div className="overflow-x-auto my-4">
+            <table className="w-full text-sm border border-slate-200 dark:border-white/10 rounded-lg overflow-hidden">
+                <thead className="bg-slate-50 dark:bg-navy-900">
+                    <tr>
+                        <th className="px-4 py-2 text-left font-medium text-navy-900 dark:text-white">Cookie</th>
+                        <th className="px-4 py-2 text-left font-medium text-navy-900 dark:text-white">Purpose</th>
+                        <th className="px-4 py-2 text-left font-medium text-navy-900 dark:text-white">Duration</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 dark:divide-white/5">
+                    {cookies.map((cookie, idx) => (
+                        <tr key={idx}>
+                            <td className="px-4 py-2 font-mono text-xs text-purple-600 dark:text-purple-400">{cookie.name}</td>
+                            <td className="px-4 py-2 text-slate-600 dark:text-slate-300">{cookie.purpose}</td>
+                            <td className="px-4 py-2 text-slate-500 dark:text-slate-400">{cookie.duration}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
 
     return (
         <LegalPageLayout
             title={t('legal.cookies.title', 'Cookie Policy')}
-            lastUpdated="December 23, 2024"
+            lastUpdated="January 1, 2025"
         >
-            {/* 1. Introduction */}
             <section>
                 <h2>1. What Are Cookies?</h2>
                 <p>
-                    Cookies are small text files that are placed on your device when you visit a website.
-                    They are widely used to make websites work more efficiently and to provide information
-                    to website owners.
-                </p>
-                <p>
-                    This Cookie Policy explains how Consultinity ("we", "us", "our") uses cookies and
-                    similar technologies on our platform.
+                    Cookies are small text files stored on your device when you visit our website. 
+                    They help us provide you with a better experience by remembering your preferences.
                 </p>
             </section>
 
-            {/* 2. How We Use Cookies */}
             <section>
-                <h2>2. How We Use Cookies</h2>
-                <p>We use cookies for the following purposes:</p>
-                <ul>
-                    <li><strong>Essential functionality:</strong> Enable core features like authentication and security</li>
-                    <li><strong>Preferences:</strong> Remember your settings and preferences</li>
-                    <li><strong>Analytics:</strong> Understand how you use our platform to improve it</li>
-                    <li><strong>Performance:</strong> Optimize loading speed and user experience</li>
-                </ul>
+                <h2>2. Cookies We Use</h2>
+                <p>Consultinity uses only essential and functional cookies. We do not use third-party tracking or advertising cookies.</p>
+
+                <h3>Essential Cookies</h3>
+                <p>Required for the platform to function. Cannot be disabled.</p>
+                {renderCookieTable(COOKIES.essential)}
+
+                <h3>Functional Cookies</h3>
+                <p>Remember your preferences for a better experience.</p>
+                {renderCookieTable(COOKIES.functional)}
             </section>
 
-            {/* 3. Types of Cookies */}
             <section>
-                <h2>3. Types of Cookies We Use</h2>
-
-                <h3>3.1 Strictly Necessary Cookies</h3>
+                <h2>3. Managing Cookies</h2>
                 <p>
-                    These cookies are essential for the platform to function. They cannot be disabled.
-                </p>
-                <div className="overflow-x-auto my-6">
-                    <table className="min-w-full border border-slate-200 dark:border-white/10">
-                        <thead className="bg-slate-50 dark:bg-navy-900">
-                            <tr>
-                                <th className="px-4 py-3 text-left text-xs font-bold uppercase">Cookie</th>
-                                <th className="px-4 py-3 text-left text-xs font-bold uppercase">Purpose</th>
-                                <th className="px-4 py-3 text-left text-xs font-bold uppercase">Duration</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr className="border-t border-slate-200 dark:border-white/10">
-                                <td className="px-4 py-3 font-mono text-sm">token</td>
-                                <td className="px-4 py-3 text-sm">Authentication session</td>
-                                <td className="px-4 py-3 text-sm">Session / 7 days</td>
-                            </tr>
-                            <tr className="border-t border-slate-200 dark:border-white/10">
-                                <td className="px-4 py-3 font-mono text-sm">cookie-consent</td>
-                                <td className="px-4 py-3 text-sm">Stores your cookie preferences</td>
-                                <td className="px-4 py-3 text-sm">1 year</td>
-                            </tr>
-                            <tr className="border-t border-slate-200 dark:border-white/10">
-                                <td className="px-4 py-3 font-mono text-sm">csrf_token</td>
-                                <td className="px-4 py-3 text-sm">Security - prevents cross-site attacks</td>
-                                <td className="px-4 py-3 text-sm">Session</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <h3>3.2 Functional Cookies</h3>
-                <p>
-                    These cookies enable enhanced functionality and personalization.
-                </p>
-                <div className="overflow-x-auto my-6">
-                    <table className="min-w-full border border-slate-200 dark:border-white/10">
-                        <thead className="bg-slate-50 dark:bg-navy-900">
-                            <tr>
-                                <th className="px-4 py-3 text-left text-xs font-bold uppercase">Cookie</th>
-                                <th className="px-4 py-3 text-left text-xs font-bold uppercase">Purpose</th>
-                                <th className="px-4 py-3 text-left text-xs font-bold uppercase">Duration</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr className="border-t border-slate-200 dark:border-white/10">
-                                <td className="px-4 py-3 font-mono text-sm">theme</td>
-                                <td className="px-4 py-3 text-sm">Remembers dark/light mode preference</td>
-                                <td className="px-4 py-3 text-sm">1 year</td>
-                            </tr>
-                            <tr className="border-t border-slate-200 dark:border-white/10">
-                                <td className="px-4 py-3 font-mono text-sm">i18nextLng</td>
-                                <td className="px-4 py-3 text-sm">Remembers language preference</td>
-                                <td className="px-4 py-3 text-sm">1 year</td>
-                            </tr>
-                            <tr className="border-t border-slate-200 dark:border-white/10">
-                                <td className="px-4 py-3 font-mono text-sm">sidebar_collapsed</td>
-                                <td className="px-4 py-3 text-sm">Remembers sidebar state</td>
-                                <td className="px-4 py-3 text-sm">Persistent</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <h3>3.3 Analytics Cookies</h3>
-                <p>
-                    These cookies help us understand how visitors interact with our platform.
-                </p>
-                <div className="overflow-x-auto my-6">
-                    <table className="min-w-full border border-slate-200 dark:border-white/10">
-                        <thead className="bg-slate-50 dark:bg-navy-900">
-                            <tr>
-                                <th className="px-4 py-3 text-left text-xs font-bold uppercase">Cookie</th>
-                                <th className="px-4 py-3 text-left text-xs font-bold uppercase">Provider</th>
-                                <th className="px-4 py-3 text-left text-xs font-bold uppercase">Purpose</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr className="border-t border-slate-200 dark:border-white/10">
-                                <td className="px-4 py-3 font-mono text-sm">_ga, _gid</td>
-                                <td className="px-4 py-3 text-sm">Google Analytics</td>
-                                <td className="px-4 py-3 text-sm">Usage analytics (if enabled)</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <p className="text-sm text-slate-500">
-                    Note: Analytics cookies are only set if you consent to them.
-                </p>
-
-                <h3>3.4 Marketing Cookies</h3>
-                <p>
-                    We currently do not use marketing or advertising cookies. If this changes,
-                    we will update this policy and request your consent.
-                </p>
-            </section>
-
-            {/* 4. Third-Party Cookies */}
-            <section>
-                <h2>4. Third-Party Cookies</h2>
-                <p>
-                    Some cookies may be set by third-party services we use. These include:
+                    You can control cookies through your browser settings. Note that disabling essential cookies 
+                    will prevent you from using the platform. Links to browser cookie settings:
                 </p>
                 <ul>
-                    <li><strong>Stripe:</strong> Payment processing (essential for billing)</li>
-                    <li><strong>Intercom/Support:</strong> Customer support chat (if applicable)</li>
-                </ul>
-                <p>
-                    These third parties have their own privacy policies governing the use of cookies.
-                </p>
-            </section>
-
-            {/* 5. Managing Cookies */}
-            <section>
-                <h2>5. Managing Your Cookie Preferences</h2>
-
-                <h3>5.1 Cookie Consent Banner</h3>
-                <p>
-                    When you first visit our platform, you will see a cookie consent banner that allows
-                    you to accept or customize your cookie preferences.
-                </p>
-
-                <h3>5.2 Browser Settings</h3>
-                <p>
-                    You can control cookies through your browser settings. Most browsers allow you to:
-                </p>
-                <ul>
-                    <li>View what cookies are stored</li>
-                    <li>Delete all or specific cookies</li>
-                    <li>Block third-party cookies</li>
-                    <li>Block cookies from specific sites</li>
-                    <li>Block all cookies</li>
-                </ul>
-                <p>
-                    Note: Blocking all cookies may prevent the platform from functioning properly.
-                </p>
-
-                <h3>5.3 Browser-Specific Instructions</h3>
-                <ul>
-                    <li><a href="https://support.google.com/chrome/answer/95647" target="_blank" rel="noopener noreferrer">Google Chrome</a></li>
-                    <li><a href="https://support.mozilla.org/en-US/kb/cookies-information-websites-store-on-your-computer" target="_blank" rel="noopener noreferrer">Mozilla Firefox</a></li>
+                    <li><a href="https://support.google.com/chrome/answer/95647" target="_blank" rel="noopener noreferrer">Chrome</a></li>
+                    <li><a href="https://support.mozilla.org/en-US/kb/cookies-information-websites-store-on-your-computer" target="_blank" rel="noopener noreferrer">Firefox</a></li>
                     <li><a href="https://support.apple.com/guide/safari/manage-cookies-sfri11471/mac" target="_blank" rel="noopener noreferrer">Safari</a></li>
-                    <li><a href="https://support.microsoft.com/en-us/windows/delete-and-manage-cookies-168dab11-0753-043d-7c16-ede5947fc64d" target="_blank" rel="noopener noreferrer">Microsoft Edge</a></li>
+                    <li><a href="https://support.microsoft.com/en-us/microsoft-edge/delete-cookies-in-microsoft-edge-63947406-40ac-c3b8-57b9-2a946a29ae09" target="_blank" rel="noopener noreferrer">Edge</a></li>
                 </ul>
             </section>
 
-            {/* 6. Local Storage */}
             <section>
-                <h2>6. Local Storage</h2>
+                <h2>4. Contact</h2>
                 <p>
-                    In addition to cookies, we use browser local storage to store certain preferences
-                    and data locally on your device. This includes:
-                </p>
-                <ul>
-                    <li>User preferences and settings</li>
-                    <li>Cached application data for performance</li>
-                    <li>Session information</li>
-                </ul>
-                <p>
-                    You can clear local storage through your browser's developer tools or settings.
-                </p>
-            </section>
-
-            {/* 7. Updates */}
-            <section>
-                <h2>7. Changes to This Policy</h2>
-                <p>
-                    We may update this Cookie Policy from time to time. Changes will be reflected by
-                    the "Last updated" date at the top of this page. We encourage you to review this
-                    policy periodically.
-                </p>
-            </section>
-
-            {/* 8. Contact */}
-            <section>
-                <h2>8. Contact Us</h2>
-                <p>
-                    If you have questions about our use of cookies, please contact us at{' '}
-                    <a href="mailto:privacy@dbr77.com">privacy@dbr77.com</a>.
-                </p>
-                <p>
-                    For more information about how we handle your personal data, please see our{' '}
-                    <a href="/privacy">Privacy Policy</a>.
+                    Questions? Contact us at <a href={`mailto:${COMPANY.email}`}>{COMPANY.email}</a>
                 </p>
             </section>
         </LegalPageLayout>

@@ -48,6 +48,11 @@ import {
   Factory, // Organization
   Wrench, // Tools
   FileOutput, // Reports export
+  LayoutGrid, // Dashboard preferences
+  Accessibility, // Accessibility settings
+  EyeOff, // Privacy settings
+  ClipboardList, // Work preferences
+  Calculator, // Economics module
 } from 'lucide-react';
 import { SidebarUsage } from './SidebarUsage';
 import { PhaseIndicator } from './PMO/PhaseIndicator';
@@ -238,42 +243,42 @@ export const Sidebar: React.FC = () => {
         // Assessment Frameworks - each opens AssessmentModuleHub with 4 tabs
         {
           id: 'M2_DRD',
-          label: 'DRD',
+          label: t('sidebar.assessmentDRD'),
           viewId: AppView.ASSESSMENT_DRD,
           icon: <Activity size={16} />
         },
         {
           id: 'M2_SIRI',
-          label: 'SIRI',
+          label: t('sidebar.assessmentSIRI'),
           viewId: AppView.ASSESSMENT_SIRI,
           icon: <Cpu size={16} />
         },
         {
           id: 'M2_ADMA',
-          label: 'ADMA',
+          label: t('sidebar.assessmentADMA'),
           viewId: AppView.ASSESSMENT_ADMA,
           icon: <Database size={16} />
         },
         {
           id: 'M2_CMMI',
-          label: 'CMMI',
+          label: t('sidebar.assessmentCMMI'),
           viewId: AppView.ASSESSMENT_CMMI,
           icon: <Layers size={16} />
         },
         {
           id: 'M2_LEAN',
-          label: 'Lean 4.0',
+          label: t('sidebar.assessmentLean'),
           viewId: AppView.ASSESSMENT_LEAN,
           icon: <Workflow size={16} />
         },
       ]
     },
-    // Inicjatywy - standalone
+    // Initiative Management - Review & Approval
     {
-      id: 'MODULE_3_INITIATIVES',
-      label: t('sidebar.module3_1'),
+      id: 'MODULE_INITIATIVES',
+      label: t('sidebar.initiativeManagement'),
       icon: <Lightbulb size={20} />,
-      viewId: AppView.FULL_STEP2_INITIATIVES,
+      viewId: AppView.INITIATIVE_MANAGEMENT,
       requiresView: AppView.FULL_STEP1_ASSESSMENT
     },
     // Mapa drogowa - standalone
@@ -282,23 +287,23 @@ export const Sidebar: React.FC = () => {
       label: t('sidebar.module3_2'),
       icon: <Calendar size={20} />,
       viewId: AppView.FULL_STEP3_ROADMAP,
-      requiresView: AppView.FULL_STEP2_INITIATIVES
+      requiresView: AppView.INITIATIVE_MANAGEMENT
     },
     // Wdrożenie (Implementation)
     {
       id: 'MODULE_4',
-      label: t('sidebar.implementation', 'Wdrożenie'),
+      label: t('sidebar.implementation'),
       icon: <Rocket size={20} />,
-      viewId: AppView.FULL_PILOT_EXECUTION,
+      viewId: AppView.IMPLEMENTATION,
       requiresView: AppView.FULL_STEP3_ROADMAP
     },
-    // Realizacja (Execution/Rollout)
+    // Realizacja / Benefits Tracking
     {
-      id: 'MODULE_5',
-      label: t('sidebar.realization', 'Realizacja'),
+      id: 'MODULE_BENEFITS',
+      label: t('sidebar.benefitsRealization'),
       icon: <Map size={20} />,
-      viewId: AppView.FULL_ROLLOUT,
-      requiresView: AppView.FULL_PILOT_EXECUTION
+      viewId: AppView.BENEFITS_REALIZATION,
+      requiresView: AppView.IMPLEMENTATION
     },
     {
       id: 'MODULE_6',
@@ -306,6 +311,13 @@ export const Sidebar: React.FC = () => {
       icon: <Box size={20} />,
       viewId: AppView.FULL_STEP4_ROI,
       requiresView: AppView.FULL_STEP2_INITIATIVES
+    },
+    {
+      id: 'MODULE_ECONOMICS',
+      label: t('sidebar.economics'),
+      icon: <Calculator size={20} />,
+      viewId: AppView.ECONOMICS,
+      requiresView: AppView.DASHBOARD
     },
     // Raporty - simplified to single item
     {
@@ -318,7 +330,7 @@ export const Sidebar: React.FC = () => {
     // Tools Section with AI Advisor and Automation Scheme
     {
       id: 'MODULE_TOOLS',
-      label: t('sidebar.tools', 'Narzędzia'),
+      label: t('sidebar.tools'),
       icon: <Wrench size={20} />,
       subItems: [
         { id: 'TOOLS_AI_ADVISOR', label: t('sidebar.aiAdvisor', 'AI Advisor'), viewId: AppView.AI_ACTION_PROPOSALS, requiresView: AppView.DASHBOARD, icon: <Sparkles size={16} /> },
@@ -333,11 +345,12 @@ export const Sidebar: React.FC = () => {
     icon: <Shield size={20} />,
     subItems: [
       { id: 'ADMIN_DASHBOARD', label: t('sidebar.dashboard'), viewId: AppView.ADMIN_DASHBOARD, icon: <LayoutDashboard size={16} /> },
-      { id: 'ADMIN_METRICS', label: t('sidebar.metrics', 'Metrics & Conversion'), viewId: AppView.ADMIN_METRICS, icon: <TrendingUp size={16} /> },
+      { id: 'ADMIN_METRICS', label: t('sidebar.metrics'), viewId: AppView.ADMIN_METRICS, icon: <TrendingUp size={16} /> },
       { id: 'ADMIN_USERS', label: t('sidebar.adminUsers'), viewId: AppView.ADMIN_USERS, icon: <Users size={16} /> },
       { id: 'ADMIN_PROJECTS', label: t('sidebar.adminProjects'), viewId: AppView.ADMIN_PROJECTS, icon: <Building2 size={16} /> },
       { id: 'ADMIN_LLM', label: t('sidebar.adminLLM'), viewId: AppView.ADMIN_LLM, icon: <Brain size={16} /> },
       { id: 'ADMIN_KNOWLEDGE', label: t('sidebar.adminKnowledge'), viewId: AppView.ADMIN_KNOWLEDGE, icon: <BookOpen size={16} /> },
+      { id: 'ADMIN_PLAYBOOK_RUNS', label: t('sidebar.playbookRuns', 'Playbook Runs'), viewId: AppView.ADMIN_PLAYBOOK_RUNS, icon: <Layers size={16} /> },
       { id: 'ADMIN_FEEDBACK', label: t('sidebar.adminFeedback'), viewId: AppView.ADMIN_FEEDBACK, icon: <MessageSquare size={16} /> },
     ]
   };
@@ -361,12 +374,16 @@ export const Sidebar: React.FC = () => {
     icon: <Settings size={20} />,
     // viewId: AppView.SETTINGS_PROFILE, // Removed direct link in favor of subitems
     subItems: [
-      { id: 'SETTINGS_PROFILE', label: t('settings.menu.myProfile', 'My Profile'), viewId: AppView.SETTINGS_PROFILE, icon: <UserCircle size={16} /> },
-      { id: 'SETTINGS_BILLING', label: t('settings.menu.billing', 'Billing & Plans'), viewId: AppView.SETTINGS_BILLING, icon: <CreditCard size={16} /> },
-      { id: 'SETTINGS_AI', label: t('settings.menu.aiConfig', 'AI Configuration'), viewId: AppView.SETTINGS_AI, icon: <Brain size={16} /> },
-      { id: 'SETTINGS_NOTIFICATIONS', label: t('settings.menu.notifications', 'Notifications'), viewId: AppView.SETTINGS_NOTIFICATIONS, icon: <Bell size={16} /> },
-      { id: 'SETTINGS_INTEGRATIONS', label: t('settings.menu.integrations', 'Integrations'), viewId: AppView.SETTINGS_INTEGRATIONS, icon: <Link size={16} /> },
-      { id: 'SETTINGS_REGIONALIZATION', label: t('settings.menu.regionalization', 'Regionalization'), viewId: AppView.SETTINGS_REGIONALIZATION, icon: <Globe size={16} /> },
+      { id: 'SETTINGS_PROFILE', label: t('settings.menu.myProfile'), viewId: AppView.SETTINGS_PROFILE, icon: <UserCircle size={16} /> },
+      { id: 'SETTINGS_WORK_PREFERENCES', label: t('settings.menu.workPreferences'), viewId: AppView.SETTINGS_WORK_PREFERENCES, icon: <ClipboardList size={16} /> },
+      { id: 'SETTINGS_DASHBOARD_PREFERENCES', label: t('settings.menu.dashboardPreferences'), viewId: AppView.SETTINGS_DASHBOARD_PREFERENCES, icon: <LayoutGrid size={16} /> },
+      { id: 'SETTINGS_BILLING', label: t('settings.menu.billing'), viewId: AppView.SETTINGS_BILLING, icon: <CreditCard size={16} /> },
+      { id: 'SETTINGS_AI', label: t('settings.menu.aiConfig'), viewId: AppView.SETTINGS_AI, icon: <Brain size={16} /> },
+      { id: 'SETTINGS_NOTIFICATIONS', label: t('settings.menu.notifications'), viewId: AppView.SETTINGS_NOTIFICATIONS, icon: <Bell size={16} /> },
+      { id: 'SETTINGS_INTEGRATIONS', label: t('settings.menu.integrations'), viewId: AppView.SETTINGS_INTEGRATIONS, icon: <Link size={16} /> },
+      { id: 'SETTINGS_REGIONALIZATION', label: t('settings.menu.regionalization'), viewId: AppView.SETTINGS_REGIONALIZATION, icon: <Globe size={16} /> },
+      { id: 'SETTINGS_ACCESSIBILITY', label: t('settings.menu.accessibility'), viewId: AppView.SETTINGS_ACCESSIBILITY, icon: <Accessibility size={16} /> },
+      { id: 'SETTINGS_PRIVACY', label: t('settings.menu.privacy'), viewId: AppView.SETTINGS_PRIVACY, icon: <EyeOff size={16} /> },
     ]
   };
 
@@ -426,13 +443,13 @@ export const Sidebar: React.FC = () => {
     // Get human-readable name for required view
     const getViewName = (view: AppView): string => {
       const viewNames: Record<string, string> = {
-        [AppView.FULL_STEP1_ASSESSMENT]: 'Assessment',
-        [AppView.FULL_STEP2_INITIATIVES]: 'Initiatives',
-        [AppView.FULL_STEP3_ROADMAP]: 'Roadmap',
-        [AppView.FULL_STEP5_EXECUTION]: 'Execution',
-        [AppView.DASHBOARD]: 'Dashboard'
+        [AppView.FULL_STEP1_ASSESSMENT]: t('sidebar.assessmentDRD'),
+        [AppView.FULL_STEP2_INITIATIVES]: t('sidebar.module3_1'),
+        [AppView.FULL_STEP3_ROADMAP]: t('sidebar.module3_2'),
+        [AppView.FULL_STEP5_EXECUTION]: t('sidebar.realization'),
+        [AppView.DASHBOARD]: t('sidebar.dashboard')
       };
-      return viewNames[view] || 'previous step';
+      return viewNames[view] || t('common.previousStep');
     };
 
     // Check if child active (for highlighting parent)
@@ -449,7 +466,7 @@ export const Sidebar: React.FC = () => {
     // Generate tooltip
     const getTooltip = () => {
       if (isLocked && item.requiresView) {
-        return `Locked: Complete ${getViewName(item.requiresView)} first`;
+        return `${t('common.locked')}: ${t('common.complete')} ${getViewName(item.requiresView)} ${t('common.first')}`;
       }
       if (!showFull) {
         return item.label;
@@ -549,11 +566,11 @@ export const Sidebar: React.FC = () => {
           border-r border-slate-200 dark:border-white/5 shadow-2xl
           flex flex-col transition-all duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)]
           ${sidebarWidthClass}
-          ${isSidebarOpen 
-            ? 'translate-x-0' 
-            : isMobile 
-              ? '-translate-x-full' 
-              : isTablet 
+          ${isSidebarOpen
+            ? 'translate-x-0'
+            : isMobile
+              ? '-translate-x-full'
+              : isTablet
                 ? 'translate-x-0'  /* Tablet: always visible as mini */
                 : 'lg:translate-x-0 -translate-x-full' /* Desktop: visible from lg breakpoint */
           }
@@ -635,7 +652,7 @@ export const Sidebar: React.FC = () => {
               className={`w-full flex items-center gap-3 py-2.5 rounded-xl text-sm font-medium btn-base transition-all duration-200
                 text-slate-500 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400
                 ${!showFull ? 'justify-center px-0' : 'px-3'} `}
-              title="Log Out"
+              title={t('sidebar.logOut')}
             >
               <LogOut size={18} />
               {showFull && <span>{t('sidebar.logOut')}</span>}

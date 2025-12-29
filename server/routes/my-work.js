@@ -438,4 +438,221 @@ router.get('/workload', verifyToken, async (req, res) => {
     }
 });
 
+// ============================================================================
+// PERSONAL STATS API - Analytics for ProgressView (PMO Upgrade)
+// ============================================================================
+
+// GET /api/my-work/stats - Personal statistics
+router.get('/stats', verifyToken, async (req, res) => {
+    try {
+        const { period } = req.query; // 'week', 'month', 'quarter'
+        const db = require('../database');
+        
+        // Calculate date range based on period
+        const now = new Date();
+        let startDate;
+        switch (period) {
+            case 'quarter':
+                startDate = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
+                break;
+            case 'month':
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                break;
+            case 'week':
+            default:
+                startDate = new Date(now);
+                startDate.setDate(now.getDate() - now.getDay()); // Start of week
+                break;
+        }
+        
+        const startDateStr = startDate.toISOString().split('T')[0];
+        
+        // Get task statistics
+        const taskStats = await new Promise((resolve, reject) => {
+            db.get(`
+                SELECT 
+                    COUNT(*) as total,
+                    SUM(CASE WHEN status = 'completed' OR status = 'done' THEN 1 ELSE 0 END) as completed,
+                    SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as inProgress,
+                    SUM(CASE WHEN status = 'todo' OR status = 'pending' THEN 1 ELSE 0 END) as todo,
+                    SUM(CASE WHEN due_date < date('now') AND status != 'completed' AND status != 'done' THEN 1 ELSE 0 END) as overdue,
+                    SUM(CASE WHEN priority = 'high' OR priority = 'critical' THEN 1 ELSE 0 END) as highPriority,
+                    SUM(CASE WHEN priority = 'medium' THEN 1 ELSE 0 END) as mediumPriority,
+                    SUM(CASE WHEN priority = 'low' THEN 1 ELSE 0 END) as lowPriority
+                FROM tasks 
+                WHERE assigned_to = ? AND created_at >= ?
+            `, [req.userId, startDateStr], (err, row) => {
+                if (err) reject(err);
+                else resolve(row || {});
+            });
+        });
+        
+        // Get on-time completion rate
+        const onTimeStats = await new Promise((resolve, reject) => {
+            db.get(`
+                SELECT 
+                    COUNT(*) as totalCompleted,
+                    SUM(CASE WHEN completed_at <= due_date THEN 1 ELSE 0 END) as onTime
+                FROM tasks 
+                WHERE assigned_to = ? 
+                AND (status = 'completed' OR status = 'done')
+                AND completed_at >= ?
+                AND due_date IS NOT NULL
+            `, [req.userId, startDateStr], (err, row) => {
+                if (err) reject(err);
+                else resolve(row || { totalCompleted: 0, onTime: 0 });
+            });
+        });
+        
+        // Get average completion time
+        const avgCompletionTime = await new Promise((resolve, reject) => {
+            db.get(`
+                SELECT 
+                    AVG(julianday(completed_at) - julianday(created_at)) as avgDays
+                FROM tasks 
+                WHERE assigned_to = ? 
+                AND (status = 'completed' OR status = 'done')
+                AND completed_at >= ?
+            `, [req.userId, startDateStr], (err, row) => {
+                if (err) reject(err);
+                else resolve(row?.avgDays || 0);
+            });
+        });
+        
+        // Get velocity history (tasks completed per day for the last 7 days)
+        const velocityHistory = await new Promise((resolve, reject) => {
+            db.all(`
+                SELECT 
+                    date(completed_at) as date,
+                    COUNT(*) as completed
+                FROM tasks 
+                WHERE assigned_to = ? 
+                AND (status = 'completed' OR status = 'done')
+                AND completed_at >= date('now', '-7 days')
+                GROUP BY date(completed_at)
+                ORDER BY date
+            `, [req.userId], (err, rows) => {
+                if (err) reject(err);
+                else {
+                    // Fill in missing days with 0
+                    const history = [];
+                    for (let i = 6; i >= 0; i--) {
+                        const date = new Date();
+                        date.setDate(date.getDate() - i);
+                        const dateStr = date.toISOString().split('T')[0];
+                        const found = rows?.find(r => r.date === dateStr);
+                        history.push(found?.completed || 0);
+                    }
+                    resolve(history);
+                }
+            });
+        });
+        
+        // Calculate velocity change
+        const thisWeekVelocity = velocityHistory.slice(-3).reduce((a, b) => a + b, 0);
+        const lastWeekVelocity = velocityHistory.slice(0, 4).reduce((a, b) => a + b, 0);
+        const velocityChange = lastWeekVelocity > 0 
+            ? Math.round(((thisWeekVelocity - lastWeekVelocity) / lastWeekVelocity) * 100)
+            : 0;
+        
+        const onTimeRate = onTimeStats.totalCompleted > 0 
+            ? Math.round((onTimeStats.onTime / onTimeStats.totalCompleted) * 100)
+            : 0;
+        
+        res.json({
+            completed: taskStats.completed || 0,
+            total: taskStats.total || 0,
+            onTimeRate,
+            avgDays: parseFloat(avgCompletionTime) || 0,
+            velocityHistory,
+            velocityChange,
+            trend: velocityChange > 5 ? 'up' : velocityChange < -5 ? 'down' : 'stable',
+            byPriority: {
+                high: taskStats.highPriority || 0,
+                medium: taskStats.mediumPriority || 0,
+                low: taskStats.lowPriority || 0
+            },
+            byStatus: {
+                completed: taskStats.completed || 0,
+                inProgress: taskStats.inProgress || 0,
+                todo: taskStats.todo || 0,
+                overdue: taskStats.overdue || 0
+            }
+        });
+    } catch (err) {
+        console.error('Stats error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// GET /api/my-work/team-workload - Team capacity heatmap
+router.get('/team-workload', verifyToken, async (req, res) => {
+    try {
+        const { projectId } = req.query;
+        const db = require('../database');
+        
+        // Get team members and their task counts
+        const teamData = await new Promise((resolve, reject) => {
+            let sql = `
+                SELECT 
+                    u.id,
+                    u.first_name,
+                    u.last_name,
+                    u.role,
+                    u.avatar_url,
+                    COUNT(t.id) as tasksAssigned,
+                    SUM(CASE WHEN t.status = 'completed' OR t.status = 'done' THEN 1 ELSE 0 END) as tasksCompleted,
+                    SUM(CASE WHEN t.status NOT IN ('completed', 'done', 'cancelled') THEN 1 ELSE 0 END) as activeTasks
+                FROM users u
+                LEFT JOIN tasks t ON t.assigned_to = u.id
+            `;
+            
+            const params = [];
+            
+            if (projectId) {
+                sql += ` WHERE t.project_id = ?`;
+                params.push(projectId);
+            }
+            
+            sql += `
+                GROUP BY u.id
+                HAVING tasksAssigned > 0 OR u.organization_id = (SELECT organization_id FROM users WHERE id = ?)
+                ORDER BY activeTasks DESC
+                LIMIT 20
+            `;
+            params.push(req.userId);
+            
+            db.all(sql, params, (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows || []);
+            });
+        });
+        
+        // Calculate capacity for each team member
+        // Assuming 10 active tasks = 100% capacity
+        const CAPACITY_BASE = 10;
+        
+        const teamMembers = teamData.map(member => {
+            const capacity = Math.round((member.activeTasks / CAPACITY_BASE) * 100);
+            const initials = `${(member.first_name || '?')[0]}${(member.last_name || '?')[0]}`.toUpperCase();
+            
+            return {
+                id: member.id,
+                name: `${member.first_name || 'Unknown'} ${member.last_name || ''}`.trim(),
+                initials,
+                role: member.role || 'Team Member',
+                capacity: Math.min(capacity, 150), // Cap at 150%
+                tasksAssigned: member.tasksAssigned || 0,
+                tasksCompleted: member.tasksCompleted || 0,
+                avatarUrl: member.avatar_url
+            };
+        });
+        
+        res.json(teamMembers);
+    } catch (err) {
+        console.error('Team workload error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 module.exports = router;

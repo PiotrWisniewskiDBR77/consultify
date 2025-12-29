@@ -314,7 +314,7 @@ class AssessmentOverviewService {
                 const assessments = (rows || []).map(row => ({
                     id: row.assessment_id || row.id,
                     name: `DRD Assessment - ${new Date(row.created_at).toLocaleDateString()}`,
-                    projectName: row.project_name || 'Unknown Project',
+                    projectName: row.project_name || 'General Project',
                     status: row.status || 'DRAFT',
                     progress: row.is_complete ? 100 : Math.round((row.overall_as_is / 7) * 100) || 0,
                     completedAxes: row.is_complete ? 7 : Math.min(Math.floor((row.overall_as_is || 0) * 7 / 7), 7),

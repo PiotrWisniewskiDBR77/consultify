@@ -242,8 +242,13 @@ describe('TokenBillingService - deductTokens with Ledger', () => {
 
         let ledgerInsertCalled = false;
         mockDb.run.mockImplementation(function (query, params, callback) {
+            if (typeof params === 'function') {
+                callback = params;
+                params = [];
+            }
+
             if (query === 'BEGIN TRANSACTION' || query.includes('BEGIN TRANSACTION')) {
-                // No callback for BEGIN
+                if (callback) callback.call({ changes: 0 }, null);
                 return;
             }
 

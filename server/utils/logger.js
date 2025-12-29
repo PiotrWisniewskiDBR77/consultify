@@ -1,63 +1,71 @@
 /**
  * Production Logger
  * Outputs structured JSON logs for easy parsing by log aggregators
+ * Powered by Winston
  */
+
+const winston = require('winston');
+const requestStore = require('./requestStore');
 
 const isProduction = process.env.NODE_ENV === 'production';
 
-const requestStore = require('./requestStore');
+// Define custom formats
+const addCorrelationId = winston.format((info) => {
+    info.correlationId = requestStore.getCorrelationId();
+    return info;
+});
 
-const formatLog = (level, message, meta = {}) => {
-    const correlationId = requestStore.getCorrelationId();
-    return {
-        level,
-        timestamp: new Date().toISOString(),
-        correlationId, // Injected for all log entries
-        message,
-        ...meta,
-        ...(meta.error && !isProduction ? { stack: meta.error.stack } : {})
-    };
-};
+// Configure Winston Logger
+const winstonLogger = winston.createLogger({
+    level: isProduction ? 'info' : 'debug',
+    format: winston.format.combine(
+        addCorrelationId(),
+        winston.format.timestamp(),
+        isProduction ? winston.format.json() : winston.format.combine(
+            winston.format.colorize(),
+            winston.format.printf(({ timestamp, level, message, correlationId, ...meta }) => {
+                const metaStr = Object.keys(meta).length ? JSON.stringify(meta) : '';
+                const cid = correlationId ? `[${correlationId}] ` : '';
+                return `${timestamp} ${level}: ${cid}${message} ${metaStr}`;
+            })
+        )
+    ),
+    transports: [
+        new winston.transports.Console()
+    ]
+});
 
 const logger = {
     info: (message, meta = {}) => {
-        if (isProduction) {
-            console.log(JSON.stringify(formatLog('info', message, meta)));
-        } else {
-            console.log(`[INFO] ${message}`, meta);
-        }
+        winstonLogger.info(message, meta);
     },
 
     warn: (message, meta = {}) => {
-        if (isProduction) {
-            console.warn(JSON.stringify(formatLog('warn', message, meta)));
-        } else {
-            console.warn(`[WARN] ${message}`, meta);
-        }
+        winstonLogger.warn(message, meta);
     },
 
     error: (message, error = null, meta = {}) => {
-        const logData = {
-            ...meta,
-            ...(error ? { error: error.message, errorName: error.name } : {})
-        };
-
-        if (isProduction) {
-            console.error(JSON.stringify(formatLog('error', message, logData)));
-        } else {
-            console.error(`[ERROR] ${message}`, error || '', meta);
+        const logData = { ...meta };
+        if (error) {
+            logData.error = error.message;
+            logData.stack = error.stack;
+            logData.name = error.name;
         }
+        winstonLogger.error(message, logData);
     },
 
     debug: (message, meta = {}) => {
-        if (!isProduction) {
-            console.log(`[DEBUG] ${message}`, meta);
-        }
+        winstonLogger.debug(message, meta);
     },
 
     // Request logging middleware
     requestLogger: (req, res, next) => {
         const start = Date.now();
+
+        // Log request start (debug only)
+        if (!isProduction) {
+            winstonLogger.debug(`Incoming ${req.method} ${req.originalUrl}`);
+        }
 
         res.on('finish', () => {
             const duration = Date.now() - start;
@@ -70,10 +78,14 @@ const logger = {
                 userAgent: req.get('User-Agent')
             };
 
-            if (res.statusCode >= 400) {
-                logger.warn('Request failed', logData);
-            } else if (isProduction) {
-                logger.info('Request completed', logData);
+            const msg = `HTTP ${req.method} ${req.originalUrl} - ${res.statusCode}`;
+
+            if (res.statusCode >= 500) {
+                winstonLogger.error(msg, logData);
+            } else if (res.statusCode >= 400) {
+                winstonLogger.warn(msg, logData);
+            } else {
+                winstonLogger.info(msg, logData);
             }
         });
 

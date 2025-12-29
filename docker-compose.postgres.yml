@@ -26,13 +26,14 @@ services:
       start_period: 40s
 
   postgres:
-    image: postgres:16-alpine
+    image: pgvector/pgvector:pg16
     environment:
       POSTGRES_USER: consultify
       POSTGRES_PASSWORD: consultify
       POSTGRES_DB: consultify
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./server/migrations/init-pgvector.sql:/docker-entrypoint-initdb.d/01-init-pgvector.sql
     ports:
       - "5432:5432"
     restart: unless-stopped

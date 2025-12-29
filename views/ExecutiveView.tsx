@@ -152,7 +152,7 @@ export const ExecutiveView: React.FC = () => {
     // Loading State
     if (loading) {
         return (
-            <SplitLayout title="Executive View" onSendMessage={handleAiChat}>
+            <SplitLayout title="Executive View">
                 <div className="flex h-full items-center justify-center">
                     <div className="animate-pulse text-slate-400">Loading executive summary...</div>
                 </div>
@@ -163,7 +163,7 @@ export const ExecutiveView: React.FC = () => {
     // No Project Selected
     if (!currentProjectId) {
         return (
-            <SplitLayout title="Executive View" onSendMessage={handleAiChat}>
+            <SplitLayout title="Executive View">
                 <div className="flex h-full items-center justify-center">
                     <div className="text-center">
                         <Eye size={48} className="mx-auto mb-4 text-slate-400" />

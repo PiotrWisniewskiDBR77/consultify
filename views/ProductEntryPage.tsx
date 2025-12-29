@@ -1,9 +1,12 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EntryTopBar } from '../components/Landing/EntryTopBar';
 import { HeroSection } from '../components/Landing/HeroSection';
+import { TrustStrip } from '../components/Landing/TrustStrip';
 import { InfoSections } from '../components/Landing/InfoSections';
 import { EntryFooter } from '../components/Landing/EntryFooter';
+import { DemoModeModal } from '../components/Landing/DemoModeModal';
+import { DemoLoadingOverlay } from '../components/demo/DemoLoadingOverlay';
 import { useAppStore } from '../store/useAppStore';
 import { SessionMode, AppView, AuthStep } from '../types';
 import { Api } from '../services/api';
@@ -18,42 +21,90 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
     onLoginClick
 }) => {
     const { i18n } = useTranslation();
-    const { currentUser, setAuthInitialStep, setCurrentView, setSessionMode } = useAppStore();
+    const { currentUser, setAuthInitialStep, setCurrentView, setSessionMode, setCurrentUser } = useAppStore();
+    
+    // Demo Modal State (only for Trial now)
+    const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
+    const [demoModalMode, setDemoModalMode] = useState<'demo' | 'trial'>('trial');
+    
+    // Instant Demo Loading State
+    const [isLoadingDemo, setIsLoadingDemo] = useState(false);
+    const [demoReady, setDemoReady] = useState(false);
 
     // Reset scroll on mount
     useEffect(() => {
         window.scrollTo(0, 0);
     }, []);
 
-    const handleTrialRedirect = () => {
-        if (!currentUser) {
-            setSessionMode(SessionMode.FULL);
-            setAuthInitialStep(AuthStep.REGISTER);
-            setCurrentView(AppView.AUTH);
-            window.history.pushState({}, '', '/auth/register?mode=trial');
-        } else {
-            // Logged in logic
-            // Check if user has workspace (this depends on the store/user structure)
-            // For now, following the spec's state machine logic
-            if (currentUser.hasWorkspace) {
-                setCurrentView(AppView.DASHBOARD); // Or /workspace/home
-            } else {
-                setCurrentView(AppView.ONBOARDING_WIZARD);
-            }
+    // Handle instant demo start (no modal)
+    const startInstantDemo = useCallback(async () => {
+        if (isLoadingDemo) return;
+        
+        setIsLoadingDemo(true);
+        
+        try {
+            console.log('[ProductEntryPage] Starting instant demo...');
+            const demoUser = await Api.demoLogin();
+            console.log('[ProductEntryPage] Demo login successful:', demoUser);
+            
+            // Set user in store with demo flag
+            setCurrentUser({
+                ...demoUser,
+                hasWorkspace: true
+            } as any);
+            
+            // Mark demo as ready - loading overlay will transition
+            setDemoReady(true);
+        } catch (error) {
+            console.error('[ProductEntryPage] Demo login failed:', error);
+            setIsLoadingDemo(false);
+            // Fallback to modal on error
+            setDemoModalMode('demo');
+            setIsDemoModalOpen(true);
+        }
+    }, [isLoadingDemo, setCurrentUser]);
+
+    // Handle loading overlay completion
+    const handleLoadingComplete = useCallback(() => {
+        if (demoReady) {
+            setIsLoadingDemo(false);
+            setSessionMode(SessionMode.DEMO);
+            setCurrentView(AppView.DASHBOARD);
+        }
+    }, [demoReady, setSessionMode, setCurrentView]);
+
+    // Handle Demo Modal Start (for trial flow)
+    const handleDemoStart = async () => {
+        try {
+            console.log('[ProductEntryPage] Starting demo from modal...');
+            const demoUser = await Api.demoLogin();
+            console.log('[ProductEntryPage] Demo login successful:', demoUser);
+            
+            // Set user in store with demo flag
+            setCurrentUser({
+                ...demoUser,
+                hasWorkspace: true
+            } as any);
+            
+            // Close modal and navigate to dashboard
+            setIsDemoModalOpen(false);
+            setSessionMode(SessionMode.DEMO);
+            setCurrentView(AppView.DASHBOARD);
+        } catch (error) {
+            console.error('[ProductEntryPage] Demo login failed:', error);
+            throw error;
         }
     };
 
-    const handleDemoRedirect = async () => {
-        // Pass current UI language to demo API
-        const currentLanguage = i18n.language;
-        try {
-            await Api.startDemo(currentLanguage);
-            onStartSession(SessionMode.DEMO);
-        } catch (error) {
-            console.error('[ProductEntryPage] Failed to start demo:', error);
-            // Fallback to basic demo mode
-            onStartSession(SessionMode.DEMO);
-        }
+    const handleTrialRedirect = () => {
+        // Show demo modal for trial (explains non-DBR77 users go to demo)
+        setDemoModalMode('trial');
+        setIsDemoModalOpen(true);
+    };
+
+    const handleDemoRedirect = () => {
+        // INSTANT DEMO - no modal, direct loading experience
+        startInstantDemo();
     };
 
     const handleExpertRedirect = () => {
@@ -62,7 +113,7 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
     };
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] dark:bg-navy-950 transition-colors duration-500 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[#F8FAFC] dark:bg-navy-950 transition-colors duration-500 overflow-y-auto overflow-x-hidden">
             {/* Advanced Background Effects */}
             <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
                 <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-purple-600/5 dark:bg-purple-600/15 rounded-full blur-[120px]" />
@@ -92,10 +143,26 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
                     onExpertClick={handleExpertRedirect}
                 />
 
+                <TrustStrip />
+
                 <InfoSections />
             </main>
 
             <EntryFooter />
+
+            {/* Demo Mode Modal (for Trial flow) */}
+            <DemoModeModal
+                isOpen={isDemoModalOpen}
+                onClose={() => setIsDemoModalOpen(false)}
+                onStartDemo={handleDemoStart}
+                mode={demoModalMode}
+            />
+
+            {/* Instant Demo Loading Overlay */}
+            <DemoLoadingOverlay
+                isVisible={isLoadingDemo}
+                onComplete={handleLoadingComplete}
+            />
         </div>
     );
 };

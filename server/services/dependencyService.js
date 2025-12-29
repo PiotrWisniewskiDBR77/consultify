@@ -55,8 +55,8 @@ const DependencyService = {
         return new Promise((resolve, reject) => {
             const sql = `
                 SELECT d.*, 
-                       i1.name as from_name, i1.status as from_status,
-                       i2.name as to_name, i2.status as to_status
+                       i1.title as from_name, i1.status as from_status,
+                       i2.title as to_name, i2.status as to_status
                 FROM initiative_dependencies d
                 LEFT JOIN initiatives i1 ON d.from_initiative_id = i1.id
                 LEFT JOIN initiatives i2 ON d.to_initiative_id = i2.id
@@ -77,8 +77,8 @@ const DependencyService = {
         return new Promise((resolve, reject) => {
             const sql = `
                 SELECT d.*, 
-                       i1.name as from_name, i1.status as from_status,
-                       i2.name as to_name, i2.status as to_status
+                       i1.title as from_name, i1.status as from_status,
+                       i2.title as to_name, i2.status as to_status
                 FROM initiative_dependencies d
                 JOIN initiatives i1 ON d.from_initiative_id = i1.id
                 JOIN initiatives i2 ON d.to_initiative_id = i2.id
@@ -159,12 +159,12 @@ const DependencyService = {
     canStart: async (initiativeId) => {
         return new Promise((resolve, reject) => {
             const sql = `
-                SELECT d.id, i.status, i.name
+                SELECT d.id, i.status, i.title as name
                 FROM initiative_dependencies d
                 JOIN initiatives i ON d.from_initiative_id = i.id
                 WHERE d.to_initiative_id = ? 
                   AND d.type = 'FINISH_TO_START'
-                  AND i.status NOT IN ('COMPLETED', 'CANCELLED')
+                  AND i.status NOT IN ('DONE', 'CANCELLED')
             `;
 
             deps.db.all(sql, [initiativeId], (err, rows) => {

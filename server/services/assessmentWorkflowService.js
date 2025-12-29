@@ -4,9 +4,9 @@
  * Supports multi-stakeholder reviews, approval gates, and versioning
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const AssessmentAuditLogger = require('../utils/assessmentAuditLogger');
+const defaultDb = require('../database');
+const { v4: defaultUuidv4 } = require('uuid');
+const defaultAuditLogger = require('../utils/assessmentAuditLogger');
 
 // Workflow States
 const WORKFLOW_STATES = {
@@ -22,7 +22,7 @@ const WORKFLOW_STATES = {
 const REVIEW_STATUS = {
     PENDING: 'PENDING',
     IN_PROGRESS: 'IN_PROGRESS',
-    COMPLETED: 'COMPLETED',
+    DONE: 'DONE',
     SKIPPED: 'SKIPPED'
 };
 
@@ -43,24 +43,40 @@ const WORKFLOW_CONFIG = {
 };
 
 class AssessmentWorkflowService {
+    constructor() {
+        this.db = defaultDb;
+        this.uuidv4 = defaultUuidv4;
+        this.auditLogger = defaultAuditLogger;
+    }
+
+    /**
+     * Inject dependencies for testing
+     * @param {Object} deps 
+     */
+    setDependencies(deps) {
+        if (deps.db) this.db = deps.db;
+        if (deps.uuidv4) this.uuidv4 = deps.uuidv4;
+        if (deps.auditLogger) this.auditLogger = deps.auditLogger;
+    }
+
     /**
      * Initialize assessment workflow
      */
-    static async initializeWorkflow(assessmentId, projectId, organizationId, createdBy) {
-        const workflowId = uuidv4();
-        
+    async initializeWorkflow(assessmentId, projectId, organizationId, createdBy) {
+        const workflowId = this.uuidv4();
+
         const sql = `
             INSERT INTO assessment_workflows (
                 id, assessment_id, project_id, organization_id,
                 status, current_version, created_by, created_at, updated_at
             ) VALUES (?, ?, ?, ?, ?, 1, ?, datetime('now'), datetime('now'))
         `;
-        
+
         return new Promise((resolve, reject) => {
-            db.run(sql, [
+            this.db.run(sql, [
                 workflowId, assessmentId, projectId, organizationId,
                 WORKFLOW_STATES.DRAFT, createdBy
-            ], function(err) {
+            ], (err) => {
                 if (err) return reject(err);
                 resolve({
                     workflowId,
@@ -75,28 +91,28 @@ class AssessmentWorkflowService {
     /**
      * Get workflow status for an assessment
      */
-    static async getWorkflowStatus(assessmentId) {
+    async getWorkflowStatus(assessmentId) {
         const sql = `
             SELECT 
                 w.*,
-                (SELECT COUNT(*) FROM assessment_reviews r WHERE r.workflow_id = w.id AND r.status = 'COMPLETED') as completed_reviews,
+                (SELECT COUNT(*) FROM assessment_reviews r WHERE r.workflow_id = w.id AND r.status = 'DONE') as completed_reviews,
                 (SELECT COUNT(*) FROM assessment_reviews r WHERE r.workflow_id = w.id) as total_reviews
             FROM assessment_workflows w
             WHERE w.assessment_id = ?
             ORDER BY w.current_version DESC
             LIMIT 1
         `;
-        
+
         return new Promise((resolve, reject) => {
-            db.get(sql, [assessmentId], (err, row) => {
+            this.db.get(sql, [assessmentId], (err, row) => {
                 if (err) return reject(err);
                 if (!row) return resolve(null);
-                
+
                 resolve({
                     ...row,
                     canSubmitForReview: row.status === WORKFLOW_STATES.DRAFT,
                     canApprove: row.status === WORKFLOW_STATES.AWAITING_APPROVAL,
-                    reviewProgress: row.total_reviews > 0 
+                    reviewProgress: row.total_reviews > 0
                         ? Math.round((row.completed_reviews / row.total_reviews) * 100)
                         : 0
                 });
@@ -107,7 +123,7 @@ class AssessmentWorkflowService {
     /**
      * Submit assessment for stakeholder review
      */
-    static async submitForReview(assessmentId, submittedBy, reviewers = []) {
+    async submitForReview(assessmentId, submittedBy, reviewers = []) {
         // Validate current state
         const workflow = await this.getWorkflowStatus(assessmentId);
         if (!workflow) {
@@ -126,16 +142,16 @@ class AssessmentWorkflowService {
         // Create review requests for each reviewer
         const reviewIds = [];
         for (const reviewer of reviewers) {
-            const reviewId = uuidv4();
+            const reviewId = this.uuidv4();
             await new Promise((resolve, reject) => {
                 // Use SLA from config (48 hours by default)
                 const slaHours = WORKFLOW_CONFIG.reviewSlaHours;
-                db.run(`
+                this.db.run(`
                     INSERT INTO assessment_reviews (
                         id, workflow_id, reviewer_id, reviewer_role,
                         status, requested_at, due_date
                     ) VALUES (?, ?, ?, ?, 'PENDING', datetime('now'), datetime('now', '+${slaHours} hours'))
-                `, [reviewId, workflow.id, reviewer.userId, reviewer.role], function(err) {
+                `, [reviewId, workflow.id, reviewer.userId, reviewer.role], (err) => {
                     if (err) return reject(err);
                     reviewIds.push(reviewId);
                     resolve();
@@ -145,11 +161,11 @@ class AssessmentWorkflowService {
 
         // Update workflow status
         await new Promise((resolve, reject) => {
-            db.run(`
+            this.db.run(`
                 UPDATE assessment_workflows 
                 SET status = ?, submitted_at = datetime('now'), submitted_by = ?, updated_at = datetime('now')
                 WHERE id = ?
-            `, [WORKFLOW_STATES.IN_REVIEW, submittedBy, workflow.id], function(err) {
+            `, [WORKFLOW_STATES.IN_REVIEW, submittedBy, workflow.id], (err) => {
                 if (err) return reject(err);
                 resolve();
             });
@@ -157,7 +173,7 @@ class AssessmentWorkflowService {
 
         // Get assessment name for notification
         const assessment = await new Promise((resolve, reject) => {
-            db.get('SELECT name, project_id FROM assessments WHERE id = ?', [assessmentId], (err, row) => {
+            this.db.get('SELECT name, project_id FROM assessments WHERE id = ?', [assessmentId], (err, row) => {
                 if (err) return reject(err);
                 resolve(row);
             });
@@ -165,7 +181,7 @@ class AssessmentWorkflowService {
 
         // Get submitter name
         const submitter = await new Promise((resolve, reject) => {
-            db.get('SELECT first_name, last_name FROM users WHERE id = ?', [submittedBy], (err, row) => {
+            this.db.get('SELECT first_name, last_name FROM users WHERE id = ?', [submittedBy], (err, row) => {
                 if (err) return reject(err);
                 resolve(row);
             });
@@ -174,16 +190,17 @@ class AssessmentWorkflowService {
         // Send notifications to reviewers
         const submitterName = submitter ? `${submitter.first_name} ${submitter.last_name}` : 'Someone';
         const assessmentName = assessment?.name || 'Assessment';
-        
+
         for (const reviewer of reviewers) {
             try {
+                const notifId = this.uuidv4();
                 await new Promise((resolve, reject) => {
-                    db.run(`
+                    this.db.run(`
                         INSERT INTO notifications (
                             id, user_id, type, title, message, data, created_at
                         ) VALUES (?, ?, 'REVIEW_REQUEST', ?, ?, ?, datetime('now'))
                     `, [
-                        uuidv4(),
+                        notifId,
                         reviewer.userId,
                         '📋 Review Request',
                         `${submitterName} requested your review on "${assessmentName}"`,
@@ -193,7 +210,7 @@ class AssessmentWorkflowService {
                             submittedBy,
                             assessmentName
                         })
-                    ], function(err) {
+                    ], (err) => {
                         if (err) {
                             console.warn('[Notification] Failed to create notification:', err.message);
                             // Don't fail the whole operation if notification fails
@@ -218,12 +235,12 @@ class AssessmentWorkflowService {
     /**
      * Submit stakeholder review
      */
-    static async submitReview(reviewId, reviewerId, reviewData) {
+    async submitReview(reviewId, reviewerId, reviewData) {
         const { rating, comments, axisComments = {}, recommendation } = reviewData;
-        
+
         // Validate reviewer
         const review = await new Promise((resolve, reject) => {
-            db.get(`SELECT * FROM assessment_reviews WHERE id = ? AND reviewer_id = ?`, 
+            this.db.get(`SELECT * FROM assessment_reviews WHERE id = ? AND reviewer_id = ?`,
                 [reviewId, reviewerId], (err, row) => {
                     if (err) return reject(err);
                     resolve(row);
@@ -236,16 +253,16 @@ class AssessmentWorkflowService {
 
         // Save review
         await new Promise((resolve, reject) => {
-            db.run(`
+            this.db.run(`
                 UPDATE assessment_reviews 
-                SET status = 'COMPLETED',
+                SET status = ?,
                     rating = ?,
                     comments = ?,
                     axis_comments = ?,
                     recommendation = ?,
                     completed_at = datetime('now')
                 WHERE id = ?
-            `, [rating, comments, JSON.stringify(axisComments), recommendation, reviewId], function(err) {
+            `, [REVIEW_STATUS.DONE, rating, comments, JSON.stringify(axisComments), recommendation, reviewId], (err) => {
                 if (err) return reject(err);
                 resolve();
             });
@@ -256,7 +273,7 @@ class AssessmentWorkflowService {
 
         return {
             reviewId,
-            status: REVIEW_STATUS.COMPLETED,
+            status: REVIEW_STATUS.DONE,
             recommendation
         };
     }
@@ -264,9 +281,9 @@ class AssessmentWorkflowService {
     /**
      * Add comment to specific axis during review
      */
-    static async addAxisComment(assessmentId, axisId, userId, comment, parentCommentId = null) {
-        const commentId = uuidv4();
-        
+    async addAxisComment(assessmentId, axisId, userId, comment, parentCommentId = null) {
+        const commentId = this.uuidv4();
+
         const sql = `
             INSERT INTO assessment_axis_comments (
                 id, assessment_id, axis_id, user_id,
@@ -275,7 +292,7 @@ class AssessmentWorkflowService {
         `;
 
         return new Promise((resolve, reject) => {
-            db.run(sql, [commentId, assessmentId, axisId, userId, comment, parentCommentId], function(err) {
+            this.db.run(sql, [commentId, assessmentId, axisId, userId, comment, parentCommentId], (err) => {
                 if (err) return reject(err);
                 resolve({ commentId, axisId, comment });
             });
@@ -285,7 +302,7 @@ class AssessmentWorkflowService {
     /**
      * Get all comments for an assessment axis
      */
-    static async getAxisComments(assessmentId, axisId = null) {
+    async getAxisComments(assessmentId, axisId = null) {
         let sql = `
             SELECT c.*, u.name as author_name, u.email as author_email
             FROM assessment_axis_comments c
@@ -302,9 +319,9 @@ class AssessmentWorkflowService {
         sql += ` ORDER BY c.created_at ASC`;
 
         return new Promise((resolve, reject) => {
-            db.all(sql, params, (err, rows) => {
+            this.db.all(sql, params, (err, rows) => {
                 if (err) return reject(err);
-                
+
                 // Build comment tree
                 const comments = this._buildCommentTree(rows || []);
                 resolve(comments);
@@ -315,13 +332,13 @@ class AssessmentWorkflowService {
     /**
      * Approve assessment (final approval gate)
      */
-    static async approveAssessment(assessmentId, approverId, approvalNotes = '') {
+    async approveAssessment(assessmentId, approverId, approvalNotes = '') {
         const workflow = await this.getWorkflowStatus(assessmentId);
-        
+
         if (!workflow) {
             throw new Error('Workflow not found');
         }
-        
+
         if (workflow.status !== WORKFLOW_STATES.AWAITING_APPROVAL) {
             throw new Error(`Cannot approve from state: ${workflow.status}. Must be in AWAITING_APPROVAL state.`);
         }
@@ -331,7 +348,7 @@ class AssessmentWorkflowService {
 
         // Update workflow to approved
         await new Promise((resolve, reject) => {
-            db.run(`
+            this.db.run(`
                 UPDATE assessment_workflows 
                 SET status = ?,
                     approved_by = ?,
@@ -339,7 +356,7 @@ class AssessmentWorkflowService {
                     approval_notes = ?,
                     updated_at = datetime('now')
                 WHERE id = ?
-            `, [WORKFLOW_STATES.APPROVED, approverId, approvalNotes, workflow.id], function(err) {
+            `, [WORKFLOW_STATES.APPROVED, approverId, approvalNotes, workflow.id], (err) => {
                 if (err) return reject(err);
                 resolve();
             });
@@ -347,11 +364,11 @@ class AssessmentWorkflowService {
 
         // Update assessment to mark as approved
         await new Promise((resolve, reject) => {
-            db.run(`
+            this.db.run(`
                 UPDATE maturity_assessments 
                 SET is_approved = 1, approved_at = datetime('now'), approved_by = ?
                 WHERE id = ?
-            `, [approverId, assessmentId], function(err) {
+            `, [approverId, assessmentId], (err) => {
                 if (err) return reject(err);
                 resolve();
             });
@@ -368,16 +385,16 @@ class AssessmentWorkflowService {
     /**
      * Reject assessment (send back for revision)
      */
-    static async rejectAssessment(assessmentId, rejectorId, rejectionReason, axisIssues = {}) {
+    async rejectAssessment(assessmentId, rejectorId, rejectionReason, axisIssues = {}) {
         const workflow = await this.getWorkflowStatus(assessmentId);
-        
+
         if (!workflow) {
             throw new Error('Workflow not found');
         }
 
         // Update workflow to rejected
         await new Promise((resolve, reject) => {
-            db.run(`
+            this.db.run(`
                 UPDATE assessment_workflows 
                 SET status = ?,
                     rejected_by = ?,
@@ -387,12 +404,12 @@ class AssessmentWorkflowService {
                     updated_at = datetime('now')
                 WHERE id = ?
             `, [
-                WORKFLOW_STATES.REJECTED, 
-                rejectorId, 
-                rejectionReason, 
+                WORKFLOW_STATES.REJECTED,
+                rejectorId,
+                rejectionReason,
                 JSON.stringify(axisIssues),
                 workflow.id
-            ], function(err) {
+            ], (err) => {
                 if (err) return reject(err);
                 resolve();
             });
@@ -409,7 +426,7 @@ class AssessmentWorkflowService {
     /**
      * Get workflow history for an assessment
      */
-    static async getWorkflowHistory(assessmentId) {
+    async getWorkflowHistory(assessmentId) {
         const sql = `
             SELECT 
                 w.id, w.status, w.current_version,
@@ -427,7 +444,7 @@ class AssessmentWorkflowService {
         `;
 
         return new Promise((resolve, reject) => {
-            db.all(sql, [assessmentId], (err, rows) => {
+            this.db.all(sql, [assessmentId], (err, rows) => {
                 if (err) return reject(err);
                 resolve(rows || []);
             });
@@ -437,7 +454,7 @@ class AssessmentWorkflowService {
     /**
      * Get pending reviews for a user
      */
-    static async getPendingReviews(userId, organizationId) {
+    async getPendingReviews(userId, organizationId) {
         const sql = `
             SELECT 
                 r.*,
@@ -467,16 +484,16 @@ class AssessmentWorkflowService {
         `;
 
         return new Promise((resolve, reject) => {
-            db.all(sql, [userId, organizationId], (err, rows) => {
+            this.db.all(sql, [userId, organizationId], (err, rows) => {
                 if (err) return reject(err);
-                
+
                 // Transform rows to include isOverdue boolean
                 const reviews = (rows || []).map(row => ({
                     ...row,
                     isOverdue: row.is_overdue === 1,
                     hoursRemaining: row.hours_remaining
                 }));
-                
+
                 resolve(reviews);
             });
         });
@@ -485,7 +502,7 @@ class AssessmentWorkflowService {
     /**
      * Get assessment version history
      */
-    static async getVersionHistory(assessmentId) {
+    async getVersionHistory(assessmentId) {
         const sql = `
             SELECT 
                 v.*,
@@ -497,7 +514,7 @@ class AssessmentWorkflowService {
         `;
 
         return new Promise((resolve, reject) => {
-            db.all(sql, [assessmentId], (err, rows) => {
+            this.db.all(sql, [assessmentId], (err, rows) => {
                 if (err) return reject(err);
                 resolve(rows || []);
             });
@@ -507,9 +524,9 @@ class AssessmentWorkflowService {
     /**
      * Restore assessment to specific version
      */
-    static async restoreVersion(assessmentId, version, restoredBy) {
+    async restoreVersion(assessmentId, version, restoredBy) {
         const versionData = await new Promise((resolve, reject) => {
-            db.get(`SELECT * FROM assessment_versions WHERE assessment_id = ? AND version = ?`,
+            this.db.get(`SELECT * FROM assessment_versions WHERE assessment_id = ? AND version = ?`,
                 [assessmentId, version], (err, row) => {
                     if (err) return reject(err);
                     resolve(row);
@@ -530,11 +547,11 @@ class AssessmentWorkflowService {
         // Restore data
         const assessmentData = JSON.parse(versionData.assessment_data);
         await new Promise((resolve, reject) => {
-            db.run(`
+            this.db.run(`
                 UPDATE maturity_assessments
                 SET axis_scores = ?, overall_score = ?, updated_at = datetime('now')
                 WHERE id = ?
-            `, [JSON.stringify(assessmentData.axis_scores), assessmentData.overall_score, assessmentId], function(err) {
+            `, [JSON.stringify(assessmentData.axis_scores), assessmentData.overall_score, assessmentId], (err) => {
                 if (err) return reject(err);
                 resolve();
             });
@@ -542,11 +559,11 @@ class AssessmentWorkflowService {
 
         // Update workflow version
         await new Promise((resolve, reject) => {
-            db.run(`
+            this.db.run(`
                 UPDATE assessment_workflows
                 SET current_version = ?, status = 'DRAFT', updated_at = datetime('now')
                 WHERE assessment_id = ?
-            `, [newVersion, assessmentId], function(err) {
+            `, [newVersion, assessmentId], (err) => {
                 if (err) return reject(err);
                 resolve();
             });
@@ -565,9 +582,9 @@ class AssessmentWorkflowService {
     /**
      * Validate assessment completeness before submission
      */
-    static async _validateAssessmentCompleteness(assessmentId) {
+    async _validateAssessmentCompleteness(assessmentId) {
         const assessment = await new Promise((resolve, reject) => {
-            db.get(`SELECT * FROM maturity_assessments WHERE id = ?`, [assessmentId], (err, row) => {
+            this.db.get(`SELECT * FROM maturity_assessments WHERE id = ?`, [assessmentId], (err, row) => {
                 if (err) return reject(err);
                 resolve(row);
             });
@@ -600,9 +617,9 @@ class AssessmentWorkflowService {
     /**
      * Check if all reviews are complete and update workflow status
      */
-    static async _checkReviewCompletion(workflowId) {
+    async _checkReviewCompletion(workflowId) {
         const stats = await new Promise((resolve, reject) => {
-            db.get(`
+            this.db.get(`
                 SELECT 
                     COUNT(*) as total,
                     SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) as completed
@@ -617,11 +634,11 @@ class AssessmentWorkflowService {
         if (stats.total > 0 && stats.completed >= stats.total) {
             // All reviews complete - move to awaiting approval
             await new Promise((resolve, reject) => {
-                db.run(`
+                this.db.run(`
                     UPDATE assessment_workflows
                     SET status = ?, updated_at = datetime('now')
                     WHERE id = ?
-                `, [WORKFLOW_STATES.AWAITING_APPROVAL, workflowId], function(err) {
+                `, [WORKFLOW_STATES.AWAITING_APPROVAL, workflowId], (err) => {
                     if (err) return reject(err);
                     resolve();
                 });
@@ -635,9 +652,9 @@ class AssessmentWorkflowService {
     /**
      * Create a version snapshot of the assessment
      */
-    static async _createVersionSnapshot(assessmentId, version) {
+    async _createVersionSnapshot(assessmentId, version) {
         const assessment = await new Promise((resolve, reject) => {
-            db.get(`SELECT * FROM maturity_assessments WHERE id = ?`, [assessmentId], (err, row) => {
+            this.db.get(`SELECT * FROM maturity_assessments WHERE id = ?`, [assessmentId], (err, row) => {
                 if (err) return reject(err);
                 resolve(row);
             });
@@ -645,7 +662,7 @@ class AssessmentWorkflowService {
 
         if (!assessment) return;
 
-        const versionId = uuidv4();
+        const versionId = this.uuidv4();
         const snapshotData = {
             axis_scores: JSON.parse(assessment.axis_scores || '{}'),
             overall_score: assessment.overall_score,
@@ -653,12 +670,12 @@ class AssessmentWorkflowService {
         };
 
         await new Promise((resolve, reject) => {
-            db.run(`
+            this.db.run(`
                 INSERT INTO assessment_versions (
                     id, assessment_id, version, assessment_data,
                     created_by, created_at
                 ) VALUES (?, ?, ?, ?, ?, datetime('now'))
-            `, [versionId, assessmentId, version, JSON.stringify(snapshotData), assessment.updated_by], function(err) {
+            `, [versionId, assessmentId, version, JSON.stringify(snapshotData), assessment.updated_by], (err) => {
                 if (err) return reject(err);
                 resolve();
             });
@@ -670,7 +687,7 @@ class AssessmentWorkflowService {
     /**
      * Build comment tree from flat list
      */
-    static _buildCommentTree(comments) {
+    _buildCommentTree(comments) {
         const commentMap = new Map();
         const roots = [];
 
@@ -698,11 +715,12 @@ class AssessmentWorkflowService {
     }
 }
 
-// Export
+// Export singleton instance and constants
+const serviceInstance = new AssessmentWorkflowService();
+
 module.exports = {
-    AssessmentWorkflowService,
+    AssessmentWorkflowService: serviceInstance,
     WORKFLOW_STATES,
     REVIEW_STATUS,
     WORKFLOW_CONFIG
 };
-

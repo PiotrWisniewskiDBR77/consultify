@@ -1,115 +1,209 @@
-// @vitest-environment node
-import { describe, it, expect, beforeAll } from 'vitest';
-import request from 'supertest';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-const app = require('../../../server/index.js');
-const db = require('../../../server/database.js');
-const { initTestDb } = require('../../helpers/dbHelper.cjs');
-
 /**
- * Level 2: Integration Tests - Billing Routes
- * Tests billing API endpoints
+ * Integration Tests for Billing Routes
+ * 
+ * Tests billing API endpoints:
+ * - Get invoices
+ * - Get invoice details
+ * - Pay invoice
+ * - Get currencies
+ * - Get exchange rates
  */
-describe('Integration Test: Billing Routes', () => {
-    let authToken;
-    const testId = Date.now();
-    const testOrgId = `billing-org-${testId}`;
-    const testUserId = `billing-user-${testId}`;
-    const testEmail = `billing-${testId}@test.com`;
+
+const request = require('supertest');
+const app = require('../../../server/index.js');
+const db = require('../../../server/database');
+const bcrypt = require('bcryptjs');
+const { v4: uuidv4 } = require('uuid');
+
+describe('Billing Routes Integration', () => {
+    let adminToken;
+    let testOrgId;
+    let testAdminId;
+    let testInvoiceId;
 
     beforeAll(async () => {
-        await db.initPromise;
+        // Wait for DB initialization
+        if (db.initPromise) {
+            await db.initPromise;
+        }
 
-        const bcrypt = require('bcryptjs');
-        const hash = bcrypt.hashSync('test123', 8);
+        // Create test organization
+        testOrgId = uuidv4();
+        await new Promise((resolve, reject) => {
+            db.run(
+                `INSERT INTO organizations (id, name, plan, status, organization_type) VALUES (?, ?, ?, ?, ?)`,
+                [testOrgId, 'Test Org', 'professional', 'active', 'PAID'],
+                (err) => err ? reject(err) : resolve()
+            );
+        });
 
-        await new Promise((resolve) => {
-            db.serialize(() => {
-                db.run(
-                    'INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)',
-                    [testOrgId, 'Billing Test Org', 'free', 'active']
-                );
-                db.run(
-                    'INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
-                    [testUserId, testOrgId, testEmail, hash, 'Test', 'ADMIN'],
-                    resolve
-                );
-            });
+        // Create test admin user
+        testAdminId = uuidv4();
+        const hashedPassword = await bcrypt.hash('password123', 10);
+        await new Promise((resolve, reject) => {
+            db.run(
+                `INSERT INTO users (id, organization_id, email, password_hash, name, role, created_at) 
+                 VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`,
+                [testAdminId, testOrgId, 'admin@test.com', hashedPassword, 'Admin User', 'client'],
+                (err) => err ? reject(err) : resolve()
+            );
+        });
+
+        // Create organization member with ADMIN role
+        await new Promise((resolve, reject) => {
+            db.run(
+                `INSERT INTO organization_members (id, organization_id, user_id, role, status) 
+                 VALUES (?, ?, ?, ?, ?)`,
+                [uuidv4(), testOrgId, testAdminId, 'ADMIN', 'active'],
+                (err) => err ? reject(err) : resolve()
+            );
         });
 
         // Login to get token
-        const loginRes = await request(app)
+        const loginResponse = await request(app)
             .post('/api/auth/login')
             .send({
-                email: testEmail,
-                password: 'test123',
+                email: 'admin@test.com',
+                password: 'password123'
             });
 
-        if (loginRes.body.token) {
-            authToken = loginRes.body.token;
+        adminToken = loginResponse.body.token;
+
+        // Create test invoice if InvoiceService exists
+        try {
+            const InvoiceService = require('../../../server/services/invoiceService');
+            const invoice = await InvoiceService.createInvoice(testOrgId, {
+                amount: 100.00,
+                currency: 'USD',
+                description: 'Test Invoice'
+            });
+            testInvoiceId = invoice.id;
+        } catch (err) {
+            // Invoice service might not exist, skip invoice tests
+            console.warn('InvoiceService not available, skipping invoice tests');
         }
     });
 
-    describe('GET /api/billing/plans', () => {
-        it('should return list of subscription plans', async () => {
-            const res = await request(app)
-                .get('/api/billing/plans')
-                .set('Authorization', `Bearer ${authToken}`);
-
-            expect(res.status).toBe(200);
-            expect(Array.isArray(res.body) || Array.isArray(res.body.plans)).toBe(true);
+    afterAll(async () => {
+        // Cleanup
+        if (testInvoiceId) {
+            await new Promise((resolve, reject) => {
+                db.run(`DELETE FROM invoices WHERE id = ?`, [testInvoiceId], (err) => err ? reject(err) : resolve());
+            });
+        }
+        await new Promise((resolve, reject) => {
+            db.run(`DELETE FROM organization_members WHERE user_id = ?`, [testAdminId], (err) => err ? reject(err) : resolve());
         });
-
-        it('should return plans without authentication', async () => {
-            const res = await request(app)
-                .get('/api/billing/plans');
-
-            expect(res.status).toBe(200);
-            expect(Array.isArray(res.body) || Array.isArray(res.body.plans)).toBe(true);
+        await new Promise((resolve, reject) => {
+            db.run(`DELETE FROM users WHERE id = ?`, [testAdminId], (err) => err ? reject(err) : resolve());
         });
-    });
-
-    describe('GET /api/billing/user-plans', () => {
-        it('should return user license plans', async () => {
-            const res = await request(app)
-                .get('/api/billing/user-plans')
-                .set('Authorization', `Bearer ${authToken}`);
-
-            expect(res.status).toBe(200);
-            expect(Array.isArray(res.body) || Array.isArray(res.body.plans)).toBe(true);
-        });
-    });
-
-    describe('GET /api/billing/usage', () => {
-        it('should return usage statistics', async () => {
-            if (!authToken) {
-                console.log('Skipping usage test - no auth token');
-                return;
-            }
-
-            const res = await request(app)
-                .get('/api/billing/usage')
-                .set('Authorization', `Bearer ${authToken}`);
-
-            expect([200, 401, 403]).toContain(res.status);
-            if (res.status === 200) expect(res.body).toBeDefined();
+        await new Promise((resolve, reject) => {
+            db.run(`DELETE FROM organizations WHERE id = ?`, [testOrgId], (err) => err ? reject(err) : resolve());
         });
     });
 
     describe('GET /api/billing/invoices', () => {
-        it('should return invoices list', async () => {
-            if (!authToken) {
-                console.log('Skipping invoices test - no auth token');
-                return;
+        it('should return invoices for admin user', async () => {
+            const response = await request(app)
+                .get('/api/billing/invoices')
+                .set('Authorization', `Bearer ${adminToken}`)
+                .set('X-Organization-Id', testOrgId);
+
+            expect(response.status).toBe(200);
+            expect(response.body).toHaveProperty('invoices');
+            expect(Array.isArray(response.body.invoices)).toBe(true);
+        });
+
+        it('should require authentication', async () => {
+            const response = await request(app)
+                .get('/api/billing/invoices');
+
+            expect(response.status).toBe(401);
+        });
+
+        it('should support pagination', async () => {
+            const response = await request(app)
+                .get('/api/billing/invoices?limit=10&offset=0')
+                .set('Authorization', `Bearer ${adminToken}`)
+                .set('X-Organization-Id', testOrgId);
+
+            expect(response.status).toBe(200);
+        });
+    });
+
+    describe('GET /api/billing/invoices/:id', () => {
+        it('should return invoice details for admin', async () => {
+            if (!testInvoiceId) {
+                return; // Skip if no invoice created
             }
 
-            const res = await request(app)
-                .get('/api/billing/invoices')
-                .set('Authorization', `Bearer ${authToken}`);
+            const response = await request(app)
+                .get(`/api/billing/invoices/${testInvoiceId}`)
+                .set('Authorization', `Bearer ${adminToken}`)
+                .set('X-Organization-Id', testOrgId);
 
-            expect([200, 401, 403, 404]).toContain(res.status);
+            expect(response.status).toBe(200);
+            expect(response.body).toHaveProperty('invoice');
+        });
+
+        it('should return 404 for non-existent invoice', async () => {
+            const response = await request(app)
+                .get(`/api/billing/invoices/${uuidv4()}`)
+                .set('Authorization', `Bearer ${adminToken}`)
+                .set('X-Organization-Id', testOrgId);
+
+            expect(response.status).toBe(404);
+        });
+
+        it('should require authentication', async () => {
+            const response = await request(app)
+                .get(`/api/billing/invoices/${testInvoiceId || uuidv4()}`);
+
+            expect(response.status).toBe(401);
+        });
+    });
+
+    describe('GET /api/billing/currencies', () => {
+        it('should return supported currencies', async () => {
+            const response = await request(app)
+                .get('/api/billing/currencies');
+
+            expect(response.status).toBe(200);
+            expect(response.body).toHaveProperty('currencies');
+            expect(Array.isArray(response.body.currencies)).toBe(true);
+        });
+
+        it('should not require authentication', async () => {
+            const response = await request(app)
+                .get('/api/billing/currencies');
+
+            expect(response.status).toBe(200);
+        });
+    });
+
+    describe('GET /api/billing/exchange-rate', () => {
+        it('should return exchange rate for currency pair', async () => {
+            const response = await request(app)
+                .get('/api/billing/exchange-rate?from=USD&to=EUR');
+
+            expect(response.status).toBe(200);
+            expect(response.body).toHaveProperty('from', 'USD');
+            expect(response.body).toHaveProperty('to', 'EUR');
+            expect(response.body).toHaveProperty('rate');
+        });
+
+        it('should require from and to parameters', async () => {
+            const response = await request(app)
+                .get('/api/billing/exchange-rate');
+
+            expect(response.status).toBe(400);
+        });
+
+        it('should require to parameter', async () => {
+            const response = await request(app)
+                .get('/api/billing/exchange-rate?from=USD');
+
+            expect(response.status).toBe(400);
         });
     });
 });

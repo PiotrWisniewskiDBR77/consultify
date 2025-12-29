@@ -21,8 +21,8 @@ const NarrativeService = {
         // Get weekly stats
         const weeklyStats = await new Promise((resolve, reject) => {
             db.get(`SELECT 
-                    (SELECT COUNT(*) FROM tasks WHERE project_id = ? AND status IN ('done', 'DONE') AND updated_at > datetime('now', '-7 days')) as tasksCompleted,
-                    (SELECT COUNT(*) FROM initiatives WHERE project_id = ? AND status = 'COMPLETED' AND updated_at > datetime('now', '-7 days')) as initiativesCompleted,
+                    (SELECT COUNT(*) FROM tasks WHERE project_id = ? AND status = 'DONE' AND updated_at > datetime('now', '-7 days')) as tasksCompleted,
+                    (SELECT COUNT(*) FROM initiatives WHERE project_id = ? AND status = 'DONE' AND updated_at > datetime('now', '-7 days')) as initiativesCompleted,
                     (SELECT COUNT(*) FROM decisions WHERE project_id = ? AND status != 'PENDING' AND decided_at > datetime('now', '-7 days')) as decisionsMade
                 `, [projectId, projectId, projectId], (err, row) => {
                 if (err) reject(err);
@@ -88,7 +88,7 @@ const NarrativeService = {
         const metrics = await new Promise((resolve, reject) => {
             db.get(`SELECT 
                     COUNT(*) as totalInitiatives,
-                    SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) as completed,
+                    SUM(CASE WHEN status = 'DONE' THEN 1 ELSE 0 END) as completed,
                     SUM(CASE WHEN status = 'BLOCKED' THEN 1 ELSE 0 END) as blocked
                     FROM initiatives WHERE project_id = ?`,
                 [projectId], (err, row) => {

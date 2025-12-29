@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     LayoutDashboard,
     Building2,
@@ -7,33 +7,82 @@ import {
     BookOpen,
     Settings,
     Shield,
-    FileText,
     LogOut,
     ChevronRight,
-    UserPlus,
     CreditCard,
-    TrendingUp,
     Pin,
     PanelLeftClose,
-    HardDrive
+    Key,
+    KeyRound,
+    Palette,
+    ShieldCheck,
+    FileCheck,
+    Receipt,
+    Lock,
+    Upload,
+    Layers
 } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
+import { Api } from '../services/api';
+import { AppView } from '../types';
 
+// Legacy type for backward compatibility - maps to AppView
 export type SuperAdminSection =
-    | 'overview'
+    | 'dashboard'
     | 'organizations'
     | 'users'
-    | 'access-requests'
-    | 'llm'
+    | 'billing'
+    | 'ai-config'
     | 'knowledge'
-    | 'plans'
-    | 'token-billing'
-    | 'revenue'
     | 'settings'
-    | 'storage'
-    | 'analytics'
-    | 'audit'
-    | 'database';
+    // Enterprise sections
+    | 'sso'
+    | 'security-policies'
+    | 'api-management'
+    | 'whitelabel'
+    | 'compliance'
+    | 'invoices'
+    | 'playbooks'
+    | 'bulk-operations';
+
+// Mapping between legacy sections and AppView
+export const sectionToAppView: Record<SuperAdminSection, AppView> = {
+    'dashboard': AppView.SUPERADMIN_DASHBOARD,
+    'organizations': AppView.SUPERADMIN_ORGANIZATIONS,
+    'users': AppView.SUPERADMIN_USERS,
+    'billing': AppView.SUPERADMIN_BILLING,
+    'ai-config': AppView.SUPERADMIN_AI_CONFIG,
+    'knowledge': AppView.SUPERADMIN_KNOWLEDGE,
+    'settings': AppView.SUPERADMIN_SETTINGS,
+    // Enterprise mappings
+    'sso': AppView.SUPERADMIN_SSO,
+    'security-policies': AppView.SUPERADMIN_SECURITY_POLICIES,
+    'api-management': AppView.SUPERADMIN_API_MANAGEMENT,
+    'whitelabel': AppView.SUPERADMIN_WHITELABEL,
+    'compliance': AppView.SUPERADMIN_COMPLIANCE,
+    'invoices': AppView.SUPERADMIN_INVOICES,
+    'playbooks': AppView.SUPERADMIN_PLAYBOOK_TEMPLATES,
+    'bulk-operations': AppView.SUPERADMIN_BULK_OPERATIONS,
+};
+
+export const appViewToSection: Record<string, SuperAdminSection> = {
+    [AppView.SUPERADMIN_DASHBOARD]: 'dashboard',
+    [AppView.SUPERADMIN_ORGANIZATIONS]: 'organizations',
+    [AppView.SUPERADMIN_USERS]: 'users',
+    [AppView.SUPERADMIN_BILLING]: 'billing',
+    [AppView.SUPERADMIN_AI_CONFIG]: 'ai-config',
+    [AppView.SUPERADMIN_KNOWLEDGE]: 'knowledge',
+    [AppView.SUPERADMIN_SETTINGS]: 'settings',
+    // Enterprise mappings
+    [AppView.SUPERADMIN_SSO]: 'sso',
+    [AppView.SUPERADMIN_SECURITY_POLICIES]: 'security-policies',
+    [AppView.SUPERADMIN_API_MANAGEMENT]: 'api-management',
+    [AppView.SUPERADMIN_WHITELABEL]: 'whitelabel',
+    [AppView.SUPERADMIN_COMPLIANCE]: 'compliance',
+    [AppView.SUPERADMIN_INVOICES]: 'invoices',
+    [AppView.SUPERADMIN_PLAYBOOK_TEMPLATES]: 'playbooks',
+    [AppView.SUPERADMIN_BULK_OPERATIONS]: 'bulk-operations',
+};
 
 interface SuperAdminSidebarProps {
     activeSection: SuperAdminSection;
@@ -42,21 +91,82 @@ interface SuperAdminSidebarProps {
     currentUserEmail: string;
 }
 
-const menuItems: { id: SuperAdminSection; label: string; icon: React.ReactNode }[] = [
-    { id: 'overview', label: 'System Overview', icon: <LayoutDashboard size={20} /> },
-    { id: 'organizations', label: 'Organizations', icon: <Building2 size={20} /> },
-    { id: 'users', label: 'All Users', icon: <Users size={20} /> },
-    { id: 'access-requests', label: 'Access Requests', icon: <UserPlus size={20} /> },
-    { id: 'plans', label: 'Subscription Plans', icon: <CreditCard size={20} /> },
-    { id: 'token-billing', label: 'Token Billing', icon: <CreditCard size={20} /> },
-    { id: 'revenue', label: 'Revenue', icon: <TrendingUp size={20} /> },
-    { id: 'llm', label: 'LLM Providers', icon: <Brain size={20} /> },
-    { id: 'knowledge', label: 'Knowledge Base', icon: <BookOpen size={20} /> },
-    { id: 'settings', label: 'System Settings', icon: <Settings size={20} /> },
-    { id: 'storage', label: 'Storage', icon: <HardDrive size={20} /> },
-    { id: 'analytics', label: 'AI Analytics', icon: <LayoutDashboard size={20} /> },
-    { id: 'audit', label: 'Audit Logs', icon: <FileText size={20} /> },
-    { id: 'database', label: 'Database Explorer', icon: <Settings size={20} /> },
+// Reusable menu button component
+const MenuButton: React.FC<{
+    item: MenuItem;
+    activeSection: SuperAdminSection;
+    showFull: boolean;
+    onSectionChange: (section: SuperAdminSection) => void;
+    pendingRequestsCount: number;
+}> = ({ item, activeSection, showFull, onSectionChange, pendingRequestsCount }) => (
+    <button
+        onClick={() => onSectionChange(item.id)}
+        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative ${activeSection === item.id
+            ? 'bg-gradient-to-r from-red-600/20 to-transparent text-white border-l-2 border-red-500'
+            : 'text-slate-400 hover:bg-white/5 hover:text-white'
+            }`}
+        title={!showFull ? item.label : undefined}
+    >
+        <span className={`shrink-0 relative ${activeSection === item.id ? 'text-red-400' : 'text-slate-500 group-hover:text-slate-300'}`}>
+            {item.icon}
+            {/* Pending requests badge for Organizations */}
+            {item.id === 'organizations' && pendingRequestsCount > 0 && !showFull && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 text-black text-[10px] font-bold rounded-full flex items-center justify-center">
+                    {pendingRequestsCount > 9 ? '9+' : pendingRequestsCount}
+                </span>
+            )}
+        </span>
+
+        <span className={`flex-1 text-left text-sm font-medium whitespace-nowrap overflow-hidden transition-all duration-300 ${showFull ? 'w-auto opacity-100' : 'w-0 opacity-0'
+            }`}>
+            {item.label}
+        </span>
+
+        {/* Pending requests badge (expanded) */}
+        {showFull && item.id === 'organizations' && pendingRequestsCount > 0 && (
+            <span className="bg-yellow-500 text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                {pendingRequestsCount}
+            </span>
+        )}
+
+        {showFull && activeSection === item.id && (
+            <ChevronRight size={14} className="text-red-400 ml-auto" />
+        )}
+    </button>
+);
+
+interface MenuItem {
+    id: SuperAdminSection;
+    viewId: AppView;
+    label: string;
+    icon: React.ReactNode;
+    highlight?: boolean;
+    category?: 'core' | 'security' | 'enterprise' | 'system';
+}
+
+const menuItems: MenuItem[] = [
+    // Core Management
+    { id: 'dashboard', viewId: AppView.SUPERADMIN_DASHBOARD, label: 'Dashboard', icon: <LayoutDashboard size={20} />, category: 'core' },
+    { id: 'organizations', viewId: AppView.SUPERADMIN_ORGANIZATIONS, label: 'Organizations', icon: <Building2 size={20} />, category: 'core' },
+    { id: 'users', viewId: AppView.SUPERADMIN_USERS, label: 'Users', icon: <Users size={20} />, category: 'core' },
+    { id: 'playbooks', viewId: AppView.SUPERADMIN_PLAYBOOK_TEMPLATES, label: 'Playbook Templates', icon: <Layers size={20} />, category: 'core' },
+
+    // Security & Access
+    { id: 'sso', viewId: AppView.SUPERADMIN_SSO, label: 'SSO Configuration', icon: <Key size={20} />, category: 'security' },
+    { id: 'security-policies', viewId: AppView.SUPERADMIN_SECURITY_POLICIES, label: 'Security Policies', icon: <ShieldCheck size={20} />, category: 'security' },
+    { id: 'api-management', viewId: AppView.SUPERADMIN_API_MANAGEMENT, label: 'API Management', icon: <KeyRound size={20} />, category: 'security' },
+
+    // Enterprise Features
+    { id: 'billing', viewId: AppView.SUPERADMIN_BILLING, label: 'Billing Center', icon: <CreditCard size={20} />, highlight: true, category: 'enterprise' },
+    { id: 'invoices', viewId: AppView.SUPERADMIN_INVOICES, label: 'Invoices', icon: <Receipt size={20} />, category: 'enterprise' },
+    { id: 'whitelabel', viewId: AppView.SUPERADMIN_WHITELABEL, label: 'White-label Studio', icon: <Palette size={20} />, category: 'enterprise' },
+    { id: 'compliance', viewId: AppView.SUPERADMIN_COMPLIANCE, label: 'Compliance Center', icon: <FileCheck size={20} />, category: 'enterprise' },
+    { id: 'bulk-operations', viewId: AppView.SUPERADMIN_BULK_OPERATIONS, label: 'Bulk Operations', icon: <Upload size={20} />, category: 'enterprise' },
+
+    // System
+    { id: 'ai-config', viewId: AppView.SUPERADMIN_AI_CONFIG, label: 'AI Configuration', icon: <Brain size={20} />, category: 'system' },
+    { id: 'knowledge', viewId: AppView.SUPERADMIN_KNOWLEDGE, label: 'Knowledge Base', icon: <BookOpen size={20} />, category: 'system' },
+    { id: 'settings', viewId: AppView.SUPERADMIN_SETTINGS, label: 'Settings', icon: <Settings size={20} />, category: 'system' },
 ];
 
 export const SuperAdminSidebar: React.FC<SuperAdminSidebarProps> = ({
@@ -67,6 +177,24 @@ export const SuperAdminSidebar: React.FC<SuperAdminSidebarProps> = ({
 }) => {
     const { isSidebarCollapsed, toggleSidebarCollapse } = useAppStore();
     const [isHovered, setIsHovered] = useState(false);
+    const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
+
+    // Fetch pending requests count for badge
+    useEffect(() => {
+        const fetchPendingCount = async () => {
+            try {
+                const requests = await Api.getAccessRequests();
+                const pending = requests.filter((r: any) => r.status === 'pending').length;
+                setPendingRequestsCount(pending);
+            } catch (err) {
+                // Silently fail - badge is optional
+            }
+        };
+        fetchPendingCount();
+        // Refresh every 60 seconds
+        const interval = setInterval(fetchPendingCount, 60000);
+        return () => clearInterval(interval);
+    }, []);
 
     // "Show Full" if Pinned (not collapsed) OR Hovered
     // If isSidebarCollapsed is true (unpinned), we only show full on hover.
@@ -111,35 +239,58 @@ export const SuperAdminSidebar: React.FC<SuperAdminSidebarProps> = ({
 
             {/* Navigation */}
             <nav className="flex-1 p-2 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                {/* Core Management */}
                 {showFull && (
-                    <div className="text-[10px] uppercase tracking-widest text-slate-600 font-semibold px-3 mb-3 fade-in">
+                    <div className="text-[10px] uppercase tracking-widest text-slate-600 font-semibold px-3 mb-2 mt-2 fade-in">
                         Management
                     </div>
                 )}
                 <ul className="space-y-1">
-                    {menuItems.map((item) => (
+                    {menuItems.filter(item => item.category === 'core').map((item) => (
                         <li key={item.id}>
-                            <button
-                                onClick={() => onSectionChange(item.id)}
-                                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative ${activeSection === item.id
-                                    ? 'bg-gradient-to-r from-red-600/20 to-transparent text-white border-l-2 border-red-500'
-                                    : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                                    }`}
-                                title={!showFull ? item.label : undefined}
-                            >
-                                <span className={`shrink-0 ${activeSection === item.id ? 'text-red-400' : 'text-slate-500 group-hover:text-slate-300'}`}>
-                                    {item.icon}
-                                </span>
+                            <MenuButton item={item} activeSection={activeSection} showFull={showFull} onSectionChange={onSectionChange} pendingRequestsCount={pendingRequestsCount} />
+                        </li>
+                    ))}
+                </ul>
 
-                                <span className={`flex-1 text-left text-sm font-medium whitespace-nowrap overflow-hidden transition-all duration-300 ${showFull ? 'w-auto opacity-100' : 'w-0 opacity-0'
-                                    }`}>
-                                    {item.label}
-                                </span>
+                {/* Security & Access */}
+                {showFull && (
+                    <div className="text-[10px] uppercase tracking-widest text-slate-600 font-semibold px-3 mb-2 mt-4 fade-in">
+                        Security & Access
+                    </div>
+                )}
+                <ul className="space-y-1 mt-1">
+                    {menuItems.filter(item => item.category === 'security').map((item) => (
+                        <li key={item.id}>
+                            <MenuButton item={item} activeSection={activeSection} showFull={showFull} onSectionChange={onSectionChange} pendingRequestsCount={0} />
+                        </li>
+                    ))}
+                </ul>
 
-                                {showFull && activeSection === item.id && (
-                                    <ChevronRight size={14} className="text-red-400 ml-auto" />
-                                )}
-                            </button>
+                {/* Enterprise Features */}
+                {showFull && (
+                    <div className="text-[10px] uppercase tracking-widest text-slate-600 font-semibold px-3 mb-2 mt-4 fade-in">
+                        Enterprise
+                    </div>
+                )}
+                <ul className="space-y-1 mt-1">
+                    {menuItems.filter(item => item.category === 'enterprise').map((item) => (
+                        <li key={item.id}>
+                            <MenuButton item={item} activeSection={activeSection} showFull={showFull} onSectionChange={onSectionChange} pendingRequestsCount={0} />
+                        </li>
+                    ))}
+                </ul>
+
+                {/* System */}
+                {showFull && (
+                    <div className="text-[10px] uppercase tracking-widest text-slate-600 font-semibold px-3 mb-2 mt-4 fade-in">
+                        System
+                    </div>
+                )}
+                <ul className="space-y-1 mt-1">
+                    {menuItems.filter(item => item.category === 'system').map((item) => (
+                        <li key={item.id}>
+                            <MenuButton item={item} activeSection={activeSection} showFull={showFull} onSectionChange={onSectionChange} pendingRequestsCount={0} />
                         </li>
                     ))}
                 </ul>

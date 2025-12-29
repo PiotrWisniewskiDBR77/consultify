@@ -470,18 +470,66 @@ A compliant Consultify implementation must satisfy:
 
 ---
 
+## 8. Work Dimensions System
+
+The Work Dimensions System implements organizational structure management aligned with PMO standards.
+
+### 8.1 Work Modes
+
+Organizations can configure their work mode based on complexity:
+
+| Mode | Description | ISO 21500 | PMBOK | PRINCE2 |
+|------|-------------|-----------|-------|---------|
+| SIMPLE | Single team, no divisions | 4.6 Resource | Team Domain | Organization Theme |
+| LOCATION_BASED | Multiple locations/units | 4.6.4 Resources | Team Domain | Organization Theme |
+| PROJECT_BASED | Project-centric work | 4.6.2 Project Team | Team Domain | Organization Theme |
+| FULL | Matrix organization | 4.6.2 + 4.6.4 | Team + Stakeholder | Organization Theme |
+
+### 8.2 PMO Role Definitions
+
+Project roles are aligned with PRINCE2 and PMBOK:
+
+| Level | Role Code | PRINCE2 | PMBOK | ISO 21500 |
+|-------|-----------|---------|-------|-----------|
+| 0 (Executive) | PROJECT_EXECUTIVE | Executive | Project Sponsor | 4.3.2 |
+| 0 (Executive) | SENIOR_USER | Senior User | Business Owner | 4.3.5 |
+| 0 (Executive) | SENIOR_SUPPLIER | Senior Supplier | Resource Manager | 4.6.2 |
+| 1 (Manager) | PROJECT_MANAGER | Project Manager | Project Manager | 4.3.3 |
+| 1 (Manager) | PMO_SUPPORT | Project Support | PMO Analyst | 4.3.6 |
+| 2 (Lead) | TECHNICAL_LEAD | Team Manager | Technical Lead | 4.6.3 |
+| 2 (Lead) | BUSINESS_ANALYST | Project Assurance | Business Analyst | 4.4.2 |
+| 2 (Lead) | CHANGE_AUTHORITY | Change Authority | CCB Member | 4.4.6 |
+| 3 (Member) | TEAM_MEMBER | Team Member | Team Member | 4.6.4 |
+| 3 (Member) | QUALITY_ASSURANCE | Project Assurance | Quality Analyst | 4.7.3 |
+| 4 (Stakeholder) | STAKEHOLDER | N/A | Stakeholder | 4.3.1 |
+
+### 8.3 Capability-Based Access Control
+
+Each PMO role grants specific capabilities with defined scope:
+
+- **assigned**: Only items assigned to the user
+- **project**: All items within the project
+- **all**: Cross-project access
+
+For full details, see: `docs/architecture/WORK_DIMENSIONS.md`
+
+---
+
 ## Document Control
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | 2024-12-24 | SCMS Team | Initial version from legacy |
 | 2.0 | 2024-12-26 | AI + ANTYGRACITY | Full compliance documentation with roles, RACI, workflow |
+| 3.0 | 2024-12-28 | AI + ANTYGRACITY | Added Work Dimensions System with PMO roles |
 
 ---
 
 *This document is the canonical source of truth for PMO standards compliance in Consultify.*
 *All development must align with this specification.*
 *Deviations require explicit approval and documentation update.*
+
+
 
 
 

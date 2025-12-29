@@ -30,8 +30,8 @@ describe('Service Test: Analytics', () => {
 
         it('calculates initiative statistics', () => {
             const initiatives: FullInitiative[] = [
-                { id: '1', title: 'Initiative 1', status: InitiativeStatus.COMPLETED, roi: 50 } as unknown as FullInitiative,
-                { id: '2', title: 'Initiative 2', status: InitiativeStatus.IN_EXECUTION, roi: 30 } as unknown as FullInitiative,
+                { id: '1', title: 'Initiative 1', status: InitiativeStatus.DONE, roi: 50 } as unknown as FullInitiative,
+                { id: '2', title: 'Initiative 2', status: InitiativeStatus.EXECUTING, roi: 30 } as unknown as FullInitiative,
                 { id: '3', title: 'Initiative 3', status: InitiativeStatus.PLANNING, roi: 20 } as unknown as FullInitiative,
             ];
 

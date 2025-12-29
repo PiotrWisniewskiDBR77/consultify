@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '../../types';
 import { Globe, Save, Info } from 'lucide-react';
+import { InfoButton } from '../shared/InfoButton';
 
 interface RegionalSettingsProps {
     currentUser: User;
@@ -31,7 +32,8 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({ currentUser,
     };
 
     return (
-        <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
+        <div className="max-w-4xl mx-auto space-y-8 animate-fade-in relative">
+            <InfoButton cardId="settings-regional" position="top-right" />
             <div>
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Regionalization</h1>
                 <p className="text-slate-500 dark:text-slate-400">Configure your timezone and measurement units.</p>

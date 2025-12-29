@@ -150,7 +150,7 @@ const StageGateService = {
                 if (err || !row) return resolve(false);
                 try {
                     const ctx = JSON.parse(row.context_data || '{}');
-                    resolve(validator(ctx[field]));
+                    resolve(!!validator(ctx[field]));
                 } catch { resolve(false); }
             });
         });
@@ -216,7 +216,7 @@ const StageGateService = {
 
     _checkAllInitiativesClosed: async (projectId) => {
         return new Promise((resolve) => {
-            db.get(`SELECT COUNT(*) as cnt FROM initiatives WHERE project_id = ? AND status NOT IN ('COMPLETED', 'CANCELLED')`,
+            db.get(`SELECT COUNT(*) as cnt FROM initiatives WHERE project_id = ? AND status NOT IN ('DONE', 'CANCELLED')`,
                 [projectId], (err, row) => {
                     resolve(row ? row.cnt === 0 : false);
                 });

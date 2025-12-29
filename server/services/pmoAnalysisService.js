@@ -11,7 +11,7 @@ const PMOAnalysisService = Object.assign({}, BaseService, {
      * Run full PMO analysis for a project
      * REFACTORED: Uses BaseService and parallel queries
      */
-    analyzeProject: async function(projectId) {
+    analyzeProject: async function (projectId) {
         try {
             const issues = [];
             const warnings = [];
@@ -82,16 +82,16 @@ const PMOAnalysisService = Object.assign({}, BaseService, {
                 });
             }
 
-        // 6. Generate recommendations
-        if (orphans.length > 0) {
-            recommendations.push('Assign owners to all initiatives before proceeding');
-        }
-        if (noTasks.length > 0) {
-            recommendations.push('Break down initiatives into executable tasks');
-        }
-        if (deadlocks.hasDeadlocks) {
-            recommendations.push('Review and resolve circular dependencies');
-        }
+            // 6. Generate recommendations
+            if (orphans.length > 0) {
+                recommendations.push('Assign owners to all initiatives before proceeding');
+            }
+            if (noTasks.length > 0) {
+                recommendations.push('Break down initiatives into executable tasks');
+            }
+            if (deadlocks.hasDeadlocks) {
+                recommendations.push('Review and resolve circular dependencies');
+            }
 
             // Calculate overall health
             const criticalCount = issues.filter(i => i.severity === 'CRITICAL').length;
@@ -117,8 +117,8 @@ const PMOAnalysisService = Object.assign({}, BaseService, {
      * Detect initiatives without owners
      * REFACTORED: Uses BaseService query helpers
      */
-    detectOrphanInitiatives: async function(projectId) {
-        const sql = `SELECT id, name FROM initiatives 
+    detectOrphanInitiatives: async function (projectId) {
+        const sql = `SELECT id, title as name FROM initiatives 
                     WHERE project_id = ? AND (owner_business_id IS NULL OR owner_business_id = '')`;
         return await this.queryAll(sql, [projectId]);
     },
@@ -127,9 +127,9 @@ const PMOAnalysisService = Object.assign({}, BaseService, {
      * Detect initiatives without tasks
      * REFACTORED: Uses BaseService query helpers
      */
-    detectInitiativesWithoutTasks: async function(projectId) {
+    detectInitiativesWithoutTasks: async function (projectId) {
         const sql = `
-            SELECT i.id, i.name 
+            SELECT i.id, i.title as name 
             FROM initiatives i
             LEFT JOIN tasks t ON t.initiative_id = i.id
             WHERE i.project_id = ?
@@ -143,12 +143,12 @@ const PMOAnalysisService = Object.assign({}, BaseService, {
      * Detect overloaded users (>10 active tasks)
      * REFACTORED: Uses BaseService query helpers
      */
-    detectOverloadedUsers: async function(projectId) {
+    detectOverloadedUsers: async function (projectId) {
         const sql = `
             SELECT t.assignee_id, u.first_name, u.last_name, COUNT(*) as task_count
             FROM tasks t
             JOIN users u ON t.assignee_id = u.id
-            WHERE t.project_id = ? AND t.status NOT IN ('done', 'DONE')
+            WHERE t.project_id = ? AND t.status != 'DONE'
             GROUP BY t.assignee_id
             HAVING COUNT(*) > 10
         `;
@@ -164,12 +164,12 @@ const PMOAnalysisService = Object.assign({}, BaseService, {
      * Detect stalled initiatives (no updates in 7+ days)
      * REFACTORED: Uses BaseService query helpers
      */
-    detectStalledInitiatives: async function(projectId) {
+    detectStalledInitiatives: async function (projectId) {
         const sql = `
-            SELECT id, name, status, updated_at
+            SELECT id, title as name, status, updated_at
             FROM initiatives
             WHERE project_id = ? 
-              AND status IN ('IN_EXECUTION', 'APPROVED')
+              AND status IN ('EXECUTING', 'APPROVED')
               AND updated_at < datetime('now', '-7 days')
         `;
         return await this.queryAll(sql, [projectId]);
@@ -179,7 +179,7 @@ const PMOAnalysisService = Object.assign({}, BaseService, {
      * Explain why something is blocked
      * REFACTORED: Uses BaseService query helpers and parallel queries
      */
-    explainBlocker: async function(objectType, objectId) {
+    explainBlocker: async function (objectType, objectId) {
         try {
             const reasons = [];
 

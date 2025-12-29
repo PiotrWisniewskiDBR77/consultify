@@ -17,7 +17,7 @@ const MetricsCollector = require('./metricsCollector');
 const EVENT_TYPES = {
     VIEWED: 'VIEWED',
     STARTED: 'STARTED',
-    COMPLETED: 'COMPLETED',
+    DONE: 'DONE',
     DISMISSED: 'DISMISSED'
 };
 
@@ -57,7 +57,7 @@ const HelpService = {
                      WHERE e.playbook_key = p.key 
                      AND e.user_id = ? 
                      AND e.organization_id = ?
-                     AND e.event_type = 'COMPLETED') as completion_count,
+                     AND e.event_type = 'DONE') as completion_count,
                     (SELECT COUNT(*) FROM help_events e 
                      WHERE e.playbook_key = p.key 
                      AND e.user_id = ? 
@@ -87,7 +87,7 @@ const HelpService = {
                     // User progress
                     isCompleted: row.completion_count > 0,
                     isDismissed: row.dismiss_count > 0,
-                    status: row.completion_count > 0 ? 'COMPLETED' :
+                    status: row.completion_count > 0 ? 'DONE' :
                         row.dismiss_count > 0 ? 'DISMISSED' : 'AVAILABLE'
                 }));
 
@@ -179,7 +179,7 @@ const HelpService = {
      * @param {string} userId - User ID
      * @param {string} organizationId - Organization ID
      * @param {string} playbookKey - Playbook key
-     * @param {string} eventType - VIEWED | STARTED | COMPLETED | DISMISSED
+     * @param {string} eventType - VIEWED | STARTED | DONE | DISMISSED
      * @param {Object} context - Additional context (route, feature, etc.)
      * @returns {Promise<Object>} - Created event
      */
@@ -208,7 +208,7 @@ const HelpService = {
                                 source: MetricsCollector.SOURCE_TYPES.HELP,
                                 context: { playbookKey, ...context }
                             });
-                        } else if (eventType === EVENT_TYPES.COMPLETED) {
+                        } else if (eventType === EVENT_TYPES.DONE) {
                             await MetricsCollector.recordEvent(MetricsCollector.EVENT_TYPES.HELP_COMPLETED, {
                                 userId,
                                 organizationId,
@@ -265,7 +265,7 @@ const HelpService = {
                         playbookKey,
                         isViewed: !!events.VIEWED,
                         isStarted: !!events.STARTED,
-                        isCompleted: !!events.COMPLETED,
+                        isCompleted: !!events.DONE,
                         isDismissed: !!events.DISMISSED,
                         events
                     });

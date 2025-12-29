@@ -19,8 +19,7 @@ const { mockDb } = vi.hoisted(() => ({
 
 vi.mock('../../../server/database', () => ({
     ...mockDb,
-    default: mockDb,
-    __esModule: true
+    default: mockDb
 }));
 
 // Mock uuid
@@ -33,6 +32,10 @@ import AttributionService from '../../../server/services/attributionService';
 describe('AttributionService', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        AttributionService.setDependencies({
+            db: mockDb,
+            uuidv4: vi.fn(() => 'test-attr-uuid-1234')
+        });
     });
 
     afterEach(() => {
@@ -52,7 +55,8 @@ describe('AttributionService', () => {
     });
 
     // CJS/ESM interop issue: database mock is not properly applied before import
-    describe.skip('recordAttribution - skipped due to CJS/ESM mock interop', () => {
+    // CJS/ESM interop issue: database mock is not properly applied before import
+    describe('recordAttribution', () => {
         it('should throw error for missing organizationId', async () => {
             await expect(AttributionService.recordAttribution({
                 sourceType: 'DEMO'
@@ -128,7 +132,8 @@ describe('AttributionService', () => {
     });
 
     // CJS/ESM interop issue
-    describe.skip('getOrganizationAttribution - skipped due to CJS/ESM mock interop', () => {
+    // CJS/ESM interop issue
+    describe('getOrganizationAttribution', () => {
         it('should return all attribution events for org', async () => {
             mockDb.all.mockImplementation((query, params, callback) => {
                 callback(null, [
@@ -181,7 +186,8 @@ describe('AttributionService', () => {
     });
 
     // CJS/ESM interop issue
-    describe.skip('getFirstAttribution - skipped due to CJS/ESM mock interop', () => {
+    // CJS/ESM interop issue
+    describe('getFirstAttribution', () => {
         it('should return first attribution event', async () => {
             mockDb.get.mockImplementation((query, params, callback) => {
                 callback(null, {
@@ -216,7 +222,8 @@ describe('AttributionService', () => {
     });
 
     // CJS/ESM interop issue
-    describe.skip('hasAttribution - skipped due to CJS/ESM mock interop', () => {
+    // CJS/ESM interop issue
+    describe('hasAttribution', () => {
         it('should return true if org has attribution', async () => {
             mockDb.get.mockImplementation((query, params, callback) => {
                 callback(null, { count: 2 });
@@ -237,7 +244,8 @@ describe('AttributionService', () => {
     });
 
     // CJS/ESM interop issue
-    describe.skip('exportAttribution - skipped due to CJS/ESM mock interop', () => {
+    // CJS/ESM interop issue
+    describe('exportAttribution', () => {
         it('should export with filters', async () => {
             mockDb.all.mockImplementation((query, params, callback) => {
                 callback(null, [
@@ -281,7 +289,8 @@ describe('AttributionService', () => {
     });
 
     // CJS/ESM interop issue
-    describe.skip('getPartnerSummary - skipped due to CJS/ESM mock interop', () => {
+    // CJS/ESM interop issue
+    describe('getPartnerSummary', () => {
         it('should return partner summary for settlements', async () => {
             mockDb.all.mockImplementation((query, params, callback) => {
                 callback(null, [

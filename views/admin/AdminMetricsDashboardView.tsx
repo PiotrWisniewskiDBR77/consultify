@@ -13,6 +13,7 @@ import {
     Mail
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { InfoButton } from '../../components/shared/InfoButton';
 
 export const AdminMetricsDashboardView: React.FC = () => {
     const [loading, setLoading] = useState(true);
@@ -58,7 +59,8 @@ export const AdminMetricsDashboardView: React.FC = () => {
     }
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 relative">
+            <InfoButton cardId="admin-metrics" position="top-right" />
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-navy-900/50 p-6 rounded-2xl border border-white/5 backdrop-blur-sm">
                 <div>

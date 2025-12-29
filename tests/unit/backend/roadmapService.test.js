@@ -232,7 +232,7 @@ describe('RoadmapService', () => {
                     status: 'ACTIVE',
                     initiative_id: 'init-1',
                     initiative_name: 'Initiative 1',
-                    initiative_status: 'IN_PROGRESS',
+                    initiative_status: 'EXECUTING',
                     priority: 'HIGH'
                 },
                 {
@@ -243,7 +243,7 @@ describe('RoadmapService', () => {
                     status: 'ACTIVE',
                     initiative_id: 'init-2',
                     initiative_name: 'Initiative 2',
-                    initiative_status: 'PLANNED',
+                    initiative_status: 'PLANNING',
                     priority: 'MEDIUM'
                 },
                 {
@@ -251,7 +251,7 @@ describe('RoadmapService', () => {
                     wave_name: 'Wave 2',
                     start_date: '2024-04-01',
                     end_date: '2024-06-30',
-                    status: 'PLANNED',
+                    status: 'PLANNING',
                     initiative_id: null,
                     initiative_name: null,
                     initiative_status: null,

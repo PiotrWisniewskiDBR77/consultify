@@ -9,6 +9,7 @@
 import React, { useState, useEffect } from 'react';
 import { useHelp, Playbook, PlaybookStep } from '../contexts/HelpContext';
 import { usePolicySnapshot } from '../contexts/AccessPolicyContext';
+import { useTranslation } from 'react-i18next';
 import { X, ChevronRight, CheckCircle, XCircle, BookOpen, Lightbulb, ArrowRight } from 'lucide-react';
 
 interface HelpPanelProps {
@@ -17,6 +18,7 @@ interface HelpPanelProps {
 }
 
 const HelpPanel: React.FC<HelpPanelProps> = ({ isOpen, onClose }) => {
+    const { t } = useTranslation();
     const { playbooks, loading, logEvent, getPlaybook } = useHelp();
     const { snapshot } = usePolicySnapshot();
     const [selectedPlaybook, setSelectedPlaybook] = useState<Playbook | null>(null);
@@ -69,9 +71,9 @@ const HelpPanel: React.FC<HelpPanelProps> = ({ isOpen, onClose }) => {
 
     // Get context badge text
     const getOrgTypeBadge = () => {
-        if (snapshot?.isDemo) return { text: 'Demo Mode', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' };
-        if (snapshot?.isTrial) return { text: `Trial (${snapshot.trialDaysLeft}d left)`, color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' };
-        if (snapshot?.isPaid) return { text: 'Paid', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' };
+        if (snapshot?.isDemo) return { text: t('demo.indicator'), color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' };
+        if (snapshot?.isTrial) return { text: `${t('auth.demoMode')} (${snapshot.trialDaysLeft}d ${t('step1.months')})`, color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' };
+        if (snapshot?.isPaid) return { text: t('demo.badge.getFullAccess'), color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' };
         return null;
     };
 
@@ -91,7 +93,7 @@ const HelpPanel: React.FC<HelpPanelProps> = ({ isOpen, onClose }) => {
                 <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
                     <div className="flex items-center gap-3">
                         <BookOpen className="w-5 h-5 text-blue-500" />
-                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Help & Training</h2>
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t('help.panel.header')}</h2>
                     </div>
                     <button
                         onClick={onClose}
@@ -123,11 +125,11 @@ const HelpPanel: React.FC<HelpPanelProps> = ({ isOpen, onClose }) => {
                                 onClick={() => setSelectedPlaybook(null)}
                                 className="text-sm text-blue-500 hover:underline flex items-center gap-1"
                             >
-                                ← Back to playbooks
+                                ← {t('help.panel.backToPlaybooks')}
                             </button>
 
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                                {selectedPlaybook.title}
+                                {t(selectedPlaybook.title)}
                             </h3>
 
                             {selectedPlaybook.steps && selectedPlaybook.steps.length > 0 && (
@@ -135,7 +137,7 @@ const HelpPanel: React.FC<HelpPanelProps> = ({ isOpen, onClose }) => {
                                     {/* Progress */}
                                     <div className="flex items-center gap-2 mb-3">
                                         <span className="text-xs text-gray-500">
-                                            Step {currentStep + 1} of {selectedPlaybook.steps.length}
+                                            {t('help.panel.stepProgress', { current: currentStep + 1, total: selectedPlaybook.steps.length })}
                                         </span>
                                         <div className="flex-1 h-1 bg-gray-200 dark:bg-gray-700 rounded-full">
                                             <div
@@ -148,16 +150,16 @@ const HelpPanel: React.FC<HelpPanelProps> = ({ isOpen, onClose }) => {
                                     {/* Current Step */}
                                     <div className="space-y-3">
                                         <h4 className="font-medium text-gray-900 dark:text-white">
-                                            {selectedPlaybook.steps[currentStep].title}
+                                            {t(selectedPlaybook.steps[currentStep].title)}
                                         </h4>
                                         <p className="text-sm text-gray-600 dark:text-gray-300">
-                                            {selectedPlaybook.steps[currentStep].contentMd}
+                                            {t(selectedPlaybook.steps[currentStep].contentMd)}
                                         </p>
 
                                         {/* Action Button */}
                                         {selectedPlaybook.steps[currentStep].actionType === 'CTA' && (
                                             <button className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium">
-                                                {selectedPlaybook.steps[currentStep].actionPayload?.label || 'Take Action'}
+                                                {t(selectedPlaybook.steps[currentStep].actionPayload?.label || 'help.panel.takeAction')}
                                             </button>
                                         )}
                                     </div>
@@ -169,13 +171,13 @@ const HelpPanel: React.FC<HelpPanelProps> = ({ isOpen, onClose }) => {
                                             disabled={currentStep === 0}
                                             className="text-sm text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
-                                            Previous
+                                            {t('help.panel.previous')}
                                         </button>
                                         <button
                                             onClick={handleNextStep}
                                             className="flex items-center gap-1 text-sm text-blue-500 hover:text-blue-600 font-medium"
                                         >
-                                            {currentStep === selectedPlaybook.steps.length - 1 ? 'Complete' : 'Next'}
+                                            {currentStep === selectedPlaybook.steps.length - 1 ? t('help.panel.complete') : t('help.panel.next')}
                                             <ArrowRight className="w-4 h-4" />
                                         </button>
                                     </div>
@@ -190,7 +192,7 @@ const HelpPanel: React.FC<HelpPanelProps> = ({ isOpen, onClose }) => {
                                 <div>
                                     <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 flex items-center gap-1">
                                         <Lightbulb className="w-4 h-4" />
-                                        Recommended for You
+                                        {t('help.panel.recommended')}
                                     </h3>
                                     <div className="space-y-2">
                                         {playbooks
@@ -212,7 +214,7 @@ const HelpPanel: React.FC<HelpPanelProps> = ({ isOpen, onClose }) => {
                             {playbooks.filter(p => !p.isRecommended && p.status === 'AVAILABLE').length > 0 && (
                                 <div>
                                     <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
-                                        More Help Topics
+                                        {t('help.panel.moreTopics')}
                                     </h3>
                                     <div className="space-y-2">
                                         {playbooks
@@ -234,7 +236,7 @@ const HelpPanel: React.FC<HelpPanelProps> = ({ isOpen, onClose }) => {
                             {playbooks.filter(p => p.status === 'COMPLETED').length > 0 && (
                                 <div>
                                     <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
-                                        Completed
+                                        {t('help.panel.completed')}
                                     </h3>
                                     <div className="space-y-2 opacity-60">
                                         {playbooks
@@ -276,6 +278,7 @@ interface PlaybookCardProps {
 }
 
 const PlaybookCard: React.FC<PlaybookCardProps> = ({ playbook, onClick, onDismiss, completed }) => {
+    const { t } = useTranslation();
     return (
         <div
             className={`group relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:border-blue-300 dark:hover:border-blue-600 transition-colors cursor-pointer ${completed ? 'bg-gray-50 dark:bg-gray-800/50' : ''}`}
@@ -286,17 +289,17 @@ const PlaybookCard: React.FC<PlaybookCardProps> = ({ playbook, onClick, onDismis
                     <div className="flex items-center gap-2">
                         {completed && <CheckCircle className="w-4 h-4 text-green-500" />}
                         <h4 className="font-medium text-gray-900 dark:text-white text-sm">
-                            {playbook.title}
+                            {t(playbook.title)}
                         </h4>
                     </div>
                     {playbook.description && (
                         <p className="text-xs text-gray-500 mt-1 line-clamp-2">
-                            {playbook.description}
+                            {t(playbook.description)}
                         </p>
                     )}
                     {playbook.recommendationReason && (
                         <p className="text-xs text-blue-500 mt-1">
-                            {playbook.recommendationReason}
+                            {t(playbook.recommendationReason)}
                         </p>
                     )}
                 </div>
@@ -311,7 +314,7 @@ const PlaybookCard: React.FC<PlaybookCardProps> = ({ playbook, onClick, onDismis
                         onDismiss();
                     }}
                     className="absolute top-2 right-8 opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-all"
-                    title="Dismiss"
+                    title={t('help.panel.dismiss')}
                 >
                     <XCircle className="w-4 h-4 text-gray-400 hover:text-red-500" />
                 </button>

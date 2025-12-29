@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { DynamicListItem } from '../views/ContextBuilder/shared/DynamicList';
+import { Api } from '../services/api';
 
 // Define the types for each module's data
 interface CompanyProfileState {
@@ -212,11 +213,36 @@ export const useContextBuilderStore = create<ContextBuilderState>()(
             generateAnalysis: async () => {
                 set({ isGenerating: true });
 
-                // Simulate AI Delay
-                await new Promise(resolve => setTimeout(resolve, 1500));
-
                 const state = get();
                 const { challenges, companyProfile, goals } = state;
+                
+                // Try to get AI-generated suggestions
+                let aiSuggestions: { risks?: any[]; strengths?: any[] } = {};
+                try {
+                    const contextSummary = `
+                        Industry: ${companyProfile.industry} / ${companyProfile.subIndustry}
+                        Growth Stage: ${companyProfile.growthStage}
+                        Employees: ${companyProfile.employees}
+                        Revenue: ${companyProfile.revenue}
+                        Constraints: ${companyProfile.activeConstraints.join(', ')}
+                        Change Appetite: ${companyProfile.workforceDynamics.changeAppetite}
+                        Top Priorities: ${goals.topPriorities.join(', ')}
+                        Challenges: ${challenges.declaredChallenges.map((c: any) => c.challenge).join(', ')}
+                    `;
+                    
+                    const response = await Api.chatWithAI(
+                        `Based on this company context, suggest 1-2 key risks and 1-2 strategic opportunities. Output as JSON: {"risks":[{"risk":"","why":"","severity":"High/Medium/Low","mitigation":""}], "strengths":[{"enabler":"","seen":"","leverage":""}]}. Context: ${contextSummary}`,
+                        [],
+                        'You are a strategic consultant. Output only valid JSON.'
+                    );
+                    
+                    const jsonMatch = response.match(/\{[\s\S]*\}/);
+                    if (jsonMatch) {
+                        aiSuggestions = JSON.parse(jsonMatch[0]);
+                    }
+                } catch (error) {
+                    console.warn('AI suggestions failed, using rule-based analysis:', error);
+                }
 
                 // 1. Generate Risks based on Challenges & Constraints
                 const newRisks: DynamicListItem[] = [];
@@ -254,15 +280,29 @@ export const useContextBuilderStore = create<ContextBuilderState>()(
                     newRisks.push({ id: 'r_def', risk: 'General Execution Risk', why: 'Standard transformation complexity.', severity: 'Medium', mitigation: 'Robust Governance.' });
                 }
 
-                // AI Suggested Risk
-                newRisks.push({
-                    id: 'r_ai_1',
-                    risk: 'Compliance Data Gap',
-                    why: 'Audit 2023 showed missing logs in legacy systems.',
-                    severity: 'High',
-                    mitigation: 'Implement immediate logging wrapper.',
-                    isAiSuggested: true
-                });
+                // AI Suggested Risks (from real AI if available)
+                if (aiSuggestions.risks && aiSuggestions.risks.length > 0) {
+                    aiSuggestions.risks.forEach((r: any, idx: number) => {
+                        newRisks.push({
+                            id: `r_ai_${idx + 1}`,
+                            risk: r.risk || 'AI Identified Risk',
+                            why: r.why || 'Identified by AI analysis',
+                            severity: r.severity || 'Medium',
+                            mitigation: r.mitigation || 'Review and address.',
+                            isAiSuggested: true
+                        });
+                    });
+                } else {
+                    // Fallback static suggestion if AI fails
+                    newRisks.push({
+                        id: 'r_ai_1',
+                        risk: 'Compliance Data Gap',
+                        why: 'Audit 2023 showed missing logs in legacy systems.',
+                        severity: 'High',
+                        mitigation: 'Implement immediate logging wrapper.',
+                        isAiSuggested: true
+                    });
+                }
 
                 // 2. Generate Strengths & Opportunities based on Profile & Goals
                 const newStrengths: DynamicListItem[] = [];
@@ -277,14 +317,27 @@ export const useContextBuilderStore = create<ContextBuilderState>()(
                     newStrengths.push({ id: 's_def', enabler: 'Executive Sponsorship', seen: 'Initiative launched by CEO', leverage: 'Maintain steerco visibility.' });
                 }
 
-                // AI Suggested Opportunity
-                newStrengths.push({
-                    id: 's_ai_1',
-                    enabler: 'Market Gap: AI in ' + companyProfile.subIndustry,
-                    seen: 'Competitor Analysis',
-                    leverage: 'First-mover advantage recommended.',
-                    isAiSuggested: true
-                });
+                // AI Suggested Opportunities (from real AI if available)
+                if (aiSuggestions.strengths && aiSuggestions.strengths.length > 0) {
+                    aiSuggestions.strengths.forEach((s: any, idx: number) => {
+                        newStrengths.push({
+                            id: `s_ai_${idx + 1}`,
+                            enabler: s.enabler || 'AI Identified Opportunity',
+                            seen: s.seen || 'Identified by AI analysis',
+                            leverage: s.leverage || 'Explore and leverage.',
+                            isAiSuggested: true
+                        });
+                    });
+                } else {
+                    // Fallback static suggestion if AI fails
+                    newStrengths.push({
+                        id: 's_ai_1',
+                        enabler: 'Market Gap: AI in ' + companyProfile.subIndustry,
+                        seen: 'Competitor Analysis',
+                        leverage: 'First-mover advantage recommended.',
+                        isAiSuggested: true
+                    });
+                }
 
                 set((state) => ({
                     synthesis: {

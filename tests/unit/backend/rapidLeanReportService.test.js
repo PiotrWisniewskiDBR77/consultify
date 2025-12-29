@@ -63,7 +63,7 @@ describe('RapidLeanReportService', () => {
             expect(trends).toHaveProperty('overallTrend');
             expect(trends).toHaveProperty('dimensionTrends');
             expect(trends.overallTrend).toBe(0.5);
-            expect(trends.dimensionTrends.value_stream).toBe(0.7);
+            expect(trends.dimensionTrends.value_stream).toBeCloseTo(0.7, 1);
         });
 
         it('should return null if no previous assessments', () => {

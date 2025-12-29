@@ -1,7 +1,8 @@
 // Extended API functions for webhooks and AI training
 // These functions complement the main Api object in api.ts
 
-const API_URL = 'http://127.0.0.1:3005/api';
+// Use relative path to allow Vite proxy to handle the request (avoiding CORS)
+const API_URL = '/api';
 
 const authHeaders = (): Record<string, string> => {
     const token = localStorage.getItem('token');

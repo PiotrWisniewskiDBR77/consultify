@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import {
     CheckCircle2, Circle, AlertTriangle, ArrowRight,
     Filter, Trash2, Plus, Calendar, User, Clock, CheckCircle, AlertCircle,
-    Layers, Target, FileQuestion, ChevronDown, ChevronUp
+    Layers, Target, FileQuestion, ChevronDown, ChevronUp, Pin
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Api } from '../../services/api';
@@ -18,19 +18,56 @@ interface TaskInboxProps {
     onCreateTask?: () => void;
 }
 
+// Quick filter type for minimalist UI
+type QuickFilter = 'all' | 'overdue' | 'urgent' | 'today';
+
 export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }) => {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activePriority, setActivePriority] = useState<'all' | 'high' | 'medium' | 'low'>('all');
-    const [activeStatus, setActiveStatus] = useState<'all' | 'todo' | 'in_progress' | 'done'>('all');
-    const [openFilter, setOpenFilter] = useState<'priority' | 'status' | null>(null);
+    const [quickFilter, setQuickFilter] = useState<QuickFilter>('all');
+    const [openFilter, setOpenFilter] = useState<'quick' | 'view' | null>(null);
     const [viewMode, setViewMode] = useState<'list' | 'pmo'>('pmo'); // Default to PMO view
     const [expandedCategories, setExpandedCategories] = useState<Set<PMOCategory>>(new Set(['blocking_phase', 'blocking_initiative', 'overdue']));
+    
+    // Pinned Tasks state
+    const [pinnedTaskIds, setPinnedTaskIds] = useState<Set<string>>(() => {
+        // Load from localStorage if available
+        const saved = localStorage.getItem('pinnedTaskIds');
+        return saved ? new Set(JSON.parse(saved)) : new Set();
+    });
+    
+    // Legacy state - kept for compatibility but unused in new UI
+    const [activePriority, setActivePriority] = useState<'all' | 'high' | 'medium' | 'low'>('all');
+    const [activeStatus, setActiveStatus] = useState<'all' | 'todo' | 'in_progress' | 'done'>('all');
 
     const getTaskLabel = usePMOStore(state => state.getTaskLabel);
 
-    const toggleFilter = (filter: 'priority' | 'status') => {
+    const toggleFilter = (filter: 'quick' | 'view') => {
         setOpenFilter(prev => prev === filter ? null : filter);
+    };
+    
+    // Quick filter labels
+    const quickFilterLabels: Record<QuickFilter, string> = {
+        all: 'All Tasks',
+        overdue: 'Overdue',
+        urgent: 'Urgent',
+        today: 'Due Today'
+    };
+    
+    // Toggle pin for a task
+    const togglePinTask = (taskId: string, event?: React.MouseEvent) => {
+        event?.stopPropagation();
+        setPinnedTaskIds(prev => {
+            const next = new Set(prev);
+            if (next.has(taskId)) {
+                next.delete(taskId);
+            } else {
+                next.add(taskId);
+            }
+            // Save to localStorage
+            localStorage.setItem('pinnedTaskIds', JSON.stringify([...next]));
+            return next;
+        });
     };
 
     const fetchTasks = async () => {
@@ -87,25 +124,39 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
     };
 
     const filteredTasks = tasks.filter(t => {
-        // Priority Filter
-        if (activePriority !== 'all' && (t.priority || 'medium').toLowerCase() !== activePriority) return false;
-
-        // Status Filter
-        if (activeStatus !== 'all') {
-            const isDone = ['done', 'completed', 'validated'].includes(t.status?.toLowerCase() || '');
-            if (activeStatus === 'done' && !isDone) return false;
-
-            const isInProgress = ['in_progress', 'validating'].includes(t.status?.toLowerCase() || '');
-            if (activeStatus === 'in_progress' && !isInProgress) return false;
-
-            const isTodo = ['todo', 'ready', 'open', 'not_started'].includes(t.status?.toLowerCase() || '');
-            if (activeStatus === 'todo' && !isTodo) return false;
+        const isDone = ['done', 'completed', 'validated'].includes(t.status?.toLowerCase() || '');
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        // Quick Filter Logic
+        switch (quickFilter) {
+            case 'overdue':
+                // Show only overdue tasks (past due date and not done)
+                if (isDone) return false;
+                if (!t.dueDate) return false;
+                return new Date(t.dueDate) < now;
+                
+            case 'urgent':
+                // Show only urgent/high priority tasks
+                if (isDone) return false;
+                return ['urgent', 'high'].includes((t.priority || '').toLowerCase());
+                
+            case 'today':
+                // Show tasks due today
+                if (isDone) return false;
+                if (!t.dueDate) return false;
+                const dueDate = new Date(t.dueDate);
+                return dueDate >= today && dueDate < tomorrow;
+                
+            case 'all':
+            default:
+                return true;
         }
-
-        return true;
     });
 
-    // PMO Grouping Logic
+    // PMO Grouping Logic - uses unpinnedTasks (pinned shown separately)
     const pmoGroupedTasks = useMemo(() => {
         const now = new Date();
         const groups: Record<PMOCategory, Task[]> = {
@@ -115,8 +166,11 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
             overdue: [],
             other: []
         };
+        
+        // Filter out pinned tasks from PMO grouping
+        const tasksToGroup = filteredTasks.filter(t => !pinnedTaskIds.has(t.id));
 
-        filteredTasks.forEach(task => {
+        tasksToGroup.forEach(task => {
             const isDone = ['done', 'completed', 'validated'].includes(task.status?.toLowerCase() || '');
             if (isDone) {
                 groups.other.push(task);
@@ -155,7 +209,14 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
         });
 
         return groups;
-    }, [filteredTasks, getTaskLabel]);
+    }, [filteredTasks, getTaskLabel, pinnedTaskIds]);
+    
+    // Separate pinned and unpinned tasks
+    const { pinnedTasks, unpinnedTasks } = useMemo(() => {
+        const pinned = filteredTasks.filter(t => pinnedTaskIds.has(t.id));
+        const unpinned = filteredTasks.filter(t => !pinnedTaskIds.has(t.id));
+        return { pinnedTasks: pinned, unpinnedTasks: unpinned };
+    }, [filteredTasks, pinnedTaskIds]);
 
     const toggleCategory = (category: PMOCategory) => {
         setExpandedCategories(prev => {
@@ -279,7 +340,18 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                     </div>
 
                     {/* Hover Actions */}
-                    <div className="shrink-0 flex flex-col justify-center items-end opacity-0 group-hover:opacity-100 transition-opacity pl-2">
+                    <div className="shrink-0 flex flex-col justify-center items-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity pl-2">
+                        <button
+                            onClick={(e) => togglePinTask(task.id, e)}
+                            className={`p-1.5 rounded transition-colors ${
+                                pinnedTaskIds.has(task.id)
+                                    ? 'text-purple-500 bg-purple-50 dark:bg-purple-500/20'
+                                    : 'text-slate-300 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-500/10'
+                            }`}
+                            title={pinnedTaskIds.has(task.id) ? 'Unpin from top' : 'Pin to top'}
+                        >
+                            <Pin size={14} />
+                        </button>
                         <button
                             onClick={(e) => handleDelete(task.id, e)}
                             className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
@@ -295,136 +367,112 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
 
     return (
         <div className="bg-white dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm h-full flex flex-col">
-            {/* Header */}
-            <div className="p-5 border-b border-slate-200 dark:border-white/5">
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-lg shadow-sm">
-                            <CheckCircle2 size={20} />
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-navy-900 dark:text-white">My Tasks</h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">Manage your action plan</p>
-                        </div>
+            {/* Header - Title Row (h-16 = 64px) */}
+            <div className="h-16 px-5 flex items-center justify-between border-b border-slate-200 dark:border-white/5 shrink-0">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-lg shadow-sm">
+                        <CheckCircle2 size={20} />
                     </div>
-                    <button
-                        onClick={onCreateTask}
-                        className="text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 shadow-sm"
-                    >
-                        <Plus size={14} />
-                        New Task
-                    </button>
+                    <div>
+                        <h3 className="font-bold text-navy-900 dark:text-white">My Tasks</h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Manage your action plan</p>
+                    </div>
                 </div>
+                <button
+                    onClick={onCreateTask}
+                    className="text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+                >
+                    <Plus size={14} />
+                    New Task
+                </button>
+            </div>
 
-                {/* Filters Row */}
+            {/* Filter Row (h-12 = 48px) */}
+            <div className="h-12 px-5 flex items-center justify-between border-b border-slate-100 dark:border-white/5 shrink-0">
+                <div className="flex items-center gap-3 text-sm">
+                    <span className="text-slate-400 text-xs">Showing:</span>
+                    
+                    {/* Quick Filter Dropdown */}
+                    <div className="relative">
+                        <button
+                            onClick={() => toggleFilter('quick')}
+                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/5 text-navy-900 dark:text-white font-medium text-xs hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
+                        >
+                            <span className={quickFilter !== 'all' ? 'text-purple-600 dark:text-purple-400' : ''}>
+                                {quickFilterLabels[quickFilter]}
+                            </span>
+                            <ChevronDown size={14} className="text-slate-400" />
+                        </button>
+
+                        {openFilter === 'quick' && (
+                            <>
+                                <div className="fixed inset-0 z-10" onClick={() => setOpenFilter(null)}></div>
+                                <div className="absolute top-full left-0 mt-1 w-40 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-slate-200 dark:border-white/10 z-20 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                    <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-white/5">
+                                        Quick Filters
+                                    </div>
+                                    {([
+                                        { id: 'all' as QuickFilter, label: 'All Tasks', icon: '📋' },
+                                        { id: 'overdue' as QuickFilter, label: 'Overdue', icon: '🔴', color: 'text-red-600' },
+                                        { id: 'urgent' as QuickFilter, label: 'Urgent', icon: '⚡', color: 'text-orange-600' },
+                                        { id: 'today' as QuickFilter, label: 'Due Today', icon: '📅', color: 'text-blue-600' },
+                                    ]).map((opt) => (
+                                        <button
+                                            key={opt.id}
+                                            onClick={() => {
+                                                setQuickFilter(opt.id);
+                                                setOpenFilter(null);
+                                            }}
+                                            className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center gap-2 ${quickFilter === opt.id ? 'font-semibold bg-slate-50 dark:bg-white/5' : ''} ${opt.color || 'text-slate-700 dark:text-slate-200'}`}
+                                        >
+                                            <span>{opt.icon}</span>
+                                            {opt.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </>
+                        )}
+                    </div>
+                    
+                    <span className="text-slate-300 dark:text-white/20">•</span>
+                    <span className="text-slate-500 dark:text-slate-400 text-xs">{filteredTasks.length} tasks</span>
+                </div>
+                
+                {/* View Toggle */}
                 <div className="flex items-center gap-2">
-                    {/* Priority Filter */}
+                    <span className="text-slate-400 text-xs hidden sm:inline">View:</span>
                     <div className="relative">
                         <button
-                            onClick={() => toggleFilter('priority')}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${activePriority !== 'all'
-                                ? 'bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-500/10 dark:border-blue-500/20 dark:text-blue-300'
-                                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 dark:bg-navy-900 dark:border-white/10 dark:text-slate-300'
-                                }`}
+                            onClick={() => toggleFilter('view')}
+                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/5 text-navy-900 dark:text-white font-medium text-xs hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
                         >
-                            <span className="opacity-70">Priority:</span>
-                            <span className="capitalize">{activePriority}</span>
-                            <Filter size={12} className="opacity-50" />
+                            <Layers size={12} className="text-purple-500" />
+                            {viewMode === 'pmo' ? 'PMO Priority' : 'List'}
+                            <ChevronDown size={14} className="text-slate-400" />
                         </button>
 
-                        {openFilter === 'priority' && (
+                        {openFilter === 'view' && (
                             <>
                                 <div className="fixed inset-0 z-10" onClick={() => setOpenFilter(null)}></div>
-                                <div className="absolute top-full left-0 mt-1 w-32 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-slate-200 dark:border-white/10 z-20 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                                    {[
-                                        { id: 'all', label: 'All' },
-                                        { id: 'high', label: 'High', color: 'text-red-600' },
-                                        { id: 'medium', label: 'Medium', color: 'text-orange-600' },
-                                        { id: 'low', label: 'Low', color: 'text-blue-600' },
-                                    ].map((opt) => (
-                                        <button
-                                            key={opt.id}
-                                            onClick={() => {
-                                                setActivePriority(opt.id as any);
-                                                setOpenFilter(null);
-                                            }}
-                                            className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center gap-2 ${activePriority === opt.id ? 'font-semibold bg-slate-50 dark:bg-white/5' : ''
-                                                } ${opt.color || 'text-slate-700 dark:text-slate-200'}`}
-                                        >
-                                            <div className={`w-1.5 h-1.5 rounded-full ${opt.id === 'all' ? 'bg-slate-400' : opt.id === 'high' ? 'bg-red-500' : opt.id === 'medium' ? 'bg-orange-500' : 'bg-blue-500'} `}></div>
-                                            {opt.label}
-                                        </button>
-                                    ))}
+                                <div className="absolute top-full right-0 mt-1 w-36 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-slate-200 dark:border-white/10 z-20 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                    <button
+                                        onClick={() => { setViewMode('pmo'); setOpenFilter(null); }}
+                                        className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center gap-2 ${viewMode === 'pmo' ? 'font-semibold bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400' : 'text-slate-700 dark:text-slate-200'}`}
+                                    >
+                                        <Layers size={12} />
+                                        PMO Priority
+                                    </button>
+                                    <button
+                                        onClick={() => { setViewMode('list'); setOpenFilter(null); }}
+                                        className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center gap-2 ${viewMode === 'list' ? 'font-semibold bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'text-slate-700 dark:text-slate-200'}`}
+                                    >
+                                        <CheckCircle2 size={12} />
+                                        List View
+                                    </button>
                                 </div>
                             </>
                         )}
                     </div>
-
-                    {/* Status Filter */}
-                    <div className="relative">
-                        <button
-                            onClick={() => toggleFilter('status')}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${activeStatus !== 'all'
-                                ? 'bg-purple-50 border-purple-200 text-purple-700 dark:bg-purple-500/10 dark:border-purple-500/20 dark:text-purple-300'
-                                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 dark:bg-navy-900 dark:border-white/10 dark:text-slate-300'
-                                }`}
-                        >
-                            <span className="opacity-70">Status:</span>
-                            <span className="capitalize">{activeStatus.replace('_', ' ')}</span>
-                            <Filter size={12} className="opacity-50" />
-                        </button>
-
-                        {openFilter === 'status' && (
-                            <>
-                                <div className="fixed inset-0 z-10" onClick={() => setOpenFilter(null)}></div>
-                                <div className="absolute top-full left-0 mt-1 w-32 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-slate-200 dark:border-white/10 z-20 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                                    {[
-                                        { id: 'all', label: 'Any Status' },
-                                        { id: 'todo', label: 'To Do' },
-                                        { id: 'in_progress', label: 'In Progress' },
-                                        { id: 'done', label: 'Done' },
-                                    ].map((opt) => (
-                                        <button
-                                            key={opt.id}
-                                            onClick={() => {
-                                                setActiveStatus(opt.id as any);
-                                                setOpenFilter(null);
-                                            }}
-                                            className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${activeStatus === opt.id ? 'font-semibold bg-slate-50 dark:bg-white/5 text-purple-600 dark:text-purple-400' : 'text-slate-700 dark:text-slate-200'
-                                                }`}
-                                        >
-                                            {opt.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            </>
-                        )}
-                    </div>
-                </div>
-
-                {/* View Mode Toggle */}
-                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100 dark:border-white/5">
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">View:</span>
-                    <button
-                        onClick={() => setViewMode('pmo')}
-                        className={`px-2 py-1 text-xs rounded flex items-center gap-1 transition-colors ${viewMode === 'pmo'
-                            ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
-                            : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5'
-                            }`}
-                    >
-                        <Layers size={12} />
-                        PMO Priority
-                    </button>
-                    <button
-                        onClick={() => setViewMode('list')}
-                        className={`px-2 py-1 text-xs rounded flex items-center gap-1 transition-colors ${viewMode === 'list'
-                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-                            : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5'
-                            }`}
-                    >
-                        <CheckCircle2 size={12} />
-                        List
-                    </button>
                 </div>
             </div>
 
@@ -444,9 +492,27 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                         <button onClick={onCreateTask} className="mt-2 text-xs text-blue-500 hover:underline">Create one?</button>
                     </div>
                 )}
+                
+                {/* Pinned Tasks Section */}
+                {!loading && pinnedTasks.length > 0 && (
+                    <div className="mb-4 pb-3 border-b border-dashed border-slate-200 dark:border-white/10">
+                        <div className="flex items-center gap-2 mb-2 px-1">
+                            <Pin size={12} className="text-purple-500" />
+                            <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider">
+                                Pinned
+                            </span>
+                            <span className="text-[10px] text-slate-400">({pinnedTasks.length})</span>
+                        </div>
+                        <div className="space-y-2">
+                            <AnimatePresence initial={false}>
+                                {pinnedTasks.map(task => renderTaskCard(task))}
+                            </AnimatePresence>
+                        </div>
+                    </div>
+                )}
 
                 {/* PMO Priority View */}
-                {viewMode === 'pmo' && !loading && filteredTasks.length > 0 && (
+                {viewMode === 'pmo' && !loading && unpinnedTasks.length > 0 && (
                     <div className="space-y-4">
                         {/* PMO Category Sections */}
                         {([
@@ -488,9 +554,9 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                 )}
 
                 {/* List View */}
-                {viewMode === 'list' && (
+                {viewMode === 'list' && !loading && unpinnedTasks.length > 0 && (
                     <AnimatePresence initial={false}>
-                        {filteredTasks.map(task => renderTaskCard(task))}
+                        {unpinnedTasks.map(task => renderTaskCard(task))}
                     </AnimatePresence>
                 )}
             </div>

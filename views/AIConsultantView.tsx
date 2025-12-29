@@ -3,6 +3,7 @@ import { useAppStore } from '../store/useAppStore';
 import { sendMessageToAI } from '../services/ai/gemini';
 import { AIMessageHistory, FullSession } from '../types';
 import { Bot, Send, User as UserIcon, Sparkles, TrendingUp, DollarSign, Activity } from 'lucide-react';
+import { formatChatError } from '../services/ai/errorMessages';
 
 interface AIConsultantViewProps {
     session: FullSession;
@@ -76,7 +77,7 @@ export const AIConsultantView: React.FC<AIConsultantViewProps> = ({ session }) =
             addChatMessage({
                 id: (Date.now() + 1).toString(),
                 role: 'ai',
-                content: "I apologize, but I'm having trouble analyzing the data right now. Please try again.",
+                content: formatChatError(error as Error, 'chat_response'),
                 timestamp: new Date()
             });
         } finally {

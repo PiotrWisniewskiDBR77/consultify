@@ -241,8 +241,29 @@ npm run test:unit -- tests/unit/backend/service.test.js
 
 ---
 
-**Ostatnia aktualizacja**: 2024
+**Ostatnia aktualizacja**: 2024-12-27
 **Status**: W trakcie implementacji
+
+---
+
+## 📁 Szablony Testów
+
+Dostępne szablony w `tests/templates/`:
+
+| Szablon | Opis | Użycie |
+|---------|------|--------|
+| `middleware.test.template.js` | Test middleware Express | Security, RBAC, Guards |
+| `component.test.template.tsx` | Test komponentu React | Komponenty UI |
+| `route.integration.test.template.js` | Test integracyjny tras API | REST endpoints |
+| `e2e.test.template.ts` | Test E2E Playwright | User flows |
+| `hook.test.template.ts` | Test hooka React | Custom hooks |
+
+## 📚 Dokumentacja Rozszerzona
+
+- [TEST_COVERAGE_EXPANSION_PLAN.md](../docs/testing/TEST_COVERAGE_EXPANSION_PLAN.md) - Pełny plan pokrycia
+- [TEST_PROGRESS_TRACKER.md](../docs/testing/TEST_PROGRESS_TRACKER.md) - Tracker postępu
+
+
 
 
 

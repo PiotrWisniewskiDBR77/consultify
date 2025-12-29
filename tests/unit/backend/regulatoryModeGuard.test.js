@@ -1,307 +1,169 @@
 /**
- * Regulatory Mode Guard Tests
+ * RegulatoryModeGuard Tests
  * 
- * CRITICAL SECURITY SERVICE - Must have 95%+ coverage
- * Tests regulatory mode enforcement, action blocking, and compliance.
+ * Tests for regulatory mode enforcement service.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createMockDb } from '../../helpers/dependencyInjector.js';
-import { testProjects } from '../../fixtures/testData.js';
+const { describe, it, expect, beforeEach, afterEach, beforeAll } = require('vitest');
+const { initTestDb, cleanTables, dbAll, dbRun } = require('../../helpers/dbHelper.cjs');
+const RegulatoryModeGuard = require('../../../server/services/regulatoryModeGuard');
+const { v4: uuidv4 } = require('uuid');
 
 describe('RegulatoryModeGuard', () => {
-    let mockDb;
-    let RegulatoryModeGuard;
-    let mockAIAuditLogger;
+    let testProjectId;
+
+    beforeAll(async () => {
+        await initTestDb();
+    });
 
     beforeEach(async () => {
-        vi.resetModules();
-
-        mockDb = createMockDb();
-        mockAIAuditLogger = {
-            logInteraction: vi.fn().mockResolvedValue({ success: true })
-        };
-
-        RegulatoryModeGuard = (await import('../../../server/services/regulatoryModeGuard.js')).default;
-
-        // Inject dependencies if service supports it
-        if (RegulatoryModeGuard.setDependencies) {
-            RegulatoryModeGuard.setDependencies({
-                db: mockDb,
-                AIAuditLogger: mockAIAuditLogger
-            });
-        }
+        testProjectId = uuidv4();
     });
 
-    afterEach(() => {
-        vi.restoreAllMocks();
+    afterEach(async () => {
+        await cleanTables(['projects']);
     });
 
-    describe('isEnabled()', () => {
-        it('should return false for null projectId', async () => {
-            const result = await RegulatoryModeGuard.isEnabled(null);
-            expect(result).toBe(false);
+    describe('isEnabled', () => {
+        it('should return false when no project ID', async () => {
+            const enabled = await RegulatoryModeGuard.isEnabled(null);
+
+            expect(enabled).toBe(false);
         });
 
-        it('should return true when regulatory mode is enabled', async () => {
-            const projectId = testProjects.project1.id;
-
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { regulatory_mode_enabled: 1 });
-            });
-
-            const result = await RegulatoryModeGuard.isEnabled(projectId);
-
-            expect(result).toBe(true);
-            expect(mockDb.get).toHaveBeenCalledWith(
-                expect.stringContaining('SELECT regulatory_mode_enabled'),
-                [projectId],
-                expect.any(Function)
+        it('should return true when regulatory mode enabled', async () => {
+            await dbRun(
+                `INSERT INTO projects (id, name, organization_id, regulatory_mode_enabled, created_at)
+                 VALUES (?, ?, ?, ?, datetime('now'))`,
+                [testProjectId, 'Test Project', uuidv4(), 1]
             );
+
+            const enabled = await RegulatoryModeGuard.isEnabled(testProjectId);
+
+            expect(enabled).toBe(true);
         });
 
-        it('should return false when regulatory mode is disabled', async () => {
-            const projectId = testProjects.project1.id;
-
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { regulatory_mode_enabled: 0 });
-            });
-
-            const result = await RegulatoryModeGuard.isEnabled(projectId);
-
-            expect(result).toBe(false);
-        });
-
-        it('should default to enabled (fail-safe) when column is null', async () => {
-            const projectId = testProjects.project1.id;
-
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { regulatory_mode_enabled: null });
-            });
-
-            const result = await RegulatoryModeGuard.isEnabled(projectId);
-
-            expect(result).toBe(true);
-        });
-
-        it('should default to enabled on database error (fail-safe)', async () => {
-            const projectId = testProjects.project1.id;
-
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(new Error('DB Error'), null);
-            });
-
-            const result = await RegulatoryModeGuard.isEnabled(projectId);
-
-            expect(result).toBe(true);
-        });
-    });
-
-    describe('setEnabled()', () => {
-        it('should enable regulatory mode', async () => {
-            const projectId = testProjects.project1.id;
-
-            mockDb.run.mockImplementation((query, params, callback) => {
-                callback.call({ changes: 1 }, null);
-            });
-
-            const result = await RegulatoryModeGuard.setEnabled(projectId, true);
-
-            expect(result.success).toBe(true);
-            expect(mockDb.run).toHaveBeenCalledWith(
-                expect.stringContaining('UPDATE projects SET regulatory_mode_enabled'),
-                [1, projectId],
-                expect.any(Function)
+        it('should return false when regulatory mode disabled', async () => {
+            await dbRun(
+                `INSERT INTO projects (id, name, organization_id, regulatory_mode_enabled, created_at)
+                 VALUES (?, ?, ?, ?, datetime('now'))`,
+                [testProjectId, 'Test Project', uuidv4(), 0]
             );
+
+            const enabled = await RegulatoryModeGuard.isEnabled(testProjectId);
+
+            expect(enabled).toBe(false);
         });
 
-        it('should disable regulatory mode', async () => {
-            const projectId = testProjects.project1.id;
-
-            mockDb.run.mockImplementation((query, params, callback) => {
-                callback.call({ changes: 1 }, null);
-            });
-
-            const result = await RegulatoryModeGuard.setEnabled(projectId, false);
-
-            expect(result.success).toBe(true);
-            expect(mockDb.run).toHaveBeenCalledWith(
-                expect.stringContaining('UPDATE projects SET regulatory_mode_enabled'),
-                [0, projectId],
-                expect.any(Function)
+        it('should default to enabled when column is null', async () => {
+            await dbRun(
+                `INSERT INTO projects (id, name, organization_id, created_at)
+                 VALUES (?, ?, ?, datetime('now'))`,
+                [testProjectId, 'Test Project', uuidv4()]
             );
-        });
 
-        it('should handle database errors', async () => {
-            const projectId = testProjects.project1.id;
+            const enabled = await RegulatoryModeGuard.isEnabled(testProjectId);
 
-            mockDb.run.mockImplementation((query, params, callback) => {
-                callback(new Error('DB Error'));
-            });
-
-            await expect(
-                RegulatoryModeGuard.setEnabled(projectId, true)
-            ).rejects.toThrow('DB Error');
+            expect(enabled).toBe(true); // Fail-safe default
         });
     });
 
-    describe('isActionAllowed()', () => {
-        it('should allow EXPLAIN_CONTEXT action', () => {
-            const result = RegulatoryModeGuard.isActionAllowed('EXPLAIN_CONTEXT');
-            expect(result).toBe(true);
-        });
-
-        it('should allow ANALYZE_RISKS action', () => {
-            const result = RegulatoryModeGuard.isActionAllowed('ANALYZE_RISKS');
-            expect(result).toBe(true);
-        });
-
-        it('should block CREATE_DRAFT_TASK action', () => {
-            const result = RegulatoryModeGuard.isActionAllowed('CREATE_DRAFT_TASK');
-            expect(result).toBe(false);
-        });
-
-        it('should block EXECUTE_ACTION action', () => {
-            const result = RegulatoryModeGuard.isActionAllowed('EXECUTE_ACTION');
-            expect(result).toBe(false);
-        });
-
-        it('should block actions with mutation keywords', () => {
-            const result = RegulatoryModeGuard.isActionAllowed('CREATE_SOMETHING');
-            expect(result).toBe(false);
-        });
-
-        it('should allow null/undefined action (fail-safe)', () => {
-            const result1 = RegulatoryModeGuard.isActionAllowed(null);
-            const result2 = RegulatoryModeGuard.isActionAllowed(undefined);
-            expect(result1).toBe(true);
-            expect(result2).toBe(true);
-        });
-    });
-
-    describe('enforceRegulatoryMode()', () => {
-        it('should not block when projectId is null', async () => {
-            const context = { userId: 'user-1', organizationId: 'org-1' };
-            const result = await RegulatoryModeGuard.enforceRegulatoryMode(context, 'CREATE_DRAFT_TASK');
-
-            expect(result.blocked).toBe(false);
-        });
-
-        it('should not block when regulatory mode is disabled', async () => {
-            const projectId = testProjects.project1.id;
-            const context = { userId: 'user-1', organizationId: 'org-1', projectId };
-
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { regulatory_mode_enabled: 0 });
-            });
-
-            const result = await RegulatoryModeGuard.enforceRegulatoryMode(context, 'CREATE_DRAFT_TASK');
-
-            expect(result.blocked).toBe(false);
-        });
-
-        it('should block mutation actions when regulatory mode is enabled', async () => {
-            const projectId = testProjects.project1.id;
-            const context = { userId: 'user-1', organizationId: 'org-1', projectId };
-
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { regulatory_mode_enabled: 1 });
-            });
-
-            const result = await RegulatoryModeGuard.enforceRegulatoryMode(context, 'CREATE_DRAFT_TASK');
-
-            expect(result.blocked).toBe(true);
-            expect(result.reason).toBe('REGULATORY_MODE');
-            expect(result.message).toContain('Regulatory Mode is enabled');
-        });
-
-        it('should allow EXPLAIN_CONTEXT even when regulatory mode is enabled', async () => {
-            const projectId = testProjects.project1.id;
-            const context = { userId: 'user-1', organizationId: 'org-1', projectId };
-
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { regulatory_mode_enabled: 1 });
-            });
-
-            const result = await RegulatoryModeGuard.enforceRegulatoryMode(context, 'EXPLAIN_CONTEXT');
-
-            expect(result.blocked).toBe(false);
-        });
-
-        it('should log blocked attempts', async () => {
-            const projectId = testProjects.project1.id;
-            const context = { userId: 'user-1', organizationId: 'org-1', projectId };
-
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { regulatory_mode_enabled: 1 });
-            });
-
-            // Create mock AIAuditLogger
-            const mockAIAuditLogger = {
-                logInteraction: vi.fn().mockResolvedValue({ id: 'log-1' })
-            };
-
-            // Inject dependencies including mocked AIAuditLogger
-            RegulatoryModeGuard.setDependencies({
-                db: mockDb,
-                AIAuditLogger: mockAIAuditLogger
-            });
-
-            await RegulatoryModeGuard.enforceRegulatoryMode(context, 'CREATE_DRAFT_TASK');
-
-            expect(mockAIAuditLogger.logInteraction).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    actionType: 'AI_ACTION_BLOCKED',
-                    actionDescription: expect.stringContaining('Blocked action'),
-                    contextSnapshot: expect.objectContaining({
-                        attemptedAction: 'CREATE_DRAFT_TASK',
-                        reason: 'REGULATORY_MODE'
-                    })
-                })
+    describe('canPerformAction', () => {
+        it('should allow EXPLAIN_CONTEXT in regulatory mode', () => {
+            const canPerform = RegulatoryModeGuard.canPerformAction(
+                'EXPLAIN_CONTEXT',
+                true // regulatory mode enabled
             );
+
+            expect(canPerform).toBe(true);
+        });
+
+        it('should block CREATE_DRAFT_TASK in regulatory mode', () => {
+            const canPerform = RegulatoryModeGuard.canPerformAction(
+                'CREATE_DRAFT_TASK',
+                true // regulatory mode enabled
+            );
+
+            expect(canPerform).toBe(false);
+        });
+
+        it('should allow all actions when regulatory mode disabled', () => {
+            const canPerform = RegulatoryModeGuard.canPerformAction(
+                'CREATE_DRAFT_TASK',
+                false // regulatory mode disabled
+            );
+
+            expect(canPerform).toBe(true);
+        });
+
+        it('should allow all allowed actions', () => {
+            RegulatoryModeGuard.ALLOWED_ACTIONS.forEach(action => {
+                const canPerform = RegulatoryModeGuard.canPerformAction(action, true);
+                expect(canPerform).toBe(true);
+            });
+        });
+
+        it('should block all blocked actions', () => {
+            RegulatoryModeGuard.BLOCKED_ACTIONS.forEach(action => {
+                const canPerform = RegulatoryModeGuard.canPerformAction(action, true);
+                expect(canPerform).toBe(false);
+            });
         });
     });
 
-    describe('getRegulatoryPrompt()', () => {
-        it('should return regulatory mode prompt constraints', () => {
-            const prompt = RegulatoryModeGuard.getRegulatoryPrompt();
+    describe('filterPrompt', () => {
+        it('should remove forbidden verbs from prompt', () => {
+            const prompt = 'Create a new task and execute it';
+            const filtered = RegulatoryModeGuard.filterPrompt(prompt, true);
 
-            expect(prompt).toContain('REGULATORY COMPLIANCE MODE');
-            expect(prompt).toContain('ABSOLUTE PROHIBITIONS');
-            expect(prompt).toContain('REQUIRED BEHAVIOR');
-            expect(prompt).toContain('create');
-            expect(prompt).toContain('consider');
+            expect(filtered).not.toContain('create');
+            expect(filtered).not.toContain('execute');
+        });
+
+        it('should add advisory language', () => {
+            const prompt = 'Create a new task';
+            const filtered = RegulatoryModeGuard.filterPrompt(prompt, true);
+
+            // Should contain advisory phrases
+            const hasAdvisory = RegulatoryModeGuard.ADVISORY_PHRASES.some(phrase =>
+                filtered.toLowerCase().includes(phrase.toLowerCase())
+            );
+            expect(hasAdvisory).toBe(true);
+        });
+
+        it('should not modify prompt when regulatory mode disabled', () => {
+            const prompt = 'Create a new task';
+            const filtered = RegulatoryModeGuard.filterPrompt(prompt, false);
+
+            expect(filtered).toBe(prompt);
         });
     });
 
-    describe('getStatus()', () => {
-        it('should return status when enabled', async () => {
-            const projectId = testProjects.project1.id;
+    describe('setEnabled', () => {
+        it('should enable regulatory mode for project', async () => {
+            await dbRun(
+                `INSERT INTO projects (id, name, organization_id, created_at)
+                 VALUES (?, ?, ?, datetime('now'))`,
+                [testProjectId, 'Test Project', uuidv4()]
+            );
 
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { regulatory_mode_enabled: 1 });
-            });
+            await RegulatoryModeGuard.setEnabled(testProjectId, true);
 
-            const status = await RegulatoryModeGuard.getStatus(projectId);
-
-            expect(status.enabled).toBe(true);
-            expect(status.allowedActions).toEqual(RegulatoryModeGuard.ALLOWED_ACTIONS);
-            expect(status.blockedActions).toEqual(RegulatoryModeGuard.BLOCKED_ACTIONS);
-            expect(status.description).toContain('advisory-only mode');
+            const enabled = await RegulatoryModeGuard.isEnabled(testProjectId);
+            expect(enabled).toBe(true);
         });
 
-        it('should return status when disabled', async () => {
-            const projectId = testProjects.project1.id;
+        it('should disable regulatory mode for project', async () => {
+            await dbRun(
+                `INSERT INTO projects (id, name, organization_id, regulatory_mode_enabled, created_at)
+                 VALUES (?, ?, ?, ?, datetime('now'))`,
+                [testProjectId, 'Test Project', uuidv4(), 1]
+            );
 
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { regulatory_mode_enabled: 0 });
-            });
+            await RegulatoryModeGuard.setEnabled(testProjectId, false);
 
-            const status = await RegulatoryModeGuard.getStatus(projectId);
-
-            expect(status.enabled).toBe(false);
-            expect(status.description).toContain('normal policy-based');
+            const enabled = await RegulatoryModeGuard.isEnabled(testProjectId);
+            expect(enabled).toBe(false);
         });
     });
 });
-

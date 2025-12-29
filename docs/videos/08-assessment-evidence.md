@@ -1,0 +1,97 @@
+# Uploading and Managing Evidence
+
+**Video ID:** `assessment-evidence`
+**Filename:** `08-assessment-evidence.mp4`
+**Duration:** ~5:30
+**Difficulty:** Beginner
+**Module:** Assessment
+
+---
+
+## Avatar Script
+
+[INTRO - 0:00-0:30]
+"Evidence documents transform your assessment from subjective opinions into objective, verifiable evaluations. They provide audit trails, enable AI-powered analysis, and give reviewers confidence in your scores. In this video, I'll show you how to effectively upload and manage evidence in Consultinity."
+
+[SECTION 1: Why Evidence Matters - 0:30-1:15]
+"Evidence serves multiple purposes. First, it validates your assessment scores – instead of just claiming you have a documented process, you can attach the actual documentation.
+
+Second, evidence enables AI analysis. When you upload a document, Consultinity's AI can read and analyze it, often suggesting appropriate maturity scores based on the content.
+
+Third, evidence creates an audit trail. For compliance purposes or when presenting to stakeholders, you can demonstrate that your assessment scores are backed by real artifacts.
+
+Finally, evidence helps future you. When re-assessing, you'll have a record of what your capabilities looked like previously."
+
+[SECTION 2: Supported File Types - 1:15-1:45]
+"Consultinity accepts a wide range of file types. You can upload PDFs, Word documents, Excel spreadsheets, PowerPoint presentations, and common image formats.
+
+The most useful evidence types include: policy documents, process maps, system screenshots, organizational charts, training records, audit reports, and metric dashboards.
+
+There's a file size limit of 50 megabytes per document. For larger files, consider compressing or splitting them."
+
+[SECTION 3: Uploading Evidence - 1:45-3:00]
+"To upload evidence during an assessment, look for the paperclip or 'Add Evidence' button next to each question. Click it to open the upload dialog.
+
+You can drag and drop files directly, or click to browse your computer. After selecting a file, you'll see an upload progress indicator.
+
+Once uploaded, give your evidence a descriptive name and optionally add a note explaining what it demonstrates. For example: 'Data Governance Policy - v2.3 - Approved Jan 2024'.
+
+The evidence is now linked to that specific assessment question. You'll see an evidence indicator showing how many documents are attached.
+
+Pro tip: You can link the same document to multiple questions if it's relevant to several areas. No need to upload duplicates."
+
+[SECTION 4: AI Evidence Analysis - 3:00-4:00]
+"After uploading, click 'Analyze Evidence' to let the AI examine your document. The AI will read the content, identify relevant passages, and suggest an appropriate maturity level.
+
+For example, if you upload a process document, the AI might note: 'This document shows a defined process with version control and approval workflow, suggesting Level 3 maturity. However, no metrics or continuous improvement mechanisms are documented, which would be needed for Level 4.'
+
+You can accept the AI's suggestion or override it with your own assessment. Either way, the AI's analysis is saved for reference."
+
+[SECTION 5: Managing Evidence Library - 4:00-4:45]
+"All uploaded evidence is stored in your Evidence Library, accessible from the Assessment module menu. Here you can see all documents you've uploaded across all assessments.
+
+You can filter by date, assessment, or document type. You can also download documents, view where they're linked, or remove outdated evidence.
+
+Keeping your evidence library organized makes future assessments faster – you can reuse existing documents when re-assessing if they're still current."
+
+[SECTION 6: Best Practices - 4:45-5:10]
+"A few best practices: Upload evidence as you complete each assessment section, rather than all at once at the end. This keeps context fresh.
+
+Ensure documents are current – outdated evidence undermines assessment validity. Include version numbers and dates where possible.
+
+Don't over-document. A few high-quality evidence pieces are better than many irrelevant ones. Focus on documents that clearly demonstrate your claimed maturity level."
+
+[OUTRO - 5:10-5:30]
+"Evidence is what separates a credible assessment from guesswork. Take the time to gather and upload relevant documents – your transformation planning will be stronger for it.
+
+Next, we'll explore how to interpret your assessment results through Gap Analysis. Let's continue!"
+
+---
+
+## Key Points to Cover
+- Evidence validates scores and enables AI analysis
+- Supported files: PDF, Word, Excel, PowerPoint, images
+- 50MB file size limit
+- Upload via paperclip icon or Add Evidence button
+- Name and annotate evidence clearly
+- AI Analysis suggests maturity levels
+- Evidence Library for management
+- Best practice: Upload as you go, keep current
+
+## Visual Notes for Editor
+- 0:00 - Avatar intro
+- 0:30 - Show benefits infographic
+- 1:15 - Display supported file type icons
+- 1:45 - Screen: Show assessment question with paperclip icon
+- 2:00 - Drag and drop file upload
+- 2:30 - Fill in evidence name and description
+- 2:45 - Show evidence indicator badge
+- 3:00 - Click Analyze Evidence button
+- 3:20 - Show AI analysis with suggested score
+- 3:45 - Show accepting/overriding AI suggestion
+- 4:00 - Navigate to Evidence Library
+- 4:20 - Filter and manage evidence
+- 4:45 - Return to avatar for best practices
+- 5:10 - Outro
+- 5:30 - End card with "Next: Understanding Gap Analysis"
+

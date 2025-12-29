@@ -72,6 +72,318 @@ function decrypt(encrypted) {
 }
 
 const SSOService = {
+    // ==========================================
+    // SUPERADMIN: List all SSO configurations
+    // ==========================================
+    
+    /**
+     * List all SSO configurations across all organizations (SuperAdmin)
+     */
+    async listAllConfigurations() {
+        const configs = await dbAll(`
+            SELECT sc.*, o.name as organization_name 
+            FROM sso_configurations sc
+            LEFT JOIN organizations o ON sc.organization_id = o.id
+            ORDER BY sc.created_at DESC
+        `);
+        
+        return configs.map(config => ({
+            id: config.id,
+            organizationId: config.organization_id,
+            organizationName: config.organization_name,
+            providerType: config.provider_type,
+            providerName: config.provider_name,
+            isActive: !!config.is_active,
+            isVerified: !!config.is_verified,
+            enforceSso: !!config.enforce_sso,
+            allowPasswordLogin: !!config.allow_password_login,
+            autoProvisionUsers: !!config.auto_provision_users,
+            defaultRole: config.default_role,
+            createdAt: config.created_at,
+            lastLoginAt: config.last_login_at,
+        }));
+    },
+    
+    /**
+     * Toggle SSO configuration active status
+     */
+    async toggleConfiguration(configId, isActive) {
+        await dbRun(
+            `UPDATE sso_configurations SET is_active = ?, updated_at = datetime('now') WHERE id = ?`,
+            [isActive ? 1 : 0, configId]
+        );
+        return { success: true };
+    },
+    
+    /**
+     * Delete SSO configuration
+     */
+    async deleteConfiguration(configId) {
+        // First terminate all SSO sessions
+        await dbRun(`DELETE FROM sso_sessions WHERE sso_config_id = ?`, [configId]);
+        
+        // Then delete the config
+        await dbRun(`DELETE FROM sso_configurations WHERE id = ?`, [configId]);
+        
+        return { success: true };
+    },
+    
+    // ==========================================
+    // GOOGLE OIDC SUPPORT
+    // ==========================================
+    
+    /**
+     * Create Google OIDC configuration
+     */
+    async createGoogleConfig(organizationId, { clientId, clientSecret, allowedDomains = [] }, createdBy = null) {
+        const existing = await dbGet(
+            `SELECT id FROM sso_configurations WHERE organization_id = ?`,
+            [organizationId]
+        );
+
+        if (existing) {
+            throw new Error('SSO configuration already exists. Use updateGoogleConfig instead.');
+        }
+
+        const id = uuidv4();
+        const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        
+        await dbRun(
+            `INSERT INTO sso_configurations 
+             (id, organization_id, provider_type, provider_name,
+              client_id, client_secret_encrypted,
+              authorization_url, token_url, userinfo_url,
+              attribute_mapping, allow_password_login, auto_provision_users, default_role,
+              created_by)
+             VALUES (?, ?, 'google', 'Google Workspace', ?, ?, ?, ?, ?, ?, 1, 1, 'USER', ?)`,
+            [
+                id, organizationId,
+                clientId, clientSecret ? encrypt(clientSecret) : null,
+                'https://accounts.google.com/o/oauth2/v2/auth',
+                'https://oauth2.googleapis.com/token',
+                'https://openidconnect.googleapis.com/v1/userinfo',
+                JSON.stringify({ email: 'email', firstName: 'given_name', lastName: 'family_name', allowedDomains }),
+                createdBy
+            ]
+        );
+
+        AuditService.logSystemEvent('GOOGLE_SSO_CONFIG_CREATED', 'sso_configuration', id, organizationId, {
+            allowedDomains,
+        });
+
+        return { 
+            id, 
+            redirectUri: `${baseUrl}/api/sso/google/callback`
+        };
+    },
+    
+    /**
+     * Update Google OIDC configuration
+     */
+    async updateGoogleConfig(organizationId, updates, updatedBy = null) {
+        const current = await this.getConfiguration(organizationId);
+        if (!current) {
+            throw new Error('SSO configuration not found');
+        }
+
+        const fields = [];
+        const params = [];
+
+        if (updates.clientId !== undefined) {
+            fields.push('client_id = ?');
+            params.push(updates.clientId);
+        }
+        
+        if (updates.clientSecret !== undefined) {
+            fields.push('client_secret_encrypted = ?');
+            params.push(updates.clientSecret ? encrypt(updates.clientSecret) : null);
+        }
+        
+        if (updates.allowedDomains !== undefined) {
+            const mapping = JSON.parse(current.attributeMapping || '{}');
+            mapping.allowedDomains = updates.allowedDomains;
+            fields.push('attribute_mapping = ?');
+            params.push(JSON.stringify(mapping));
+        }
+        
+        if (updates.enforceSso !== undefined) {
+            fields.push('enforce_sso = ?');
+            params.push(updates.enforceSso ? 1 : 0);
+        }
+        
+        if (updates.allowPasswordLogin !== undefined) {
+            fields.push('allow_password_login = ?');
+            params.push(updates.allowPasswordLogin ? 1 : 0);
+        }
+        
+        if (updates.autoProvisionUsers !== undefined) {
+            fields.push('auto_provision_users = ?');
+            params.push(updates.autoProvisionUsers ? 1 : 0);
+        }
+        
+        if (updates.defaultRole !== undefined) {
+            fields.push('default_role = ?');
+            params.push(updates.defaultRole);
+        }
+
+        fields.push('updated_at = datetime("now")');
+        params.push(organizationId);
+
+        await dbRun(
+            `UPDATE sso_configurations SET ${fields.join(', ')} WHERE organization_id = ?`,
+            params
+        );
+
+        return { success: true };
+    },
+    
+    /**
+     * Process Google OIDC callback
+     */
+    async processGoogleCallback(organizationId, code, requestInfo = {}) {
+        const config = await this.getConfiguration(organizationId, true);
+        if (!config || !config.isActive) {
+            throw new Error('SSO not configured or not active');
+        }
+
+        const attemptId = uuidv4();
+
+        try {
+            // Exchange code for tokens
+            const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    code,
+                    client_id: config.clientId,
+                    client_secret: config.clientSecret,
+                    redirect_uri: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/api/sso/google/callback`,
+                    grant_type: 'authorization_code',
+                }).toString(),
+            });
+
+            const tokens = await tokenResponse.json();
+            
+            if (tokens.error) {
+                throw new Error(tokens.error_description || tokens.error);
+            }
+
+            // Get user info
+            const userInfoResponse = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
+                headers: { Authorization: `Bearer ${tokens.access_token}` },
+            });
+
+            const userInfo = await userInfoResponse.json();
+            
+            // Validate domain if restricted
+            const mapping = config.attributeMapping || {};
+            if (mapping.allowedDomains && mapping.allowedDomains.length > 0) {
+                const emailDomain = userInfo.email.split('@')[1];
+                if (!mapping.allowedDomains.includes(emailDomain)) {
+                    throw new Error(`Domain ${emailDomain} is not allowed for this organization`);
+                }
+            }
+
+            // Find or create user
+            let user = await dbGet(`SELECT * FROM users WHERE email = ?`, [userInfo.email]);
+            let userCreated = false;
+
+            if (!user) {
+                if (!config.autoProvisionUsers) {
+                    throw new Error('User not found and auto-provisioning disabled');
+                }
+
+                const userId = uuidv4();
+                await dbRun(
+                    `INSERT INTO users (id, organization_id, email, first_name, last_name, role, status, sso_only)
+                     VALUES (?, ?, ?, ?, ?, ?, 'active', 1)`,
+                    [userId, organizationId, userInfo.email, userInfo.given_name, userInfo.family_name, config.defaultRole]
+                );
+
+                user = await dbGet(`SELECT * FROM users WHERE id = ?`, [userId]);
+                userCreated = true;
+            } else if (user.organization_id !== organizationId) {
+                throw new Error('User belongs to different organization');
+            }
+
+            // Create SSO session
+            const sessionId = uuidv4();
+            const expiresAt = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString();
+
+            await dbRun(
+                `INSERT INTO sso_sessions (id, user_id, organization_id, sso_config_id, name_id, expires_at, ip_address, user_agent)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                [sessionId, user.id, organizationId, config.id, userInfo.email, expiresAt, requestInfo.ip, requestInfo.userAgent]
+            );
+
+            // Log successful attempt
+            await this._logAttempt({
+                id: attemptId,
+                organizationId,
+                ssoConfigId: config.id,
+                status: 'success',
+                nameId: userInfo.email,
+                userId: user.id,
+                userCreated,
+                ...requestInfo,
+            });
+
+            AuditService.logSystemEvent('GOOGLE_SSO_LOGIN', 'user', user.id, organizationId, {
+                userCreated,
+            });
+
+            return {
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    firstName: user.first_name,
+                    lastName: user.last_name,
+                    role: user.role,
+                    organizationId: user.organization_id,
+                },
+                sessionId,
+                expiresAt,
+            };
+
+        } catch (error) {
+            await this._logAttempt({
+                id: attemptId,
+                organizationId,
+                ssoConfigId: config?.id,
+                status: 'failed',
+                errorMessage: error.message,
+                ...requestInfo,
+            });
+
+            throw error;
+        }
+    },
+    
+    /**
+     * Generate Google OAuth URL
+     */
+    async getGoogleAuthUrl(organizationId) {
+        const config = await this.getConfiguration(organizationId, true);
+        if (!config || config.providerType !== 'google') {
+            throw new Error('Google SSO not configured');
+        }
+
+        const state = Buffer.from(JSON.stringify({ organizationId })).toString('base64');
+        const redirectUri = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/api/sso/google/callback`;
+        
+        const params = new URLSearchParams({
+            client_id: config.clientId,
+            redirect_uri: redirectUri,
+            response_type: 'code',
+            scope: 'openid email profile',
+            state,
+            access_type: 'offline',
+            prompt: 'select_account',
+        });
+
+        return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+    },
+
     /**
      * Create SSO configuration for organization
      * @param {string} organizationId 

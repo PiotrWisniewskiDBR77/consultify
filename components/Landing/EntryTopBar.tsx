@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Globe, ChevronDown } from 'lucide-react';
+import { Globe, ChevronDown, Menu, X, Sun, Moon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../../store/useAppStore';
 
@@ -21,7 +21,9 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
 }) => {
     const { t, i18n } = useTranslation();
     const [isLangOpen, setIsLangOpen] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const langRef = useRef<HTMLDivElement>(null);
+    const mobileMenuRef = useRef<HTMLDivElement>(null);
     const { theme, toggleTheme } = useAppStore();
 
     const languages = [
@@ -40,9 +42,23 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
             if (langRef.current && !langRef.current.contains(event.target as Node)) {
                 setIsLangOpen(false);
             }
+            if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
+                setIsMobileMenuOpen(false);
+            }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    // Close mobile menu on resize to desktop
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth >= 768) {
+                setIsMobileMenuOpen(false);
+            }
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
     }, []);
 
     const handleLangChange = (code: string) => {
@@ -54,18 +70,28 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
         <header className="fixed top-0 left-0 right-0 h-20 bg-white/70 dark:bg-navy-950/70 backdrop-blur-xl border-b border-white/20 dark:border-white/5 z-[100] transition-colors duration-300">
             <div className="max-w-7xl mx-auto h-full px-6 flex items-center justify-between">
                 {/* Logo + Brand Name */}
-                <div
-                    className="flex items-center gap-3 cursor-pointer group"
-                    onClick={() => window.location.href = '/'}
-                >
-                    <img
-                        src="/assets/logos/logo-dark.png"
-                        alt="DBR77"
-                        className="h-8 transition-transform duration-300 group-hover:scale-105"
-                    />
-                    <span className="text-xl font-black tracking-tight text-navy-950 dark:text-white uppercase font-sans">
+                <div className="flex items-center gap-3">
+                    {/* DBR77 Logo - links to company website */}
+                    <a
+                        href="https://dbr77.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group"
+                        title="DBR77 Robotics - Company Website"
+                    >
+                        <img
+                            src="/assets/logos/logo-dark.png"
+                            alt="DBR77"
+                            className="h-8 transition-transform duration-300 group-hover:scale-110 group-hover:brightness-110"
+                        />
+                    </a>
+                    {/* Consultinity - links to homepage */}
+                    <a
+                        href="/"
+                        className="text-xl font-black tracking-tight text-navy-950 dark:text-white uppercase font-sans hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                    >
                         Consultinity
-                    </span>
+                    </a>
                 </div>
 
                 {/* Center Navigation - Demo & Trial */}
@@ -163,10 +189,96 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                     </div>
                 </div>
 
-                {/* Mobile Menu Toggle (simplified for now) */}
-                <button className="md:hidden p-2 text-navy-950 dark:text-white">
-                    <Globe size={24} />
-                </button>
+                {/* Mobile Menu Toggle */}
+                <div className="md:hidden" ref={mobileMenuRef}>
+                    <button 
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        className="p-2 text-navy-950 dark:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                        aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+                    >
+                        {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                    </button>
+
+                    {/* Mobile Menu Dropdown */}
+                    <AnimatePresence>
+                        {isMobileMenuOpen && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                transition={{ duration: 0.2 }}
+                                className="absolute top-full left-0 right-0 bg-white dark:bg-navy-950 border-b border-slate-200 dark:border-white/10 shadow-xl"
+                            >
+                                <nav className="flex flex-col p-4 gap-2 max-w-7xl mx-auto">
+                                    {/* Navigation Links */}
+                                    <button
+                                        onClick={() => { onDemoClick(); setIsMobileMenuOpen(false); }}
+                                        className="w-full text-left px-4 py-3 text-base font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-all"
+                                    >
+                                        Demo
+                                    </button>
+                                    <button
+                                        onClick={() => { onTrialClick(); setIsMobileMenuOpen(false); }}
+                                        className="w-full text-left px-4 py-3 text-base font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-all"
+                                    >
+                                        Trial
+                                    </button>
+                                    
+                                    <div className="h-px bg-slate-200 dark:bg-white/10 my-2" />
+                                    
+                                    <button
+                                        onClick={() => { onLoginClick(); setIsMobileMenuOpen(false); }}
+                                        className="w-full text-left px-4 py-3 text-base font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-all"
+                                    >
+                                        {t('landing.topBar.login', 'Log in')}
+                                    </button>
+                                    <button
+                                        onClick={() => { onTrialClick(); setIsMobileMenuOpen(false); }}
+                                        className="w-full px-4 py-3 text-base font-semibold text-white bg-purple-600 hover:bg-purple-500 rounded-lg transition-all text-center"
+                                    >
+                                        {t('auth.createOne', 'Sign up')}
+                                    </button>
+
+                                    <div className="h-px bg-slate-200 dark:bg-white/10 my-2" />
+                                    
+                                    {/* Theme & Language Row */}
+                                    <div className="flex items-center justify-between px-4 py-2">
+                                        {/* Theme Toggle */}
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm text-slate-500 dark:text-slate-400">Theme:</span>
+                                            <button
+                                                onClick={() => toggleTheme(theme === 'dark' ? 'light' : 'dark')}
+                                                className="p-2 text-slate-600 dark:text-slate-400 hover:text-navy-950 dark:hover:text-white transition-colors bg-slate-100 dark:bg-white/10 rounded-lg"
+                                            >
+                                                {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                                            </button>
+                                        </div>
+
+                                        {/* Language Selector */}
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm text-slate-500 dark:text-slate-400">Lang:</span>
+                                            <div className="flex gap-1">
+                                                {languages.slice(0, 3).map((lang) => (
+                                                    <button
+                                                        key={lang.code}
+                                                        onClick={() => handleLangChange(lang.code)}
+                                                        className={`text-xs px-2 py-1.5 rounded-lg border transition-colors font-medium uppercase ${
+                                                            i18n.language.startsWith(lang.code)
+                                                                ? 'bg-purple-100 border-purple-300 text-purple-700 dark:bg-purple-900/30 dark:border-purple-500/30 dark:text-purple-300'
+                                                                : 'border-slate-200 text-slate-500 hover:bg-slate-100 dark:border-white/10 dark:hover:bg-white/5 dark:text-slate-400'
+                                                        }`}
+                                                    >
+                                                        {lang.code}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </nav>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
             </div>
         </header>
     );

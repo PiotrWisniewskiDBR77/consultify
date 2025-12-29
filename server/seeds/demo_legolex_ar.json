@@ -3,89 +3,89 @@
         "name": "Legolex Manufacturing"
     },
     "project": {
-        "name": "برنامج التحول الرقمي",
-        "current_phase": "خارطة الطريق"
+        "name": "Digital Transformation Program",
+        "current_phase": "Roadmap"
     },
     "initiatives": [
         {
-            "name": "مبادرة أتمتة العمليات",
-            "summary": "أتمتة العمليات التجارية المتكررة لتحسين الكفاءة وتقليل الأخطاء اليدوية.",
+            "name": "Process Automation Initiative",
+            "summary": "Automate repetitive business processes to improve efficiency and reduce manual errors.",
             "status": "IN_PROGRESS",
             "priority": "HIGH",
             "tasks": [
                 {
-                    "title": "تحليل الوضع الحالي",
-                    "description": "توثيق العمليات الحالية وتحديد فرص الأتمتة.",
+                    "title": "Current State Analysis",
+                    "description": "Document existing processes and identify automation opportunities.",
                     "status": "done",
                     "priority": "high"
                 },
                 {
-                    "title": "اختيار التكنولوجيا",
-                    "description": "تقييم أدوات RPA وأتمتة سير العمل.",
+                    "title": "Technology Selection",
+                    "description": "Evaluate RPA and workflow automation tools.",
                     "status": "done",
                     "priority": "high"
                 },
                 {
-                    "title": "التنفيذ التجريبي",
-                    "description": "تنفيذ الأتمتة في قسم المالية.",
+                    "title": "Pilot Implementation",
+                    "description": "Implement automation in the finance department.",
                     "status": "in_progress",
                     "priority": "high"
                 },
                 {
-                    "title": "تدريب المستخدمين",
-                    "description": "تدريب الموظفين على سير العمل الآلي الجديد.",
+                    "title": "User Training",
+                    "description": "Train staff on new automated workflows.",
                     "status": "todo",
                     "priority": "medium"
                 },
                 {
-                    "title": "الطرح الكامل",
-                    "description": "توسيع الأتمتة لجميع الأقسام.",
+                    "title": "Full Rollout",
+                    "description": "Extend automation to all departments.",
                     "status": "todo",
                     "priority": "medium"
                 }
             ]
         },
         {
-            "name": "منصة تحليل البيانات",
-            "summary": "تنفيذ منصة حديثة لتحليل البيانات للحصول على ذكاء الأعمال في الوقت الفعلي.",
+            "name": "Data Analytics Platform",
+            "summary": "Implement a modern data analytics platform for real-time business intelligence.",
             "status": "DRAFT",
             "priority": "MEDIUM",
             "tasks": [
                 {
-                    "title": "جمع المتطلبات",
-                    "description": "جمع متطلبات التحليل من أصحاب المصلحة.",
+                    "title": "Requirements Gathering",
+                    "description": "Collect analytics requirements from stakeholders.",
                     "status": "in_progress",
                     "priority": "high"
                 },
                 {
-                    "title": "تصميم بنية البيانات",
-                    "description": "تصميم مستودع البيانات وخطوط ETL.",
+                    "title": "Data Architecture Design",
+                    "description": "Design the data warehouse and ETL pipelines.",
                     "status": "todo",
                     "priority": "high"
                 },
                 {
-                    "title": "اختيار أداة BI",
-                    "description": "تقييم واختيار أدوات ذكاء الأعمال.",
+                    "title": "BI Tool Selection",
+                    "description": "Evaluate and select business intelligence tools.",
                     "status": "todo",
                     "priority": "medium"
                 }
             ]
         },
         {
-            "name": "تحسين تجربة العملاء",
-            "summary": "تحسين القنوات الرقمية الموجهة للعملاء لتحقيق مشاركة ورضا أفضل.",
+            "name": "Customer Experience Enhancement",
+            "summary": "Improve customer-facing digital channels for better engagement and satisfaction.",
             "status": "DRAFT",
             "priority": "LOW",
             "tasks": [
                 {
-                    "title": "رسم رحلة العميل",
-                    "description": "رسم رحلات العملاء الحالية عبر جميع نقاط الاتصال.",
+                    "title": "Customer Journey Mapping",
+                    "description": "Map current customer journeys across all touchpoints.",
                     "status": "todo",
                     "priority": "high"
                 },
                 {
-                    "title": "بحث تجربة المستخدم",
-                    "description": "إجراء بحث المستخدمين لتحديد نقاط الألم.",
+                    "title": "UX Research",
+                    "description": "Conduct user research to identify pain points.",
                     "status": "todo",
                     "priority": "medium"
                 }

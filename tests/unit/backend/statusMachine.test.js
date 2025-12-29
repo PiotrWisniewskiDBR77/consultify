@@ -55,8 +55,8 @@ describe('StatusMachine', () => {
         });
 
         it('should prevent approved state if governance failed', () => {
-            // Updated: PLANNING_COMPLETE -> APPROVED needs approval
-            const result = StatusMachine.validateInitiativeTransition('PLANNING_COMPLETE', 'APPROVED', { requiresApproval: true, isApproved: false });
+            // Updated: REVIEW -> APPROVED needs approval
+            const result = StatusMachine.validateInitiativeTransition('REVIEW', 'APPROVED', { requiresApproval: true, isApproved: false });
             expect(result.valid).toBe(false);
             expect(result.reason).toContain('Governance approval required');
         });

@@ -53,9 +53,8 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({ currentUse
         setIsCreateModalOpen(true);
     };
 
-    const handleAiChat = async (text: string) => {
-        addMessage({ id: Date.now().toString(), role: 'user', content: text, timestamp: new Date() });
-    };
+    // NOTE: We pass undefined to let SplitLayout use its default AI handler
+    // The default handler in SplitLayout properly calls startStream() which sends to backend
 
     // Step C: Handle "Explain This" click from PMO Health section
     const handleExplainPMO = (snapshot: any) => {
@@ -79,7 +78,6 @@ Please explain:
         <SplitLayout
             title={t('dashboard.chatTitle', 'Executive Assistant')}
             subtitle={t('dashboard.chatSubtitle', 'Strategic guidance & insights')}
-            onSendMessage={handleAiChat}
         >
             <div className="flex h-full flex-col bg-slate-50 dark:bg-navy-950">
                 <div className="flex-1 p-2 lg:p-4 overflow-auto">

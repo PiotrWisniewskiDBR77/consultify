@@ -4,19 +4,21 @@
 
 const BaseService = require('./BaseService');
 const queryHelpers = require('../utils/queryHelpers');
+const WorkModeService = require('./workModeService');
 
 const MyWorkService = Object.assign({}, BaseService, {
     /**
      * Get aggregated My Work view for a user
-     * REFACTORED: Uses BaseService caching
+     * REFACTORED: Uses BaseService caching + Work Mode visibility filtering
      */
     getMyWork: async function(userId, organizationId) {
         const cacheKey = this.cache.CacheKeys.userDashboard(userId, organizationId);
         
         return await this.cache.getCached(cacheKey, async () => {
             // Execute all queries in parallel for better performance
+            // Pass organizationId to _getMyTasks for work mode visibility filtering
             const [myTasks, myAlerts, hasInitiatives, hasDecisions] = await Promise.all([
-                this._getMyTasks(userId),
+                this._getMyTasks(userId, organizationId),
                 this._getMyAlerts(userId),
                 this._isInitiativeOwnerOrPM(userId),
                 this._isDecisionOwner(userId)
@@ -44,10 +46,14 @@ const MyWorkService = Object.assign({}, BaseService, {
     },
 
     /**
-     * Get user's tasks
-     * REFACTORED: Uses BaseService query helpers
+     * Get user's tasks with work mode visibility filtering
+     * REFACTORED: Uses BaseService query helpers + WorkModeService visibility rules
+     * 
+     * @param {string} userId - User ID
+     * @param {string} organizationId - Organization ID for work mode rules
+     * @param {Array} locationIds - Legacy location filter (optional)
      */
-    _getMyTasks: async function(userId, locationIds = null) {
+    _getMyTasks: async function(userId, organizationId = null, locationIds = null) {
         const today = new Date().toISOString().split('T')[0];
 
         let sql = `
@@ -59,7 +65,33 @@ const MyWorkService = Object.assign({}, BaseService, {
         `;
         const params = [userId];
 
-        // GAP-04: Filter by location if provided
+        // Apply work mode visibility rules if organization is provided
+        if (organizationId) {
+            try {
+                const visibilityRules = await WorkModeService.getTaskVisibilityRules(userId, organizationId);
+                
+                if (visibilityRules.type !== 'all') {
+                    // Apply facility filter
+                    if (visibilityRules.filters.facilityIds && visibilityRules.filters.facilityIds.length > 0) {
+                        const facilityPlaceholders = visibilityRules.filters.facilityIds.map(() => '?').join(',');
+                        sql += ` AND (t.facility_id IN (${facilityPlaceholders}) OR t.facility_id IS NULL)`;
+                        params.push(...visibilityRules.filters.facilityIds);
+                    }
+                    
+                    // Apply project filter
+                    if (visibilityRules.filters.projectIds && visibilityRules.filters.projectIds.length > 0) {
+                        const projectPlaceholders = visibilityRules.filters.projectIds.map(() => '?').join(',');
+                        sql += ` AND (t.project_id IN (${projectPlaceholders}) OR t.project_id IS NULL)`;
+                        params.push(...visibilityRules.filters.projectIds);
+                    }
+                }
+            } catch (err) {
+                console.error('[MyWorkService] Visibility rules error:', err.message);
+                // Continue without visibility filtering on error
+            }
+        }
+
+        // GAP-04: Legacy location filter (for backwards compatibility)
         if (locationIds && locationIds.length > 0) {
             const placeholders = queryHelpers.buildInPlaceholders(locationIds);
             sql += ` AND (i.id IN (
@@ -89,7 +121,8 @@ const MyWorkService = Object.assign({}, BaseService, {
                 dueDate: t.due_date,
                 status: t.status,
                 priority: t.priority || 'MEDIUM',
-                blockedReason: t.blocked_reason
+                blockedReason: t.blocked_reason,
+                facilityId: t.facility_id
             }))
         };
     },

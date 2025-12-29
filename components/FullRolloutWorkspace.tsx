@@ -3,7 +3,8 @@ import { FullSession, FullInitiative, Language } from '../types';
 import {
     Layout, Users, Calendar, Activity,
     AlertOctagon, Megaphone, TrendingUp, Flag,
-    CheckCircle2
+    CheckCircle2, FileText, Shield, BarChart3, UserCog, 
+    GitBranch, Layers
 } from 'lucide-react';
 import { FullStep5Workspace } from './FullStep5Workspace'; // Reuse Kanban
 import { RolloutStrategyTab } from './RolloutStrategyTab';
@@ -13,6 +14,11 @@ import { RolloutRisksTab } from './RolloutRisksTab';
 import { RolloutChangeTab } from './RolloutChangeTab';
 import { RolloutKPITab } from './RolloutKPITab';
 import { RolloutClosureTab } from './RolloutClosureTab';
+import { DecisionBoard, CapacityView, StatusReportBuilder } from './Implementation';
+import { GateStatus } from './PMO/GateStatus';
+import { RACIMatrix } from './PMO/RACIMatrix';
+import { WorkstreamBoard } from './PMO/WorkstreamBoard';
+import { PMOHealthSection } from './PMO/PMOHealthSection';
 
 interface FullRolloutWorkspaceProps {
     fullSession: FullSession;
@@ -20,33 +26,58 @@ interface FullRolloutWorkspaceProps {
     onUpdateSession?: (session: FullSession) => void; // New prop
     onNextStep: () => void;
     language: Language;
+    projectId?: string;
 }
 
-type RolloutTab = 'strategy' | 'teams' | 'plan' | 'dashboard' | 'risks' | 'change' | 'kpi' | 'closure';
+type RolloutTab = 'dashboard' | 'governance' | 'workstreams' | 'teams' | 'capacity' | 'plan' | 'risks' | 'change' | 'reports' | 'closure';
 
 export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
     fullSession,
     onUpdateInitiative,
     onUpdateSession,
     onNextStep,
-    language
+    language,
+    projectId = 'default'
 }) => {
     const [activeTab, setActiveTab] = useState<RolloutTab>('dashboard'); // Default to Dashboard (Kanban) which is most used
+    const [showChangeModal, setShowChangeModal] = useState(false);
 
-    // Placeholders for PRO MAX tabs
-    const renderStrategy = () => (
-        <RolloutStrategyTab
-            data={fullSession.rollout || {}}
-            onUpdate={(updatedData) => {
-                if (onUpdateSession) {
-                    onUpdateSession({
-                        ...fullSession,
-                        rollout: { ...fullSession.rollout, ...updatedData }
-                    });
-                }
-            }}
-            isAdmin={true}
-        />
+    // Governance Tab - Decisions, Stage Gates, RACI
+    const renderGovernance = () => (
+        <div className="space-y-8 p-6">
+            {/* PMO Health Banner */}
+            <PMOHealthSection projectId={projectId} compact />
+            
+            {/* Stage Gate Status */}
+            <div className="bg-navy-900 rounded-xl border border-white/10 p-6">
+                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <Shield size={20} className="text-purple-400" />
+                    Current Stage Gate
+                </h3>
+                <GateStatus projectId={projectId} />
+            </div>
+            
+            {/* Decision Board */}
+            <DecisionBoard 
+                projectId={projectId}
+                canApprove={true}
+            />
+            
+            {/* RACI Matrix */}
+            <div className="bg-navy-900 rounded-xl border border-white/10 p-6">
+                <RACIMatrix projectId={projectId} compact={false} />
+            </div>
+        </div>
+    );
+
+    // Workstreams Tab
+    const renderWorkstreams = () => (
+        <div className="p-6">
+            <WorkstreamBoard 
+                projectId={projectId}
+                canManage={true}
+            />
+        </div>
     );
 
     const renderTeams = () => (
@@ -61,6 +92,13 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
                 }
             }}
         />
+    );
+
+    // Capacity Planning Tab
+    const renderCapacity = () => (
+        <div className="p-6">
+            <CapacityView projectId={projectId} />
+        </div>
     );
 
     const renderPlan = () => (
@@ -119,18 +157,14 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
         />
     );
 
-    const renderKPI = () => (
-        <RolloutKPITab
-            data={fullSession.rollout || {}}
-            onUpdate={(updatedData) => {
-                if (onUpdateSession) {
-                    onUpdateSession({
-                        ...fullSession,
-                        rollout: { ...fullSession.rollout, ...updatedData }
-                    });
-                }
-            }}
-        />
+    // Status Reports Tab
+    const renderReports = () => (
+        <div className="p-6">
+            <StatusReportBuilder 
+                projectId={projectId}
+                projectName={fullSession.rollout?.projectName || 'Digital Transformation'}
+            />
+        </div>
     );
 
     const renderClosure = () => (
@@ -166,13 +200,15 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
 
     const renderContent = () => {
         switch (activeTab) {
-            case 'strategy': return renderStrategy();
-            case 'teams': return renderTeams();
-            case 'plan': return renderPlan();
             case 'dashboard': return renderDashboard();
+            case 'governance': return renderGovernance();
+            case 'workstreams': return renderWorkstreams();
+            case 'teams': return renderTeams();
+            case 'capacity': return renderCapacity();
+            case 'plan': return renderPlan();
             case 'risks': return renderRisks();
             case 'change': return renderChange();
-            case 'kpi': return renderKPI();
+            case 'reports': return renderReports();
             case 'closure': return renderClosure();
             default: return null;
         }
@@ -183,30 +219,34 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
             {/* Header */}
             <div className="h-16 border-b border-white/10 px-6 flex items-center justify-between bg-navy-900/50 backdrop-blur-sm sticky top-0 z-10">
                 <h1 className="text-xl font-bold flex items-center gap-2">
-                    <CheckCircle2 className="text-green-500" size={24} />
-                    Full Rollout Execution
+                    <CheckCircle2 className="text-purple-500" size={24} />
+                    Implementation - Full PMO
                 </h1>
-                <a href="#" onClick={(e) => { e.preventDefault(); /* Would trigger navigation if I had access to router, but here I only have props */ }} className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-1">
-                    Open My Work &rarr;
-                </a>
+                <div className="flex items-center gap-3">
+                    <span className="text-xs text-slate-400 bg-slate-800 px-2 py-1 rounded">
+                        ISO 21500 | PMBOK 7 | PRINCE2
+                    </span>
+                </div>
             </div>
 
-            {/* Navigation Tabs (Scrollable) */}
+            {/* Navigation Tabs (Scrollable) - Reorganized for Full PMO */}
             <div className="flex border-b border-white/10 px-6 gap-6 mt-2 overflow-x-auto scrollbar-thin scrollbar-thumb-white/10">
                 {[
-                    { id: 'strategy', label: '5.1 Strategy', icon: Layout },
-                    { id: 'teams', label: '5.2 Teams', icon: Users },
-                    { id: 'plan', label: '5.3 Plan', icon: Calendar },
-                    { id: 'dashboard', label: '5.4 Dashboard', icon: Activity },
-                    { id: 'risks', label: '5.5 Risks', icon: AlertOctagon },
-                    { id: 'change', label: '5.6 Change', icon: Megaphone },
-                    { id: 'kpi', label: '5.7 KPIs', icon: TrendingUp },
-                    { id: 'closure', label: '5.8 Closure', icon: Flag },
+                    { id: 'dashboard', label: 'Dashboard', icon: Activity, group: 'delivery' },
+                    { id: 'governance', label: 'Governance', icon: Shield, group: 'governance' },
+                    { id: 'workstreams', label: 'Workstreams', icon: Layers, group: 'delivery' },
+                    { id: 'teams', label: 'Teams', icon: Users, group: 'resources' },
+                    { id: 'capacity', label: 'Capacity', icon: UserCog, group: 'resources' },
+                    { id: 'plan', label: 'Plan', icon: Calendar, group: 'delivery' },
+                    { id: 'risks', label: 'Risks', icon: AlertOctagon, group: 'monitoring' },
+                    { id: 'change', label: 'Changes', icon: GitBranch, group: 'governance' },
+                    { id: 'reports', label: 'Reports', icon: BarChart3, group: 'monitoring' },
+                    { id: 'closure', label: 'Closure', icon: Flag, group: 'governance' },
                 ].map(tab => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as RolloutTab)}
-                        className={`pb-3 flex items-center gap-2 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${activeTab === tab.id ? 'border-blue-500 text-blue-400' : 'border-transparent text-slate-400 hover:text-white'}`}
+                        className={`pb-3 flex items-center gap-2 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${activeTab === tab.id ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-white'}`}
                     >
                         <tab.icon size={16} />
                         {tab.label}

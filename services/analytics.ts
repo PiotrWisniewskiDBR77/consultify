@@ -90,16 +90,25 @@ export const generateBurnDownData = (tasks: Task[], startDate: Date, endDate: Da
 
 export const generateVelocityData = (tasks: Task[], weeks: number = 8): VelocityData[] => {
     const data: VelocityData[] = [];
-    const tasksPerWeek = tasks.length / weeks;
-
+    const tasksPerWeek = Math.max(1, Math.floor(tasks.length / weeks));
+    const now = new Date();
+    
+    // Calculate completed tasks per week based on actual updatedAt dates
     for (let i = 0; i < weeks; i++) {
-        // In real implementation, this would count actual completions per week
-        const completed = Math.floor(Math.random() * tasksPerWeek * 1.5); // Simulated
+        const weekStart = new Date(now.getTime() - (weeks - i) * 7 * 24 * 60 * 60 * 1000);
+        const weekEnd = new Date(now.getTime() - (weeks - i - 1) * 7 * 24 * 60 * 60 * 1000);
+        
+        // Count tasks completed in this specific week
+        const completedInWeek = tasks.filter(t => {
+            if (t.status !== TaskStatus.DONE) return false;
+            const completedDate = new Date(t.updatedAt || t.createdAt);
+            return completedDate >= weekStart && completedDate < weekEnd;
+        }).length;
 
         data.push({
             week: `W${i + 1}`,
-            completed,
-            target: Math.floor(tasksPerWeek)
+            completed: completedInWeek,
+            target: tasksPerWeek
         });
     }
 

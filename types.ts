@@ -50,8 +50,10 @@ export enum AppView {
   FULL_STEP2_INITIATIVES = 'FULL_STEP2_INITIATIVES',
   FULL_STEP3_ROADMAP = 'FULL_STEP3_ROADMAP',
   FULL_STEP4_ROI = 'FULL_STEP4_ROI',
-  FULL_STEP5_EXECUTION = 'FULL_STEP5_EXECUTION', // Keepingfor backward compat
-  FULL_PILOT_EXECUTION = 'FULL_PILOT_EXECUTION', // Module 4
+  ECONOMICS = 'ECONOMICS', // Module: Economics & Value Realization (Digitization Maturity)
+  FULL_STEP5_EXECUTION = 'FULL_STEP5_EXECUTION', // Keeping for backward compat
+  IMPLEMENTATION = 'IMPLEMENTATION', // Module 4: Wdrożenie
+  FULL_PILOT_EXECUTION = 'IMPLEMENTATION', // @deprecated - use IMPLEMENTATION
   FULL_ROLLOUT = 'FULL_ROLLOUT', // Module 5
   FULL_STEP6_REPORTS = 'FULL_STEP6_REPORTS',
   DRD_AUDIT_REPORT = 'DRD_AUDIT_REPORT', // DRD Audit Report Builder
@@ -70,6 +72,7 @@ export enum AppView {
   ADMIN_USERS = 'ADMIN_USERS',
   ADMIN_PROJECTS = 'ADMIN_PROJECTS',
   ADMIN_LLM = 'ADMIN_LLM',
+  ADMIN_AI_HEALTH = 'ADMIN_AI_HEALTH',
   ADMIN_KNOWLEDGE = 'ADMIN_KNOWLEDGE',
   ADMIN_TEAMS = 'ADMIN_TEAMS',
   ADMIN_ANALYTICS = 'ADMIN_ANALYTICS',
@@ -95,6 +98,10 @@ export enum AppView {
   // Teamwork Views
   MY_WORK = 'MY_WORK', // New Module 7 (Tasks & Workflow)
 
+  // Initiative Lifecycle Management
+  INITIATIVE_MANAGEMENT = 'INITIATIVE_MANAGEMENT', // REVIEW and APPROVED initiatives
+  BENEFITS_REALIZATION = 'BENEFITS_REALIZATION', // DONE, BLOCKED, CANCELLED, ARCHIVED + KPIs
+
   // Step D: Executive View (Read-only reporting for executives)
   EXECUTIVE_VIEW = 'EXECUTIVE_VIEW',
 
@@ -114,7 +121,53 @@ export enum AppView {
   ADMIN_SETTINGS_CONSULTANTS = 'ADMIN_SETTINGS_CONSULTANTS',
 
   // Ecosystem (Phase G)
-  AFFILIATE_DASHBOARD = 'AFFILIATE_DASHBOARD'
+  AFFILIATE_DASHBOARD = 'AFFILIATE_DASHBOARD',
+
+  // SuperAdmin Views (Unified Navigation)
+  SUPERADMIN_DASHBOARD = 'SUPERADMIN_DASHBOARD',
+  SUPERADMIN_ORGANIZATIONS = 'SUPERADMIN_ORGANIZATIONS',
+  SUPERADMIN_USERS = 'SUPERADMIN_USERS',
+  SUPERADMIN_BILLING = 'SUPERADMIN_BILLING',
+  SUPERADMIN_AI_CONFIG = 'SUPERADMIN_AI_CONFIG',
+  SUPERADMIN_KNOWLEDGE = 'SUPERADMIN_KNOWLEDGE',
+  SUPERADMIN_SETTINGS = 'SUPERADMIN_SETTINGS',
+
+  // SuperAdmin Enterprise Views
+  SUPERADMIN_SSO = 'SUPERADMIN_SSO',
+  SUPERADMIN_SECURITY_POLICIES = 'SUPERADMIN_SECURITY_POLICIES',
+  SUPERADMIN_API_MANAGEMENT = 'SUPERADMIN_API_MANAGEMENT',
+  SUPERADMIN_WHITELABEL = 'SUPERADMIN_WHITELABEL',
+  SUPERADMIN_COMPLIANCE = 'SUPERADMIN_COMPLIANCE',
+  SUPERADMIN_INVOICES = 'SUPERADMIN_INVOICES',
+  SUPERADMIN_BULK_OPERATIONS = 'SUPERADMIN_BULK_OPERATIONS',
+
+  // Admin Enterprise Views
+  ADMIN_SECURITY = 'ADMIN_SECURITY',
+  ADMIN_API_KEYS = 'ADMIN_API_KEYS',
+  ADMIN_BILLING_MANAGEMENT = 'ADMIN_BILLING_MANAGEMENT',
+  ADMIN_BULK_OPERATIONS = 'ADMIN_BULK_OPERATIONS',
+  ADMIN_WORK_MODE = 'ADMIN_WORK_MODE',
+
+  // Settings Enterprise Views
+  SETTINGS_SECURITY = 'SETTINGS_SECURITY',
+  SETTINGS_API_ACCESS = 'SETTINGS_API_ACCESS',
+  SETTINGS_PRIVACY = 'SETTINGS_PRIVACY',
+  SETTINGS_SSO = 'SETTINGS_SSO',
+
+  // Settings (additional)
+  SETTINGS_LEGAL = 'SETTINGS_LEGAL',
+
+  // Extended User Settings
+  SETTINGS_WORK_PREFERENCES = 'SETTINGS_WORK_PREFERENCES',
+  SETTINGS_DASHBOARD_PREFERENCES = 'SETTINGS_DASHBOARD_PREFERENCES',
+  SETTINGS_ACCESSIBILITY = 'SETTINGS_ACCESSIBILITY',
+
+  // Help & Documentation
+  KNOWLEDGE_BASE = 'KNOWLEDGE_BASE',
+  KNOWLEDGE_BASE_ARTICLE = 'KNOWLEDGE_BASE_ARTICLE',
+  STATUS_PAGE = 'STATUS_PAGE',
+  CHANGELOG = 'CHANGELOG',
+  HELP_ANALYTICS = 'HELP_ANALYTICS'
 }
 
 // SCMS: Canonical Change Lifecycle Phases (System Reframe Step 0)
@@ -257,17 +310,17 @@ export interface GovernancePolicy {
 export enum InitiativeStatus {
   // Assessment Module (Module 2)
   DRAFT = 'DRAFT',
-  
+
   // Initiative Management Module (Module 3)
   PLANNING = 'PLANNING',
   REVIEW = 'REVIEW',
   APPROVED = 'APPROVED',
-  
+
   // Execution Module (Module 4/5)
   EXECUTING = 'EXECUTING',
   BLOCKED = 'BLOCKED',
   DONE = 'DONE',
-  
+
   // Terminal States
   CANCELLED = 'CANCELLED',
   ARCHIVED = 'ARCHIVED'
@@ -301,6 +354,101 @@ export enum StageGateType {
   PLANNING_GATE = 'PLANNING_GATE',       // Initiatives → Roadmap
   EXECUTION_GATE = 'EXECUTION_GATE',     // Roadmap → Execution
   CLOSURE_GATE = 'CLOSURE_GATE'          // Execution → Stabilization
+}
+
+/** Initiative Module Types */
+export type InitiativeModule = 'ASSESSMENT' | 'INITIATIVE_MANAGEMENT' | 'ROADMAP' | 'EXECUTION' | 'TERMINAL' | 'UNKNOWN';
+
+/** Status Transition - allowed transition from current status */
+export interface StatusTransition {
+  status: InitiativeStatus;
+  label: string;
+  module: InitiativeModule;
+  requiresReason: boolean;
+  requiresConfirmation: boolean;
+}
+
+/** Status History Entry - audit trail for status changes */
+export interface StatusHistoryEntry {
+  id: string;
+  fromStatus: InitiativeStatus | null;
+  toStatus: InitiativeStatus;
+  reason?: string;
+  context?: {
+    charterCompleteness?: number;
+    pendingTasks?: number;
+    hasBlockingDecisions?: boolean;
+  };
+  changedAt: string;
+  changedBy?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    avatarUrl?: string;
+  };
+}
+
+/** Module Transition Info */
+export interface ModuleTransition {
+  crossesModule: boolean;
+  fromModule: InitiativeModule;
+  toModule: InitiativeModule;
+}
+
+/** Initiative Task Stats */
+export interface InitiativeTaskStats {
+  total: number;
+  done: number;
+  pending: number;
+  blocked: number;
+}
+
+/** Initiative KPI - Key Performance Indicator */
+export interface InitiativeKPI {
+  id: string;
+  initiativeId: string;
+  name: string;
+  description?: string;
+  targetValue: number | null;
+  unit?: string;
+  measurementFrequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY';
+  alertThreshold?: number;
+  alertDirection: 'BELOW' | 'ABOVE';
+  isPrimary: boolean;
+  sortOrder: number;
+  latestValue?: number;
+  latestMeasurementDate?: string;
+  isOnTarget: boolean;
+  createdAt: string;
+}
+
+/** KPI Measurement - historical value record */
+export interface KPIMeasurement {
+  id: string;
+  kpiId: string;
+  value: number;
+  measuredAt: string;
+  notes?: string;
+  explanation?: string;
+  actionItems?: string[];
+  createdBy?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  };
+  createdAt: string;
+}
+
+/** Initiative Review - approval workflow */
+export interface InitiativeReview {
+  id: string;
+  initiativeId: string;
+  reviewerId: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CHANGES_REQUESTED';
+  comments?: string;
+  reviewedAt?: string;
+  createdAt: string;
 }
 
 // ==========================================
@@ -1709,14 +1857,23 @@ export interface ChatOption {
   value: string;
 }
 
+export interface ToolCallInfo {
+  name: string;
+  args: Record<string, unknown>;
+  result?: unknown;
+  status?: 'pending' | 'approved' | 'rejected' | 'executed';
+}
+
 export interface ChatMessage {
   id: string;
   role: 'ai' | 'user';
   content: string;
   timestamp: Date;
-  type?: 'text' | 'action_request' | 'summary' | 'file';
+  type?: 'text' | 'action_request' | 'summary' | 'file' | 'tool_call';
   options?: ChatOption[]; // For interactive buttons
   multiSelect?: boolean;  // If true, allows multiple selections
+  toolCalls?: ToolCallInfo[]; // For AI tool calls (MCP)
+  isThinking?: boolean; // For MAX Mode deep reasoning indicator
 }
 
 export interface AIMessageHistory {
@@ -1854,7 +2011,7 @@ export type Quarter = 'Q1' | 'Q2' | 'Q3' | 'Q4' | 'Q5' | 'Q6' | 'Q7' | 'Q8';
 export type Wave = 'Wave 1' | 'Wave 2' | 'Wave 3';
 // Updated InitiativeStatus to include Pilot-specific 'Validated' (Task) or Initiative status
 
-export type TaskType = 'ANALYSIS' | 'DESIGN' | 'BUILD' | 'PILOT' | 'VALIDATION' | 'DECISION' | 'CHANGE_MGMT';
+export type TaskType = 'ANALYSIS' | 'DESIGN' | 'BUILD' | 'EXECUTION' | 'VALIDATION' | 'DECISION' | 'CHANGE_MGMT';
 
 export interface DecisionImpact {
   decisionType: 'CONTINUE' | 'MOVE_TO_PILOT' | 'MOVE_TO_SCALE' | 'STOP' | 'APPROVE_INVESTMENT' | 'CHANGE_SCOPE';
@@ -2499,7 +2656,7 @@ export interface Assessment {
 // =====================================================
 
 /** Workflow states for assessment approval process */
-export type WorkflowState = 'DRAFT' | 'IN_REVIEW' | 'AWAITING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'ARCHIVED';
+export type WorkflowState = 'DRAFT' | 'IN_REVIEW' | 'AWAITING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'ARCHIVED' | 'COMPLETED' | 'IN_PROGRESS';
 
 /** Review status for individual reviewers */
 export type ReviewStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'SKIPPED';
@@ -2640,7 +2797,7 @@ export interface InitiativeTemplate {
   category: TemplateCategory;
   description: string;
   applicableAxes: DRDAxis[];
-  
+
   // Pre-filled charter fields
   problemStructured?: Partial<ProblemStructured>;
   targetState?: Partial<TargetState>;
@@ -2649,7 +2806,7 @@ export interface InitiativeTemplate {
   suggestedRoles?: { role: string; allocation: number }[];
   typicalTimeline?: string;
   typicalBudgetRange?: { min: number; max: number };
-  
+
   isPublic: boolean;
   organizationId?: string;
   createdBy?: string;
@@ -2678,7 +2835,7 @@ export interface AIGeneratedCharter extends GeneratedInitiative {
   applicantOneLiner?: string;
   strategicIntent?: 'Grow' | 'Fix' | 'Stabilize' | 'De-risk' | 'Build Capability';
   hypothesis?: string;
-  
+
   // Structured sections
   problemStructured: ProblemStructured;
   targetState: TargetState;
@@ -2688,12 +2845,12 @@ export interface AIGeneratedCharter extends GeneratedInitiative {
   keyRisks: { risk: string; mitigation: string; metric: 'Low' | 'Medium' | 'High' }[];
   deliverables: string[];
   milestones: { name: string; targetDate: string }[];
-  
+
   // Financials
   capex?: number;
   firstYearOpex?: number;
   annualBenefit?: number;
-  
+
   // Meta
   templateId?: string;
   generationConfidence: 'HIGH' | 'MEDIUM' | 'LOW';
@@ -2967,11 +3124,11 @@ export interface Task {
   initiativeId?: string;
   initiativeName?: string;
   why?: string;
-  
+
   // Weight for progress calculation (1-5, default 1)
   weight?: number;
   weightReason?: string;
-  
+
   // Evidence Sign-off
   signedOff?: boolean;
   signedOffAt?: string;
@@ -3714,4 +3871,966 @@ export interface RACIMatrix {
   projectId: string;
   entries: RACIEntry[];
   generatedAt: string;
+}
+
+// =====================================================
+// MANAGEMENT REPORTS MODULE
+// PMO Standards: ISO 21500:2021, PMBOK 7, PRINCE2
+// =====================================================
+
+/**
+ * Management Report Types
+ */
+export type ManagementReportType = 'TEAM_MEETING' | 'STEERING_COMMITTEE';
+export type ManagementReportScope = 'PORTFOLIO' | 'PROJECT';
+export type ManagementReportStatus = 'DRAFT' | 'FINAL' | 'ARCHIVED';
+
+/**
+ * RAG Status (Red/Amber/Green) - PRINCE2 Traffic Light Reporting
+ */
+export type RAGStatus = 'GREEN' | 'AMBER' | 'RED' | 'GREY';
+
+/**
+ * RAG Category for Steering Committee Reports
+ */
+export interface RAGStatusItem {
+  category: 'SCHEDULE' | 'BUDGET' | 'SCOPE' | 'RISK' | 'QUALITY' | 'RESOURCES';
+  status: RAGStatus;
+  trend: 'IMPROVING' | 'STABLE' | 'DECLINING';
+  summary: string;
+  details?: string;
+}
+
+/**
+ * Overall RAG Status Grid
+ */
+export interface OverallRAGStatus {
+  schedule: RAGStatusItem;
+  budget: RAGStatusItem;
+  scope: RAGStatusItem;
+  risk: RAGStatusItem;
+  overallHealth: RAGStatus;
+  lastUpdated: string;
+}
+
+/**
+ * Status Summary for Team Meeting Reports
+ */
+export interface TeamStatusSummary {
+  progressPercent: number;
+  healthStatus: RAGStatus;
+  tasksTotal: number;
+  tasksCompleted: number;
+  tasksInProgress: number;
+  tasksBlocked: number;
+  tasksOverdue: number;
+  initiativesTotal: number;
+  initiativesOnTrack: number;
+  initiativesAtRisk: number;
+  decisionsApproved: number;
+  decisionsPending: number;
+}
+
+/**
+ * Completed Work Item
+ */
+export interface CompletedWorkItem {
+  id: string;
+  type: 'TASK' | 'INITIATIVE' | 'MILESTONE' | 'DECISION';
+  title: string;
+  completedAt: string;
+  completedBy: string;
+  completedByName: string;
+  projectId?: string;
+  projectName?: string;
+  initiativeId?: string;
+  initiativeTitle?: string;
+  impact?: string;
+}
+
+/**
+ * Work In Progress Item
+ */
+export interface WorkInProgressItem {
+  id: string;
+  type: 'TASK' | 'INITIATIVE';
+  title: string;
+  assigneeId: string;
+  assigneeName: string;
+  progressPercent: number;
+  dueDate?: string;
+  daysUntilDue?: number;
+  status: RAGStatus;
+  projectId?: string;
+  projectName?: string;
+}
+
+/**
+ * Blocker Item
+ */
+export interface BlockerItem {
+  id: string;
+  type: 'TASK' | 'INITIATIVE' | 'DECISION';
+  title: string;
+  blockedReason: string;
+  blockedSince: string;
+  daysBlocked: number;
+  ownerId: string;
+  ownerName: string;
+  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  projectId?: string;
+  projectName?: string;
+  suggestedAction?: string;
+}
+
+/**
+ * Decision Item
+ */
+export interface ReportDecisionItem {
+  id: string;
+  title: string;
+  description?: string;
+  decisionType: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'DEFERRED';
+  ownerId: string;
+  ownerName: string;
+  createdAt: string;
+  daysWaiting: number;
+  urgency: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+  projectId?: string;
+  projectName?: string;
+  options?: string[];
+  recommendation?: string;
+}
+
+/**
+ * Planned Item for Next Period
+ */
+export interface PlannedItem {
+  id: string;
+  type: 'TASK' | 'INITIATIVE' | 'MILESTONE' | 'GATE';
+  title: string;
+  plannedDate: string;
+  assigneeId?: string;
+  assigneeName?: string;
+  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  projectId?: string;
+  projectName?: string;
+}
+
+/**
+ * KPI Metric for Steering Committee
+ */
+export interface KPIMetric {
+  id: string;
+  name: string;
+  category: 'DELIVERY' | 'QUALITY' | 'COST' | 'TIME' | 'RISK' | 'RESOURCE';
+  currentValue: number;
+  targetValue: number;
+  unit: string;
+  trend: 'IMPROVING' | 'STABLE' | 'DECLINING';
+  status: RAGStatus;
+  variance?: number;
+  variancePercent?: number;
+  sparklineData?: number[];
+}
+
+/**
+ * Risk/Issue Item for Steering Committee
+ */
+export interface RiskIssueItem {
+  id: string;
+  type: 'RISK' | 'ISSUE';
+  title: string;
+  description: string;
+  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  probability?: 'LOW' | 'MEDIUM' | 'HIGH';  // For risks only
+  impact: string;
+  owner: string;
+  ownerName: string;
+  status: string;
+  detectedAt: string;
+  daysOpen: number;
+  mitigationPlan?: string;
+  projectId?: string;
+  projectName?: string;
+  requiresEscalation: boolean;
+}
+
+/**
+ * Decision for Board Approval
+ */
+export interface DecisionForBoard {
+  id: string;
+  title: string;
+  description: string;
+  decisionType: 'BUDGET' | 'SCOPE' | 'RESOURCE' | 'TIMELINE' | 'STRATEGIC' | 'RISK_ACCEPTANCE';
+  requestedBy: string;
+  requestedByName: string;
+  deadline: string;
+  daysUntilDeadline: number;
+  impact: string;
+  options: {
+    id: string;
+    label: string;
+    description: string;
+    recommendation?: boolean;
+    pros?: string[];
+    cons?: string[];
+  }[];
+  projectId?: string;
+  projectName?: string;
+  estimatedValue?: number;
+  currency?: string;
+}
+
+/**
+ * Forecast Section
+ */
+export interface ForecastSection {
+  nextMilestones: {
+    id: string;
+    name: string;
+    plannedDate: string;
+    status: RAGStatus;
+    projectId?: string;
+    projectName?: string;
+  }[];
+  nextGates: {
+    id: string;
+    name: string;
+    gateType: string;
+    plannedDate: string;
+    readiness: RAGStatus;
+    missingCriteria: string[];
+    projectId?: string;
+    projectName?: string;
+  }[];
+  projectedCompletion?: string;
+  confidenceLevel?: 'LOW' | 'MEDIUM' | 'HIGH';
+  forecastNarrative: string;
+}
+
+/**
+ * Audit Trail Information (PMO Standards Compliance)
+ */
+export interface AuditTrailInfo {
+  reportId: string;
+  generatedAt: string;
+  generatedBy: string;
+  generatedByName: string;
+  version: string;
+  pmoDomain: PMODomainId;
+  iso21500Mapping: string;
+  pmbokMapping: string;
+  prince2Mapping: string;
+  dataSnapshot: {
+    projectsIncluded: number;
+    tasksAnalyzed: number;
+    initiativesAnalyzed: number;
+    decisionsAnalyzed: number;
+    risksAnalyzed: number;
+    dataAsOf: string;
+  };
+}
+
+/**
+ * Team Meeting Report Content
+ */
+export interface TeamMeetingReportContent {
+  statusSummary: TeamStatusSummary;
+  completedWork: CompletedWorkItem[];
+  workInProgress: WorkInProgressItem[];
+  blockers: BlockerItem[];
+  pendingDecisions: ReportDecisionItem[];
+  nextPeriodPlan: PlannedItem[];
+  
+  // Per-project breakdown (for portfolio reports)
+  projectBreakdown?: {
+    projectId: string;
+    projectName: string;
+    status: RAGStatus;
+    tasksCompleted: number;
+    tasksTotal: number;
+    blockers: number;
+    highlights: string[];
+  }[];
+  
+  // AI-generated insights
+  aiHighlights?: string[];
+  aiConcerns?: string[];
+}
+
+/**
+ * Steering Committee Report Content
+ */
+export interface SteeringCommitteeReportContent {
+  executiveSummary: string;
+  overallStatus: OverallRAGStatus;
+  kpis: KPIMetric[];
+  risksAndIssues: RiskIssueItem[];
+  decisionsRequired: DecisionForBoard[];
+  forecast: ForecastSection;
+  
+  // Per-project status (for portfolio reports)
+  projectStatuses?: {
+    projectId: string;
+    projectName: string;
+    owner: string;
+    phase: string;
+    status: OverallRAGStatus;
+    keyIssues: string[];
+    nextMilestone?: string;
+  }[];
+  
+  // AI transparency - never hide bad news
+  warnings: string[];
+  
+  // Audit trail
+  auditTrail: AuditTrailInfo;
+}
+
+/**
+ * Approval Status for Management Reports
+ */
+export type ReportApprovalStatus = 'NONE' | 'PENDING' | 'APPROVED' | 'REJECTED';
+
+/**
+ * Management Report
+ */
+export interface ManagementReport {
+  id: string;
+  organizationId: string;
+  projectId?: string;
+  reportType: ManagementReportType;
+  scope: ManagementReportScope;
+  title: string;
+  periodStart: string;
+  periodEnd: string;
+  status: ManagementReportStatus;
+  generatedBy: string;
+  generatedByName: string;
+  content: TeamMeetingReportContent | SteeringCommitteeReportContent;
+  aiNarrative: string;
+  aiWarnings?: string[];
+  pdfPath?: string;
+  pptxPath?: string;
+  shareToken?: string;
+  shareExpiresAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  // Enterprise fields
+  currentVersion?: number;
+  approvalStatus?: ReportApprovalStatus;
+  requiresApproval?: boolean;
+  approvalConfig?: ReportApprovalConfig;
+  lockedAt?: string;
+  lockedBy?: string;
+  finalizedAt?: string;
+  finalizedBy?: string;
+  integrityHash?: string;
+  previousReportId?: string;
+  // Period comparison
+  periodComparison?: PeriodComparisonData;
+}
+
+/**
+ * Management Report Generation Options
+ */
+export interface ManagementReportOptions {
+  reportType: ManagementReportType;
+  scope: ManagementReportScope;
+  projectId?: string;  // Required if scope is PROJECT
+  organizationId: string;
+  periodDays?: number;  // Default 7 for team meeting, 30 for steering
+  customPeriodStart?: string;
+  customPeriodEnd?: string;
+  includeSections?: string[];
+  excludeSections?: string[];
+  aiEnhancement?: boolean;
+  generatePdf?: boolean;
+  generatePptx?: boolean;
+}
+
+/**
+ * Management Report Schedule
+ */
+export interface ManagementReportSchedule {
+  id: string;
+  organizationId: string;
+  projectId?: string;
+  reportType: ManagementReportType;
+  scope: ManagementReportScope;
+  frequency: 'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
+  dayOfWeek?: number;
+  dayOfMonth?: number;
+  timeOfDay: string;
+  timezone: string;
+  isActive: boolean;
+  lastGeneratedAt?: string;
+  nextScheduledAt?: string;
+  recipients: string[];
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Report History Filter
+ */
+export interface ManagementReportFilter {
+  organizationId: string;
+  projectId?: string;
+  reportType?: ManagementReportType;
+  scope?: ManagementReportScope;
+  status?: ManagementReportStatus;
+  fromDate?: string;
+  toDate?: string;
+  generatedBy?: string;
+  limit?: number;
+  offset?: number;
+}
+
+// =====================================================
+// MANAGEMENT REPORTS - ENTERPRISE FEATURES
+// =====================================================
+
+/**
+ * Report Version for version history
+ */
+export interface ReportVersion {
+  id: string;
+  reportId: string;
+  versionNumber: number;
+  versionLabel: string;
+  content: TeamMeetingReportContent | SteeringCommitteeReportContent;
+  aiNarrative?: string;
+  aiWarnings?: string[];
+  changeSummary?: string;
+  createdBy: string;
+  createdByName?: string;
+  createdAt: string;
+}
+
+/**
+ * Approval Level Configuration
+ */
+export interface ApprovalLevelConfig {
+  level: number;
+  role: 'MANAGER' | 'PMO_LEAD' | 'SPONSOR';
+  required: boolean;
+  slaHours?: number;
+  assignedTo?: string;
+}
+
+/**
+ * Report Approval Configuration
+ */
+export interface ReportApprovalConfig {
+  levels: ApprovalLevelConfig[];
+  autoSubmit?: boolean;
+  requireAllLevels?: boolean;
+}
+
+/**
+ * Single Approval Record
+ */
+export interface ReportApproval {
+  id: string;
+  reportId: string;
+  versionId?: string;
+  approvalLevel: number;
+  requiredRole: string;
+  assignedTo?: string;
+  assignedToName?: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SKIPPED';
+  decisionComment?: string;
+  decidedAt?: string;
+  decidedBy?: string;
+  decidedByName?: string;
+  slaDueAt?: string;
+  createdAt: string;
+}
+
+/**
+ * Approval Chain Status
+ */
+export interface ApprovalChainStatus {
+  reportId: string;
+  currentLevel: number;
+  totalLevels: number;
+  overallStatus: ReportApprovalStatus;
+  levels: ReportApproval[];
+  canApprove: boolean;
+  canReject: boolean;
+  currentUserLevel?: number;
+}
+
+/**
+ * Report Comment
+ */
+export interface ReportComment {
+  id: string;
+  reportId: string;
+  versionId?: string;
+  sectionId?: string;
+  parentCommentId?: string;
+  content: string;
+  mentions?: string[];
+  isResolved: boolean;
+  resolvedBy?: string;
+  resolvedByName?: string;
+  resolvedAt?: string;
+  createdBy: string;
+  createdByName?: string;
+  createdAt: string;
+  updatedAt: string;
+  replies?: ReportComment[];
+}
+
+/**
+ * Report Audit Log Action Types
+ */
+export type ReportAuditAction = 
+  | 'CREATED'
+  | 'UPDATED'
+  | 'VERSION_CREATED'
+  | 'SUBMITTED_FOR_APPROVAL'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'FINALIZED'
+  | 'UNLOCKED'
+  | 'SHARED'
+  | 'SHARE_VIEWED'
+  | 'EXPORTED_PDF'
+  | 'EXPORTED_PPTX'
+  | 'COMMENT_ADDED'
+  | 'COMMENT_RESOLVED'
+  | 'COMMENT_DELETED'
+  | 'SCHEDULE_CREATED'
+  | 'EMAIL_SENT';
+
+/**
+ * Report Audit Log Entry
+ */
+export interface ReportAuditEntry {
+  id: string;
+  reportId: string;
+  versionId?: string;
+  action: ReportAuditAction;
+  actorId: string;
+  actorName?: string;
+  actorEmail?: string;
+  details?: Record<string, unknown>;
+  ipAddress?: string;
+  userAgent?: string;
+  createdAt: string;
+}
+
+/**
+ * Period Comparison Change
+ */
+export interface PeriodComparisonChange {
+  current: number;
+  previous: number;
+  change: number;
+  changePercent: number;
+  trend: 'UP' | 'DOWN' | 'STABLE';
+}
+
+/**
+ * Period Comparison Data
+ */
+export interface PeriodComparisonData {
+  previousReportId?: string;
+  previousPeriod?: {
+    start: string;
+    end: string;
+  };
+  hasPreviousReport: boolean;
+  changes: {
+    tasksCompleted?: PeriodComparisonChange;
+    progressPercent?: PeriodComparisonChange;
+    blockers?: PeriodComparisonChange;
+    overdueTasks?: PeriodComparisonChange;
+    pendingDecisions?: PeriodComparisonChange;
+    criticalRisks?: PeriodComparisonChange;
+    budgetVariance?: PeriodComparisonChange;
+    kpis?: Record<string, PeriodComparisonChange>;
+  };
+}
+
+/**
+ * EVM (Earned Value Management) Metrics
+ */
+export interface EVMMetrics {
+  pv: number;  // Planned Value
+  ev: number;  // Earned Value
+  ac: number;  // Actual Cost
+  bac: number; // Budget at Completion
+  sv: number;  // Schedule Variance (EV - PV)
+  cv: number;  // Cost Variance (EV - AC)
+  spi: number; // Schedule Performance Index (EV / PV)
+  cpi: number; // Cost Performance Index (EV / AC)
+  eac: number; // Estimate at Completion
+  etc: number; // Estimate to Complete
+  vac: number; // Variance at Completion (BAC - EAC)
+  tcpi: number; // To-Complete Performance Index
+  percentComplete: number;
+  asOfDate: string;
+}
+
+/**
+ * Report Approval Preset
+ */
+export interface ReportApprovalPreset {
+  id: string;
+  organizationId: string;
+  name: string;
+  description?: string;
+  reportType?: ManagementReportType;
+  levels: ApprovalLevelConfig[];
+  isDefault: boolean;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Version Comparison Result
+ */
+export interface VersionComparisonResult {
+  version1: ReportVersion;
+  version2: ReportVersion;
+  changes: {
+    field: string;
+    section?: string;
+    type: 'added' | 'removed' | 'modified';
+    oldValue?: unknown;
+    newValue?: unknown;
+  }[];
+  summary: string;
+}
+
+// =====================================================
+// MULTI-FRAMEWORK ASSESSMENT TYPES
+// =====================================================
+
+/**
+ * Framework identifiers for assessment module
+ */
+export type AssessmentFrameworkId = 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
+
+/**
+ * Generic framework assessment score
+ */
+export interface FrameworkDimensionScore {
+  current: number;
+  target: number;
+  gap: number;
+  evidence?: string;
+  justification?: string;
+}
+
+// =====================================================
+// SIRI (Smart Industry Readiness Index) Types
+// =====================================================
+
+export type SIRIBuildingBlockId = 'PROCESS' | 'TECHNOLOGY' | 'ORGANIZATION';
+
+export interface SIRIBlockScore {
+  score: number;
+  target?: number;
+  dimensionScores: Record<string, number>;
+}
+
+export interface SIRIDimensionScore extends FrameworkDimensionScore {
+  areaScores?: Record<string, number>;
+}
+
+export interface SIRIAssessmentData {
+  buildingBlocks: Record<SIRIBuildingBlockId, SIRIBlockScore>;
+  dimensions: Record<string, SIRIDimensionScore>;
+  prioritisationMatrix: Record<string, number>;
+  overallScore: number;
+  metadata: {
+    assessmentDate: string;
+    version: string;
+    source: 'manual' | 'imported';
+  };
+}
+
+// =====================================================
+// ADMA (Advanced Digital Maturity Assessment) Types
+// =====================================================
+
+export type ADMAPillarId = 'strategy' | 'smart_products' | 'smart_operations' | 'smart_supply' | 'data_driven';
+
+export interface ADMAPillarScore {
+  current: number;
+  target: number;
+  gap: number;
+  dimensionScores: Record<string, number>;
+}
+
+export interface ADMAAssessmentData {
+  pillars: Record<ADMAPillarId, ADMAPillarScore>;
+  dimensions: Record<string, FrameworkDimensionScore>;
+  overallMaturity: number;
+  metadata: {
+    assessmentDate: string;
+    version: string;
+    source: 'manual' | 'imported';
+  };
+}
+
+// =====================================================
+// CMMI (Capability Maturity Model Integration) Types
+// =====================================================
+
+export type CMMICategoryId = 'DOING' | 'MANAGING' | 'ENABLING';
+export type CMMIModelType = 'DEV' | 'SVC' | 'SPM';
+
+export interface CMMIPracticeAreaScore {
+  level: number; // 1-5
+  target?: number;
+  evidence?: string;
+  gaps?: string[];
+}
+
+export interface CMMICategoryScore {
+  averageLevel: number;
+  practiceAreaScores: Record<string, number>;
+}
+
+export interface CMMIAssessmentData {
+  maturityLevel: number;
+  practiceAreas: Record<string, CMMIPracticeAreaScore>;
+  categories: Record<CMMICategoryId, CMMICategoryScore>;
+  overallScore: number;
+  metadata: {
+    assessmentDate: string;
+    version: string;
+    source: 'manual' | 'imported';
+    model: CMMIModelType;
+  };
+}
+
+// =====================================================
+// DBR77 Lean 4.0 Types
+// =====================================================
+
+export type DBR77PhaseId = 'MEASURE' | 'OPTIMIZE' | 'AUTOMATE';
+export type DBR77DimensionId = 'PROCESSES' | 'WORKSTATIONS';
+export type DBR77WasteType = 
+  | 'TRANSPORTATION' 
+  | 'INVENTORY' 
+  | 'MOTION' 
+  | 'WAITING' 
+  | 'OVERPRODUCTION' 
+  | 'OVER_PROCESSING' 
+  | 'DEFECTS' 
+  | 'SKILLS';
+
+export type DBR77AutomationTech = 
+  | 'RPA' 
+  | 'AI_ML' 
+  | 'IOT' 
+  | 'COBOT' 
+  | 'AMR' 
+  | 'VISION' 
+  | 'NLP' 
+  | 'DIGITAL_TWIN' 
+  | 'WORKFLOW' 
+  | 'ANALYTICS';
+
+export type DBR77RoleEvolution = 'ELIMINATE' | 'TRANSFORM' | 'AUGMENT' | 'MAINTAIN';
+
+export interface DBR77ProcessMetrics {
+  cycleTime: number;
+  taktTime: number;
+  leadTime: number;
+  wip: number;
+  defectRate: number;
+  oee: number;
+  valueAddedRatio: number;
+}
+
+export interface DBR77ProcessLeanScore {
+  wasteIdentified: DBR77WasteType[];
+  wasteImpact: Partial<Record<DBR77WasteType, number>>;
+  fiveSLevel: number;
+  standardWorkDefined: boolean;
+  visualManagement: number;
+  continuousFlow: number;
+}
+
+export interface DBR77AutomationPotential {
+  feasibility: number;
+  roi: number;
+  complexity: 'LOW' | 'MEDIUM' | 'HIGH';
+  recommendedTechnologies: DBR77AutomationTech[];
+  estimatedSavings: number;
+  implementationTime: number;
+}
+
+export interface DBR77ProcessAssessment {
+  id: string;
+  name: string;
+  department: string;
+  category: 'VALUE_STREAM' | 'FLOW' | 'SUPPORT' | 'MANAGEMENT';
+  currentState: DBR77ProcessMetrics;
+  leanAssessment: DBR77ProcessLeanScore;
+  automationPotential: DBR77AutomationPotential;
+  priority: number;
+}
+
+export interface DBR77WorkstationMetrics {
+  tasksPerDay: number;
+  avgTaskTime: number;
+  errorRate: number;
+  overtimeHours: number;
+  skillLevel: number;
+  digitalMaturity: number;
+}
+
+export interface DBR77WorkstationLeanScore {
+  workplaceOrganization: number;
+  standardizedWork: boolean;
+  wasteInRole: DBR77WasteType[];
+  wasteImpact: Partial<Record<DBR77WasteType, number>>;
+  crossTraining: number;
+  kaizen: number;
+}
+
+export interface DBR77WorkstationAutomation {
+  taskAutomationPercent: number;
+  augmentationPercent: number;
+  roleEvolution: DBR77RoleEvolution;
+  retrainingNeeded: boolean;
+  newSkillsRequired: string[];
+  estimatedSavings: number;
+  recommendedTechnologies: DBR77AutomationTech[];
+}
+
+export interface DBR77WorkstationAssessment {
+  id: string;
+  name: string;
+  department: string;
+  headcount: number;
+  currentState: DBR77WorkstationMetrics;
+  leanAssessment: DBR77WorkstationLeanScore;
+  automationPotential: DBR77WorkstationAutomation;
+  priority: number;
+}
+
+export interface DBR77ManagementPractices {
+  dailyManagement: {
+    tieredMeetings: boolean;
+    visualBoards: number;
+    kpiTracking: number;
+    problemSolving: 'NONE' | 'BASIC' | 'A3' | 'DMAIC' | '8D';
+    gembaWalks: number;
+  };
+  continuousImprovement: {
+    kaizenEvents: number;
+    suggestionSystem: boolean;
+    pdcaCycles: number;
+    rootCauseAnalysis: number;
+  };
+  peopleDevelopment: {
+    trainingHoursPerYear: number;
+    multiSkilling: number;
+    coachingCulture: number;
+  };
+}
+
+export interface DBR77AssessmentData {
+  processes: DBR77ProcessAssessment[];
+  workstations: DBR77WorkstationAssessment[];
+  managementPractices: DBR77ManagementPractices;
+  summary: {
+    totalProcesses: number;
+    totalWorkstations: number;
+    totalHeadcount: number;
+    avgLeanMaturity: number;
+    avgAutomationPotential: number;
+    totalEstimatedSavings: number;
+    topWastes: DBR77WasteType[];
+  };
+  metadata: {
+    assessmentDate: string;
+    version: string;
+    assessor?: string;
+  };
+}
+
+// =====================================================
+// UNIFIED MULTI-FRAMEWORK ASSESSMENT
+// =====================================================
+
+/**
+ * Unified assessment data that can hold any framework's data
+ */
+export interface MultiFrameworkAssessment {
+  id: string;
+  projectId: string;
+  organizationId: string;
+  name: string;
+  framework: AssessmentFrameworkId;
+  status: AssessmentStatus;
+  
+  // Framework-specific data (only one will be populated)
+  drdData?: Partial<Record<DRDAxis, AxisAssessment>>;
+  siriData?: SIRIAssessmentData;
+  admaData?: ADMAAssessmentData;
+  cmmiData?: CMMIAssessmentData;
+  leanData?: DBR77AssessmentData;
+  
+  // Import metadata (for PDF imports)
+  importSource?: {
+    fileName: string;
+    uploadedAt: string;
+    parsedAt?: string;
+    confidence: number;
+    rawText?: string;
+  };
+  
+  // Progress tracking
+  progress: number; // 0-100
+  completedDimensions: string[];
+  totalDimensions: number;
+  
+  // Workflow
+  workflowStatus?: WorkflowState;
+  
+  // Metadata
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+  lastModifiedBy?: string;
+}
+
+/**
+ * PDF Import result
+ */
+export interface PDFImportResult {
+  success: boolean;
+  detectedFramework?: AssessmentFrameworkId;
+  confidence: number;
+  extractedScores?: Record<string, number>;
+  rawText?: string;
+  error?: string;
+  warnings?: string[];
+}
+
+/**
+ * Framework score mapping to DRD (for initiative generation)
+ */
+export interface FrameworkToDRDMapping {
+  frameworkId: AssessmentFrameworkId;
+  frameworkDimension: string;
+  drdAxis: DRDAxis;
+  score: number;
+  normalizedScore: number; // Converted to 1-7 scale
 }

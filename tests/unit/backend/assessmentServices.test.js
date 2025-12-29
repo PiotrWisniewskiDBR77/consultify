@@ -1,10 +1,8 @@
-/**
- * Comprehensive Test Suite for Assessment Services
- */
+import { describe, test, expect, vi } from 'vitest';
 
-const ExternalAssessmentService = require('../../server/services/externalAssessmentService');
-const GenericReportService = require('../../server/services/genericReportService');
-const BenchmarkingService = require('../../server/services/benchmarkingService');
+import ExternalAssessmentService from '../../server/services/externalAssessmentService';
+import GenericReportService from '../../server/services/genericReportService';
+import BenchmarkingService from '../../server/services/benchmarkingService';
 
 describe('ExternalAssessmentService', () => {
     describe('normalizeScore', () => {

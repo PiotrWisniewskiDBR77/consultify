@@ -1,10 +1,80 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bot, User, HelpCircle, Check, Send, ThumbsUp, ThumbsDown, Mic, MicOff, Square, Volume2, VolumeX, Square as StopIcon } from 'lucide-react';
-import { ChatMessage, ChatOption } from '../types';
+import { Bot, User, HelpCircle, Check, Send, ThumbsUp, ThumbsDown, Mic, MicOff, Square, Volume2, VolumeX, Square as StopIcon, Wrench, CheckCircle, XCircle, Clock, ChevronDown, ChevronUp } from 'lucide-react';
+import { ChatMessage, ChatOption, ToolCallInfo } from '../types';
 import { AIFeedbackButton } from './AIFeedbackButton';
 import { useAppStore } from '../store/useAppStore';
 import { useTranslation } from 'react-i18next';
 import { useVoiceChat } from '../hooks/useVoiceChat';
+
+// Tool Call Card Component for displaying MCP tool executions
+const ToolCallCard: React.FC<{ tool: ToolCallInfo }> = ({ tool }) => {
+  const [isExpanded, setIsExpanded] = React.useState(false);
+  
+  const statusIcon = () => {
+    switch (tool.status) {
+      case 'executed':
+        return <CheckCircle size={14} className="text-green-500" />;
+      case 'approved':
+        return <Check size={14} className="text-blue-500" />;
+      case 'rejected':
+        return <XCircle size={14} className="text-red-500" />;
+      case 'pending':
+      default:
+        return <Clock size={14} className="text-amber-500 animate-pulse" />;
+    }
+  };
+
+  const statusColor = () => {
+    switch (tool.status) {
+      case 'executed':
+        return 'border-green-500/30 bg-green-500/10';
+      case 'approved':
+        return 'border-blue-500/30 bg-blue-500/10';
+      case 'rejected':
+        return 'border-red-500/30 bg-red-500/10';
+      case 'pending':
+      default:
+        return 'border-amber-500/30 bg-amber-500/10';
+    }
+  };
+
+  return (
+    <div className={`rounded-lg border ${statusColor()} p-3 text-xs`}>
+      <div 
+        className="flex items-center justify-between cursor-pointer"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div className="flex items-center gap-2">
+          <Wrench size={14} className="text-slate-500" />
+          <span className="font-medium text-slate-700 dark:text-slate-300">
+            {tool.name.replace(/_/g, ' ')}
+          </span>
+          {statusIcon()}
+        </div>
+        {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+      </div>
+      
+      {isExpanded && (
+        <div className="mt-2 space-y-2">
+          <div>
+            <span className="text-slate-500">Arguments:</span>
+            <pre className="mt-1 p-2 bg-slate-100 dark:bg-navy-900 rounded text-[10px] overflow-x-auto">
+              {JSON.stringify(tool.args, null, 2)}
+            </pre>
+          </div>
+          {tool.result && (
+            <div>
+              <span className="text-slate-500">Result:</span>
+              <pre className="mt-1 p-2 bg-slate-100 dark:bg-navy-900 rounded text-[10px] overflow-x-auto">
+                {typeof tool.result === 'string' ? tool.result : JSON.stringify(tool.result, null, 2)}
+              </pre>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
 interface ChatPanelProps {
   messages: ChatMessage[];
@@ -216,6 +286,23 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                   {msg.content}
                 </div>
               </div>
+
+              {/* Tool Calls Display */}
+              {msg.role === 'ai' && msg.toolCalls && msg.toolCalls.length > 0 && (
+                <div className="ml-9 mt-2 space-y-2">
+                  {msg.toolCalls.map((tool, idx) => (
+                    <ToolCallCard key={`${msg.id}-tool-${idx}`} tool={tool} />
+                  ))}
+                </div>
+              )}
+
+              {/* Thinking Indicator for MAX Mode */}
+              {msg.role === 'ai' && msg.isThinking && (
+                <div className="ml-9 mt-2 flex items-center gap-2 text-xs text-purple-500 dark:text-purple-400">
+                  <div className="animate-spin w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full" />
+                  <span>Deep reasoning in progress...</span>
+                </div>
+              )}
 
               {/* Message Actions (Feedback + Voice) */}
               {msg.role === 'ai' && msg.id !== 'stream' && (

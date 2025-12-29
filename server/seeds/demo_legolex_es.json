@@ -3,89 +3,89 @@
         "name": "Legolex Manufacturing"
     },
     "project": {
-        "name": "Programa de Transformación Digital",
-        "current_phase": "Hoja de Ruta"
+        "name": "Digital Transformation Program",
+        "current_phase": "Roadmap"
     },
     "initiatives": [
         {
-            "name": "Iniciativa de Automatización de Procesos",
-            "summary": "Automatizar procesos empresariales repetitivos para mejorar la eficiencia y reducir errores manuales.",
+            "name": "Process Automation Initiative",
+            "summary": "Automate repetitive business processes to improve efficiency and reduce manual errors.",
             "status": "IN_PROGRESS",
             "priority": "HIGH",
             "tasks": [
                 {
-                    "title": "Análisis del Estado Actual",
-                    "description": "Documentar los procesos existentes e identificar oportunidades de automatización.",
+                    "title": "Current State Analysis",
+                    "description": "Document existing processes and identify automation opportunities.",
                     "status": "done",
                     "priority": "high"
                 },
                 {
-                    "title": "Selección de Tecnología",
-                    "description": "Evaluar herramientas de RPA y automatización de flujos de trabajo.",
+                    "title": "Technology Selection",
+                    "description": "Evaluate RPA and workflow automation tools.",
                     "status": "done",
                     "priority": "high"
                 },
                 {
-                    "title": "Implementación Piloto",
-                    "description": "Implementar la automatización en el departamento financiero.",
+                    "title": "Pilot Implementation",
+                    "description": "Implement automation in the finance department.",
                     "status": "in_progress",
                     "priority": "high"
                 },
                 {
-                    "title": "Capacitación de Usuarios",
-                    "description": "Capacitar al personal sobre los nuevos flujos de trabajo automatizados.",
+                    "title": "User Training",
+                    "description": "Train staff on new automated workflows.",
                     "status": "todo",
                     "priority": "medium"
                 },
                 {
-                    "title": "Despliegue Completo",
-                    "description": "Extender la automatización a todos los departamentos.",
+                    "title": "Full Rollout",
+                    "description": "Extend automation to all departments.",
                     "status": "todo",
                     "priority": "medium"
                 }
             ]
         },
         {
-            "name": "Plataforma de Análisis de Datos",
-            "summary": "Implementar una plataforma moderna de análisis de datos para inteligencia empresarial en tiempo real.",
+            "name": "Data Analytics Platform",
+            "summary": "Implement a modern data analytics platform for real-time business intelligence.",
             "status": "DRAFT",
             "priority": "MEDIUM",
             "tasks": [
                 {
-                    "title": "Recopilación de Requisitos",
-                    "description": "Recopilar requisitos de análisis de las partes interesadas.",
+                    "title": "Requirements Gathering",
+                    "description": "Collect analytics requirements from stakeholders.",
                     "status": "in_progress",
                     "priority": "high"
                 },
                 {
-                    "title": "Diseño de Arquitectura de Datos",
-                    "description": "Diseñar el almacén de datos y las tuberías ETL.",
+                    "title": "Data Architecture Design",
+                    "description": "Design the data warehouse and ETL pipelines.",
                     "status": "todo",
                     "priority": "high"
                 },
                 {
-                    "title": "Selección de Herramienta BI",
-                    "description": "Evaluar y seleccionar herramientas de inteligencia empresarial.",
+                    "title": "BI Tool Selection",
+                    "description": "Evaluate and select business intelligence tools.",
                     "status": "todo",
                     "priority": "medium"
                 }
             ]
         },
         {
-            "name": "Mejora de la Experiencia del Cliente",
-            "summary": "Mejorar los canales digitales orientados al cliente para una mejor participación y satisfacción.",
+            "name": "Customer Experience Enhancement",
+            "summary": "Improve customer-facing digital channels for better engagement and satisfaction.",
             "status": "DRAFT",
             "priority": "LOW",
             "tasks": [
                 {
-                    "title": "Mapeo del Viaje del Cliente",
-                    "description": "Mapear los viajes actuales del cliente en todos los puntos de contacto.",
+                    "title": "Customer Journey Mapping",
+                    "description": "Map current customer journeys across all touchpoints.",
                     "status": "todo",
                     "priority": "high"
                 },
                 {
-                    "title": "Investigación UX",
-                    "description": "Realizar investigación de usuarios para identificar puntos de dolor.",
+                    "title": "UX Research",
+                    "description": "Conduct user research to identify pain points.",
                     "status": "todo",
                     "priority": "medium"
                 }

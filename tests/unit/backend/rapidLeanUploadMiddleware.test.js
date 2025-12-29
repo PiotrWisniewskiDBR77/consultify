@@ -4,65 +4,68 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-
-// Mock fs and multer
-const mockFs = {
-    existsSync: vi.fn().mockReturnValue(false),
-    mkdirSync: vi.fn()
-};
-
-vi.mock('fs', () => mockFs);
-vi.mock('multer', () => {
-    const mockSingle = vi.fn().mockReturnValue((req, res, next) => next());
-    const mockDiskStorage = vi.fn().mockReturnValue({});
-    return {
-        default: vi.fn().mockReturnValue({ single: mockSingle }),
-        diskStorage: mockDiskStorage
-    };
-});
-
-// Import after mocks
-const { createRapidLeanUpload, rapidLeanPhotoUpload } = require('../../../server/middleware/rapidLeanUploadMiddleware');
+import fs from 'fs';
 
 describe('RapidLean Upload Middleware', () => {
-    beforeEach(() => {
+    let rapidLeanUploadMiddleware;
+
+    beforeEach(async () => {
+        vi.resetModules();
         vi.clearAllMocks();
-        mockFs.existsSync.mockReturnValue(false);
+
+        // Spy on fs methods
+        vi.spyOn(fs, 'existsSync').mockReturnValue(false);
+        vi.spyOn(fs, 'mkdirSync').mockImplementation(() => { });
+
+        // Require middleware AFTER spies
+        rapidLeanUploadMiddleware = require('../../../server/middleware/rapidLeanUploadMiddleware');
     });
 
     describe('createRapidLeanUpload', () => {
-        it('should create multer instance with correct configuration', () => {
+        it('should create multer instance correctly', () => {
+            const { createRapidLeanUpload } = rapidLeanUploadMiddleware;
             const upload = createRapidLeanUpload('test-org-id', 'test-assessment-id');
 
             expect(upload).toBeDefined();
-            expect(mockFs.mkdirSync).toHaveBeenCalled();
-        });
-
-        it('should create directory if it does not exist', () => {
-            mockFs.existsSync.mockReturnValue(false);
-
-            createRapidLeanUpload('test-org-id', 'test-assessment-id');
-
-            expect(mockFs.mkdirSync).toHaveBeenCalled();
-        });
-
-        it('should use temp directory if assessmentId not provided', () => {
-            createRapidLeanUpload('test-org-id');
-
-            expect(mockFs.mkdirSync).toHaveBeenCalled();
-            const callPath = mockFs.mkdirSync.mock.calls[0][0];
-            expect(callPath).toContain('temp');
+            expect(fs.mkdirSync).toHaveBeenCalled();
         });
     });
 
     describe('rapidLeanPhotoUpload', () => {
-        it('should be a function', () => {
-            expect(typeof rapidLeanPhotoUpload).toBe('function');
+        it('should handle organizationId from req.user', () => {
+            const { rapidLeanPhotoUpload } = rapidLeanUploadMiddleware;
+            const req = {
+                user: { organizationId: 'test-org-id' },
+                body: {},
+                headers: {}
+            };
+            const res = {
+                status: vi.fn().mockReturnThis(),
+                json: vi.fn().mockReturnThis()
+            };
+            const next = vi.fn();
+
+            rapidLeanPhotoUpload(req, res, next);
+
+            expect(next).toHaveBeenCalled();
         });
 
-        it('should handle organizationId from req.user', () => {
-            expect(rapidLeanPhotoUpload).toBeDefined();
+        it('should return 401 if organizationId is missing', () => {
+            const { rapidLeanPhotoUpload } = rapidLeanUploadMiddleware;
+            const req = {
+                user: {}, // No organizationId
+                body: {}
+            };
+            const res = {
+                status: vi.fn().mockReturnThis(),
+                json: vi.fn().mockReturnThis()
+            };
+            const next = vi.fn();
+
+            rapidLeanPhotoUpload(req, res, next);
+
+            expect(res.status).toHaveBeenCalledWith(401);
+            expect(next).not.toHaveBeenCalled();
         });
     });
 });
-

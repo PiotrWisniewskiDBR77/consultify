@@ -142,7 +142,8 @@ const AiService = {
 
             // CHECK ACCESS POLICY (TRIAL LIMITS)
             if (orgId) {
-                const accessCheck = await AccessPolicyService.checkAccess(orgId, 'ai_call');
+                const APS = deps.AccessPolicyService || AccessPolicyService;
+                const accessCheck = await APS.checkAccess(orgId, 'ai_call');
                 if (!accessCheck.allowed) {
                     throw new Error(accessCheck.reason || "AI Access Denied");
                 }
@@ -393,7 +394,8 @@ const AiService = {
 
             // CHECK ACCESS POLICY (TRIAL LIMITS & BUDGET)
             if (orgId) {
-                const accessCheck = await AccessPolicyService.checkAccess(orgId, 'ai_call');
+                const APS = deps.AccessPolicyService || AccessPolicyService;
+                const accessCheck = await APS.checkAccess(orgId, 'ai_call');
                 if (!accessCheck.allowed) {
                     throw new Error(accessCheck.reason || "AI Access Denied");
                 }

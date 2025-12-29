@@ -1,11 +1,19 @@
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+const defaultDb = require('../database');
+const { v4: defaultUuidv4 } = require('uuid');
 const ActionProposalEngine = require('./actionProposalEngine');
 const PolicyEngine = require('./policyEngine');
 const auditLogger = require('../utils/auditLogger');
 const { ACTION_ERROR_CODES, classifyError } = require('./actionErrors');
 const EvidenceLedgerService = require('../services/evidenceLedgerService');
 
+
+const deps = {
+    db: defaultDb,
+    uuidv4: defaultUuidv4,
+    ActionProposalEngine,
+    EvidenceLedgerService,
+    auditLogger
+};
 
 /**
  * ActionDecisionService
@@ -19,6 +27,14 @@ const ActionDecisionService = {
         'PLAYBOOK_ASSIGN': ['playbook_key', 'target_user_id'],
         'MEETING_SCHEDULE': ['participants', 'title', 'proposed_timeslot'],
         'ROLE_SUGGESTION': ['suggested_role', 'entity_id']
+    },
+
+    /**
+     * Dependency injection for testing
+     * @param {object} newDeps 
+     */
+    setDependencies: (newDeps) => {
+        Object.assign(deps, newDeps);
     },
 
     /**
@@ -48,7 +64,7 @@ const ActionDecisionService = {
         }
 
         // 1. Fetch Proposal Server-Side (SNAPSHOT)
-        const proposal = await ActionProposalEngine.getProposalById(organization_id, proposal_id);
+        const proposal = await deps.ActionProposalEngine.getProposalById(organization_id, proposal_id);
         if (!proposal) {
             const error = new Error(`Proposal ${proposal_id} not found for this organization.`);
             error.status = 404;
@@ -89,9 +105,9 @@ const ActionDecisionService = {
             finalModifiedPayload = filteredPayload;
         }
 
-        const id = `ad-${uuidv4()}`;
+        const id = `ad-${deps.uuidv4()}`;
         // Propagate correlation_id from proposal, or generate new if missing
-        const correlationId = proposal.correlation_id || `corr-${uuidv4()}`;
+        const correlationId = proposal.correlation_id || `corr-${deps.uuidv4()}`;
         const snapshotStr = JSON.stringify(proposal);
         const modifiedPayloadStr = finalModifiedPayload ? JSON.stringify(finalModifiedPayload) : null;
 
@@ -99,7 +115,7 @@ const ActionDecisionService = {
         const policyRuleId = data.policy_rule_id || null;
 
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `INSERT INTO action_decisions (
                     id, proposal_id, organization_id, correlation_id, action_type, scope, 
                     decision, decided_by_user_id, decision_reason, 
@@ -112,7 +128,7 @@ const ActionDecisionService = {
                 ],
                 function (err) {
                     if (err) {
-                        auditLogger.error('DECISION_RECORD_FAILED', {
+                        deps.auditLogger.error('DECISION_RECORD_FAILED', {
                             correlation_id: correlationId,
                             organization_id,
                             proposal_id,
@@ -124,7 +140,7 @@ const ActionDecisionService = {
                         return reject(err);
                     }
 
-                    auditLogger.info('DECISION_RECORDED', {
+                    deps.auditLogger.info('DECISION_RECORDED', {
                         correlation_id: correlationId,
                         organization_id,
                         proposal_id,
@@ -137,9 +153,9 @@ const ActionDecisionService = {
                     (async () => {
                         try {
                             // Create evidence object from proposal snapshot
-                            const evidence = await EvidenceLedgerService.createEvidenceObject(
+                            const evidence = await deps.EvidenceLedgerService.createEvidenceObject(
                                 organization_id,
-                                EvidenceLedgerService.EVIDENCE_TYPES.SIGNAL,
+                                deps.EvidenceLedgerService.EVIDENCE_TYPES.SIGNAL,
                                 'actionDecisionService',
                                 {
                                     proposal_id,
@@ -153,8 +169,8 @@ const ActionDecisionService = {
                             );
 
                             // Link evidence to decision
-                            await EvidenceLedgerService.linkEvidence(
-                                EvidenceLedgerService.ENTITY_TYPES.DECISION,
+                            await deps.EvidenceLedgerService.linkEvidence(
+                                deps.EvidenceLedgerService.ENTITY_TYPES.DECISION,
                                 id,
                                 evidence.id,
                                 1.0,
@@ -170,7 +186,7 @@ const ActionDecisionService = {
                                 assumptions.push(`Policy rule ${policyRuleId} was applied`);
                             }
 
-                            await EvidenceLedgerService.recordReasoning(
+                            await deps.EvidenceLedgerService.recordReasoning(
                                 'decision',
                                 id,
                                 proposal.reasoning || `Decision ${decision} for ${proposal.action_type} action`,
@@ -211,7 +227,7 @@ const ActionDecisionService = {
      */
     getDecisionsByProposal: async (proposalId) => {
         return new Promise((resolve, reject) => {
-            db.all(
+            deps.db.all(
                 `SELECT * FROM action_decisions WHERE proposal_id = ? ORDER BY created_at ASC`,
                 [proposalId],
                 (err, rows) => {
@@ -260,7 +276,7 @@ const ActionDecisionService = {
             sql += ` ORDER BY ad.created_at DESC LIMIT ? OFFSET ? `;
             params.push(limit, offset);
 
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) return reject(err);
                 resolve((rows || []).map(row => ({
                     ...row,

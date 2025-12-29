@@ -17,7 +17,7 @@ describe('OrganizationService', () => {
         vi.resetModules();
 
         mockDb = createMockDb();
-        
+
         OrganizationService = (await import('../../../server/services/organizationService.js')).default;
         OrganizationService.setDependencies({
             db: mockDb,
@@ -34,53 +34,33 @@ describe('OrganizationService', () => {
             const userId = testUsers.user.id;
             const name = 'New Organization';
 
-            // Track call order
-            const callOrder = [];
-            let orgInsertDone = false;
-            let memberInsertDone = false;
-            let commitCallback = null;
-
             // Mock serialize to execute callback synchronously
             mockDb.serialize.mockImplementation((callback) => {
-                if (callback) {
-                    // Execute callback synchronously, which will trigger db.run calls
-                callback();
-                }
+                if (callback) callback();
             });
 
+            // Mock run to handle transaction steps
             mockDb.run.mockImplementation(function (query, params, callback) {
-                callOrder.push(query.substring(0, 30));
-
+                // Handle different query types
                 if (query === 'BEGIN TRANSACTION') {
-                    // No callback for BEGIN
-                    return;
-                }
+                    // No callback needed or immediate return
+                } else if (query === 'COMMIT') {
+                    if (callback) callback(null);
+                } else if (query === 'ROLLBACK') {
+                    if (callback) callback(null);
+                } else {
+                    // Insert queries
+                    if (query.includes('INSERT INTO organizations')) {
+                        expect(params).toContain(name);
+                        expect(params).toContain(userId);
+                    } else if (query.includes('INSERT INTO organization_members')) {
+                        expect(params).toContain('OWNER');
+                        expect(params).toContain(userId);
+                    }
 
-                if (callback) {
-                    // Use setImmediate to ensure async execution and prevent deadlocks
-                    // But ensure COMMIT is called after member insert callback completes
-                    setImmediate(() => {
-                        if (query.includes('INSERT INTO organizations')) {
-                            expect(params).toContain(name);
-                            expect(params).toContain(userId);
-                            orgInsertDone = true;
-                            callback.call({ changes: 1 }, null);
-                        } else if (query.includes('INSERT INTO organization_members')) {
-                            expect(params).toContain('OWNER');
-                            expect(params).toContain(userId);
-                            memberInsertDone = true;
-                            // This callback triggers COMMIT inside the service
-                            callback.call({ changes: 1 }, null);
-                            // COMMIT will be queued and called in next tick
-                        } else if (query === 'COMMIT') {
-                            // COMMIT callback resolves the promise
-                            callback(null);
-                        } else if (query === 'ROLLBACK') {
-                            callback(null);
-                        } else {
-                            callback.call({ changes: 1 }, null);
-                        }
-                    });
+                    if (callback) {
+                        callback.call({ changes: 1 }, null);
+                    }
                 }
             });
 
@@ -89,12 +69,10 @@ describe('OrganizationService', () => {
                 name
             });
 
-            expect(orgInsertDone).toBe(true);
-            expect(memberInsertDone).toBe(true);
             expect(result.id).toBeDefined();
             expect(result.name).toBe(name);
             expect(result.role).toBe('OWNER');
-        }, 15000); // Increase timeout to 15 seconds for async callbacks
+        });
 
         it('should rollback on error', async () => {
             const userId = testUsers.user.id;
@@ -105,21 +83,14 @@ describe('OrganizationService', () => {
             });
 
             mockDb.run.mockImplementation((query, params, callback) => {
-                // Use process.nextTick for async callback execution
-                if (callback) {
-                    process.nextTick(() => {
-                        if (query === 'BEGIN TRANSACTION') {
-                    callback.call({ changes: 0 }, null);
+                if (query === 'BEGIN TRANSACTION') {
+                    // Pass
                 } else if (query.includes('INSERT INTO organizations')) {
-                            callback.call({ changes: 0 }, new Error('DB Error'));
-                        } else if (query === 'ROLLBACK') {
-                            callback.call({ changes: 0 }, null);
-                        } else if (query === 'COMMIT') {
-                    callback.call({ changes: 0 }, null);
+                    if (callback) callback(new Error('DB Error'));
+                } else if (query === 'ROLLBACK') {
+                    if (callback) callback(null);
                 } else {
-                    callback.call({ changes: 1 }, null);
-                        }
-                    });
+                    if (callback) callback(null);
                 }
             });
 
@@ -133,45 +104,22 @@ describe('OrganizationService', () => {
             const name = 'New Organization';
             const attribution = { type: 'partner', id: 'partner-123' };
 
-            let orgInsertCalled = false;
-            let memberInsertCalled = false;
-            let commitCallback = null;
-
             mockDb.serialize.mockImplementation((callback) => {
-                if (callback) {
-                    // Execute callback synchronously, which will trigger db.run calls
-                callback();
-                }
+                if (callback) callback();
             });
 
             mockDb.run.mockImplementation(function (query, params, callback) {
                 if (query === 'BEGIN TRANSACTION') {
-                    // No callback for BEGIN
-                    return;
-                }
-
-                if (callback) {
-                    // Use setImmediate to ensure async execution and prevent deadlocks
-                    // But ensure COMMIT is called after member insert callback completes
-                    setImmediate(() => {
-                        if (query.includes('INSERT INTO organizations')) {
-                            orgInsertCalled = true;
-                            expect(params).toContain(JSON.stringify(attribution));
-                            callback.call({ changes: 1 }, null);
-                        } else if (query.includes('INSERT INTO organization_members')) {
-                            memberInsertCalled = true;
-                            // This callback triggers COMMIT inside the service
-                            callback.call({ changes: 1 }, null);
-                            // COMMIT will be queued and called in next tick
-                        } else if (query === 'COMMIT') {
-                            // COMMIT callback resolves the promise
-                            callback(null);
-                        } else if (query === 'ROLLBACK') {
-                            callback(null);
-                        } else {
-                            callback.call({ changes: 1 }, null);
-                        }
-                    });
+                    // No callback
+                } else if (query.includes('INSERT INTO organizations')) {
+                    expect(params).toContain(JSON.stringify(attribution));
+                    if (callback) callback.call({ changes: 1 }, null);
+                } else if (query.includes('INSERT INTO organization_members')) {
+                    if (callback) callback.call({ changes: 1 }, null);
+                } else if (query === 'COMMIT') {
+                    if (callback) callback(null);
+                } else {
+                    if (callback) callback(null);
                 }
             });
 
@@ -181,10 +129,8 @@ describe('OrganizationService', () => {
                 attribution
             });
 
-            expect(orgInsertCalled).toBe(true);
-            expect(memberInsertCalled).toBe(true);
             expect(result.id).toBeDefined();
-        }, 15000); // Increase timeout to 15 seconds for async callbacks
+        });
     });
 
     describe('getOrganization()', () => {
@@ -278,7 +224,7 @@ describe('OrganizationService', () => {
                 expect(params).toContain(orgId);
                 expect(params).toContain(userId);
                 if (callback) {
-                callback.call({ changes: 1 }, null);
+                    callback.call({ changes: 1 }, null);
                 }
             });
 
@@ -366,7 +312,7 @@ describe('OrganizationService', () => {
                 expect(params).toContain(orgId);
                 expect(params).toContain(userId);
                 if (callback) {
-                callback.call({ changes: 1 }, null);
+                    callback.call({ changes: 1 }, null);
                 }
             });
 

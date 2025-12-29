@@ -18,209 +18,12 @@ const withTimeout = (promise, timeoutMs = 1000) => {
 
 // LOGIN
 // Enhanced with MFA support and refresh tokens
-router.post('/login', async (req, res) => {
-    console.log('[Auth] Login request received for:', req.body?.email || 'no email');
-    const { email, password, mfaToken, deviceFingerprint, trustDevice } = req.body;
+// Import Controller
+const authController = require('../controllers/authController');
 
-    if (!email || !password) {
-        return res.status(400).json({ error: 'Email and password are required' });
-    }
-
-    // Clear rate limit on successful login attempt (before validation)
-    // This prevents legitimate users from being blocked after fixing their password
-    // Note: We'll clear it again after successful login, but clearing early helps
-    // if user had typos and is now typing correctly
-    try {
-        const RedisStore = require('../utils/redisRateLimitStore');
-        const authRedisStore = new RedisStore({ windowMs: 15 * 60 * 1000 });
-        const rateLimitKey = `auth:${email.toLowerCase().trim()}`;
-        await withTimeout(authRedisStore.resetKey(rateLimitKey), 500);
-    } catch (err) {
-        // Ignore errors - rate limit clearing is best effort
-    }
-
-    // Import services
-    const MFAService = require('../services/mfaService');
-    const RefreshTokenService = require('../services/refreshTokenService');
-
-    try {
-        // Get user
-        const user = await new Promise((resolve, reject) => {
-            db.get('SELECT * FROM users WHERE email = ?', [email], (err, row) => {
-                if (err) reject(err);
-                else resolve(row);
-            });
-        });
-
-        if (!user) {
-            // Don't reveal if user exists or not (security best practice)
-            // But don't count this toward rate limit since it's not a real attempt
-            return res.status(401).json({ error: 'Invalid email or password' });
-        }
-
-        // Verify password
-        const passwordIsValid = bcrypt.compareSync(password, user.password);
-        if (!passwordIsValid) {
-            // Invalid password - this counts toward rate limit
-            return res.status(401).json({ error: 'Invalid email or password' });
-        }
-
-        // Successful password verification - clear rate limit for this email
-        // This allows users to retry after fixing typos without hitting limit
-        try {
-            const RedisStore = require('../utils/redisRateLimitStore');
-            const authRedisStore = new RedisStore({ windowMs: 15 * 60 * 1000 });
-            const rateLimitKey = `auth:${email.toLowerCase().trim()}`;
-            await withTimeout(authRedisStore.resetKey(rateLimitKey), 500);
-        } catch (err) {
-            // Ignore errors - rate limit clearing is best effort
-        }
-
-        // Get organization
-        const org = await new Promise((resolve, reject) => {
-            db.get('SELECT * FROM organizations WHERE id = ?', [user.organization_id], (err, row) => {
-                if (err) reject(err);
-                else resolve(row);
-            });
-        });
-
-        if (!org) {
-            return res.status(404).json({ error: 'Organization not found' });
-        }
-
-        // Check organization status
-        if (org.status === 'pending' && user.role !== 'SUPERADMIN') {
-            return res.status(403).json({ error: 'Your organization is waiting for approval.', status: 'pending' });
-        }
-        if (org.status === 'blocked' && user.role !== 'SUPERADMIN') {
-            return res.status(403).json({ error: 'Your organization has been blocked. Contact support.' });
-        }
-
-        // Check MFA requirement
-        const mfaStatus = await MFAService.getMFAStatus(user.id);
-
-        if (mfaStatus.enabled) {
-            // MFA is enabled - check if device is trusted
-            if (deviceFingerprint) {
-                const isTrusted = await MFAService.isDeviceTrusted(user.id, deviceFingerprint);
-                if (isTrusted) {
-                    // Device is trusted, skip MFA
-                } else if (!mfaToken) {
-                    // Need MFA verification
-                    return res.json({
-                        mfaRequired: true,
-                        userId: user.id,
-                        message: 'Please enter your 2FA code'
-                    });
-                } else {
-                    // Verify MFA token
-                    const verification = await MFAService.verifyTOTP(
-                        user.id,
-                        mfaToken,
-                        req.ip,
-                        req.get('user-agent')
-                    );
-
-                    if (!verification.success) {
-                        return res.status(401).json({
-                            error: verification.error,
-                            mfaRequired: true
-                        });
-                    }
-
-                    // Trust device if requested
-                    if (trustDevice && deviceFingerprint) {
-                        const deviceName = (req.get('user-agent') || 'Unknown Device').substring(0, 100);
-                        await MFAService.trustDevice(user.id, deviceFingerprint, deviceName);
-                    }
-                }
-            } else if (!mfaToken) {
-                // No device fingerprint, need MFA
-                return res.json({
-                    mfaRequired: true,
-                    userId: user.id,
-                    message: 'Please enter your 2FA code'
-                });
-            } else {
-                // Verify MFA token
-                const verification = await MFAService.verifyTOTP(
-                    user.id,
-                    mfaToken,
-                    req.ip,
-                    req.get('user-agent')
-                );
-
-                if (!verification.success) {
-                    return res.status(401).json({
-                        error: verification.error,
-                        mfaRequired: true
-                    });
-                }
-            }
-        } else if (mfaStatus.enforced) {
-            // Organization requires MFA but user hasn't set it up
-            return res.status(403).json({
-                error: 'Your organization requires two-factor authentication. Please set up MFA first.',
-                mfaSetupRequired: true,
-                gracePeriodRemaining: mfaStatus.gracePeriodRemaining
-            });
-        }
-
-        // Update Last Login
-        await new Promise((resolve) => {
-            db.run('UPDATE users SET last_login = datetime("now") WHERE id = ?', [user.id], resolve);
-        });
-
-        // Generate token pair (access + refresh)
-        const deviceInfo = (req.get('user-agent') || 'Unknown Device').substring(0, 200);
-        const tokenPair = await RefreshTokenService.generateTokenPair(
-            {
-                id: user.id,
-                email: user.email,
-                role: user.role,
-                organization_id: user.organization_id
-            },
-            {
-                deviceInfo,
-                ip: req.ip,
-                userAgent: req.get('user-agent')
-            }
-        );
-
-        const safeUser = {
-            id: user.id,
-            email: user.email,
-            firstName: user.first_name,
-            lastName: user.last_name,
-            role: user.role,
-            status: user.status,
-            organizationId: user.organization_id,
-            companyName: org.name,
-            mfaEnabled: mfaStatus.enabled
-        };
-
-        // Log successful login
-        ActivityService.log({
-            organizationId: user.organization_id,
-            userId: user.id,
-            action: 'login',
-            entityType: 'session',
-            entityId: 'session',
-            entityName: 'User Login'
-        });
-
-        res.json({
-            user: safeUser,
-            token: tokenPair.accessToken,
-            refreshToken: tokenPair.refreshToken,
-            expiresIn: tokenPair.expiresIn
-        });
-
-    } catch (error) {
-        console.error('[Auth] Login error:', error);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
+// LOGIN
+// Enhanced with MFA support and refresh tokens
+router.post('/login', authController.login);
 
 // REFRESH TOKEN - Get new access token using refresh token
 router.post('/refresh', async (req, res) => {
@@ -383,6 +186,88 @@ router.post('/revert-impersonation', authMiddleware, (req, res) => {
     });
 });
 
+
+// DEMO LOGIN - Auto-login as demo@legolex.com
+router.post('/demo-login', async (req, res) => {
+    const DEMO_EMAIL = 'demo@legolex.com';
+    const DEMO_PASSWORD = 'Demo123!';
+
+    console.log('[Auth] Demo login request');
+
+    try {
+        // Get demo user
+        const user = await new Promise((resolve, reject) => {
+            db.get('SELECT * FROM users WHERE email = ?', [DEMO_EMAIL], (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
+            });
+        });
+
+        if (!user) {
+            console.error('[Auth] Demo user not found - please run seed script');
+            return res.status(404).json({ 
+                error: 'Demo user not found. Please contact support.',
+                code: 'DEMO_USER_NOT_FOUND'
+            });
+        }
+
+        // Get organization
+        const org = await new Promise((resolve, reject) => {
+            db.get('SELECT * FROM organizations WHERE id = ?', [user.organization_id], (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
+            });
+        });
+
+        // Generate tokens using RefreshTokenService
+        const RefreshTokenService = require('../services/refreshTokenService');
+        
+        const tokenResult = await RefreshTokenService.generateTokenPair(user, {
+            deviceInfo: 'Demo Session',
+            ip: req.ip,
+            userAgent: req.get('user-agent')
+        });
+        
+        const accessToken = tokenResult.accessToken;
+        const refreshToken = tokenResult.refreshToken;
+
+        // Log demo access
+        ActivityService.log({
+            userId: user.id,
+            action: 'demo_login',
+            entityType: 'user',
+            entityId: user.id,
+            entityName: DEMO_EMAIL,
+            metadata: { ip: req.ip }
+        });
+
+        // Return demo user
+        const safeUser = {
+            id: user.id,
+            email: user.email,
+            firstName: user.first_name,
+            lastName: user.last_name,
+            role: user.role,
+            status: user.status,
+            organizationId: user.organization_id,
+            companyName: org?.name || 'Demo Company',
+            isDemo: true,
+            hasWorkspace: true // Demo always has workspace access
+        };
+
+        console.log('[Auth] Demo login successful');
+        res.json({ 
+            user: safeUser, 
+            token: accessToken, 
+            refreshToken,
+            isDemo: true 
+        });
+
+    } catch (error) {
+        console.error('[Auth] Demo login error:', error);
+        res.status(500).json({ error: 'Demo login failed. Please try again.' });
+    }
+});
 
 // REGISTER (New Company)
 // Step 4: Enhanced with promo code support and attribution tracking
@@ -606,6 +491,90 @@ function performRevocation(userId, res) {
         }
     );
 }
+
+// CHANGE PASSWORD (Authenticated User)
+router.post('/change-password', authMiddleware, async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.id;
+
+    if (!currentPassword || !newPassword) {
+        return res.status(400).json({ error: 'Current password and new password are required' });
+    }
+
+    // Password validation
+    if (newPassword.length < 8) {
+        return res.status(400).json({ error: 'New password must be at least 8 characters long' });
+    }
+
+    if (!/[A-Z]/.test(newPassword)) {
+        return res.status(400).json({ error: 'New password must contain at least one uppercase letter' });
+    }
+
+    if (!/[a-z]/.test(newPassword)) {
+        return res.status(400).json({ error: 'New password must contain at least one lowercase letter' });
+    }
+
+    if (!/[0-9]/.test(newPassword)) {
+        return res.status(400).json({ error: 'New password must contain at least one number' });
+    }
+
+    try {
+        // Get user with current password hash
+        const user = await new Promise((resolve, reject) => {
+            db.get('SELECT id, password FROM users WHERE id = ?', [userId], (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
+            });
+        });
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Verify current password
+        const isCurrentPasswordValid = bcrypt.compareSync(currentPassword, user.password);
+        if (!isCurrentPasswordValid) {
+            return res.status(401).json({ error: 'Current password is incorrect' });
+        }
+
+        // Ensure new password is different from current
+        if (bcrypt.compareSync(newPassword, user.password)) {
+            return res.status(400).json({ error: 'New password must be different from current password' });
+        }
+
+        // Hash and save new password
+        const hashedPassword = bcrypt.hashSync(newPassword, 10);
+
+        await new Promise((resolve, reject) => {
+            db.run('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, userId], function (err) {
+                if (err) reject(err);
+                else resolve(this);
+            });
+        });
+
+        // Log password change activity
+        ActivityService.log({
+            userId,
+            action: 'password_changed',
+            entityType: 'user',
+            entityId: userId,
+            entityName: 'Password Change'
+        });
+
+        // Optionally: Revoke all other sessions for security
+        const RefreshTokenService = require('../services/refreshTokenService');
+        await RefreshTokenService.revokeAllUserTokens(userId);
+
+        res.json({
+            success: true,
+            message: 'Password changed successfully. All other sessions have been logged out for security.'
+        });
+
+    } catch (error) {
+        console.error('[Auth] Change password error:', error);
+        res.status(500).json({ error: 'Failed to change password' });
+    }
+});
 
 // RESET PASSWORD (Public)
 router.post('/reset-password', (req, res) => {

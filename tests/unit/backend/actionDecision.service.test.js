@@ -51,6 +51,12 @@ import ActionDecisionService from '../../../server/ai/actionDecisionService';
 describe('ActionDecisionService - HARDENED', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+
+        ActionDecisionService.setDependencies({
+            db: mockDb,
+            uuidv4: vi.fn(() => 'test-uuid-decision')
+        });
+
         // Set default mock behavior
         mockDb.all.mockImplementation((sql, params, cb) => cb(null, []));
         mockDb.run.mockImplementation((sql, params, cb) => cb.call({ changes: 1 }, null));
@@ -100,9 +106,8 @@ describe('ActionDecisionService - HARDENED', () => {
         });
     });
 
-    // Note: getDecisionsByProposal tests skipped due to CJS mock limitations
-    // The logic is tested indirectly through getAuditLog and recordDecision integration tests
-    describe.skip('getDecisionsByProposal', () => {
+    // Note: getDecisionsByProposal tests enabled after fixing CJS mock limitations
+    describe('getDecisionsByProposal', () => {
         it('should query decisions by proposal_id', async () => {
             mockDb.all.mockImplementation((sql, params, cb) => {
                 expect(params).toContain('ap-123');

@@ -49,6 +49,30 @@ const DECISION_STATUSES = {
 };
 
 /**
+ * Execution Stages - Granular tracking within EXECUTING status
+ * 
+ * These stages allow more detailed progress tracking during initiative execution:
+ * - KICKOFF: Initial setup, team onboarding, resource allocation
+ * - IN_PROGRESS: Active implementation work
+ * - REVIEW: Review and testing phase before delivery
+ * - DELIVERY: Final delivery and handover
+ */
+const EXECUTION_STAGES = {
+    KICKOFF: 'KICKOFF',
+    IN_PROGRESS: 'IN_PROGRESS',
+    REVIEW: 'REVIEW',
+    DELIVERY: 'DELIVERY'
+};
+
+// Valid Execution Stage Transitions
+const EXECUTION_STAGE_TRANSITIONS = {
+    [EXECUTION_STAGES.KICKOFF]: [EXECUTION_STAGES.IN_PROGRESS],
+    [EXECUTION_STAGES.IN_PROGRESS]: [EXECUTION_STAGES.REVIEW, EXECUTION_STAGES.KICKOFF],
+    [EXECUTION_STAGES.REVIEW]: [EXECUTION_STAGES.IN_PROGRESS, EXECUTION_STAGES.DELIVERY],
+    [EXECUTION_STAGES.DELIVERY]: [EXECUTION_STAGES.REVIEW] // Allow rollback if needed
+};
+
+/**
  * Valid Initiative Transitions
  * 
  * Key Module Boundaries:
@@ -113,6 +137,7 @@ const StatusMachine = {
     INITIATIVE_STATUSES,
     TASK_STATUSES,
     DECISION_STATUSES,
+    EXECUTION_STAGES,
 
     /**
      * Check if initiative status transition is valid
@@ -214,6 +239,52 @@ const StatusMachine = {
 
     getAllowedTaskTransitions: (currentStatus) => {
         return TASK_TRANSITIONS[currentStatus] || [];
+    },
+
+    /**
+     * Check if execution stage transition is valid
+     */
+    canTransitionExecutionStage: (from, to) => {
+        const allowed = EXECUTION_STAGE_TRANSITIONS[from] || [];
+        return allowed.includes(to);
+    },
+
+    /**
+     * Get allowed execution stage transitions
+     */
+    getAllowedStageTransitions: (currentStage) => {
+        return EXECUTION_STAGE_TRANSITIONS[currentStage] || [];
+    },
+
+    /**
+     * Validate execution stage transition
+     */
+    validateStageTransition: (from, to, context = {}) => {
+        if (!StatusMachine.canTransitionExecutionStage(from, to)) {
+            return { valid: false, reason: `Cannot transition stage from ${from} to ${to}` };
+        }
+
+        // Transition to DELIVERY requires review completion
+        if (to === EXECUTION_STAGES.DELIVERY) {
+            if (context.pendingReviews > 0) {
+                return { valid: false, reason: `Cannot deliver: ${context.pendingReviews} reviews still pending` };
+            }
+        }
+
+        return { valid: true };
+    },
+
+    /**
+     * Get display label for execution stage
+     */
+    getStageLabel: (stage) => {
+        const labels = {
+            [EXECUTION_STAGES.KICKOFF]: 'Kickoff',
+            [EXECUTION_STAGES.IN_PROGRESS]: 'In Progress',
+            [EXECUTION_STAGES.REVIEW]: 'Review',
+            [EXECUTION_STAGES.DELIVERY]: 'Delivery'
+        };
+        return labels[stage] || stage;
     },
 
     /**

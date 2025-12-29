@@ -3,89 +3,89 @@
         "name": "Legolex Manufacturing"
     },
     "project": {
-        "name": "デジタルトランスフォーメーションプログラム",
-        "current_phase": "ロードマップ"
+        "name": "Digital Transformation Program",
+        "current_phase": "Roadmap"
     },
     "initiatives": [
         {
-            "name": "プロセス自動化イニシアチブ",
-            "summary": "反復的なビジネスプロセスを自動化し、効率を改善し、手作業によるエラーを削減します。",
+            "name": "Process Automation Initiative",
+            "summary": "Automate repetitive business processes to improve efficiency and reduce manual errors.",
             "status": "IN_PROGRESS",
             "priority": "HIGH",
             "tasks": [
                 {
-                    "title": "現状分析",
-                    "description": "既存のプロセスを文書化し、自動化の機会を特定します。",
+                    "title": "Current State Analysis",
+                    "description": "Document existing processes and identify automation opportunities.",
                     "status": "done",
                     "priority": "high"
                 },
                 {
-                    "title": "技術選定",
-                    "description": "RPAおよびワークフロー自動化ツールを評価します。",
+                    "title": "Technology Selection",
+                    "description": "Evaluate RPA and workflow automation tools.",
                     "status": "done",
                     "priority": "high"
                 },
                 {
-                    "title": "パイロット実装",
-                    "description": "財務部門で自動化を実装します。",
+                    "title": "Pilot Implementation",
+                    "description": "Implement automation in the finance department.",
                     "status": "in_progress",
                     "priority": "high"
                 },
                 {
-                    "title": "ユーザートレーニング",
-                    "description": "新しい自動化されたワークフローについてスタッフをトレーニングします。",
+                    "title": "User Training",
+                    "description": "Train staff on new automated workflows.",
                     "status": "todo",
                     "priority": "medium"
                 },
                 {
-                    "title": "全面展開",
-                    "description": "すべての部門に自動化を拡大します。",
+                    "title": "Full Rollout",
+                    "description": "Extend automation to all departments.",
                     "status": "todo",
                     "priority": "medium"
                 }
             ]
         },
         {
-            "name": "データ分析プラットフォーム",
-            "summary": "リアルタイムビジネスインテリジェンスのための最新のデータ分析プラットフォームを実装します。",
+            "name": "Data Analytics Platform",
+            "summary": "Implement a modern data analytics platform for real-time business intelligence.",
             "status": "DRAFT",
             "priority": "MEDIUM",
             "tasks": [
                 {
-                    "title": "要件収集",
-                    "description": "ステークホルダーから分析要件を収集します。",
+                    "title": "Requirements Gathering",
+                    "description": "Collect analytics requirements from stakeholders.",
                     "status": "in_progress",
                     "priority": "high"
                 },
                 {
-                    "title": "データアーキテクチャ設計",
-                    "description": "データウェアハウスとETLパイプラインを設計します。",
+                    "title": "Data Architecture Design",
+                    "description": "Design the data warehouse and ETL pipelines.",
                     "status": "todo",
                     "priority": "high"
                 },
                 {
-                    "title": "BIツール選定",
-                    "description": "ビジネスインテリジェンスツールを評価して選択します。",
+                    "title": "BI Tool Selection",
+                    "description": "Evaluate and select business intelligence tools.",
                     "status": "todo",
                     "priority": "medium"
                 }
             ]
         },
         {
-            "name": "顧客体験の向上",
-            "summary": "より良いエンゲージメントと満足度のために、顧客向けデジタルチャネルを改善します。",
+            "name": "Customer Experience Enhancement",
+            "summary": "Improve customer-facing digital channels for better engagement and satisfaction.",
             "status": "DRAFT",
             "priority": "LOW",
             "tasks": [
                 {
-                    "title": "カスタマージャーニーマッピング",
-                    "description": "すべてのタッチポイントで現在のカスタマージャーニーをマッピングします。",
+                    "title": "Customer Journey Mapping",
+                    "description": "Map current customer journeys across all touchpoints.",
                     "status": "todo",
                     "priority": "high"
                 },
                 {
-                    "title": "UXリサーチ",
-                    "description": "ユーザーリサーチを実施して課題を特定します。",
+                    "title": "UX Research",
+                    "description": "Conduct user research to identify pain points.",
                     "status": "todo",
                     "priority": "medium"
                 }

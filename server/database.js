@@ -1,4 +1,4 @@
-const config = require('./config/database.config.ts');
+const config = require('./config/database.config');
 
 let db;
 

@@ -1,8 +1,8 @@
 // PMO Validation Middleware
 // Step 3: Enforces PMO rules for initiatives and tasks
 
-const db = require('../database');
-const StatusMachine = require('../services/statusMachine');
+let db = require('../database');
+let StatusMachine = require('../services/statusMachine');
 
 const PMOValidation = {
     /**
@@ -146,5 +146,9 @@ const PMOValidation = {
         };
     }
 };
+
+// Test helper
+PMOValidation._setDb = (mock) => { db = mock; };
+PMOValidation._setStatusMachine = (mock) => { StatusMachine = mock; };
 
 module.exports = PMOValidation;

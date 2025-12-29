@@ -1,23 +1,44 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Api } from '../../services/api';
 import { User, AppView } from '../../types';
-import { Users, Building, AlertCircle, CheckCircle, CreditCard, Trash2, Edit2, Search, Plus, RefreshCw, Lock } from 'lucide-react';
+import {
+    Lock,
+    RefreshCw,
+    Building,
+    UserPlus,
+    TrendingUp,
+    Users,
+    Activity,
+    Brain,
+    Zap,
+    DollarSign,
+    Search,
+    CheckCircle,
+    AlertCircle,
+    Edit2,
+    Trash2,
+    Plus
+} from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useAppStore } from '../../store/useAppStore';
-import { SuperAdminSidebar, SuperAdminSection } from '../../components/SuperAdminSidebar';
-import { AdminLLMView } from '../admin/AdminLLMView';
+import { SuperAdminSidebar, SuperAdminSection, appViewToSection, sectionToAppView } from '../../components/SuperAdminSidebar';
 import { AdminKnowledgeView } from '../admin/AdminKnowledgeView';
-import { SuperAdminAccessRequestsView } from './SuperAdminAccessRequestsView';
-import { SuperAdminPlansView } from './SuperAdminPlansView';
-import { SuperAdminRevenueView } from './SuperAdminRevenueView';
-import { AdminLLMMultipliers } from '../admin/AdminLLMMultipliers';
-import { AdminMarginConfig } from '../admin/AdminMarginConfig';
-import { AdminTokenPackages } from '../admin/AdminTokenPackages';
 import { SuperAdminOrgDetailsModal } from './SuperAdminOrgDetailsModal';
-import { TokenBillingManagementView } from '../admin/TokenBillingManagementView';
 import { SystemSettings } from './SystemSettings';
-import { SuperAdminDatabaseView } from './SuperAdminDatabaseView';
-import { SuperAdminStorageView } from './SuperAdminStorageView';
+import { BillingCenterView } from './BillingCenterView';
+import { OrganizationsView } from './OrganizationsView';
+import { AIConfigurationView } from './AIConfigurationView';
+import { SuperAdminDashboard } from './SuperAdminDashboard';
+import { SuperAdminUserManagement } from './SuperAdminUserManagement';
+// Enterprise Views
+import { SSOConfigurationView } from './SSOConfigurationView';
+import { SecurityPoliciesView } from './SecurityPoliciesView';
+import { APIManagementView } from './APIManagementView';
+import { WhitelabelStudioView } from './WhitelabelStudioView';
+import { ComplianceCenterView } from './ComplianceCenterView';
+import { InvoiceCenterView } from './InvoiceCenterView';
+import { BulkOperationsView } from '../admin/BulkOperationsView';
+import { PlaybookTemplatesListView } from './PlaybookTemplatesListView';
 
 interface SuperAdminViewProps {
     currentUser: User;
@@ -36,8 +57,17 @@ interface Organization {
 
 
 export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onNavigate }) => {
-    const [activeSection, setActiveSection] = useState<SuperAdminSection>('overview');
-    const [stats, setStats] = useState({ totalOrgs: 0, totalUsers: 0, revenue: 0, aiCalls: 0, tokens: 0, activeUsers7d: 0, liveUsers: 0 });
+    const { isSidebarCollapsed, currentView, setCurrentView } = useAppStore();
+
+    // Derive activeSection from currentView for backward compatibility
+    const activeSection: SuperAdminSection = appViewToSection[currentView] || 'dashboard';
+
+    // Helper to set section (updates currentView in store)
+    const setActiveSection = (section: SuperAdminSection) => {
+        setCurrentView(sectionToAppView[section]);
+    };
+
+    const [stats, setStats] = useState({ totalOrgs: 0, totalUsers: 0, revenue: 0, aiCalls: 0, tokens: 0, activeUsers7d: 0, liveUsers: 0, pendingRequests: 0 });
     const [organizations, setOrganizations] = useState<Organization[]>([]);
     const [allUsers, setAllUsers] = useState<User[]>([]);
     const [activities, setActivities] = useState<any[]>([]);
@@ -52,7 +82,13 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
     const [movingUser, setMovingUser] = useState<User | null>(null);
     const [targetOrgId, setTargetOrgId] = useState('');
     const [viewingOrgUsers, setViewingOrgUsers] = useState<Organization | null>(null);
-    const { isSidebarCollapsed } = useAppStore();
+
+    // Initialize to dashboard if not a superadmin view
+    useEffect(() => {
+        if (!currentView.startsWith('SUPERADMIN_')) {
+            setCurrentView(AppView.SUPERADMIN_DASHBOARD);
+        }
+    }, []);
 
     const fetchData = useCallback(async (showLoading = true) => {
         if (showLoading) setLoading(true);
@@ -106,6 +142,15 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
             setActivities(acts);
         } catch (e) {
             console.warn('Could not fetch activities', e);
+        }
+
+        // 5. Fetch Pending Requests Count
+        try {
+            const requests = await Api.getAccessRequests();
+            const pendingCount = requests.filter((r: any) => r.status === 'pending').length;
+            setStats(prev => ({ ...prev, pendingRequests: pendingCount }));
+        } catch (e) {
+            console.warn('Could not fetch pending requests', e);
         }
 
         setLoading(false);
@@ -172,70 +217,127 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
         (user.lastName || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    // Render content based on active section
+    // Render content based on currentView (unified AppView navigation)
     const renderContent = () => {
-        switch (activeSection) {
-            case 'overview':
-                return renderOverview();
-            case 'organizations':
-                return renderOrganizations();
-            case 'users':
-                return renderUsers();
-            case 'access-requests':
-                return <div className="p-8 overflow-y-auto"><SuperAdminAccessRequestsView /></div>;
-            case 'llm':
-                return <div className="p-8 overflow-y-auto h-full"><AdminLLMView /></div>;
-            case 'knowledge':
-                return <div className="p-8 overflow-y-auto h-full"><AdminKnowledgeView /></div>;
-            case 'plans':
-                return <div className="p-8 overflow-y-auto h-full"><SuperAdminPlansView /></div>;
-            case 'token-billing':
-                return <div className="p-8 overflow-y-auto h-full"><TokenBillingManagementView /></div>;
-            case 'revenue':
-                return <div className="p-8 overflow-y-auto"><SuperAdminRevenueView /></div>;
-            case 'settings':
-                return <div className="p-8 overflow-y-auto h-full"><SystemSettings /></div>;
-            case 'storage':
-                return <div className="p-8 overflow-y-auto h-full"><SuperAdminStorageView /></div>;
-            case 'analytics':
+        switch (currentView) {
+            case AppView.SUPERADMIN_DASHBOARD:
                 return (
-                    <div className="p-8 overflow-y-auto">
-                        <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
-                            <h2 className="text-xl font-bold mb-4">AI Analytics</h2>
-                            <p className="text-slate-400 mb-4">Advanced AI usage analytics and insights.</p>
-                            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 flex items-start gap-3">
-                                <AlertCircle className="text-yellow-500 shrink-0 mt-0.5" size={20} />
-                                <div>
-                                    <p className="text-yellow-500 font-medium mb-1">Coming Soon</p>
-                                    <p className="text-slate-400 text-sm">
-                                        This section is currently under development. Advanced AI analytics including token usage trends,
-                                        model performance metrics, and cost optimization recommendations will be available here.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <SuperAdminDashboard
+                        stats={stats}
+                        activities={activities}
+                        loading={loading}
+                        onRefresh={() => fetchData(true)}
+                        onNavigateToOrganizations={() => setActiveSection('organizations')}
+                        onNavigateToUsers={() => setActiveSection('users')}
+                        onNavigateToBilling={() => setActiveSection('billing')}
+                    />
                 );
-            case 'audit':
-                return renderAuditLogs();
-            case 'database':
-                return <div className="p-8 overflow-y-auto h-full"><SuperAdminDatabaseView /></div>;
+            case AppView.SUPERADMIN_ORGANIZATIONS:
+                return <OrganizationsView />;
+            case AppView.SUPERADMIN_USERS:
+                return <SuperAdminUserManagement organizations={organizations} />;
+            case AppView.SUPERADMIN_BILLING:
+                return <BillingCenterView />;
+            case AppView.SUPERADMIN_AI_CONFIG:
+                return <AIConfigurationView />;
+            case AppView.SUPERADMIN_PLAYBOOK_TEMPLATES:
+                return <PlaybookTemplatesListView />;
+            case AppView.SUPERADMIN_KNOWLEDGE:
+                return <div className="p-8 overflow-y-auto h-full"><AdminKnowledgeView /></div>;
+            case AppView.SUPERADMIN_SETTINGS:
+                return <div className="p-8 overflow-y-auto h-full"><SystemSettings /></div>;
+            // Enterprise Views
+            case AppView.SUPERADMIN_SSO:
+                return <div className="p-8 overflow-y-auto h-full"><SSOConfigurationView /></div>;
+            case AppView.SUPERADMIN_SECURITY_POLICIES:
+                return <div className="p-8 overflow-y-auto h-full"><SecurityPoliciesView /></div>;
+            case AppView.SUPERADMIN_API_MANAGEMENT:
+                return <div className="p-8 overflow-y-auto h-full"><APIManagementView /></div>;
+            case AppView.SUPERADMIN_WHITELABEL:
+                return <div className="p-8 overflow-y-auto h-full"><WhitelabelStudioView /></div>;
+            case AppView.SUPERADMIN_COMPLIANCE:
+                return <div className="p-8 overflow-y-auto h-full"><ComplianceCenterView /></div>;
+            case AppView.SUPERADMIN_INVOICES:
+                return <div className="p-8 overflow-y-auto h-full"><InvoiceCenterView /></div>;
+            case AppView.SUPERADMIN_BULK_OPERATIONS:
+                return <div className="p-8 overflow-y-auto h-full"><BulkOperationsView /></div>;
             default:
-                return renderOverview();
+                // Fallback for any other view - show dashboard
+                return (
+                    <SuperAdminDashboard
+                        stats={stats}
+                        activities={activities}
+                        loading={loading}
+                        onRefresh={() => fetchData(true)}
+                        onNavigateToOrganizations={() => setActiveSection('organizations')}
+                        onNavigateToUsers={() => setActiveSection('users')}
+                        onNavigateToBilling={() => setActiveSection('billing')}
+                    />
+                );
         }
     };
 
-    const renderOverview = () => (
+    const renderDashboard = () => (
         <div className="p-8 overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
-                <h1 className="text-2xl font-bold">System Overview</h1>
-                <button onClick={() => fetchData(true)} className="flex items-center gap-2 px-4 py-2 bg-navy-800 hover:bg-navy-700 rounded-lg text-sm transition-colors">
-                    <RefreshCw size={16} /> Refresh
+                <div>
+                    <h1 className="text-2xl font-bold text-white">Dashboard</h1>
+                    <p className="text-slate-400 text-sm mt-1">System overview and quick actions</p>
+                </div>
+                <button onClick={() => fetchData(true)} className="flex items-center gap-2 px-4 py-2 bg-navy-800 hover:bg-navy-700 rounded-lg text-sm transition-colors border border-white/10">
+                    <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Refresh
                 </button>
             </div>
 
+            {/* Quick Actions */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                <button
+                    onClick={() => setActiveSection('organizations')}
+                    className="bg-gradient-to-br from-blue-600/20 to-blue-700/10 border border-blue-500/20 rounded-xl p-4 text-left hover:border-blue-500/40 transition-all group"
+                >
+                    <div className="flex items-center gap-3 mb-2">
+                        <Building size={20} className="text-blue-400" />
+                        <span className="text-white font-medium">Organizations</span>
+                    </div>
+                    <p className="text-xs text-slate-400">Manage orgs & subscriptions</p>
+                </button>
+                <button
+                    onClick={() => setActiveSection('users')}
+                    className="bg-gradient-to-br from-emerald-600/20 to-emerald-700/10 border border-emerald-500/20 rounded-xl p-4 text-left hover:border-emerald-500/40 transition-all group"
+                >
+                    <div className="flex items-center gap-3 mb-2">
+                        <UserPlus size={20} className="text-emerald-400" />
+                        <span className="text-white font-medium">Invite User</span>
+                    </div>
+                    <p className="text-xs text-slate-400">Add new users to system</p>
+                </button>
+                <button
+                    onClick={() => setActiveSection('billing')}
+                    className="bg-gradient-to-br from-purple-600/20 to-purple-700/10 border border-purple-500/20 rounded-xl p-4 text-left hover:border-purple-500/40 transition-all group"
+                >
+                    <div className="flex items-center gap-3 mb-2">
+                        <TrendingUp size={20} className="text-purple-400" />
+                        <span className="text-white font-medium">Revenue</span>
+                    </div>
+                    <p className="text-xs text-slate-400">View billing & analytics</p>
+                </button>
+                {stats.pendingRequests > 0 && (
+                    <button
+                        onClick={() => setActiveSection('organizations')}
+                        className="bg-gradient-to-br from-yellow-600/20 to-yellow-700/10 border border-yellow-500/20 rounded-xl p-4 text-left hover:border-yellow-500/40 transition-all group relative"
+                    >
+                        <span className="absolute top-2 right-2 bg-yellow-500 text-black text-xs font-bold px-2 py-0.5 rounded-full">{stats.pendingRequests}</span>
+                        <div className="flex items-center gap-3 mb-2">
+                            <Users size={20} className="text-yellow-400" />
+                            <span className="text-white font-medium">Pending</span>
+                        </div>
+                        <p className="text-xs text-slate-400">Review access requests</p>
+                    </button>
+                )}
+            </div>
+
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-8">
                 <div className="bg-navy-900 border border-white/10 rounded-xl p-4 flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400"><Building size={20} /></div>
                     <div>
@@ -252,11 +354,11 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                 </div>
                 <div className="bg-navy-900 border border-white/10 rounded-xl p-4 flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-red-500/20 flex items-center justify-center text-red-500 relative">
-                        <Users size={20} />
+                        <Activity size={20} />
                         <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse border border-navy-900"></span>
                     </div>
                     <div>
-                        <p className="text-slate-400 text-xs">Live Users Now</p>
+                        <p className="text-slate-400 text-xs">Live Now</p>
                         <p className="text-xl font-bold text-white">{stats.liveUsers}</p>
                     </div>
                 </div>
@@ -268,21 +370,21 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                     </div>
                 </div>
                 <div className="bg-navy-900 border border-white/10 rounded-xl p-4 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400"><CreditCard size={20} /></div>
+                    <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400"><Brain size={20} /></div>
                     <div>
                         <p className="text-slate-400 text-xs">AI Calls (7d)</p>
                         <p className="text-xl font-bold text-white">{stats.aiCalls}</p>
                     </div>
                 </div>
                 <div className="bg-navy-900 border border-white/10 rounded-xl p-4 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center text-cyan-400"><CreditCard size={20} /></div>
+                    <div className="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center text-cyan-400"><Zap size={20} /></div>
                     <div>
                         <p className="text-slate-400 text-xs">Tokens (7d)</p>
                         <p className="text-xl font-bold text-white">{(stats.tokens / 1000).toFixed(1)}k</p>
                     </div>
                 </div>
                 <div className="bg-navy-900 border border-white/10 rounded-xl p-4 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-pink-500/20 flex items-center justify-center text-pink-400"><CreditCard size={20} /></div>
+                    <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400"><DollarSign size={20} /></div>
                     <div>
                         <p className="text-slate-400 text-xs">MRR (Est)</p>
                         <p className="text-xl font-bold text-white">${stats.revenue.toFixed(0)}</p>
@@ -292,7 +394,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
 
             {/* Recent Activity */}
             <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
-                <h2 className="text-lg font-semibold mb-4">Recent Activity</h2>
+                <h2 className="text-lg font-semibold mb-4 text-white">Recent Activity</h2>
                 {activities.length === 0 ? (
                     <p className="text-slate-500 text-sm">No recent activity recorded yet.</p>
                 ) : (

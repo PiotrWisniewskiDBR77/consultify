@@ -1,11 +1,20 @@
-/**
- * Error Handler Utility
- * 
- * Centralized error handling and response formatting.
- * Provides consistent error responses across the API.
- */
-
 const logger = require('./logger');
+
+/**
+ * Standardized AppError Class
+ */
+class AppError extends Error {
+    constructor(message, statusCode, code = 'INTERNAL_ERROR', details = {}) {
+        super(message);
+        this.statusCode = statusCode;
+        this.code = code;
+        this.details = details;
+        this.status = `${statusCode}`.startsWith('4') ? 'fail' : 'error';
+        this.isOperational = true;
+
+        Error.captureStackTrace(this, this.constructor);
+    }
+}
 
 /**
  * Error types/codes
@@ -22,11 +31,7 @@ const ERROR_CODES = {
 };
 
 /**
- * Create standardized error response
- * @param {string} code - Error code
- * @param {string} message - Error message
- * @param {Object} details - Additional error details
- * @returns {Object} Error object
+ * Create standardized error response object (Legacy support)
  */
 function createError(code, message, details = {}) {
     return {
@@ -40,131 +45,64 @@ function createError(code, message, details = {}) {
 }
 
 /**
- * Handle validation errors
- * @param {string} message - Error message
- * @param {Object} fields - Field-specific errors
- * @returns {Object} Error response
- */
-function validationError(message = 'Validation failed', fields = {}) {
-    return createError(ERROR_CODES.VALIDATION_ERROR, message, { fields });
-}
-
-/**
- * Handle not found errors
- * @param {string} resource - Resource name (e.g., 'Task', 'Project')
- * @param {string} id - Resource ID
- * @returns {Object} Error response
- */
-function notFoundError(resource = 'Resource', id = null) {
-    const message = id 
-        ? `${resource} with ID ${id} not found`
-        : `${resource} not found`;
-    return createError(ERROR_CODES.NOT_FOUND, message);
-}
-
-/**
- * Handle unauthorized errors
- * @param {string} message - Error message
- * @returns {Object} Error response
- */
-function unauthorizedError(message = 'Unauthorized') {
-    return createError(ERROR_CODES.UNAUTHORIZED, message);
-}
-
-/**
- * Handle forbidden errors
- * @param {string} message - Error message
- * @returns {Object} Error response
- */
-function forbiddenError(message = 'Access forbidden') {
-    return createError(ERROR_CODES.FORBIDDEN, message);
-}
-
-/**
- * Handle database errors
- * @param {Error} error - Database error
- * @param {string} operation - Operation that failed
- * @returns {Object} Error response
- */
-function databaseError(error, operation = 'Database operation') {
-    logger.error(`[ErrorHandler] ${operation} failed:`, error);
-    
-    // Don't expose internal database errors to client
-    const message = process.env.NODE_ENV === 'production'
-        ? `${operation} failed. Please try again later.`
-        : error.message;
-    
-    return createError(ERROR_CODES.DATABASE_ERROR, message, {
-        operation,
-        // Include stack trace only in development
-        ...(process.env.NODE_ENV !== 'production' && { stack: error.stack })
-    });
-}
-
-/**
- * Handle internal server errors
- * @param {Error} error - Error object
- * @param {string} context - Context where error occurred
- * @returns {Object} Error response
- */
-function internalError(error, context = 'Internal server error') {
-    logger.error(`[ErrorHandler] ${context}:`, error);
-    
-    const message = process.env.NODE_ENV === 'production'
-        ? 'An internal error occurred. Please try again later.'
-        : error.message;
-    
-    return createError(ERROR_CODES.INTERNAL_ERROR, message, {
-        context,
-        ...(process.env.NODE_ENV !== 'production' && { stack: error.stack })
-    });
-}
-
-/**
  * Express error handler middleware
- * @param {Error} err - Error object
- * @param {Object} req - Express request
- * @param {Object} res - Express response
- * @param {Function} next - Express next function
  */
 function errorHandlerMiddleware(err, req, res, next) {
-    logger.error('[ErrorHandler] Unhandled error:', {
-        error: err.message,
-        stack: err.stack,
-        path: req.path,
-        method: req.method,
-        userId: req.user?.id
-    });
+    err.statusCode = err.statusCode || 500;
+    err.status = err.status || 'error';
 
-    // Default to internal error
-    let errorResponse = internalError(err, 'Unhandled error');
-    let statusCode = 500;
-
-    // Map known error types to status codes
-    if (err.code === ERROR_CODES.VALIDATION_ERROR) {
-        statusCode = 400;
-        errorResponse = validationError(err.message, err.fields);
-    } else if (err.code === ERROR_CODES.NOT_FOUND) {
-        statusCode = 404;
-        errorResponse = notFoundError(err.resource, err.id);
-    } else if (err.code === ERROR_CODES.UNAUTHORIZED) {
-        statusCode = 401;
-        errorResponse = unauthorizedError(err.message);
-    } else if (err.code === ERROR_CODES.FORBIDDEN) {
-        statusCode = 403;
-        errorResponse = forbiddenError(err.message);
-    } else if (err.code === ERROR_CODES.DATABASE_ERROR) {
-        statusCode = 500;
-        errorResponse = databaseError(err, err.operation);
+    // Log the error
+    if (err.statusCode >= 500) {
+        logger.error(`[ErrorHandler] ${err.message}`, {
+            stack: err.stack,
+            path: req.path,
+            method: req.method,
+            userId: req.user?.id
+        });
+    } else {
+        logger.warn(`[ErrorHandler] ${err.message}`, {
+            statusCode: err.statusCode,
+            path: req.path
+        });
     }
 
-    res.status(statusCode).json(errorResponse);
+    // Development response
+    if (process.env.NODE_ENV === 'development') {
+        return res.status(err.statusCode).json({
+            status: err.status,
+            error: err,
+            message: err.message,
+            stack: err.stack
+        });
+    }
+
+    // Production response
+    if (err.isOperational) {
+        // Known operational error (AppError)
+        res.status(err.statusCode).json({
+            status: err.status,
+            error: {
+                code: err.code || 'ERROR',
+                message: err.message,
+                ...err.details,
+                timestamp: new Date().toISOString()
+            }
+        });
+    } else {
+        // Unknown programming/system error
+        res.status(500).json({
+            status: 'error',
+            error: {
+                code: 'INTERNAL_ERROR',
+                message: 'Something went very wrong!',
+                timestamp: new Date().toISOString()
+            }
+        });
+    }
 }
 
 /**
  * Async route wrapper to catch errors
- * @param {Function} fn - Async route handler
- * @returns {Function} Wrapped route handler
  */
 function asyncHandler(fn) {
     return (req, res, next) => {
@@ -173,17 +111,17 @@ function asyncHandler(fn) {
 }
 
 module.exports = {
+    AppError,
     ERROR_CODES,
-    createError,
-    validationError,
-    notFoundError,
-    unauthorizedError,
-    forbiddenError,
-    databaseError,
-    internalError,
     errorHandlerMiddleware,
-    asyncHandler
+    asyncHandler,
+    // Legacy exports for backward compatibility
+    createError,
+    validationError: (msg, fields) => new AppError(msg, 400, ERROR_CODES.VALIDATION_ERROR, { fields }),
+    notFoundError: (res, id) => new AppError(`${res} not found`, 404, ERROR_CODES.NOT_FOUND, { id }),
 };
+
+
 
 
 

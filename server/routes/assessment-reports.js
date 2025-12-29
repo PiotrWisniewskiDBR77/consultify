@@ -1218,6 +1218,147 @@ router.post('/:id/generate', verifyToken, async (req, res) => {
 });
 
 /**
+ * POST /api/assessment-reports/:id/generate-comprehensive
+ * Generate a comprehensive AI-powered report with web research
+ */
+router.post('/:id/generate-comprehensive', verifyToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { language = 'pl', includeResearch = true, stakeholderRole = 'CEO' } = req.body;
+        const organizationId = req.user.organizationId;
+
+        // Verify report belongs to organization
+        const reportSql = `
+            SELECT r.*, a.id as assessment_id
+            FROM assessment_reports r
+            LEFT JOIN assessments a ON r.assessment_id = a.id
+            WHERE r.id = ? AND r.organization_id = ?
+        `;
+
+        db.get(reportSql, [id, organizationId], async (err, report) => {
+            if (err || !report) {
+                return res.status(404).json({ error: 'Report not found' });
+            }
+
+            if (!report.assessment_id) {
+                return res.status(400).json({ error: 'No assessment linked to this report' });
+            }
+
+            try {
+                // Import comprehensive report generator
+                const { comprehensiveReportGenerator } = require('../services/ai/comprehensiveReportGenerator');
+                
+                // Generate comprehensive report
+                const result = await comprehensiveReportGenerator.generateReport(
+                    report.assessment_id,
+                    { language, includeResearch, stakeholderRole }
+                );
+
+                if (!result.success) {
+                    return res.status(500).json({ 
+                        error: 'Report generation failed', 
+                        details: result.error 
+                    });
+                }
+
+                // Store generated sections in database
+                const now = new Date().toISOString();
+                const userId = req.user.id;
+
+                // Delete existing sections
+                await new Promise((resolve, reject) => {
+                    db.run('DELETE FROM report_sections WHERE report_id = ?', [id], (err) => {
+                        if (err) reject(err);
+                        else resolve();
+                    });
+                });
+
+                // Insert new sections
+                let orderIndex = 0;
+                for (const section of result.sections) {
+                    const sectionId = uuidv4();
+                    const sectionType = section.type || 'custom';
+                    const title = section.axisName || getSectionTitle(sectionType);
+                    const content = typeof section.content === 'object' 
+                        ? JSON.stringify(section.content, null, 2)
+                        : section.content || '';
+
+                    await new Promise((resolve, reject) => {
+                        db.run(
+                            `INSERT INTO report_sections 
+                             (id, report_id, section_type, axis_id, title, content, data_snapshot, order_index, is_ai_generated, ai_model_used, last_edited_by, created_at, updated_at)
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, 'gemini-1.5-pro', ?, ?, ?)`,
+                            [
+                                sectionId,
+                                id,
+                                sectionType,
+                                section.axisId || null,
+                                title,
+                                content,
+                                JSON.stringify({ generatedAt: now, metadata: result.metadata }),
+                                orderIndex++,
+                                userId,
+                                now,
+                                now
+                            ],
+                            (err) => {
+                                if (err) reject(err);
+                                else resolve();
+                            }
+                        );
+                    });
+                }
+
+                // Update report status
+                db.run(
+                    `UPDATE assessment_reports SET 
+                     report_status = 'AI_GENERATED',
+                     updated_at = ?,
+                     ai_generated_at = ?
+                     WHERE id = ?`,
+                    [now, now, id]
+                );
+
+                res.json({
+                    success: true,
+                    reportId: id,
+                    sectionsGenerated: result.sections.length,
+                    metadata: result.metadata,
+                    duration: result.duration,
+                    message: `Comprehensive report generated with ${result.sections.length} sections`
+                });
+
+            } catch (genError) {
+                console.error('[Assessment Reports API] Comprehensive generation error:', genError);
+                res.status(500).json({ 
+                    error: 'Failed to generate comprehensive report',
+                    details: genError.message
+                });
+            }
+        });
+    } catch (error) {
+        console.error('[Assessment Reports API] Comprehensive report error:', error);
+        res.status(500).json({ error: 'Failed to generate comprehensive report' });
+    }
+});
+
+function getSectionTitle(sectionType) {
+    const titles = {
+        coverPage: 'Strona Tytułowa',
+        executiveSummary: 'Streszczenie Wykonawcze',
+        methodology: 'Metodologia DRD',
+        maturityOverview: 'Przegląd Dojrzałości',
+        axisAnalysis: 'Analiza Osi',
+        gapAnalysis: 'Analiza Luk',
+        initiatives: 'Inicjatywy Transformacyjne',
+        roadmap: 'Roadmapa Transformacji',
+        riskRegister: 'Rejestr Ryzyk',
+        appendix: 'Załączniki'
+    };
+    return titles[sectionType] || sectionType;
+}
+
+/**
  * GET /api/assessment-reports/:id/sections
  * Get all sections for a report
  */

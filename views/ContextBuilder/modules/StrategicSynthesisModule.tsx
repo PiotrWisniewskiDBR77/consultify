@@ -4,7 +4,7 @@ import { DynamicList, DynamicListItem } from '../shared/DynamicList';
 import { useContextBuilderStore } from '../../../store/useContextBuilderStore';
 import { useAppStore } from '../../../store/useAppStore';
 import { TransformationScenarios } from './TransformationScenarios';
-import { ReportContainer } from '../../../components/ReportBuilder/ReportContainer';
+import { SynthesisSummary } from './SynthesisSummary';
 export const StrategicSynthesisModule: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'risks' | 'strengths' | 'scenarios' | 'summary'>('risks');
     // Store Access
@@ -309,13 +309,23 @@ export const StrategicSynthesisModule: React.FC = () => {
                 {/* TAB 3: SCENARIOS */}
                 {activeTab === 'scenarios' && (
                     <div className="space-y-6">
-                        <p className="text-slate-600 dark:text-slate-300">Scenario planning content...</p>
+                        <TransformationScenarios
+                            currentScenarioId={selectedScenarioId}
+                            onSelectScenario={(scenarioId) => setSynthesis({ ...synthesis, selectedScenarioId: scenarioId })}
+                        />
                     </div>
                 )}
                 {/* TAB 4: SUMMARY */}
                 {activeTab === 'summary' && (
                     <div className="space-y-6">
-                        <p className="text-slate-600 dark:text-slate-300">Summary content...</p>
+                        <SynthesisSummary
+                            companyProfile={companyProfile}
+                            challenges={challenges}
+                            goals={goals}
+                            risks={risks}
+                            strengths={strengths}
+                            selectedScenarioId={selectedScenarioId}
+                        />
                     </div>
                 )}
             </div>

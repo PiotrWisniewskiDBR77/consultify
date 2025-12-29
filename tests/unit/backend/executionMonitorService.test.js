@@ -16,14 +16,14 @@ describe('ExecutionMonitorService', () => {
 
     beforeEach(async () => {
         vi.resetModules();
-        
+
         mockDb = createMockDb();
         mockNotificationService = {
             create: vi.fn().mockResolvedValue({ id: 'notif-123' })
         };
 
         ExecutionMonitorService = (await import('../../../server/services/executionMonitorService.js')).default;
-        
+
         ExecutionMonitorService.setDependencies({
             db: mockDb,
             NotificationService: mockNotificationService
@@ -41,7 +41,7 @@ describe('ExecutionMonitorService', () => {
                 {
                     id: 'task-1',
                     title: 'Stalled Task',
-                    status: 'in_progress',
+                    status: 'IN_PROGRESS',
                     updated_at: '2024-01-01T00:00:00Z'
                 }
             ];
@@ -125,7 +125,7 @@ describe('ExecutionMonitorService', () => {
                 {
                     id: 'init-1',
                     name: 'Stalled Initiative',
-                    status: 'IN_EXECUTION',
+                    status: 'EXECUTING',
                     updated_at: '2024-01-01T00:00:00Z'
                 }
             ];
@@ -203,13 +203,13 @@ describe('ExecutionMonitorService', () => {
                 {
                     id: 'task-1',
                     title: 'Stalled Task',
-                    status: 'in_progress'
+                    status: 'IN_PROGRESS'
                 }
             ];
 
             mockDb.all.mockImplementation((query, params, callback) => {
                 expect(query).toContain('WHERE t.project_id = ?');
-                expect(query).toContain("status IN ('in_progress', 'IN_PROGRESS')");
+                expect(query).toContain("status = 'IN_PROGRESS'");
                 expect(query).toContain("updated_at < datetime('now', '-7 days')");
                 expect(params[0]).toBe(projectId);
                 callback(null, mockTasks);
@@ -233,7 +233,7 @@ describe('ExecutionMonitorService', () => {
             ];
 
             mockDb.all.mockImplementation((query, params, callback) => {
-                expect(query).toContain("status NOT IN ('done', 'DONE')");
+                expect(query).toContain("status != 'DONE'");
                 expect(query).toContain("due_date < date('now')");
                 callback(null, mockTasks);
             });
@@ -274,12 +274,12 @@ describe('ExecutionMonitorService', () => {
                 {
                     id: 'init-1',
                     name: 'Stalled Initiative',
-                    status: 'IN_EXECUTION'
+                    status: 'EXECUTING'
                 }
             ];
 
             mockDb.all.mockImplementation((query, params, callback) => {
-                expect(query).toContain("status IN ('IN_EXECUTION', 'APPROVED')");
+                expect(query).toContain("status IN ('EXECUTING', 'APPROVED')");
                 expect(query).toContain("updated_at < datetime('now', '-7 days')");
                 callback(null, mockInitiatives);
             });
@@ -303,7 +303,7 @@ describe('ExecutionMonitorService', () => {
 
             mockDb.all.mockImplementation((query, params, callback) => {
                 expect(query).toContain('UNION ALL');
-                expect(query).toContain("status IN ('blocked', 'BLOCKED')");
+                expect(query).toContain("status = 'BLOCKED'");
                 expect(query).toContain("blocked_reason IS NULL OR t.blocked_reason = ''");
                 callback(null, mockBlockers);
             });

@@ -20,12 +20,18 @@ import {
     Plus,
     Sparkles,
     CheckCircle,
+    CheckCircle2,
     Circle,
     GripVertical,
     ChevronUp,
     ChevronDown,
     X,
-    Loader2
+    Loader2,
+    Flame,
+    Inbox,
+    Brain,
+    Coffee,
+    Zap
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { FocusTask, TimeBlock, FocusBoardProps, FocusSuggestion } from '../../../types/myWork';
@@ -37,9 +43,68 @@ import toast from 'react-hot-toast';
 
 interface ExtendedFocusBoardProps extends Partial<FocusBoardProps> {
     onTaskClick?: (taskId: string) => void;
+    onNavigateToInbox?: () => void;
 }
 
 const MAX_FOCUS_TASKS = 5;
+
+/**
+ * Daily Stats Card Component
+ */
+const DailyStatCard: React.FC<{
+    icon: React.ReactNode;
+    label: string;
+    value: number | string;
+    suffix?: string;
+    color: 'green' | 'blue' | 'orange' | 'slate' | 'purple';
+}> = ({ icon, label, value, suffix, color }) => {
+    const colorClasses = {
+        green: 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800/30',
+        blue: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800/30',
+        orange: 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-800/30',
+        slate: 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700/30',
+        purple: 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800/30'
+    };
+
+    const iconBgClasses = {
+        green: 'bg-green-100 dark:bg-green-900/30',
+        blue: 'bg-blue-100 dark:bg-blue-900/30',
+        orange: 'bg-orange-100 dark:bg-orange-900/30',
+        slate: 'bg-slate-100 dark:bg-slate-700/30',
+        purple: 'bg-purple-100 dark:bg-purple-900/30'
+    };
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`p-4 rounded-xl border ${colorClasses[color]} transition-all hover:shadow-md`}
+        >
+            <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${iconBgClasses[color]}`}>
+                    {icon}
+                </div>
+                <div>
+                    <p className="text-2xl font-bold text-navy-900 dark:text-white">
+                        {value}
+                        {suffix && <span className="text-sm font-normal text-slate-400 ml-1">{suffix}</span>}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
+                </div>
+            </div>
+        </motion.div>
+    );
+};
+
+/**
+ * Focus Tips for empty state
+ */
+const focusTips = [
+    { icon: Brain, tip: "Start with your hardest task when your energy is highest", color: 'text-purple-500' },
+    { icon: Target, tip: "Limit yourself to 3-5 important tasks per day", color: 'text-blue-500' },
+    { icon: Coffee, tip: "Take breaks every 90 minutes to maintain focus", color: 'text-orange-500' },
+    { icon: Zap, tip: "Group similar tasks together to minimize context switching", color: 'text-yellow-500' }
+];
 
 /**
  * Time block configuration
@@ -277,7 +342,8 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
     onReorder,
     onAddToFocus,
     onRemoveFromFocus,
-    onRequestAISuggestion
+    onRequestAISuggestion,
+    onNavigateToInbox
 }) => {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(true);
@@ -288,6 +354,14 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
     );
     const [aiSuggesting, setAiSuggesting] = useState(false);
     const [suggestions, setSuggestions] = useState<FocusSuggestion | null>(null);
+    
+    // Daily stats state
+    const [dailyStats, setDailyStats] = useState({
+        completedToday: 0,
+        focusHours: 0,
+        streak: 0,
+        backlogCount: 0
+    });
 
     const currentDate = date || new Date();
     const dateString = currentDate.toISOString().split('T')[0];
@@ -303,6 +377,22 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
             }
             if (res?.suggestions) {
                 setSuggestions(res.suggestions);
+            }
+            // Load daily stats
+            if (res?.stats) {
+                setDailyStats({
+                    completedToday: res.stats.completedToday || 0,
+                    focusHours: res.stats.focusHours || 0,
+                    streak: res.stats.streak || 0,
+                    backlogCount: res.stats.backlogCount || 0
+                });
+            } else {
+                // Fallback: calculate from tasks
+                const completed = (res?.board?.tasks || []).filter((t: FocusTask) => t.isCompleted).length;
+                setDailyStats(prev => ({
+                    ...prev,
+                    completedToday: completed
+                }));
             }
         } catch (error) {
             console.error('Failed to load focus:', error);
@@ -489,6 +579,36 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
                 </div>
             </div>
 
+            {/* Daily Stats Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <DailyStatCard
+                    icon={<CheckCircle2 size={18} />}
+                    label={t('myWork.focus.stats.doneToday', 'Done Today')}
+                    value={dailyStats.completedToday}
+                    color="green"
+                />
+                <DailyStatCard
+                    icon={<Clock size={18} />}
+                    label={t('myWork.focus.stats.focusTime', 'Focus Time')}
+                    value={dailyStats.focusHours}
+                    suffix="h"
+                    color="blue"
+                />
+                <DailyStatCard
+                    icon={<Flame size={18} />}
+                    label={t('myWork.focus.stats.streak', 'Streak')}
+                    value={dailyStats.streak}
+                    suffix={t('myWork.focus.stats.days', 'days')}
+                    color="orange"
+                />
+                <DailyStatCard
+                    icon={<Inbox size={18} />}
+                    label={t('myWork.focus.stats.backlog', 'Backlog')}
+                    value={dailyStats.backlogCount}
+                    color="slate"
+                />
+            </div>
+
             {/* Task Count Warning */}
             {tasks.length >= MAX_FOCUS_TASKS && (
                 <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30 rounded-lg p-3 text-sm text-amber-700 dark:text-amber-300">
@@ -514,15 +634,76 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
                     ))}
                 </div>
             ) : (
-                <EmptyState
-                    type="focus"
-                    showAISuggestion
-                    onAISuggestion={handleAISuggestion}
-                    actionLabel={t('myWork.focus.addFromInbox', 'Add from Inbox')}
-                    onAction={() => {
-                        // Navigate to inbox
-                    }}
-                />
+                <div className="space-y-6">
+                    {/* Enhanced Empty State with Tips */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-2xl border border-purple-200/50 dark:border-purple-800/30 p-8 text-center"
+                    >
+                        <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/25">
+                            <Target size={32} className="text-white" />
+                        </div>
+                        <h3 className="text-xl font-bold text-navy-900 dark:text-white mb-2">
+                            {t('myWork.focus.empty.title', 'Plan Your Focus')}
+                        </h3>
+                        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6 max-w-md mx-auto">
+                            {t('myWork.focus.empty.description', 'Select up to 5 tasks to focus on today. AI can help you prioritize based on deadlines and importance.')}
+                        </p>
+                        
+                        {/* Action Buttons */}
+                        <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
+                            <button
+                                onClick={handleAISuggestion}
+                                disabled={aiSuggesting}
+                                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium shadow-lg shadow-purple-500/25 transition-all disabled:opacity-50"
+                            >
+                                {aiSuggesting ? (
+                                    <Loader2 size={18} className="animate-spin" />
+                                ) : (
+                                    <Sparkles size={18} />
+                                )}
+                                {t('myWork.focus.aiSuggest', 'AI Suggest')}
+                            </button>
+                            <button
+                                onClick={() => onNavigateToInbox?.()}
+                                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors"
+                            >
+                                <Plus size={18} />
+                                {t('myWork.focus.addFromInbox', 'Add from Inbox')}
+                            </button>
+                        </div>
+                    </motion.div>
+
+                    {/* Focus Tips */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
+                        className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-5"
+                    >
+                        <h4 className="text-sm font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
+                            <Sparkles size={16} className="text-purple-500" />
+                            {t('myWork.focus.tips.title', 'Tips for productive focus')}
+                        </h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {focusTips.map((tip, i) => (
+                                <motion.div
+                                    key={i}
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.2 + i * 0.1 }}
+                                    className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-navy-800/50 rounded-lg"
+                                >
+                                    <tip.icon size={18} className={`${tip.color} shrink-0 mt-0.5`} />
+                                    <span className="text-sm text-slate-600 dark:text-slate-300">
+                                        {t(`myWork.focus.tips.tip${i + 1}`, tip.tip)}
+                                    </span>
+                                </motion.div>
+                            ))}
+                        </div>
+                    </motion.div>
+                </div>
             )}
 
             {/* AI Suggestions Panel */}
@@ -600,6 +781,8 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
 };
 
 export default FocusBoard;
+
+
 
 
 

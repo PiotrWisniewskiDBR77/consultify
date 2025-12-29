@@ -5,14 +5,14 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-// Mock database
+// Mock database - use hoisted to ensure mock is applied before imports
 const mockDb = {
     run: vi.fn(),
     get: vi.fn(),
     all: vi.fn()
 };
 
-vi.mock('../../../server/database', () => ({ default: mockDb }));
+// Mock dependencies
 vi.mock('uuid', () => ({ v4: () => 'mock-audit-uuid' }));
 
 describe('AssessmentAuditLogger', () => {
@@ -27,9 +27,24 @@ describe('AssessmentAuditLogger', () => {
         mockDb.get.mockReset();
         mockDb.all.mockReset();
 
+        // Default implementation - simulate successful db.run
+        mockDb.run.mockImplementation((sql, params, callback) => {
+            if (typeof callback === 'function') {
+                callback.call({ lastID: 1, changes: 1 }, null);
+            }
+        });
+
         // Import fresh module
         const module = await import('../../../server/utils/assessmentAuditLogger.js');
-        AssessmentAuditLogger = module.default || module.AssessmentAuditLogger || module;
+        AssessmentAuditLogger = module.default;
+
+        // Inject dependencies directly
+        if (AssessmentAuditLogger.setDependencies) {
+            AssessmentAuditLogger.setDependencies({
+                db: mockDb,
+                uuidv4: () => 'mock-audit-uuid'
+            });
+        }
     });
 
     afterEach(() => {
@@ -476,6 +491,8 @@ describe('AssessmentAuditLogger', () => {
         });
     });
 });
+
+
 
 
 

@@ -150,8 +150,13 @@ class RapidLeanService {
         const overallScore = this.calculateWeightedScore(dimensionScores);
 
         return {
-            ...dimensionScores,
-            overall: overallScore
+            value_stream_score: dimensionScores.value_stream,
+            waste_elimination_score: dimensionScores.waste_elimination,
+            flow_pull_score: dimensionScores.flow_pull,
+            quality_source_score: dimensionScores.quality_source,
+            continuous_improvement_score: dimensionScores.continuous_improvement,
+            visual_management_score: dimensionScores.visual_management,
+            overall_score: overallScore
         };
     }
 
@@ -181,7 +186,7 @@ class RapidLeanService {
         const totalWeight = Object.values(this.DIMENSION_WEIGHTS).reduce((a, b) => a + b, 0);
 
         const weightedSum = Object.keys(this.DIMENSION_WEIGHTS).reduce((sum, key) => {
-            const scoreKey = key;  // e.g., 'value_stream'
+            const scoreKey = scores[key] !== undefined ? key : `${key}_score`;
             return sum + (scores[scoreKey] || 0) * this.DIMENSION_WEIGHTS[key];
         }, 0);
 
@@ -320,12 +325,15 @@ class RapidLeanService {
      */
     static identifyTopGaps(scores, benchmark) {
         const gaps = Object.keys(scores)
-            .filter(key => key !== 'overall')
-            .map(dimension => ({
-                dimension,
-                score: scores[dimension],
-                gap: benchmark - scores[dimension]
-            }))
+            .filter(key => key !== 'overall' && key !== 'overall_score')
+            .map(key => {
+                const dimension = key.replace('_score', '');
+                return {
+                    dimension,
+                    score: scores[key],
+                    gap: benchmark - scores[key]
+                };
+            })
             .filter(item => item.gap > 0)
             .sort((a, b) => b.gap - a.gap)
             .slice(0, 3)
@@ -438,7 +446,7 @@ class RapidLeanService {
                 Object.keys(obs.answers).forEach(itemId => {
                     const answer = obs.answers[itemId];
                     const mappingKey = `${itemId}_${answer}`;
-                    
+
                     if (dimensionMapping[mappingKey]) {
                         const drdLevel = dimensionMapping[mappingKey].level;
                         if (drdLevel && dimensionMapping[mappingKey].axis === (drdAxis === 'processes' ? 1 : 5)) {

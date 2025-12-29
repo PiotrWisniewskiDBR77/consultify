@@ -41,10 +41,14 @@ describe('RapidLeanService', () => {
         });
 
         it('should handle all 1s (minimum scores)', () => {
-            const responses = {};
-            for (let i = 1; i <= 18; i++) {
-                responses[`question_${i}`] = 1;
-            }
+            const responses = {
+                value_stream_1: 1, value_stream_2: 1, value_stream_3: 1,
+                waste_elimination_1: 1, waste_elimination_2: 1, waste_elimination_3: 1,
+                flow_pull_1: 1, flow_pull_2: 1, flow_pull_3: 1,
+                quality_source_1: 1, quality_source_2: 1, quality_source_3: 1,
+                continuous_improvement_1: 1, continuous_improvement_2: 1, continuous_improvement_3: 1,
+                visual_management_1: 1, visual_management_2: 1, visual_management_3: 1
+            };
 
             const scores = RapidLeanService.calculateScores(responses);
             expect(scores.overall_score).toBe(1);

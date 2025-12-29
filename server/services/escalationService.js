@@ -165,7 +165,7 @@ const EscalationService = {
         const stalledInitiatives = await new Promise((resolve, reject) => {
             deps.db.all(`SELECT * FROM initiatives
                     WHERE project_id = ? 
-                    AND status IN ('IN_EXECUTION', 'APPROVED')
+                    AND status IN ('EXECUTING', 'APPROVED')
                     AND updated_at < datetime('now', '-14 days')`, [projectId], (err, rows) => {
                 if (err) reject(err);
                 else resolve(rows || []);

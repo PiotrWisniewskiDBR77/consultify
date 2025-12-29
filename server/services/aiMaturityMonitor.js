@@ -96,7 +96,7 @@ const AIMaturityMonitor = {
         });
 
         // Store assessment
-        const assessmentId = uuidv4();
+        const assessmentId = deps.uuidv4();
         await new Promise((resolve) => {
             deps.db.run(`
                 INSERT INTO maturity_assessments 
@@ -159,7 +159,7 @@ const AIMaturityMonitor = {
             const sql = scope.projectId
                 ? `SELECT * FROM initiatives WHERE project_id = ?`
                 : `SELECT i.* FROM initiatives i JOIN projects p ON i.project_id = p.id WHERE p.organization_id = ?`;
-            db.all(sql, [param], (err, rows) => resolve(rows || []));
+            deps.db.all(sql, [param], (err, rows) => resolve(rows || []));
         });
 
         if (initiatives.length === 0) return 2.5; // Neutral if no data
@@ -177,10 +177,10 @@ const AIMaturityMonitor = {
         if (descriptionRatio < 0.6) score -= 0.5;
 
         // Check for dependencies defined
-        const deps = await new Promise((resolve) => {
+        const depCount = await new Promise((resolve) => {
             deps.db.get(`SELECT COUNT(*) as count FROM initiative_dependencies`, [], (err, row) => resolve(row?.count || 0));
         });
-        if (deps === 0 && initiatives.length > 5) score -= 0.5;
+        if (depCount === 0 && initiatives.length > 5) score -= 0.5;
 
         return Math.max(1, score);
     },
@@ -197,7 +197,7 @@ const AIMaturityMonitor = {
             : `SELECT d.* FROM decisions d JOIN projects p ON d.project_id = p.id WHERE p.organization_id = ?`;
 
         const decisions = await new Promise((resolve) => {
-            db.all(sql, [param], (err, rows) => resolve(rows || []));
+            deps.db.all(sql, [param], (err, rows) => resolve(rows || []));
         });
 
         if (decisions.length === 0) return 3; // Neutral
@@ -241,7 +241,7 @@ const AIMaturityMonitor = {
             : `SELECT t.* FROM tasks t JOIN projects p ON t.project_id = p.id WHERE p.organization_id = ?`;
 
         const tasks = await new Promise((resolve) => {
-            db.all(sql, [param], (err, rows) => resolve(rows || []));
+            deps.db.all(sql, [param], (err, rows) => resolve(rows || []));
         });
 
         if (tasks.length === 0) return 3;
@@ -292,7 +292,7 @@ const AIMaturityMonitor = {
             const sql = scope.projectId
                 ? `SELECT COUNT(*) as count FROM stage_gates WHERE project_id = ?`
                 : `SELECT COUNT(*) as count FROM stage_gates sg JOIN projects p ON sg.project_id = p.id WHERE p.organization_id = ?`;
-            db.get(sql, [param], (err, row) => resolve(row?.count || 0));
+            deps.db.get(sql, [param], (err, row) => resolve(row?.count || 0));
         });
 
         if (gates === 0) score -= 1;
@@ -302,7 +302,7 @@ const AIMaturityMonitor = {
             const sql = scope.projectId
                 ? `SELECT COUNT(*) as count FROM escalations WHERE project_id = ?`
                 : `SELECT COUNT(*) as count FROM escalations e JOIN projects p ON e.project_id = p.id WHERE p.organization_id = ?`;
-            db.get(sql, [param], (err, row) => resolve(row?.count || 0));
+            deps.db.get(sql, [param], (err, row) => resolve(row?.count || 0));
         });
 
         // Some escalations are expected and healthy
@@ -326,7 +326,7 @@ const AIMaturityMonitor = {
             : `SELECT i.status, COUNT(*) as count FROM initiatives i JOIN projects p ON i.project_id = p.id WHERE p.organization_id = ? GROUP BY i.status`;
 
         const statusCounts = await new Promise((resolve) => {
-            db.all(sql, [param], (err, rows) => {
+            deps.db.all(sql, [param], (err, rows) => {
                 const counts = {};
                 (rows || []).forEach(r => { counts[r.status] = r.count; });
                 resolve(counts);

@@ -145,6 +145,7 @@ export const MyWorkView: React.FC = () => {
                             <FocusBoard
                                 onTaskClick={handleEditTask}
                                 onTaskComplete={() => setRefreshTrigger(prev => prev + 1)}
+                                onNavigateToInbox={() => setActiveTab('inbox')}
                             />
                         )}
                         

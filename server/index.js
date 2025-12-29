@@ -31,6 +31,15 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
     // Init Health Check Monitor
     const { startHealthCheck } = require('./cron/healthCheckJob');
     startHealthCheck();
+
+    // Init LLM Provider Health Monitoring (Auto-Fallback)
+    try {
+        const llmFallbackService = require('./services/llmFallbackService');
+        llmFallbackService.startHealthMonitoring(60000); // Check every minute
+        console.log('[Server] LLM Provider Health Monitoring started');
+    } catch (err) {
+        console.warn('[Server] LLM Fallback Service not available:', err.message);
+    }
 }
 
 // Security Headers (production-ready)
@@ -133,19 +142,33 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // const { correlationMiddleware } = require('./utils/requestStore');
 // app.use(correlationMiddleware);
 
+// Health Check - MUST be before routers and auth middleware
+// This endpoint is used by the frontend to show "System Online/Offline"
+app.get('/api/health', (req, res) => {
+    const start = Date.now();
+    const db = require('./database');
+    db.get('SELECT 1', [], (err) => {
+        const duration = Date.now() - start;
+        if (err) {
+            console.error('Health Check DB Error:', err);
+            return res.status(500).json({ status: 'error', message: 'Database unreachable', error: err.message });
+        }
+        res.json({ status: 'ok', timestamp: new Date(), latency: duration, database: 'connected' });
+    });
+});
+
 // FAZA 5: Performance Metrics Middleware
 const { performanceMetricsMiddleware } = require('./middleware/performanceMetrics');
 // TEMP DEBUG: Disabling ALL suspect middleware
-// app.use('/api/', performanceMetricsMiddleware);
+app.use('/api/', performanceMetricsMiddleware);
 
 // Apply rate limiting and security logging to API routes
-// Temporarily disabled apiLimiter to debug hanging issue
-// app.use('/api/', apiLimiter);
-// app.use('/api/', auditLogMiddleware); // Audit Log for all API methods (filters GET internally)
-// app.use(logger.requestLogger); // Standard Request Logging with IDs
-// Temporarily disabled auth Limiter to debug hanging issue
-// app.use('/api/auth/login', authLimiter);
-// app.use('/api/auth/register', authLimiter);
+app.use('/api/', apiLimiter);
+app.use('/api/', auditLogMiddleware); // Audit Log for all API methods (filters GET internally)
+app.use(logger.requestLogger); // Standard Request Logging with IDs
+
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
 
 
 // ... (imports remain the same)
@@ -197,6 +220,22 @@ app.use(demoGuard);
 app.use('/api/users', userRoutes);
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/ai', aiRoutes);
+const aiDraftsRoutes = require('./routes/ai-drafts');
+app.use('/api/ai-drafts', aiDraftsRoutes);
+const taskAdvisorRoutes = require('./routes/task-advisor');
+app.use('/api/task-advisor', taskAdvisorRoutes);
+const aiAnalyticsRoutes = require('./routes/ai-analytics');
+app.use('/api/ai-analytics', aiAnalyticsRoutes);
+const aiFeedbackRoutes = require('./routes/ai-feedback');
+app.use('/api/ai-feedback', aiFeedbackRoutes);
+const aiPromptsRoutes = require('./routes/ai-prompts');
+app.use('/api/ai-prompts', aiPromptsRoutes);
+const aiAbTestingRoutes = require('./routes/ai-ab-testing');
+app.use('/api/ai-ab-testing', aiAbTestingRoutes);
+const aiSecurityRoutes = require('./routes/ai-security');
+app.use('/api/ai-security', aiSecurityRoutes);
+const aiNudgesRoutes = require('./routes/ai-nudges');
+app.use('/api/ai/nudges', aiNudgesRoutes);
 app.use('/api/documents', documentRoutes); // New Document Route
 app.use('/api/settings', settingsRoutes);
 app.use('/api/superadmin', superAdminRoutes);
@@ -218,7 +257,9 @@ app.use('/api/ai-training', aiTrainingRoutes);
 // Billing & Stripe
 app.use('/api/billing', billingRoutes);
 app.use('/api/token-billing', tokenBillingRoutes);
-app.use('/api/token-billing', tokenBillingRoutes);
+// Pricing (from legal-metadata.json)
+const pricingRoutes = require('./routes/pricing');
+app.use('/api/pricing', pricingRoutes);
 app.use('/api/megatrends', megatrendRoutes);
 app.use('/api/organizations', organizationRoutes);
 
@@ -252,12 +293,18 @@ const advancedAnalyticsRoutes = require('./routes/analyticsAdvanced');
 app.use('/api/analytics/advanced', advancedAnalyticsRoutes);
 
 app.use('/api/webhooks', stripeWebhookRoutes);
-const reportRoutes = require('./routes/reports');
-app.use('/api/reports', reportRoutes);
 const trialRoutes = require('./routes/trial');
 app.use('/api/trial', trialRoutes);
 const ssoRoutes = require('./routes/sso');
 app.use('/api/sso', ssoRoutes);
+
+// Security Policies Routes
+const securityPoliciesRoutes = require('./routes/securityPolicies');
+app.use('/api/security-policies', securityPoliciesRoutes);
+
+// Branding Routes
+const brandingRoutes = require('./routes/branding');
+app.use('/api/branding', brandingRoutes);
 
 // OAuth Routes (Google, LinkedIn)
 const oauthRoutes = require('./routes/oauthRoutes');
@@ -266,7 +313,7 @@ app.use('/api/auth', oauthRoutes);
 const aiAsyncRoutes = require('./routes/aiAsync');
 app.use('/api/ai-async', aiAsyncRoutes); // New Async Endpoint
 
-const myWorkRoutes = require('./routes/myWork');
+const myWorkRoutes = require('./routes/my-work');
 app.use('/api/my-work', myWorkRoutes);
 
 // SCMS Governance Routes (Step 1)
@@ -297,6 +344,12 @@ app.use('/api/assessment-workflow', assessmentWorkflowRoutes);
 // Assessment Hub Routes (for 4-tab UI)
 app.use('/api/assessments', assessmentHubRoutes);
 app.use('/api/assessment-reports', assessmentReportsRoutes);
+
+// Multi-Framework Assessment Routes (SIRI, ADMA, CMMI, LEAN)
+const multiFrameworkAssessmentRoutes = require('./routes/multi-framework-assessment');
+app.use('/api/mf-assessments', multiFrameworkAssessmentRoutes);
+const multiFrameworkWorkflowRoutes = require('./routes/multi-framework-workflow');
+app.use('/api/assessment-workflow', multiFrameworkWorkflowRoutes); // Extends assessment-workflow
 
 // Premium Reports (McKinsey/BCG-grade PDF generation)
 const premiumReportsRoutes = require('./routes/premiumReports');
@@ -346,6 +399,17 @@ app.use('/api/projects', projectMembersRoutes);
 const workstreamsRoutes = require('./routes/workstreams');
 app.use('/api', workstreamsRoutes);
 
+// Work Dimensions System
+// Organization work mode configuration and user assignments
+const workModeRoutes = require('./routes/workMode');
+app.use('/api/org/work-mode', workModeRoutes);
+
+// PMO Roles Management
+// PRINCE2/PMBOK aligned project team roles
+const pmoRolesRoutes = require('./routes/pmoRoles');
+app.use('/api/pmo-roles', pmoRolesRoutes);
+app.use('/api', pmoRolesRoutes); // Also mount at root for /api/projects/:id/team and /api/users/:id/project-roles
+
 // SCMS Step 4: Roadmap, Sequencing & Capacity Routes
 const baselinesRoutes = require('./routes/baselines');
 app.use('/api/baselines', baselinesRoutes);
@@ -365,6 +429,12 @@ app.use('/api/notifications', notificationsRoutes);
 // SCMS Step 6: Stabilization, Reporting & Economics Routes
 const reportsRoutes = require('./routes/reports');
 app.use('/api/reports', reportsRoutes);
+
+// Management Reports Module (Team Meeting & Steering Committee)
+const managementReportsRoutes = require('./routes/managementReports');
+const managementReportsAnalyticsRoutes = require('./routes/managementReportsAnalytics');
+app.use('/api/management-reports', managementReportsRoutes);
+app.use('/api/management-reports/analytics', managementReportsAnalyticsRoutes);
 
 const economicsRoutes = require('./routes/economics');
 app.use('/api/economics', economicsRoutes);
@@ -405,6 +475,24 @@ app.use('/api/access-codes', accessCodeRoutes);
 const helpRoutes = require('./routes/help');
 app.use('/api/help', helpRoutes);
 
+// Help System - Feedback & Chat
+const helpFeedbackRoutes = require('./routes/helpFeedback');
+const helpChatRoutes = require('./routes/helpChat');
+app.use('/api/help', helpFeedbackRoutes);
+app.use('/api/help', helpChatRoutes);
+
+// Help System - Analytics (Admin only)
+const helpAnalyticsRoutes = require('./routes/helpAnalytics');
+app.use('/api/help-analytics', helpAnalyticsRoutes);
+
+// Video Tutorials API
+const videoRoutes = require('./routes/videos');
+app.use('/api/videos', videoRoutes);
+
+// System Status API
+const statusRoutes = require('./routes/status');
+app.use('/api/status', statusRoutes);
+
 // Step 7: Metrics & Conversion Intelligence Routes
 const metricsRoutes = require('./routes/metrics');
 app.use('/api/metrics', metricsRoutes);
@@ -427,6 +515,10 @@ app.use('/api/ai/playbooks', aiPlaybooksRoutes);
 const aiExplainRoutes = require('./routes/aiExplain');
 app.use('/api/ai/explain', aiExplainRoutes);
 
+// Multi-Agent Architecture Routes
+const agentsRoutes = require('./routes/agents');
+app.use('/api/agents', agentsRoutes);
+
 // Step 16: Human Workflow, SLA, Escalation & Notifications
 const workqueueRoutes = require('./routes/workqueue');
 app.use('/api/workqueue', workqueueRoutes);
@@ -440,8 +532,8 @@ const connectorRoutes = require('./routes/connectors');
 app.use('/api/connectors', connectorRoutes);
 
 // Step 18: Outcomes, ROI & Continuous Learning Loop
-const aiAnalyticsRoutes = require('./routes/aiAnalytics');
-app.use('/api/analytics/ai', aiAnalyticsRoutes);
+const aiAnalyticsRoutesV2 = require('./routes/aiAnalytics');
+app.use('/api/analytics/ai', aiAnalyticsRoutesV2);
 
 // Audit Events API (for AuditHistoryView component)
 const auditRoutes = require('./routes/audit');
@@ -450,6 +542,18 @@ app.use('/api/audit', auditRoutes);
 // MFA (Multi-Factor Authentication) Routes
 const mfaRoutes = require('./routes/mfa');
 app.use('/api/mfa', mfaRoutes);
+
+// RAID Log Routes (Risks, Assumptions, Issues, Dependencies)
+const raidRoutes = require('./routes/raid');
+app.use('/api/raid', raidRoutes);
+
+// Budget Management Routes
+const budgetRoutes = require('./routes/budget');
+app.use('/api/budget', budgetRoutes);
+
+// Status Reports Routes
+const statusReportsRoutes = require('./routes/status-reports');
+app.use('/api/status-reports', statusReportsRoutes);
 
 // Email Verification Routes
 const verifyRoutes = require('./routes/verify');
@@ -470,19 +574,6 @@ app.use('/api/preferences', preferencesRoutes);
 
 const db = require('./database');
 
-// Health Check - MUST be before catchall
-app.get('/api/health', (req, res) => {
-    const start = Date.now();
-    db.get('SELECT 1', [], (err) => {
-        const duration = Date.now() - start;
-        if (err) {
-            console.error('Health Check DB Error:', err);
-            return res.status(500).json({ status: 'error', message: 'Database unreachable', error: err.message });
-        }
-        res.json({ status: 'ok', timestamp: new Date(), latency: duration, database: 'connected' });
-    });
-});
-
 // Run Integrity Check at Startup
 const SystemIntegrity = require('./services/systemIntegrity');
 // Give DB a moment to connect (SQLite/PG async init)
@@ -492,20 +583,10 @@ if (!isTest && process.env.DISABLE_SYSTEM_INTEGRITY !== 'true') {
     }, 2000);
 }
 
-// Serve static files from the React app
-app.use(express.static(path.join(__dirname, '../dist')));
-
-// The "catchall" handler: for any request that doesn't
-// match one above, send back React's index.html file.
-app.use((req, res) => {
-    res.sendFile(path.join(__dirname, '../dist/index.html'));
-});
-
-// Feature Flags
+// featureFlagRoutes and other final routes moved before catchall
 const featureFlagRoutes = require('./routes/featureFlags');
 app.use('/api/features', featureFlagRoutes);
 
-// Phase 7: Enterprise Maturity Routes
 const webhookSubRoutes = require('./routes/webhookSubscriptions');
 app.use('/api/webhooks/subscriptions', webhookSubRoutes);
 
@@ -514,6 +595,19 @@ app.use('/api/gdpr', gdprRoutes);
 
 const systemHealthRoutes = require('./routes/systemHealth');
 app.use('/api/system/health', systemHealthRoutes);
+
+// Serve static files from the React app
+app.use(express.static(path.join(__dirname, '../dist')));
+
+// The "catchall" handler: for any request that doesn't
+// match one above, send back React's index.html file.
+app.use((req, res) => {
+    // Only send index.html if it's not an API route
+    if (req.path.startsWith('/api/')) {
+        return res.status(404).json({ error: 'API route not found' });
+    }
+    res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
 
 // Sentry Error Handler (must be before other error handlers)
 app.use(sentryHandlers.errorHandler);
@@ -589,6 +683,40 @@ if (require.main === module) {
         startCleanupJob();
     } catch (err) {
         logger.warn('[Server] Token cleanup job failed to start:', err.message);
+    }
+
+    // Start metrics snapshot job (Faza 5)
+    try {
+        const initMetricsSnapshotJob = require('./cron/snapshotMetrics');
+        initMetricsSnapshotJob();
+    } catch (err) {
+        logger.warn('[Server] Metrics snapshot job failed to start:', err.message);
+    }
+
+    // Init AI Services (Redis, Cache, Rate Limiter)
+    try {
+        const { initRedis, getRedisClient } = require('./services/ai/redisClient');
+        const redisUrl = process.env.REDIS_URL;
+
+        initRedis(redisUrl).then((redisClient) => {
+            if (redisClient) {
+                // Connect cache service to Redis
+                const { cacheService } = require('./services/ai/cacheService');
+                cacheService.connectRedis(redisClient);
+
+                // Connect rate limiter to Redis
+                const { rateLimiter } = require('./services/ai/rateLimiter');
+                rateLimiter.connectRedis(redisClient);
+
+                console.log('[AI Services] Redis connected for cache and rate limiting');
+            } else {
+                console.log('[AI Services] Using in-memory fallback (Redis not available)');
+            }
+        }).catch(err => {
+            console.warn('[AI Services] Redis init failed, using in-memory:', err.message);
+        });
+    } catch (err) {
+        logger.warn('[Server] AI Services failed to initialize:', err.message);
     }
 
     // Init AI Worker

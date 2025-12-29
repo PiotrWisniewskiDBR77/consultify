@@ -2,9 +2,15 @@
  * Multer middleware for RapidLean observation photo uploads
  */
 
-const multer = require('multer');
+let multer = require('multer');
 const path = require('path');
-const fs = require('fs');
+let fs = require('fs');
+
+// Dependency Injection for Testing
+const _setDependencies = (deps) => {
+    if (deps.multer) multer = deps.multer;
+    if (deps.fs) fs = deps.fs;
+};
 
 /**
  * Create multer instance for RapidLean photo uploads
@@ -44,7 +50,7 @@ function createRapidLeanUpload(organizationId, assessmentId = null) {
             const filetypes = /jpeg|jpg|png|webp/;
             const mimetype = filetypes.test(file.mimetype);
             const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-            
+
             if (mimetype && extname) {
                 return cb(null, true);
             }
@@ -65,7 +71,7 @@ function rapidLeanPhotoUpload(req, res, next) {
     }
 
     const upload = createRapidLeanUpload(organizationId, assessmentId);
-    
+
     // Handle multiple files with field name 'photos'
     upload.array('photos', 10)(req, res, (err) => {
         if (err) {
@@ -78,6 +84,6 @@ function rapidLeanPhotoUpload(req, res, next) {
 
 module.exports = {
     createRapidLeanUpload,
-    rapidLeanPhotoUpload
+    rapidLeanPhotoUpload,
+    _setDependencies
 };
-

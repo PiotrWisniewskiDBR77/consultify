@@ -106,6 +106,37 @@ export const Api = {
         return data.user;
     },
 
+    /**
+     * Demo Login - Automatically logs in as demo@legolex.com
+     * Used for demo/trial access from landing page
+     */
+    demoLogin: async (): Promise<User & { isDemo: boolean }> => {
+        console.log('Api.demoLogin called');
+        const res = await fetch(`${API_URL}/auth/demo-login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await handleResponse(res, 'Demo login failed');
+        tokenService.saveTokens(data.token, data.refreshToken);
+        // Store demo flag in session
+        sessionStorage.setItem('isDemo', 'true');
+        return { ...data.user, isDemo: true };
+    },
+
+    /**
+     * Check if current session is a demo session
+     */
+    isDemoSession: (): boolean => {
+        return sessionStorage.getItem('isDemo') === 'true';
+    },
+
+    /**
+     * Clear demo session flag
+     */
+    clearDemoSession: (): void => {
+        sessionStorage.removeItem('isDemo');
+    },
+
     logout: async (): Promise<void> => {
         try {
             await fetch(`${API_URL}/auth/logout`, {
@@ -118,10 +149,78 @@ export const Api = {
         tokenService.clearTokens();
     },
 
+    getMe: async (): Promise<User | null> => {
+        const res = await fetch(`${API_URL}/auth/me`, { headers: getHeaders() });
+        if (!res.ok) return null;
+        const data = await res.json();
+        return data.user;
+    },
+
+    // --- SECURITY & SESSIONS ---
+    changePassword: async (currentPassword: string, newPassword: string): Promise<void> => {
+        const res = await fetchWithRetry(`${API_URL}/auth/change-password`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ currentPassword, newPassword })
+        });
+        return handleResponse(res, 'Failed to change password');
+    },
+
+    getActiveSessions: async (): Promise<{ sessions: any[] }> => {
+        const res = await fetchWithRetry(`${API_URL}/auth/sessions`, {
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to fetch sessions');
+    },
+
+    revokeSession: async (sessionId: string): Promise<void> => {
+        const res = await fetchWithRetry(`${API_URL}/auth/sessions/${sessionId}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to revoke session');
+    },
+
+    revokeAllSessions: async (): Promise<void> => {
+        const res = await fetchWithRetry(`${API_URL}/auth/sessions/revoke-all`, {
+            method: 'POST',
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to revoke all sessions');
+    },
+
+    // --- EMAIL VERIFICATION ---
+    resendVerificationEmail: async (): Promise<void> => {
+        const res = await fetchWithRetry(`${API_URL}/auth/resend-verification`, {
+            method: 'POST',
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to send verification email');
+    },
+
+    verifyEmail: async (token: string): Promise<{ success: boolean }> => {
+        const res = await fetch(`${API_URL}/auth/verify-email`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token })
+        });
+        return handleResponse(res, 'Email verification failed');
+    },
+
+    // --- TOKEN USAGE ANALYTICS ---
+    getTokenUsageAnalytics: async (organizationId: string, timeRange: '7d' | '30d' | '90d' = '30d'): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/analytics/token-usage?orgId=${organizationId}&range=${timeRange}`, {
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to fetch token usage analytics');
+    },
+
     // --- USERS (Admin) ---
     getUsers: async (): Promise<User[]> => {
         const res = await fetch(`${API_URL}/users`, { headers: getHeaders() });
-        return handleResponse(res, 'Failed to fetch users');
+        const data = await handleResponse(res, 'Failed to fetch users');
+        // Backend returns { users: [...], total: N }, extract array
+        return Array.isArray(data) ? data : (data.users || []);
     },
 
     addUser: async (user: any): Promise<User> => {
@@ -175,6 +274,104 @@ export const Api = {
         return data;
     },
 
+    // --- ANALYTICS (Leadership Dashboard) ---
+    getAnalyticsHealth: async (): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/analytics/health`, { headers: getHeaders() });
+        return handleResponse(res, 'Failed to fetch analytics health');
+    },
+
+    getAnalyticsPerformance: async (): Promise<any[]> => {
+        const res = await fetchWithRetry(`${API_URL}/analytics/performance`, { headers: getHeaders() });
+        return handleResponse(res, 'Failed to fetch analytics performance');
+    },
+
+    getAnalyticsEconomics: async (): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/analytics/economics`, { headers: getHeaders() });
+        return handleResponse(res, 'Failed to fetch analytics economics');
+    },
+
+    // --- NOTIFICATIONS (NotificationCenter) ---
+    fetchNotifications: async (): Promise<any[]> => {
+        const res = await fetchWithRetry(`${API_URL}/notifications`, { headers: getHeaders() });
+        return handleResponse(res, 'Failed to fetch notifications');
+    },
+
+    markNotificationRead: async (id: string): Promise<void> => {
+        // Backend uses PATCH, not PUT
+        const res = await fetchWithRetry(`${API_URL}/notifications/${id}/read`, {
+            method: 'PATCH',
+            headers: getHeaders()
+        });
+        if (!res.ok) throw new Error('Failed to mark notification as read');
+    },
+
+    markAllNotificationsRead: async (): Promise<void> => {
+        // Backend uses POST /mark-all-read, not PUT /read-all
+        const res = await fetchWithRetry(`${API_URL}/notifications/mark-all-read`, {
+            method: 'POST',
+            headers: getHeaders()
+        });
+        if (!res.ok) throw new Error('Failed to mark all notifications as read');
+    },
+
+    deleteNotification: async (id: string): Promise<void> => {
+        const res = await fetchWithRetry(`${API_URL}/notifications/${id}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        if (!res.ok) throw new Error('Failed to delete notification');
+    },
+
+    // --- SETTINGS (NotificationSettings, IntegrationSettings) ---
+    getNotificationPreferences: async (userId: string): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/settings/notifications?userId=${userId}`, { headers: getHeaders() });
+        if (!res.ok) return {};
+        return res.json();
+    },
+
+    saveNotificationPreferences: async (userId: string, preferences: any): Promise<void> => {
+        const res = await fetchWithRetry(`${API_URL}/settings/notifications`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ userId, preferences })
+        });
+        if (!res.ok) throw new Error('Failed to save notification preferences');
+    },
+
+    getIntegrations: async (organizationId: string): Promise<any[]> => {
+        const res = await fetchWithRetry(`${API_URL}/settings/integrations?organizationId=${organizationId}`, { headers: getHeaders() });
+        if (!res.ok) return [];
+        return res.json();
+    },
+
+    saveIntegration: async (integration: any): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/settings/integrations`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(integration)
+        });
+        return handleResponse(res, 'Failed to save integration');
+    },
+
+    deleteIntegration: async (id: string): Promise<void> => {
+        const res = await fetchWithRetry(`${API_URL}/settings/integrations/${id}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        if (!res.ok) throw new Error('Failed to delete integration');
+    },
+
+    // --- CONTACT FORM ---
+    submitContactForm: async (formData: { name: string; email: string; company?: string; subject: string; message: string }): Promise<void> => {
+        // Contact form is under /api/legal/contact
+        const res = await fetch(`${API_URL}/legal/contact`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+        });
+        if (!res.ok) throw new Error('Failed to submit contact form');
+    },
+
     // Session Management
     getSession: async (userId: string, type: SessionMode, projectId?: string): Promise<any> => {
         let url = `${API_URL}/sessions/${userId}?type=${type}`;
@@ -225,22 +422,12 @@ export const Api = {
         context?: any,
         roleName?: string
     ) => {
-        // #region agent log
-        const token = localStorage.getItem('token');
-        console.log('[DEBUG-A] chatWithAIStream entry:', { hasToken: !!token, tokenLength: token?.length || 0, historyLength: history?.length || 0, roleName });
-        fetch('http://127.0.0.1:7242/ingest/690b8f02-96fa-4527-ae57-5d2b028e8181', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'api.ts:chatWithAIStream:entry', message: 'Stream request started', data: { hasToken: !!token, tokenLength: token?.length || 0, historyLength: history?.length || 0, hasContext: !!context, roleName }, timestamp: Date.now(), sessionId: 'debug-session', hypothesisId: 'A' }) }).catch(() => { });
-        // #endregion
         try {
             const response = await fetch(`${API_URL}/ai/chat/stream`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getHeaders(),
                 body: JSON.stringify({ message, history, systemInstruction, context, roleName })
             });
-
-            // #region agent log
-            console.log('[DEBUG-A,C] chatWithAIStream response:', { status: response.status, ok: response.ok, statusText: response.statusText });
-            fetch('http://127.0.0.1:7242/ingest/690b8f02-96fa-4527-ae57-5d2b028e8181', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'api.ts:chatWithAIStream:response', message: 'Response received', data: { status: response.status, ok: response.ok, statusText: response.statusText }, timestamp: Date.now(), sessionId: 'debug-session', hypothesisId: 'A,C' }) }).catch(() => { });
-            // #endregion
 
             if (!response.body) throw new Error('ReadableStream not supported');
 
@@ -271,6 +458,7 @@ export const Api = {
                             if (data.text) onChunk(data.text);
                             if (data.error) {
                                 console.error('Stream error from server:', data.error);
+                                onChunk(`Error: ${data.error}`);
                                 if (data.code === 'AI_BUDGET_EXHAUSTED') {
                                     const { useAppStore } = await import('../store/useAppStore');
                                     useAppStore.getState().setAiFreezeStatus({
@@ -583,6 +771,29 @@ export const Api = {
         if (!res.ok) throw new Error('Failed to delete provider');
     },
 
+    // --- AI GOVERNANCE ---
+    aiGetSystemPrompts: async (): Promise<any[]> => {
+        const res = await fetch(`${API_URL}/llm/prompts`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch system prompts');
+        return res.json();
+    },
+
+    aiUpdateSystemPrompt: async (key: string, data: any): Promise<void> => {
+        const res = await fetch(`${API_URL}/llm/prompts/${key}`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        if (!res.ok) throw new Error('Failed to update prompt');
+    },
+
+    aiSeedSystemPrompts: async (): Promise<void> => {
+        await fetch(`${API_URL}/llm/prompts/reset-defaults`, {
+            method: 'POST',
+            headers: getHeaders()
+        });
+    },
+
     getPublicLLMProviders: async (): Promise<any[]> => {
         const res = await fetch(`${API_URL}/llm/providers/public`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch public LLM providers');
@@ -619,6 +830,76 @@ export const Api = {
             body: JSON.stringify({ providerId })
         });
         if (!res.ok) throw new Error('Failed to update organization LLM config');
+    },
+
+    // LLM Self-Diagnosis - auto-repair missing providers
+    diagnoseLLM: async (): Promise<{ status: string; checks: any[]; repairs: string[]; version: string }> => {
+        const res = await fetch(`${API_URL}/llm/diagnose`);
+        if (!res.ok) throw new Error('LLM diagnosis failed');
+        return res.json();
+    },
+
+    // LLM Provider Health Check - check connectivity and status of all providers
+    checkLLMProvidersHealth: async (): Promise<{
+        success: boolean;
+        providers: Record<string, { available: boolean; latency?: number; error?: string }>;
+        circuitBreakers: Array<{ name: string; state: string; failures: number }>;
+        lastCheck: number;
+    }> => {
+        const res = await fetch(`${API_URL}/llm/providers/health`);
+        if (!res.ok) throw new Error('Health check failed');
+        return res.json();
+    },
+
+    // Get recommended LLM provider based on current health
+    getRecommendedLLMProvider: async (tier: string = 'STANDARD'): Promise<{
+        success: boolean;
+        recommendation: {
+            provider: any;
+            health: { available: boolean; latency?: number };
+            recommended: boolean;
+        } | null;
+    }> => {
+        const res = await fetch(`${API_URL}/llm/providers/recommended?tier=${tier}`);
+        if (!res.ok) throw new Error('Failed to get recommendation');
+        return res.json();
+    },
+
+    // Test fallback chain
+    testLLMFallback: async (tier: string = 'STANDARD'): Promise<{
+        success: boolean;
+        tier: string;
+        fallbackChain: string[];
+        recommendedFallback: any;
+    }> => {
+        const res = await fetch(`${API_URL}/llm/test-fallback`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ tier })
+        });
+        if (!res.ok) throw new Error('Fallback test failed');
+        return res.json();
+    },
+
+    // User AI Usage - get user's token consumption
+    getUserAIUsage: async (): Promise<{
+        daily: number;
+        monthly: number;
+        dailyLimit: number;
+        monthlyLimit: number;
+        percentage: number;
+        recentUsage?: Array<{ date: string; tokens: number; requests: number }>;
+    }> => {
+        const res = await fetch(`${API_URL}/llm/user/usage`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch user AI usage');
+        return res.json();
+    },
+
+    // Get user's currently active AI model
+    getUserActiveModel: async (): Promise<{ activeModel: any; source: string }> => {
+        const res = await fetch(`${API_URL}/llm/user/active-model`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch active model');
+        return res.json();
     },
 
     // --- KNOWLEDGE BASE ---
@@ -808,29 +1089,8 @@ export const Api = {
         return data.count;
     },
 
-    markNotificationRead: async (id: string): Promise<void> => {
-        const res = await fetch(`${API_URL}/notifications/${id}/read`, {
-            method: 'PUT',
-            headers: getHeaders()
-        });
-        if (!res.ok) throw new Error('Failed to mark notification as read');
-    },
-
-    markAllNotificationsRead: async (): Promise<void> => {
-        const res = await fetch(`${API_URL}/notifications/read-all`, {
-            method: 'PUT',
-            headers: getHeaders()
-        });
-        if (!res.ok) throw new Error('Failed to mark all as read');
-    },
-
-    deleteNotification: async (id: string): Promise<void> => {
-        const res = await fetch(`${API_URL}/notifications/${id}`, {
-            method: 'DELETE',
-            headers: getHeaders()
-        });
-        if (!res.ok) throw new Error('Failed to delete notification');
-    },
+    // Note: markNotificationRead, markAllNotificationsRead, deleteNotification 
+    // are defined above in "NOTIFICATIONS (NotificationCenter)" section with correct HTTP methods
 
     deleteReadNotifications: async (): Promise<void> => {
         const res = await fetch(`${API_URL}/notifications`, {
@@ -1094,21 +1354,7 @@ export const Api = {
         return data;
     },
 
-    aiGetSystemPrompts: async (): Promise<any[]> => {
-        const res = await fetch(`${API_URL}/ai/prompts`, { headers: getHeaders() });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to fetch prompts');
-        return data;
-    },
 
-    aiUpdateSystemPrompt: async (key: string, updates: any): Promise<void> => {
-        const res = await fetch(`${API_URL}/ai/prompts/${key}`, {
-            method: 'PUT',
-            headers: getHeaders(),
-            body: JSON.stringify(updates)
-        });
-        if (!res.ok) throw new Error('Failed to update prompt');
-    },
 
     // --- AI LEARNING & KNOWLEDGE ---
     aiExtractInsights: async (text: string, source: string = 'chat'): Promise<any> => {
@@ -1858,8 +2104,8 @@ export const Api = {
      * Get full report with all sections for the Report Builder
      */
     getFullReport: async (reportId: string): Promise<any> => {
-        const res = await fetch(`${API_URL}/assessment-reports/${reportId}/full`, { 
-            headers: getHeaders() 
+        const res = await fetch(`${API_URL}/assessment-reports/${reportId}/full`, {
+            headers: getHeaders()
         });
         return handleResponse(res, 'Failed to load report');
     },
@@ -1880,8 +2126,8 @@ export const Api = {
      * Get all sections for a report
      */
     getReportSections: async (reportId: string): Promise<any> => {
-        const res = await fetch(`${API_URL}/assessment-reports/${reportId}/sections`, { 
-            headers: getHeaders() 
+        const res = await fetch(`${API_URL}/assessment-reports/${reportId}/sections`, {
+            headers: getHeaders()
         });
         return handleResponse(res, 'Failed to load sections');
     },
@@ -1889,13 +2135,13 @@ export const Api = {
     /**
      * Add a new section to the report
      */
-    addReportSection: async (reportId: string, data: { 
-        sectionType: string; 
-        axisId?: string; 
+    addReportSection: async (reportId: string, data: {
+        sectionType: string;
+        axisId?: string;
         areaId?: string;
-        title?: string; 
-        content?: string; 
-        orderIndex?: number 
+        title?: string;
+        content?: string;
+        orderIndex?: number
     }): Promise<any> => {
         const res = await fetch(`${API_URL}/assessment-reports/${reportId}/sections`, {
             method: 'POST',
@@ -1908,10 +2154,10 @@ export const Api = {
     /**
      * Update a section's content
      */
-    updateReportSection: async (reportId: string, sectionId: string, data: { 
-        content: string; 
+    updateReportSection: async (reportId: string, sectionId: string, data: {
+        content: string;
         title?: string;
-        saveHistory?: boolean 
+        saveHistory?: boolean
     }): Promise<any> => {
         const res = await fetch(`${API_URL}/assessment-reports/${reportId}/sections/${sectionId}`, {
             method: 'PUT',
@@ -1935,10 +2181,10 @@ export const Api = {
     /**
      * AI action on a section (expand, summarize, improve, translate, regenerate)
      */
-    aiSectionAction: async (reportId: string, sectionId: string, data: { 
-        action: string; 
+    aiSectionAction: async (reportId: string, sectionId: string, data: {
+        action: string;
         language?: string;
-        customPrompt?: string 
+        customPrompt?: string
     }): Promise<any> => {
         const res = await fetch(`${API_URL}/assessment-reports/${reportId}/sections/${sectionId}/ai`, {
             method: 'POST',
@@ -1976,8 +2222,8 @@ export const Api = {
      * Get section version history
      */
     getSectionHistory: async (reportId: string, sectionId: string): Promise<any> => {
-        const res = await fetch(`${API_URL}/assessment-reports/${reportId}/sections/${sectionId}/history`, { 
-            headers: getHeaders() 
+        const res = await fetch(`${API_URL}/assessment-reports/${reportId}/sections/${sectionId}/history`, {
+            headers: getHeaders()
         });
         return handleResponse(res, 'Failed to load section history');
     },
@@ -1997,8 +2243,8 @@ export const Api = {
      * Export report as PDF
      */
     exportReportPDF: async (reportId: string): Promise<Blob> => {
-        const res = await fetch(`${API_URL}/assessment-reports/${reportId}/export/pdf`, { 
-            headers: getHeaders() 
+        const res = await fetch(`${API_URL}/assessment-reports/${reportId}/export/pdf`, {
+            headers: getHeaders()
         });
         if (!res.ok) {
             throw new Error('Failed to export PDF');
@@ -2010,13 +2256,451 @@ export const Api = {
      * Export report as Excel
      */
     exportReportExcel: async (reportId: string): Promise<Blob> => {
-        const res = await fetch(`${API_URL}/assessment-reports/${reportId}/export/excel`, { 
-            headers: getHeaders() 
+        const res = await fetch(`${API_URL}/assessment-reports/${reportId}/export/excel`, {
+            headers: getHeaders()
         });
         if (!res.ok) {
             throw new Error('Failed to export Excel');
         }
         return res.blob();
+    },
+
+    // ============================================
+    // ECONOMICS MODULE API
+    // ============================================
+
+    /**
+     * Get list of digitization analyses
+     */
+    getDigitizationAnalyses: async (filters?: {
+        status?: string;
+        projectId?: string;
+        search?: string;
+        sortBy?: string;
+        sortOrder?: string;
+        page?: number;
+        pageSize?: number;
+    }): Promise<any> => {
+        const params = new URLSearchParams();
+        if (filters) {
+            Object.entries(filters).forEach(([key, value]) => {
+                if (value !== undefined && value !== null) {
+                    params.append(key, String(value));
+                }
+            });
+        }
+        const url = `${API_URL}/economics/analyses${params.toString() ? `?${params.toString()}` : ''}`;
+        const res = await fetchWithRetry(url, { headers: getHeaders() });
+        return handleResponse(res, 'Failed to load analyses');
+    },
+
+    /**
+     * Create new digitization analysis
+     */
+    createDigitizationAnalysis: async (data: {
+        name: string;
+        description?: string;
+        projectId?: string;
+        tags?: string[];
+    }): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/economics/analyses`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        return handleResponse(res, 'Failed to create analysis');
+    },
+
+    /**
+     * Get single digitization analysis by ID
+     */
+    getDigitizationAnalysis: async (id: string): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/economics/analyses/${id}`, {
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to load analysis');
+    },
+
+    /**
+     * Update digitization analysis
+     */
+    updateDigitizationAnalysis: async (id: string, data: {
+        name?: string;
+        description?: string;
+        status?: string;
+        projectId?: string;
+        tags?: string[];
+    }): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/economics/analyses/${id}`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        return handleResponse(res, 'Failed to update analysis');
+    },
+
+    /**
+     * Delete digitization analysis
+     */
+    deleteDigitizationAnalysis: async (id: string): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/economics/analyses/${id}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to delete analysis');
+    },
+
+    /**
+     * Duplicate digitization analysis
+     */
+    duplicateDigitizationAnalysis: async (id: string, name?: string): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/economics/analyses/${id}/duplicate`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ name })
+        });
+        return handleResponse(res, 'Failed to duplicate analysis');
+    },
+
+    /**
+     * Update scores for digitization analysis
+     */
+    updateDigitizationScores: async (analysisId: string, scores: Array<{
+        axisId: string;
+        areaId: string;
+        areaCode?: string;
+        currentLevel: number;
+        targetLevel: number;
+        notes?: string;
+        evidence?: string[];
+        justification?: string;
+    }>): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/scores`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify({ scores })
+        });
+        return handleResponse(res, 'Failed to update scores');
+    },
+
+    /**
+     * Update single score for digitization analysis
+     */
+    updateDigitizationScore: async (analysisId: string, scoreData: {
+        axisId: string;
+        areaId: string;
+        areaCode?: string;
+        currentLevel: number;
+        targetLevel: number;
+        notes?: string;
+        evidence?: string[];
+        justification?: string;
+    }): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/score`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify(scoreData)
+        });
+        return handleResponse(res, 'Failed to update score');
+    },
+
+    /**
+     * Import digitization analysis from Excel file
+     */
+    importDigitizationExcel: async (file: File, analysisName?: string): Promise<any> => {
+        const formData = new FormData();
+        formData.append('file', file);
+        if (analysisName) {
+            formData.append('analysisName', analysisName);
+        }
+
+        const token = tokenService.getToken();
+        const res = await fetch(`${API_URL}/economics/import`, {
+            method: 'POST',
+            headers: {
+                'Authorization': token ? `Bearer ${token}` : '',
+                'X-Correlation-ID': correlationId as string
+            },
+            body: formData
+        });
+        return handleResponse(res, 'Failed to import Excel file');
+    },
+
+    /**
+     * Export digitization analysis to Excel
+     */
+    exportDigitizationAnalysis: async (analysisId: string, options?: {
+        recommendations?: boolean;
+        rawData?: boolean;
+        language?: string;
+    }): Promise<any> => {
+        const params = new URLSearchParams();
+        if (options) {
+            if (options.recommendations !== undefined) params.append('recommendations', String(options.recommendations));
+            if (options.rawData !== undefined) params.append('rawData', String(options.rawData));
+            if (options.language) params.append('language', options.language);
+        }
+        const url = `${API_URL}/economics/analyses/${analysisId}/export${params.toString() ? `?${params.toString()}` : ''}`;
+        const res = await fetchWithRetry(url, { headers: getHeaders() });
+        return handleResponse(res, 'Failed to export analysis');
+    },
+
+    /**
+     * Export digitization analysis to PDF
+     */
+    exportDigitizationPDF: async (analysisId: string, options?: {
+        template?: 'executive' | 'full' | 'gap_analysis';
+        language?: 'pl' | 'en';
+        logo?: boolean;
+        recommendations?: boolean;
+    }): Promise<{ success: boolean; downloadUrl: string; filename: string }> => {
+        const params = new URLSearchParams();
+        if (options) {
+            if (options.template) params.append('template', options.template);
+            if (options.language) params.append('language', options.language);
+            if (options.logo !== undefined) params.append('logo', String(options.logo));
+            if (options.recommendations !== undefined) params.append('recommendations', String(options.recommendations));
+        }
+        const url = `${API_URL}/economics/analyses/${analysisId}/export/pdf${params.toString() ? `?${params.toString()}` : ''}`;
+        const res = await fetchWithRetry(url, { headers: getHeaders() });
+        return handleResponse(res, 'Failed to export analysis to PDF');
+    },
+
+    /**
+     * Get digitization catalog statistics
+     */
+    getDigitizationStats: async (): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/economics/stats`, {
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to load statistics');
+    },
+
+    /**
+     * Compare multiple digitization analyses
+     */
+    compareDigitizationAnalyses: async (analysisIds: string[]): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/economics/compare`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ analysisIds })
+        });
+        return handleResponse(res, 'Failed to compare analyses');
+    },
+
+    /**
+     * Create saved comparison
+     */
+    createDigitizationComparison: async (data: {
+        name: string;
+        description?: string;
+        analysisIds: string[];
+        comparisonType?: string;
+    }): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/economics/comparisons`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        return handleResponse(res, 'Failed to create comparison');
+    },
+
+    /**
+     * Get saved comparison
+     */
+    getDigitizationComparison: async (id: string): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/economics/comparisons/${id}`, {
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to load comparison');
+    },
+
+    // =========================================
+    // Economics: Versioning API
+    // =========================================
+
+    /**
+     * Create version snapshot
+     */
+    createDigitizationVersion: async (analysisId: string, data: {
+        versionName?: string;
+        versionType?: 'snapshot' | 'baseline' | 'milestone';
+        notes?: string;
+    }): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/versions`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        return handleResponse(res, 'Failed to create version');
+    },
+
+    /**
+     * Get all versions for an analysis
+     */
+    getDigitizationVersions: async (analysisId: string): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/versions`, {
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to load versions');
+    },
+
+    /**
+     * Get specific version
+     */
+    getDigitizationVersion: async (analysisId: string, versionId: string): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/versions/${versionId}`, {
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to load version');
+    },
+
+    /**
+     * Restore analysis to version
+     */
+    restoreDigitizationVersion: async (analysisId: string, versionId: string): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/versions/${versionId}/restore`, {
+            method: 'POST',
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to restore version');
+    },
+
+    /**
+     * Compare two versions
+     */
+    compareDigitizationVersions: async (analysisId: string, v1: string, v2: string): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/versions/compare?v1=${v1}&v2=${v2}`, {
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to compare versions');
+    },
+
+    /**
+     * Mark version as baseline
+     */
+    markVersionAsBaseline: async (analysisId: string, versionId: string): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/versions/${versionId}/baseline`, {
+            method: 'POST',
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to mark as baseline');
+    },
+
+    // =========================================
+    // Economics: Evidence API
+    // =========================================
+
+    /**
+     * Add evidence to score
+     */
+    addDigitizationEvidence: async (scoreId: string, data: {
+        evidenceType: 'document' | 'link' | 'screenshot' | 'note';
+        title: string;
+        content?: string;
+        category?: string;
+    }): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/economics/scores/${scoreId}/evidence`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        return handleResponse(res, 'Failed to add evidence');
+    },
+
+    /**
+     * Upload evidence file
+     */
+    uploadDigitizationEvidence: async (scoreId: string, file: File, metadata: {
+        title?: string;
+        description?: string;
+        category?: string;
+    }): Promise<any> => {
+        const formData = new FormData();
+        formData.append('file', file);
+        if (metadata.title) formData.append('title', metadata.title);
+        if (metadata.description) formData.append('description', metadata.description);
+        if (metadata.category) formData.append('category', metadata.category);
+
+        const token = tokenService.getToken();
+        const res = await fetchWithRetry(`${API_URL}/economics/scores/${scoreId}/evidence/upload`, {
+            method: 'POST',
+            headers: {
+                'Authorization': token ? `Bearer ${token}` : '',
+                'X-Correlation-ID': correlationId as string
+                // Note: Don't set Content-Type for FormData - browser sets it with boundary
+            },
+            body: formData
+        });
+        return handleResponse(res, 'Failed to upload evidence');
+    },
+
+    /**
+     * Get evidence for score
+     */
+    getDigitizationEvidence: async (scoreId: string): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/economics/scores/${scoreId}/evidence`, {
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to load evidence');
+    },
+
+    /**
+     * Get all evidence for analysis
+     */
+    getDigitizationAnalysisEvidence: async (analysisId: string): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/evidence`, {
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to load evidence');
+    },
+
+    /**
+     * Update evidence
+     */
+    updateDigitizationEvidence: async (evidenceId: string, data: {
+        title?: string;
+        content?: string;
+        category?: string;
+    }): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/economics/evidence/${evidenceId}`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        return handleResponse(res, 'Failed to update evidence');
+    },
+
+    /**
+     * Delete evidence
+     */
+    deleteDigitizationEvidence: async (evidenceId: string): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/economics/evidence/${evidenceId}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to delete evidence');
+    },
+
+    /**
+     * Verify evidence
+     */
+    verifyDigitizationEvidence: async (evidenceId: string): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/economics/evidence/${evidenceId}/verify`, {
+            method: 'POST',
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to verify evidence');
+    },
+
+    /**
+     * Get evidence categories
+     */
+    getEvidenceCategories: async (): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/economics/evidence/categories`, {
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to load categories');
     }
 };
 

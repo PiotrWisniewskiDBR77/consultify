@@ -1,0 +1,525 @@
+
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raport DRD - Cyfryzacja Produkcji Q4 2024</title>
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --secondary: #3b82f6;
+            --accent: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background: var(--bg);
+            margin: 0;
+            padding: 2rem;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 3rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+        .header h1 { margin: 0 0 0.5rem 0; font-size: 2rem; }
+        .header .meta { opacity: 0.9; font-size: 0.95rem; }
+        .card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        .card h2 {
+            color: var(--primary);
+            margin-top: 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--secondary);
+        }
+        .scorecard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+        .score-item {
+            background: var(--bg);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--secondary);
+        }
+        .score-item.high-gap { border-left-color: var(--danger); }
+        .score-item.medium-gap { border-left-color: var(--warning); }
+        .score-item.low-gap { border-left-color: var(--accent); }
+        .score-item h3 { margin: 0 0 0.5rem 0; color: var(--primary); }
+        .score-bar {
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            margin: 0.5rem 0;
+            position: relative;
+        }
+        .score-fill { height: 100%; border-radius: 4px; }
+        .score-fill.actual { background: var(--secondary); }
+        .score-fill.target { background: var(--accent); opacity: 0.3; }
+        .metrics { display: flex; gap: 1rem; margin-top: 0.5rem; font-size: 0.9rem; }
+        .metric { padding: 0.25rem 0.75rem; background: var(--card); border-radius: 20px; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background: var(--bg); color: var(--primary); font-weight: 600; }
+        .priority-high { color: var(--danger); font-weight: 600; }
+        .priority-medium { color: var(--warning); font-weight: 600; }
+        .priority-low { color: var(--accent); font-weight: 600; }
+        .recommendation {
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid var(--accent);
+        }
+        .recommendation h4 { margin: 0 0 0.5rem 0; color: var(--primary); }
+        .timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .timeline-item {
+            display: flex;
+            gap: 1rem;
+        }
+        .timeline-marker {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--secondary);
+            margin-top: 4px;
+            flex-shrink: 0;
+        }
+        .timeline-content { flex: 1; }
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Raport Oceny Dojrzałości Cyfrowej</h1>
+            <div class="meta">
+                <strong>Cyfryzacja Produkcji Q4 2024</strong><br>
+                Wygenerowano: 27.12.2025 | 
+                Ogólna dojrzałość: 3/7.0 | 
+                Cel: 4.86/7.0 | 
+                Luka: 1.86
+            </div>
+        </div>
+
+        <!-- Executive Summary -->
+        <div class="card">
+            <h2>🎯 Podsumowanie Wykonawcze</h2>
+            <p>
+                <strong>Cyfryzacja Produkcji Q4 2024</strong> wykazuje ogólny poziom dojrzałości cyfrowej 
+                <strong>3/7.0</strong>, co plasuje organizację 
+                na średnim poziomie zaawansowania cyfrowego.
+            </p>
+            <p>
+                Zidentyfikowana luka wynosi <strong>1.86 punktu</strong> do celu 
+                4.86/7.0. Wymaga to strategicznego podejścia obejmującego 
+                6 obszarów priorytetowych.
+            </p>
+            
+            <h3>📈 Kluczowe Wskaźniki</h3>
+            <table>
+                <tr>
+                    <th>Metryka</th>
+                    <th>Wartość</th>
+                    <th>Interpretacja</th>
+                </tr>
+                <tr>
+                    <td>Średnia dojrzałość AS-IS</td>
+                    <td><strong>3</strong>/7.0</td>
+                    <td>⚠️ Wymaga uwagi</td>
+                </tr>
+                <tr>
+                    <td>Cel TO-BE</td>
+                    <td><strong>4.86</strong>/7.0</td>
+                    <td>📊 Konserwatywny</td>
+                </tr>
+                <tr>
+                    <td>Całkowita luka transformacyjna</td>
+                    <td><strong>1.86</strong></td>
+                    <td>🟢 Umiarkowane zmiany</td>
+                </tr>
+                <tr>
+                    <td>Szacowany czas transformacji</td>
+                    <td><strong>11-17</strong> miesięcy</td>
+                    <td>📅 Przy pełnym zaangażowaniu zasobów</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Detailed Axis Analysis -->
+        <div class="card">
+            <h2>📋 Szczegółowa Analiza Osi DRD</h2>
+            <div class="scorecard">
+
+                <div class="score-item high-gap">
+                    <h3>Cyfryzacja Procesów</h3>
+                    <div class="score-bar">
+                        <div class="score-fill actual" style="width: 57.14285714285714%"></div>
+                    </div>
+                    <div class="metrics">
+                        <span class="metric">AS-IS: <strong>4</strong>/7</span>
+                        <span class="metric">TO-BE: <strong>6</strong>/7</span>
+                        <span class="metric">Luka: <strong>2.0</strong></span>
+                    </div>
+                    <p style="font-size: 0.9rem; color: #64748b; margin-top: 0.75rem;">
+                        Procesy produkcyjne są w dużej mierze zautomatyzowane. System MES zintegrowany z ERP. Planowanie produkcji wspierane przez APS. Monitoring OEE w czasie rzeczywistym na 80% linii.
+                    </p>
+                </div>
+
+                <div class="score-item high-gap">
+                    <h3>Produkty Cyfrowe</h3>
+                    <div class="score-bar">
+                        <div class="score-fill actual" style="width: 28.57142857142857%"></div>
+                    </div>
+                    <div class="metrics">
+                        <span class="metric">AS-IS: <strong>2</strong>/7</span>
+                        <span class="metric">TO-BE: <strong>4</strong>/7</span>
+                        <span class="metric">Luka: <strong>2.0</strong></span>
+                    </div>
+                    <p style="font-size: 0.9rem; color: #64748b; margin-top: 0.75rem;">
+                        Produkty fizyczne bez komponentów cyfrowych. Brak IoT w produktach końcowych. Dokumentacja techniczna nadal w formie papierowej. Portal klienta oferuje tylko podstawowe funkcje.
+                    </p>
+                </div>
+
+                <div class="score-item high-gap">
+                    <h3>Modele Biznesowe</h3>
+                    <div class="score-bar">
+                        <div class="score-fill actual" style="width: 42.857142857142854%"></div>
+                    </div>
+                    <div class="metrics">
+                        <span class="metric">AS-IS: <strong>3</strong>/7</span>
+                        <span class="metric">TO-BE: <strong>5</strong>/7</span>
+                        <span class="metric">Luka: <strong>2.0</strong></span>
+                    </div>
+                    <p style="font-size: 0.9rem; color: #64748b; margin-top: 0.75rem;">
+                        Model biznesowy oparty na tradycyjnej sprzedaży produktów. Rozpoczęto transformację w kierunku modelu subskrypcyjnego dla części zamiennych. Brak przychodów z usług cyfrowych.
+                    </p>
+                </div>
+
+                <div class="score-item high-gap">
+                    <h3>Zarządzanie Danymi</h3>
+                    <div class="score-bar">
+                        <div class="score-fill actual" style="width: 42.857142857142854%"></div>
+                    </div>
+                    <div class="metrics">
+                        <span class="metric">AS-IS: <strong>3</strong>/7</span>
+                        <span class="metric">TO-BE: <strong>5</strong>/7</span>
+                        <span class="metric">Luka: <strong>2.0</strong></span>
+                    </div>
+                    <p style="font-size: 0.9rem; color: #64748b; margin-top: 0.75rem;">
+                        Dane produkcyjne zbierane z systemów SCADA i MES. Data Lake wdrożony, ale wykorzystanie analityczne ograniczone. Brak zaawansowanych dashboardów dla kierownictwa.
+                    </p>
+                </div>
+
+                <div class="score-item high-gap">
+                    <h3>Kultura Cyfrowa</h3>
+                    <div class="score-bar">
+                        <div class="score-fill actual" style="width: 42.857142857142854%"></div>
+                    </div>
+                    <div class="metrics">
+                        <span class="metric">AS-IS: <strong>3</strong>/7</span>
+                        <span class="metric">TO-BE: <strong>5</strong>/7</span>
+                        <span class="metric">Luka: <strong>2.0</strong></span>
+                    </div>
+                    <p style="font-size: 0.9rem; color: #64748b; margin-top: 0.75rem;">
+                        Kultura produkcyjna nastawiona na efektywność operacyjną. Opór przed zmianami wśród starszych pracowników. Program szkoleń cyfrowych w fazie pilotażu.
+                    </p>
+                </div>
+
+                <div class="score-item medium-gap">
+                    <h3>Cyberbezpieczeństwo</h3>
+                    <div class="score-bar">
+                        <div class="score-fill actual" style="width: 71.42857142857143%"></div>
+                    </div>
+                    <div class="metrics">
+                        <span class="metric">AS-IS: <strong>5</strong>/7</span>
+                        <span class="metric">TO-BE: <strong>6</strong>/7</span>
+                        <span class="metric">Luka: <strong>1.0</strong></span>
+                    </div>
+                    <p style="font-size: 0.9rem; color: #64748b; margin-top: 0.75rem;">
+                        Dojrzały program bezpieczeństwa OT/IT. Segmentacja sieci przemysłowej. SOC działający 24/7. Regularne audyty bezpieczeństwa i testy penetracyjne.
+                    </p>
+                </div>
+
+                <div class="score-item high-gap">
+                    <h3>Dojrzałość AI</h3>
+                    <div class="score-bar">
+                        <div class="score-fill actual" style="width: 14.285714285714285%"></div>
+                    </div>
+                    <div class="metrics">
+                        <span class="metric">AS-IS: <strong>1</strong>/7</span>
+                        <span class="metric">TO-BE: <strong>3</strong>/7</span>
+                        <span class="metric">Luka: <strong>2.0</strong></span>
+                    </div>
+                    <p style="font-size: 0.9rem; color: #64748b; margin-top: 0.75rem;">
+                        Brak wdrożonych rozwiązań AI/ML w produkcji. Dane historyczne dostępne, ale nieprzetworzone. Zespół nie posiada kompetencji Data Science.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Gap Prioritization -->
+        <div class="card">
+            <h2>⚡ Priorytetyzacja Luk</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Oś</th>
+                        <th>AS-IS</th>
+                        <th>TO-BE</th>
+                        <th>Luka</th>
+                        <th>Priorytet</th>
+                        <th>Wpływ Biznesowy</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    <tr>
+                        <td><strong>Cyfryzacja Procesów</strong></td>
+                        <td>4/7</td>
+                        <td>6/7</td>
+                        <td>2.0</td>
+                        <td class="priority-high">WYSOKI</td>
+                        <td>Krytyczny dla sukcesu transformacji</td>
+                    </tr>
+
+                    <tr>
+                        <td><strong>Produkty Cyfrowe</strong></td>
+                        <td>2/7</td>
+                        <td>4/7</td>
+                        <td>2.0</td>
+                        <td class="priority-high">WYSOKI</td>
+                        <td>Krytyczny dla sukcesu transformacji</td>
+                    </tr>
+
+                    <tr>
+                        <td><strong>Modele Biznesowe</strong></td>
+                        <td>3/7</td>
+                        <td>5/7</td>
+                        <td>2.0</td>
+                        <td class="priority-high">WYSOKI</td>
+                        <td>Krytyczny dla sukcesu transformacji</td>
+                    </tr>
+
+                    <tr>
+                        <td><strong>Zarządzanie Danymi</strong></td>
+                        <td>3/7</td>
+                        <td>5/7</td>
+                        <td>2.0</td>
+                        <td class="priority-high">WYSOKI</td>
+                        <td>Krytyczny dla sukcesu transformacji</td>
+                    </tr>
+
+                    <tr>
+                        <td><strong>Kultura Cyfrowa</strong></td>
+                        <td>3/7</td>
+                        <td>5/7</td>
+                        <td>2.0</td>
+                        <td class="priority-high">WYSOKI</td>
+                        <td>Krytyczny dla sukcesu transformacji</td>
+                    </tr>
+
+                    <tr>
+                        <td><strong>Dojrzałość AI</strong></td>
+                        <td>1/7</td>
+                        <td>3/7</td>
+                        <td>2.0</td>
+                        <td class="priority-high">WYSOKI</td>
+                        <td>Krytyczny dla sukcesu transformacji</td>
+                    </tr>
+
+                    <tr>
+                        <td><strong>Cyberbezpieczeństwo</strong></td>
+                        <td>5/7</td>
+                        <td>6/7</td>
+                        <td>1.0</td>
+                        <td class="priority-medium">ŚREDNI</td>
+                        <td>Istotny wpływ na konkurencyjność</td>
+                    </tr>
+
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Strategic Recommendations -->
+        <div class="card">
+            <h2>💡 Rekomendacje Strategiczne</h2>
+
+            <div class="recommendation">
+                <h4>Rekomendacja 1: Cyfryzacja Procesów</h4>
+                <p><strong>Działanie:</strong> Wdrożenie zaawansowanej automatyzacji procesów biznesowych z wykorzystaniem RPA i process mining. Priorytet: procesy o wysokiej powtarzalności i wartości.</p>
+                <p><strong>Luka do zamknięcia:</strong> 2.0 punktu (4 → 6)</p>
+                <p><strong>Szacowana inwestycja:</strong> 250-500K PLN</p>
+                <p><strong>Harmonogram:</strong> 6-9 miesięcy</p>
+            </div>
+
+            <div class="recommendation">
+                <h4>Rekomendacja 2: Produkty Cyfrowe</h4>
+                <p><strong>Działanie:</strong> Rozwój portfolio produktów cyfrowych z integracją IoT. Rekomendowane podejście MVP z iteracyjnym rozwojem.</p>
+                <p><strong>Luka do zamknięcia:</strong> 2.0 punktu (2 → 4)</p>
+                <p><strong>Szacowana inwestycja:</strong> 400-800K PLN</p>
+                <p><strong>Harmonogram:</strong> 9-12 miesięcy</p>
+            </div>
+
+            <div class="recommendation">
+                <h4>Rekomendacja 3: Modele Biznesowe</h4>
+                <p><strong>Działanie:</strong> Pilotaż nowych modeli biznesowych (subskrypcja, pay-per-use). Analiza customer lifetime value i optymalizacja monetyzacji.</p>
+                <p><strong>Luka do zamknięcia:</strong> 2.0 punktu (3 → 5)</p>
+                <p><strong>Szacowana inwestycja:</strong> 150-300K PLN</p>
+                <p><strong>Harmonogram:</strong> 3-6 miesięcy</p>
+            </div>
+
+            <div class="recommendation">
+                <h4>Rekomendacja 4: Zarządzanie Danymi</h4>
+                <p><strong>Działanie:</strong> Budowa platformy danych z zaawansowaną analityką. Wdrożenie data governance i self-service BI.</p>
+                <p><strong>Luka do zamknięcia:</strong> 2.0 punktu (3 → 5)</p>
+                <p><strong>Szacowana inwestycja:</strong> 300-600K PLN</p>
+                <p><strong>Harmonogram:</strong> 6-9 miesięcy</p>
+            </div>
+
+        </div>
+
+        <!-- Transformation Roadmap -->
+        <div class="card">
+            <h2>🗺️ Roadmapa Transformacji</h2>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-marker" style="background: var(--danger)"></div>
+                    <div class="timeline-content">
+                        <h4>Faza 1: Fundamenty (Miesiące 1-6)</h4>
+                        <p>Quick wins i budowa fundamentów. Priorytety: Cyfryzacja Procesów, Produkty Cyfrowe.</p>
+                        <ul>
+                            <li>Audyt i mapowanie procesów krytycznych</li>
+                            <li>Proof of Concept dla wybranych inicjatyw</li>
+                            <li>Budowa zespołu transformacyjnego</li>
+                            <li>Szybkie zwycięstwa dla budowania momentum</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-marker" style="background: var(--warning)"></div>
+                    <div class="timeline-content">
+                        <h4>Faza 2: Transformacja (Miesiące 7-12)</h4>
+                        <p>Główne wdrożenia i skalowanie. Fokus: Modele Biznesowe, Zarządzanie Danymi.</p>
+                        <ul>
+                            <li>Wdrożenie kluczowych platform technologicznych</li>
+                            <li>Skalowanie pilotaży na całą organizację</li>
+                            <li>Intensywne szkolenia i change management</li>
+                            <li>Pierwsze mierzalne rezultaty biznesowe</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-marker" style="background: var(--accent)"></div>
+                    <div class="timeline-content">
+                        <h4>Faza 3: Optymalizacja (Miesiące 13-24)</h4>
+                        <p>Doskonalenie i innowacje. Obszary: Kultura Cyfrowa, Dojrzałość AI, Cyberbezpieczeństwo.</p>
+                        <ul>
+                            <li>Zaawansowana analityka i AI</li>
+                            <li>Nowe modele biznesowe oparte na danych</li>
+                            <li>Ciągłe doskonalenie procesów</li>
+                            <li>Budowanie przewagi konkurencyjnej</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Investment Summary -->
+        <div class="card">
+            <h2>💰 Podsumowanie Inwestycji</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Kategoria</th>
+                        <th>Zakres inwestycji</th>
+                        <th>% Budżetu</th>
+                        <th>Priorytet</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Technologia i platformy</td>
+                        <td>800K - 1.5M PLN</td>
+                        <td>40%</td>
+                        <td class="priority-high">WYSOKI</td>
+                    </tr>
+                    <tr>
+                        <td>Ludzie i kompetencje</td>
+                        <td>400K - 800K PLN</td>
+                        <td>25%</td>
+                        <td class="priority-high">WYSOKI</td>
+                    </tr>
+                    <tr>
+                        <td>Procesy i governance</td>
+                        <td>300K - 500K PLN</td>
+                        <td>15%</td>
+                        <td class="priority-medium">ŚREDNI</td>
+                    </tr>
+                    <tr>
+                        <td>Change management</td>
+                        <td>200K - 400K PLN</td>
+                        <td>12%</td>
+                        <td class="priority-medium">ŚREDNI</td>
+                    </tr>
+                    <tr>
+                        <td>Rezerwa i ryzyka</td>
+                        <td>200K - 300K PLN</td>
+                        <td>8%</td>
+                        <td class="priority-low">STANDARDOWY</td>
+                    </tr>
+                    <tr style="background: #f0fdf4;">
+                        <td><strong>RAZEM</strong></td>
+                        <td><strong>1.9M - 3.5M PLN</strong></td>
+                        <td><strong>100%</strong></td>
+                        <td>-</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <h3>📊 Oczekiwany ROI</h3>
+            <ul>
+                <li><strong>Okres zwrotu:</strong> 18-24 miesięcy</li>
+                <li><strong>ROI 3-letni:</strong> 150-250%</li>
+                <li><strong>Redukcja kosztów operacyjnych:</strong> 15-25%</li>
+                <li><strong>Wzrost przychodów cyfrowych:</strong> 20-40%</li>
+            </ul>
+        </div>
+
+        <div class="footer">
+            <p>
+                📋 Raport wygenerowany przez Consultify AI | 
+                Data: 27.12.2025, 19:01:16 | 
+                Projekt: Cyfryzacja Produkcji Q4 2024
+            </p>
+            <p>© 2025 DBR77 Digital Transformation Platform</p>
+        </div>
+    </div>
+</body>
+</html>

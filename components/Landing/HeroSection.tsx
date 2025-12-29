@@ -11,6 +11,9 @@ interface HeroSectionProps {
     onExpertClick: () => void;
 }
 
+// Array of slogan variant keys (1-5)
+const SLOGAN_VARIANTS = [1, 2, 3, 4, 5];
+
 export const HeroSection: React.FC<HeroSectionProps> = ({
     onDemoClick,
     onTrialClick,
@@ -21,6 +24,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     const { theme } = useAppStore();
     const { t } = useTranslation();
     const isDark = theme === 'dark';
+    
+    // Randomly select a slogan variant based on current second (changes every second)
+    // This ensures variety on each page load in production
+    const [sloganVariant] = useState(() => {
+        const second = new Date().getSeconds();
+        return SLOGAN_VARIANTS[second % SLOGAN_VARIANTS.length];
+    });
 
     const cards = [
         {
@@ -100,9 +110,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6, delay: 0.1 }}
-                        className="text-lg lg:text-xl text-slate-500 dark:text-slate-400 leading-relaxed font-light"
+                        className="text-xl lg:text-2xl text-white/90 leading-relaxed font-medium"
                     >
-                        {t('landing.hero.subtitle')}
+                        {t('landing.hero.subtitleLine1', 'Your')} <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent font-bold">AI Co-Thinker</span> {t('landing.hero.subtitleLine1End', 'for Enterprise Strategy.')}<br />
+                        {t(`landing.hero.slogans.${sloganVariant}`, 'Months of consulting. Minutes of AI. Better results.')}
                     </motion.p>
                 </div>
 
@@ -216,13 +227,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                             {/* Text Content */}
                             <div className="relative z-10 text-right space-y-1">
                                 <p className="text-2xl lg:text-3xl font-black text-white tracking-tight leading-tight">
-                                    AI consulting.
+                                    {t('landing.hero.tagline.line1', 'AI consulting.')}
                                 </p>
                                 <p className="text-2xl lg:text-3xl font-black bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent tracking-tight leading-tight">
-                                    No slides.
+                                    {t('landing.hero.tagline.line2', 'No slides.')}
                                 </p>
                                 <p className="text-2xl lg:text-3xl font-black text-white tracking-tight leading-tight">
-                                    Just decisions.
+                                    {t('landing.hero.tagline.line3', 'Just decisions.')}
                                 </p>
                             </div>
 

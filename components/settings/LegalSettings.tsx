@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { FileText, Check, X, Eye, Clock, Shield } from 'lucide-react';
+import { FileText, Check, X, Eye, Clock, Shield, Scale, ExternalLink } from 'lucide-react';
 import { User, LegalDocument, LegalDocType } from '../../types';
+import { InfoButton } from '../shared/InfoButton';
 
 interface LegalSettingsProps {
     currentUser: User;
@@ -105,7 +107,8 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
     }
 
     return (
-        <div className="max-w-3xl">
+        <div className="max-w-3xl relative">
+            <InfoButton cardId="settings-legal" position="top-right" />
             <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
                 {t('settings.menu.legal', 'Legal Documents')}
             </h2>
@@ -168,6 +171,30 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
                         {t('legal.noDocuments', 'No legal documents available.')}
                     </div>
                 )}
+            </div>
+
+            {/* Legal Center Link */}
+            <div className="mt-6 p-4 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <Scale className="w-5 h-5 text-slate-400" />
+                        <div>
+                            <h4 className="font-medium text-slate-700 dark:text-slate-200">
+                                {t('legal.centerTitle', 'Legal Center')}
+                            </h4>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                                {t('legal.centerDescription', 'View all legal documents in one place')}
+                            </p>
+                        </div>
+                    </div>
+                    <Link
+                        to="/legal"
+                        className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+                    >
+                        {t('legal.viewAll', 'View All')}
+                        <ExternalLink className="w-4 h-4" />
+                    </Link>
+                </div>
             </div>
 
             {/* Document Viewer Modal */}

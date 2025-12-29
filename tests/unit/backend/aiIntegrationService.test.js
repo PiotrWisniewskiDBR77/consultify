@@ -22,6 +22,7 @@ describe('AI Integration Service', () => {
         vi.doMock('uuid', () => ({ v4: mockUuid.v4 }));
 
         AIIntegrationService = (await import('../../../server/services/aiIntegrationService.js')).default;
+        AIIntegrationService.setDependencies({ db: mockDb });
     });
 
     afterEach(() => {
@@ -46,8 +47,8 @@ describe('AI Integration Service', () => {
 
     describe('suggestSync', () => {
         it('should create pending action', async () => {
-            mockDb.run.mockImplementation(function (sql, params, cb) { 
-                if (cb) cb.call({ changes: 1, lastID: 'mock-action-id' }, null); 
+            mockDb.run.mockImplementation(function (sql, params, cb) {
+                if (cb) cb.call({ changes: 1, lastID: 'mock-action-id' }, null);
             });
 
             const suggestion = {
@@ -85,8 +86,8 @@ describe('AI Integration Service', () => {
             });
 
             // Mock updates
-            mockDb.run.mockImplementation(function (sql, params, cb) { 
-                if (cb) cb.call({ changes: 1 }, null); 
+            mockDb.run.mockImplementation(function (sql, params, cb) {
+                if (cb) cb.call({ changes: 1 }, null);
             });
 
             const result = await AIIntegrationService.executeAction('a-1', 'user-1');
@@ -110,8 +111,8 @@ describe('AI Integration Service', () => {
                 }
                 cb(null, { id: 'int-1', is_active: 1 });
             });
-            mockDb.run.mockImplementation(function (sql, params, cb) { 
-                if (cb) cb.call({ changes: 1 }, null); 
+            mockDb.run.mockImplementation(function (sql, params, cb) {
+                if (cb) cb.call({ changes: 1 }, null);
             }); // Log sync
 
             const result = await AIIntegrationService.handleWebhook('jira', { id: 'evt-1' });

@@ -3,21 +3,8 @@ import verifyToken from '../../../../server/middleware/authMiddleware';
 import jwt from 'jsonwebtoken';
 import db from '../../../../server/database';
 
-vi.mock('jsonwebtoken');
-vi.mock('../../../../server/database', () => ({
-    default: {
-        get: vi.fn(),
-    },
-    get: vi.fn()
-}));
 
-// Mock config
-vi.mock('../../../../server/config', () => ({
-    default: { JWT_SECRET: 'test-secret' },
-    JWT_SECRET: 'test-secret'
-}));
-
-describe('AuthMiddleware', () => {
+describe('AuthMiddleware (DI Refactored)', () => {
     let req, res, next;
 
     beforeEach(() => {
@@ -28,6 +15,16 @@ describe('AuthMiddleware', () => {
         };
         next = vi.fn();
         vi.clearAllMocks();
+
+        // Inject dependencies directly
+        verifyToken.setDependencies({
+            jwt: jwt,
+            config: { JWT_SECRET: 'test-secret' },
+            db: db,
+            PermissionService: {
+                can: vi.fn().mockReturnValue(true)
+            }
+        });
     });
 
     it('should return 403 if no token provided', () => {
@@ -92,7 +89,7 @@ describe('AuthMiddleware', () => {
     it('should check revocation if jti is present', () => {
         req.headers['authorization'] = 'Bearer valid-token';
         const decoded = { id: 1, role: 'USER', jti: 'uuid', iat: Math.floor(Date.now() / 1000) };
-        
+
         let callCount = 0;
         jwt.verify.mockImplementation((token, secret, cb) => {
             process.nextTick(() => {

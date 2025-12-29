@@ -26,7 +26,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
         setLoading(true);
         setError(null);
         try {
-            const res = await Api.post('/auth/mfa/setup', {});
+            const res = await Api.post('/mfa/setup', {});
             setQrCode(res.data.qrCode);
             setSecret(res.data.manualEntry);
             setStep('setup');
@@ -41,7 +41,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
         setLoading(true);
         setError(null);
         try {
-            const res = await Api.post('/auth/mfa/enable', { token: verificationCode });
+            const res = await Api.post('/mfa/verify-setup', { token: verificationCode });
             if (res.data.success) {
                 setBackupCodes(res.data.backupCodes || []);
                 setStep('backup');
@@ -61,7 +61,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
             // Check if disable requires code? Usually strict security does, 
             // but for simplicity in this flow we might just ask password or code. 
             // The backend endpoint requires 'token' (TOTP) to disable.
-            const res = await Api.post('/auth/mfa/disable', { token: verificationCode });
+            const res = await Api.post('/mfa/disable', { token: verificationCode });
             if (res.data.success) {
                 setDisableConfirm(false);
                 setVerificationCode('');

@@ -3,6 +3,7 @@ import { Api } from '../../services/api';
 import { LLMProvider } from '../../types';
 import { toast } from 'react-hot-toast';
 import { Shield, Plus, Trash2, Edit, Save, X, Check, Eye, EyeOff, Server, RefreshCw, Wifi, WifiOff } from 'lucide-react';
+import { InfoButton } from '../../components/shared/InfoButton';
 
 export const AdminLLMView: React.FC = () => {
     // Providers State
@@ -157,6 +158,7 @@ export const AdminLLMView: React.FC = () => {
             await Api.aiUpdateSystemPrompt(editingPrompt.key, {
                 content: editingPrompt.content,
                 description: editingPrompt.description,
+                context_config: editingPrompt.context_config,
                 updatedBy: 'SuperAdmin' // In real app, use currentUser.email
             });
             toast.success('System Prompt Updated');
@@ -185,7 +187,8 @@ export const AdminLLMView: React.FC = () => {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 relative">
+            <InfoButton cardId="admin-llm" position="top-right" />
             {/* TABS */}
             <div className="flex gap-4 border-b border-white/5 pb-1">
                 <button
@@ -493,6 +496,45 @@ export const AdminLLMView: React.FC = () => {
                                             onChange={e => setEditingPrompt({ ...editingPrompt, content: e.target.value })}
                                             className="w-full h-96 bg-navy-950 border border-white/10 rounded p-4 text-white font-mono text-sm leading-relaxed focus:border-purple-500 outline-none resize-none"
                                         />
+                                    </div>
+
+                                    {/* Context Injection Controls */}
+                                    <div className="bg-navy-950 border border-white/5 rounded-lg p-4">
+                                        <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                                            <Shield size={14} className="text-purple-400" />
+                                            Context Injection Governance
+                                        </h4>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            {[
+                                                { id: 'include_project_context', label: 'Project Context (Goals, Risks)' },
+                                                { id: 'include_user_profile', label: 'User Profile (Role, Bio)' },
+                                                { id: 'include_assessment_data', label: 'Live Assessment Data' },
+                                                { id: 'include_kb_articles', label: 'Knowledge Base (RAG)' },
+                                                { id: 'include_task_history', label: 'Task History & Comments' }
+                                            ].map(opt => {
+                                                const config = typeof editingPrompt.context_config === 'string'
+                                                    ? JSON.parse(editingPrompt.context_config || '{}')
+                                                    : (editingPrompt.context_config || {});
+
+                                                return (
+                                                    <label key={opt.id} className="flex items-center gap-2 cursor-pointer group">
+                                                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${config[opt.id] ? 'bg-purple-600 border-purple-600' : 'border-white/20 group-hover:border-white/40'}`}>
+                                                            {config[opt.id] && <Check size={10} className="text-white" />}
+                                                        </div>
+                                                        <input
+                                                            type="checkbox"
+                                                            className="hidden"
+                                                            checked={!!config[opt.id]}
+                                                            onChange={e => {
+                                                                const newConfig = { ...config, [opt.id]: e.target.checked };
+                                                                setEditingPrompt({ ...editingPrompt, context_config: newConfig });
+                                                            }}
+                                                        />
+                                                        <span className="text-xs text-slate-300 group-hover:text-white transition-colors">{opt.label}</span>
+                                                    </label>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
                                     <div className="flex justify-end gap-2">
                                         <button type="submit" className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-medium flex items-center gap-2">

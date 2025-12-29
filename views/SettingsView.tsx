@@ -1,17 +1,21 @@
-import React, { useState } from 'react';
-import { User, Language } from '../types';
+import React, { useEffect } from 'react';
+import { User, AppView } from '../types';
 import { useTranslation } from 'react-i18next';
-import { UserCircle, CreditCard, Cpu, Bell, Link as LinkIcon, Globe, FileText } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { BillingSettings } from '../components/settings/BillingSettings';
 import { AISettings } from '../components/settings/AISettings';
 import { ProfileSettings } from '../components/settings/ProfileSettings';
+import { SecuritySettings } from '../components/settings/SecuritySettings';
 import { NotificationSettings } from '../components/settings/NotificationSettings';
 import { IntegrationSettings } from '../components/settings/IntegrationSettings';
 import { RegionalSettings } from '../components/settings/RegionalSettings';
 import { LegalSettings } from '../components/settings/LegalSettings';
 import { OrganizationSettings } from '../components/settings/OrganizationSettings';
-import { Building2 } from 'lucide-react';
-
+import { WorkPreferencesSettings } from '../components/settings/WorkPreferencesSettings';
+import { DashboardPreferencesSettings } from '../components/settings/DashboardPreferencesSettings';
+import { AccessibilitySettings } from '../components/settings/AccessibilitySettings';
+import { PrivacySettings } from '../components/settings/PrivacySettings';
+import { useAppStore } from '../store/useAppStore';
 
 interface SettingsViewProps {
     currentUser: User;
@@ -22,98 +26,78 @@ interface SettingsViewProps {
 
 export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdateUser, theme, toggleTheme }) => {
     const { t } = useTranslation();
-    const [activeTab, setActiveTab] = useState<'PROFILE' | 'ORGANIZATION' | 'BILLING' | 'AI' | 'NOTIFICATIONS' | 'INTEGRATIONS' | 'REGIONAL' | 'LEGAL'>('PROFILE');
+    const { currentView, setCurrentView } = useAppStore();
+    
+    // Initialize to profile if not a settings view
+    useEffect(() => {
+        if (!currentView.startsWith('SETTINGS_')) {
+            setCurrentView(AppView.SETTINGS_PROFILE);
+        }
+    }, []);
 
-
-    return (
-        <div className="flex h-full bg-slate-50 dark:bg-navy-950 transition-colors duration-300">
-            {/* Settings Navigation */}
-            <div className="w-64 border-r border-slate-200 dark:border-white/5 bg-white dark:bg-navy-900 p-6 flex flex-col gap-1 transition-colors duration-300">
-                <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4 px-3">{t('settings.menu.header')}</h2>
-
-                <button
-                    onClick={() => setActiveTab('PROFILE')}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-left transition-colors ${activeTab === 'PROFILE' ? 'bg-slate-100 dark:bg-navy-800 text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'}`}
-                >
-                    <UserCircle size={18} />
-                    {t('settings.menu.myProfile')}
-                </button>
-
-                <button
-                    onClick={() => setActiveTab('ORGANIZATION')}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-left transition-colors ${activeTab === 'ORGANIZATION' ? 'bg-slate-100 dark:bg-navy-800 text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'}`}
-                >
-                    <Building2 size={18} />
-                    Organization
-                </button>
-
-                <button
-                    onClick={() => setActiveTab('BILLING')}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-left transition-colors ${activeTab === 'BILLING' ? 'bg-slate-100 dark:bg-navy-800 text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'}`}
-                >
-                    <CreditCard size={18} />
-                    {t('settings.menu.billing')}
-                </button>
-
-                <button
-                    onClick={() => setActiveTab('AI')}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-left transition-colors ${activeTab === 'AI' ? 'bg-slate-100 dark:bg-navy-800 text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'}`}
-                >
-                    <Cpu size={18} />
-                    {t('settings.menu.aiConfig')}
-                </button>
-
-                <button
-                    onClick={() => setActiveTab('NOTIFICATIONS')}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-left transition-colors ${activeTab === 'NOTIFICATIONS' ? 'bg-slate-100 dark:bg-navy-800 text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'}`}
-                >
-                    <Bell size={18} />
-                    {t('settings.menu.notifications')}
-                </button>
-
-                <button
-                    onClick={() => setActiveTab('INTEGRATIONS')}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-left transition-colors ${activeTab === 'INTEGRATIONS' ? 'bg-slate-100 dark:bg-navy-800 text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'}`}
-                >
-                    <LinkIcon size={18} />
-                    {t('settings.menu.integrations')}
-                </button>
-
-                <button
-                    onClick={() => setActiveTab('REGIONAL')}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-left transition-colors ${activeTab === 'REGIONAL' ? 'bg-slate-100 dark:bg-navy-800 text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'}`}
-                >
-                    <Globe size={18} />
-                    {t('settings.menu.regionalization')}
-                </button>
-
-                <button
-                    onClick={() => setActiveTab('LEGAL')}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-left transition-colors ${activeTab === 'LEGAL' ? 'bg-slate-100 dark:bg-navy-800 text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'}`}
-                >
-                    <FileText size={18} />
-                    {t('settings.menu.legal', 'Legal')}
-                </button>
-            </div>
-
-            {/* Content Area */}
-            <div className="flex-1 overflow-auto p-6 lg:p-8">
-                {activeTab === 'PROFILE' && (
+    // Render content based on currentView
+    const renderContent = () => {
+        switch (currentView) {
+            case AppView.SETTINGS_PROFILE:
+                return (
                     <ProfileSettings
                         currentUser={currentUser}
                         onUpdateUser={onUpdateUser}
                         theme={theme}
                         toggleTheme={toggleTheme}
                     />
-                )}
-                {activeTab === 'ORGANIZATION' && <OrganizationSettings currentUser={currentUser} />}
+                );
+            case AppView.SETTINGS_SECURITY:
+                return <SecuritySettings currentUser={currentUser} />;
+            case AppView.SETTINGS_ORGANIZATION:
+                return <OrganizationSettings currentUser={currentUser} />;
+            case AppView.SETTINGS_BILLING:
+                return <BillingSettings currentUser={currentUser} />;
+            case AppView.SETTINGS_AI:
+                return <AISettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+            case AppView.SETTINGS_NOTIFICATIONS:
+                return <NotificationSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+            case AppView.SETTINGS_INTEGRATIONS:
+                return <IntegrationSettings currentUser={currentUser} />;
+            case AppView.SETTINGS_REGIONALIZATION:
+                return <RegionalSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+            case AppView.SETTINGS_LEGAL:
+                return <LegalSettings currentUser={currentUser} />;
+            case AppView.SETTINGS_WORK_PREFERENCES:
+                return <WorkPreferencesSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+            case AppView.SETTINGS_DASHBOARD_PREFERENCES:
+                return <DashboardPreferencesSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+            case AppView.SETTINGS_ACCESSIBILITY:
+                return <AccessibilitySettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+            case AppView.SETTINGS_PRIVACY:
+                return <PrivacySettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+            default:
+                return (
+                    <ProfileSettings
+                        currentUser={currentUser}
+                        onUpdateUser={onUpdateUser}
+                        theme={theme}
+                        toggleTheme={toggleTheme}
+                    />
+                );
+        }
+    };
 
-                {activeTab === 'BILLING' && <BillingSettings currentUser={currentUser} />}
-                {activeTab === 'AI' && <AISettings currentUser={currentUser} onUpdateUser={onUpdateUser} />}
-                {activeTab === 'NOTIFICATIONS' && <NotificationSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />}
-                {activeTab === 'INTEGRATIONS' && <IntegrationSettings currentUser={currentUser} />}
-                {activeTab === 'REGIONAL' && <RegionalSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />}
-                {activeTab === 'LEGAL' && <LegalSettings currentUser={currentUser} />}
+    return (
+        <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-950 transition-colors duration-300">
+            {/* Settings Header */}
+            <div className="h-14 border-b border-slate-200 dark:border-white/5 bg-white dark:bg-navy-950 flex items-center justify-between px-6 shrink-0">
+                <div>
+                    <h1 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <Settings className="text-purple-500" size={18} />
+                        {t('settings.menu.header', 'Settings')}
+                    </h1>
+                </div>
+            </div>
+
+            {/* Content Area */}
+            <div className="flex-1 overflow-auto p-6 lg:p-8">
+                {renderContent()}
             </div>
         </div>
     );

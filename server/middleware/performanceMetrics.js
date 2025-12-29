@@ -10,19 +10,23 @@
  * - Error rates
  */
 
-const logger = require('../utils/logger');
+let logger = require('../utils/logger');
+let queryHelpers = require('../utils/queryHelpers');
 
-// In-memory metrics store (can be replaced with Redis/DB in production)
+// Dependency Injection for Testing
+const _setDependencies = (deps) => {
+    if (deps.logger) logger = deps.logger;
+    if (deps.queryHelpers) queryHelpers = deps.queryHelpers;
+};
+
+// In-memory store for metrics
 const metricsStore = {
     requests: [],
     dbQueries: [],
     errors: []
 };
 
-// Keep only last 1000 entries to prevent memory leaks
 const MAX_ENTRIES = 1000;
-
-const queryHelpers = require('../utils/queryHelpers');
 
 /**
  * Performance metrics middleware
@@ -33,7 +37,7 @@ const queryHelpers = require('../utils/queryHelpers');
 function performanceMetricsMiddleware(req, res, next) {
     const startTime = Date.now();
     const startMemory = process.memoryUsage();
-    
+
     // Store metrics in request for later access
     req._performanceMetrics = {
         startTime,
@@ -208,6 +212,8 @@ module.exports = {
     getMetricsSummary,
     getMemoryMetrics,
     clearMetrics,
-    metricsStore // Expose for testing
+    resetMetrics: clearMetrics,
+    metricsStore, // Expose for testing
+    _setDependencies // Expose for testing
 };
 

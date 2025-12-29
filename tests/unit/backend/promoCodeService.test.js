@@ -33,6 +33,10 @@ import PromoCodeService from '../../../server/services/promoCodeService';
 describe('PromoCodeService', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        PromoCodeService.setDependencies({
+            db: mockDb,
+            uuidv4: vi.fn(() => 'test-uuid-1234')
+        });
     });
 
     afterEach(() => {
@@ -58,7 +62,8 @@ describe('PromoCodeService', () => {
     });
 
     // CJS/ESM interop issue: database mock is not properly applied before import
-    describe.skip('validatePromoCode - skipped due to CJS/ESM mock interop', () => {
+    // CJS/ESM interop issue: database mock is not properly applied before import
+    describe('validatePromoCode', () => {
         it('should return invalid for empty code', async () => {
             const result = await PromoCodeService.validatePromoCode('');
             expect(result).toEqual({ valid: false, reason: 'Invalid promo code format' });
@@ -190,7 +195,8 @@ describe('PromoCodeService', () => {
     });
 
     // CJS/ESM interop issue: database mock is not properly applied before import
-    describe.skip('markPromoCodeUsed - skipped due to CJS/ESM mock interop', () => {
+    // CJS/ESM interop issue: database mock is not properly applied before import
+    describe('markPromoCodeUsed', () => {
         it('should return error for already used org code', async () => {
             // Mock validatePromoCode to return valid
             mockDb.get.mockImplementation((query, params, callback) => {
@@ -244,7 +250,7 @@ describe('PromoCodeService', () => {
         });
 
         // CJS/ESM interop issue
-        it.skip('should create promo code successfully', async () => {
+        it('should create promo code successfully', async () => {
             mockDb.run.mockImplementation(function (query, params, callback) {
                 callback.call({ changes: 1 }, null);
             });
@@ -264,7 +270,8 @@ describe('PromoCodeService', () => {
     });
 
     // CJS/ESM interop issue: database mock is not properly applied before import
-    describe.skip('listPromoCodes - skipped due to CJS/ESM mock interop', () => {
+    // CJS/ESM interop issue: database mock is not properly applied before import
+    describe('listPromoCodes', () => {
         it('should return list of promo codes', async () => {
             mockDb.all.mockImplementation((query, params, callback) => {
                 callback(null, [
@@ -294,7 +301,8 @@ describe('PromoCodeService', () => {
     });
 
     // CJS/ESM interop issue: database mock is not properly applied before import
-    describe.skip('deactivatePromoCode - skipped due to CJS/ESM mock interop', () => {
+    // CJS/ESM interop issue: database mock is not properly applied before import
+    describe('deactivatePromoCode', () => {
         it('should deactivate promo code', async () => {
             mockDb.run.mockImplementation(function (query, params, callback) {
                 callback.call({ changes: 1 }, null);

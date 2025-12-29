@@ -1,0 +1,231 @@
+/**
+ * ProactiveNudges Unit Tests
+ * 
+ * Tests for proactive AI suggestions service.
+ */
+
+const { proactiveNudges, ProactiveNudgesService, NUDGE_TRIGGERS } = require('../../../server/services/ai/proactiveNudges');
+
+describe('ProactiveNudges', () => {
+    describe('trackActivity()', () => {
+        it('should track user activity', async () => {
+            const userId = 'test-user-track-' + Date.now();
+            
+            const result = await proactiveNudges.trackActivity(userId, 'page_view', {
+                page: 'assessment'
+            });
+            
+            expect(result).toBeDefined();
+            expect(result).toBeInstanceOf(Array);
+        });
+
+        it('should return nudges when trigger conditions are met', async () => {
+            const userId = 'test-user-trigger-' + Date.now();
+            
+            // Track first login which should trigger nudge
+            const result = await proactiveNudges.trackActivity(userId, 'login', {
+                isFirstLogin: true
+            });
+            
+            expect(result).toBeInstanceOf(Array);
+            // First login should generate a welcome nudge
+        });
+    });
+
+    describe('checkTriggers()', () => {
+        it('should detect assessment_view trigger', async () => {
+            const service = new ProactiveNudgesService();
+            const userId = 'test-assess-' + Date.now();
+            
+            // Initialize user state
+            await service.trackActivity(userId, 'session_start', {});
+            
+            const nudges = await service.checkTriggers(userId, 'assessment_view', {});
+            
+            expect(nudges).toBeInstanceOf(Array);
+        });
+
+        it('should detect report_empty trigger', async () => {
+            const service = new ProactiveNudgesService();
+            const userId = 'test-report-' + Date.now();
+            
+            await service.trackActivity(userId, 'session_start', {});
+            
+            const nudges = await service.checkTriggers(userId, 'report_view', {
+                isEmpty: true
+            });
+            
+            expect(nudges).toBeInstanceOf(Array);
+        });
+
+        it('should detect low_score trigger', async () => {
+            const service = new ProactiveNudgesService();
+            const userId = 'test-score-' + Date.now();
+            
+            await service.trackActivity(userId, 'session_start', {});
+            
+            const nudges = await service.checkTriggers(userId, 'assessment_score', {
+                score: 2
+            });
+            
+            expect(nudges).toBeInstanceOf(Array);
+        });
+    });
+
+    describe('shouldShowNudge()', () => {
+        it('should respect cooldown period', async () => {
+            const service = new ProactiveNudgesService();
+            const userId = 'test-cooldown-' + Date.now();
+            
+            // Mark nudge as shown
+            await service.markNudgeShown(userId, 'test_nudge');
+            
+            // Should not show same nudge again
+            const shouldShow = await service.shouldShowNudge(userId, 'test_nudge');
+            
+            expect(shouldShow).toBe(false);
+        });
+
+        it('should allow nudge after cooldown', async () => {
+            const service = new ProactiveNudgesService();
+            service.cooldownPeriod = 100; // Very short for test
+            
+            const userId = 'test-cooldown-2-' + Date.now();
+            
+            await service.markNudgeShown(userId, 'test_nudge_2');
+            
+            // Wait for cooldown
+            await new Promise(r => setTimeout(r, 150));
+            
+            const shouldShow = await service.shouldShowNudge(userId, 'test_nudge_2');
+            
+            expect(shouldShow).toBe(true);
+        });
+    });
+
+    describe('createNudge()', () => {
+        it('should create nudge with correct structure', () => {
+            const service = new ProactiveNudgesService();
+            
+            const nudge = service.createNudge(NUDGE_TRIGGERS.FIRST_LOGIN, 'test-user', {});
+            
+            expect(nudge).toHaveProperty('id');
+            expect(nudge).toHaveProperty('nudgeId', 'first_login');
+            expect(nudge).toHaveProperty('userId', 'test-user');
+            expect(nudge).toHaveProperty('message');
+            expect(nudge).toHaveProperty('capability', 'onboarding');
+            expect(nudge).toHaveProperty('priority');
+            expect(nudge).toHaveProperty('createdAt');
+            expect(nudge).toHaveProperty('expiresAt');
+        });
+
+        it('should set correct expiration time', () => {
+            const service = new ProactiveNudgesService();
+            
+            const nudge = service.createNudge(NUDGE_TRIGGERS.ASSESSMENT_STARTED, 'test-user', {});
+            
+            expect(nudge.expiresAt).toBeGreaterThan(Date.now());
+            expect(nudge.expiresAt).toBeLessThan(Date.now() + 4 * 3600 * 1000); // Less than 4 hours
+        });
+    });
+
+    describe('calculatePriority()', () => {
+        it('should give highest priority to first_login', () => {
+            const service = new ProactiveNudgesService();
+            
+            const priority = service.calculatePriority(NUDGE_TRIGGERS.FIRST_LOGIN, {});
+            
+            expect(priority).toBe(100);
+        });
+
+        it('should adjust priority for critical metadata', () => {
+            const service = new ProactiveNudgesService();
+            
+            const normalPriority = service.calculatePriority(NUDGE_TRIGGERS.REPORT_EMPTY, {});
+            const criticalPriority = service.calculatePriority(NUDGE_TRIGGERS.REPORT_EMPTY, { critical: true });
+            
+            expect(criticalPriority).toBeGreaterThan(normalPriority);
+        });
+
+        it('should cap priority at 100', () => {
+            const service = new ProactiveNudgesService();
+            
+            const priority = service.calculatePriority(NUDGE_TRIGGERS.FIRST_LOGIN, { 
+                critical: true, 
+                urgent: true 
+            });
+            
+            expect(priority).toBeLessThanOrEqual(100);
+        });
+    });
+
+    describe('dismissNudge()', () => {
+        it('should mark nudge as dismissed', async () => {
+            await expect(
+                proactiveNudges.dismissNudge('test-user', 'test-nudge-dismiss')
+            ).resolves.not.toThrow();
+        });
+    });
+
+    describe('markNudgeActed()', () => {
+        it('should record nudge action', async () => {
+            await expect(
+                proactiveNudges.markNudgeActed('test-user', 'test-nudge-act', 'accepted')
+            ).resolves.not.toThrow();
+        });
+    });
+
+    describe('getPendingNudges()', () => {
+        it('should return pending nudges for user', async () => {
+            const userId = 'test-pending-' + Date.now();
+            
+            // Track some activity first
+            await proactiveNudges.trackActivity(userId, 'session_start', {});
+            
+            const nudges = await proactiveNudges.getPendingNudges(userId, {});
+            
+            expect(nudges).toBeInstanceOf(Array);
+        });
+
+        it('should return nudges sorted by priority', async () => {
+            const service = new ProactiveNudgesService();
+            const userId = 'test-sort-' + Date.now();
+            
+            await service.trackActivity(userId, 'session_start', {});
+            
+            const nudges = await service.getPendingNudges(userId, {
+                screenName: 'report',
+                isEmpty: true,
+                hasOverdueTasks: true
+            });
+            
+            expect(nudges).toBeInstanceOf(Array);
+            
+            // Check sorting if multiple nudges
+            if (nudges.length > 1) {
+                for (let i = 1; i < nudges.length; i++) {
+                    expect(nudges[i - 1].priority).toBeGreaterThanOrEqual(nudges[i].priority);
+                }
+            }
+        });
+    });
+
+    describe('suppressNudgeType()', () => {
+        it('should suppress nudge type permanently', async () => {
+            const userId = 'test-suppress-' + Date.now();
+            
+            await expect(
+                proactiveNudges.suppressNudgeType(userId, 'test_type', 'permanent')
+            ).resolves.not.toThrow();
+        });
+
+        it('should suppress nudge type temporarily', async () => {
+            const userId = 'test-suppress-temp-' + Date.now();
+            
+            await expect(
+                proactiveNudges.suppressNudgeType(userId, 'test_type', '7days')
+            ).resolves.not.toThrow();
+        });
+    });
+});
+

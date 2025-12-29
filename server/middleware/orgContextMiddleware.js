@@ -14,7 +14,12 @@
  * 3. User's last selected org — only for reads when strictWrite=true
  */
 
-const db = require('../database');
+const defaultDb = require('../database');
+
+// Dependencies object to allow injection
+const deps = {
+    db: defaultDb
+};
 
 /**
  * Resolve organization access for a user.
@@ -28,7 +33,7 @@ async function resolveUserOrgAccess(userId, orgId) {
 
     return new Promise((resolve, reject) => {
         // Check direct membership first
-        db.get(
+        deps.db.get(
             `SELECT id, role, status, permission_scope FROM organization_members 
              WHERE user_id = ? AND organization_id = ? AND status = 'ACTIVE'`,
             [userId, orgId],
@@ -46,7 +51,7 @@ async function resolveUserOrgAccess(userId, orgId) {
                 }
 
                 // Check consultant link (fresh from DB — revocation is immediate)
-                db.get(
+                deps.db.get(
                     `SELECT id, permission_scope, status FROM consultant_org_links 
                      WHERE consultant_id = ? AND organization_id = ? AND status = 'ACTIVE'`,
                     [userId, orgId],
@@ -79,7 +84,7 @@ async function getUserOrganizations(userId) {
     return new Promise((resolve, reject) => {
         const orgs = [];
 
-        db.all(
+        deps.db.all(
             `SELECT o.id, o.name, om.role, 'MEMBER' as access_type
              FROM organizations o
              JOIN organization_members om ON o.id = om.organization_id
@@ -89,7 +94,7 @@ async function getUserOrganizations(userId) {
                 if (err) return reject(err);
                 orgs.push(...(memberOrgs || []));
 
-                db.all(
+                deps.db.all(
                     `SELECT o.id, o.name, 'CONSULTANT' as role, 'CONSULTANT' as access_type
                      FROM organizations o
                      JOIN consultant_org_links col ON o.id = col.organization_id
@@ -220,8 +225,17 @@ function orgContextMiddleware(options = {}) {
     };
 }
 
+/**
+ * Inject dependencies for testing
+ * @param {Object} newDeps 
+ */
+function setDependencies(newDeps) {
+    Object.assign(deps, newDeps);
+}
+
 // Export utilities for use in routes
 orgContextMiddleware.getUserOrganizations = getUserOrganizations;
 orgContextMiddleware.resolveUserOrgAccess = resolveUserOrgAccess;
+orgContextMiddleware.setDependencies = setDependencies;
 
 module.exports = orgContextMiddleware;

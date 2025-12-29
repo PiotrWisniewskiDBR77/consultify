@@ -9,7 +9,63 @@ const authMiddleware = require('../middleware/authMiddleware');
 const LegalService = require('../services/legalService');
 const ActivityService = require('../services/activityService');
 
-// All routes require authentication
+// ==========================================
+// PUBLIC ROUTES (No Authentication Required)
+// ==========================================
+
+/**
+ * GET /api/legal/document/:docType
+ * Get public legal document by type (no auth required)
+ * Used for legal pages that need to be accessible before login
+ */
+router.get('/document/:docType', async (req, res) => {
+    try {
+        const { docType } = req.params;
+        const validTypes = ['TOS', 'PRIVACY', 'COOKIES', 'AUP', 'AI_POLICY', 'DPA', 'SLA', 'REFUND', 'SECURITY', 'SUBPROCESSORS', 'SUBSCRIPTION', 'CUSTOMER_SECURITY'];
+
+        if (!validTypes.includes(docType.toUpperCase())) {
+            return res.status(400).json({ error: 'Invalid document type' });
+        }
+
+        const document = await LegalService.getActiveDocument(docType.toUpperCase());
+
+        if (!document) {
+            return res.status(404).json({ error: 'Document not found' });
+        }
+
+        res.json({ document });
+    } catch (err) {
+        console.error('[Legal] Error fetching public document:', err);
+        res.status(500).json({ error: 'Failed to fetch document' });
+    }
+});
+
+/**
+ * GET /api/legal/documents
+ * List all public legal documents (metadata only, no auth required)
+ */
+router.get('/documents', async (req, res) => {
+    try {
+        const documents = await LegalService.getActiveDocuments();
+        res.json({ 
+            documents: documents.map(doc => ({
+                doc_type: doc.doc_type,
+                title: doc.title,
+                version: doc.version,
+                effective_from: doc.effective_from
+            }))
+        });
+    } catch (err) {
+        console.error('[Legal] Error fetching documents list:', err);
+        res.status(500).json({ error: 'Failed to fetch documents' });
+    }
+});
+
+// ==========================================
+// AUTHENTICATED ROUTES
+// ==========================================
+
+// All routes below require authentication
 router.use(authMiddleware);
 
 /**
@@ -33,7 +89,7 @@ router.get('/active', async (req, res) => {
 router.get('/active/:docType', async (req, res) => {
     try {
         const { docType } = req.params;
-        const validTypes = ['TOS', 'PRIVACY', 'COOKIES', 'AUP', 'AI_POLICY', 'DPA'];
+        const validTypes = ['TOS', 'PRIVACY', 'COOKIES', 'AUP', 'AI_POLICY', 'DPA', 'SLA', 'REFUND', 'SECURITY', 'SUBPROCESSORS', 'SUBSCRIPTION', 'CUSTOMER_SECURITY'];
 
         if (!validTypes.includes(docType.toUpperCase())) {
             return res.status(400).json({ error: 'Invalid document type' });
@@ -100,7 +156,7 @@ router.post('/accept', async (req, res) => {
             return res.status(400).json({ error: 'docTypes array is required' });
         }
 
-        const validTypes = ['TOS', 'PRIVACY', 'COOKIES', 'AUP', 'AI_POLICY', 'DPA'];
+        const validTypes = ['TOS', 'PRIVACY', 'COOKIES', 'AUP', 'AI_POLICY', 'DPA', 'SLA', 'REFUND', 'SECURITY', 'SUBPROCESSORS', 'SUBSCRIPTION', 'CUSTOMER_SECURITY'];
         const invalidTypes = docTypes.filter(t => !validTypes.includes(t.toUpperCase()));
         if (invalidTypes.length > 0) {
             return res.status(400).json({ error: `Invalid document types: ${invalidTypes.join(', ')}` });
@@ -295,6 +351,78 @@ router.get('/compliance-summary', async (req, res) => {
     } catch (err) {
         console.error('[Legal] Compliance summary error:', err);
         res.status(500).json({ error: 'Failed to get compliance summary' });
+    }
+});
+
+// ==========================================
+// CONTACT FORM
+// ==========================================
+
+const EmailService = require('../services/emailService');
+
+/**
+ * POST /api/legal/contact
+ * Submit contact form (public endpoint, no auth required)
+ */
+router.post('/contact', async (req, res) => {
+    try {
+        const { name, email, company, subject, message } = req.body;
+
+        if (!name || !email || !message) {
+            return res.status(400).json({ error: 'Name, email, and message are required' });
+        }
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ error: 'Invalid email format' });
+        }
+
+        // Send email notification to support
+        try {
+            await EmailService.sendEmail({
+                to: process.env.SUPPORT_EMAIL || 'support@consultinity.com',
+                subject: `[Contact Form] ${subject || 'General Inquiry'} from ${name}`,
+                text: `
+Contact Form Submission
+=======================
+Name: ${name}
+Email: ${email}
+Company: ${company || 'Not provided'}
+Subject: ${subject || 'General Inquiry'}
+
+Message:
+${message}
+
+---
+This message was sent from the Consultify contact form.
+                `,
+                html: `
+<h2>Contact Form Submission</h2>
+<table style="border-collapse: collapse;">
+    <tr><td style="padding: 5px; font-weight: bold;">Name:</td><td style="padding: 5px;">${name}</td></tr>
+    <tr><td style="padding: 5px; font-weight: bold;">Email:</td><td style="padding: 5px;"><a href="mailto:${email}">${email}</a></td></tr>
+    <tr><td style="padding: 5px; font-weight: bold;">Company:</td><td style="padding: 5px;">${company || 'Not provided'}</td></tr>
+    <tr><td style="padding: 5px; font-weight: bold;">Subject:</td><td style="padding: 5px;">${subject || 'General Inquiry'}</td></tr>
+</table>
+<h3>Message:</h3>
+<p style="white-space: pre-wrap;">${message}</p>
+<hr>
+<p style="color: #666; font-size: 12px;">This message was sent from the Consultify contact form.</p>
+                `
+            });
+        } catch (emailError) {
+            console.error('[Contact] Email send failed:', emailError);
+            // Don't fail the request if email fails - we still want to log it
+        }
+
+        // Log the contact submission
+        console.log('[Contact] Form submitted:', { name, email, company, subject });
+
+        res.json({ success: true, message: 'Thank you for contacting us. We will get back to you soon.' });
+    } catch (err) {
+        console.error('[Contact] Error:', err);
+        res.status(500).json({ error: 'Failed to submit contact form' });
     }
 });
 

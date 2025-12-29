@@ -124,7 +124,7 @@ const AIRiskChangeControl = {
                 FROM tasks t
                 LEFT JOIN initiatives i ON t.initiative_id = i.id
                 WHERE t.project_id = ?
-                AND t.status NOT IN ('done', 'DONE', 'cancelled')
+                AND t.status != 'DONE'
                 AND t.due_date < date('now')
             `, [projectId], (err, rows) => resolve(rows || []));
         });
@@ -149,7 +149,7 @@ const AIRiskChangeControl = {
             deps.db.all(`
                 SELECT * FROM initiatives
                 WHERE project_id = ?
-                AND status IN ('IN_EXECUTION', 'APPROVED')
+                AND status IN ('EXECUTING', 'APPROVED')
                 AND updated_at < datetime('now', '-14 days')
             `, [projectId], (err, rows) => resolve(rows || []));
         });
@@ -181,7 +181,7 @@ const AIRiskChangeControl = {
                 FROM tasks t
                 JOIN users u ON t.assignee_id = u.id
                 WHERE t.project_id = ?
-                AND t.status NOT IN ('done', 'DONE', 'cancelled')
+                AND t.status != 'DONE'
                 GROUP BY u.id
                 HAVING task_count > 10
             `, [projectId], (err, rows) => resolve(rows || []));
@@ -241,7 +241,7 @@ const AIRiskChangeControl = {
                 JOIN initiatives ti ON id.to_initiative_id = ti.id
                 WHERE ti.project_id = ?
                 AND id.is_satisfied = 0
-                AND ti.status IN ('IN_EXECUTION', 'APPROVED')
+                AND ti.status IN ('EXECUTING', 'APPROVED')
             `, [projectId], (err, rows) => resolve(rows || []));
         });
 
@@ -308,7 +308,7 @@ const AIRiskChangeControl = {
             deps.db.get(`
                 SELECT COUNT(*) as count FROM initiatives
                 WHERE project_id = ?
-                AND status IN ('IN_EXECUTION', 'APPROVED')
+                AND status IN ('EXECUTING', 'APPROVED')
             `, [projectId], (err, row) => resolve(row?.count || 0));
         });
 

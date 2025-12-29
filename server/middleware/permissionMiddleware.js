@@ -6,8 +6,14 @@
  * Uses PBAC (Permission-Based Access Control) with org-user overrides.
  */
 
-const PermissionService = require('../services/permissionService');
-const GovernanceAuditService = require('../services/governanceAuditService');
+const defaultPermissionService = require('../services/permissionService');
+const defaultGovernanceAuditService = require('../services/governanceAuditService');
+
+// Dependencies object to allow injection
+const deps = {
+    PermissionService: defaultPermissionService,
+    GovernanceAuditService: defaultGovernanceAuditService
+};
 
 /**
  * Middleware factory to require a specific permission
@@ -28,7 +34,7 @@ const requirePermission = (permissionKey) => {
                 });
             }
 
-            const hasPermission = await PermissionService.hasPermission(
+            const hasPermission = await deps.PermissionService.hasPermission(
                 userId,
                 orgId,
                 permissionKey,
@@ -77,7 +83,7 @@ const requireAnyPermission = (permissionKeys) => {
             }
 
             for (const permissionKey of permissionKeys) {
-                const hasPermission = await PermissionService.hasPermission(
+                const hasPermission = await deps.PermissionService.hasPermission(
                     userId,
                     orgId,
                     permissionKey,
@@ -128,7 +134,7 @@ const requireAllPermissions = (permissionKeys) => {
             const missingPermissions = [];
 
             for (const permissionKey of permissionKeys) {
-                const hasPermission = await PermissionService.hasPermission(
+                const hasPermission = await deps.PermissionService.hasPermission(
                     userId,
                     orgId,
                     permissionKey,
@@ -189,7 +195,7 @@ const auditAction = (options) => {
             // Only audit on success (2xx status codes)
             if (res.statusCode >= 200 && res.statusCode < 300) {
                 try {
-                    await GovernanceAuditService.logAudit({
+                    await deps.GovernanceAuditService.logAudit({
                         actorId: req.userId || req.user?.id,
                         actorRole: req.userRole || req.user?.role,
                         orgId: req.organizationId || req.user?.organization_id,
@@ -214,9 +220,18 @@ const auditAction = (options) => {
     };
 };
 
+/**
+ * Inject dependencies for testing
+ * @param {Object} newDeps 
+ */
+function setDependencies(newDeps) {
+    Object.assign(deps, newDeps);
+}
+
 module.exports = {
     requirePermission,
     requireAnyPermission,
     requireAllPermissions,
-    auditAction
+    auditAction,
+    setDependencies
 };

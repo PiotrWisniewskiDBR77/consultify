@@ -4,6 +4,7 @@ import { AppView } from '../../../types';
 import { Api } from '../../../services/api';
 import { Building, Plus, ExternalLink, Settings as LucideSettings, Users as LucideUsers, LogOut as LucideLogOut } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 interface LinkedOrg {
     id: string;
@@ -15,6 +16,7 @@ interface LinkedOrg {
 }
 
 export const ConsultantPanelView = () => {
+    const { t } = useTranslation();
     const { setCurrentView, currentUser, logout: appLogout } = useAppStore();
     const [linkedOrgs, setLinkedOrgs] = useState<LinkedOrg[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -31,7 +33,7 @@ export const ConsultantPanelView = () => {
             setLinkedOrgs(data);
         } catch (error) {
             console.error(error);
-            toast.error('Error loading organizations');
+            toast.error(t('consultant.panel.loadingError') || 'Error loading organizations');
         } finally {
             setIsLoading(false);
         }
@@ -51,9 +53,9 @@ export const ConsultantPanelView = () => {
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-3xl font-bold text-navy-900 dark:text-white">Consultant Panel</h1>
+                        <h1 className="text-3xl font-bold text-navy-900 dark:text-white">{t('consultant.panel.title')}</h1>
                         <p className="text-slate-500 dark:text-slate-400 mt-1">
-                            Welcome back, {currentUser?.firstName || 'Consultant'}. Manage your client organizations.
+                            {t('consultant.panel.welcome', { name: currentUser?.firstName || 'Consultant' })}
                         </p>
                     </div>
                     <div className="flex gap-3">
@@ -62,7 +64,7 @@ export const ConsultantPanelView = () => {
                             className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-navy-800 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-500/30 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-colors font-medium shadow-sm"
                         >
                             <Plus size={18} />
-                            Create Invite
+                            {t('consultant.panel.createInvite')}
                         </button>
                     </div>
                 </div>
@@ -73,29 +75,29 @@ export const ConsultantPanelView = () => {
                         <div className="px-6 py-4 border-b border-slate-100 dark:border-white/5 flex items-center justify-between bg-slate-50/50 dark:bg-white/5">
                             <h2 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
                                 <Building size={20} className="text-purple-500" />
-                                Linked Organizations
+                                {t('consultant.panel.linkedOrgs')}
                             </h2>
                             <span className="text-xs font-medium px-2 py-1 bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300 rounded-full">
-                                {linkedOrgs.length} Active
+                                {t('consultant.panel.activeCount', { count: linkedOrgs.length })}
                             </span>
                         </div>
 
                         {isLoading ? (
-                            <div className="p-12 text-center text-slate-400">Loading...</div>
+                            <div className="p-12 text-center text-slate-400">{t('consultant.panel.loading')}</div>
                         ) : linkedOrgs.length === 0 ? (
                             <div className="p-12 text-center">
                                 <div className="w-16 h-16 bg-slate-100 dark:bg-navy-900 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <Building size={32} className="text-slate-400" />
                                 </div>
-                                <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-2">No Organizations Linked</h3>
+                                <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-2">{t('consultant.panel.noOrgsTitle')}</h3>
                                 <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-6">
-                                    You don't have access to any organizations yet. Invite a client to get started.
+                                    {t('consultant.panel.noOrgsMessage')}
                                 </p>
                                 <button
                                     onClick={() => setCurrentView(AppView.CONSULTANT_INVITES)}
                                     className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors font-medium"
                                 >
-                                    Invite Client
+                                    {t('consultant.panel.inviteClient')}
                                 </button>
                             </div>
                         ) : (
@@ -114,7 +116,7 @@ export const ConsultantPanelView = () => {
                                                     <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400 mt-1">
                                                         <span className="capitalize">{org.status.toLowerCase()}</span>
                                                         <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-                                                        <span className="capitalize text-slate-400">Role: {org.role_in_org.toLowerCase()}</span>
+                                                        <span className="capitalize text-slate-400">{t('consultant.panel.role', { role: org.role_in_org.toLowerCase() })}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -123,7 +125,7 @@ export const ConsultantPanelView = () => {
                                                     onClick={() => handleSwitchToOrg(org.id)}
                                                     className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-navy-700 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 rounded-lg hover:border-purple-500 hover:text-purple-500 dark:hover:text-purple-400 transition-all font-medium text-sm"
                                                 >
-                                                    Open Workspace
+                                                    {t('consultant.panel.openWorkspace')}
                                                     <ExternalLink size={16} />
                                                 </button>
                                             </div>

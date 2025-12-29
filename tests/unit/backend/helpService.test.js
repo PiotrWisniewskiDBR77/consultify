@@ -22,7 +22,7 @@ describe('HelpService Constants and Validation', () => {
             expect(HelpService.EVENT_TYPES).toBeDefined();
             expect(HelpService.EVENT_TYPES.VIEWED).toBe('VIEWED');
             expect(HelpService.EVENT_TYPES.STARTED).toBe('STARTED');
-            expect(HelpService.EVENT_TYPES.COMPLETED).toBe('COMPLETED');
+            expect(HelpService.EVENT_TYPES.DONE).toBe('DONE');
             expect(HelpService.EVENT_TYPES.DISMISSED).toBe('DISMISSED');
         });
 

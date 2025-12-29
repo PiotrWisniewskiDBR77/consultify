@@ -101,9 +101,9 @@ const AIExecutiveReporting = {
             deps.db.get(`
                 SELECT 
                     COUNT(*) as total,
-                    SUM(CASE WHEN status IN ('done', 'DONE') THEN 1 ELSE 0 END) as completed,
+                    SUM(CASE WHEN status = 'DONE' THEN 1 ELSE 0 END) as completed,
                     SUM(CASE WHEN status = 'BLOCKED' THEN 1 ELSE 0 END) as blocked,
-                    SUM(CASE WHEN due_date < date('now') AND status NOT IN ('done', 'DONE') THEN 1 ELSE 0 END) as overdue
+                    SUM(CASE WHEN due_date < date('now') AND status != 'DONE' THEN 1 ELSE 0 END) as overdue
                 FROM tasks WHERE project_id = ?
             `, [projectId], (err, row) => resolve(row || { total: 0, completed: 0, blocked: 0, overdue: 0 }));
         });
@@ -158,8 +158,8 @@ const AIExecutiveReporting = {
             summary: {
                 initiatives: {
                     total: initiatives.total,
-                    inExecution: initiatives.statusBreakdown['IN_EXECUTION'] || 0,
-                    completed: initiatives.statusBreakdown['COMPLETED'] || 0
+                    inExecution: initiatives.statusBreakdown['EXECUTING'] || 0,
+                    completed: initiatives.statusBreakdown['DONE'] || 0
                 },
                 tasks: {
                     total: taskMetrics.total,
@@ -189,7 +189,7 @@ const AIExecutiveReporting = {
             deps.db.all(`
                 SELECT p.*, u.first_name as owner_first, u.last_name as owner_last,
                     (SELECT COUNT(*) FROM initiatives WHERE project_id = p.id) as initiative_count,
-                    (SELECT COUNT(*) FROM tasks WHERE project_id = p.id AND status NOT IN ('done', 'DONE')) as active_tasks,
+                    (SELECT COUNT(*) FROM tasks WHERE project_id = p.id AND status != 'DONE') as active_tasks,
                     (SELECT COUNT(*) FROM tasks WHERE project_id = p.id AND status = 'BLOCKED') as blocked_tasks,
                     (SELECT COUNT(*) FROM decisions WHERE project_id = p.id AND status = 'PENDING') as pending_decisions,
                     (SELECT COUNT(*) FROM risk_register WHERE project_id = p.id AND status NOT IN ('resolved', 'accepted') AND severity IN ('high', 'critical')) as critical_risks

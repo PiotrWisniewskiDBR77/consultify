@@ -206,4 +206,166 @@ router.delete('/integrations/:id', (req, res) => {
     });
 });
 
+// ==========================================
+// EXTENDED USER PREFERENCES
+// ==========================================
+
+/**
+ * @route GET /api/settings/preferences
+ * @desc Get all extended user preferences
+ * @access Private
+ */
+router.get('/preferences', auth, async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const row = await new Promise((resolve, reject) => {
+            db.get('SELECT extended_preferences FROM users WHERE id = ?', [userId], (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
+            });
+        });
+
+        if (!row || !row.extended_preferences) {
+            // Return default preferences
+            return res.json({
+                work: {
+                    defaultProjectView: 'list',
+                    taskSortOrder: 'priority',
+                    weekStartDay: 'monday',
+                    showCompletedTasks: true,
+                    autoArchiveDays: 30,
+                    enableTimeTracking: false,
+                    defaultTaskDuration: 60
+                },
+                dashboard: {
+                    defaultLandingPage: 'dashboard',
+                    widgetsVisible: ['overview', 'tasks', 'calendar', 'activity'],
+                    compactMode: false,
+                    showWelcomeMessage: true,
+                    refreshInterval: 300,
+                    chartAnimations: true
+                },
+                accessibility: {
+                    fontSize: 'medium',
+                    highContrast: false,
+                    reduceMotion: false,
+                    screenReaderOptimized: false,
+                    keyboardShortcuts: true,
+                    focusIndicators: true
+                },
+                privacy: {
+                    showOnlineStatus: true,
+                    showActivityStatus: true,
+                    allowProfileViewing: 'organization',
+                    shareAnalytics: true,
+                    marketingEmails: false
+                },
+                ai: {
+                    responseStyle: 'balanced',
+                    writingTone: 'professional',
+                    autoSuggestions: true,
+                    contextRetention: 'session',
+                    preferredLanguage: 'auto',
+                    codeExplanations: true,
+                    showSources: true
+                }
+            });
+        }
+
+        const prefs = JSON.parse(row.extended_preferences);
+        res.json(prefs);
+    } catch (err) {
+        console.error('[SettingsRoute] Error getting extended preferences:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
+ * @route PUT /api/settings/preferences
+ * @desc Update all extended user preferences
+ * @access Private
+ */
+router.put('/preferences', auth, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const preferences = req.body;
+
+        await new Promise((resolve, reject) => {
+            db.run(
+                'UPDATE users SET extended_preferences = ?, updated_at = datetime("now") WHERE id = ?',
+                [JSON.stringify(preferences), userId],
+                (err) => {
+                    if (err) reject(err);
+                    else resolve();
+                }
+            );
+        });
+
+        res.json({ success: true, preferences });
+    } catch (err) {
+        console.error('[SettingsRoute] Error updating extended preferences:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
+ * @route PUT /api/settings/preferences/:category
+ * @desc Update a specific category of extended user preferences
+ * @access Private
+ */
+router.put('/preferences/:category', auth, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { category } = req.params;
+        const categoryPrefs = req.body;
+
+        // Valid categories
+        const validCategories = ['work', 'dashboard', 'accessibility', 'privacy', 'ai'];
+        if (!validCategories.includes(category)) {
+            return res.status(400).json({ error: 'Invalid preference category' });
+        }
+
+        // Get existing preferences
+        const row = await new Promise((resolve, reject) => {
+            db.get('SELECT extended_preferences FROM users WHERE id = ?', [userId], (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
+            });
+        });
+
+        let existing = {};
+        if (row && row.extended_preferences) {
+            try {
+                existing = JSON.parse(row.extended_preferences);
+            } catch {
+                existing = {};
+            }
+        }
+
+        // Merge the category
+        existing[category] = {
+            ...(existing[category] || {}),
+            ...categoryPrefs
+        };
+
+        // Save
+        await new Promise((resolve, reject) => {
+            db.run(
+                'UPDATE users SET extended_preferences = ?, updated_at = datetime("now") WHERE id = ?',
+                [JSON.stringify(existing), userId],
+                (err) => {
+                    if (err) reject(err);
+                    else resolve();
+                }
+            );
+        });
+
+        res.json({ success: true, category, preferences: existing[category] });
+    } catch (err) {
+        console.error('[SettingsRoute] Error updating category preferences:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 module.exports = router;

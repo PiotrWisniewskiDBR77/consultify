@@ -1,17 +1,23 @@
-const jwt = require('jsonwebtoken');
+const defaultJwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey_change_this_in_production';
+
+// Dependencies object to allow injection
+const deps = {
+    jwt: defaultJwt
+};
 
 /**
  * Admin Middleware - Verifies user is an ADMIN or SUPERADMIN for their organization
  * Use this for organization-scoped admin actions (user management, team creation, etc.)
  */
 const verifyAdmin = (req, res, next) => {
-    const token = req.headers['authorization'] || req.headers['x-access-token'];
+    const headers = req.headers || {};
+    const token = headers['authorization'] || headers['x-access-token'];
     if (!token) return res.status(403).json({ error: 'No token provided' });
 
     const cleanToken = token.startsWith('Bearer ') ? token.slice(7) : token;
 
-    jwt.verify(cleanToken, JWT_SECRET, (err, decoded) => {
+    deps.jwt.verify(cleanToken, JWT_SECRET, (err, decoded) => {
         if (err) return res.status(401).json({ error: 'Unauthorized' });
 
         // Check if user is ADMIN or SUPERADMIN
@@ -85,4 +91,12 @@ const checkPermission = (requiredPermission) => {
     };
 };
 
-module.exports = { verifyAdmin, checkPermission };
+/**
+ * Inject dependencies for testing
+ * @param {Object} newDeps 
+ */
+function setDependencies(newDeps) {
+    Object.assign(deps, newDeps);
+}
+
+module.exports = { verifyAdmin, checkPermission, setDependencies };

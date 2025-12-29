@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../store/useAppStore';
 import { Api } from '../services/api';
 import { AIFeedbackButton } from '../components/AIFeedbackButton';
+import { formatChatError } from '../services/ai/errorMessages';
 
 import { WorkloadChart } from '../components/WorkloadChart';
 import { RoadmapSummary } from '../components/RoadmapSummary';
@@ -140,7 +141,7 @@ export const FullRoadmapView: React.FC = () => {
 
     } catch (e) {
       console.error("Roadmap Gen Error", e);
-      addAiMessage("AI Roadmap generation failed. Using standard sequencing.");
+      addAiMessage(formatChatError(e as Error, 'roadmap_generation'));
 
       // Fallback Logic (original)
       const scheduledInitiatives = fullSession.initiatives.map(init => {
@@ -224,14 +225,8 @@ export const FullRoadmapView: React.FC = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const res = await fetch('http://localhost:3001/api/users', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setUsers(data);
-        }
+        const data = await Api.getUsers();
+        setUsers(data);
       } catch (error) {
         console.error("Failed to fetch users", error);
       }
@@ -257,13 +252,13 @@ export const FullRoadmapView: React.FC = () => {
     updateFullSession({ initiatives: updated, step3Completed: true });
     await Api.saveSession(currentUser!.id, SessionMode.FULL, { ...fullSession, initiatives: updated, step3Completed: true }, currentProjectId || undefined);
 
-    onNavigate(AppView.FULL_STEP4_ROI); // Or go to Step 5 Execution directly? For now ROI.
-    // Actually Pilot Execution is Step 5 equivalent (FULL_PILOT_EXECUTION)?
-    // Keeping flow: Roadmap -> ROI -> Pilot Execution
+    onNavigate(AppView.FULL_STEP4_ROI); // Or go to Implementation directly? For now ROI.
+    // Flow: Roadmap -> ROI -> Implementation (IMPLEMENTATION)
+    // Keeping flow: Roadmap -> ROI -> Implementation
   };
 
   return (
-    <SplitLayout title="Module 3: Strategic Roadmap" onSendMessage={handleAiChat}>
+    <SplitLayout title="Module 3: Strategic Roadmap">
       <div className="w-full h-full relative">
         <div className="w-full h-full bg-slate-50 dark:bg-navy-950 flex flex-col p-6 overflow-y-auto gap-6 relative">
           <div className="absolute top-6 right-6 z-10">

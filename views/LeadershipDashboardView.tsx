@@ -74,17 +74,11 @@ export const LeadershipDashboardView: React.FC = () => {
         const loadAnalytics = async () => {
             if (!currentUser?.organizationId) return;
             try {
-                // Fetch data from our new Analytics API
-                // Note: We need to implement Api.getAnalytics() in frontend service
-                // For now, I will use raw fetch or add it to Api service.
-                // Since I cannot easily edit Api service sequentially here, I will do a raw fetch wrapper
-                const token = localStorage.getItem('token');
-                const headers = { 'Authorization': `Bearer ${token}` };
-                const API_URL = 'http://127.0.0.1:3001/api'; // Hardcoded for now based on Api.ts
+                // Use Api service for analytics endpoints
                 const [healthRes, perfRes, ecoRes] = await Promise.all([
-                    fetch(`${API_URL}/analytics/health`, { headers }).then(r => r.json()),
-                    fetch(`${API_URL}/analytics/performance`, { headers }).then(r => r.json()),
-                    fetch(`${API_URL}/analytics/economics`, { headers }).then(r => r.json())
+                    Api.getAnalyticsHealth(),
+                    Api.getAnalyticsPerformance(),
+                    Api.getAnalyticsEconomics()
                 ]);
                 setHealthData(healthRes);
                 setPerformanceData(perfRes);
@@ -102,7 +96,7 @@ export const LeadershipDashboardView: React.FC = () => {
     };
     if (loading) {
         return (
-            <SplitLayout title="Leadership Dashboard" onSendMessage={handleAiChat}>
+            <SplitLayout title="Leadership Dashboard">
                 <div className="w-full h-full bg-gray-50 dark:bg-navy-900 flex items-center justify-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
                 </div>
@@ -110,7 +104,7 @@ export const LeadershipDashboardView: React.FC = () => {
         );
     }
     return (
-        <SplitLayout title="Leadership Dashboard" onSendMessage={handleAiChat}>
+        <SplitLayout title="Leadership Dashboard">
             <div className="w-full h-full bg-gray-50 dark:bg-navy-900 overflow-y-auto p-8">
                 <div className="max-w-7xl mx-auto space-y-8">
                     {/* Section 1: Economic Impact (The "CFO View") */}

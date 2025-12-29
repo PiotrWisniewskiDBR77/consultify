@@ -1,12 +1,14 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FullInitiative, User, StrategicIntent, StakeholderImpact, StrategicGoal, InitiativeComment, InitiativeTeamMember, RelatedInitiative, InitiativeVersion } from '../types';
 
 import {
     X, Save, Target, TrendingUp, DollarSign,
     Calendar, Users, CheckCircle, Shield, UserCheck, Clock, ArrowRight,
     AlertTriangle, FileText, Globe, Sparkles, Brain, AlertOctagon,
-    MessageSquare, Copy, Link2, History, Download, Send, UserPlus, GitBranch
+    MessageSquare, Copy, Link2, History, Download, Send, UserPlus, GitBranch,
+    Award, Zap
 } from 'lucide-react';
 import { Button } from './Button';
 import { Select } from './Select';
@@ -28,10 +30,13 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
     isOpen,
     onClose,
     onSave,
-    users = [],
+    users: rawUsers = [],
     currentUser,
     strategicGoals = []
 }) => {
+    const { t } = useTranslation();
+    // Ensure users is always an array to prevent .map() errors
+    const users = Array.isArray(rawUsers) ? rawUsers : [];
     const [initiative, setInitiative] = useState<FullInitiative>({ ...initialInitiative });
     const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'definition' | 'execution' | 'economics' | 'governance' | 'team' | 'comments' | 'history' | 'intelligence'>('overview');
     const [isGenerating, setIsGenerating] = useState(false);
@@ -84,8 +89,8 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
         if (initiative.milestones && initiative.milestones.length > 0) timeline += 3;
 
         const total = strategic + problem + target + execution + value + governance + timeline;
-        return { 
-            total, 
+        return {
+            total,
             details: { strategic, problem, target, execution, value, governance, timeline },
             maxScores: { strategic: 15, problem: 15, target: 15, execution: 15, value: 15, governance: 15, timeline: 10 }
         };
@@ -211,6 +216,28 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
         }
     };
 
+    const handleAutoFill = async () => {
+        setIsGenerating(true);
+        try {
+            const res = await fetch('/api/ai/autofill-initiative', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ initiative, userId: currentUser?.id })
+            });
+            if (!res.ok) throw new Error("AI Autofill Failed");
+            const data = await res.json();
+            setInitiative(prev => ({
+                ...prev,
+                ...data
+            }));
+        } catch (error) {
+            console.error(error);
+            alert("Failed to autofill initiative via AI.");
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
     const handleSave = () => {
         // Validation
         if (!initiative.strategicIntent) {
@@ -262,29 +289,27 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                     {/* Module Transition Indicator */}
                     <div className="h-8 border-b border-slate-100 dark:border-white/5 flex items-center px-6 gap-0">
                         {[
-                            { module: 'Assessment', statuses: ['DRAFT'], color: 'slate', icon: '1' },
-                            { module: 'Initiative Mgmt', statuses: ['PLANNING', 'REVIEW', 'APPROVED'], color: 'amber', icon: '2' },
-                            { module: 'Execution', statuses: ['EXECUTING', 'BLOCKED', 'DONE'], color: 'blue', icon: '3' },
+                            { module: t('initiative.tabs.overview'), statuses: ['DRAFT'], color: 'slate', icon: '1' },
+                            { module: t('initiative.charterTitle'), statuses: ['PLANNING', 'REVIEW', 'APPROVED'], color: 'amber', icon: '2' },
+                            { module: t('initiative.tabs.execution'), statuses: ['EXECUTING', 'BLOCKED', 'DONE'], color: 'blue', icon: '3' },
                         ].map((mod, idx, arr) => {
                             const isActive = mod.statuses.includes(initiative.status || 'DRAFT');
-                            const isPassed = arr.slice(0, idx).some(m => m.statuses.includes(initiative.status || 'DRAFT')) || 
-                                            (idx < arr.findIndex(m => m.statuses.includes(initiative.status || 'DRAFT')));
+                            const isPassed = arr.slice(0, idx).some(m => m.statuses.includes(initiative.status || 'DRAFT')) ||
+                                (idx < arr.findIndex(m => m.statuses.includes(initiative.status || 'DRAFT')));
                             return (
                                 <React.Fragment key={mod.module}>
-                                    <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold transition-all ${
-                                        isActive 
-                                            ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 shadow-sm' 
-                                            : isPassed 
-                                                ? 'bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400' 
-                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500'
-                                    }`}>
-                                        <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] ${
-                                            isActive 
-                                                ? 'bg-blue-500 text-white' 
-                                                : isPassed 
-                                                    ? 'bg-green-500 text-white' 
-                                                    : 'bg-slate-300 dark:bg-slate-600 text-white'
+                                    <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold transition-all ${isActive
+                                        ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 shadow-sm'
+                                        : isPassed
+                                            ? 'bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400'
+                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500'
                                         }`}>
+                                        <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] ${isActive
+                                            ? 'bg-blue-500 text-white'
+                                            : isPassed
+                                                ? 'bg-green-500 text-white'
+                                                : 'bg-slate-300 dark:bg-slate-600 text-white'
+                                            }`}>
                                             {isPassed && !isActive ? '✓' : mod.icon}
                                         </span>
                                         <span className="uppercase tracking-wide">{mod.module}</span>
@@ -297,7 +322,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                         })}
                         <div className="flex-1" />
                         <span className="text-[10px] text-slate-400">
-                            {initiative.status === 'ARCHIVED' ? '📦 Archived' : initiative.status === 'CANCELLED' ? '❌ Cancelled' : ''}
+                            {initiative.status === 'ARCHIVED' ? `📦 ${t('status.ARCHIVED')}` : initiative.status === 'CANCELLED' ? `❌ ${t('status.CANCELLED')}` : ''}
                         </span>
                     </div>
 
@@ -308,25 +333,24 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                 <Target size={20} />
                             </div>
                             <div>
-                                <h2 className="text-lg font-bold text-navy-900 dark:text-white">Initiative Charter</h2>
+                                <h2 className="text-lg font-bold text-navy-900 dark:text-white">{t('initiative.charterTitle')}</h2>
                                 <div className="flex items-center gap-2 text-xs text-slate-400">
-                                    <span className="uppercase">{initiative.id ? `ID: ${initiative.id.slice(0, 8)}` : 'New Initiative'}</span>
+                                    <span className="uppercase">{initiative.id ? `${t('initiative.idLabel')} ${initiative.id.slice(0, 8)}` : t('initiative.newInitiative')}</span>
                                     <span className="w-1 h-1 bg-slate-600 rounded-full"></span>
-                                    <span className={`uppercase font-bold ${
-                                        initiative.status === 'BLOCKED' ? 'text-red-400' :
+                                    <span className={`uppercase font-bold ${initiative.status === 'BLOCKED' ? 'text-red-400' :
                                         initiative.status === 'DONE' ? 'text-green-400' :
-                                        initiative.status === 'EXECUTING' ? 'text-blue-400' :
-                                        'text-amber-400'
-                                    }`}>{initiative.status?.replace('_', ' ') || 'DRAFT'}</span>
+                                            initiative.status === 'EXECUTING' ? 'text-blue-400' :
+                                                'text-amber-400'
+                                        }`}>{t(`status.${initiative.status || 'DRAFT'}`).replace('_', ' ')}</span>
                                     <span className="w-1 h-1 bg-slate-600 rounded-full"></span>
                                     <div className="flex items-center gap-1 text-blue-400">
                                         <TrendingUp size={12} />
-                                        <span>Progress: {initiative.progress || 0}%</span>
+                                        <span>{t('initiative.progressLabel')} {initiative.progress || 0}%</span>
                                     </div>
                                     <span className="w-1 h-1 bg-slate-600 rounded-full"></span>
                                     <div className={`flex items-center gap-1 ${isReady ? 'text-green-400' : 'text-orange-400'}`}>
                                         <Brain size={12} />
-                                        <span>Readiness: {readiness}%</span>
+                                        <span>{t('initiative.readinessLabel')} {readiness}%</span>
                                     </div>
                                 </div>
                             </div>
@@ -340,16 +364,16 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                 {/* Tabs */}
                 <div className="flex border-b border-slate-200 dark:border-white/5 bg-white dark:bg-navy-900/50 px-6 gap-6">
                     {[
-                        { id: 'overview', label: 'Overview', icon: FileText },
-                        { id: 'tasks', label: 'Tasks', icon: CheckCircle },
-                        { id: 'definition', label: 'Definition & Scope', icon: Target },
-                        { id: 'execution', label: 'Execution & Risks', icon: Calendar },
-                        { id: 'economics', label: 'Value & Finance', icon: DollarSign },
-                        { id: 'governance', label: 'Governance', icon: Shield },
-                        { id: 'team', label: 'Team', icon: Users },
-                        { id: 'comments', label: 'Discussion', icon: MessageSquare },
-                        { id: 'history', label: 'History', icon: History },
-                        { id: 'intelligence', label: 'Intelligence', icon: Brain },
+                        { id: 'overview', label: t('initiative.tabs.overview'), icon: FileText },
+                        { id: 'tasks', label: t('initiative.tabs.tasks'), icon: CheckCircle },
+                        { id: 'definition', label: t('initiative.tabs.definition'), icon: Target },
+                        { id: 'execution', label: t('initiative.tabs.execution'), icon: Calendar },
+                        { id: 'economics', label: t('initiative.tabs.economics'), icon: DollarSign },
+                        { id: 'governance', label: t('initiative.tabs.governance'), icon: Shield },
+                        { id: 'team', label: t('initiative.tabs.team'), icon: Users },
+                        { id: 'comments', label: t('initiative.tabs.discussion'), icon: MessageSquare },
+                        { id: 'history', label: t('initiative.tabs.history'), icon: History },
+                        { id: 'intelligence', label: t('initiative.tabs.intelligence'), icon: Brain },
                     ].map(tab => (
                         <button
                             key={tab.id}
@@ -385,7 +409,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                             <div className="bg-slate-50 dark:bg-navy-950 p-5 rounded-xl border border-slate-200 dark:border-blue-500/30 shadow-sm dark:shadow-blue-900/10 flex items-start gap-6">
                                 <div className="flex-1 space-y-2">
                                     <label className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider flex items-center gap-2">
-                                        <AlertOctagon size={14} /> Decision to be made
+                                        <AlertOctagon size={14} /> {t('initiative.decisionToMake')}
                                     </label>
                                     <input
                                         className="w-full bg-white dark:bg-navy-900 border-b-2 border-blue-500/50 text-xl font-bold text-navy-900 dark:text-white focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 py-2 placeholder:text-slate-400 dark:placeholder:text-blue-900/50"
@@ -396,7 +420,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                     <p className="text-xs text-slate-500">Define the specific decision executives need to make today.</p>
                                 </div>
                                 <div className="w-64 space-y-2">
-                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Decision Owner</label>
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('initiative.decisionOwner')}</label>
                                     <Select
                                         value={initiative.decisionOwnerId || ''}
                                         onChange={(val) => setInitiative({ ...initiative, decisionOwnerId: val })}
@@ -411,7 +435,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                 <div className="col-span-8 space-y-6">
                                     <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-5 border border-slate-200 dark:border-white/5 space-y-4">
                                         <h3 className="text-sm font-bold text-navy-900 dark:text-white flex items-center gap-2">
-                                            <Sparkles size={16} className="text-purple-600 dark:text-purple-400" /> Executive One-Liner
+                                            <Sparkles size={16} className="text-purple-600 dark:text-purple-400" /> {t('initiative.oneLiner')}
                                         </h3>
                                         <div className="bg-white dark:bg-navy-900 p-4 rounded-lg border border-slate-200 dark:border-white/5 space-y-3">
                                             <p className="text-xs text-slate-500 font-mono mb-2">Structure: Achieve [X] by changing [Y] so that [Z improves]</p>
@@ -426,11 +450,11 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
 
                                     <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-5 border border-slate-200 dark:border-white/5 space-y-4">
                                         <h3 className="text-sm font-bold text-navy-900 dark:text-white flex items-center gap-2">
-                                            <AlertTriangle size={16} className="text-orange-500 dark:text-orange-400" /> Problem Statement (The Why)
+                                            <AlertTriangle size={16} className="text-orange-500 dark:text-orange-400" /> {t('initiative.problemStatement')}
                                         </h3>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="col-span-2">
-                                                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Symptom</label>
+                                                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">{t('initiative.symptom')}</label>
                                                 <input
                                                     className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded p-2 text-navy-900 dark:text-white text-sm"
                                                     placeholder="What is visible?"
@@ -439,7 +463,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                                 />
                                             </div>
                                             <div>
-                                                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Root Cause</label>
+                                                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">{t('initiative.rootCause')}</label>
                                                 <input
                                                     className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded p-2 text-navy-900 dark:text-white text-sm"
                                                     placeholder="Why is it happening?"
@@ -448,7 +472,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                                 />
                                             </div>
                                             <div>
-                                                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Cost of Inaction</label>
+                                                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">{t('initiative.costOfInaction')}</label>
                                                 <input
                                                     className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded p-2 text-navy-900 dark:text-white text-sm"
                                                     placeholder="What if we do nothing?"
@@ -459,7 +483,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
 
                                             {/* Legacy Textarea Fallback (if user wants to write generic text) */}
                                             <div className="col-span-2 mt-2">
-                                                <p className="text-xs text-slate-600 mb-1">Full Description (Legacy)</p>
+                                                <p className="text-xs text-slate-600 mb-1">{t('initiative.fullDescriptionLabel')}</p>
                                                 <textarea
                                                     className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-600 dark:text-slate-400 text-xs h-16 resize-none"
                                                     value={initiative.problemStatement || ''}
@@ -472,14 +496,14 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
 
                                     {/* Basic Fields */}
                                     <div className="grid grid-cols-2 gap-4">
-                                        <InputGroup label="Initiative Name">
+                                        <InputGroup label={t('initiative.nameLabel')}>
                                             <input
                                                 className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-navy-900 dark:text-white focus:border-blue-500 outline-none"
                                                 value={initiative.name}
                                                 onChange={e => setInitiative({ ...initiative, name: e.target.value })}
                                             />
                                         </InputGroup>
-                                        <InputGroup label="Strategic Intent">
+                                        <InputGroup label={t('initiative.strategicIntentLabel')}>
                                             <Select
                                                 value={initiative.strategicIntent || ''}
                                                 onChange={(val) => setInitiative({ ...initiative, strategicIntent: val as StrategicIntent })}
@@ -500,22 +524,22 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                     {/* Strategic Fit Panel */}
                                     <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-5 border border-slate-200 dark:border-white/5 h-full">
                                         <div className="flex justify-between items-center mb-4">
-                                            <h3 className="text-sm font-bold text-navy-900 dark:text-white">Strategic Fit</h3>
+                                            <h3 className="text-sm font-bold text-navy-900 dark:text-white">{t('initiative.strategicFitTitle')}</h3>
                                             <button onClick={handleCheckStrategicFit} disabled={isGenerating} className="text-blue-600 dark:text-blue-400 hover:text-navy-900 dark:hover:text-white">
                                                 {isGenerating ? <div className="w-4 h-4 rounded-full border-2 border-t-transparent border-blue-500 animate-spin" /> : <Sparkles size={14} />}
                                             </button>
                                         </div>
                                         <div className="space-y-3">
                                             <div className="flex items-center justify-between p-2 bg-white dark:bg-navy-900 rounded border border-slate-100 dark:border-white/5">
-                                                <span className="text-xs text-slate-500 dark:text-slate-400">Alignment with Axis</span>
+                                                <span className="text-xs text-slate-500 dark:text-slate-400">{t('initiative.alignmentWithAxis')}</span>
                                                 {initiative.strategicFit?.axisAlign ? <CheckCircle size={14} className="text-green-500" /> : <X size={14} className="text-slate-400 dark:text-slate-600" />}
                                             </div>
                                             <div className="flex items-center justify-between p-2 bg-white dark:bg-navy-900 rounded border border-slate-100 dark:border-white/5">
-                                                <span className="text-xs text-slate-500 dark:text-slate-400">Corporate Goal</span>
+                                                <span className="text-xs text-slate-500 dark:text-slate-400">{t('initiative.corporateGoal')}</span>
                                                 {initiative.strategicFit?.goalAlign ? <CheckCircle size={14} className="text-green-500" /> : <X size={14} className="text-slate-400 dark:text-slate-600" />}
                                             </div>
                                             <div className="flex items-center justify-between p-2 bg-white dark:bg-navy-900 rounded border border-slate-100 dark:border-white/5">
-                                                <span className="text-xs text-slate-500 dark:text-slate-400">Pain Point</span>
+                                                <span className="text-xs text-slate-500 dark:text-slate-400">{t('initiative.painPoint')}</span>
                                                 {initiative.strategicFit?.painPointAlign ? <CheckCircle size={14} className="text-green-500" /> : <X size={14} className="text-slate-400 dark:text-slate-600" />}
                                             </div>
                                             <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-500/10 rounded border border-blue-100 dark:border-blue-500/20">
@@ -527,7 +551,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                             {/* Enhanced Readiness Breakdown v2 */}
                                             <div className="mt-6 pt-6 border-t border-slate-200 dark:border-white/5">
                                                 <div className="flex items-center justify-between mb-4">
-                                                    <h4 className="text-xs font-bold text-navy-900 dark:text-white">Charter Readiness</h4>
+                                                    <h4 className="text-xs font-bold text-navy-900 dark:text-white">{t('initiative.charterReadiness')}</h4>
                                                     <div className={`text-lg font-bold ${readiness >= 80 ? 'text-green-500' : readiness >= 50 ? 'text-amber-500' : 'text-red-500'}`}>
                                                         {readiness}%
                                                     </div>
@@ -542,8 +566,8 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                                                 <div className={`w-2 h-2 rounded-full ${isComplete ? 'bg-green-500' : percentage > 50 ? 'bg-amber-500' : 'bg-slate-300 dark:bg-slate-600'}`} />
                                                                 <span className="text-xs text-slate-500 dark:text-slate-400 capitalize flex-1">{key}</span>
                                                                 <div className="w-24 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                                                                    <div 
-                                                                        className={`h-full transition-all ${isComplete ? 'bg-green-500' : percentage > 50 ? 'bg-amber-500' : 'bg-blue-500'}`} 
+                                                                    <div
+                                                                        className={`h-full transition-all ${isComplete ? 'bg-green-500' : percentage > 50 ? 'bg-amber-500' : 'bg-blue-500'}`}
                                                                         style={{ width: `${percentage}%` }}
                                                                     />
                                                                 </div>
@@ -557,7 +581,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                                 {readiness < 80 && (
                                                     <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/10 rounded-lg border border-amber-200 dark:border-amber-500/20">
                                                         <p className="text-xs text-amber-700 dark:text-amber-400">
-                                                            <span className="font-bold">Incomplete:</span> Fill in missing sections to reach 80% before advancing to Review.
+                                                            <span className="font-bold">{t('initiative.incompleteLabel')}</span> Fill in missing sections to reach 80% before advancing to Review.
                                                         </p>
                                                     </div>
                                                 )}
@@ -569,12 +593,12 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
 
                             {/* 3. Target State Snapshot */}
                             <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-5 border border-slate-200 dark:border-white/5">
-                                <h3 className="text-sm font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2"><Target size={16} className="text-blue-500 dark:text-blue-400" /> Target State Snapshot (After Initiative)</h3>
+                                <h3 className="text-sm font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2"><Target size={16} className="text-blue-500 dark:text-blue-400" /> {t('initiative.targetStateSnapshot')}</h3>
                                 <div className="grid grid-cols-3 gap-4">
                                     {['Process', 'Behavior', 'Capability'].map(type => (
                                         <div key={type} className="bg-white dark:bg-navy-900 p-3 rounded-lg border border-slate-200 dark:border-white/5">
                                             <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 border-b border-slate-100 dark:border-white/5 pb-1 flex justify-between">
-                                                {type} Changes
+                                                {t(`initiative.${type.toLowerCase()}Changes`)}
                                                 <button onClick={() => handleGenerateList('targetState', type.toLowerCase())} disabled={isGenerating} className="text-blue-500 hover:text-purple-500"><Sparkles size={10} /></button>
                                             </h4>
                                             <div className="space-y-2">
@@ -608,7 +632,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                                     const key = type.toLowerCase() as keyof typeof newState;
                                                     (newState[key] as string[]).push("New item...");
                                                     setInitiative({ ...initiative, targetState: newState });
-                                                }} className="text-xs text-blue-500 hover:text-blue-400">+ Add bullet</button>
+                                                }} className="text-xs text-blue-500 hover:text-blue-400">+ {t('initiative.addBullet')}</button>
                                             </div>
                                         </div>
                                     ))}
@@ -620,7 +644,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                 {/* Attachments */}
                                 <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-5 border border-slate-200 dark:border-white/5">
                                     <h3 className="text-sm font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-                                        <FileText size={16} className="text-blue-500 dark:text-blue-400" /> Evidence & Attachments
+                                        <FileText size={16} className="text-blue-500 dark:text-blue-400" /> {t('initiative.evidenceTitle')}
                                     </h3>
                                     <div className="space-y-2">
                                         {(initiative.attachments || []).map((att, idx) => (
@@ -643,14 +667,14 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                             const list = [...(initiative.attachments || [])];
                                             list.push({ id: Date.now().toString(), name: "New Evidence.pdf", type: 'strategy', url: '', uploadedAt: new Date().toISOString() });
                                             setInitiative({ ...initiative, attachments: list });
-                                        }} className="text-xs text-blue-500 hover:text-blue-400">+ Add Attachment (Mock)</button>
+                                        }} className="text-xs text-blue-500 hover:text-blue-400">+ {t('initiative.addAttachmentMock')}</button>
                                     </div>
                                 </div>
 
                                 {/* Change Log */}
                                 <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-5 border border-slate-200 dark:border-white/5">
                                     <h3 className="text-sm font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-                                        <TrendingUp size={16} className="text-purple-600 dark:text-purple-400" /> Strategic Change Log
+                                        <TrendingUp size={16} className="text-purple-600 dark:text-purple-400" /> {t('initiative.strategicChangeLog')}
                                     </h3>
                                     <div className="space-y-3">
                                         {(initiative.changeLog || []).map((log, idx) => (
@@ -667,7 +691,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                             const list = [...(initiative.changeLog || [])];
                                             list.push({ id: Date.now().toString(), date: new Date().toISOString().split('T')[0], user: currentUser?.firstName || 'User', change: "Updated strategy", reason: "Market shift", impact: "High" });
                                             setInitiative({ ...initiative, changeLog: list });
-                                        }} className="text-xs text-purple-500 hover:text-purple-400">+ Add Log Entry</button>
+                                        }} className="text-xs text-purple-500 hover:text-purple-400">+ {t('initiative.addLogEntry')}</button>
                                     </div>
                                 </div>
                             </div>
@@ -682,12 +706,12 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                 {/* Strategic Roadmap Attributes (New) */}
                                 <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-5 border border-slate-200 dark:border-white/5 space-y-4">
                                     <h3 className="text-navy-900 dark:text-white font-bold flex items-center gap-2 border-b border-slate-200 dark:border-white/10 pb-2">
-                                        <Globe size={18} className="text-blue-600 dark:text-blue-500" /> Strategic Roadmap Attributes
+                                        <GitBranch size={18} className="text-blue-500" /> {t('initiative.strategicRoadmapAttributes')}
                                     </h3>
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="col-span-2 md:col-span-1">
-                                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Strategic Role</label>
+                                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">{t('initiative.strategicRole')}</label>
                                             <Select
                                                 value={initiative.strategicRole || ''}
                                                 onChange={(val) => setInitiative({ ...initiative, strategicRole: val as any })}
@@ -708,7 +732,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
 
                                     <div>
                                         <div className="flex justify-between items-center mb-1">
-                                            <label className="text-xs font-bold text-slate-500 uppercase">Placement Reason</label>
+                                            <label className="text-xs font-bold text-slate-500 uppercase">{t('initiative.placementReason')}</label>
                                             <button
                                                 onClick={async () => {
                                                     setIsGenerating(true);
@@ -726,25 +750,25 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                                 disabled={isGenerating}
                                                 className="text-[10px] text-blue-400 hover:text-white flex items-center gap-1"
                                             >
-                                                <Sparkles size={10} /> {isGenerating ? 'Generating...' : 'Auto-fill with AI'}
+                                                <Sparkles size={10} /> {isGenerating ? t('common.generating') : t('initiative.autoFillWithAI')}
                                             </button>
 
                                         </div>
                                         <textarea
                                             className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded p-2 text-sm text-navy-900 dark:text-slate-300 h-20 focus:outline-none focus:border-blue-500/50"
-                                            placeholder="Why is this initiative placed here? (e.g. key dependency for X...)"
+                                            placeholder={t('initiative.placementReasonPlaceholder')}
                                             value={initiative.placementReason || ''}
                                             onChange={e => setInitiative({ ...initiative, placementReason: e.target.value })}
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="text-xs font-bold text-slate-500 uppercase mb-3 block">Effort Profile (1-5)</label>
+                                        <label className="text-xs font-bold text-slate-500 uppercase mb-3 block">{t('initiative.effortProfile')}</label>
                                         <div className="space-y-3">
                                             {[
-                                                { label: 'Analytical', key: 'analytical', color: 'bg-blue-500' },
-                                                { label: 'Operational', key: 'operational', color: 'bg-emerald-500' },
-                                                { label: 'Change Mgmt', key: 'change', color: 'bg-rose-500' }
+                                                { label: t('initiative.analytical'), key: 'analytical', color: 'bg-blue-500' },
+                                                { label: t('initiative.operational'), key: 'operational', color: 'bg-emerald-500' },
+                                                { label: t('initiative.changeMgmt'), key: 'change', color: 'bg-rose-500' }
                                             ].map(metric => (
                                                 <div key={metric.key} className="flex items-center gap-3">
                                                     <span className="text-xs text-slate-500 dark:text-slate-400 w-20">{metric.label}</span>
@@ -778,10 +802,10 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                 </div>
 
                                 {/* Success Criteria (Enhanced) */}
-                                <div className="space-y-4">
+                                <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-5 border border-slate-200 dark:border-white/5 space-y-4">
                                     <h3 className="text-navy-900 dark:text-white font-bold flex items-center gap-2 border-b border-slate-200 dark:border-white/10 pb-2">
-                                        <TrendingUp size={18} className="text-blue-500" /> Success Criteria (Typed)
-                                        <button onClick={() => handleGenerateList('successCriteria')} disabled={isGenerating} className="ml-auto text-xs flex items-center gap-1 text-purple-500 bg-purple-100 dark:bg-purple-500/10 px-2 py-1 rounded hover:bg-purple-200"><Sparkles size={12} /> Auto-Suggest</button>
+                                        <Award size={18} className="text-blue-500" /> {t('initiative.successCriteriaTyped')}
+                                        <button onClick={() => handleGenerateList('successCriteria')} disabled={isGenerating} className="ml-auto text-xs flex items-center gap-1 text-purple-500 bg-purple-100 dark:bg-purple-500/10 px-2 py-1 rounded hover:bg-purple-200"><Sparkles size={12} /> {t('initiative.autoSuggest')}</button>
                                     </h3>
 
                                     {(initiative.structuredSuccessCriteria || initiative.successCriteria?.map(s => ({ type: 'Metric', value: s })) || []).map((item: any, idx: number) => (
@@ -795,10 +819,10 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                                     setInitiative({ ...initiative, structuredSuccessCriteria: list });
                                                 }}
                                             >
-                                                <option value="Metric">Metric</option>
-                                                <option value="Behavior">Behavior</option>
-                                                <option value="Process">Process</option>
-                                                <option value="Capability">Capability</option>
+                                                <option value="Metric">{t('initiative.metric')}</option>
+                                                <option value="Behavior">{t('initiative.behavior')}</option>
+                                                <option value="Process">{t('initiative.process')}</option>
+                                                <option value="Capability">{t('initiative.capability')}</option>
                                             </select>
                                             <input
                                                 className="flex-1 bg-transparent border-none p-1 text-sm text-navy-900 dark:text-white focus:ring-0"
@@ -808,7 +832,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                                     list[idx] = { ...item, value: e.target.value };
                                                     setInitiative({ ...initiative, structuredSuccessCriteria: list });
                                                 }}
-                                                placeholder="Criteria description..."
+                                                placeholder={t('initiative.criteriaDescriptionPlaceholder')}
                                             />
                                             <button onClick={() => {
                                                 const list = [...(initiative.structuredSuccessCriteria || initiative.successCriteria?.map(s => ({ type: 'Metric', value: s })) || [])];
@@ -821,57 +845,57 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                         const list = [...(initiative.structuredSuccessCriteria || initiative.successCriteria?.map(s => ({ type: 'Metric', value: s })) || [])];
                                         list.push({ type: 'Metric', value: '' });
                                         setInitiative({ ...initiative, structuredSuccessCriteria: list });
-                                    }} className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-medium">+ Add Criteria</button>
+                                    }} className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-medium">+ {t('initiative.addCriteria')}</button>
                                 </div>
 
                                 {/* EXPLICIT ASSUMPTIONS (NEW) */}
                                 <div className="space-y-4">
                                     <h3 className="text-navy-900 dark:text-white font-bold flex items-center gap-2 border-b border-slate-200 dark:border-white/10 pb-2">
-                                        <AlertOctagon size={18} className="text-purple-600 dark:text-purple-500" /> Explicit Assumptions
-                                        <span className="text-xs text-slate-400 font-normal ml-2">(Click label to auto-fill)</span>
+                                        <AlertOctagon size={18} className="text-purple-600 dark:text-purple-500" /> {t('initiative.explicitAssumptions')}
+                                        <span className="text-xs text-slate-400 font-normal ml-2">({t('common.clickLabelToAutoFill')})</span>
                                     </h3>
 
                                     <div className="grid grid-cols-1 gap-4">
                                         <div className="bg-slate-50 dark:bg-navy-950 p-3 rounded border border-slate-200 dark:border-white/5">
                                             <label className="text-xs font-bold text-slate-500 uppercase mb-1 flex items-center gap-2 cursor-pointer hover:text-purple-500" onClick={() => handleGenerateList('assumptions', 'org')}>
-                                                Organizational <Sparkles size={10} />
+                                                {t('initiative.organizational')} <Sparkles size={10} />
                                             </label>
                                             <input
                                                 className="w-full bg-transparent text-sm text-navy-900 dark:text-slate-300 focus:outline-none"
-                                                placeholder="e.g. Structure remains stable..."
+                                                placeholder={t('initiative.organizationalPlaceholder')}
                                                 value={initiative.assumptions?.org || ''}
                                                 onChange={e => setInitiative({ ...initiative, assumptions: { ...initiative.assumptions, org: e.target.value } })}
                                             />
                                         </div>
                                         <div className="bg-slate-50 dark:bg-navy-950 p-3 rounded border border-slate-200 dark:border-white/5">
                                             <label className="text-xs font-bold text-slate-500 uppercase mb-1 flex items-center gap-2 cursor-pointer hover:text-purple-500" onClick={() => handleGenerateList('assumptions', 'data')}>
-                                                Data / Tech <Sparkles size={10} />
+                                                {t('initiative.dataTech')} <Sparkles size={10} />
                                             </label>
                                             <input
                                                 className="w-full bg-transparent text-sm text-navy-900 dark:text-slate-300 focus:outline-none"
-                                                placeholder="e.g. ERP data is available by Q2..."
+                                                placeholder={t('initiative.dataTechPlaceholder')}
                                                 value={initiative.assumptions?.data || ''}
                                                 onChange={e => setInitiative({ ...initiative, assumptions: { ...initiative.assumptions, data: e.target.value } })}
                                             />
                                         </div>
                                         <div className="bg-slate-50 dark:bg-navy-950 p-3 rounded border border-slate-200 dark:border-white/5">
                                             <label className="text-xs font-bold text-slate-500 uppercase mb-1 flex items-center gap-2 cursor-pointer hover:text-purple-500" onClick={() => handleGenerateList('assumptions', 'budget')}>
-                                                Budget / Resources <Sparkles size={10} />
+                                                {t('initiative.budgetResources')} <Sparkles size={10} />
                                             </label>
                                             <input
                                                 className="w-full bg-transparent text-sm text-navy-900 dark:text-slate-300 focus:outline-none"
-                                                placeholder="e.g. Budget approval 1st Jan..."
+                                                placeholder={t('initiative.budgetResourcesPlaceholder')}
                                                 value={initiative.assumptions?.budget || ''}
                                                 onChange={e => setInitiative({ ...initiative, assumptions: { ...initiative.assumptions, budget: e.target.value } })}
                                             />
                                         </div>
                                         <div className="bg-slate-50 dark:bg-navy-950 p-3 rounded border border-slate-200 dark:border-white/5">
                                             <label className="text-xs font-bold text-slate-500 uppercase mb-1 flex items-center gap-2 cursor-pointer hover:text-purple-500" onClick={() => handleGenerateList('assumptions', 'people')}>
-                                                People / Skills <Sparkles size={10} />
+                                                {t('initiative.peopleSkills')} <Sparkles size={10} />
                                             </label>
                                             <input
                                                 className="w-full bg-transparent text-sm text-navy-900 dark:text-slate-300 focus:outline-none"
-                                                placeholder="e.g. Key Stakeholders are available..."
+                                                placeholder={t('initiative.peopleSkillsPlaceholder')}
                                                 value={initiative.assumptions?.people || ''}
                                                 onChange={e => setInitiative({ ...initiative, assumptions: { ...initiative.assumptions, people: e.target.value } })}
                                             />
@@ -882,8 +906,8 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
 
                             <div className="space-y-4">
                                 <h3 className="text-navy-900 dark:text-white font-bold flex items-center gap-2 border-b border-slate-200 dark:border-white/10 pb-2">
-                                    <CheckCircle size={18} className="text-green-500" /> Key Deliverables
-                                    <button onClick={() => handleGenerateList('deliverables')} disabled={isGenerating} className="ml-auto text-xs flex items-center gap-1 text-purple-500 bg-purple-100 dark:bg-purple-500/10 px-2 py-1 rounded hover:bg-purple-200"><Sparkles size={12} /> Auto-Suggest</button>
+                                    <CheckCircle size={18} className="text-green-500" /> {t('initiative.keyDeliverables')}
+                                    <button onClick={() => handleGenerateList('deliverables')} disabled={isGenerating} className="ml-auto text-xs flex items-center gap-1 text-purple-500 bg-purple-100 dark:bg-purple-500/10 px-2 py-1 rounded hover:bg-purple-200"><Sparkles size={12} /> {t('initiative.autoSuggest')}</button>
                                 </h3>
                                 {initiative.deliverables?.map((item, idx) => (
                                     <div key={idx} className="flex gap-2">
@@ -896,18 +920,18 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                         <button onClick={() => removeArrayItem('deliverables', idx)} className="text-slate-500 hover:text-red-500"><X size={16} /></button>
                                     </div>
                                 ))}
-                                <button onClick={() => addArrayItem('deliverables')} className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-medium">+ Add Deliverable</button>
+                                <button onClick={() => addArrayItem('deliverables')} className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-medium">+ {t('initiative.addDeliverable')}</button>
 
                                 <div className="mt-8">
                                     <h3 className="text-navy-900 dark:text-white font-bold flex items-center gap-2 border-b border-slate-200 dark:border-white/10 pb-2">
-                                        <Target size={18} className="text-orange-500" /> Scope Guard (Target)
+                                        <Target size={18} className="text-orange-500" /> {t('initiative.scopeGuard')}
                                     </h3>
                                     <div className="bg-orange-500/5 p-4 rounded border border-orange-500/10 mt-2">
                                         <p className="text-xs text-orange-800 dark:text-orange-200 mb-2">Scope In / Out definition determines the boundary of AI monitoring.</p>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
                                                 <h4 className="text-xs font-bold text-green-600 dark:text-green-400 uppercase mb-2 flex justify-between">
-                                                    In Scope <button onClick={() => handleGenerateList('scopeIn')}><Sparkles size={10} /></button>
+                                                    {t('initiative.inScope')} <button onClick={() => handleGenerateList('scopeIn')}><Sparkles size={10} /></button>
                                                 </h4>
                                                 {initiative.scopeIn?.map((s, idx) => (
                                                     <div key={idx} className="flex gap-1 mb-1">
@@ -915,11 +939,11 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                                         <button onClick={() => removeArrayItem('scopeIn', idx)}><X size={12} className="text-slate-500" /></button>
                                                     </div>
                                                 ))}
-                                                <button onClick={() => addArrayItem('scopeIn')} className="text-xs text-green-600 dark:text-green-400">+ Add</button>
+                                                <button onClick={() => addArrayItem('scopeIn')} className="text-xs text-green-600 dark:text-green-400">+ {t('common.add')}</button>
                                             </div>
                                             <div>
                                                 <h4 className="text-xs font-bold text-red-600 dark:text-red-400 uppercase mb-2 flex justify-between">
-                                                    Out of Scope <button onClick={() => handleGenerateList('scopeOut')}><Sparkles size={10} /></button>
+                                                    {t('initiative.outOfScope')} <button onClick={() => handleGenerateList('scopeOut')}><Sparkles size={10} /></button>
                                                 </h4>
                                                 {initiative.scopeOut?.map((s, idx) => (
                                                     <div key={idx} className="flex gap-1 mb-1">
@@ -927,7 +951,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                                         <button onClick={() => removeArrayItem('scopeOut', idx)}><X size={12} className="text-slate-500" /></button>
                                                     </div>
                                                 ))}
-                                                <button onClick={() => addArrayItem('scopeOut')} className="text-xs text-red-400">+ Add</button>
+                                                <button onClick={() => addArrayItem('scopeOut')} className="text-xs text-red-400">+ {t('common.add')}</button>
                                             </div>
                                         </div>
                                     </div>
@@ -940,8 +964,23 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                     {activeTab === 'execution' && (
                         <div className="grid grid-cols-2 gap-8">
                             <div className="space-y-6">
+                                <div className="bg-blue-500/5 p-4 rounded border border-blue-500/10 flex items-start gap-3">
+                                    <Brain size={24} className="text-blue-500 mt-1" />
+                                    <div>
+                                        <h4 className="text-sm font-bold text-navy-900 dark:text-white">{t('initiative.autoFill')}</h4>
+                                        <p className="text-xs text-slate-500 mb-3">{t('initiative.autoFillDescription')}</p>
+                                        <button
+                                            onClick={handleAutoFill}
+                                            disabled={isGenerating}
+                                            className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20"
+                                        >
+                                            <Sparkles size={14} className={isGenerating ? "animate-spin" : ""} />
+                                            {isGenerating ? t('common.analyzing') : t('initiative.autoFillExecution')}
+                                        </button>
+                                    </div>
+                                </div>
                                 <h3 className="text-navy-900 dark:text-white font-bold mb-4 flex items-center justify-between">
-                                    <span>Timeline & Milestones</span>
+                                    <span>{t('initiative.timelineMilestones')}</span>
                                     <button
                                         onClick={generateExecutionStrategy}
                                         disabled={isGenerating}
@@ -951,41 +990,41 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                             }`}
                                     >
                                         <Sparkles size={12} className={isGenerating ? "animate-spin" : ""} />
-                                        {isGenerating ? "Generating..." : "Auto-fill Execution"}
+                                        {isGenerating ? t('common.generating') : t('initiative.autoFillExecution')}
                                     </button>
                                 </h3>
 
-                                <InputGroup label="Kill Criteria (Mandatory) *">
+                                <InputGroup label={t('initiative.killCriteriaMandatory')}>
                                     <div className="bg-red-50 dark:bg-red-500/5 border border-red-200 dark:border-red-500/20 rounded-lg p-3">
                                         <div className="flex items-center gap-2 mb-2 text-red-600 dark:text-red-400 text-xs font-bold uppercase">
                                             <AlertTriangle size={12} />
-                                            <span>Stop Conditions</span>
+                                            <span>{t('initiative.stopConditions')}</span>
                                         </div>
                                         <textarea
                                             className="w-full bg-transparent border-none p-0 text-slate-700 dark:text-slate-300 focus:ring-0 placeholder:text-slate-400 dark:placeholder:text-slate-600 h-24 resize-none text-sm"
                                             value={Array.isArray(initiative.killCriteria) ? initiative.killCriteria.join('\n') : initiative.killCriteria || ''}
                                             onChange={e => setInitiative({ ...initiative, killCriteria: e.target.value.split('\n') })}
-                                            placeholder="Define specific conditions under which this initiative MUST be stopped (e.g., Budget overrun > 15%, Technical failure in Pilot)..."
+                                            placeholder={t('initiative.killCriteriaPlaceholder')}
                                         />
                                     </div>
                                 </InputGroup>
 
                                 <div className="grid grid-cols-2 gap-4">
-                                    <InputGroup label="Start Date">
+                                    <InputGroup label={t('initiative.startDate')}>
                                         <input type="date"
                                             className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-navy-900 dark:text-white"
                                             value={initiative.startDate ? initiative.startDate.split('T')[0] : ''}
                                             onChange={e => setInitiative({ ...initiative, startDate: e.target.value })}
                                         />
                                     </InputGroup>
-                                    <InputGroup label="End Date">
+                                    <InputGroup label={t('initiative.endDate')}>
                                         <input type="date"
                                             className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-navy-900 dark:text-white"
                                             value={initiative.endDate ? initiative.endDate.split('T')[0] : ''}
                                             onChange={e => setInitiative({ ...initiative, endDate: e.target.value })}
                                         />
                                     </InputGroup>
-                                    <InputGroup label="Pilot End">
+                                    <InputGroup label={t('initiative.pilotEnd')}>
                                         <input type="date"
                                             className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-navy-900 dark:text-white"
                                             value={initiative.pilotEndDate ? initiative.pilotEndDate.split('T')[0] : ''}
@@ -997,11 +1036,11 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                 {/* Milestones UI */}
                                 <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-4 border border-slate-200 dark:border-white/5">
                                     <h4 className="text-sm font-bold text-navy-900 dark:text-white mb-2 flex justify-between items-center">
-                                        <span>Key Milestones & Gates</span>
+                                        <span>{t('initiative.milestonesAndGates')}</span>
                                         <button onClick={() => {
                                             const newMilestones = [...(initiative.milestones || []), { name: '', date: '', status: 'pending' as const }];
                                             setInitiative({ ...initiative, milestones: newMilestones });
-                                        }} className="text-xs text-blue-600 dark:text-blue-400 hover:text-navy-900 dark:hover:text-white">+ Add</button>
+                                        }} className="text-xs text-blue-600 dark:text-blue-400 hover:text-navy-900 dark:hover:text-white">+ {t('common.add')}</button>
                                     </h4>
                                     <div className="space-y-3">
                                         {initiative.milestones?.map((m, idx: number) => (
@@ -1019,7 +1058,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                                     />
                                                     <input
                                                         className="flex-1 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-1 text-xs text-navy-900 dark:text-white"
-                                                        placeholder="Milestone name..."
+                                                        placeholder={t('initiative.milestoneNamePlaceholder')}
                                                         value={m.name}
                                                         onChange={e => {
                                                             const list = [...(initiative.milestones || [])];
@@ -1046,14 +1085,14 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                                             }}
                                                             className="rounded bg-white dark:bg-navy-950 border-slate-300 dark:border-white/20 text-blue-600 dark:text-blue-500 focus:ring-offset-white dark:focus:ring-offset-navy-900"
                                                         />
-                                                        Decision Gate
+                                                        {t('initiative.decisionGate')}
                                                     </label>
 
                                                     {m.isDecisionGate && (
                                                         <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-200">
-                                                            <span className="text-xs text-slate-500">Decision:</span>
+                                                            <span className="text-xs text-slate-500">{t('initiative.decision')}:</span>
                                                             <select
-                                                                className={`text - xs border rounded px - 2 py - 0.5 outline - none ${m.decision === 'stop' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
+                                                                className={`text-xs border rounded px-2 py-0.5 outline-none ${m.decision === 'stop' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
                                                                     m.decision === 'adjust' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
                                                                         'bg-green-500/20 text-green-400 border-green-500/30'
                                                                     } `}
@@ -1065,9 +1104,9 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                                                     setInitiative({ ...initiative, milestones: list });
                                                                 }}
                                                             >
-                                                                <option value="continue">Continue</option>
-                                                                <option value="adjust">Adjust</option>
-                                                                <option value="stop">Stop</option>
+                                                                <option value="continue">{t('initiative.continue')}</option>
+                                                                <option value="adjust">{t('initiative.adjust')}</option>
+                                                                <option value="stop">{t('initiative.stop')}</option>
                                                             </select>
                                                         </div>
                                                     )}
@@ -1078,10 +1117,10 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                 </div>
 
                                 <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-4 border border-slate-200 dark:border-white/5">
-                                    <h4 className="text-sm font-bold text-navy-900 dark:text-white mb-2">Required Competencies</h4>
+                                    <h4 className="text-sm font-bold text-navy-900 dark:text-white mb-2">{t('initiative.requiredCompetencies')}</h4>
                                     <input
                                         className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded p-2 text-sm text-slate-600 dark:text-slate-300"
-                                        placeholder="e.g. UX Design, Python, Data Science (comma separated)"
+                                        placeholder={t('initiative.competenciesPlaceholder')}
                                         value={initiative.competenciesRequired?.join(', ') || ''}
                                         onChange={e => setInitiative({ ...initiative, competenciesRequired: e.target.value.split(',').map(s => s.trim()) })}
                                     />
@@ -1090,11 +1129,11 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
 
                             <div className="space-y-4">
                                 <h3 className="text-navy-900 dark:text-white font-bold mb-4 flex items-center gap-2">
-                                    <AlertTriangle size={18} className="text-orange-500" /> Key Risks
+                                    <AlertTriangle size={18} className="text-orange-500" /> {t('initiative.keyRisks')}
                                 </h3>
                                 {/* Simplified Risk Input for now (future: array of objects) */}
                                 <div className="bg-orange-50 dark:bg-orange-500/5 border border-orange-200 dark:border-orange-500/10 rounded-xl p-4">
-                                    <p className="text-sm text-orange-800 dark:text-orange-200 mb-2">Identify top 3-5 risks that could derail this initiative.</p>
+                                    <p className="text-sm text-orange-800 dark:text-orange-200 mb-2">{t('initiative.keyRisksDescription')}</p>
                                     {/* We are storing risks as simple array in JSON for this iteration, or strictly adhering to types updated */}
                                     {/* Currently logic stores keyRisks as JSON array. Let's make it simple strings for now or update UI for complex objects later. */}
                                     {/* To match updated types { risk: string; mitigation: string; metric: 'Low' | 'Medium' | 'High' }[] */}
@@ -1102,7 +1141,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                         <div key={idx} className="mb-4 bg-white dark:bg-navy-900 p-3 rounded border border-slate-200 dark:border-white/5">
                                             <input
                                                 className="w-full bg-transparent border-b border-slate-100 dark:border-white/10 mb-2 text-sm text-navy-900 dark:text-white focus:outline-none"
-                                                placeholder="Risk description..."
+                                                placeholder={t('initiative.riskDescriptionPlaceholder')}
                                                 value={risk.risk || ''}
                                                 onChange={e => {
                                                     const newRisks = [...(initiative.keyRisks || [])];
@@ -1112,7 +1151,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                             />
                                             <input
                                                 className="w-full bg-transparent text-xs text-slate-400 focus:outline-none"
-                                                placeholder="Mitigation strategy..."
+                                                placeholder={t('initiative.mitigationStrategyPlaceholder')}
                                                 value={risk.mitigation || ''}
                                                 onChange={e => {
                                                     const newRisks = [...(initiative.keyRisks || [])];
@@ -1124,7 +1163,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                                 const newRisks = [...(initiative.keyRisks || [])];
                                                 newRisks.splice(idx, 1);
                                                 setInitiative({ ...initiative, keyRisks: newRisks });
-                                            }} className="text-xs text-red-500 mt-2">Remove</button>
+                                            }} className="text-xs text-red-500 mt-2">{t('common.remove')}</button>
                                         </div>
                                     ))}
                                     <Button size="sm" variant="outline"
@@ -1135,7 +1174,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                             newRisks.push({ risk: '', mitigation: '', metric: 'Medium' });
                                             setInitiative({ ...initiative, keyRisks: newRisks });
                                         }}>
-                                        {(initiative.keyRisks?.length || 0) >= 5 ? 'Max 5 Risks Reached' : '+ Add Risk'}
+                                        {(initiative.keyRisks?.length || 0) >= 5 ? t('initiative.maxRisksReached') : t('initiative.addRisk')}
                                     </Button>
                                 </div>
                             </div>
@@ -1146,56 +1185,56 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                     {activeTab === 'economics' && (
                         <div className="grid grid-cols-2 gap-8">
                             <div className="space-y-6">
-                                <InputGroup label="Business Value">
+                                <InputGroup label={t('initiative.businessValue')}>
                                     <Select
                                         value={initiative.businessValue || ''}
                                         onChange={(val) => setInitiative({ ...initiative, businessValue: val as 'High' | 'Medium' | 'Low' })}
                                         options={[
-                                            { value: 'High', label: 'High' },
-                                            { value: 'Medium', label: 'Medium' },
-                                            { value: 'Low', label: 'Low' }
+                                            { value: 'High', label: t('common.high') },
+                                            { value: 'Medium', label: t('common.medium') },
+                                            { value: 'Low', label: t('common.low') }
                                         ]}
                                     />
                                 </InputGroup>
 
                                 <div className="grid grid-cols-2 gap-4">
-                                    <InputGroup label="Value Driver">
+                                    <InputGroup label={t('initiative.valueDriver')}>
                                         <Select
                                             value={initiative.valueDriver || ''}
                                             onChange={(val) => setInitiative({ ...initiative, valueDriver: val as any })}
-                                            placeholder="Select Driver..."
+                                            placeholder={t('initiative.selectDriverPlaceholder')}
                                             options={[
-                                                { value: 'Cost', label: 'Cost Optimization' },
-                                                { value: 'Revenue', label: 'Revenue Growth' },
-                                                { value: 'Capital', label: 'Capital Efficiency' },
-                                                { value: 'Risk', label: 'Risk Reduction' },
-                                                { value: 'Capability', label: 'Strategic Capability' }
+                                                { value: 'Cost', label: t('initiative.costOptimization') },
+                                                { value: 'Revenue', label: t('initiative.revenueGrowth') },
+                                                { value: 'Capital', label: t('initiative.capitalEfficiency') },
+                                                { value: 'Risk', label: t('initiative.riskReduction') },
+                                                { value: 'Capability', label: t('initiative.strategicCapability') }
                                             ]}
                                         />
                                     </InputGroup>
-                                    <InputGroup label="Confidence Level">
+                                    <InputGroup label={t('initiative.confidenceLevel')}>
                                         <Select
                                             value={initiative.confidenceLevel || ''}
                                             onChange={(val) => setInitiative({ ...initiative, confidenceLevel: val as any })}
-                                            placeholder="Confidence..."
+                                            placeholder={t('initiative.confidencePlaceholder')}
                                             options={[
-                                                { value: 'High', label: 'High' },
-                                                { value: 'Medium', label: 'Medium' },
-                                                { value: 'Low', label: 'Low' }
+                                                { value: 'High', label: t('common.high') },
+                                                { value: 'Medium', label: t('common.medium') },
+                                                { value: 'Low', label: t('common.low') }
                                             ]}
                                         />
                                     </InputGroup>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
-                                    <InputGroup label="CAPEX Est. ($)">
+                                    <InputGroup label={t('initiative.capexEst')}>
                                         <input type="number"
                                             className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-navy-900 dark:text-white focus:border-blue-500 outline-none"
                                             value={initiative.costCapex || 0}
                                             onChange={e => setInitiative({ ...initiative, costCapex: parseInt(e.target.value) })}
                                         />
                                     </InputGroup>
-                                    <InputGroup label="OPEX Est. ($)">
+                                    <InputGroup label={t('initiative.opexEst')}>
                                         <input type="number"
                                             className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-navy-900 dark:text-white focus:border-blue-500 outline-none"
                                             value={initiative.costOpex || 0}
@@ -1204,15 +1243,15 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                     </InputGroup>
                                 </div>
 
-                                <InputGroup label="Value Timing">
+                                <InputGroup label={t('initiative.valueTiming')}>
                                     <Select
                                         value={initiative.valueTiming || ''}
                                         onChange={(val) => setInitiative({ ...initiative, valueTiming: val as any })}
-                                        placeholder="Expected Realization..."
+                                        placeholder={t('initiative.expectedRealizationPlaceholder')}
                                         options={[
-                                            { value: 'Immediate', label: 'Immediate (<3mo)' },
-                                            { value: 'Short term', label: 'Short term (3-12mo)' },
-                                            { value: 'Long term', label: 'Long term (>12mo)' }
+                                            { value: 'Immediate', label: t('initiative.valueTimingImmediate') },
+                                            { value: 'Short term', label: t('initiative.valueTimingShortTerm') },
+                                            { value: 'Long term', label: t('initiative.valueTimingLongTerm') }
                                         ]}
                                     />
                                 </InputGroup>
@@ -1220,35 +1259,35 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
 
                             <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-6 border border-slate-200 dark:border-white/5 flex flex-col items-center justify-center text-center relative">
                                 <TrendingUp size={48} className={`mb-4 opacity-50 ${initiative.valueDriver === 'Capability' ? 'text-purple-500' : 'text-green-500'} `} />
-                                <h3 className="text-xl font-bold text-navy-900 dark:text-white mb-2">Financial Summary</h3>
+                                <h3 className="text-xl font-bold text-navy-900 dark:text-white mb-2">{t('initiative.financialSummary')}</h3>
 
                                 <div className="mb-4">
                                     {initiative.valueDriver === 'Capability' ? (
                                         <span className="px-3 py-1 rounded-full bg-purple-500/20 text-purple-400 text-xs font-bold border border-purple-500/30">
-                                            CAPABILITY PLAY
+                                            {t('initiative.capabilityPlay')}
                                         </span>
                                     ) : initiative.valueDriver ? (
                                         <span className="px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-bold border border-green-500/30">
-                                            CASH PLAY
+                                            {t('initiative.cashPlay')}
                                         </span>
                                     ) : null}
                                 </div>
 
                                 <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">
-                                    Total Investment: <span className="text-navy-900 dark:text-white font-mono">${((initiative.costCapex || 0) + (initiative.costOpex || 0)).toLocaleString()}</span>
+                                    {t('initiative.totalInvestment')}: <span className="text-navy-900 dark:text-white font-mono">${((initiative.costCapex || 0) + (initiative.costOpex || 0)).toLocaleString()}</span>
                                 </p>
 
                                 {/* Sanity Check Logic Display */}
                                 {initiative.costCapex && initiative.costCapex > 0 && !initiative.valueDriver && (
                                     <div className="flex items-center gap-2 text-orange-400 text-xs bg-orange-500/10 p-2 rounded w-full justify-center mb-4">
                                         <AlertTriangle size={12} />
-                                        <span>Missing Value Driver for Investment</span>
+                                        <span>{t('initiative.missingValueDriverWarning')}</span>
                                     </div>
                                 )}
 
                                 <div className="w-full bg-white dark:bg-navy-900 rounded-lg p-4 border border-slate-200 dark:border-white/5 text-left">
-                                    <span className="text-xs uppercase text-slate-500">Social Impact</span>
-                                    <p className="text-navy-900 dark:text-white mt-1 text-sm">{initiative.socialImpact || 'Not defined'}</p>
+                                    <span className="text-xs uppercase text-slate-500">{t('initiative.socialImpact')}</span>
+                                    <p className="text-navy-900 dark:text-white mt-1 text-sm">{initiative.socialImpact || t('common.notDefined')}</p>
                                 </div>
                             </div>
                         </div>
@@ -1260,42 +1299,42 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                             {/* Roles & Ownership */}
                             <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-6 border border-slate-200 dark:border-white/5">
                                 <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-6 flex items-center gap-2">
-                                    <Users size={20} className="text-blue-500" /> Roles & Ownership
+                                    <Users size={20} className="text-blue-500" /> {t('initiative.rolesOwnership')}
                                 </h3>
                                 <div className="grid grid-cols-3 gap-6">
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
-                                            <UserCheck size={12} /> Business Owner
+                                            <UserCheck size={12} /> {t('initiative.businessOwner')}
                                         </label>
-                                        <p className="text-[10px] text-slate-400 mb-2">Accountable for VALUE delivery</p>
+                                        <p className="text-[10px] text-slate-400 mb-2">{t('initiative.businessOwnerDescription')}</p>
                                         <Select
                                             value={initiative.ownerBusinessId || ''}
                                             onChange={(val) => setInitiative({ ...initiative, ownerBusinessId: val })}
-                                            placeholder="Select Business Owner..."
+                                            placeholder={t('initiative.selectBusinessOwnerPlaceholder')}
                                             options={users.map(u => ({ value: u.id, label: `${u.firstName} ${u.lastName}` }))}
                                         />
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
-                                            <UserCheck size={12} /> Execution Owner
+                                            <UserCheck size={12} /> {t('initiative.executionOwner')}
                                         </label>
-                                        <p className="text-[10px] text-slate-400 mb-2">Accountable for DELIVERY</p>
+                                        <p className="text-[10px] text-slate-400 mb-2">{t('initiative.executionOwnerDescription')}</p>
                                         <Select
                                             value={initiative.ownerExecutionId || ''}
                                             onChange={(val) => setInitiative({ ...initiative, ownerExecutionId: val })}
-                                            placeholder="Select Execution Owner..."
+                                            placeholder={t('initiative.selectExecutionOwnerPlaceholder')}
                                             options={users.map(u => ({ value: u.id, label: `${u.firstName} ${u.lastName}` }))}
                                         />
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
-                                            <Shield size={12} /> Sponsor
+                                            <Shield size={12} /> {t('initiative.sponsor')}
                                         </label>
-                                        <p className="text-[10px] text-slate-400 mb-2">Final APPROVAL authority</p>
+                                        <p className="text-[10px] text-slate-400 mb-2">{t('initiative.sponsorDescription')}</p>
                                         <Select
                                             value={initiative.sponsorId || ''}
                                             onChange={(val) => setInitiative({ ...initiative, sponsorId: val })}
-                                            placeholder="Select Sponsor..."
+                                            placeholder={t('initiative.selectSponsorPlaceholder')}
                                             options={users.map(u => ({ value: u.id, label: `${u.firstName} ${u.lastName}` }))}
                                         />
                                     </div>
@@ -1305,32 +1344,30 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                             {/* Approval Workflow Status */}
                             <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-6 border border-slate-200 dark:border-white/5">
                                 <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-6 flex items-center gap-2">
-                                    <Clock size={20} className="text-purple-500" /> Approval Workflow
+                                    <Clock size={20} className="text-purple-500" /> {t('initiative.approvalWorkflow')}
                                 </h3>
-                                
+
                                 {/* Status Timeline */}
                                 <div className="flex items-center justify-between mb-8">
                                     {[
-                                        { status: 'DRAFT', label: 'Draft', done: true },
-                                        { status: 'PLANNING', label: 'Planning', done: initiative.status !== 'DRAFT' },
-                                        { status: 'REVIEW', label: 'In Review', done: ['REVIEW', 'APPROVED', 'EXECUTING', 'DONE'].includes(initiative.status) },
-                                        { status: 'APPROVED', label: 'Approved', done: ['APPROVED', 'EXECUTING', 'DONE'].includes(initiative.status) },
-                                        { status: 'EXECUTING', label: 'Executing', done: ['EXECUTING', 'DONE'].includes(initiative.status) },
+                                        { status: 'DRAFT', label: t('status.DRAFT'), done: true },
+                                        { status: 'PLANNING', label: t('status.PLANNING'), done: initiative.status !== 'DRAFT' },
+                                        { status: 'REVIEW', label: t('status.REVIEW'), done: ['REVIEW', 'APPROVED', 'EXECUTING', 'DONE'].includes(initiative.status) },
+                                        { status: 'APPROVED', label: t('status.APPROVED'), done: ['APPROVED', 'EXECUTING', 'DONE'].includes(initiative.status) },
+                                        { status: 'EXECUTING', label: t('status.EXECUTING'), done: ['EXECUTING', 'DONE'].includes(initiative.status) },
                                     ].map((step, idx, arr) => (
                                         <React.Fragment key={step.status}>
                                             <div className="flex flex-col items-center">
-                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all ${
-                                                    initiative.status === step.status 
-                                                        ? 'bg-blue-500 border-blue-500 text-white' 
-                                                        : step.done 
-                                                            ? 'bg-green-500/20 border-green-500 text-green-400' 
-                                                            : 'bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-400'
-                                                }`}>
+                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all ${initiative.status === step.status
+                                                    ? 'bg-blue-500 border-blue-500 text-white'
+                                                    : step.done
+                                                        ? 'bg-green-500/20 border-green-500 text-green-400'
+                                                        : 'bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-400'
+                                                    }`}>
                                                     {step.done && initiative.status !== step.status ? '✓' : idx + 1}
                                                 </div>
-                                                <span className={`text-xs mt-2 font-medium ${
-                                                    initiative.status === step.status ? 'text-blue-400' : step.done ? 'text-green-400' : 'text-slate-500'
-                                                }`}>
+                                                <span className={`text-xs mt-2 font-medium ${initiative.status === step.status ? 'text-blue-400' : step.done ? 'text-green-400' : 'text-slate-500'
+                                                    }`}>
                                                     {step.label}
                                                 </span>
                                             </div>
@@ -1344,55 +1381,54 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                 {/* Current Status Info */}
                                 <div className="grid grid-cols-2 gap-6">
                                     <div className="bg-white dark:bg-navy-900 p-4 rounded-lg border border-slate-200 dark:border-white/5">
-                                        <h4 className="text-xs font-bold text-slate-500 uppercase mb-3">Current Status</h4>
+                                        <h4 className="text-xs font-bold text-slate-500 uppercase mb-3">{t('initiative.currentStatus')}</h4>
                                         <div className="flex items-center gap-3">
-                                            <div className={`w-3 h-3 rounded-full ${
-                                                initiative.status === 'BLOCKED' ? 'bg-red-500' :
+                                            <div className={`w-3 h-3 rounded-full ${initiative.status === 'BLOCKED' ? 'bg-red-500' :
                                                 initiative.status === 'DONE' ? 'bg-green-500' :
-                                                initiative.status === 'EXECUTING' ? 'bg-blue-500 animate-pulse' :
-                                                'bg-amber-500'
-                                            }`} />
+                                                    initiative.status === 'EXECUTING' ? 'bg-blue-500 animate-pulse' :
+                                                        'bg-amber-500'
+                                                }`} />
                                             <span className="text-lg font-bold text-navy-900 dark:text-white">
                                                 {initiative.status.replace('_', ' ')}
                                             </span>
                                         </div>
                                         {initiative.status === 'BLOCKED' && (
                                             <p className="text-xs text-red-400 mt-2">
-                                                Reason: {(initiative as any).blockedReason || 'Not specified'}
+                                                {t('common.reason')}: {(initiative as any).blockedReason || t('common.notSpecified')}
                                             </p>
                                         )}
                                     </div>
 
                                     <div className="bg-white dark:bg-navy-900 p-4 rounded-lg border border-slate-200 dark:border-white/5">
-                                        <h4 className="text-xs font-bold text-slate-500 uppercase mb-3">Next Action</h4>
+                                        <h4 className="text-xs font-bold text-slate-500 uppercase mb-3">{t('initiative.nextAction')}</h4>
                                         {initiative.status === 'DRAFT' && (
                                             <p className="text-sm text-slate-600 dark:text-slate-300">
-                                                Complete charter and submit to <span className="text-amber-400 font-medium">Planning</span>
+                                                {t('initiative.nextActionDraft')} <span className="text-amber-400 font-medium">{t('status.PLANNING')}</span>
                                             </p>
                                         )}
                                         {initiative.status === 'PLANNING' && (
                                             <p className="text-sm text-slate-600 dark:text-slate-300">
-                                                Finalize details and submit for <span className="text-purple-400 font-medium">Review</span>
+                                                {t('initiative.nextActionPlanning')} <span className="text-purple-400 font-medium">{t('status.REVIEW')}</span>
                                             </p>
                                         )}
                                         {initiative.status === 'REVIEW' && (
                                             <p className="text-sm text-slate-600 dark:text-slate-300">
-                                                Awaiting <span className="text-teal-400 font-medium">Sponsor approval</span>
+                                                {t('initiative.nextActionReview')} <span className="text-teal-400 font-medium">{t('initiative.sponsorApproval')}</span>
                                             </p>
                                         )}
                                         {initiative.status === 'APPROVED' && (
                                             <p className="text-sm text-slate-600 dark:text-slate-300">
-                                                Ready to start <span className="text-blue-400 font-medium">Execution</span>
+                                                {t('initiative.nextActionApproved')} <span className="text-blue-400 font-medium">{t('status.EXECUTING')}</span>
                                             </p>
                                         )}
                                         {initiative.status === 'EXECUTING' && (
                                             <p className="text-sm text-slate-600 dark:text-slate-300">
-                                                Complete all tasks to mark as <span className="text-green-400 font-medium">Done</span>
+                                                {t('initiative.nextActionExecuting')} <span className="text-green-400 font-medium">{t('status.DONE')}</span>
                                             </p>
                                         )}
                                         {initiative.status === 'DONE' && (
                                             <p className="text-sm text-green-400 font-medium">
-                                                ✓ Initiative completed successfully
+                                                ✓ {t('initiative.completedSuccessfully')}
                                             </p>
                                         )}
                                     </div>
@@ -1403,7 +1439,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                             {initiative.decisionToMake && (
                                 <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-xl p-6 border border-blue-500/20">
                                     <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-                                        <AlertOctagon size={20} className="text-blue-400" /> Decision Required
+                                        <AlertOctagon size={20} className="text-blue-400" /> {t('initiative.decisionRequired')}
                                     </h3>
                                     <div className="bg-white dark:bg-navy-900 p-4 rounded-lg border border-blue-500/20 mb-4">
                                         <p className="text-lg text-navy-900 dark:text-white font-medium">
@@ -1412,14 +1448,14 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                     </div>
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
-                                            <span className="text-xs text-slate-400">Decision Owner:</span>
+                                            <span className="text-xs text-slate-400">{t('initiative.decisionOwner')}:</span>
                                             <span className="text-sm text-white font-medium">
-                                                {users.find(u => u.id === initiative.decisionOwnerId)?.firstName || 'Not assigned'} {users.find(u => u.id === initiative.decisionOwnerId)?.lastName || ''}
+                                                {users.find(u => u.id === initiative.decisionOwnerId)?.firstName || t('common.notAssigned')} {users.find(u => u.id === initiative.decisionOwnerId)?.lastName || ''}
                                             </span>
                                         </div>
                                         <div className="flex gap-2">
-                                            <Button size="sm" variant="outline" onClick={() => {/* TODO: View decision brief */}}>
-                                                View Brief
+                                            <Button size="sm" variant="outline" onClick={() => {/* TODO: View decision brief */ }}>
+                                                {t('initiative.viewBrief')}
                                             </Button>
                                         </div>
                                     </div>
@@ -1429,7 +1465,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                             {/* Audit Trail */}
                             <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-6 border border-slate-200 dark:border-white/5">
                                 <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-                                    <FileText size={20} className="text-slate-400" /> Governance Audit Trail
+                                    <FileText size={20} className="text-slate-400" /> {t('initiative.governanceAuditTrail')}
                                 </h3>
                                 <div className="space-y-3 max-h-48 overflow-y-auto">
                                     {initiative.changeLog && initiative.changeLog.length > 0 ? (
@@ -1447,7 +1483,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                             </div>
                                         ))
                                     ) : (
-                                        <p className="text-sm text-slate-500 italic">No governance events recorded yet.</p>
+                                        <p className="text-sm text-slate-500 italic">{t('initiative.noGovernanceEvents')}</p>
                                     )}
                                 </div>
                             </div>
@@ -1461,7 +1497,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                             <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-6 border border-slate-200 dark:border-white/5">
                                 <div className="flex items-center justify-between mb-6">
                                     <h3 className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
-                                        <Users size={20} className="text-blue-500" /> Team Members
+                                        <Users size={20} className="text-blue-500" /> {t('initiative.teamMembers')}
                                     </h3>
                                     <button
                                         onClick={() => {
@@ -1474,14 +1510,14 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                                 assignedAt: new Date().toISOString(),
                                                 assignedBy: 'current-user'
                                             };
-                                            setInitiative({ 
-                                                ...initiative, 
-                                                teamMembers: [...(initiative.teamMembers || []), newMember] 
+                                            setInitiative({
+                                                ...initiative,
+                                                teamMembers: [...(initiative.teamMembers || []), newMember]
                                             });
                                         }}
                                         className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors"
                                     >
-                                        <UserPlus size={14} /> Add Member
+                                        <UserPlus size={14} /> {t('initiative.addMember')}
                                     </button>
                                 </div>
 
@@ -1490,7 +1526,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                     {(initiative.teamMembers || []).length === 0 ? (
                                         <div className="text-center py-8 text-slate-500">
                                             <Users size={40} className="mx-auto mb-2 opacity-30" />
-                                            <p>No team members assigned yet</p>
+                                            <p>{t('initiative.noTeamMembersAssigned')}</p>
                                         </div>
                                     ) : (
                                         (initiative.teamMembers || []).map((member, idx) => (
@@ -1509,7 +1545,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                                         }}
                                                         className="bg-transparent text-sm font-medium text-navy-900 dark:text-white outline-none border-b border-dashed border-slate-300 dark:border-slate-600 w-48"
                                                     >
-                                                        <option value="">Select member...</option>
+                                                        <option value="">{t('initiative.selectMember')}</option>
                                                         {users.map(u => (
                                                             <option key={u.id} value={u.id} className="bg-white dark:bg-navy-900">
                                                                 {u.firstName} {u.lastName}
@@ -1526,14 +1562,14 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                                     }}
                                                     className="text-xs bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 px-2 py-1 rounded border border-slate-200 dark:border-white/10"
                                                 >
-                                                    <option value="CONTRIBUTOR">Contributor</option>
-                                                    <option value="REVIEWER">Reviewer</option>
-                                                    <option value="SME">SME</option>
-                                                    <option value="STAKEHOLDER">Stakeholder</option>
-                                                    <option value="OBSERVER">Observer</option>
+                                                    <option value="CONTRIBUTOR">{t('role.CONTRIBUTOR')}</option>
+                                                    <option value="REVIEWER">{t('role.REVIEWER')}</option>
+                                                    <option value="SME">{t('role.SME')}</option>
+                                                    <option value="STAKEHOLDER">{t('role.STAKEHOLDER')}</option>
+                                                    <option value="OBSERVER">{t('role.OBSERVER')}</option>
                                                 </select>
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-xs text-slate-500">Allocation:</span>
+                                                    <span className="text-xs text-slate-500">{t('initiative.allocation')}:</span>
                                                     <input
                                                         type="number"
                                                         min="0"
@@ -1567,7 +1603,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                             <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-6 border border-slate-200 dark:border-white/5">
                                 <div className="flex items-center justify-between mb-6">
                                     <h3 className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
-                                        <Link2 size={20} className="text-purple-500" /> Related Initiatives
+                                        <Link2 size={20} className="text-purple-500" /> {t('initiative.relatedInitiatives')}
                                     </h3>
                                     <button
                                         onClick={() => {
@@ -1579,14 +1615,14 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                                 createdAt: new Date().toISOString(),
                                                 createdBy: 'current-user'
                                             };
-                                            setInitiative({ 
-                                                ...initiative, 
-                                                relatedInitiatives: [...(initiative.relatedInitiatives || []), newRelation] 
+                                            setInitiative({
+                                                ...initiative,
+                                                relatedInitiatives: [...(initiative.relatedInitiatives || []), newRelation]
                                             });
                                         }}
                                         className="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors"
                                     >
-                                        <Link2 size={14} /> Link Initiative
+                                        <Link2 size={14} /> {t('initiative.linkInitiative')}
                                     </button>
                                 </div>
 
@@ -1594,7 +1630,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                     {(initiative.relatedInitiatives || []).length === 0 ? (
                                         <div className="text-center py-6 text-slate-500 border-2 border-dashed border-slate-200 dark:border-white/5 rounded-lg">
                                             <GitBranch size={32} className="mx-auto mb-2 opacity-30" />
-                                            <p className="text-sm">No linked initiatives</p>
+                                            <p className="text-sm">{t('initiative.noLinkedInitiatives')}</p>
                                         </div>
                                     ) : (
                                         (initiative.relatedInitiatives || []).map((rel, idx) => (
@@ -1608,11 +1644,11 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                                     }}
                                                     className="text-xs bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 px-2 py-1 rounded border border-purple-200 dark:border-purple-500/20"
                                                 >
-                                                    <option value="DEPENDS_ON">Depends on</option>
-                                                    <option value="BLOCKS">Blocks</option>
-                                                    <option value="RELATED_TO">Related to</option>
-                                                    <option value="PARENT_OF">Parent of</option>
-                                                    <option value="CHILD_OF">Child of</option>
+                                                    <option value="DEPENDS_ON">{t('relation.DEPENDS_ON')}</option>
+                                                    <option value="BLOCKS">{t('relation.BLOCKS')}</option>
+                                                    <option value="RELATED_TO">{t('relation.RELATED_TO')}</option>
+                                                    <option value="PARENT_OF">{t('relation.PARENT_OF')}</option>
+                                                    <option value="CHILD_OF">{t('relation.CHILD_OF')}</option>
                                                 </select>
                                                 <input
                                                     type="text"
@@ -1622,7 +1658,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                                         updated[idx] = { ...updated[idx], relatedInitiativeId: e.target.value };
                                                         setInitiative({ ...initiative, relatedInitiatives: updated });
                                                     }}
-                                                    placeholder="Initiative ID or name..."
+                                                    placeholder={t('initiative.initiativeIdOrNamePlaceholder')}
                                                     className="flex-1 bg-transparent text-sm text-navy-900 dark:text-white outline-none border-b border-dashed border-slate-300 dark:border-slate-600"
                                                 />
                                                 <button
@@ -1649,13 +1685,13 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                             <div className="bg-white dark:bg-navy-950 rounded-xl p-4 border border-slate-200 dark:border-white/5 shadow-sm">
                                 <div className="flex gap-3">
                                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-teal-400 flex items-center justify-center text-white font-bold shrink-0">
-                                        You
+                                        {t('common.you')}
                                     </div>
                                     <div className="flex-1">
                                         <textarea
                                             value={newComment}
                                             onChange={(e) => setNewComment(e.target.value)}
-                                            placeholder="Add a comment or question..."
+                                            placeholder={t('initiative.addCommentPlaceholder')}
                                             className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-navy-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-blue-500/50 resize-none h-20"
                                         />
                                         <div className="flex justify-end mt-2">
@@ -1679,7 +1715,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                                 disabled={!newComment.trim()}
                                                 className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors"
                                             >
-                                                <Send size={14} /> Post Comment
+                                                <Send size={14} /> {t('initiative.postComment')}
                                             </button>
                                         </div>
                                     </div>
@@ -1691,8 +1727,8 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                 {(initiative.comments || []).length === 0 ? (
                                     <div className="text-center py-12 text-slate-500">
                                         <MessageSquare size={48} className="mx-auto mb-3 opacity-20" />
-                                        <p className="text-lg font-medium">No comments yet</p>
-                                        <p className="text-sm">Start the discussion!</p>
+                                        <p className="text-lg font-medium">{t('initiative.noCommentsYet')}</p>
+                                        <p className="text-sm">{t('initiative.startDiscussion')}</p>
                                     </div>
                                 ) : (
                                     (initiative.comments || []).map((comment) => (
@@ -1714,8 +1750,8 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                                         {comment.content}
                                                     </p>
                                                     <div className="flex gap-4 mt-2">
-                                                        <button className="text-xs text-slate-400 hover:text-blue-500">Reply</button>
-                                                        <button className="text-xs text-slate-400 hover:text-blue-500">React</button>
+                                                        <button className="text-xs text-slate-400 hover:text-blue-500">{t('common.reply')}</button>
+                                                        <button className="text-xs text-slate-400 hover:text-blue-500">{t('common.react')}</button>
                                                     </div>
                                                 </div>
                                                 <button
@@ -1754,7 +1790,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                     }}
                                     className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors"
                                 >
-                                    <Download size={16} /> Export Charter
+                                    <Download size={16} /> {t('initiative.exportCharter')}
                                 </button>
                                 <button
                                     onClick={() => {
@@ -1774,14 +1810,14 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                     }}
                                     className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors"
                                 >
-                                    <Copy size={16} /> Clone as Template
+                                    <Copy size={16} /> {t('initiative.cloneAsTemplate')}
                                 </button>
                             </div>
 
                             {/* Version History */}
                             <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-6 border border-slate-200 dark:border-white/5">
                                 <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-6 flex items-center gap-2">
-                                    <History size={20} className="text-amber-500" /> Version History
+                                    <History size={20} className="text-amber-500" /> {t('initiative.versionHistory')}
                                 </h3>
 
                                 <div className="space-y-0">
@@ -1793,11 +1829,11 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                         </div>
                                         <div className="pb-6">
                                             <div className="flex items-center gap-2">
-                                                <span className="text-sm font-bold text-navy-900 dark:text-white">Current Version</span>
-                                                <span className="text-[10px] px-2 py-0.5 bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 rounded-full">LIVE</span>
+                                                <span className="text-sm font-bold text-navy-900 dark:text-white">{t('initiative.currentVersion')}</span>
+                                                <span className="text-[10px] px-2 py-0.5 bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 rounded-full">{t('initiative.live')}</span>
                                             </div>
                                             <p className="text-xs text-slate-500 mt-1">
-                                                Status: {initiative.status} • Last updated: {initiative.updatedAt ? new Date(initiative.updatedAt).toLocaleString() : 'Now'}
+                                                {t('common.statusLabel')} {t(`status.${initiative.status}`)} • Last updated: {initiative.updatedAt ? new Date(initiative.updatedAt).toLocaleString() : 'Now'}
                                             </p>
                                         </div>
                                     </div>
@@ -1809,7 +1845,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                                 <div className="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-600" />
                                             </div>
                                             <div className="pb-4">
-                                                <p className="text-sm text-slate-500">Initial creation</p>
+                                                <p className="text-sm text-slate-500">{t('initiative.initialCreation')}</p>
                                                 <p className="text-xs text-slate-400">
                                                     {initiative.createdAt ? new Date(initiative.createdAt).toLocaleString() : 'Unknown'}
                                                 </p>
@@ -1819,11 +1855,10 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                         (initiative.versions || []).map((version, idx) => (
                                             <div key={version.id} className="flex gap-4">
                                                 <div className="flex flex-col items-center">
-                                                    <div className={`w-3 h-3 rounded-full ${
-                                                        version.changeType === 'APPROVAL' ? 'bg-teal-500' :
+                                                    <div className={`w-3 h-3 rounded-full ${version.changeType === 'APPROVAL' ? 'bg-teal-500' :
                                                         version.changeType === 'STATUS_CHANGE' ? 'bg-blue-500' :
-                                                        'bg-slate-400'
-                                                    }`} />
+                                                            'bg-slate-400'
+                                                        }`} />
                                                     {idx < (initiative.versions || []).length - 1 && (
                                                         <div className="w-0.5 h-full bg-slate-200 dark:bg-slate-700" />
                                                     )}
@@ -1833,11 +1868,10 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                                         <span className="text-sm font-medium text-navy-900 dark:text-white">
                                                             v{version.version}
                                                         </span>
-                                                        <span className={`text-[10px] px-1.5 py-0.5 rounded ${
-                                                            version.changeType === 'APPROVAL' ? 'bg-teal-100 dark:bg-teal-500/20 text-teal-700 dark:text-teal-400' :
+                                                        <span className={`text-[10px] px-1.5 py-0.5 rounded ${version.changeType === 'APPROVAL' ? 'bg-teal-100 dark:bg-teal-500/20 text-teal-700 dark:text-teal-400' :
                                                             version.changeType === 'STATUS_CHANGE' ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400' :
-                                                            'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
-                                                        }`}>
+                                                                'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                                                            }`}>
                                                             {version.changeType.replace('_', ' ')}
                                                         </span>
                                                     </div>
@@ -1899,7 +1933,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                     <Button onClick={handleSave} icon={<Save size={18} />}>Save Initiative Charter</Button>
                 </div>
 
-            </div>
+            </div >
         </div >
     );
 }, (prevProps, nextProps) => {

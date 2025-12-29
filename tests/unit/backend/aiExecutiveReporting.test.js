@@ -16,7 +16,7 @@ describe('AI Executive Reporting Service', () => {
         vi.doMock('../../../server/database', () => ({ default: mockDb }));
 
         AIExecutiveReporting = require('../../../server/services/aiExecutiveReporting.js');
-        
+
         // Inject mock dependencies
         AIExecutiveReporting.setDependencies({
             db: mockDb,
@@ -48,7 +48,7 @@ describe('AI Executive Reporting Service', () => {
             mockDb.all
                 .mockImplementationOnce((sql, params, cb) => {
                     // Initiatives status
-                    cb(null, [{ status: 'IN_EXECUTION', count: 5 }]);
+                    cb(null, [{ status: 'EXECUTING', count: 5 }]);
                 })
                 .mockImplementationOnce((sql, params, cb) => {
                     // Risks
@@ -69,7 +69,7 @@ describe('AI Executive Reporting Service', () => {
                 })
                 .mockImplementationOnce((sql, params, cb) => {
                     // Initiatives
-                    cb(null, [{ status: 'COMPLETED', count: 5 }]);
+                    cb(null, [{ status: 'DONE', count: 5 }]);
                 });
 
             mockDb.get.mockImplementation((sql, params, cb) => {

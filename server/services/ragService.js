@@ -1,6 +1,9 @@
 const db = require('../database');
 const { OpenAI } = require('openai'); // Assuming openai package is available
 
+// Import new embedding service
+const { embeddingService } = require('./ai/embeddingService');
+
 // Helper: Cosine Similarity
 const cosineSimilarity = (vecA, vecB) => {
     if (!vecA || !vecB || vecA.length !== vecB.length) return 0;
@@ -207,6 +210,99 @@ const RagService = {
     getAxisDefinitions: (axisName) => {
         const query = `${axisName} maturity levels definitions 1 2 3 4 5`;
         return RagService.getContext(query, 5);
+    },
+
+    /**
+     * Search for relevant chunks using the new embedding service
+     * This is the primary method for RAG integration
+     * @param {string} query - Search query
+     * @param {Object} options - { limit, organizationId, minSimilarity }
+     */
+    searchRelevantChunks: async (query, options = {}) => {
+        const { limit = 5, organizationId, minSimilarity = 0.5 } = options;
+
+        try {
+            // Use new embedding service for vector search
+            const results = await embeddingService.search(query, {
+                limit,
+                organizationId,
+                minSimilarity
+            });
+
+            // If no results from new embeddings table, fallback to legacy
+            if (!results || results.length === 0) {
+                const legacyContext = await RagService.getContext(query, limit, { organizationId });
+                if (legacyContext) {
+                    return [{
+                        content: legacyContext,
+                        source: 'legacy_knowledge_base',
+                        similarity: 0.7
+                    }];
+                }
+                return [];
+            }
+
+            return results.map(r => ({
+                content: r.content,
+                source: r.metadata?.filename || 'Knowledge Base',
+                similarity: r.similarity,
+                documentId: r.document_id,
+                chunkIndex: r.chunk_index
+            }));
+
+        } catch (error) {
+            console.error('[RagService] searchRelevantChunks error:', error.message);
+            // Fallback to legacy keyword search
+            const keywordContext = await RagService.getContextKeyword(query, limit, organizationId);
+            if (keywordContext) {
+                return [{
+                    content: keywordContext,
+                    source: 'keyword_search',
+                    similarity: 0.5
+                }];
+            }
+            return [];
+        }
+    },
+
+    /**
+     * Ingest a document into the vector database
+     * @param {Object} params - { content, filename, mimeType, organizationId }
+     */
+    ingestDocument: async (params) => {
+        const { content, filename, mimeType, organizationId } = params;
+        const { v4: uuidv4 } = require('uuid');
+        const { ingestionPipeline } = require('./ai/ingestionPipeline');
+
+        const documentId = uuidv4();
+
+        // 1. Process document into chunks
+        const { chunks } = await ingestionPipeline.process({
+            content,
+            filename,
+            mimeType,
+            documentId,
+            organizationId
+        });
+
+        // 2. Generate embeddings and store
+        let successCount = 0;
+        for (const chunk of chunks) {
+            try {
+                const embedding = await embeddingService.generateEmbedding(chunk.content);
+                await embeddingService.storeChunk(chunk, embedding);
+                successCount++;
+            } catch (e) {
+                console.error(`[RagService] Failed to embed chunk ${chunk.chunkIndex}:`, e.message);
+            }
+        }
+
+        return {
+            documentId,
+            totalChunks: chunks.length,
+            embeddedChunks: successCount,
+            success: successCount > 0
+        };
     }
 };
 

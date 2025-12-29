@@ -38,10 +38,16 @@ describe('AI Risk & Change Control Service', () => {
 
     describe('detectRisks (Integration)', () => {
         it('should aggregate risks from all detectors', async () => {
+            // Inject dependencies
+            AIRiskChangeControl.setDependencies({
+                db: mockDb,
+                uuidv4: mockUuid.v4
+            });
+
             // Mock org ID fetch
             mockDb.get.mockImplementation((sql, params, cb) => {
                 const s = sql.toLowerCase();
-                if (s.includes('organization_id') || s.includes('select organization_id')) {
+                if (s.includes('organization_id') || s.includes('select organization_id') || s.includes('from projects')) {
                     return cb(null, { organization_id: 'org-1' });
                 }
                 cb(null, { organization_id: 'org-1' });
@@ -54,11 +60,31 @@ describe('AI Risk & Change Control Service', () => {
                 if (s.includes('select t.') && s.includes('due_date < date')) {
                     const longAgo = new Date(); 
                     longAgo.setDate(longAgo.getDate() - 100);
-                    return cb(null, [{ id: 't1', title: 'Late', due_date: longAgo.toISOString(), name: 'Initiative 1' }]);
+                    return cb(null, [{ id: 't1', title: 'Late Task', due_date: longAgo.toISOString(), initiative_name: 'Initiative 1' }]);
+                }
+                // Delivery: Stalled initiatives
+                if (s.includes('from initiatives') && s.includes('updated_at < datetime')) {
+                    return cb(null, [{ id: 'i1', name: 'Stalled Initiative', status: 'EXECUTING' }]);
                 }
                 // Capacity: Overloaded users
                 if (s.includes('having') && s.includes('task_count > 10')) {
                     return cb(null, [{ id: 'u1', task_count: 25, first_name: 'Over', last_name: 'Loaded' }]);
+                }
+                // Dependency: Blocked tasks
+                if (s.includes('status') && s.includes('blocked')) {
+                    return cb(null, [{ id: 't2', title: 'Blocked Task', blocked_reason: 'Waiting for dependency' }]);
+                }
+                // Decision: Pending decisions
+                if (s.includes('from decisions') && s.includes('status') && s.includes('pending')) {
+                    return cb(null, [{ id: 'd1', title: 'Pending Decision', status: 'PENDING' }]);
+                }
+                // Change fatigue: Recent scope changes
+                if (s.includes('from scope_changes') || s.includes('scope_change')) {
+                    return cb(null, [
+                        { id: 'sc1', change_type: 'add', created_at: new Date().toISOString() },
+                        { id: 'sc2', change_type: 'modify', created_at: new Date().toISOString() },
+                        { id: 'sc3', change_type: 'expand', created_at: new Date().toISOString() }
+                    ]);
                 }
 
                 // Return empty for others
@@ -74,6 +100,7 @@ describe('AI Risk & Change Control Service', () => {
 
             expect(result.risksDetected).toBeGreaterThanOrEqual(1);
             expect(result.risks).toBeInstanceOf(Array);
+            expect(result.risks.length).toBeGreaterThanOrEqual(1);
         });
     });
 

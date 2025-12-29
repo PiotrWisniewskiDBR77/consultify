@@ -18,7 +18,7 @@ export const FullROIView: React.FC = () => {
   };
 
   return (
-    <SplitLayout title="Value Realization & ROI" onSendMessage={handleAiChat}>
+    <SplitLayout title="Value Realization & ROI">
       <div className="w-full h-full bg-navy-900 flex flex-col items-center justify-center p-8 text-white">
         <div className="text-center max-w-lg">
           <h2 className="text-3xl font-bold mb-4">Economics & ROI</h2>

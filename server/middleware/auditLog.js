@@ -1,4 +1,7 @@
-const ActivityService = require('../services/activityService');
+// Default Dependencies
+const deps = {
+    ActivityService: require('../services/activityService')
+};
 
 /**
  * Audit Log Middleware
@@ -31,7 +34,7 @@ const auditLogMiddleware = (req, res, next) => {
                 // URL: /api/projects/:id -> Entity: project, ID: :id
                 const parts = req.originalUrl.split('/').filter(p => p);
                 const entityType = parts[1] || 'unknown'; // api / [entity]
-                const entityId = parts[2] || (req.body.id) || 'new';
+                const entityId = parts[2] || (req.body && req.body.id) || 'new';
 
                 const actionMap = {
                     'POST': 'created',
@@ -42,7 +45,7 @@ const auditLogMiddleware = (req, res, next) => {
                 const action = actionMap[req.method] || 'modified';
 
                 // Log asynchronously
-                Promise.resolve(ActivityService.log({
+                Promise.resolve(deps.ActivityService.log({
                     organizationId,
                     userId,
                     action,
@@ -61,6 +64,11 @@ const auditLogMiddleware = (req, res, next) => {
     };
 
     next();
+};
+
+// Expose DI setter on the function itself
+auditLogMiddleware.setDependencies = (newDeps) => {
+    Object.assign(deps, newDeps);
 };
 
 module.exports = auditLogMiddleware;

@@ -122,7 +122,7 @@ const ExecutionMonitorService = {
                     FROM tasks t
                     LEFT JOIN users u ON t.assignee_id = u.id
                     WHERE t.project_id = ? 
-                    AND t.status IN ('in_progress', 'IN_PROGRESS')
+                    AND t.status = 'IN_PROGRESS'
                     AND t.updated_at < datetime('now', '-7 days')`,
                 [projectId], (err, rows) => {
                     if (err) return reject(err);
@@ -140,7 +140,7 @@ const ExecutionMonitorService = {
                     FROM tasks t
                     LEFT JOIN users u ON t.assignee_id = u.id
                     WHERE t.project_id = ? 
-                    AND t.status NOT IN ('done', 'DONE')
+                    AND t.status != 'DONE'
                     AND t.due_date < date('now')`,
                 [projectId], (err, rows) => {
                     if (err) return reject(err);
@@ -172,7 +172,7 @@ const ExecutionMonitorService = {
         return new Promise((resolve, reject) => {
             deps.db.all(`SELECT * FROM initiatives
                     WHERE project_id = ? 
-                    AND status IN ('IN_EXECUTION', 'APPROVED')
+                    AND status IN ('EXECUTING', 'APPROVED')
                     AND updated_at < datetime('now', '-7 days')`,
                 [projectId], (err, rows) => {
                     if (err) return reject(err);
@@ -187,7 +187,7 @@ const ExecutionMonitorService = {
     _detectSilentBlockers: async (projectId) => {
         return new Promise((resolve, reject) => {
             deps.db.all(`SELECT t.id, t.title, 'TASK' as type FROM tasks t
-                    WHERE t.project_id = ? AND t.status IN ('blocked', 'BLOCKED') AND (t.blocked_reason IS NULL OR t.blocked_reason = '')
+                    WHERE t.project_id = ? AND t.status = 'BLOCKED' AND (t.blocked_reason IS NULL OR t.blocked_reason = '')
                     UNION ALL
                     SELECT i.id, i.name as title, 'INITIATIVE' as type FROM initiatives i
                     WHERE i.project_id = ? AND i.status = 'BLOCKED' AND (i.blocked_reason IS NULL OR i.blocked_reason = '')`,

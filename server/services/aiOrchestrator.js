@@ -12,6 +12,7 @@ const deps = {
     RegulatoryModeGuard: require('./regulatoryModeGuard'),
     AIExplainabilityService: require('./aiExplainabilityService'),
     AccessPolicyService: require('./accessPolicyService'),
+    TokenBillingService: require('./tokenBillingService'),
     uuidv4: require('uuid').v4
 };
 
@@ -68,6 +69,30 @@ const AIOrchestrator = {
                 role: AI_ROLES.ADVISOR,
                 intent: CHAT_MODES.EXPLAIN
             };
+        }
+
+        // HARD TOKEN ENFORCEMENT: Block AI if organization has no tokens
+        // This is critical for monetization - users MUST have tokens to use AI
+        try {
+            const orgBalance = await deps.TokenBillingService.getOrgBalance(organizationId);
+            const tokenBalance = orgBalance?.balance || 0;
+            const minTokensRequired = 100; // Minimum tokens needed for an AI call
+
+            if (tokenBalance < minTokensRequired) {
+                return {
+                    blocked: true,
+                    errorCode: 'INSUFFICIENT_TOKENS',
+                    message: 'You don\'t have enough tokens to use AI features. Please purchase tokens to continue.',
+                    role: AI_ROLES.ADVISOR,
+                    intent: CHAT_MODES.EXPLAIN,
+                    tokenBalance: tokenBalance,
+                    minRequired: minTokensRequired,
+                    buyTokensUrl: '/settings/billing'
+                };
+            }
+        } catch (tokenCheckError) {
+            console.error('[AIOrchestrator] Token balance check failed:', tokenCheckError.message);
+            // Allow through if token check fails (fail-open for now, consider fail-closed in production)
         }
 
         // 1. Build context
@@ -444,6 +469,166 @@ USER MESSAGE: ${userMessage}`;
         }
 
         return processedResponse;
+    },
+
+    // ============================================================
+    // MULTI-AGENT ARCHITECTURE
+    // ============================================================
+
+    /**
+     * Process message using Multi-Agent Architecture
+     * Routes query to specialist agents and coordinates their responses
+     * 
+     * @param {string} message - User message
+     * @param {string} userId - User ID
+     * @param {string} organizationId - Organization ID
+     * @param {string} projectId - Project ID (optional)
+     * @param {object} options - Processing options
+     * @returns {object} Coordinated multi-agent response
+     */
+    processMessageWithAgents: async (message, userId, organizationId, projectId = null, options = {}) => {
+        const { getCoordinator } = require('./ai/agents');
+        
+        // 0. Check access policy first
+        const accessContext = await deps.AccessPolicyService.getAIAccessContext(organizationId);
+
+        if (accessContext.trialStatus?.expired && !accessContext.isPaid) {
+            return {
+                blocked: true,
+                errorCode: 'TRIAL_EXPIRED',
+                message: 'Your trial has expired. Please upgrade to continue using AI features.'
+            };
+        }
+
+        if (accessContext.dailyAIUsage.remaining <= 0 && !accessContext.isPaid) {
+            return {
+                blocked: true,
+                errorCode: 'AI_LIMIT_REACHED',
+                message: `You've reached your daily AI call limit.`
+            };
+        }
+
+        // 1. Build context
+        const context = await deps.AIContextBuilder.buildContext(userId, organizationId, projectId, options);
+        
+        // 2. Get policy and preferences
+        const policy = await deps.AIPolicyEngine.getEffectivePolicy(organizationId, projectId, userId);
+        const preferences = await deps.AIMemoryManager.getUserPreferences(userId);
+
+        // 3. Prepare agent context
+        const agentContext = {
+            ...context,
+            organization: {
+                id: organizationId,
+                name: context.organization?.organizationName,
+                industry: context.organization?.industry,
+                employeeCount: context.organization?.employeeCount
+            },
+            project: context.project ? {
+                id: projectId,
+                name: context.project.projectName,
+                phase: context.project.currentPhase,
+                status: context.project.status,
+                progress: context.project.progressPercent
+            } : null,
+            initiatives: context.project?.initiatives || [],
+            assessment: context.project?.assessment,
+            economics: context.project?.economics,
+            goals: context.project?.goals,
+            risks: context.project?.risks,
+            stakeholders: context.project?.stakeholders,
+            resources: context.project?.resources,
+            milestones: context.project?.milestones,
+            dependencies: context.project?.dependencies,
+            preferences,
+            preferredModel: policy.preferredModel
+        };
+
+        // 4. Get coordinator and process query
+        const coordinator = getCoordinator({
+            minAgentsForDebate: options.enableDebate !== false ? 2 : 99,
+            maxAgentsPerQuery: options.maxAgents || 3
+        });
+
+        const result = await coordinator.processQuery(message, agentContext, {
+            skipDebate: options.skipDebate
+        });
+
+        // 5. Increment usage counter
+        deps.AccessPolicyService.incrementUsage(organizationId, 'ai_calls', 1).catch(err => {
+            console.error('[AIOrchestrator] Failed to increment AI usage counter:', err);
+        });
+
+        // 6. Add access context to response
+        return {
+            ...result,
+            accessContext: {
+                organizationType: accessContext.organizationType,
+                isDemo: accessContext.isDemo,
+                isTrial: accessContext.isTrial,
+                isPaid: accessContext.isPaid
+            }
+        };
+    },
+
+    /**
+     * Query a specific specialist agent directly
+     * 
+     * @param {string} domain - Agent domain (strategy, finance, change, risk, pmo)
+     * @param {string} message - Query
+     * @param {string} userId - User ID
+     * @param {string} organizationId - Organization ID
+     * @param {string} projectId - Project ID (optional)
+     * @returns {object} Agent response
+     */
+    querySpecialistAgent: async (domain, message, userId, organizationId, projectId = null) => {
+        const { getCoordinator } = require('./ai/agents');
+        
+        // Build context
+        const context = await deps.AIContextBuilder.buildContext(userId, organizationId, projectId);
+        
+        const agentContext = {
+            organization: { id: organizationId },
+            project: projectId ? { id: projectId } : null,
+            ...context
+        };
+
+        const coordinator = getCoordinator();
+        return await coordinator.queryAgent(domain, message, agentContext);
+    },
+
+    /**
+     * Get recommendations from all relevant agents
+     * 
+     * @param {string} topic - Topic to get recommendations for
+     * @param {string} userId - User ID
+     * @param {string} organizationId - Organization ID
+     * @param {string} projectId - Project ID (optional)
+     * @returns {object} Recommendations by agent domain
+     */
+    getMultiAgentRecommendations: async (topic, userId, organizationId, projectId = null) => {
+        const { getCoordinator } = require('./ai/agents');
+        
+        const context = await deps.AIContextBuilder.buildContext(userId, organizationId, projectId);
+        const coordinator = getCoordinator();
+        
+        return await coordinator.getSpecialistRecommendations(topic, context);
+    },
+
+    /**
+     * Get available agent domains and their metadata
+     */
+    getAvailableAgents: () => {
+        const { getAllAgentMetadata } = require('./ai/agents');
+        return getAllAgentMetadata();
+    },
+
+    /**
+     * Get agent coordinator metrics
+     */
+    getAgentMetrics: () => {
+        const { getCoordinator } = require('./ai/agents');
+        return getCoordinator().getMetrics();
     }
 };
 

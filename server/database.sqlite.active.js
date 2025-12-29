@@ -14,10 +14,17 @@ const db = new sqlite3.Database(dbPath, (err) => {
         console.error('Error opening database', err.message);
         if (db.initReject) db.initReject(err);
     } else {
-        console.log('Connected to the SQLite database.');
+        console.log(`[DB:${dbId}] Connected to the SQLite database.`);
+
+        // Hardening & Performance Optimization
+        db.serialize(() => {
+            db.run('PRAGMA journal_mode=WAL;');
+            db.run('PRAGMA busy_timeout=10000;');
+            db.run('PRAGMA synchronous=NORMAL;');
+            console.log(`[DB:${dbId}] WAL mode, Busy Timeout (10s), and Synchronous=NORMAL enabled.`);
+        });
+
         initDb();
-        // db.initResolve will be called inside initDb after serialization
-        // if (db.initResolve) db.initResolve();
     }
 });
 
@@ -181,17 +188,262 @@ function initDb() {
             password TEXT,
             first_name TEXT,
             last_name TEXT,
+            name TEXT,
             role TEXT, 
             status TEXT DEFAULT 'active',
             avatar_url TEXT,
             timezone TEXT DEFAULT 'UTC',
+            locale TEXT DEFAULT 'en',
+            date_format TEXT DEFAULT 'YYYY-MM-DD',
+            time_format TEXT DEFAULT '24h',
+            first_day_of_week TEXT DEFAULT 'MONDAY',
+            accessibility_settings TEXT, -- JSON
+            notification_preferences TEXT, -- JSON
+            ui_preferences TEXT, -- JSON
             units TEXT DEFAULT 'metric',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             last_login DATETIME,
             FOREIGN KEY(organization_id) REFERENCES organizations(id)
         )`);
 
-        // Migration: Ensure avatar_url exists
+        // Refresh Tokens
+        db.run(`CREATE TABLE IF NOT EXISTS refresh_tokens (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            token_hash TEXT NOT NULL,
+            token_family TEXT NOT NULL,
+            device_info TEXT,
+            ip_address TEXT,
+            user_agent TEXT,
+            expires_at DATETIME NOT NULL,
+            revoked_at DATETIME,
+            revoked_reason TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            last_used_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+
+        // Revoked Tokens (Blacklist)
+        db.run(`CREATE TABLE IF NOT EXISTS revoked_tokens (
+            jti TEXT PRIMARY KEY,
+            user_id TEXT,
+            reason TEXT,
+            revoked_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            expires_at DATETIME, -- When the token would have expired anyway
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+
+        // Organization Context (for Reports)
+        db.run(`CREATE TABLE IF NOT EXISTS organization_context (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            goals JSON,
+            digital_maturity TEXT,
+            transformation_type TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+
+        // Management Reports
+        db.run(`CREATE TABLE IF NOT EXISTS management_reports (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            project_id TEXT,
+            report_type TEXT NOT NULL CHECK (report_type IN ('TEAM_MEETING', 'STEERING_COMMITTEE')),
+            scope TEXT NOT NULL DEFAULT 'PROJECT' CHECK (scope IN ('PROJECT', 'PORTFOLIO')),
+            title TEXT NOT NULL,
+            period_start DATE,
+            period_end DATE,
+            status TEXT DEFAULT 'DRAFT' CHECK (status IN ('DRAFT', 'FINAL', 'ARCHIVED')),
+            generated_by TEXT NOT NULL,
+            content JSON,
+            ai_narrative TEXT,
+            ai_warnings JSON,
+            pdf_path TEXT,
+            pptx_path TEXT,
+            share_token TEXT UNIQUE,
+            share_expires_at DATETIME,
+            pmo_domain TEXT DEFAULT 'PERFORMANCE_MONITORING',
+            iso21500_mapping TEXT DEFAULT 'Project Performance Measurement (Clause 4.4.22)',
+            pmbok_mapping TEXT DEFAULT 'Measurement Performance Domain',
+            prince2_mapping TEXT DEFAULT 'Highlight Report / Progress Theme',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS management_report_sections (
+            id TEXT PRIMARY KEY,
+            report_id TEXT NOT NULL,
+            section_type TEXT NOT NULL,
+            section_order INTEGER DEFAULT 0,
+            title TEXT,
+            content JSON,
+            is_included BOOLEAN DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (report_id) REFERENCES management_reports(id) ON DELETE CASCADE
+        )`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS management_report_recipients (
+            id TEXT PRIMARY KEY,
+            report_id TEXT NOT NULL,
+            user_id TEXT,
+            email TEXT,
+            sent_at DATETIME,
+            opened_at DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (report_id) REFERENCES management_reports(id) ON DELETE CASCADE
+        )`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS management_report_schedules (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            project_id TEXT,
+            report_type TEXT NOT NULL CHECK (report_type IN ('TEAM_MEETING', 'STEERING_COMMITTEE')),
+            scope TEXT NOT NULL DEFAULT 'PROJECT' CHECK (scope IN ('PROJECT', 'PORTFOLIO')),
+            frequency TEXT NOT NULL CHECK (frequency IN ('DAILY', 'WEEKLY', 'BIWEEKLY', 'MONTHLY')),
+            day_of_week INTEGER,
+            day_of_month INTEGER,
+            time_of_day TEXT DEFAULT '09:00',
+            timezone TEXT DEFAULT 'Europe/Warsaw',
+            is_active BOOLEAN DEFAULT 1,
+            last_generated_at DATETIME,
+            next_scheduled_at DATETIME,
+            recipients JSON,
+            created_by TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+
+        // ============================================
+        // Economics / Digitization Module Tables
+        // ============================================
+
+        // Digitization Analyses
+        db.run(`CREATE TABLE IF NOT EXISTS digitization_analyses (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT,
+            status TEXT DEFAULT 'draft' CHECK (status IN ('draft', 'in_progress', 'completed')),
+            project_id TEXT,
+            organization_id INTEGER NOT NULL,
+            created_by TEXT NOT NULL,
+            overall_score REAL,
+            completion_percent INTEGER DEFAULT 0,
+            axis_scores TEXT, -- JSON
+            imported_from TEXT,
+            import_date DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (organization_id) REFERENCES organizations(id)
+        )`);
+
+        // Axis Scores
+        db.run(`CREATE TABLE IF NOT EXISTS digitization_axis_scores (
+            id TEXT PRIMARY KEY,
+            analysis_id TEXT NOT NULL,
+            axis_id TEXT NOT NULL,
+            area_id TEXT NOT NULL,
+            area_code TEXT,
+            current_level INTEGER CHECK (current_level >= 0 AND current_level <= 7),
+            target_level INTEGER CHECK (target_level >= 0 AND target_level <= 7),
+            notes TEXT,
+            evidence TEXT, -- JSON
+            justification TEXT,
+            assessed_by TEXT,
+            assessed_at DATETIME,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (analysis_id) REFERENCES digitization_analyses(id) ON DELETE CASCADE,
+            UNIQUE(analysis_id, axis_id, area_id)
+        )`);
+
+        // Comparisons
+        db.run(`CREATE TABLE IF NOT EXISTS digitization_comparisons (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT,
+            organization_id INTEGER NOT NULL,
+            created_by TEXT NOT NULL,
+            analysis_ids TEXT NOT NULL, -- JSON
+            comparison_type TEXT DEFAULT 'side_by_side',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (organization_id) REFERENCES organizations(id)
+        )`);
+
+        // Exports History
+        db.run(`CREATE TABLE IF NOT EXISTS digitization_exports (
+            id TEXT PRIMARY KEY,
+            analysis_id TEXT NOT NULL,
+            export_type TEXT NOT NULL,
+            export_filename TEXT,
+            export_path TEXT,
+            exported_by TEXT NOT NULL,
+            exported_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (analysis_id) REFERENCES digitization_analyses(id) ON DELETE CASCADE
+        )`);
+
+        // Analysis Versions
+        db.run(`CREATE TABLE IF NOT EXISTS digitization_analysis_versions (
+            id TEXT PRIMARY KEY,
+            analysis_id TEXT NOT NULL,
+            version_number INTEGER NOT NULL,
+            version_name TEXT,
+            version_type TEXT DEFAULT 'snapshot',
+            snapshot_data TEXT NOT NULL,
+            created_by TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            notes TEXT,
+            overall_score REAL,
+            completion_percent INTEGER,
+            FOREIGN KEY (analysis_id) REFERENCES digitization_analyses(id) ON DELETE CASCADE,
+            UNIQUE(analysis_id, version_number)
+        )`);
+
+        // Evidence
+        db.run(`CREATE TABLE IF NOT EXISTS digitization_evidence (
+            id TEXT PRIMARY KEY,
+            score_id TEXT NOT NULL,
+            evidence_type TEXT DEFAULT 'note',
+            title TEXT NOT NULL,
+            content TEXT,
+            file_path TEXT,
+            file_size INTEGER,
+            mime_type TEXT,
+            uploaded_by TEXT NOT NULL,
+            uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            category TEXT,
+            is_verified BOOLEAN DEFAULT 0,
+            verified_by TEXT,
+            verified_at DATETIME,
+            FOREIGN KEY (score_id) REFERENCES digitization_axis_scores(id) ON DELETE CASCADE
+        )`);
+
+        // AI Recommendations
+        db.run(`CREATE TABLE IF NOT EXISTS digitization_ai_recommendations (
+            id TEXT PRIMARY KEY,
+            analysis_id TEXT NOT NULL,
+            axis_id TEXT,
+            area_id TEXT,
+            recommendation_type TEXT,
+            title TEXT NOT NULL,
+            description TEXT,
+            rationale TEXT,
+            estimated_effort TEXT,
+            estimated_impact TEXT,
+            priority_score INTEGER,
+            status TEXT DEFAULT 'suggested',
+            accepted_by TEXT,
+            accepted_at DATETIME,
+            initiative_id TEXT,
+            ai_model TEXT,
+            ai_confidence REAL,
+            generated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (analysis_id) REFERENCES digitization_analyses(id) ON DELETE CASCADE
+        )`);
+
         db.run(`ALTER TABLE users ADD COLUMN avatar_url TEXT`, (err) => {
             // Ignore error if column exists
         });
@@ -295,8 +547,9 @@ function initDb() {
         db.run(`CREATE TABLE IF NOT EXISTS initiatives (
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL,
+            org_id TEXT, -- Legacy alias for reports compatibility
             project_id TEXT, -- Optional link to legacy project container
-            name TEXT NOT NULL,
+            title TEXT NOT NULL,
             axis TEXT, -- 1-6 or 7 (AI)
             area TEXT,
             summary TEXT,
@@ -312,7 +565,9 @@ function initDb() {
             start_date DATETIME,
             pilot_end_date DATETIME,
             end_date DATETIME,
+            due_date DATETIME,
             owner_business_id TEXT,
+            owner_id TEXT, -- Legacy alias
             owner_execution_id TEXT,
             sponsor_id TEXT,
             market_context TEXT, -- AI-gathered research data
@@ -400,6 +655,21 @@ function initDb() {
                                                             is_default INTEGER DEFAULT 0,
                                                             visibility TEXT DEFAULT 'admin' -- admin, public, beta
                                                         )`);
+
+        // AI System Prompts (Governance Hub)
+        db.run(`CREATE TABLE IF NOT EXISTS ai_system_prompts (
+            id TEXT PRIMARY KEY,
+            key TEXT UNIQUE NOT NULL, -- e.g. INITIATIVE_GENERATOR
+            description TEXT,
+            content TEXT NOT NULL,
+            context_config TEXT DEFAULT '{}', -- JSON: { include_project_context: true, ... }
+            is_active INTEGER DEFAULT 1,
+            version INTEGER DEFAULT 1,
+            updated_by TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(updated_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
 
         // ==========================================
         // PHASE 1: CORE INFRASTRUCTURE TABLES
@@ -672,7 +942,7 @@ function initDb() {
         db.run(`ALTER TABLE assessment_reports ADD COLUMN custom_data TEXT DEFAULT '{}'`, (err) => {
             // Ignore if exists - Additional metadata JSON
         });
-        
+
         // Migration: Add report status and content for 3-phase workflow
         db.run(`ALTER TABLE assessment_reports ADD COLUMN report_status TEXT DEFAULT 'DRAFT'`, (err) => {
             // Ignore if exists - DRAFT | FINALIZED
@@ -699,7 +969,7 @@ function initDb() {
         db.run(`ALTER TABLE assessment_reports ADD COLUMN previous_version_id TEXT`, (err) => {
             // Ignore if exists - Link to previous version
         });
-        
+
         // Migration: Add assessment status to maturity_assessments
         db.run(`ALTER TABLE maturity_assessments ADD COLUMN assessment_status TEXT DEFAULT 'IN_PROGRESS'`, (err) => {
             // Ignore if exists - IN_PROGRESS | FINALIZED
@@ -780,7 +1050,7 @@ function initDb() {
         // DRD AUDIT REPORT SECTIONS
         // Editable report sections with AI support
         // ==========================================
-        
+
         // Report Sections - Individual editable sections of a report
         db.run(`CREATE TABLE IF NOT EXISTS report_sections (
             id TEXT PRIMARY KEY,
@@ -840,7 +1110,6 @@ function initDb() {
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL,
             project_id TEXT,
-            assessment_date DATETIME DEFAULT CURRENT_TIMESTAMP,
             
             -- Scoring (6 dimensions on 1-5 scale)
             value_stream_score REAL DEFAULT 0,
@@ -852,149 +1121,186 @@ function initDb() {
             
             -- Aggregated
             overall_score REAL DEFAULT 0,
-            industry_benchmark REAL DEFAULT 0,
+            industry_benchmark REAL DEFAULT 3.3,
             
             -- AI Analysis
-            ai_recommendations TEXT,
+            ai_recommendations TEXT DEFAULT '[]',
             top_gaps TEXT DEFAULT '[]',
             
-            -- Raw Data
+            -- Raw Data & Mapping
             questionnaire_responses TEXT DEFAULT '{}',
+            drd_mapping TEXT DEFAULT '{}',
+            observation_count INTEGER DEFAULT 0,
+            report_generated INTEGER DEFAULT 0,
             
-            -- Metadata
-            created_by TEXT NOT NULL,
+            created_by TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            
             FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
             FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
             FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
         )`);
 
-        // External Digital Assessments (SIRI, ADMA, CMMI, etc.)
-        db.run(`CREATE TABLE IF NOT EXISTS external_digital_assessments (
+        db.run(`CREATE TABLE IF NOT EXISTS rapid_lean_observations (
             id TEXT PRIMARY KEY,
+            assessment_id TEXT,
             organization_id TEXT NOT NULL,
             project_id TEXT,
-            
-            -- Framework Info
-            framework_type TEXT NOT NULL CHECK(framework_type IN ('SIRI', 'ADMA', 'CMMI', 'DIGITAL_OTHER')),
-            framework_version TEXT,
-            assessment_date DATETIME,
-            
-            -- Scores
-            raw_scores_json TEXT NOT NULL,
-            normalized_scores_json TEXT,
-            mapping_confidence REAL DEFAULT 0,
-            
-            -- Mapping to DRD
-            drd_axis_mapping TEXT DEFAULT '{}',
-            inconsistencies TEXT DEFAULT '[]',
-            
-            -- File Info
-            file_path TEXT,
-            file_name TEXT,
-            file_size INTEGER,
-            upload_method TEXT DEFAULT 'MANUAL' CHECK(upload_method IN ('PDF_PARSE', 'MANUAL', 'API')),
-            
-            -- Metadata
-            uploaded_by TEXT NOT NULL,
-            uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            processing_status TEXT DEFAULT 'uploaded' CHECK(processing_status IN ('uploaded', 'processing', 'mapped', 'error')),
-            processing_error TEXT,
-            
+            template_id TEXT NOT NULL,
+            location TEXT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            answers TEXT DEFAULT '{}',
+            photos TEXT DEFAULT '[]',
+            notes TEXT,
+            created_by TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(assessment_id) REFERENCES rapid_lean_assessments(id) ON DELETE CASCADE,
             FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
             FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
-            FOREIGN KEY(uploaded_by) REFERENCES users(id) ON DELETE SET NULL
+            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
         )`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS rapid_lean_reports (
+            id TEXT PRIMARY KEY,
+            assessment_id TEXT NOT NULL,
+            organization_id TEXT NOT NULL,
+            project_id TEXT,
+            report_type TEXT DEFAULT 'detailed',
+            format TEXT DEFAULT 'pdf',
+            file_url TEXT,
+            report_data TEXT DEFAULT '{}',
+            generated_by TEXT,
+            generated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(assessment_id) REFERENCES rapid_lean_assessments(id) ON DELETE CASCADE,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+            FOREIGN KEY(generated_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        // External Digital Assessments (SIRI, ADMA, CMMI, etc.)
+        db.run(`CREATE TABLE IF NOT EXISTS external_digital_assessments(
+                    id TEXT PRIMARY KEY,
+                    organization_id TEXT NOT NULL,
+                    project_id TEXT,
+
+                    --Framework Info
+            framework_type TEXT NOT NULL CHECK(framework_type IN('SIRI', 'ADMA', 'CMMI', 'DIGITAL_OTHER')),
+                    framework_version TEXT,
+                    assessment_date DATETIME,
+
+                    --Scores
+            raw_scores_json TEXT NOT NULL,
+                    normalized_scores_json TEXT,
+                    mapping_confidence REAL DEFAULT 0,
+
+                    --Mapping to DRD
+            drd_axis_mapping TEXT DEFAULT '{}',
+                    inconsistencies TEXT DEFAULT '[]',
+
+                    --File Info
+            file_path TEXT,
+                    file_name TEXT,
+                    file_size INTEGER,
+                    upload_method TEXT DEFAULT 'MANUAL' CHECK(upload_method IN('PDF_PARSE', 'MANUAL', 'API')),
+
+                    --Metadata
+            uploaded_by TEXT NOT NULL,
+                    uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    processing_status TEXT DEFAULT 'uploaded' CHECK(processing_status IN('uploaded', 'processing', 'mapped', 'error')),
+                    processing_error TEXT,
+
+                    FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                    FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+                    FOREIGN KEY(uploaded_by) REFERENCES users(id) ON DELETE SET NULL
+                )`);
 
         // Generic Assessment Reports (ISO, Consulting, Compliance, etc.)
-        db.run(`CREATE TABLE IF NOT EXISTS generic_assessment_reports (
-            id TEXT PRIMARY KEY,
-            organization_id TEXT NOT NULL,
-            project_id TEXT,
-            
-            -- Report Info
-            report_type TEXT DEFAULT 'OTHER' CHECK(report_type IN ('ISO_AUDIT', 'CONSULTING', 'COMPLIANCE', 'LEAN', 'OTHER')),
-            title TEXT NOT NULL,
-            consultant_name TEXT,
-            report_date DATETIME,
-            
-            -- File Info
+        db.run(`CREATE TABLE IF NOT EXISTS generic_assessment_reports(
+                    id TEXT PRIMARY KEY,
+                    organization_id TEXT NOT NULL,
+                    project_id TEXT,
+
+                    --Report Info
+            report_type TEXT DEFAULT 'OTHER' CHECK(report_type IN('ISO_AUDIT', 'CONSULTING', 'COMPLIANCE', 'LEAN', 'OTHER')),
+                    title TEXT NOT NULL,
+                    consultant_name TEXT,
+                    report_date DATETIME,
+
+                    --File Info
             file_path TEXT NOT NULL,
-            file_name TEXT NOT NULL,
-            file_size INTEGER,
-            file_type TEXT,
-            
-            -- AI Processing
+                    file_name TEXT NOT NULL,
+                    file_size INTEGER,
+                    file_type TEXT,
+
+                    --AI Processing
             ocr_text TEXT,
-            ai_summary TEXT,
-            ai_key_findings TEXT DEFAULT '[]',
-            
-            -- Organization
+                    ai_summary TEXT,
+                    ai_key_findings TEXT DEFAULT '[]',
+
+                    --Organization
             tags_json TEXT DEFAULT '[]',
-            linked_initiatives TEXT DEFAULT '[]',
-            
-            -- Metadata
+                    linked_initiatives TEXT DEFAULT '[]',
+
+                    --Metadata
             uploaded_by TEXT NOT NULL,
-            uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            processing_status TEXT DEFAULT 'pending' CHECK(processing_status IN ('pending', 'processing', 'completed', 'error')),
-            processing_error TEXT,
-            
-            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
-            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
-            FOREIGN KEY(uploaded_by) REFERENCES users(id) ON DELETE SET NULL
-        )`);
+                    uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    processing_status TEXT DEFAULT 'pending' CHECK(processing_status IN('pending', 'processing', 'completed', 'error')),
+                    processing_error TEXT,
+
+                    FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                    FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+                    FOREIGN KEY(uploaded_by) REFERENCES users(id) ON DELETE SET NULL
+                )`);
 
         // Assessment Correlations (Cross-framework analysis)
-        db.run(`CREATE TABLE IF NOT EXISTS assessment_correlations (
-            id TEXT PRIMARY KEY,
-            organization_id TEXT NOT NULL,
-            project_id TEXT,
-            
-            -- Source Assessment
+        db.run(`CREATE TABLE IF NOT EXISTS assessment_correlations(
+                    id TEXT PRIMARY KEY,
+                    organization_id TEXT NOT NULL,
+                    project_id TEXT,
+
+                    --Source Assessment
             source_type TEXT NOT NULL,
-            source_id TEXT NOT NULL,
-            source_dimension TEXT,
-            source_score REAL,
-            
-            -- Target Assessment
+                    source_id TEXT NOT NULL,
+                    source_dimension TEXT,
+                    source_score REAL,
+
+                    --Target Assessment
             target_type TEXT NOT NULL,
-            target_id TEXT NOT NULL,
-            target_dimension TEXT,
-            target_score REAL,
-            
-            -- Correlation Analysis
+                    target_id TEXT NOT NULL,
+                    target_dimension TEXT,
+                    target_score REAL,
+
+                    --Correlation Analysis
             correlation_strength REAL DEFAULT 0,
-            inconsistency_flag INTEGER DEFAULT 0,
-            ai_explanation TEXT,
-            
-            -- Metadata
+                    inconsistency_flag INTEGER DEFAULT 0,
+                    ai_explanation TEXT,
+
+                    --Metadata
             detected_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            reviewed_by TEXT,
-            reviewed_at DATETIME,
-            resolution_notes TEXT,
-            
-            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
-            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
-            FOREIGN KEY(reviewed_by) REFERENCES users(id) ON DELETE SET NULL
-        )`);
+                    reviewed_by TEXT,
+                    reviewed_at DATETIME,
+                    resolution_notes TEXT,
+
+                    FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                    FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+                    FOREIGN KEY(reviewed_by) REFERENCES users(id) ON DELETE SET NULL
+                )`);
 
 
         // Roadmap Waves (SCMS Phase 4)
-        db.run(`CREATE TABLE IF NOT EXISTS roadmap_waves (
-            id TEXT PRIMARY KEY,
-            project_id TEXT NOT NULL,
-            name TEXT NOT NULL,
-            description TEXT,
-            start_date DATETIME,
-            end_date DATETIME,
-            sort_order INTEGER DEFAULT 0,
-            status TEXT DEFAULT 'PLANNED', -- PLANNED, ACTIVE, COMPLETED
+        db.run(`CREATE TABLE IF NOT EXISTS roadmap_waves(
+                    id TEXT PRIMARY KEY,
+                    project_id TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    start_date DATETIME,
+                    end_date DATETIME,
+                    sort_order INTEGER DEFAULT 0,
+                    status TEXT DEFAULT 'PLANNED', --PLANNED, ACTIVE, COMPLETED
             is_baselined INTEGER DEFAULT 0,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
-        )`);
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
+                )`);
 
         // Add wave_id to initiatives
         db.run(`ALTER TABLE initiatives ADD COLUMN wave_id TEXT`, (err) => {
@@ -1005,76 +1311,76 @@ function initDb() {
         });
 
         // KPI Results (SCMS Phase 6 - Stabilization)
-        db.run(`CREATE TABLE IF NOT EXISTS kpi_results (
-            id TEXT PRIMARY KEY,
-            project_id TEXT NOT NULL,
-            initiative_id TEXT,
-            name TEXT NOT NULL,
-            baseline_value REAL DEFAULT 0,
-            target_value REAL DEFAULT 0,
-            current_value REAL DEFAULT 0,
-            unit TEXT DEFAULT 'units',
-            measurement_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
-            FOREIGN KEY(initiative_id) REFERENCES initiatives(id) ON DELETE SET NULL
-        )`);
+        db.run(`CREATE TABLE IF NOT EXISTS kpi_results(
+                    id TEXT PRIMARY KEY,
+                    project_id TEXT NOT NULL,
+                    initiative_id TEXT,
+                    name TEXT NOT NULL,
+                    baseline_value REAL DEFAULT 0,
+                    target_value REAL DEFAULT 0,
+                    current_value REAL DEFAULT 0,
+                    unit TEXT DEFAULT 'units',
+                    measurement_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+                    FOREIGN KEY(initiative_id) REFERENCES initiatives(id) ON DELETE SET NULL
+                )`);
 
         // ==========================================
         // STEP 3: PMO OBJECT MODEL TABLES
         // ==========================================
 
         // Decisions (Governance Checkpoints)
-        db.run(`CREATE TABLE IF NOT EXISTS decisions (
-            id TEXT PRIMARY KEY,
-            project_id TEXT NOT NULL,
-            decision_type TEXT NOT NULL, -- INITIATIVE_APPROVAL, PHASE_TRANSITION, UNBLOCK, CANCEL, OTHER
-            related_object_type TEXT NOT NULL, -- INITIATIVE, PHASE, ROADMAP, TASK
+        db.run(`CREATE TABLE IF NOT EXISTS decisions(
+                    id TEXT PRIMARY KEY,
+                    project_id TEXT NOT NULL,
+                    decision_type TEXT NOT NULL, --INITIATIVE_APPROVAL, PHASE_TRANSITION, UNBLOCK, CANCEL, OTHER
+            related_object_type TEXT NOT NULL, --INITIATIVE, PHASE, ROADMAP, TASK
             related_object_id TEXT NOT NULL,
-            decision_owner_id TEXT NOT NULL,
-            status TEXT DEFAULT 'PENDING', -- PENDING, APPROVED, REJECTED
+                    decision_owner_id TEXT NOT NULL,
+                    status TEXT DEFAULT 'PENDING', --PENDING, APPROVED, REJECTED
             required INTEGER DEFAULT 1,
-            title TEXT NOT NULL,
-            description TEXT,
-            outcome TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            decided_at DATETIME,
-            audit_trail TEXT DEFAULT '[]', -- JSON Array
+                    title TEXT NOT NULL,
+                    description TEXT,
+                    outcome TEXT,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    decided_at DATETIME,
+                    audit_trail TEXT DEFAULT '[]', --JSON Array
             FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
-            FOREIGN KEY(decision_owner_id) REFERENCES users(id) ON DELETE SET NULL
-        )`);
+                    FOREIGN KEY(decision_owner_id) REFERENCES users(id) ON DELETE SET NULL
+                )`);
 
         // Initiative Dependencies
-        db.run(`CREATE TABLE IF NOT EXISTS initiative_dependencies (
-            id TEXT PRIMARY KEY,
-            from_initiative_id TEXT NOT NULL, -- Must complete first
-            to_initiative_id TEXT NOT NULL,   -- Dependent initiative
-            type TEXT DEFAULT 'FINISH_TO_START', -- FINISH_TO_START, SOFT
+        db.run(`CREATE TABLE IF NOT EXISTS initiative_dependencies(
+                    id TEXT PRIMARY KEY,
+                    from_initiative_id TEXT NOT NULL, --Must complete first
+            to_initiative_id TEXT NOT NULL, --Dependent initiative
+            type TEXT DEFAULT 'FINISH_TO_START', --FINISH_TO_START, SOFT
             is_satisfied INTEGER DEFAULT 0,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(from_initiative_id) REFERENCES initiatives(id) ON DELETE CASCADE,
-            FOREIGN KEY(to_initiative_id) REFERENCES initiatives(id) ON DELETE CASCADE
-        )`);
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY(from_initiative_id) REFERENCES initiatives(id) ON DELETE CASCADE,
+                    FOREIGN KEY(to_initiative_id) REFERENCES initiatives(id) ON DELETE CASCADE
+                )`);
 
         // Stage Gates
-        db.run(`CREATE TABLE IF NOT EXISTS stage_gates (
-            id TEXT PRIMARY KEY,
-            project_id TEXT NOT NULL,
-            gate_type TEXT NOT NULL, -- READINESS_GATE, DESIGN_GATE, etc.
+        db.run(`CREATE TABLE IF NOT EXISTS stage_gates(
+                    id TEXT PRIMARY KEY,
+                    project_id TEXT NOT NULL,
+                    gate_type TEXT NOT NULL, --READINESS_GATE, DESIGN_GATE, etc.
             from_phase TEXT NOT NULL,
-            to_phase TEXT NOT NULL,
-            status TEXT DEFAULT 'NOT_READY', -- NOT_READY, READY, PASSED, FAILED
+                    to_phase TEXT NOT NULL,
+                    status TEXT DEFAULT 'NOT_READY', --NOT_READY, READY, PASSED, FAILED
             requires_approval INTEGER DEFAULT 1,
-            evaluated_at DATETIME,
-            evaluated_by TEXT,
-            approved_at DATETIME,
-            approved_by TEXT,
-            notes TEXT,
-            completion_criteria TEXT DEFAULT '[]', -- JSON Array
+                    evaluated_at DATETIME,
+                    evaluated_by TEXT,
+                    approved_at DATETIME,
+                    approved_by TEXT,
+                    notes TEXT,
+                    completion_criteria TEXT DEFAULT '[]', --JSON Array
             FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
-            FOREIGN KEY(evaluated_by) REFERENCES users(id) ON DELETE SET NULL,
-            FOREIGN KEY(approved_by) REFERENCES users(id) ON DELETE SET NULL
-        )`);
+                    FOREIGN KEY(evaluated_by) REFERENCES users(id) ON DELETE SET NULL,
+                    FOREIGN KEY(approved_by) REFERENCES users(id) ON DELETE SET NULL
+                )`);
 
         // Update initiatives table with PMO fields
         db.run(`ALTER TABLE initiatives ADD COLUMN status TEXT DEFAULT 'DRAFT'`, (err) => {
@@ -1128,82 +1434,82 @@ function initDb() {
         // ==========================================
 
         // Roadmaps (one active per project)
-        db.run(`CREATE TABLE IF NOT EXISTS roadmaps (
-            id TEXT PRIMARY KEY,
-            project_id TEXT NOT NULL,
-            name TEXT NOT NULL,
-            status TEXT DEFAULT 'DRAFT', -- DRAFT, ACTIVE, BASELINED, ARCHIVED
+        db.run(`CREATE TABLE IF NOT EXISTS roadmaps(
+                    id TEXT PRIMARY KEY,
+                    project_id TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    status TEXT DEFAULT 'DRAFT', --DRAFT, ACTIVE, BASELINED, ARCHIVED
             planned_start_date DATETIME,
-            planned_end_date DATETIME,
-            current_baseline_version INTEGER DEFAULT 0,
-            last_baselined_at DATETIME,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
-        )`);
+                    planned_end_date DATETIME,
+                    current_baseline_version INTEGER DEFAULT 0,
+                    last_baselined_at DATETIME,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
+                )`);
 
         // Roadmap Initiatives (timeline entries)
-        db.run(`CREATE TABLE IF NOT EXISTS roadmap_initiatives (
-            id TEXT PRIMARY KEY,
-            roadmap_id TEXT NOT NULL,
-            initiative_id TEXT NOT NULL,
-            planned_start_date DATETIME NOT NULL,
-            planned_end_date DATETIME NOT NULL,
-            planned_duration INTEGER DEFAULT 0, -- Days
+        db.run(`CREATE TABLE IF NOT EXISTS roadmap_initiatives(
+                    id TEXT PRIMARY KEY,
+                    roadmap_id TEXT NOT NULL,
+                    initiative_id TEXT NOT NULL,
+                    planned_start_date DATETIME NOT NULL,
+                    planned_end_date DATETIME NOT NULL,
+                    planned_duration INTEGER DEFAULT 0, --Days
             sequence_position INTEGER DEFAULT 0,
-            actual_start_date DATETIME,
-            actual_end_date DATETIME,
-            is_milestone INTEGER DEFAULT 0,
-            is_critical_path INTEGER DEFAULT 0,
-            start_variance_days INTEGER DEFAULT 0,
-            end_variance_days INTEGER DEFAULT 0,
-            FOREIGN KEY(roadmap_id) REFERENCES roadmaps(id) ON DELETE CASCADE,
-            FOREIGN KEY(initiative_id) REFERENCES initiatives(id) ON DELETE CASCADE
-        )`);
+                    actual_start_date DATETIME,
+                    actual_end_date DATETIME,
+                    is_milestone INTEGER DEFAULT 0,
+                    is_critical_path INTEGER DEFAULT 0,
+                    start_variance_days INTEGER DEFAULT 0,
+                    end_variance_days INTEGER DEFAULT 0,
+                    FOREIGN KEY(roadmap_id) REFERENCES roadmaps(id) ON DELETE CASCADE,
+                    FOREIGN KEY(initiative_id) REFERENCES initiatives(id) ON DELETE CASCADE
+                )`);
 
         // Schedule Baselines
-        db.run(`CREATE TABLE IF NOT EXISTS schedule_baselines (
-            id TEXT PRIMARY KEY,
-            roadmap_id TEXT NOT NULL,
-            project_id TEXT NOT NULL,
-            version INTEGER NOT NULL,
-            initiative_snapshots TEXT NOT NULL, -- JSON Array
+        db.run(`CREATE TABLE IF NOT EXISTS schedule_baselines(
+                    id TEXT PRIMARY KEY,
+                    roadmap_id TEXT NOT NULL,
+                    project_id TEXT NOT NULL,
+                    version INTEGER NOT NULL,
+                    initiative_snapshots TEXT NOT NULL, --JSON Array
             approved_by TEXT NOT NULL,
-            approved_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            rationale TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(roadmap_id) REFERENCES roadmaps(id) ON DELETE CASCADE,
-            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
-            FOREIGN KEY(approved_by) REFERENCES users(id) ON DELETE SET NULL
-        )`);
+                    approved_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    rationale TEXT,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY(roadmap_id) REFERENCES roadmaps(id) ON DELETE CASCADE,
+                    FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+                    FOREIGN KEY(approved_by) REFERENCES users(id) ON DELETE SET NULL
+                )`);
 
         // User Capacity (weekly)
-        db.run(`CREATE TABLE IF NOT EXISTS user_capacity (
-            id TEXT PRIMARY KEY,
-            user_id TEXT NOT NULL,
-            project_id TEXT,
-            week_start DATETIME NOT NULL,
-            allocated_hours REAL DEFAULT 0,
-            available_hours REAL DEFAULT 40,
-            utilization_percent REAL DEFAULT 0,
-            initiative_allocations TEXT DEFAULT '[]', -- JSON Array
+        db.run(`CREATE TABLE IF NOT EXISTS user_capacity(
+                    id TEXT PRIMARY KEY,
+                    user_id TEXT NOT NULL,
+                    project_id TEXT,
+                    week_start DATETIME NOT NULL,
+                    allocated_hours REAL DEFAULT 0,
+                    available_hours REAL DEFAULT 40,
+                    utilization_percent REAL DEFAULT 0,
+                    initiative_allocations TEXT DEFAULT '[]', --JSON Array
             is_overloaded INTEGER DEFAULT 0,
-            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
-            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
-        )`);
+                    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+                    FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
+                )`);
 
         // Scenarios (what-if, can be non-persistent)
-        db.run(`CREATE TABLE IF NOT EXISTS scenarios (
-            id TEXT PRIMARY KEY,
-            project_id TEXT NOT NULL,
-            name TEXT NOT NULL,
-            proposed_changes TEXT DEFAULT '[]', -- JSON Array
-            impact_analysis TEXT, -- JSON Object
+        db.run(`CREATE TABLE IF NOT EXISTS scenarios(
+                    id TEXT PRIMARY KEY,
+                    project_id TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    proposed_changes TEXT DEFAULT '[]', --JSON Array
+            impact_analysis TEXT, --JSON Object
             created_by TEXT NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
-            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
-        )`);
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+                    FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+                )`);
 
         // Add timeline fields to initiatives
         db.run(`ALTER TABLE initiatives ADD COLUMN planned_start_date DATETIME`, (err) => { });
@@ -1236,81 +1542,81 @@ function initDb() {
         // ==========================================
 
         // Notifications
-        db.run(`CREATE TABLE IF NOT EXISTS notifications (
-            id TEXT PRIMARY KEY,
-            user_id TEXT NOT NULL,
-            organization_id TEXT NOT NULL,
-            project_id TEXT,
-            type TEXT NOT NULL,
-            severity TEXT DEFAULT 'INFO', -- INFO, WARNING, CRITICAL
+        db.run(`CREATE TABLE IF NOT EXISTS notifications(
+                    id TEXT PRIMARY KEY,
+                    user_id TEXT NOT NULL,
+                    organization_id TEXT NOT NULL,
+                    project_id TEXT,
+                    type TEXT NOT NULL,
+                    severity TEXT DEFAULT 'INFO', --INFO, WARNING, CRITICAL
             title TEXT NOT NULL,
-            message TEXT NOT NULL,
-            related_object_type TEXT,
-            related_object_id TEXT,
-            is_read INTEGER DEFAULT 0,
-            is_actionable INTEGER DEFAULT 0,
-            action_url TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            read_at DATETIME,
-            expires_at DATETIME,
-            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
-            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
-            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE SET NULL
-        )`);
+                    message TEXT NOT NULL,
+                    related_object_type TEXT,
+                    related_object_id TEXT,
+                    is_read INTEGER DEFAULT 0,
+                    is_actionable INTEGER DEFAULT 0,
+                    action_url TEXT,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    read_at DATETIME,
+                    expires_at DATETIME,
+                    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+                    FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                    FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE SET NULL
+                )`);
 
         // User Notification Settings
-        db.run(`CREATE TABLE IF NOT EXISTS user_notification_settings (
-            user_id TEXT PRIMARY KEY,
-            in_app_enabled INTEGER DEFAULT 1,
-            email_enabled INTEGER DEFAULT 0,
-            mute_info INTEGER DEFAULT 0,
-            mute_warning INTEGER DEFAULT 0,
-            mute_critical INTEGER DEFAULT 0,
-            muted_types TEXT DEFAULT '[]', -- JSON Array
+        db.run(`CREATE TABLE IF NOT EXISTS user_notification_settings(
+                    user_id TEXT PRIMARY KEY,
+                    in_app_enabled INTEGER DEFAULT 1,
+                    email_enabled INTEGER DEFAULT 0,
+                    mute_info INTEGER DEFAULT 0,
+                    mute_warning INTEGER DEFAULT 0,
+                    mute_critical INTEGER DEFAULT 0,
+                    muted_types TEXT DEFAULT '[]', --JSON Array
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
-        )`);
+                )`);
 
         // Escalations
-        db.run(`CREATE TABLE IF NOT EXISTS escalations (
-            id TEXT PRIMARY KEY,
-            project_id TEXT NOT NULL,
-            source_type TEXT NOT NULL, -- DECISION, INITIATIVE, TASK, CAPACITY
+        db.run(`CREATE TABLE IF NOT EXISTS escalations(
+                    id TEXT PRIMARY KEY,
+                    project_id TEXT NOT NULL,
+                    source_type TEXT NOT NULL, --DECISION, INITIATIVE, TASK, CAPACITY
             source_id TEXT NOT NULL,
-            from_user_id TEXT,
-            to_user_id TEXT NOT NULL,
-            to_role TEXT NOT NULL,
-            reason TEXT NOT NULL,
-            trigger_type TEXT NOT NULL, -- OVERDUE, STALLED, OVERLOAD, MANUAL
+                    from_user_id TEXT,
+                    to_user_id TEXT NOT NULL,
+                    to_role TEXT NOT NULL,
+                    reason TEXT NOT NULL,
+                    trigger_type TEXT NOT NULL, --OVERDUE, STALLED, OVERLOAD, MANUAL
             days_overdue INTEGER DEFAULT 0,
-            status TEXT DEFAULT 'PENDING', -- PENDING, ACKNOWLEDGED, RESOLVED
+                    status TEXT DEFAULT 'PENDING', --PENDING, ACKNOWLEDGED, RESOLVED
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            acknowledged_at DATETIME,
-            resolved_at DATETIME,
-            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
-            FOREIGN KEY(from_user_id) REFERENCES users(id) ON DELETE SET NULL,
-            FOREIGN KEY(to_user_id) REFERENCES users(id) ON DELETE SET NULL
-        )`);
+                    acknowledged_at DATETIME,
+                    resolved_at DATETIME,
+                    FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+                    FOREIGN KEY(from_user_id) REFERENCES users(id) ON DELETE SET NULL,
+                    FOREIGN KEY(to_user_id) REFERENCES users(id) ON DELETE SET NULL
+                )`);
 
         // ==========================================
         // STEP 6: STABILIZATION, REPORTING & ECONOMICS
         // ==========================================
 
         // Core Audit Events Table (RBAC + Org Context Foundation)
-        db.run(`CREATE TABLE IF NOT EXISTS audit_events (
-            id TEXT PRIMARY KEY,
-            ts DATETIME DEFAULT CURRENT_TIMESTAMP,
-            actor_user_id TEXT,
-            actor_type TEXT NOT NULL DEFAULT 'USER', -- USER, CONSULTANT, SYSTEM, AI
+        db.run(`CREATE TABLE IF NOT EXISTS audit_events(
+                    id TEXT PRIMARY KEY,
+                    ts DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    actor_user_id TEXT,
+                    actor_type TEXT NOT NULL DEFAULT 'USER', --USER, CONSULTANT, SYSTEM, AI
             org_id TEXT,
-            action_type TEXT NOT NULL,
-            entity_type TEXT,
-            entity_id TEXT,
-            metadata_json TEXT DEFAULT '{}',
-            ip TEXT,
-            user_agent TEXT,
-            FOREIGN KEY(actor_user_id) REFERENCES users(id) ON DELETE SET NULL,
-            FOREIGN KEY(org_id) REFERENCES organizations(id) ON DELETE SET NULL
-        )`);
+                    action_type TEXT NOT NULL,
+                    entity_type TEXT,
+                    entity_id TEXT,
+                    metadata_json TEXT DEFAULT '{}',
+                    ip TEXT,
+                    user_agent TEXT,
+                    FOREIGN KEY(actor_user_id) REFERENCES users(id) ON DELETE SET NULL,
+                    FOREIGN KEY(org_id) REFERENCES organizations(id) ON DELETE SET NULL
+                )`);
 
         // Indexes for audit_events (composite for efficient queries)
         db.run(`CREATE INDEX IF NOT EXISTS idx_audit_events_org_ts ON audit_events(org_id, ts)`);
@@ -1319,60 +1625,60 @@ function initDb() {
         db.run(`CREATE INDEX IF NOT EXISTS idx_audit_events_entity ON audit_events(entity_type, entity_id)`);
 
         // Value Hypotheses
-        db.run(`CREATE TABLE IF NOT EXISTS value_hypotheses (
-            id TEXT PRIMARY KEY,
-            initiative_id TEXT NOT NULL,
-            project_id TEXT NOT NULL,
-            description TEXT NOT NULL,
-            type TEXT NOT NULL, -- COST_REDUCTION, REVENUE_INCREASE, RISK_REDUCTION, EFFICIENCY, STRATEGIC_OPTION
-            confidence_level TEXT DEFAULT 'MEDIUM', -- LOW, MEDIUM, HIGH
+        db.run(`CREATE TABLE IF NOT EXISTS value_hypotheses(
+                    id TEXT PRIMARY KEY,
+                    initiative_id TEXT NOT NULL,
+                    project_id TEXT NOT NULL,
+                    description TEXT NOT NULL,
+                    type TEXT NOT NULL, --COST_REDUCTION, REVENUE_INCREASE, RISK_REDUCTION, EFFICIENCY, STRATEGIC_OPTION
+            confidence_level TEXT DEFAULT 'MEDIUM', --LOW, MEDIUM, HIGH
             owner_id TEXT NOT NULL,
-            related_initiative_ids TEXT DEFAULT '[]', -- JSON Array
+                    related_initiative_ids TEXT DEFAULT '[]', --JSON Array
             is_validated INTEGER DEFAULT 0,
-            validated_at DATETIME,
-            validated_by TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(initiative_id) REFERENCES initiatives(id) ON DELETE CASCADE,
-            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
-            FOREIGN KEY(owner_id) REFERENCES users(id) ON DELETE SET NULL
-        )`);
+                    validated_at DATETIME,
+                    validated_by TEXT,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY(initiative_id) REFERENCES initiatives(id) ON DELETE CASCADE,
+                    FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+                    FOREIGN KEY(owner_id) REFERENCES users(id) ON DELETE SET NULL
+                )`);
 
         // Financial Assumptions (light, range-based)
-        db.run(`CREATE TABLE IF NOT EXISTS financial_assumptions (
-            id TEXT PRIMARY KEY,
-            value_hypothesis_id TEXT NOT NULL,
-            low_estimate REAL,
-            expected_estimate REAL,
-            high_estimate REAL,
-            currency TEXT DEFAULT 'USD',
-            timeframe TEXT DEFAULT 'per year',
-            notes TEXT,
-            is_non_binding INTEGER DEFAULT 1, -- Always true
+        db.run(`CREATE TABLE IF NOT EXISTS financial_assumptions(
+                    id TEXT PRIMARY KEY,
+                    value_hypothesis_id TEXT NOT NULL,
+                    low_estimate REAL,
+                    expected_estimate REAL,
+                    high_estimate REAL,
+                    currency TEXT DEFAULT 'USD',
+                    timeframe TEXT DEFAULT 'per year',
+                    notes TEXT,
+                    is_non_binding INTEGER DEFAULT 1, --Always true
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(value_hypothesis_id) REFERENCES value_hypotheses(id) ON DELETE CASCADE
-        )`);
+                    FOREIGN KEY(value_hypothesis_id) REFERENCES value_hypotheses(id) ON DELETE CASCADE
+                )`);
 
         // Project Closures
-        db.run(`CREATE TABLE IF NOT EXISTS project_closures (
-            id TEXT PRIMARY KEY,
-            project_id TEXT NOT NULL UNIQUE,
-            closure_type TEXT NOT NULL, -- COMPLETED, CANCELLED, ARCHIVED
+        db.run(`CREATE TABLE IF NOT EXISTS project_closures(
+                    id TEXT PRIMARY KEY,
+                    project_id TEXT NOT NULL UNIQUE,
+                    closure_type TEXT NOT NULL, --COMPLETED, CANCELLED, ARCHIVED
             closure_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-            closed_by TEXT NOT NULL,
-            lessons_learned TEXT,
-            final_status TEXT,
-            total_initiatives INTEGER DEFAULT 0,
-            completed_initiatives INTEGER DEFAULT 0,
-            cancelled_initiatives INTEGER DEFAULT 0,
-            value_hypotheses_validated INTEGER DEFAULT 0,
-            value_hypotheses_total INTEGER DEFAULT 0,
-            approved_by TEXT,
-            approved_at DATETIME,
-            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
-            FOREIGN KEY(closed_by) REFERENCES users(id) ON DELETE SET NULL,
-            FOREIGN KEY(approved_by) REFERENCES users(id) ON DELETE SET NULL
-        )`);
+                    closed_by TEXT NOT NULL,
+                    lessons_learned TEXT,
+                    final_status TEXT,
+                    total_initiatives INTEGER DEFAULT 0,
+                    completed_initiatives INTEGER DEFAULT 0,
+                    cancelled_initiatives INTEGER DEFAULT 0,
+                    value_hypotheses_validated INTEGER DEFAULT 0,
+                    value_hypotheses_total INTEGER DEFAULT 0,
+                    approved_by TEXT,
+                    approved_at DATETIME,
+                    FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+                    FOREIGN KEY(closed_by) REFERENCES users(id) ON DELETE SET NULL,
+                    FOREIGN KEY(approved_by) REFERENCES users(id) ON DELETE SET NULL
+                )`);
 
         // Add stabilization_status to initiatives
         db.run(`ALTER TABLE initiatives ADD COLUMN stabilization_status TEXT DEFAULT 'NOT_APPLICABLE'`, (err) => { });
@@ -1382,23 +1688,23 @@ function initDb() {
         db.run(`ALTER TABLE projects ADD COLUMN closed_at DATETIME`, (err) => { });
 
         // Activity Logs (Audit Trail)
-        db.run(`CREATE TABLE IF NOT EXISTS activity_logs (
-            id TEXT PRIMARY KEY,
-            organization_id TEXT NOT NULL,
-            user_id TEXT,
-            action TEXT NOT NULL, -- created, updated, deleted, status_changed, assigned, etc.
-            entity_type TEXT NOT NULL, -- task, project, user, team, etc.
+        db.run(`CREATE TABLE IF NOT EXISTS activity_logs(
+                    id TEXT PRIMARY KEY,
+                    organization_id TEXT NOT NULL,
+                    user_id TEXT,
+                    action TEXT NOT NULL, --created, updated, deleted, status_changed, assigned, etc.
+            entity_type TEXT NOT NULL, --task, project, user, team, etc.
             entity_id TEXT,
-            entity_name TEXT,
-            old_value TEXT, -- JSON
-            new_value TEXT, -- JSON
+                    entity_name TEXT,
+                    old_value TEXT, --JSON
+            new_value TEXT, --JSON
             ip_address TEXT,
-            user_agent TEXT,
-            correlation_id TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
-            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
-        )`);
+                    user_agent TEXT,
+                    correlation_id TEXT,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
+                )`);
 
         // ==========================================
         // META-PMO FRAMEWORK: DOMAIN REGISTRY & AUDIT
@@ -1416,17 +1722,17 @@ function initDb() {
          * @mapping PMBOK 7: Performance Domains
          * @mapping PRINCE2: Themes
          */
-        db.run(`CREATE TABLE IF NOT EXISTS pmo_domains (
-            id TEXT PRIMARY KEY,
-            name TEXT NOT NULL,
-            description TEXT,
-            iso21500_term TEXT,      -- ISO 21500 equivalent terminology
-            pmbok_term TEXT,         -- PMI PMBOK equivalent terminology
-            prince2_term TEXT,       -- PRINCE2 equivalent terminology
-            is_configurable INTEGER DEFAULT 1,  -- Can be enabled/disabled per project
+        db.run(`CREATE TABLE IF NOT EXISTS pmo_domains(
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    iso21500_term TEXT, --ISO 21500 equivalent terminology
+            pmbok_term TEXT, --PMI PMBOK equivalent terminology
+            prince2_term TEXT, --PRINCE2 equivalent terminology
+            is_configurable INTEGER DEFAULT 1, --Can be enabled / disabled per project
             sort_order INTEGER DEFAULT 0,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`);
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )`);
 
         /**
          * Project PMO Domain Configuration
@@ -1434,17 +1740,17 @@ function initDb() {
          * Junction table allowing per-project enablement of PMO domains.
          * Projects can choose which domains are active for their governance model.
          */
-        db.run(`CREATE TABLE IF NOT EXISTS project_pmo_domains (
-            project_id TEXT NOT NULL,
-            domain_id TEXT NOT NULL,
-            is_enabled INTEGER DEFAULT 1,
-            enabled_by TEXT,
-            enabled_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            custom_label TEXT,       -- Optional custom terminology for this project
+        db.run(`CREATE TABLE IF NOT EXISTS project_pmo_domains(
+                    project_id TEXT NOT NULL,
+                    domain_id TEXT NOT NULL,
+                    is_enabled INTEGER DEFAULT 1,
+                    enabled_by TEXT,
+                    enabled_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    custom_label TEXT, --Optional custom terminology for this project
             PRIMARY KEY(project_id, domain_id),
             FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
-            FOREIGN KEY(domain_id) REFERENCES pmo_domains(id),
-            FOREIGN KEY(enabled_by) REFERENCES users(id) ON DELETE SET NULL
+                FOREIGN KEY(domain_id) REFERENCES pmo_domains(id),
+                    FOREIGN KEY(enabled_by) REFERENCES users(id) ON DELETE SET NULL
         )`);
 
         /**
@@ -1460,24 +1766,24 @@ function initDb() {
          * - Baselines → Domain → Standard
          * - Changes → Domain → Standard
          */
-        db.run(`CREATE TABLE IF NOT EXISTS pmo_audit_trail (
-            id TEXT PRIMARY KEY,
-            project_id TEXT NOT NULL,
-            pmo_domain_id TEXT NOT NULL,
-            pmo_phase TEXT NOT NULL,           -- Current phase when action occurred
-            object_type TEXT NOT NULL,         -- DECISION, BASELINE, CHANGE_REQUEST, STAGE_GATE, etc.
-            object_id TEXT NOT NULL,           -- ID of the PMO object
-            action TEXT NOT NULL,              -- CREATED, UPDATED, APPROVED, REJECTED, TRANSITIONED, etc.
-            actor_id TEXT,                     -- User who performed the action
-            iso21500_mapping TEXT,             -- ISO 21500 term at time of action
-            pmbok_mapping TEXT,                -- PMBOK term at time of action
-            prince2_mapping TEXT,              -- PRINCE2 term at time of action
-            metadata TEXT DEFAULT '{}',        -- JSON: additional context
+        db.run(`CREATE TABLE IF NOT EXISTS pmo_audit_trail(
+                        id TEXT PRIMARY KEY,
+                        project_id TEXT NOT NULL,
+                        pmo_domain_id TEXT NOT NULL,
+                        pmo_phase TEXT NOT NULL, --Current phase when action occurred
+            object_type TEXT NOT NULL, --DECISION, BASELINE, CHANGE_REQUEST, STAGE_GATE, etc.
+            object_id TEXT NOT NULL, --ID of the PMO object
+            action TEXT NOT NULL, --CREATED, UPDATED, APPROVED, REJECTED, TRANSITIONED, etc.
+            actor_id TEXT, --User who performed the action
+            iso21500_mapping TEXT, --ISO 21500 term at time of action
+            pmbok_mapping TEXT, --PMBOK term at time of action
+            prince2_mapping TEXT, --PRINCE2 term at time of action
+            metadata TEXT DEFAULT '{}', --JSON: additional context
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
-            FOREIGN KEY(pmo_domain_id) REFERENCES pmo_domains(id),
-            FOREIGN KEY(actor_id) REFERENCES users(id) ON DELETE SET NULL
-        )`);
+                        FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+                        FOREIGN KEY(pmo_domain_id) REFERENCES pmo_domains(id),
+                        FOREIGN KEY(actor_id) REFERENCES users(id) ON DELETE SET NULL
+                    )`);
 
         /**
          * Add PMO domain references to existing governance tables
@@ -1512,104 +1818,104 @@ function initDb() {
         // ==========================================
 
         // AI Policies (Tenant-level settings)
-        db.run(`CREATE TABLE IF NOT EXISTS ai_policies (
-            organization_id TEXT PRIMARY KEY,
-            policy_level TEXT DEFAULT 'ADVISORY', -- ADVISORY, ASSISTED, PROACTIVE, AUTOPILOT
+        db.run(`CREATE TABLE IF NOT EXISTS ai_policies(
+                        organization_id TEXT PRIMARY KEY,
+                        policy_level TEXT DEFAULT 'ADVISORY', --ADVISORY, ASSISTED, PROACTIVE, AUTOPILOT
             internet_enabled INTEGER DEFAULT 0,
-            audit_required INTEGER DEFAULT 1,
-            active_roles TEXT DEFAULT '["ADVISOR","PMO_MANAGER","EXECUTOR","EDUCATOR"]', -- JSON Array
+                        audit_required INTEGER DEFAULT 1,
+                        active_roles TEXT DEFAULT '["ADVISOR","PMO_MANAGER","EXECUTOR","EDUCATOR"]', --JSON Array
             max_policy_level TEXT DEFAULT 'ASSISTED',
-            default_ai_role TEXT DEFAULT 'ADVISOR',
-            proactive_notifications INTEGER DEFAULT 1,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
-        )`);
+                        default_ai_role TEXT DEFAULT 'ADVISOR',
+                        proactive_notifications INTEGER DEFAULT 1,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+                    )`);
 
         // AI Project Memory (Persistent per project)
-        db.run(`CREATE TABLE IF NOT EXISTS ai_project_memory (
-            id TEXT PRIMARY KEY,
-            project_id TEXT NOT NULL,
-            memory_type TEXT NOT NULL, -- DECISION, PHASE_TRANSITION, RECOMMENDATION
-            content TEXT NOT NULL, -- JSON Object
+        db.run(`CREATE TABLE IF NOT EXISTS ai_project_memory(
+                        id TEXT PRIMARY KEY,
+                        project_id TEXT NOT NULL,
+                        memory_type TEXT NOT NULL, --DECISION, PHASE_TRANSITION, RECOMMENDATION
+            content TEXT NOT NULL, --JSON Object
             recorded_by TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
-            FOREIGN KEY(recorded_by) REFERENCES users(id) ON DELETE SET NULL
-        )`);
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+                        FOREIGN KEY(recorded_by) REFERENCES users(id) ON DELETE SET NULL
+                    )`);
 
         // AI Organization Memory
-        db.run(`CREATE TABLE IF NOT EXISTS ai_organization_memory (
-            organization_id TEXT PRIMARY KEY,
-            governance_style TEXT DEFAULT 'BALANCED', -- STRICT, BALANCED, FLEXIBLE
-            ai_strictness TEXT DEFAULT 'STANDARD', -- MINIMAL, STANDARD, AGGRESSIVE
-            recurring_patterns TEXT DEFAULT '[]', -- JSON Array
-            pmo_maturity TEXT DEFAULT 'BASIC', -- BASIC, INTERMEDIATE, ADVANCED
+        db.run(`CREATE TABLE IF NOT EXISTS ai_organization_memory(
+                        organization_id TEXT PRIMARY KEY,
+                        governance_style TEXT DEFAULT 'BALANCED', --STRICT, BALANCED, FLEXIBLE
+            ai_strictness TEXT DEFAULT 'STANDARD', --MINIMAL, STANDARD, AGGRESSIVE
+            recurring_patterns TEXT DEFAULT '[]', --JSON Array
+            pmo_maturity TEXT DEFAULT 'BASIC', --BASIC, INTERMEDIATE, ADVANCED
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
-        )`);
+                        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+                    )`);
 
         // AI User Preferences
-        db.run(`CREATE TABLE IF NOT EXISTS ai_user_preferences (
-            user_id TEXT PRIMARY KEY,
-            preferred_tone TEXT DEFAULT 'EXPERT', -- BUDDY, EXPERT, MANAGER
+        db.run(`CREATE TABLE IF NOT EXISTS ai_user_preferences(
+                        user_id TEXT PRIMARY KEY,
+                        preferred_tone TEXT DEFAULT 'EXPERT', --BUDDY, EXPERT, MANAGER
             education_mode INTEGER DEFAULT 0,
-            proactive_notifications INTEGER DEFAULT 1,
-            preferred_language TEXT DEFAULT 'en',
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
-        )`);
+                        proactive_notifications INTEGER DEFAULT 1,
+                        preferred_language TEXT DEFAULT 'en',
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+                    )`);
 
         // AI Audit Logs
-        db.run(`CREATE TABLE IF NOT EXISTS ai_audit_logs (
-            id TEXT PRIMARY KEY,
-            user_id TEXT NOT NULL,
-            organization_id TEXT NOT NULL,
-            project_id TEXT,
-            action_type TEXT NOT NULL,
-            action_description TEXT,
-            context_snapshot TEXT, -- JSON Object
-            data_sources_used TEXT DEFAULT '[]', -- JSON Array
+        db.run(`CREATE TABLE IF NOT EXISTS ai_audit_logs(
+                        id TEXT PRIMARY KEY,
+                        user_id TEXT NOT NULL,
+                        organization_id TEXT NOT NULL,
+                        project_id TEXT,
+                        action_type TEXT NOT NULL,
+                        action_description TEXT,
+                        context_snapshot TEXT, --JSON Object
+            data_sources_used TEXT DEFAULT '[]', --JSON Array
             ai_role TEXT NOT NULL,
-            policy_level TEXT NOT NULL,
-            confidence_level REAL,
-            ai_suggestion TEXT,
-            user_decision TEXT, -- ACCEPTED, REJECTED, MODIFIED, IGNORED
+                        policy_level TEXT NOT NULL,
+                        confidence_level REAL,
+                        ai_suggestion TEXT,
+                        user_decision TEXT, --ACCEPTED, REJECTED, MODIFIED, IGNORED
             user_feedback TEXT,
-            regulatory_mode INTEGER DEFAULT 0,
-            reasoning_summary TEXT,
-            data_used_json TEXT,
-            constraints_applied_json TEXT,
-            correlation_id TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL,
-            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
-            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE SET NULL
-        )`);
+                        regulatory_mode INTEGER DEFAULT 0,
+                        reasoning_summary TEXT,
+                        data_used_json TEXT,
+                        constraints_applied_json TEXT,
+                        correlation_id TEXT,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL,
+                        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                        FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE SET NULL
+                    )`);
 
         // AI Actions (Pending approvals)
-        db.run(`CREATE TABLE IF NOT EXISTS ai_actions (
-            id TEXT PRIMARY KEY,
-            user_id TEXT NOT NULL,
-            organization_id TEXT NOT NULL,
-            project_id TEXT,
-            action_type TEXT NOT NULL,
-            payload TEXT NOT NULL, -- JSON Object
+        db.run(`CREATE TABLE IF NOT EXISTS ai_actions(
+                        id TEXT PRIMARY KEY,
+                        user_id TEXT NOT NULL,
+                        organization_id TEXT NOT NULL,
+                        project_id TEXT,
+                        action_type TEXT NOT NULL,
+                        payload TEXT NOT NULL, --JSON Object
             draft_content TEXT,
-            required_policy_level TEXT NOT NULL,
-            current_policy_level TEXT NOT NULL,
-            requires_approval INTEGER DEFAULT 1,
-            status TEXT DEFAULT 'PENDING', -- PENDING, APPROVED, REJECTED, EXECUTED
+                        required_policy_level TEXT NOT NULL,
+                        current_policy_level TEXT NOT NULL,
+                        requires_approval INTEGER DEFAULT 1,
+                        status TEXT DEFAULT 'PENDING', --PENDING, APPROVED, REJECTED, EXECUTED
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            approved_at DATETIME,
-            approved_by TEXT,
-            executed_at DATETIME,
-            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL,
-            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
-            FOREIGN KEY(approved_by) REFERENCES users(id) ON DELETE SET NULL
-        )`);
+                        approved_at DATETIME,
+                        approved_by TEXT,
+                        executed_at DATETIME,
+                        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL,
+                        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                        FOREIGN KEY(approved_by) REFERENCES users(id) ON DELETE SET NULL
+                    )`);
 
         // AI Roles Model: Add columns to ai_audit_logs for enhanced tracking
         db.run(`ALTER TABLE ai_audit_logs ADD COLUMN ai_project_role TEXT DEFAULT 'ADVISOR'`, (err) => {
@@ -1643,77 +1949,77 @@ function initDb() {
         // ==========================================
 
         // AI Feedback (Self-Learning Memory)
-        db.run(`CREATE TABLE IF NOT EXISTS ai_feedback (
-            id TEXT PRIMARY KEY,
-            organization_id TEXT,
-            user_id TEXT,
-            context TEXT, -- diagnosis, recommendation, chat
+        db.run(`CREATE TABLE IF NOT EXISTS ai_feedback(
+                        id TEXT PRIMARY KEY,
+                        organization_id TEXT,
+                        user_id TEXT,
+                        context TEXT, --diagnosis, recommendation, chat
             prompt TEXT,
-            response TEXT,
-            helpful INTEGER, -- 0 or 1
+                        response TEXT,
+                        helpful INTEGER, --0 or 1
             comment TEXT,
-            rating INTEGER, -- 1-5
-            correction TEXT, -- User provided better answer
+                        rating INTEGER, --1 - 5
+            correction TEXT, --User provided better answer
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
-            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
-        )`);
+                        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
+                    )`);
 
         // Custom AI Prompts (Organization-specific)
-        db.run(`CREATE TABLE IF NOT EXISTS custom_prompts (
-            id TEXT PRIMARY KEY,
-            organization_id TEXT NOT NULL,
-            name TEXT NOT NULL,
-            context TEXT NOT NULL, -- diagnosis, recommendation, roadmap, etc.
+        db.run(`CREATE TABLE IF NOT EXISTS custom_prompts(
+                        id TEXT PRIMARY KEY,
+                        organization_id TEXT NOT NULL,
+                        name TEXT NOT NULL,
+                        context TEXT NOT NULL, --diagnosis, recommendation, roadmap, etc.
             template TEXT NOT NULL,
-            variables TEXT, -- JSON array of variable names
+                        variables TEXT, --JSON array of variable names
             is_active INTEGER DEFAULT 1,
-            created_by TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
-            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
-        )`);
+                        created_by TEXT,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                        FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+                    )`);
 
         // Webhooks (Integration Hub)
-        db.run(`CREATE TABLE IF NOT EXISTS webhooks (
-            id TEXT PRIMARY KEY,
-            organization_id TEXT NOT NULL,
-            name TEXT NOT NULL,
-            description TEXT,
-            url TEXT NOT NULL,
-            events TEXT NOT NULL, -- JSON array of event types
-            secret TEXT NOT NULL, -- For signature verification
+        db.run(`CREATE TABLE IF NOT EXISTS webhooks(
+                        id TEXT PRIMARY KEY,
+                        organization_id TEXT NOT NULL,
+                        name TEXT NOT NULL,
+                        description TEXT,
+                        url TEXT NOT NULL,
+                        events TEXT NOT NULL, --JSON array of event types
+            secret TEXT NOT NULL, --For signature verification
             is_active INTEGER DEFAULT 1,
-            created_by TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
-            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
-        )`);
+                        created_by TEXT,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                        FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+                    )`);
 
         // AI Logs (Analytics)
-        db.run(`CREATE TABLE IF NOT EXISTS ai_logs (
-            id TEXT PRIMARY KEY,
-            user_id TEXT,
-            action TEXT, -- diagnose, chat, etc.
+        db.run(`CREATE TABLE IF NOT EXISTS ai_logs(
+                        id TEXT PRIMARY KEY,
+                        user_id TEXT,
+                        action TEXT, --diagnose, chat, etc.
             model TEXT,
-            input_tokens INTEGER,
-            output_tokens INTEGER,
-            latency_ms INTEGER,
-            topic TEXT, -- Classified topic
+                        input_tokens INTEGER,
+                        output_tokens INTEGER,
+                        latency_ms INTEGER,
+                        topic TEXT, --Classified topic
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`);
+                    )`);
 
         // System Prompts (Super Admin Control)
-        db.run(`CREATE TABLE IF NOT EXISTS system_prompts (
-            id TEXT PRIMARY KEY,
-            key TEXT UNIQUE, -- e.g. 'ANALYST', 'CONSULTANT'
+        db.run(`CREATE TABLE IF NOT EXISTS system_prompts(
+                        id TEXT PRIMARY KEY,
+                        key TEXT UNIQUE, --e.g. 'ANALYST', 'CONSULTANT'
             content TEXT,
-            description TEXT,
-            updated_by TEXT,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`);
+                        description TEXT,
+                        updated_by TEXT,
+                        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                    )`);
 
         // Seed Default System Prompts if not exist
         const defaultPrompts = [
@@ -1724,81 +2030,81 @@ function initDb() {
             { key: 'MENTOR', desc: 'Tone for Coaching', content: "You are a Leadership Coach and Mentor. Your tone is supportive, encouraging, and psychological. You focus on mindset, change management, and overcoming resistance." }
         ];
 
-        const insertPrompt = db.prepare(`INSERT OR IGNORE INTO system_prompts (id, key, description, content, updated_by) VALUES (?, ?, ?, ?, ?)`);
+        const insertPrompt = db.prepare(`INSERT OR IGNORE INTO system_prompts(id, key, description, content, updated_by) VALUES(?, ?, ?, ?, ?)`);
         defaultPrompts.forEach(p => {
             insertPrompt.run(uuidv4(), p.key, p.desc, p.content, 'system');
         });
         insertPrompt.finalize();
 
         // Feedback / System Issues Table
-        db.run(`CREATE TABLE IF NOT EXISTS feedback (
-            id TEXT PRIMARY KEY,
-            user_id TEXT NOT NULL,
-            type TEXT NOT NULL, -- bug, feature, general
+        db.run(`CREATE TABLE IF NOT EXISTS feedback(
+                        id TEXT PRIMARY KEY,
+                        user_id TEXT NOT NULL,
+                        type TEXT NOT NULL, --bug, feature, general
             message TEXT NOT NULL,
-            screenshot TEXT, -- Base64
+                        screenshot TEXT, --Base64
             url TEXT,
-            status TEXT DEFAULT 'new', -- new, read, resolved, rejected
+                        status TEXT DEFAULT 'new', --new, read, resolved, rejected
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
-        )`);
+                        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+                    )`);
 
         // Revoked Tokens Table (JWT Blacklist)
-        db.run(`CREATE TABLE IF NOT EXISTS revoked_tokens (
-            jti TEXT PRIMARY KEY,
-            user_id TEXT,
-            expires_at DATETIME NOT NULL,
-            revoked_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            reason TEXT DEFAULT 'logout',
-            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
-        )`);
+        db.run(`CREATE TABLE IF NOT EXISTS revoked_tokens(
+                        jti TEXT PRIMARY KEY,
+                        user_id TEXT,
+                        expires_at DATETIME NOT NULL,
+                        revoked_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        reason TEXT DEFAULT 'logout',
+                        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+                    )`);
 
         // Password Resets Table
-        db.run(`CREATE TABLE IF NOT EXISTS organization_facilities (
-            id TEXT PRIMARY KEY,
-            organization_id TEXT NOT NULL,
-            name TEXT,
-            location TEXT,
-            headcount INTEGER DEFAULT 0,
-            activity_profile TEXT, -- JSON
+        db.run(`CREATE TABLE IF NOT EXISTS organization_facilities(
+                        id TEXT PRIMARY KEY,
+                        organization_id TEXT NOT NULL,
+                        name TEXT,
+                        location TEXT,
+                        headcount INTEGER DEFAULT 0,
+                        activity_profile TEXT, --JSON
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
-        )`);
+                        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+                    )`);
 
         // Client Context
-        db.run(`CREATE TABLE IF NOT EXISTS client_context (
-            id TEXT PRIMARY KEY,
-            organization_id TEXT NOT NULL,
-            key TEXT NOT NULL,
-            value TEXT,
-            confidence REAL DEFAULT 1.0,
-            source TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
-        )`); db.run(`CREATE TABLE IF NOT EXISTS password_resets (
-            id TEXT PRIMARY KEY,
-            user_id TEXT NOT NULL,
-            token TEXT NOT NULL UNIQUE,
-            expires_at DATETIME NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
-        )`);
+        db.run(`CREATE TABLE IF NOT EXISTS client_context(
+                        id TEXT PRIMARY KEY,
+                        organization_id TEXT NOT NULL,
+                        key TEXT NOT NULL,
+                        value TEXT,
+                        confidence REAL DEFAULT 1.0,
+                        source TEXT,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+                    )`); db.run(`CREATE TABLE IF NOT EXISTS password_resets(
+                        id TEXT PRIMARY KEY,
+                        user_id TEXT NOT NULL,
+                        token TEXT NOT NULL UNIQUE,
+                        expires_at DATETIME NOT NULL,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+                    )`);
 
         // Invitations Table
-        db.run(`CREATE TABLE IF NOT EXISTS invitations (
-            id TEXT PRIMARY KEY,
-            organization_id TEXT NOT NULL,
-            email TEXT NOT NULL,
-            role TEXT DEFAULT 'USER',
-            token TEXT NOT NULL UNIQUE,
-            status TEXT DEFAULT 'pending', -- pending, accepted, expired, revoked
+        db.run(`CREATE TABLE IF NOT EXISTS invitations(
+                        id TEXT PRIMARY KEY,
+                        organization_id TEXT NOT NULL,
+                        email TEXT NOT NULL,
+                        role TEXT DEFAULT 'USER',
+                        token TEXT NOT NULL UNIQUE,
+                        status TEXT DEFAULT 'pending', --pending, accepted, expired, revoked
             invited_by TEXT,
-            expires_at DATETIME,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            accepted_at DATETIME,
-            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
-            FOREIGN KEY(invited_by) REFERENCES users(id) ON DELETE SET NULL
-        )`);
+                        expires_at DATETIME,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        accepted_at DATETIME,
+                        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                        FOREIGN KEY(invited_by) REFERENCES users(id) ON DELETE SET NULL
+                    )`);
 
         // ==========================================
         // INVITATION SYSTEM EXTENSIONS (Enterprise-Ready)
@@ -1830,18 +2136,18 @@ function initDb() {
          * - Security audit trails
          * - Partner attribution tracking
          */
-        db.run(`CREATE TABLE IF NOT EXISTS invitation_events (
-            id TEXT PRIMARY KEY,
-            invitation_id TEXT NOT NULL,
-            event_type TEXT NOT NULL,  -- created, sent, resent, accepted, expired, revoked
+        db.run(`CREATE TABLE IF NOT EXISTS invitation_events(
+                        id TEXT PRIMARY KEY,
+                        invitation_id TEXT NOT NULL,
+                        event_type TEXT NOT NULL, --created, sent, resent, accepted, expired, revoked
             performed_by_user_id TEXT,
-            ip_address TEXT,
-            user_agent TEXT,
-            metadata TEXT DEFAULT '{}',
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(invitation_id) REFERENCES invitations(id) ON DELETE CASCADE,
-            FOREIGN KEY(performed_by_user_id) REFERENCES users(id) ON DELETE SET NULL
-        )`);
+                        ip_address TEXT,
+                        user_agent TEXT,
+                        metadata TEXT DEFAULT '{}',
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY(invitation_id) REFERENCES invitations(id) ON DELETE CASCADE,
+                        FOREIGN KEY(performed_by_user_id) REFERENCES users(id) ON DELETE SET NULL
+                    )`);
 
         // Indexes for invitation performance
         db.run(`CREATE INDEX IF NOT EXISTS idx_invitations_token ON invitations(token)`);
@@ -1862,51 +2168,51 @@ function initDb() {
         });
 
         // Access Requests Table (for controlled organization access)
-        db.run(`CREATE TABLE IF NOT EXISTS access_requests (
-            id TEXT PRIMARY KEY,
-            email TEXT NOT NULL,
-            first_name TEXT,
-            last_name TEXT,
-            phone TEXT,
-            organization_id TEXT,
-            organization_name TEXT,
-            requested_role TEXT DEFAULT 'USER',
-            status TEXT DEFAULT 'pending', -- pending, approved, rejected, expired
-            request_type TEXT DEFAULT 'new_user', -- new_user, join_org
+        db.run(`CREATE TABLE IF NOT EXISTS access_requests(
+                        id TEXT PRIMARY KEY,
+                        email TEXT NOT NULL,
+                        first_name TEXT,
+                        last_name TEXT,
+                        phone TEXT,
+                        organization_id TEXT,
+                        organization_name TEXT,
+                        requested_role TEXT DEFAULT 'USER',
+                        status TEXT DEFAULT 'pending', --pending, approved, rejected, expired
+            request_type TEXT DEFAULT 'new_user', --new_user, join_org
             metadata TEXT,
-            requested_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            reviewed_by TEXT,
-            reviewed_at DATETIME,
-            rejection_reason TEXT,
-            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
-            FOREIGN KEY(reviewed_by) REFERENCES users(id) ON DELETE SET NULL
-        )`);
+                        requested_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        reviewed_by TEXT,
+                        reviewed_at DATETIME,
+                        rejection_reason TEXT,
+                        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                        FOREIGN KEY(reviewed_by) REFERENCES users(id) ON DELETE SET NULL
+                    )`);
 
         // Access Codes Table (Admin-generated codes for organization access)
-        db.run(`CREATE TABLE IF NOT EXISTS access_codes (
-            id TEXT PRIMARY KEY,
-            organization_id TEXT NOT NULL,
-            code TEXT NOT NULL UNIQUE,
-            created_by TEXT NOT NULL,
-            role TEXT DEFAULT 'USER',
-            max_uses INTEGER DEFAULT 1,
-            current_uses INTEGER DEFAULT 0,
-            expires_at DATETIME,
-            is_active INTEGER DEFAULT 1,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
-            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE CASCADE
-        )`);
+        db.run(`CREATE TABLE IF NOT EXISTS access_codes(
+                        id TEXT PRIMARY KEY,
+                        organization_id TEXT NOT NULL,
+                        code TEXT NOT NULL UNIQUE,
+                        created_by TEXT NOT NULL,
+                        role TEXT DEFAULT 'USER',
+                        max_uses INTEGER DEFAULT 1,
+                        current_uses INTEGER DEFAULT 0,
+                        expires_at DATETIME,
+                        is_active INTEGER DEFAULT 1,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                        FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE CASCADE
+                    )`);
 
         // Access Code Usage Tracking
-        db.run(`CREATE TABLE IF NOT EXISTS access_code_usage (
-            id TEXT PRIMARY KEY,
-            code_id TEXT NOT NULL,
-            user_id TEXT NOT NULL,
-            used_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(code_id) REFERENCES access_codes(id) ON DELETE CASCADE,
-            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
-        )`);
+        db.run(`CREATE TABLE IF NOT EXISTS access_code_usage(
+                        id TEXT PRIMARY KEY,
+                        code_id TEXT NOT NULL,
+                        user_id TEXT NOT NULL,
+                        used_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY(code_id) REFERENCES access_codes(id) ON DELETE CASCADE,
+                        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+                    )`);
 
         // ==========================================
         // LEGAL & COMPLIANCE FOUNDATION
@@ -1920,18 +2226,18 @@ function initDb() {
          * 
          * @doc_type Valid values: TOS, PRIVACY, COOKIES, AUP, AI_POLICY, DPA
          */
-        db.run(`CREATE TABLE IF NOT EXISTS legal_documents (
-            id TEXT PRIMARY KEY,
-            doc_type TEXT NOT NULL,
-            version TEXT NOT NULL,
-            title TEXT NOT NULL,
-            content_md TEXT NOT NULL,
-            effective_from TEXT NOT NULL,
-            created_at TEXT DEFAULT (datetime('now')),
-            created_by TEXT,
-            is_active INTEGER DEFAULT 0,
-            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
-        )`);
+        db.run(`CREATE TABLE IF NOT EXISTS legal_documents(
+                        id TEXT PRIMARY KEY,
+                        doc_type TEXT NOT NULL,
+                        version TEXT NOT NULL,
+                        title TEXT NOT NULL,
+                        content_md TEXT NOT NULL,
+                        effective_from TEXT NOT NULL,
+                        created_at TEXT DEFAULT(datetime('now')),
+                        created_by TEXT,
+                        is_active INTEGER DEFAULT 0,
+                        FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+                    )`);
 
         /**
          * Legal Acceptances Table
@@ -1940,20 +2246,20 @@ function initDb() {
          * @acceptance_scope: 'USER' for individual acceptance, 'ORG_ADMIN' for org-level (DPA)
          * @evidence_json: Contains hash of document, timestamps, and metadata snapshot
          */
-        db.run(`CREATE TABLE IF NOT EXISTS legal_acceptances (
-            id TEXT PRIMARY KEY,
-            organization_id TEXT,
-            user_id TEXT NOT NULL,
-            doc_type TEXT NOT NULL,
-            version TEXT NOT NULL,
-            accepted_at TEXT DEFAULT (datetime('now')),
-            accepted_ip TEXT,
-            user_agent TEXT,
-            acceptance_scope TEXT DEFAULT 'USER',
-            evidence_json TEXT DEFAULT '{}',
-            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
-            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
-        )`);
+        db.run(`CREATE TABLE IF NOT EXISTS legal_acceptances(
+                        id TEXT PRIMARY KEY,
+                        organization_id TEXT,
+                        user_id TEXT NOT NULL,
+                        doc_type TEXT NOT NULL,
+                        version TEXT NOT NULL,
+                        accepted_at TEXT DEFAULT(datetime('now')),
+                        accepted_ip TEXT,
+                        user_agent TEXT,
+                        acceptance_scope TEXT DEFAULT 'USER',
+                        evidence_json TEXT DEFAULT '{}',
+                        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
+                        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+                    )`);
 
         // Create index for faster acceptance lookups
         db.run(`CREATE INDEX IF NOT EXISTS idx_legal_acceptances_user ON legal_acceptances(user_id, doc_type)`);
@@ -1970,17 +2276,17 @@ function initDb() {
          * Append-only audit trail for all legal compliance events.
          * CRITICAL: Never update or delete rows from this table.
          */
-        db.run(`CREATE TABLE IF NOT EXISTS legal_events (
-            id TEXT PRIMARY KEY,
-            event_type TEXT NOT NULL,
-            document_id TEXT,
-            document_version TEXT,
-            user_id TEXT,
-            organization_id TEXT,
-            performed_by TEXT NOT NULL,
-            metadata TEXT DEFAULT '{}',
-            created_at TEXT DEFAULT (datetime('now'))
-        )`);
+        db.run(`CREATE TABLE IF NOT EXISTS legal_events(
+                        id TEXT PRIMARY KEY,
+                        event_type TEXT NOT NULL,
+                        document_id TEXT,
+                        document_version TEXT,
+                        user_id TEXT,
+                        organization_id TEXT,
+                        performed_by TEXT NOT NULL,
+                        metadata TEXT DEFAULT '{}',
+                        created_at TEXT DEFAULT(datetime('now'))
+                    )`);
 
         // Indexes for audit log queries
         db.run(`CREATE INDEX IF NOT EXISTS idx_legal_events_type ON legal_events(event_type)`);
@@ -2043,53 +2349,53 @@ function initDb() {
          * Per-org constraints for Trial/Demo mode
          * Enforced by AccessPolicyService
          */
-        db.run(`CREATE TABLE IF NOT EXISTS organization_limits (
-            id TEXT PRIMARY KEY,
-            organization_id TEXT NOT NULL UNIQUE,
-            max_projects INTEGER DEFAULT 3,
-            max_users INTEGER DEFAULT 5,
-            max_ai_calls_per_day INTEGER DEFAULT 50,
-            max_initiatives INTEGER DEFAULT 10,
-            max_storage_mb INTEGER DEFAULT 100,
-            ai_roles_enabled_json TEXT DEFAULT '["ADVISOR"]',
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
-        )`);
+        db.run(`CREATE TABLE IF NOT EXISTS organization_limits(
+                        id TEXT PRIMARY KEY,
+                        organization_id TEXT NOT NULL UNIQUE,
+                        max_projects INTEGER DEFAULT 3,
+                        max_users INTEGER DEFAULT 5,
+                        max_ai_calls_per_day INTEGER DEFAULT 50,
+                        max_initiatives INTEGER DEFAULT 10,
+                        max_storage_mb INTEGER DEFAULT 100,
+                        ai_roles_enabled_json TEXT DEFAULT '["ADVISOR"]',
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+                    )`);
 
         /**
          * Demo Templates Table
          * Seed data snapshots for demo organizations
          * Used by demoService to hydrate ephemeral demo orgs
          */
-        db.run(`CREATE TABLE IF NOT EXISTS demo_templates (
-            id TEXT PRIMARY KEY,
-            name TEXT NOT NULL,
-            description TEXT,
-            seed_data_json TEXT NOT NULL,
-            is_active INTEGER DEFAULT 1,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`);
+        db.run(`CREATE TABLE IF NOT EXISTS demo_templates(
+                        id TEXT PRIMARY KEY,
+                        name TEXT NOT NULL,
+                        description TEXT,
+                        seed_data_json TEXT NOT NULL,
+                        is_active INTEGER DEFAULT 1,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                    )`);
 
         /**
          * Usage Counters Table
          * Daily tracking of AI calls, projects, users per organization
          * Reset daily by cron job
          */
-        db.run(`CREATE TABLE IF NOT EXISTS usage_counters (
-            id TEXT PRIMARY KEY,
-            organization_id TEXT NOT NULL,
-            counter_date TEXT NOT NULL,
-            ai_calls_count INTEGER DEFAULT 0,
-            projects_count INTEGER DEFAULT 0,
-            users_count INTEGER DEFAULT 0,
-            initiatives_count INTEGER DEFAULT 0,
-            storage_used_mb INTEGER DEFAULT 0,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(organization_id, counter_date),
-            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
-        )`);
+        db.run(`CREATE TABLE IF NOT EXISTS usage_counters(
+                        id TEXT PRIMARY KEY,
+                        organization_id TEXT NOT NULL,
+                        counter_date TEXT NOT NULL,
+                        ai_calls_count INTEGER DEFAULT 0,
+                        projects_count INTEGER DEFAULT 0,
+                        users_count INTEGER DEFAULT 0,
+                        initiatives_count INTEGER DEFAULT 0,
+                        storage_used_mb INTEGER DEFAULT 0,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        UNIQUE(organization_id, counter_date),
+                        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+                    )`);
 
         // Indexes for Trial/Demo performance
         db.run(`CREATE INDEX IF NOT EXISTS idx_org_type ON organizations(organization_type)`);
@@ -2101,15 +2407,15 @@ function initDb() {
          * Immutable log for trial/demo/paid lifecycle events
          * Enterprise+ compliance requirement
          */
-        db.run(`CREATE TABLE IF NOT EXISTS organization_events (
-            id TEXT PRIMARY KEY,
-            organization_id TEXT NOT NULL,
-            event_type TEXT NOT NULL,
-            performed_by_user_id TEXT,
-            metadata TEXT DEFAULT '{}',
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
-        )`);
+        db.run(`CREATE TABLE IF NOT EXISTS organization_events(
+                        id TEXT PRIMARY KEY,
+                        organization_id TEXT NOT NULL,
+                        event_type TEXT NOT NULL,
+                        performed_by_user_id TEXT,
+                        metadata TEXT DEFAULT '{}',
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+                    )`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_org_events ON organization_events(organization_id, event_type)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_org_events_created ON organization_events(created_at)`);
 
@@ -2131,21 +2437,21 @@ function initDb() {
          * Supports DISCOUNT, PARTNER, and CAMPAIGN type codes
          * Partner codes for attribution tracking (no discount required)
          */
-        db.run(`CREATE TABLE IF NOT EXISTS promo_codes (
-            id TEXT PRIMARY KEY,
-            code TEXT UNIQUE NOT NULL,
-            type TEXT NOT NULL,                    -- DISCOUNT | PARTNER | CAMPAIGN
-            discount_type TEXT DEFAULT 'NONE',     -- PERCENT | FIXED | NONE
-            discount_value REAL,                   -- nullable, only if discount_type != NONE
+        db.run(`CREATE TABLE IF NOT EXISTS promo_codes(
+                        id TEXT PRIMARY KEY,
+                        code TEXT UNIQUE NOT NULL,
+                        type TEXT NOT NULL, --DISCOUNT | PARTNER | CAMPAIGN
+            discount_type TEXT DEFAULT 'NONE', --PERCENT | FIXED | NONE
+            discount_value REAL, --nullable, only if discount_type != NONE
             valid_from TEXT NOT NULL,
-            valid_until TEXT,                      -- nullable = infinite
-            max_uses INTEGER,                      -- nullable = unlimited
+        valid_until TEXT, --nullable = infinite
+            max_uses INTEGER, --nullable = unlimited
             used_count INTEGER DEFAULT 0,
-            created_by_user_id TEXT,
+        created_by_user_id TEXT,
             is_active INTEGER DEFAULT 1,
-            metadata TEXT DEFAULT '{}',            -- JSON for extensibility
+                metadata TEXT DEFAULT '{}', --JSON for extensibility
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(created_by_user_id) REFERENCES users(id) ON DELETE SET NULL
+        FOREIGN KEY(created_by_user_id) REFERENCES users(id) ON DELETE SET NULL
         )`);
 
         // Indexes for promo code performance
@@ -2158,18 +2464,18 @@ function initDb() {
          * CRITICAL: Never UPDATE or DELETE rows from this table.
          * Used for partner settlements and marketing analytics.
          */
-        db.run(`CREATE TABLE IF NOT EXISTS attribution_events (
+        db.run(`CREATE TABLE IF NOT EXISTS attribution_events(
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL,
-            user_id TEXT,                          -- nullable (anonymous demos)
-            source_type TEXT NOT NULL,             -- PROMO_CODE | INVITATION | DEMO | SALES | SELF_SERVE
-            source_id TEXT,                        -- promo_code_id | invitation_id | null
-            campaign TEXT,                         -- UTM campaign or similar
-            partner_code TEXT,                     -- Partner attribution
-            medium TEXT,                           -- UTM medium or channel
-            metadata TEXT DEFAULT '{}',            -- JSON for extensibility
+            user_id TEXT, --nullable(anonymous demos)
+            source_type TEXT NOT NULL, --PROMO_CODE | INVITATION | DEMO | SALES | SELF_SERVE
+            source_id TEXT, --promo_code_id | invitation_id | null
+            campaign TEXT, --UTM campaign or similar
+            partner_code TEXT, --Partner attribution
+            medium TEXT, --UTM medium or channel
+            metadata TEXT DEFAULT '{}', --JSON for extensibility
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
         )`);
 
         // Indexes for attribution performance
@@ -2182,7 +2488,7 @@ function initDb() {
          * Promo Code Usage Log (for detailed tracking)
          * Links promo code uses to organizations
          */
-        db.run(`CREATE TABLE IF NOT EXISTS promo_code_usage (
+        db.run(`CREATE TABLE IF NOT EXISTS promo_code_usage(
             id TEXT PRIMARY KEY,
             promo_code_id TEXT NOT NULL,
             organization_id TEXT NOT NULL,
@@ -2201,12 +2507,12 @@ function initDb() {
         // ==========================================
 
         // Integrations Table (Slack, Teams, etc.)
-        db.run(`CREATE TABLE IF NOT EXISTS integrations (
+        db.run(`CREATE TABLE IF NOT EXISTS integrations(
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL,
-            provider TEXT NOT NULL, -- slack, teams, whatsapp, trello, jira, clickup
-            config TEXT, -- JSON: webhook_url, api_token, channel_id, etc.
-            status TEXT DEFAULT 'active', -- active, error, disabled
+            provider TEXT NOT NULL, --slack, teams, whatsapp, trello, jira, clickup
+            config TEXT, --JSON: webhook_url, api_token, channel_id, etc.
+            status TEXT DEFAULT 'active', --active, error, disabled
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
@@ -2217,18 +2523,23 @@ function initDb() {
             // Ignore if exists
         });
 
+        // Add extended_preferences to users if not exists (work, dashboard, accessibility, privacy, ai preferences)
+        db.run(`ALTER TABLE users ADD COLUMN extended_preferences TEXT DEFAULT '{}'`, (err) => {
+            // Ignore if exists
+        });
+
         // Add priority to notifications if not exists
         db.run(`ALTER TABLE notifications ADD COLUMN priority TEXT DEFAULT 'normal'`, (err) => {
             // Ignore if exists
         });
 
         // Notification Preferences Table
-        db.run(`CREATE TABLE IF NOT EXISTS notification_preferences (
+        db.run(`CREATE TABLE IF NOT EXISTS notification_preferences(
             user_id TEXT PRIMARY KEY,
-            channels TEXT DEFAULT '{"inApp":true,"email":true}', -- JSON
-            digest TEXT DEFAULT 'daily', -- daily, weekly, off
-            triggers TEXT DEFAULT '{"overdue":true,"assigned":true,"blocked":true,"mentioned":true}', -- JSON
-            quiet_hours TEXT DEFAULT '{"enabled":false,"start":"22:00","end":"08:00"}', -- JSON
+            channels TEXT DEFAULT '{"inApp":true,"email":true}', --JSON
+            digest TEXT DEFAULT 'daily', --daily, weekly, off
+            triggers TEXT DEFAULT '{"overdue":true,"assigned":true,"blocked":true,"mentioned":true}', --JSON
+            quiet_hours TEXT DEFAULT '{"enabled":false,"start":"22:00","end":"08:00"}', --JSON
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
         )`);
@@ -2240,21 +2551,21 @@ function initDb() {
         // --- PHASE 1.5: AI LEARNING & CONTEXT (NEW) ---
 
         // 1. Knowledge Candidates (The "Inbox" for AI Ideas)
-        db.run(`CREATE TABLE IF NOT EXISTS knowledge_candidates (
+        db.run(`CREATE TABLE IF NOT EXISTS knowledge_candidates(
             id TEXT PRIMARY KEY,
-            content TEXT NOT NULL,          -- The proposed insight/idea
-            reasoning TEXT,                 -- Why is this useful?
-            source TEXT,                    -- 'interaction', 'manual', 'analysis'
-            origin_context TEXT,            -- Anonymized snippet of where it came from
-            related_axis TEXT,              -- Linked to specific axis if applicable
-            priority TEXT DEFAULT 'medium', -- low, medium, high
-            status TEXT DEFAULT 'pending',  -- pending, approved, rejected, edited
+            content TEXT NOT NULL, --The proposed insight / idea
+            reasoning TEXT, --Why is this useful ?
+            source TEXT, -- 'interaction', 'manual', 'analysis'
+            origin_context TEXT, --Anonymized snippet of where it came from
+            related_axis TEXT, --Linked to specific axis if applicable
+            priority TEXT DEFAULT 'medium', --low, medium, high
+            status TEXT DEFAULT 'pending', --pending, approved, rejected, edited
             admin_comment TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
 
         // 2. Global Strategic Directions (Admin Controls)
-        db.run(`CREATE TABLE IF NOT EXISTS global_strategies (
+        db.run(`CREATE TABLE IF NOT EXISTS global_strategies(
             id TEXT PRIMARY KEY,
             title TEXT NOT NULL,
             description TEXT,
@@ -2281,14 +2592,14 @@ function initDb() {
         });
 
         // 2. Maturity Scores (Structured Data for Benchmarking)
-        db.run(`CREATE TABLE IF NOT EXISTS maturity_scores (
+        db.run(`CREATE TABLE IF NOT EXISTS maturity_scores(
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL,
-            axis TEXT NOT NULL,         -- e.g. 'Culture', 'Data'
-            score REAL NOT NULL,        -- 1.0 to 5.0
-            industry TEXT,              -- Denormalized for easier querying
+            axis TEXT NOT NULL, --e.g. 'Culture', 'Data'
+            score REAL NOT NULL, --1.0 to 5.0
+            industry TEXT, --Denormalized for easier querying
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
         )`);
 
         // Add Active LLM Provider to Organizations
@@ -2308,7 +2619,7 @@ function initDb() {
         ];
 
         initiativeColumns.forEach(col => {
-            db.run(`ALTER TABLE initiatives ADD COLUMN ${col.name} ${col.type} DEFAULT ${col.default}`, (err) => {
+            db.run(`ALTER TABLE initiatives ADD COLUMN ${col.name} ${col.type} DEFAULT ${col.default} `, (err) => {
                 // Ignore error if column already exists
             });
         });
@@ -2321,7 +2632,7 @@ function initDb() {
         ];
 
         valueColumns.forEach(col => {
-            db.run(`ALTER TABLE initiatives ADD COLUMN ${col.name} ${col.type} DEFAULT ${col.default}`, (err) => {
+            db.run(`ALTER TABLE initiatives ADD COLUMN ${col.name} ${col.type} DEFAULT ${col.default} `, (err) => {
                 // Ignore error if column already exists
             });
         });
@@ -2340,7 +2651,7 @@ function initDb() {
         ];
 
         decisionColumns.forEach(col => {
-            db.run(`ALTER TABLE initiatives ADD COLUMN ${col.name} ${col.type} DEFAULT ${col.default}`, (err) => {
+            db.run(`ALTER TABLE initiatives ADD COLUMN ${col.name} ${col.type} DEFAULT ${col.default} `, (err) => {
                 // Ignore error if column already exists
             });
         });
@@ -2353,7 +2664,7 @@ function initDb() {
         ];
 
         roadmapColumns.forEach(col => {
-            db.run(`ALTER TABLE initiatives ADD COLUMN ${col.name} ${col.type} DEFAULT ${col.default}`, (err) => {
+            db.run(`ALTER TABLE initiatives ADD COLUMN ${col.name} ${col.type} DEFAULT ${col.default} `, (err) => {
                 // Ignore error if column already exists
             });
         });
@@ -2364,11 +2675,11 @@ function initDb() {
         db.run(`ALTER TABLE initiatives ADD COLUMN source_report_id TEXT`, (err) => { });
 
         // Task Dependencies
-        db.run(`CREATE TABLE IF NOT EXISTS task_dependencies (
+        db.run(`CREATE TABLE IF NOT EXISTS task_dependencies(
             id TEXT PRIMARY KEY,
             from_task_id TEXT NOT NULL,
             to_task_id TEXT NOT NULL,
-            type TEXT DEFAULT 'hard', -- hard (blocker), soft (recommended)
+            type TEXT DEFAULT 'hard', --hard(blocker), soft(recommended)
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(from_task_id) REFERENCES tasks(id) ON DELETE CASCADE,
             FOREIGN KEY(to_task_id) REFERENCES tasks(id) ON DELETE CASCADE
@@ -2389,7 +2700,7 @@ function initDb() {
         ];
 
         taskColumns.forEach(col => {
-            db.run(`ALTER TABLE tasks ADD COLUMN ${col.name} ${col.type} DEFAULT ${col.default}`, (err) => {
+            db.run(`ALTER TABLE tasks ADD COLUMN ${col.name} ${col.type} DEFAULT ${col.default} `, (err) => {
                 // Ignore error if column already exists
             });
         });
@@ -2404,8 +2715,8 @@ function initDb() {
         // ==========================================
 
         // 0. TOKEN BILLING & MARGINS
-        db.run(`CREATE TABLE IF NOT EXISTS billing_margins (
-            source_type TEXT PRIMARY KEY, -- platform, byok, local
+        db.run(`CREATE TABLE IF NOT EXISTS billing_margins(
+            source_type TEXT PRIMARY KEY, --platform, byok, local
             base_cost_per_1k REAL DEFAULT 0,
             margin_percent REAL DEFAULT 20,
             min_charge REAL DEFAULT 0.01,
@@ -2414,173 +2725,173 @@ function initDb() {
         )`);
 
         // Seed default margins
-        db.run(`INSERT OR IGNORE INTO billing_margins (source_type, base_cost_per_1k, margin_percent) VALUES 
-            ('platform', 0.03, 30),
-            ('byok', 0, 5),
-            ('local', 0, 0)
-        `);
+        db.run(`INSERT OR IGNORE INTO billing_margins(source_type, base_cost_per_1k, margin_percent) VALUES
+        ('platform', 0.03, 30),
+        ('byok', 0, 5),
+        ('local', 0, 0)
+            `);
 
-        db.run(`CREATE TABLE IF NOT EXISTS token_packages (
-            id TEXT PRIMARY KEY,
-            name TEXT,
-            description TEXT,
+        db.run(`CREATE TABLE IF NOT EXISTS token_packages(
+                id TEXT PRIMARY KEY,
+                name TEXT,
+                description TEXT,
+                tokens INTEGER,
+                price_usd REAL,
+                bonus_percent REAL DEFAULT 0,
+                is_popular INTEGER DEFAULT 0,
+                sort_order INTEGER DEFAULT 0,
+                stripe_price_id TEXT,
+                is_active INTEGER DEFAULT 1
+            )`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS user_token_balance(
+                user_id TEXT PRIMARY KEY,
+                platform_tokens INTEGER DEFAULT 0,
+                platform_tokens_bonus INTEGER DEFAULT 0,
+                byok_usage_tokens INTEGER DEFAULT 0,
+                local_usage_tokens INTEGER DEFAULT 0,
+                lifetime_purchased INTEGER DEFAULT 0,
+                lifetime_used INTEGER DEFAULT 0,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+            )`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS token_transactions(
+                id TEXT PRIMARY KEY,
+                user_id TEXT,
+                organization_id TEXT,
+                type TEXT, --purchase, usage
+            source_type TEXT, --platform, byok, local
             tokens INTEGER,
-            price_usd REAL,
-            bonus_percent REAL DEFAULT 0,
-            is_popular INTEGER DEFAULT 0,
-            sort_order INTEGER DEFAULT 0,
-            stripe_price_id TEXT,
-            is_active INTEGER DEFAULT 1
-        )`);
+                package_id TEXT,
+                stripe_payment_id TEXT,
+                description TEXT,
+                margin_usd REAL,
+                net_revenue_usd REAL,
+                llm_provider TEXT,
+                model_used TEXT,
+                metadata TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )`);
 
-        db.run(`CREATE TABLE IF NOT EXISTS user_token_balance (
-            user_id TEXT PRIMARY KEY,
-            platform_tokens INTEGER DEFAULT 0,
-            platform_tokens_bonus INTEGER DEFAULT 0,
-            byok_usage_tokens INTEGER DEFAULT 0,
-            local_usage_tokens INTEGER DEFAULT 0,
-            lifetime_purchased INTEGER DEFAULT 0,
-            lifetime_used INTEGER DEFAULT 0,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
-        )`);
+        db.run(`CREATE TABLE IF NOT EXISTS billing_invoices(
+                id TEXT PRIMARY KEY,
+                organization_id TEXT,
+                amount_due REAL,
+                currency TEXT DEFAULT 'USD',
+                status TEXT,
+                stripe_invoice_id TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )`);
 
-        db.run(`CREATE TABLE IF NOT EXISTS token_transactions (
-            id TEXT PRIMARY KEY,
-            user_id TEXT,
-            organization_id TEXT,
-            type TEXT, -- purchase, usage
-            source_type TEXT, -- platform, byok, local
-            tokens INTEGER,
-            package_id TEXT,
-            stripe_payment_id TEXT,
-            description TEXT,
-            margin_usd REAL,
-            net_revenue_usd REAL,
-            llm_provider TEXT,
-            model_used TEXT,
-            metadata TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`);
-
-        db.run(`CREATE TABLE IF NOT EXISTS billing_invoices (
-             id TEXT PRIMARY KEY,
-             organization_id TEXT,
-             amount_due REAL,
-             currency TEXT DEFAULT 'USD',
-             status TEXT,
-             stripe_invoice_id TEXT,
-             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`);
-
-        db.run(`CREATE TABLE IF NOT EXISTS user_api_keys (
-             id TEXT PRIMARY KEY,
-             user_id TEXT,
-             organization_id TEXT,
-             provider TEXT,
-             display_name TEXT,
-             encrypted_key TEXT,
-             model_preference TEXT,
-             is_active INTEGER DEFAULT 1,
-             is_default INTEGER DEFAULT 0,
-             usage_count INTEGER DEFAULT 0,
-             last_used_at DATETIME,
-             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
-        )`);
+        db.run(`CREATE TABLE IF NOT EXISTS user_api_keys(
+                id TEXT PRIMARY KEY,
+                user_id TEXT,
+                organization_id TEXT,
+                provider TEXT,
+                display_name TEXT,
+                encrypted_key TEXT,
+                model_preference TEXT,
+                is_active INTEGER DEFAULT 1,
+                is_default INTEGER DEFAULT 0,
+                usage_count INTEGER DEFAULT 0,
+                last_used_at DATETIME,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+            )`);
 
         // 1. SUBSCRIPTION PLANS (Superadmin-managed)
-        db.run(`CREATE TABLE IF NOT EXISTS subscription_plans (
-            id TEXT PRIMARY KEY,
-            name TEXT NOT NULL,
-            price_monthly REAL NOT NULL,
-            token_limit INTEGER,
-            storage_limit_gb REAL,
-            token_overage_rate REAL,
-            storage_overage_rate REAL,
-            stripe_price_id TEXT,
-            features TEXT DEFAULT '{}', -- JSON: printing, analytics_level, etc.
+        db.run(`CREATE TABLE IF NOT EXISTS subscription_plans(
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                price_monthly REAL NOT NULL,
+                token_limit INTEGER,
+                storage_limit_gb REAL,
+                token_overage_rate REAL,
+                storage_overage_rate REAL,
+                stripe_price_id TEXT,
+                features TEXT DEFAULT '{}', --JSON: printing, analytics_level, etc.
             is_active INTEGER DEFAULT 1,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`);
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )`);
 
         // 1.5 USER LICENSE PLANS (New)
-        db.run(`CREATE TABLE IF NOT EXISTS user_license_plans (
-            id TEXT PRIMARY KEY,
-            name TEXT NOT NULL, -- Standard, Premium
+        db.run(`CREATE TABLE IF NOT EXISTS user_license_plans(
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL, --Standard, Premium
             price_monthly REAL NOT NULL,
-            features TEXT DEFAULT '{}', -- JSON
+                features TEXT DEFAULT '{}', --JSON
             is_active INTEGER DEFAULT 1,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`);
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )`);
 
         // 2. ORGANIZATION BILLING (per tenant)
-        db.run(`CREATE TABLE IF NOT EXISTS organization_billing (
-            id TEXT PRIMARY KEY,
-            organization_id TEXT NOT NULL UNIQUE,
-            subscription_plan_id TEXT,
-            stripe_customer_id TEXT,
-            stripe_subscription_id TEXT,
-            billing_email TEXT,
-            billing_address TEXT,
-            payment_method_last4 TEXT,
-            payment_method_brand TEXT,
-            current_period_start DATETIME,
-            current_period_end DATETIME,
-            status TEXT DEFAULT 'active',
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
-            FOREIGN KEY(subscription_plan_id) REFERENCES subscription_plans(id)
-        )`);
+        db.run(`CREATE TABLE IF NOT EXISTS organization_billing(
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL UNIQUE,
+                subscription_plan_id TEXT,
+                stripe_customer_id TEXT,
+                stripe_subscription_id TEXT,
+                billing_email TEXT,
+                billing_address TEXT,
+                payment_method_last4 TEXT,
+                payment_method_brand TEXT,
+                current_period_start DATETIME,
+                current_period_end DATETIME,
+                status TEXT DEFAULT 'active',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                FOREIGN KEY(subscription_plan_id) REFERENCES subscription_plans(id)
+            )`);
 
         // 3. USAGE RECORDS (detailed token/storage tracking)
-        db.run(`CREATE TABLE IF NOT EXISTS usage_records (
-            id TEXT PRIMARY KEY,
-            organization_id TEXT NOT NULL,
-            user_id TEXT,
-            type TEXT NOT NULL,
-            amount INTEGER NOT NULL,
-            action TEXT,
-            metadata TEXT,
-            recorded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
-            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
-        )`);
+        db.run(`CREATE TABLE IF NOT EXISTS usage_records(
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL,
+                user_id TEXT,
+                type TEXT NOT NULL,
+                amount INTEGER NOT NULL,
+                action TEXT,
+                metadata TEXT,
+                recorded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
+            )`);
 
         // 4. MONTHLY USAGE SUMMARIES (for billing)
-        db.run(`CREATE TABLE IF NOT EXISTS usage_summaries (
-            id TEXT PRIMARY KEY,
-            organization_id TEXT NOT NULL,
-            period_start DATE NOT NULL,
-            period_end DATE NOT NULL,
-            tokens_used INTEGER DEFAULT 0,
-            tokens_included INTEGER DEFAULT 0,
-            tokens_overage INTEGER DEFAULT 0,
-            storage_bytes_peak INTEGER DEFAULT 0,
-            storage_gb_included REAL DEFAULT 0,
-            storage_gb_overage REAL DEFAULT 0,
-            overage_amount REAL DEFAULT 0,
-            billed INTEGER DEFAULT 0,
-            stripe_invoice_id TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(organization_id, period_start)
-        )`);
+        db.run(`CREATE TABLE IF NOT EXISTS usage_summaries(
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL,
+                period_start DATE NOT NULL,
+                period_end DATE NOT NULL,
+                tokens_used INTEGER DEFAULT 0,
+                tokens_included INTEGER DEFAULT 0,
+                tokens_overage INTEGER DEFAULT 0,
+                storage_bytes_peak INTEGER DEFAULT 0,
+                storage_gb_included REAL DEFAULT 0,
+                storage_gb_overage REAL DEFAULT 0,
+                overage_amount REAL DEFAULT 0,
+                billed INTEGER DEFAULT 0,
+                stripe_invoice_id TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(organization_id, period_start)
+            )`);
 
         // 5. INVOICES (for history & reconciliation)
-        db.run(`CREATE TABLE IF NOT EXISTS invoices (
-            id TEXT PRIMARY KEY,
-            organization_id TEXT NOT NULL,
-            stripe_invoice_id TEXT UNIQUE,
-            amount_due REAL,
-            amount_paid REAL,
-            status TEXT, -- paid, open, void, uncollectible
+        db.run(`CREATE TABLE IF NOT EXISTS invoices(
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL,
+                stripe_invoice_id TEXT UNIQUE,
+                amount_due REAL,
+                amount_paid REAL,
+                status TEXT, --paid, open, void, uncollectible
             period_start DATETIME,
-            period_end DATETIME,
-            pdf_url TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
-        )`);
+                period_end DATETIME,
+                pdf_url TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+            )`);
 
         // User License Link
         db.run(`ALTER TABLE users ADD COLUMN license_plan_id TEXT`, (err) => {
@@ -2604,7 +2915,7 @@ function initDb() {
                 { id: 'plan-enterprise', name: 'Enterprise', price: 2999, tokens: 10000000, storage: 5000, features: JSON.stringify({ printing: true, analytics: 'full', support: 'dedicated' }) }
             ];
 
-            const insertOrgPlan = db.prepare(`INSERT OR IGNORE INTO subscription_plans (id, name, price_monthly, token_limit, storage_limit_gb, features) VALUES (?, ?, ?, ?, ?, ?)`);
+            const insertOrgPlan = db.prepare(`INSERT OR IGNORE INTO subscription_plans(id, name, price_monthly, token_limit, storage_limit_gb, features) VALUES(?, ?, ?, ?, ?, ?)`);
             for (const p of orgPlans) {
                 insertOrgPlan.run(p.id, p.name, p.price, p.tokens, p.storage, p.features);
             }
@@ -2616,7 +2927,7 @@ function initDb() {
                 { id: 'license-premium', name: 'Premium User', price: 100, features: JSON.stringify({ access: 'full' }) }
             ];
 
-            const insertUserPlan = db.prepare(`INSERT OR IGNORE INTO user_license_plans (id, name, price_monthly, features) VALUES (?, ?, ?, ?)`);
+            const insertUserPlan = db.prepare(`INSERT OR IGNORE INTO user_license_plans(id, name, price_monthly, features) VALUES(?, ?, ?, ?)`);
             for (const p of userPlans) {
                 insertUserPlan.run(p.id, p.name, p.price, p.features);
             }
@@ -2663,290 +2974,290 @@ function initDb() {
 
         // 3. STORAGE AUDIT LOG (Physical File Reconciliation)
         db.run(`CREATE TABLE IF NOT EXISTS storage_audit_logs(
-                                    id TEXT PRIMARY KEY,
-                                    organization_id TEXT NOT NULL,
-                                    action TEXT, -- 'reconciliation', 'cleanup'
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL,
+                action TEXT, -- 'reconciliation', 'cleanup'
             files_scanned INTEGER,
-                                    files_deleted INTEGER,
-                                    space_reclaimed_bytes INTEGER,
-                                    discrepancies_found INTEGER,
-                                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                                )`);
+                files_deleted INTEGER,
+                space_reclaimed_bytes INTEGER,
+                discrepancies_found INTEGER,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )`);
 
         // ==========================================
         // PHASE 5: MEGATREND SCANNER
         // ==========================================
 
         // Megatrends (Baseline Data)
-        db.run(`CREATE TABLE IF NOT EXISTS megatrends (
-            id TEXT PRIMARY KEY,
-            industry TEXT NOT NULL,
-            type TEXT NOT NULL,          -- Technology, Business, Societal
+        db.run(`CREATE TABLE IF NOT EXISTS megatrends(
+                id TEXT PRIMARY KEY,
+                industry TEXT NOT NULL,
+                type TEXT NOT NULL, --Technology, Business, Societal
             label TEXT NOT NULL,
-            description TEXT,
-            base_impact_score REAL,
-            initial_ring TEXT DEFAULT 'Watch Closely'
-        )`);
+                description TEXT,
+                base_impact_score REAL,
+                initial_ring TEXT DEFAULT 'Watch Closely'
+            )`);
 
         // Custom Trends (Company Specific)
-        db.run(`CREATE TABLE IF NOT EXISTS custom_trends (
-            id TEXT PRIMARY KEY,
-            company_id TEXT NOT NULL,
-            industry TEXT,
-            type TEXT,
-            label TEXT NOT NULL,
-            description TEXT,
-            ring TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(company_id) REFERENCES organizations(id) ON DELETE CASCADE
-        )`);
+        db.run(`CREATE TABLE IF NOT EXISTS custom_trends(
+                id TEXT PRIMARY KEY,
+                company_id TEXT NOT NULL,
+                industry TEXT,
+                type TEXT,
+                label TEXT NOT NULL,
+                description TEXT,
+                ring TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(company_id) REFERENCES organizations(id) ON DELETE CASCADE
+            )`);
 
         // ==========================================
         // PHASE 6: REPORT BUILDER (Added Fix)
         // ==========================================
 
-        db.run(`CREATE TABLE IF NOT EXISTS reports (
-            id TEXT PRIMARY KEY,
-            project_id TEXT,
-            organization_id TEXT,
-            title TEXT,
-            status TEXT DEFAULT 'draft',
-            version INTEGER DEFAULT 1,
-            block_order TEXT DEFAULT '[]', -- JSON array of block IDs
-            sources TEXT DEFAULT '[]', -- JSON array of sources used
+        db.run(`CREATE TABLE IF NOT EXISTS reports(
+                id TEXT PRIMARY KEY,
+                project_id TEXT,
+                organization_id TEXT,
+                title TEXT,
+                status TEXT DEFAULT 'draft',
+                version INTEGER DEFAULT 1,
+                block_order TEXT DEFAULT '[]', --JSON array of block IDs
+            sources TEXT DEFAULT '[]', --JSON array of sources used
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
-            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
-        )`);
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+            )`);
 
-        db.run(`CREATE TABLE IF NOT EXISTS report_blocks (
-            id TEXT PRIMARY KEY,
-            report_id TEXT NOT NULL,
-            type TEXT NOT NULL, -- text, table, chart, etc.
+        db.run(`CREATE TABLE IF NOT EXISTS report_blocks(
+                id TEXT PRIMARY KEY,
+                report_id TEXT NOT NULL,
+                type TEXT NOT NULL, --text, table, chart, etc.
             title TEXT,
-            module TEXT, -- Origin module
-            content TEXT, -- JSON content
-            meta TEXT, -- JSON metadata (layout, chart config)
+                module TEXT, --Origin module
+            content TEXT, --JSON content
+            meta TEXT, --JSON metadata(layout, chart config)
             position INTEGER DEFAULT 0,
-            locked INTEGER DEFAULT 0, -- boolean
-            ai_regeneratable INTEGER DEFAULT 1, -- boolean
+                locked INTEGER DEFAULT 0, --boolean
+            ai_regeneratable INTEGER DEFAULT 1, --boolean
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(report_id) REFERENCES reports(id) ON DELETE CASCADE
-        )`);
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(report_id) REFERENCES reports(id) ON DELETE CASCADE
+            )`);
 
         // ==========================================
         // AI ENTERPRISE CONTROL LAYERS
         // ==========================================
 
         // AI-1: Budget Management
-        db.run(`CREATE TABLE IF NOT EXISTS ai_budgets (
-            id TEXT PRIMARY KEY,
-            scope_type TEXT NOT NULL, -- 'global' | 'tenant' | 'project'
+        db.run(`CREATE TABLE IF NOT EXISTS ai_budgets(
+                id TEXT PRIMARY KEY,
+                scope_type TEXT NOT NULL, -- 'global' | 'tenant' | 'project'
             scope_id TEXT,
-            monthly_limit_usd REAL,
-            current_month_usage REAL DEFAULT 0,
-            reset_day INTEGER DEFAULT 1,
-            auto_downgrade INTEGER DEFAULT 1, -- auto-downgrade when exceeded
+                monthly_limit_usd REAL,
+                current_month_usage REAL DEFAULT 0,
+                reset_day INTEGER DEFAULT 1,
+                auto_downgrade INTEGER DEFAULT 1, --auto - downgrade when exceeded
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(scope_type, scope_id)
-        )`);
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(scope_type, scope_id)
+            )`);
 
         // AI-1: Usage Logging (Audit)
-        db.run(`CREATE TABLE IF NOT EXISTS ai_usage_log (
-            id TEXT PRIMARY KEY,
-            organization_id TEXT,
-            project_id TEXT,
-            user_id TEXT,
-            model_used TEXT,
-            model_category TEXT, -- reasoning | execution | chat | summarization
-            action_type TEXT, -- chat | analysis | generation | etc.
+        db.run(`CREATE TABLE IF NOT EXISTS ai_usage_log(
+                id TEXT PRIMARY KEY,
+                organization_id TEXT,
+                project_id TEXT,
+                user_id TEXT,
+                model_used TEXT,
+                model_category TEXT, --reasoning | execution | chat | summarization
+            action_type TEXT, --chat | analysis | generation | etc.
             input_tokens INTEGER,
-            output_tokens INTEGER,
-            estimated_cost_usd REAL,
-            actual_cost_usd REAL,
-            was_downgraded INTEGER DEFAULT 0,
-            downgrade_reason TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(organization_id) REFERENCES organizations(id),
-            FOREIGN KEY(project_id) REFERENCES projects(id),
-            FOREIGN KEY(user_id) REFERENCES users(id)
-        )`);
+                output_tokens INTEGER,
+                estimated_cost_usd REAL,
+                actual_cost_usd REAL,
+                was_downgraded INTEGER DEFAULT 0,
+                downgrade_reason TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id),
+                FOREIGN KEY(project_id) REFERENCES projects(id),
+                FOREIGN KEY(user_id) REFERENCES users(id)
+            )`);
 
         // AI-1: Model Categories Configuration
-        db.run(`CREATE TABLE IF NOT EXISTS ai_model_config (
-            id TEXT PRIMARY KEY,
-            provider_id TEXT,
-            category TEXT NOT NULL, -- reasoning | execution | chat | summarization
-            priority_tier INTEGER DEFAULT 1, -- 1=premium, 2=standard, 3=budget
+        db.run(`CREATE TABLE IF NOT EXISTS ai_model_config(
+                id TEXT PRIMARY KEY,
+                provider_id TEXT,
+                category TEXT NOT NULL, --reasoning | execution | chat | summarization
+            priority_tier INTEGER DEFAULT 1, --1=premium, 2 = standard, 3 = budget
             cost_per_1k_input REAL,
-            cost_per_1k_output REAL,
-            max_context_tokens INTEGER,
-            capabilities TEXT, -- JSON array of capabilities
+                cost_per_1k_output REAL,
+                max_context_tokens INTEGER,
+                capabilities TEXT, --JSON array of capabilities
             is_active INTEGER DEFAULT 1,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(provider_id) REFERENCES llm_providers(id)
-        )`);
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(provider_id) REFERENCES llm_providers(id)
+            )`);
 
         // AI-2: Hierarchical Prompts (Versioned)
-        db.run(`CREATE TABLE IF NOT EXISTS ai_system_prompts (
-            id TEXT PRIMARY KEY,
-            prompt_type TEXT NOT NULL, -- 'system' | 'role' | 'phase'
-            prompt_key TEXT NOT NULL, -- e.g., 'ADVISOR', 'Context', 'GLOBAL'
+        db.run(`CREATE TABLE IF NOT EXISTS ai_system_prompts(
+                id TEXT PRIMARY KEY,
+                prompt_type TEXT NOT NULL, -- 'system' | 'role' | 'phase'
+            prompt_key TEXT NOT NULL, --e.g., 'ADVISOR', 'Context', 'GLOBAL'
             content TEXT NOT NULL,
-            version INTEGER DEFAULT 1,
-            is_active INTEGER DEFAULT 1,
-            created_by TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(prompt_type, prompt_key, version)
-        )`);
+                version INTEGER DEFAULT 1,
+                is_active INTEGER DEFAULT 1,
+                created_by TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(prompt_type, prompt_key, version)
+            )`);
 
         // AI-2: User Prompt Preferences
-        db.run(`CREATE TABLE IF NOT EXISTS ai_user_prompt_prefs (
-            user_id TEXT PRIMARY KEY,
-            preferred_tone TEXT DEFAULT 'PROFESSIONAL', -- PROFESSIONAL | FRIENDLY | EXPERT
+        db.run(`CREATE TABLE IF NOT EXISTS ai_user_prompt_prefs(
+                user_id TEXT PRIMARY KEY,
+                preferred_tone TEXT DEFAULT 'PROFESSIONAL', --PROFESSIONAL | FRIENDLY | EXPERT
             education_mode INTEGER DEFAULT 0,
-            language_preference TEXT DEFAULT 'en',
-            custom_instructions TEXT,
-            max_response_length TEXT DEFAULT 'medium', -- short | medium | long
+                language_preference TEXT DEFAULT 'en',
+                custom_instructions TEXT,
+                max_response_length TEXT DEFAULT 'medium', --short | medium | long
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(user_id) REFERENCES users(id)
-        )`);
+                FOREIGN KEY(user_id) REFERENCES users(id)
+            )`);
 
         // AI-3: Project RAG Settings
-        db.run(`CREATE TABLE IF NOT EXISTS project_rag_settings (
-            project_id TEXT PRIMARY KEY,
-            rag_enabled INTEGER DEFAULT 1,
-            max_chunks_per_query INTEGER DEFAULT 5,
-            min_relevance_score REAL DEFAULT 0.5,
-            knowledge_visibility TEXT DEFAULT 'project', -- 'project' | 'organization'
+        db.run(`CREATE TABLE IF NOT EXISTS project_rag_settings(
+                project_id TEXT PRIMARY KEY,
+                rag_enabled INTEGER DEFAULT 1,
+                max_chunks_per_query INTEGER DEFAULT 5,
+                min_relevance_score REAL DEFAULT 0.5,
+                knowledge_visibility TEXT DEFAULT 'project', -- 'project' | 'organization'
             prefer_internal_knowledge INTEGER DEFAULT 1,
-            include_citations INTEGER DEFAULT 1,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(project_id) REFERENCES projects(id)
-        )`);
+                include_citations INTEGER DEFAULT 1,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(project_id) REFERENCES projects(id)
+            )`);
 
         // AI-4: External Data Settings
-        db.run(`CREATE TABLE IF NOT EXISTS external_data_settings (
-            id TEXT PRIMARY KEY,
-            scope_type TEXT NOT NULL, -- 'tenant' | 'project'
+        db.run(`CREATE TABLE IF NOT EXISTS external_data_settings(
+                id TEXT PRIMARY KEY,
+                scope_type TEXT NOT NULL, -- 'tenant' | 'project'
             scope_id TEXT NOT NULL,
-            enabled INTEGER DEFAULT 0, -- disabled by default
-            allowed_providers TEXT, -- JSON array of allowed providers
+                enabled INTEGER DEFAULT 0, --disabled by default
+                allowed_providers TEXT, --JSON array of allowed providers
             max_queries_per_day INTEGER DEFAULT 100,
-            require_labeling INTEGER DEFAULT 1,
-            enabled_by TEXT,
-            enabled_at DATETIME,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(scope_type, scope_id),
-            FOREIGN KEY(enabled_by) REFERENCES users(id)
-        )`);
+                require_labeling INTEGER DEFAULT 1,
+                enabled_by TEXT,
+                enabled_at DATETIME,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(scope_type, scope_id),
+                FOREIGN KEY(enabled_by) REFERENCES users(id)
+            )`);
 
         // AI-4: External Data Audit Log
-        db.run(`CREATE TABLE IF NOT EXISTS external_data_log (
-            id TEXT PRIMARY KEY,
-            organization_id TEXT,
-            project_id TEXT,
-            user_id TEXT,
-            query TEXT,
-            provider TEXT,
-            sources_count INTEGER,
-            sources_used TEXT, -- JSON array of source URLs
+        db.run(`CREATE TABLE IF NOT EXISTS external_data_log(
+                id TEXT PRIMARY KEY,
+                organization_id TEXT,
+                project_id TEXT,
+                user_id TEXT,
+                query TEXT,
+                provider TEXT,
+                sources_count INTEGER,
+                sources_used TEXT, --JSON array of source URLs
             response_summary TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(organization_id) REFERENCES organizations(id),
-            FOREIGN KEY(project_id) REFERENCES projects(id),
-            FOREIGN KEY(user_id) REFERENCES users(id)
-        )`);
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id),
+                FOREIGN KEY(project_id) REFERENCES projects(id),
+                FOREIGN KEY(user_id) REFERENCES users(id)
+            )`);
 
         // AI-5: Integration Configurations
-        db.run(`CREATE TABLE IF NOT EXISTS integration_configs (
-            id TEXT PRIMARY KEY,
-            organization_id TEXT NOT NULL,
-            project_id TEXT,
-            integration_type TEXT NOT NULL, -- task_sync | notifications | calendar | document
-            provider TEXT NOT NULL, -- jira | clickup | slack | teams | etc.
-            config TEXT, -- Encrypted JSON configuration
+        db.run(`CREATE TABLE IF NOT EXISTS integration_configs(
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL,
+                project_id TEXT,
+                integration_type TEXT NOT NULL, --task_sync | notifications | calendar | document
+            provider TEXT NOT NULL, --jira | clickup | slack | teams | etc.
+            config TEXT, --Encrypted JSON configuration
             webhook_url TEXT,
-            webhook_secret TEXT,
-            is_active INTEGER DEFAULT 0,
-            last_sync_at DATETIME,
-            sync_direction TEXT DEFAULT 'bidirectional', -- inbound | outbound | bidirectional
+                webhook_secret TEXT,
+                is_active INTEGER DEFAULT 0,
+                last_sync_at DATETIME,
+                sync_direction TEXT DEFAULT 'bidirectional', --inbound | outbound | bidirectional
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(organization_id) REFERENCES organizations(id),
-            FOREIGN KEY(project_id) REFERENCES projects(id)
-        )`);
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id),
+                FOREIGN KEY(project_id) REFERENCES projects(id)
+            )`);
 
         // AI-5: Pending Sync Actions (AI suggestions requiring approval)
-        db.run(`CREATE TABLE IF NOT EXISTS integration_pending_actions (
-            id TEXT PRIMARY KEY,
-            organization_id TEXT,
-            project_id TEXT,
-            integration_id TEXT,
-            action_type TEXT, -- create_task | update_task | send_notification | sync_status
-            target_entity_type TEXT, -- task | initiative | decision | etc.
+        db.run(`CREATE TABLE IF NOT EXISTS integration_pending_actions(
+                id TEXT PRIMARY KEY,
+                organization_id TEXT,
+                project_id TEXT,
+                integration_id TEXT,
+                action_type TEXT, --create_task | update_task | send_notification | sync_status
+            target_entity_type TEXT, --task | initiative | decision | etc.
             target_entity_id TEXT,
-            payload TEXT, -- JSON payload to send
+                payload TEXT, --JSON payload to send
             suggested_by TEXT DEFAULT 'ai', -- 'ai' | 'system' | 'user'
             suggestion_reason TEXT,
-            status TEXT DEFAULT 'pending', -- pending | approved | rejected | executed | expired
+                status TEXT DEFAULT 'pending', --pending | approved | rejected | executed | expired
             approved_by TEXT,
-            approved_at DATETIME,
-            rejected_reason TEXT,
-            executed_at DATETIME,
-            execution_result TEXT,
-            expires_at DATETIME,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(organization_id) REFERENCES organizations(id),
-            FOREIGN KEY(project_id) REFERENCES projects(id),
-            FOREIGN KEY(integration_id) REFERENCES integration_configs(id),
-            FOREIGN KEY(approved_by) REFERENCES users(id)
-        )`);
+                approved_at DATETIME,
+                rejected_reason TEXT,
+                executed_at DATETIME,
+                execution_result TEXT,
+                expires_at DATETIME,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id),
+                FOREIGN KEY(project_id) REFERENCES projects(id),
+                FOREIGN KEY(integration_id) REFERENCES integration_configs(id),
+                FOREIGN KEY(approved_by) REFERENCES users(id)
+            )`);
 
         // AI-5: Integration Sync Log
-        db.run(`CREATE TABLE IF NOT EXISTS integration_sync_log (
-            id TEXT PRIMARY KEY,
-            integration_id TEXT,
-            direction TEXT, -- inbound | outbound
+        db.run(`CREATE TABLE IF NOT EXISTS integration_sync_log(
+                id TEXT PRIMARY KEY,
+                integration_id TEXT,
+                direction TEXT, --inbound | outbound
             action_type TEXT,
-            external_id TEXT,
-            external_url TEXT,
-            internal_entity_type TEXT,
-            internal_entity_id TEXT,
-            status TEXT, -- success | failed | partial
+                external_id TEXT,
+                external_url TEXT,
+                internal_entity_type TEXT,
+                internal_entity_id TEXT,
+                status TEXT, --success | failed | partial
             error_message TEXT,
-            sync_data TEXT, -- JSON of synced data
+                sync_data TEXT, --JSON of synced data
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(integration_id) REFERENCES integration_configs(id)
-        )`);
+                FOREIGN KEY(integration_id) REFERENCES integration_configs(id)
+            )`);
 
         // ==========================================
         // AI PMO INTELLIGENCE LAYERS (AI-6 to AI-11)
         // ==========================================
 
         // AI-6: Decision Briefs (AI-generated context for decisions)
-        db.run(`CREATE TABLE IF NOT EXISTS decision_briefs (
-            id TEXT PRIMARY KEY,
-            decision_id TEXT NOT NULL,
-            context_summary TEXT,
-            options TEXT, -- JSON array of options with pros/cons
-            risks TEXT, -- JSON array of risks
+        db.run(`CREATE TABLE IF NOT EXISTS decision_briefs(
+                id TEXT PRIMARY KEY,
+                decision_id TEXT NOT NULL,
+                context_summary TEXT,
+                options TEXT, --JSON array of options with pros / cons
+            risks TEXT, --JSON array of risks
             ai_recommendation TEXT,
-            recommendation_rationale TEXT,
+        recommendation_rationale TEXT,
             recommendation_confidence REAL,
-            data_sources_used TEXT, -- JSON array of sources
+                data_sources_used TEXT, --JSON array of sources
             generated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(decision_id) REFERENCES decisions(id) ON DELETE CASCADE
+        FOREIGN KEY(decision_id) REFERENCES decisions(id) ON DELETE CASCADE
         )`);
 
         // AI-6: Decision Impact Tracking
-        db.run(`CREATE TABLE IF NOT EXISTS decision_impacts (
+        db.run(`CREATE TABLE IF NOT EXISTS decision_impacts(
             id TEXT PRIMARY KEY,
             decision_id TEXT NOT NULL,
-            impacted_type TEXT NOT NULL, -- initiative | task | roadmap | project
+            impacted_type TEXT NOT NULL, --initiative | task | roadmap | project
             impacted_id TEXT NOT NULL,
             impact_description TEXT,
             is_blocker INTEGER DEFAULT 0,
@@ -2956,22 +3267,22 @@ function initDb() {
         )`);
 
         // AI-7: Risk Register
-        db.run(`CREATE TABLE IF NOT EXISTS risk_register (
+        db.run(`CREATE TABLE IF NOT EXISTS risk_register(
             id TEXT PRIMARY KEY,
             project_id TEXT NOT NULL,
             organization_id TEXT,
-            risk_type TEXT NOT NULL, -- delivery | capacity | dependency | decision | change_fatigue
-            severity TEXT DEFAULT 'medium', -- low | medium | high | critical
-            likelihood TEXT DEFAULT 'medium', -- low | medium | high
+            risk_type TEXT NOT NULL, --delivery | capacity | dependency | decision | change_fatigue
+            severity TEXT DEFAULT 'medium', --low | medium | high | critical
+            likelihood TEXT DEFAULT 'medium', --low | medium | high
             title TEXT NOT NULL,
             description TEXT,
-            trigger_conditions TEXT, -- What triggered detection
-            affected_entities TEXT, -- JSON array of affected items
+            trigger_conditions TEXT, --What triggered detection
+            affected_entities TEXT, --JSON array of affected items
             mitigation_plan TEXT,
             owner_id TEXT,
-            status TEXT DEFAULT 'open', -- open | mitigating | resolved | accepted | escalated
+            status TEXT DEFAULT 'open', --open | mitigating | resolved | accepted | escalated
             detected_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            detected_by TEXT DEFAULT 'ai', -- ai | user
+            detected_by TEXT DEFAULT 'ai', --ai | user
             escalated_at DATETIME,
             resolved_at DATETIME,
             resolution_notes TEXT,
@@ -2980,18 +3291,18 @@ function initDb() {
         )`);
 
         // AI-7: Scope Change Log
-        db.run(`CREATE TABLE IF NOT EXISTS scope_change_log (
+        db.run(`CREATE TABLE IF NOT EXISTS scope_change_log(
             id TEXT PRIMARY KEY,
             project_id TEXT,
             organization_id TEXT,
-            entity_type TEXT NOT NULL, -- initiative | roadmap | task | project
+            entity_type TEXT NOT NULL, --initiative | roadmap | task | project
             entity_id TEXT NOT NULL,
-            change_type TEXT NOT NULL, -- add | remove | modify | expand | reduce
+            change_type TEXT NOT NULL, --add | remove | modify | expand | reduce
             change_summary TEXT,
-            field_changed TEXT, -- Which field was changed
+            field_changed TEXT, --Which field was changed
             previous_value TEXT,
             new_value TEXT,
-            is_controlled INTEGER DEFAULT 1, -- Was it through proper approval?
+            is_controlled INTEGER DEFAULT 1, --Was it through proper approval ?
             change_reason TEXT,
             approved_by TEXT,
             changed_by TEXT,
@@ -3002,23 +3313,23 @@ function initDb() {
         )`);
 
         // AI-8: User Capacity Profiles
-        db.run(`CREATE TABLE IF NOT EXISTS user_capacity_profile (
+        db.run(`CREATE TABLE IF NOT EXISTS user_capacity_profile(
             user_id TEXT PRIMARY KEY,
             organization_id TEXT,
             default_weekly_hours REAL DEFAULT 40,
-            role_type TEXT DEFAULT 'full_time', -- full_time | part_time | contractor
-            capacity_unit TEXT DEFAULT 'hours', -- hours | points | percentage
-            vacation_calendar TEXT, -- JSON of planned absences
-            skills TEXT, -- JSON array of skills
+            role_type TEXT DEFAULT 'full_time', --full_time | part_time | contractor
+            capacity_unit TEXT DEFAULT 'hours', --hours | points | percentage
+            vacation_calendar TEXT, --JSON of planned absences
+            skills TEXT, --JSON array of skills
             max_concurrent_initiatives INTEGER DEFAULT 3,
-            preferred_work_types TEXT, -- JSON array
+            preferred_work_types TEXT, --JSON array
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
             FOREIGN KEY(organization_id) REFERENCES organizations(id)
         )`);
 
         // AI-8: Workload Snapshots (for trend analysis)
-        db.run(`CREATE TABLE IF NOT EXISTS workload_snapshots (
+        db.run(`CREATE TABLE IF NOT EXISTS workload_snapshots(
             id TEXT PRIMARY KEY,
             user_id TEXT NOT NULL,
             project_id TEXT,
@@ -3029,30 +3340,30 @@ function initDb() {
             utilization_percent REAL,
             task_count INTEGER,
             initiative_count INTEGER,
-            burnout_risk_score REAL, -- 0-100
+            burnout_risk_score REAL, --0 - 100
             is_overloaded INTEGER DEFAULT 0,
-            trend_direction TEXT, -- improving | stable | worsening
+            trend_direction TEXT, --improving | stable | worsening
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(user_id) REFERENCES users(id),
             FOREIGN KEY(project_id) REFERENCES projects(id)
         )`);
 
         // AI-9: Maturity Assessments
-        db.run(`CREATE TABLE IF NOT EXISTS maturity_assessments (
+        db.run(`CREATE TABLE IF NOT EXISTS maturity_assessments(
             id TEXT PRIMARY KEY,
             project_id TEXT,
             organization_id TEXT,
             assessment_date DATE NOT NULL,
-            planning_score REAL, -- 0-5
-            decision_score REAL, -- 0-5
-            execution_score REAL, -- 0-5
-            governance_score REAL, -- 0-5
-            adoption_score REAL, -- 0-5
-            overall_score REAL, -- Average
-            overall_level INTEGER, -- 1-5 (Initial to Optimizing)
-            insights TEXT, -- JSON of observations
-            recommendations TEXT, -- JSON of recommendations
-            benchmarks_used TEXT, -- JSON of comparison data
+            planning_score REAL, --0 - 5
+            decision_score REAL, --0 - 5
+            execution_score REAL, --0 - 5
+            governance_score REAL, --0 - 5
+            adoption_score REAL, --0 - 5
+            overall_score REAL, --Average
+            overall_level INTEGER, --1 - 5(Initial to Optimizing)
+            insights TEXT, --JSON of observations
+            recommendations TEXT, --JSON of recommendations
+            benchmarks_used TEXT, --JSON of comparison data
             assessed_by TEXT DEFAULT 'ai',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(project_id) REFERENCES projects(id),
@@ -3060,11 +3371,11 @@ function initDb() {
         )`);
 
         // AI-9: Discipline Events (for pattern detection)
-        db.run(`CREATE TABLE IF NOT EXISTS discipline_events (
+        db.run(`CREATE TABLE IF NOT EXISTS discipline_events(
             id TEXT PRIMARY KEY,
             project_id TEXT,
             organization_id TEXT,
-            event_type TEXT NOT NULL, -- missed_deadline | late_decision | scope_creep | blocked_task | stalled_initiative
+            event_type TEXT NOT NULL, --missed_deadline | late_decision | scope_creep | blocked_task | stalled_initiative
             severity TEXT DEFAULT 'medium',
             entity_type TEXT,
             entity_id TEXT,
@@ -3076,16 +3387,16 @@ function initDb() {
         )`);
 
         // AI-11: AI Failure Log
-        db.run(`CREATE TABLE IF NOT EXISTS ai_failure_log (
+        db.run(`CREATE TABLE IF NOT EXISTS ai_failure_log(
             id TEXT PRIMARY KEY,
-            failure_type TEXT NOT NULL, -- model_unavailable | budget_exceeded | context_incomplete | rate_limited | timeout
-            context TEXT, -- JSON context of the request
+            failure_type TEXT NOT NULL, --model_unavailable | budget_exceeded | context_incomplete | rate_limited | timeout
+            context TEXT, --JSON context of the request
             user_id TEXT,
             organization_id TEXT,
             project_id TEXT,
             error_message TEXT,
             error_code TEXT,
-            fallback_used TEXT, -- What fallback was applied
+            fallback_used TEXT, --What fallback was applied
             recovery_action TEXT,
             user_notified INTEGER DEFAULT 0,
             occurred_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -3094,12 +3405,12 @@ function initDb() {
         )`);
 
         // AI-11: AI Health Status (singleton table for monitoring)
-        db.run(`CREATE TABLE IF NOT EXISTS ai_health_status (
+        db.run(`CREATE TABLE IF NOT EXISTS ai_health_status(
             id TEXT PRIMARY KEY DEFAULT 'singleton',
-            overall_status TEXT DEFAULT 'healthy', -- healthy | degraded | unavailable
-            model_status TEXT DEFAULT 'available', -- available | limited | unavailable
-            budget_status TEXT DEFAULT 'ok', -- ok | warning | exceeded
-            knowledge_status TEXT DEFAULT 'ok', -- ok | empty | error
+            overall_status TEXT DEFAULT 'healthy', --healthy | degraded | unavailable
+            model_status TEXT DEFAULT 'available', --available | limited | unavailable
+            budget_status TEXT DEFAULT 'ok', --ok | warning | exceeded
+            knowledge_status TEXT DEFAULT 'ok', --ok | empty | error
             integration_status TEXT DEFAULT 'ok',
             last_successful_call DATETIME,
             last_failure DATETIME,
@@ -3138,10 +3449,10 @@ function initDb() {
          * Partners Table
          * Referral partners, resellers, and sales partners.
          */
-        db.run(`CREATE TABLE IF NOT EXISTS partners (
+        db.run(`CREATE TABLE IF NOT EXISTS partners(
             id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
-            partner_type TEXT NOT NULL,           -- REFERRAL | RESELLER | SALES
+            partner_type TEXT NOT NULL, --REFERRAL | RESELLER | SALES
             email TEXT,
             contact_name TEXT,
             default_revenue_share_percent REAL DEFAULT 10,
@@ -3158,16 +3469,16 @@ function initDb() {
          * Allows changing revenue share terms over time (enterprise must-have).
          * Valid agreement is determined by date range.
          */
-        db.run(`CREATE TABLE IF NOT EXISTS partner_agreements (
+        db.run(`CREATE TABLE IF NOT EXISTS partner_agreements(
             id TEXT PRIMARY KEY,
             partner_id TEXT NOT NULL,
             valid_from DATETIME NOT NULL,
-            valid_until DATETIME,                 -- NULL = indefinitely valid
+            valid_until DATETIME, --NULL = indefinitely valid
             revenue_share_percent REAL NOT NULL,
-            applies_to TEXT DEFAULT 'GLOBAL',     -- GLOBAL | CAMPAIGN | PRODUCT
-            applies_value TEXT,                   -- Campaign/product ID if scoped
+            applies_to TEXT DEFAULT 'GLOBAL', --GLOBAL | CAMPAIGN | PRODUCT
+            applies_value TEXT, --Campaign / product ID if scoped
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(partner_id) REFERENCES partners(id) ON DELETE CASCADE
+        FOREIGN KEY(partner_id) REFERENCES partners(id) ON DELETE CASCADE
         )`);
 
         db.run(`CREATE INDEX IF NOT EXISTS idx_partner_agreements_partner ON partner_agreements(partner_id, valid_from)`);
@@ -3178,11 +3489,11 @@ function initDb() {
          * Status flow: OPEN → CALCULATED → LOCKED
          * Once LOCKED, no changes allowed.
          */
-        db.run(`CREATE TABLE IF NOT EXISTS settlement_periods (
+        db.run(`CREATE TABLE IF NOT EXISTS settlement_periods(
             id TEXT PRIMARY KEY,
             period_start DATETIME NOT NULL,
             period_end DATETIME NOT NULL,
-            status TEXT DEFAULT 'OPEN',           -- OPEN | CALCULATED | LOCKED
+            status TEXT DEFAULT 'OPEN', --OPEN | CALCULATED | LOCKED
             calculated_at DATETIME,
             calculated_by TEXT,
             locked_at DATETIME,
@@ -3213,7 +3524,7 @@ function initDb() {
          * - Using which agreement's terms
          * - Entry type (NORMAL or ADJUSTMENT for corrections)
          */
-        db.run(`CREATE TABLE IF NOT EXISTS partner_settlements (
+        db.run(`CREATE TABLE IF NOT EXISTS partner_settlements(
             id TEXT PRIMARY KEY,
             settlement_period_id TEXT NOT NULL,
             partner_id TEXT NOT NULL,
@@ -3224,17 +3535,17 @@ function initDb() {
             settlement_amount REAL NOT NULL,
             currency TEXT DEFAULT 'USD',
             agreement_id TEXT,
-            entry_type TEXT DEFAULT 'NORMAL',     -- NORMAL | ADJUSTMENT
-            adjusts_settlement_id TEXT,           -- FK to original settlement being corrected
-            adjustment_reason TEXT,               -- Required if entry_type = ADJUSTMENT
-            metadata TEXT DEFAULT '{}',           -- calculation timestamp, rate source, etc.
+            entry_type TEXT DEFAULT 'NORMAL', --NORMAL | ADJUSTMENT
+            adjusts_settlement_id TEXT, --FK to original settlement being corrected
+            adjustment_reason TEXT, --Required if entry_type = ADJUSTMENT
+            metadata TEXT DEFAULT '{}', --calculation timestamp, rate source, etc.
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(settlement_period_id) REFERENCES settlement_periods(id),
+        FOREIGN KEY(settlement_period_id) REFERENCES settlement_periods(id),
             FOREIGN KEY(partner_id) REFERENCES partners(id),
-            FOREIGN KEY(organization_id) REFERENCES organizations(id),
-            FOREIGN KEY(source_attribution_id) REFERENCES attribution_events(id),
-            FOREIGN KEY(agreement_id) REFERENCES partner_agreements(id),
-            FOREIGN KEY(adjusts_settlement_id) REFERENCES partner_settlements(id)
+                FOREIGN KEY(organization_id) REFERENCES organizations(id),
+                    FOREIGN KEY(source_attribution_id) REFERENCES attribution_events(id),
+                        FOREIGN KEY(agreement_id) REFERENCES partner_agreements(id),
+                            FOREIGN KEY(adjusts_settlement_id) REFERENCES partner_settlements(id)
         )`);
 
         // Migration: Add adjustment columns to existing table
@@ -3259,17 +3570,17 @@ function initDb() {
          * Stores contextual help sequences that guide users through features.
          * Playbooks are filtered by organization type (DEMO/TRIAL/PAID) and user role.
          */
-        db.run(`CREATE TABLE IF NOT EXISTS help_playbooks (
-            id TEXT PRIMARY KEY,
-            key TEXT UNIQUE NOT NULL,              -- Unique key e.g. "trial_expired", "invite_users"
+        db.run(`CREATE TABLE IF NOT EXISTS help_playbooks(
+                                id TEXT PRIMARY KEY,
+                                key TEXT UNIQUE NOT NULL, --Unique key e.g. "trial_expired", "invite_users"
             title TEXT NOT NULL,
-            description TEXT,
-            target_role TEXT DEFAULT 'ANY',        -- ADMIN | USER | SUPERADMIN | PARTNER | ANY
-            target_org_type TEXT DEFAULT 'ANY',    -- DEMO | TRIAL | PAID | ANY
-            priority INTEGER DEFAULT 3,            -- 1-5 (1=highest priority)
+                                description TEXT,
+                                target_role TEXT DEFAULT 'ANY', --ADMIN | USER | SUPERADMIN | PARTNER | ANY
+            target_org_type TEXT DEFAULT 'ANY', --DEMO | TRIAL | PAID | ANY
+            priority INTEGER DEFAULT 3, --1 - 5(1 = highest priority)
             is_active INTEGER DEFAULT 1,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`);
+                                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                            )`);
 
         /**
          * Help Steps Table
@@ -3277,17 +3588,17 @@ function initDb() {
          * Individual steps within each playbook.
          * Steps are displayed in order and can link to specific UI elements or routes.
          */
-        db.run(`CREATE TABLE IF NOT EXISTS help_steps (
-            id TEXT PRIMARY KEY,
-            playbook_id TEXT NOT NULL,
-            step_order INTEGER NOT NULL,
-            title TEXT NOT NULL,
-            content_md TEXT NOT NULL,              -- Markdown content
-            ui_target TEXT,                        -- CSS selector or route path
-            action_type TEXT DEFAULT 'INFO',       -- INFO | CTA | LINK
-            action_payload TEXT DEFAULT '{}',      -- JSON payload for CTA/LINK actions
+        db.run(`CREATE TABLE IF NOT EXISTS help_steps(
+                                id TEXT PRIMARY KEY,
+                                playbook_id TEXT NOT NULL,
+                                step_order INTEGER NOT NULL,
+                                title TEXT NOT NULL,
+                                content_md TEXT NOT NULL, --Markdown content
+            ui_target TEXT, --CSS selector or route path
+            action_type TEXT DEFAULT 'INFO', --INFO | CTA | LINK
+            action_payload TEXT DEFAULT '{}', --JSON payload for CTA / LINK actions
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(playbook_id) REFERENCES help_playbooks(id) ON DELETE CASCADE
+        FOREIGN KEY(playbook_id) REFERENCES help_playbooks(id) ON DELETE CASCADE
         )`);
 
         /**
@@ -3296,13 +3607,13 @@ function initDb() {
          * CRITICAL: This table is APPEND-ONLY for audit compliance.
          * Never UPDATE or DELETE rows. All interactions are logged for analytics.
          */
-        db.run(`CREATE TABLE IF NOT EXISTS help_events (
+        db.run(`CREATE TABLE IF NOT EXISTS help_events(
             id TEXT PRIMARY KEY,
             user_id TEXT NOT NULL,
             organization_id TEXT NOT NULL,
             playbook_key TEXT NOT NULL,
-            event_type TEXT NOT NULL,              -- VIEWED | STARTED | COMPLETED | DISMISSED
-            context TEXT DEFAULT '{}',             -- JSON context (route, feature, blocked_action, etc.)
+            event_type TEXT NOT NULL, --VIEWED | STARTED | COMPLETED | DISMISSED
+            context TEXT DEFAULT '{}', --JSON context(route, feature, blocked_action, etc.)
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
             FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
@@ -3339,7 +3650,7 @@ function initDb() {
          * - help_completed: User completed a playbook
          * - settlement_generated: Partner settlement calculated
          */
-        db.run(`CREATE TABLE IF NOT EXISTS metrics_events (
+        db.run(`CREATE TABLE IF NOT EXISTS metrics_events(
             id TEXT PRIMARY KEY,
             event_type TEXT NOT NULL,
             user_id TEXT,
@@ -3374,7 +3685,7 @@ function initDb() {
          * - partner_revenue: Revenue per partner
          * - help_effectiveness: Help leading to action rate
          */
-        db.run(`CREATE TABLE IF NOT EXISTS metrics_snapshots (
+        db.run(`CREATE TABLE IF NOT EXISTS metrics_snapshots(
             id TEXT PRIMARY KEY,
             snapshot_date DATE NOT NULL,
             metric_key TEXT NOT NULL,
@@ -3396,22 +3707,22 @@ function initDb() {
          * Step 9.2: Approval & Audit Layer
          * Captures human decisions (Approved, Rejected, Modified) for AI Action Proposals.
          */
-        db.run(`CREATE TABLE IF NOT EXISTS action_decisions (
+        db.run(`CREATE TABLE IF NOT EXISTS action_decisions(
             id TEXT PRIMARY KEY,
             proposal_id TEXT NOT NULL,
-            organization_id TEXT,            -- Added for RBAC hardening
-            correlation_id TEXT,             -- Step 9.5: For tracing proposal→decision→execution
-            decision TEXT NOT NULL,          -- APPROVED | REJECTED | MODIFIED
+            organization_id TEXT, --Added for RBAC hardening
+            correlation_id TEXT, --Step 9.5: For tracing proposal→decision→execution
+            decision TEXT NOT NULL, --APPROVED | REJECTED | MODIFIED
             decided_by_user_id TEXT NOT NULL,
-            decision_reason TEXT,
-            action_type TEXT NOT NULL,       -- Denormalized for filtering
-            scope TEXT NOT NULL,            -- Denormalized for filtering
-            proposal_snapshot TEXT,          -- Full JSON of AI proposal (Step 9.2 alignment)
-            original_payload TEXT,           -- JSON (deprecated, use snapshot)
-            modified_payload TEXT,           -- JSON (only if MODIFIED)
-            archived_at DATETIME,            -- Step 9.7: For retention policy
+        decision_reason TEXT,
+            action_type TEXT NOT NULL, --Denormalized for filtering
+            scope TEXT NOT NULL, --Denormalized for filtering
+            proposal_snapshot TEXT, --Full JSON of AI proposal(Step 9.2 alignment)
+            original_payload TEXT, --JSON(deprecated, use snapshot)
+            modified_payload TEXT, --JSON(only if MODIFIED)
+            archived_at DATETIME, --Step 9.7: For retention policy
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(decided_by_user_id) REFERENCES users(id) ON DELETE SET NULL
+        FOREIGN KEY(decided_by_user_id) REFERENCES users(id) ON DELETE SET NULL
         )`);
 
         db.run(`CREATE INDEX IF NOT EXISTS idx_action_decisions_proposal ON action_decisions(proposal_id)`);
@@ -3424,20 +3735,20 @@ function initDb() {
          * Step 9.3: Execution Adapter
          * Logs the result of executing approved decisions.
          */
-        db.run(`CREATE TABLE IF NOT EXISTS action_executions (
+        db.run(`CREATE TABLE IF NOT EXISTS action_executions(
             id TEXT PRIMARY KEY,
             decision_id TEXT NOT NULL,
-            proposal_id TEXT NOT NULL,       -- Consistency
-            action_type TEXT NOT NULL,       -- Consistency
-            organization_id TEXT NOT NULL,   -- Consistency
-            correlation_id TEXT NOT NULL,    -- Step 9.5: For tracing
+            proposal_id TEXT NOT NULL, --Consistency
+            action_type TEXT NOT NULL, --Consistency
+            organization_id TEXT NOT NULL, --Consistency
+            correlation_id TEXT NOT NULL, --Step 9.5: For tracing
             executed_by TEXT DEFAULT 'SYSTEM',
-            status TEXT NOT NULL,            -- SUCCESS | FAILED
-            result TEXT,                     -- JSON
-            error_code TEXT,                 -- For diagnostics (uses ACTION_ERROR_CODES)
-            error_message TEXT,              -- For diagnostics
-            duration_ms INTEGER,             -- Step 9.5: Execution duration
-            archived_at DATETIME,            -- Step 9.7: For retention policy
+            status TEXT NOT NULL, --SUCCESS | FAILED
+            result TEXT, --JSON
+            error_code TEXT, --For diagnostics(uses ACTION_ERROR_CODES)
+            error_message TEXT, --For diagnostics
+            duration_ms INTEGER, --Step 9.5: Execution duration
+            archived_at DATETIME, --Step 9.7: For retention policy
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(decision_id) REFERENCES action_decisions(id)
         )`);
@@ -3457,15 +3768,15 @@ function initDb() {
          * Defines rules for conditional auto-approval of AI Action Proposals.
          * Policy Engine is deterministic, auditable, and always overridable.
          */
-        db.run(`CREATE TABLE IF NOT EXISTS ai_policy_rules (
+        db.run(`CREATE TABLE IF NOT EXISTS ai_policy_rules(
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL,
             enabled INTEGER DEFAULT 1,
-            action_type TEXT NOT NULL,           -- TASK_CREATE | PLAYBOOK_ASSIGN | etc.
-            scope TEXT NOT NULL,                 -- USER | ORG | INITIATIVE
-            max_risk_level TEXT NOT NULL,        -- LOW | MEDIUM | HIGH
-            conditions JSON NOT NULL,            -- Rule conditions JSON
-            auto_decision TEXT NOT NULL,         -- APPROVED | MODIFIED
+            action_type TEXT NOT NULL, --TASK_CREATE | PLAYBOOK_ASSIGN | etc.
+            scope TEXT NOT NULL, --USER | ORG | INITIATIVE
+            max_risk_level TEXT NOT NULL, --LOW | MEDIUM | HIGH
+            conditions JSON NOT NULL, --Rule conditions JSON
+            auto_decision TEXT NOT NULL, --APPROVED | MODIFIED
             auto_decision_reason TEXT NOT NULL,
             created_by_user_id TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -3482,7 +3793,7 @@ function initDb() {
         /**
          * Global Policy Engine Settings (Singleton)
          */
-        db.run(`CREATE TABLE IF NOT EXISTS ai_policy_settings (
+        db.run(`CREATE TABLE IF NOT EXISTS ai_policy_settings(
             id TEXT PRIMARY KEY DEFAULT 'singleton',
             policy_engine_enabled INTEGER DEFAULT 1,
             updated_by TEXT,
@@ -3490,7 +3801,7 @@ function initDb() {
         )`);
 
         // Ensure singleton row exists
-        db.run(`INSERT OR IGNORE INTO ai_policy_settings (id) VALUES ('singleton')`);
+        db.run(`INSERT OR IGNORE INTO ai_policy_settings(id) VALUES('singleton')`);
 
         // ==========================================
         // STEP 10: AI PLAYBOOKS (Multi-Step Action Plans)
@@ -3500,7 +3811,7 @@ function initDb() {
          * AI Playbook Templates
          * Defines reusable multi-step action sequences triggered by signals.
          */
-        db.run(`CREATE TABLE IF NOT EXISTS ai_playbook_templates (
+        db.run(`CREATE TABLE IF NOT EXISTS ai_playbook_templates(
             id TEXT PRIMARY KEY,
             key TEXT UNIQUE NOT NULL,
             title TEXT NOT NULL,
@@ -3518,7 +3829,7 @@ function initDb() {
          * AI Playbook Template Steps
          * Individual actions within a playbook template.
          */
-        db.run(`CREATE TABLE IF NOT EXISTS ai_playbook_template_steps (
+        db.run(`CREATE TABLE IF NOT EXISTS ai_playbook_template_steps(
             id TEXT PRIMARY KEY,
             template_id TEXT NOT NULL,
             step_order INTEGER NOT NULL,
@@ -3537,7 +3848,7 @@ function initDb() {
          * AI Playbook Runs
          * Execution instances of playbook templates.
          */
-        db.run(`CREATE TABLE IF NOT EXISTS ai_playbook_runs (
+        db.run(`CREATE TABLE IF NOT EXISTS ai_playbook_runs(
             id TEXT PRIMARY KEY,
             template_id TEXT NOT NULL,
             organization_id TEXT NOT NULL,
@@ -3559,7 +3870,7 @@ function initDb() {
          * AI Playbook Run Steps
          * Progress tracking for each step in a run.
          */
-        db.run(`CREATE TABLE IF NOT EXISTS ai_playbook_run_steps (
+        db.run(`CREATE TABLE IF NOT EXISTS ai_playbook_run_steps(
             id TEXT PRIMARY KEY,
             run_id TEXT NOT NULL,
             template_step_id TEXT NOT NULL,
@@ -3602,14 +3913,14 @@ function initDb() {
          * DB is source of truth, queue (BullMQ) is execution mechanism.
          * Tracks all async jobs for Action Decisions and Playbook Step Advances.
          */
-        db.run(`CREATE TABLE IF NOT EXISTS async_jobs (
+        db.run(`CREATE TABLE IF NOT EXISTS async_jobs(
             id TEXT PRIMARY KEY,
-            type TEXT NOT NULL,                    -- EXECUTE_DECISION | ADVANCE_PLAYBOOK_STEP
+            type TEXT NOT NULL, --EXECUTE_DECISION | ADVANCE_PLAYBOOK_STEP
             organization_id TEXT NOT NULL,
             correlation_id TEXT NOT NULL,
-            entity_id TEXT NOT NULL,               -- decisionId or playbookRunStepId
-            status TEXT NOT NULL DEFAULT 'QUEUED', -- QUEUED|RUNNING|SUCCESS|FAILED|DEAD_LETTER|CANCELLED
-            priority TEXT DEFAULT 'normal',        -- low|normal|high
+            entity_id TEXT NOT NULL, --decisionId or playbookRunStepId
+            status TEXT NOT NULL DEFAULT 'QUEUED', --QUEUED | RUNNING | SUCCESS | FAILED | DEAD_LETTER | CANCELLED
+            priority TEXT DEFAULT 'normal', --low | normal | high
             attempts INTEGER DEFAULT 0,
             max_attempts INTEGER DEFAULT 3,
             last_error_code TEXT,
@@ -3674,7 +3985,7 @@ function initDb() {
          * Connectors Catalog (Reference Table)
          * Stores available integration connectors with capabilities.
          */
-        db.run(`CREATE TABLE IF NOT EXISTS connectors (
+        db.run(`CREATE TABLE IF NOT EXISTS connectors(
             key TEXT PRIMARY KEY,
             name TEXT NOT NULL,
             category TEXT NOT NULL,
@@ -3690,7 +4001,7 @@ function initDb() {
          * Organization Connector Configurations
          * Stores per-org connector configs with encrypted secrets (AES-256-GCM).
          */
-        db.run(`CREATE TABLE IF NOT EXISTS org_connector_configs (
+        db.run(`CREATE TABLE IF NOT EXISTS org_connector_configs(
             id TEXT PRIMARY KEY,
             org_id TEXT NOT NULL,
             connector_key TEXT NOT NULL,
@@ -3714,7 +4025,7 @@ function initDb() {
          * Connector Health Monitoring
          * Tracks health status of each org's connector configuration.
          */
-        db.run(`CREATE TABLE IF NOT EXISTS connector_health (
+        db.run(`CREATE TABLE IF NOT EXISTS connector_health(
             id TEXT PRIMARY KEY,
             org_id TEXT NOT NULL,
             connector_key TEXT NOT NULL,
@@ -3739,7 +4050,7 @@ function initDb() {
             { key: 'hubspot', name: 'HubSpot', category: 'crm', capabilities: ['contact_create', 'contact_update', 'deal_create', 'deal_update'] }
         ];
 
-        const insertConnector = db.prepare(`INSERT OR IGNORE INTO connectors (key, name, category, capabilities_json) VALUES (?, ?, ?, ?)`);
+        const insertConnector = db.prepare(`INSERT OR IGNORE INTO connectors(key, name, category, capabilities_json) VALUES(?, ?, ?, ?)`);
         connectorsCatalog.forEach(c => {
             insertConnector.run(c.key, c.name, c.category, JSON.stringify(c.capabilities));
         });
@@ -3755,19 +4066,19 @@ function initDb() {
          * Defines what metrics to track per action type or playbook template.
          * Each org can customize their outcome tracking criteria.
          */
-        db.run(`CREATE TABLE IF NOT EXISTS outcome_definitions (
+        db.run(`CREATE TABLE IF NOT EXISTS outcome_definitions(
             id TEXT PRIMARY KEY,
             org_id TEXT NOT NULL,
-            entity_type TEXT NOT NULL,               -- ACTION_TYPE | PLAYBOOK_TEMPLATE
-            entity_key TEXT NOT NULL,                -- e.g., 'TASK_CREATE' or playbook template key
-            metrics_tracked TEXT NOT NULL DEFAULT '{}', -- JSON: { "tasks_completed": true, "time_saved_mins": true }
+            entity_type TEXT NOT NULL, --ACTION_TYPE | PLAYBOOK_TEMPLATE
+            entity_key TEXT NOT NULL, --e.g., 'TASK_CREATE' or playbook template key
+            metrics_tracked TEXT NOT NULL DEFAULT '{}', --JSON: { "tasks_completed": true, "time_saved_mins": true }
             measurement_window_days INTEGER DEFAULT 7,
-            baseline_query TEXT,                      -- Optional custom SQL for baseline
-            success_criteria TEXT DEFAULT '{}',       -- JSON: { "tasks_completed_delta": "> 0" }
+            baseline_query TEXT, --Optional custom SQL for baseline
+            success_criteria TEXT DEFAULT '{}', --JSON: { "tasks_completed_delta": "> 0" }
             is_active INTEGER DEFAULT 1,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(org_id) REFERENCES organizations(id) ON DELETE CASCADE
+                FOREIGN KEY(org_id) REFERENCES organizations(id) ON DELETE CASCADE
         )`);
 
         db.run(`CREATE INDEX IF NOT EXISTS idx_outcome_definitions_org ON outcome_definitions(org_id, entity_type)`);
@@ -3778,25 +4089,25 @@ function initDb() {
          * Stores before/after snapshots for each action/playbook execution.
          * Delta is computed after measurement window.
          */
-        db.run(`CREATE TABLE IF NOT EXISTS outcome_measurements (
-            id TEXT PRIMARY KEY,
-            org_id TEXT NOT NULL,
-            definition_id TEXT NOT NULL,
-            run_id TEXT,                              -- Link to ai_playbook_runs (nullable)
-            execution_id TEXT,                        -- Link to action_executions (nullable)
+        db.run(`CREATE TABLE IF NOT EXISTS outcome_measurements(
+                    id TEXT PRIMARY KEY,
+                    org_id TEXT NOT NULL,
+                    definition_id TEXT NOT NULL,
+                    run_id TEXT, --Link to ai_playbook_runs(nullable)
+            execution_id TEXT, --Link to action_executions(nullable)
             entity_type TEXT NOT NULL,
-            entity_key TEXT NOT NULL,
-            baseline_json TEXT NOT NULL DEFAULT '{}',
-            after_json TEXT DEFAULT '{}',
-            delta_json TEXT DEFAULT '{}',
-            is_success INTEGER,                       -- Computed based on success_criteria
+                    entity_key TEXT NOT NULL,
+                    baseline_json TEXT NOT NULL DEFAULT '{}',
+                    after_json TEXT DEFAULT '{}',
+                    delta_json TEXT DEFAULT '{}',
+                    is_success INTEGER, --Computed based on success_criteria
             baseline_captured_at DATETIME NOT NULL,
-            after_captured_at DATETIME,
-            computed_at DATETIME,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(org_id) REFERENCES organizations(id) ON DELETE CASCADE,
-            FOREIGN KEY(definition_id) REFERENCES outcome_definitions(id) ON DELETE SET NULL
-        )`);
+                    after_captured_at DATETIME,
+                    computed_at DATETIME,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY(org_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                    FOREIGN KEY(definition_id) REFERENCES outcome_definitions(id) ON DELETE SET NULL
+                )`);
 
         db.run(`CREATE INDEX IF NOT EXISTS idx_outcome_measurements_org ON outcome_measurements(org_id)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_outcome_measurements_run ON outcome_measurements(run_id)`);
@@ -3809,20 +4120,20 @@ function initDb() {
          * Defines assumptions and formulas for ROI calculations.
          * Each org can have multiple models, one is default.
          */
-        db.run(`CREATE TABLE IF NOT EXISTS roi_models (
-            id TEXT PRIMARY KEY,
-            org_id TEXT NOT NULL,
-            name TEXT NOT NULL,
-            description TEXT,
-            assumptions TEXT NOT NULL DEFAULT '{}',   -- JSON: { "hourly_cost": 75, "downtime_cost_per_hour": 500 }
-            metric_mappings TEXT NOT NULL DEFAULT '{}', -- JSON: { "time_saved_mins": { "formula": "value * (hourly_cost/60)" } }
+        db.run(`CREATE TABLE IF NOT EXISTS roi_models(
+                    id TEXT PRIMARY KEY,
+                    org_id TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    assumptions TEXT NOT NULL DEFAULT '{}', --JSON: { "hourly_cost": 75, "downtime_cost_per_hour": 500 }
+            metric_mappings TEXT NOT NULL DEFAULT '{}', --JSON: { "time_saved_mins": { "formula": "value * (hourly_cost/60)" } }
             is_default INTEGER DEFAULT 0,
-            created_by TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(org_id) REFERENCES organizations(id) ON DELETE CASCADE,
-            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
-        )`);
+                    created_by TEXT,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY(org_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                    FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+                )`);
 
         db.run(`CREATE INDEX IF NOT EXISTS idx_roi_models_org ON roi_models(org_id, is_default)`);
 
@@ -3838,23 +4149,23 @@ function initDb() {
          * Status flow: PENDING → ACKED → DONE | EXPIRED
          * Supports escalation when SLA expires.
          */
-        db.run(`CREATE TABLE IF NOT EXISTS approval_assignments (
-            id TEXT PRIMARY KEY,
-            org_id TEXT NOT NULL,
-            proposal_id TEXT NOT NULL,
-            assigned_to_user_id TEXT NOT NULL,
-            status TEXT NOT NULL DEFAULT 'PENDING', -- PENDING|ACKED|DONE|EXPIRED
+        db.run(`CREATE TABLE IF NOT EXISTS approval_assignments(
+                    id TEXT PRIMARY KEY,
+                    org_id TEXT NOT NULL,
+                    proposal_id TEXT NOT NULL,
+                    assigned_to_user_id TEXT NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'PENDING', --PENDING | ACKED | DONE | EXPIRED
             sla_due_at DATETIME NOT NULL,
-            escalated_to_user_id TEXT,
-            escalated_at DATETIME,
-            escalation_reason TEXT,
-            acked_at DATETIME,
-            completed_at DATETIME,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(org_id) REFERENCES organizations(id) ON DELETE CASCADE,
-            FOREIGN KEY(assigned_to_user_id) REFERENCES users(id) ON DELETE SET NULL,
-            FOREIGN KEY(escalated_to_user_id) REFERENCES users(id) ON DELETE SET NULL
-        )`);
+                    escalated_to_user_id TEXT,
+                    escalated_at DATETIME,
+                    escalation_reason TEXT,
+                    acked_at DATETIME,
+                    completed_at DATETIME,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY(org_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                    FOREIGN KEY(assigned_to_user_id) REFERENCES users(id) ON DELETE SET NULL,
+                    FOREIGN KEY(escalated_to_user_id) REFERENCES users(id) ON DELETE SET NULL
+                )`);
 
         db.run(`CREATE INDEX IF NOT EXISTS idx_approval_assignments_org ON approval_assignments(org_id)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_approval_assignments_user ON approval_assignments(assigned_to_user_id, status)`);
@@ -3867,23 +4178,23 @@ function initDb() {
          * Per-user notification settings covering channels and event types.
          * Unique constraint per user/org combination.
          */
-        db.run(`CREATE TABLE IF NOT EXISTS user_notification_preferences (
-            id TEXT PRIMARY KEY,
-            user_id TEXT NOT NULL,
-            org_id TEXT NOT NULL,
-            channel_email INTEGER DEFAULT 1,
-            channel_slack INTEGER DEFAULT 0,
-            channel_teams INTEGER DEFAULT 0,
-            event_approval_due INTEGER DEFAULT 1,
-            event_playbook_stuck INTEGER DEFAULT 1,
-            event_dead_letter INTEGER DEFAULT 1,
-            event_escalation INTEGER DEFAULT 1,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
-            FOREIGN KEY(org_id) REFERENCES organizations(id) ON DELETE CASCADE,
-            UNIQUE(user_id, org_id)
-        )`);
+        db.run(`CREATE TABLE IF NOT EXISTS user_notification_preferences(
+                    id TEXT PRIMARY KEY,
+                    user_id TEXT NOT NULL,
+                    org_id TEXT NOT NULL,
+                    channel_email INTEGER DEFAULT 1,
+                    channel_slack INTEGER DEFAULT 0,
+                    channel_teams INTEGER DEFAULT 0,
+                    event_approval_due INTEGER DEFAULT 1,
+                    event_playbook_stuck INTEGER DEFAULT 1,
+                    event_dead_letter INTEGER DEFAULT 1,
+                    event_escalation INTEGER DEFAULT 1,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+                    FOREIGN KEY(org_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                    UNIQUE(user_id, org_id)
+                )`);
 
         db.run(`CREATE INDEX IF NOT EXISTS idx_user_notification_prefs_user ON user_notification_preferences(user_id)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_user_notification_prefs_org ON user_notification_preferences(org_id)`);
@@ -3895,22 +4206,22 @@ function initDb() {
          * Implements outbox pattern for async notification delivery.
          * Status flow: QUEUED → SENT | FAILED
          */
-        db.run(`CREATE TABLE IF NOT EXISTS notification_outbox (
-            id TEXT PRIMARY KEY,
-            org_id TEXT NOT NULL,
-            user_id TEXT NOT NULL,
-            notification_type TEXT NOT NULL, -- APPROVAL_DUE|PLAYBOOK_STUCK|DEAD_LETTER|ESCALATION
+        db.run(`CREATE TABLE IF NOT EXISTS notification_outbox(
+                    id TEXT PRIMARY KEY,
+                    org_id TEXT NOT NULL,
+                    user_id TEXT NOT NULL,
+                    notification_type TEXT NOT NULL, --APPROVAL_DUE | PLAYBOOK_STUCK | DEAD_LETTER | ESCALATION
             payload_json TEXT NOT NULL,
-            status TEXT NOT NULL DEFAULT 'QUEUED', -- QUEUED|SENT|FAILED
+                    status TEXT NOT NULL DEFAULT 'QUEUED', --QUEUED | SENT | FAILED
             channel TEXT NOT NULL DEFAULT 'email',
-            attempts INTEGER DEFAULT 0,
-            last_attempt_at DATETIME,
-            sent_at DATETIME,
-            error_message TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(org_id) REFERENCES organizations(id) ON DELETE CASCADE,
-            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
-        )`);
+                    attempts INTEGER DEFAULT 0,
+                    last_attempt_at DATETIME,
+                    sent_at DATETIME,
+                    error_message TEXT,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY(org_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+                )`);
 
         db.run(`CREATE INDEX IF NOT EXISTS idx_notification_outbox_status ON notification_outbox(status)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_notification_outbox_user ON notification_outbox(user_id)`);
@@ -3929,15 +4240,15 @@ function initDb() {
          * Payloads are redacted before storage to prevent PII exposure.
          * Types: METRIC_SNAPSHOT | SIGNAL | DOC_REF | USER_EVENT | SYSTEM_EVENT
          */
-        db.run(`CREATE TABLE IF NOT EXISTS ai_evidence_objects (
-            id TEXT PRIMARY KEY,
-            org_id TEXT NOT NULL,
-            type TEXT NOT NULL,
-            source TEXT NOT NULL,
-            payload_json TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(org_id) REFERENCES organizations(id) ON DELETE CASCADE
-        )`);
+        db.run(`CREATE TABLE IF NOT EXISTS ai_evidence_objects(
+                    id TEXT PRIMARY KEY,
+                    org_id TEXT NOT NULL,
+                    type TEXT NOT NULL,
+                    source TEXT NOT NULL,
+                    payload_json TEXT,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY(org_id) REFERENCES organizations(id) ON DELETE CASCADE
+                )`);
 
         db.run(`CREATE INDEX IF NOT EXISTS idx_ai_evidence_objects_org ON ai_evidence_objects(org_id)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_ai_evidence_objects_type ON ai_evidence_objects(type, created_at)`);
@@ -3949,16 +4260,16 @@ function initDb() {
          * Links evidence objects to AI entities (proposals, decisions, executions, run_steps).
          * Many-to-many relationship with weight (0-1) for importance scoring.
          */
-        db.run(`CREATE TABLE IF NOT EXISTS ai_explainability_links (
-            id TEXT PRIMARY KEY,
-            from_type TEXT NOT NULL,
-            from_id TEXT NOT NULL,
-            evidence_id TEXT NOT NULL,
-            weight REAL DEFAULT 1.0,
-            note TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(evidence_id) REFERENCES ai_evidence_objects(id) ON DELETE CASCADE
-        )`);
+        db.run(`CREATE TABLE IF NOT EXISTS ai_explainability_links(
+                    id TEXT PRIMARY KEY,
+                    from_type TEXT NOT NULL,
+                    from_id TEXT NOT NULL,
+                    evidence_id TEXT NOT NULL,
+                    weight REAL DEFAULT 1.0,
+                    note TEXT,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY(evidence_id) REFERENCES ai_evidence_objects(id) ON DELETE CASCADE
+                )`);
 
         db.run(`CREATE INDEX IF NOT EXISTS idx_ai_explainability_links_from ON ai_explainability_links(from_type, from_id)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_ai_explainability_links_evidence ON ai_explainability_links(evidence_id)`);
@@ -3969,15 +4280,15 @@ function initDb() {
          * Server-generated reasoning summaries. CRITICAL: No client input allowed.
          * Each entry is immutable - corrections require new entries.
          */
-        db.run(`CREATE TABLE IF NOT EXISTS ai_reasoning_ledger (
-            id TEXT PRIMARY KEY,
-            entity_type TEXT NOT NULL,
-            entity_id TEXT NOT NULL,
-            reasoning_summary TEXT NOT NULL,
-            assumptions_json TEXT DEFAULT '[]',
-            confidence REAL NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`);
+        db.run(`CREATE TABLE IF NOT EXISTS ai_reasoning_ledger(
+                    id TEXT PRIMARY KEY,
+                    entity_type TEXT NOT NULL,
+                    entity_id TEXT NOT NULL,
+                    reasoning_summary TEXT NOT NULL,
+                    assumptions_json TEXT DEFAULT '[]',
+                    confidence REAL NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )`);
 
         db.run(`CREATE INDEX IF NOT EXISTS idx_ai_reasoning_ledger_entity ON ai_reasoning_ledger(entity_type, entity_id)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_ai_reasoning_ledger_confidence ON ai_reasoning_ledger(confidence)`);
@@ -3991,48 +4302,48 @@ function initDb() {
          * Permissions Table (PBAC)
          * Granular permissions that can be assigned to roles.
          */
-        db.run(`CREATE TABLE IF NOT EXISTS permissions (
-            id TEXT PRIMARY KEY,
-            scope TEXT NOT NULL,         -- global, organization, project
-            resource TEXT NOT NULL,      -- e.g. 'financials', 'settings', 'ai_ops'
-            action TEXT NOT NULL,        -- create, read, update, delete, approve
+        db.run(`CREATE TABLE IF NOT EXISTS permissions(
+                    id TEXT PRIMARY KEY,
+                    scope TEXT NOT NULL, --global, organization, project
+            resource TEXT NOT NULL, --e.g. 'financials', 'settings', 'ai_ops'
+            action TEXT NOT NULL, --create, read, update, delete, approve
             name TEXT NOT NULL,
-            description TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(scope, resource, action)
-        )`);
+                    description TEXT,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(scope, resource, action)
+                )`);
 
         /**
          * Role Permissions Table
          * Maps defined roles (e.g. 'ORG_ADMIN', 'PMO_MANAGER') to specific permissions.
          * Compatible with permissionService.js which uses 'role' and 'permission_key'.
          */
-        db.run(`CREATE TABLE IF NOT EXISTS role_permissions (
-            id TEXT PRIMARY KEY,
-            role TEXT NOT NULL,
-            permission_key TEXT NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(role, permission_key),
-            FOREIGN KEY(permission_key) REFERENCES permissions(key) ON DELETE CASCADE
-        )`);
+        db.run(`CREATE TABLE IF NOT EXISTS role_permissions(
+                    id TEXT PRIMARY KEY,
+                    role TEXT NOT NULL,
+                    permission_key TEXT NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(role, permission_key),
+                    FOREIGN KEY(permission_key) REFERENCES permissions(key) ON DELETE CASCADE
+                )`);
 
         /**
          * Organization User Permissions (Overrides)
          * Specific permissions granted to a user within an org, independent of their role.
          * Uses permission_key (string) instead of permission_id for compatibility with permissionService.
          */
-        db.run(`CREATE TABLE IF NOT EXISTS org_user_permissions (
-            id TEXT PRIMARY KEY,
-            organization_id TEXT NOT NULL,
-            user_id TEXT NOT NULL,
-            permission_key TEXT NOT NULL,
-            grant_type TEXT NOT NULL CHECK(grant_type IN ('GRANT', 'REVOKE')),
-            granted_by TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(user_id, organization_id, permission_key),
-            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
-            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
-        )`);
+        db.run(`CREATE TABLE IF NOT EXISTS org_user_permissions(
+                    id TEXT PRIMARY KEY,
+                    organization_id TEXT NOT NULL,
+                    user_id TEXT NOT NULL,
+                    permission_key TEXT NOT NULL,
+                    grant_type TEXT NOT NULL CHECK(grant_type IN('GRANT', 'REVOKE')),
+                    granted_by TEXT,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(user_id, organization_id, permission_key),
+                    FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+                )`);
 
         // Index for org_user_permissions
         db.run(`CREATE INDEX IF NOT EXISTS idx_org_user_perms_user ON org_user_permissions(user_id, organization_id)`);
@@ -4041,21 +4352,24 @@ function initDb() {
          * Governance Audit Log (Immutable)
          * High-fidelity audit trail for all governance actions.
          */
-        db.run(`CREATE TABLE IF NOT EXISTS governance_audit_log (
-            id TEXT PRIMARY KEY,
-            event_type TEXT NOT NULL,
-            actor_id TEXT NOT NULL,
-            organization_id TEXT,
-            project_id TEXT,
-            resource_type TEXT NOT NULL,
-            resource_id TEXT NOT NULL,
-            previous_state TEXT,    -- JSON snapshot
-            new_state TEXT,         -- JSON snapshot
-            metadata TEXT,          -- JSON: ip, user_agent, correlation_id
-            hash TEXT,              -- Tamper-evident hash
-            prev_hash TEXT,         -- Link to previous record
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`);
+        db.run(`CREATE TABLE IF NOT EXISTS governance_audit_log(
+                    id TEXT PRIMARY KEY,
+                    event_type TEXT DEFAULT 'audit', -- KEEPING for compatibility, though action is used
+                    action TEXT, -- ADDED to match service
+                    actor_id TEXT NOT NULL,
+                    actor_role TEXT, -- ADDED
+                    organization_id TEXT,
+                    project_id TEXT,
+                    resource_type TEXT NOT NULL,
+                    resource_id TEXT NOT NULL,
+                    before_json TEXT, -- Renamed from previous_state
+                    after_json TEXT, -- Renamed from new_state
+                    metadata TEXT,
+                    correlation_id TEXT, -- ADDED
+                    record_hash TEXT, -- Renamed from hash
+                    prev_hash TEXT,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )`);
 
         db.run(`CREATE INDEX IF NOT EXISTS idx_gov_audit_org ON governance_audit_log(organization_id)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_gov_audit_actor ON governance_audit_log(actor_id)`);
@@ -4068,24 +4382,24 @@ function initDb() {
          */
         // Align schema with Step 14 governance controls (see migrations/014_governance_enterprise.sql)
         // NOTE: Keep fields compatible with BreakGlassService expectations.
-        db.run(`CREATE TABLE IF NOT EXISTS break_glass_sessions (
-            id TEXT PRIMARY KEY,
-            organization_id TEXT NOT NULL,
-            actor_id TEXT NOT NULL,
-            reason TEXT NOT NULL,
-            scope TEXT NOT NULL,
-            expires_at DATETIME NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            closed_at DATETIME,
-            -- Legacy/compat fields (safe to keep, optional)
+        db.run(`CREATE TABLE IF NOT EXISTS break_glass_sessions(
+                    id TEXT PRIMARY KEY,
+                    organization_id TEXT NOT NULL,
+                    actor_id TEXT NOT NULL,
+                    reason TEXT NOT NULL,
+                    scope TEXT NOT NULL,
+                    expires_at DATETIME NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    closed_at DATETIME,
+                    --Legacy / compat fields(safe to keep, optional)
             ticket_ref TEXT,
-            permissions_granted TEXT,
-            started_at DATETIME,
-            ended_at DATETIME,
-            is_active INTEGER DEFAULT 1,
-            FOREIGN KEY(actor_id) REFERENCES users(id),
-            FOREIGN KEY(organization_id) REFERENCES organizations(id)
-        )`);
+                    permissions_granted TEXT,
+                    started_at DATETIME,
+                    ended_at DATETIME,
+                    is_active INTEGER DEFAULT 1,
+                    FOREIGN KEY(actor_id) REFERENCES users(id),
+                    FOREIGN KEY(organization_id) REFERENCES organizations(id)
+                )`);
 
         // Seed Super Admin & Default Organization
         const superAdminOrgId = 'org-dbr77-system';

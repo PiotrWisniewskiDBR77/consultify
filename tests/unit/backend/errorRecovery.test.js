@@ -1,9 +1,7 @@
-/**
- * Backend Error Recovery Tests
- * Tests that backend services recover gracefully from errors
- */
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { createRequire } from 'module';
 
-const { describe, it, expect, beforeEach, afterEach } = require('vitest');
+const require = createRequire(import.meta.url);
 const { initTestDb, cleanTables, dbRun, dbAll } = require('../../helpers/dbHelper.cjs');
 const db = require('../../../server/database');
 
@@ -127,7 +125,7 @@ describe('Backend Error Recovery', () => {
 
         it('should recover after connection issues', async () => {
             // Make multiple queries to verify connection stability
-            const queries = Array(10).fill(null).map(() => 
+            const queries = Array(10).fill(null).map(() =>
                 dbAll('SELECT 1 as test')
             );
 

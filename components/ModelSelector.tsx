@@ -108,7 +108,10 @@ export const ModelSelector: React.FC = () => {
             // For system providers, just check if the provider exists in the public list
             if (currentProvider === 'system') {
                 const systemProviders = await Api.getPublicLLMProviders();
-                const providerExists = systemProviders.some((p: any) => p.id === currentModelId);
+                // Check against both ID (UUID) and modelId (e.g. 'gpt-4o') for robust matching
+                const providerExists = systemProviders.some((p: any) => 
+                    p.id === currentModelId || p.model_id === currentModelId
+                );
                 setLlmConnected(providerExists && systemProviders.length > 0);
             } else {
                 // For private models, test the actual connection

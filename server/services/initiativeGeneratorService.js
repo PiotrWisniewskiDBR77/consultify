@@ -903,36 +903,55 @@ class InitiativeGeneratorService {
                 const businessValue = initiative.estimatedROI > 2 ? 'High' :
                     initiative.estimatedROI > 1 ? 'Medium' : 'Low';
 
-                // Insert into initiatives table with ALL required fields
+                // Prepare JSON fields (ensure valid JSON strings)
+                const deliverables = initiative.deliverables ? JSON.stringify(initiative.deliverables) : '[]';
+                const successCriteria = initiative.successCriteria || initiative.kpis ? 
+                    JSON.stringify(initiative.successCriteria || initiative.kpis) : '[]';
+                const scopeIn = initiative.scopeIn ? JSON.stringify(initiative.scopeIn) : '[]';
+                const scopeOut = initiative.scopeOut ? JSON.stringify(initiative.scopeOut) : '[]';
+                const keyRisks = initiative.risks || initiative.keyRisks ? 
+                    JSON.stringify(initiative.risks || initiative.keyRisks) : '[]';
+                const competenciesRequired = initiative.competenciesRequired || initiative.requiredCompetencies ?
+                    JSON.stringify(initiative.competenciesRequired || initiative.requiredCompetencies) : '[]';
+
+                // Insert into initiatives table with ALL required fields including JSON fields
                 const sql = `
                     INSERT INTO initiatives (
                         id, organization_id, project_id, name, summary, hypothesis,
                         axis, area, priority, business_value, status,
                         cost_capex, expected_roi,
                         source_assessment_id,
-                        problem_statement, created_from, created_by, created_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+                        problem_statement, created_from, created_by,
+                        deliverables, success_criteria, scope_in, scope_out, key_risks, competencies_required,
+                        created_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
                 `;
 
                 await new Promise((resolve, reject) => {
                     db.run(sql, [
                         initiative.id,
-                        organizationId,                                    // ADDED: organization_id (NOT NULL)
+                        organizationId,                                    // organization_id (NOT NULL)
                         projectId,
                         initiative.name,
                         initiative.description || initiative.summary || '',
                         initiative.objectives?.join('; ') || initiative.hypothesis || '',
                         initiative.sourceAxisId || initiative.axis || null,
-                        initiative.area || null,                          // ADDED: area
+                        initiative.area || null,                          // area
                         priority,
                         businessValue,
                         'APPROVED',
-                        initiative.estimatedBudget || null,               // ADDED: cost_capex
-                        initiative.estimatedROI || null,                  // ADDED: expected_roi
-                        initiative.assessmentId || null,                  // ADDED: source_assessment_id
+                        initiative.estimatedBudget || null,               // cost_capex
+                        initiative.estimatedROI || null,                  // expected_roi
+                        initiative.assessmentId || null,                  // source_assessment_id
                         initiative.problemStatement || `AI-generated from ${initiative.sourceAxisId || 'assessment'} gap analysis`,
                         'AI_ASSESSMENT',
-                        userId
+                        userId,
+                        deliverables,                                     // JSON field
+                        successCriteria,                                  // JSON field
+                        scopeIn,                                          // JSON field
+                        scopeOut,                                         // JSON field
+                        keyRisks,                                         // JSON field
+                        competenciesRequired                              // JSON field
                     ], function(err) {
                         if (err) {
                             console.error('[InitiativeGenerator] SQL Error:', err.message);
@@ -1058,6 +1077,316 @@ class InitiativeGeneratorService {
                 }
             });
         });
+    }
+
+    // ============================================
+    // MULTI-FRAMEWORK INITIATIVE GENERATION
+    // ============================================
+
+    /**
+     * Generate initiatives from multi-framework assessment
+     * @param {Object} params - Generation parameters
+     * @returns {Promise<Array>} Generated initiatives
+     */
+    static async generateFromMultiFramework({
+        assessmentId,
+        framework,
+        projectId,
+        organizationId,
+        userId
+    }) {
+        try {
+            // Get assessment from multi_framework_assessments table
+            const multiFrameworkAssessmentService = require('./multiFrameworkAssessmentService');
+            const { getTemplatesForGap, selectBestTemplate } = require('../data/frameworkInitiativeTemplates');
+            
+            const assessment = await multiFrameworkAssessmentService.getAssessment(assessmentId);
+            if (!assessment) {
+                throw new Error('Assessment not found');
+            }
+
+            // Calculate scores and gaps
+            const { calculateFrameworkScore } = require('./frameworkScoreCalculators');
+            const scoreResult = calculateFrameworkScore(assessment.framework, assessment.data);
+            
+            // Map to unified gaps
+            const gaps = multiFrameworkAssessmentService.mapToUnifiedGaps(
+                assessment.framework,
+                assessment.data,
+                scoreResult
+            );
+
+            // Generate initiatives from gaps using templates
+            const initiatives = [];
+            
+            for (const gap of gaps) {
+                const templates = getTemplatesForGap(gap);
+                const template = selectBestTemplate(templates, gap);
+                
+                if (template) {
+                    const initiative = {
+                        id: uuidv4(),
+                        name: template.title,
+                        summary: template.description,
+                        hypothesis: template.rationale,
+                        
+                        // Framework-specific source
+                        framework: assessment.framework,
+                        source_assessment_id: assessmentId,
+                        source_dimension: gap.dimensionId || gap.practiceAreaId || gap.wasteType,
+                        source_dimension_name: gap.dimensionName || gap.practiceAreaName || gap.wasteType,
+                        
+                        // Gap info
+                        current_score: gap.currentScore || gap.currentLevel || gap.severity,
+                        target_score: gap.targetScore || gap.targetLevel,
+                        gap_size: gap.gap,
+                        
+                        // Initiative details
+                        priority: gap.priority,
+                        estimated_effort: template.estimatedEffort,
+                        impact_score: template.impactScore,
+                        
+                        recommended_technologies: template.technologies,
+                        expected_outcomes: template.expectedOutcomes,
+                        
+                        // Traceability
+                        derived_from_assessments: [{
+                            source: assessment.framework,
+                            sourceId: assessmentId,
+                            dimension: gap.dimensionId || gap.practiceAreaId,
+                            gap: gap.gap,
+                            score: gap.currentScore || gap.currentLevel,
+                            priority: gap.priority
+                        }],
+                        
+                        assessment_traceability: {
+                            multi_framework_assessment_id: assessmentId,
+                            framework: assessment.framework,
+                            generated_at: new Date().toISOString(),
+                            auto_generated: true
+                        },
+                        
+                        created_from: `AI_${assessment.framework}_ASSESSMENT`,
+                        status: 'DRAFT'
+                    };
+                    
+                    initiatives.push(initiative);
+                }
+            }
+
+            // Deduplicate similar initiatives
+            const dedupedInitiatives = this.deduplicateInitiatives(initiatives);
+
+            // Save to database
+            for (const initiative of dedupedInitiatives) {
+                await this.saveMultiFrameworkInitiative(initiative, projectId, organizationId, userId);
+            }
+
+            // Log audit
+            const multiFrameworkAuditService = require('./multiFrameworkAuditService');
+            await multiFrameworkAuditService.logInitiativeGeneration(
+                assessmentId,
+                assessment.framework,
+                userId,
+                dedupedInitiatives.length
+            );
+
+            return dedupedInitiatives;
+        } catch (error) {
+            console.error('[InitiativeGenerator] Multi-framework error:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Generate initiatives specifically from SIRI assessment
+     */
+    static async generateFromSIRI(assessmentId, projectId, organizationId, userId) {
+        return this.generateFromMultiFramework({
+            assessmentId,
+            framework: 'SIRI',
+            projectId,
+            organizationId,
+            userId
+        });
+    }
+
+    /**
+     * Generate initiatives specifically from ADMA assessment
+     */
+    static async generateFromADMA(assessmentId, projectId, organizationId, userId) {
+        return this.generateFromMultiFramework({
+            assessmentId,
+            framework: 'ADMA',
+            projectId,
+            organizationId,
+            userId
+        });
+    }
+
+    /**
+     * Generate initiatives specifically from CMMI assessment
+     */
+    static async generateFromCMMI(assessmentId, projectId, organizationId, userId) {
+        return this.generateFromMultiFramework({
+            assessmentId,
+            framework: 'CMMI',
+            projectId,
+            organizationId,
+            userId
+        });
+    }
+
+    /**
+     * Generate initiatives specifically from Lean 4.0 assessment
+     */
+    static async generateFromLean(assessmentId, projectId, organizationId, userId) {
+        return this.generateFromMultiFramework({
+            assessmentId,
+            framework: 'LEAN',
+            projectId,
+            organizationId,
+            userId
+        });
+    }
+
+    /**
+     * Deduplicate similar initiatives
+     */
+    static deduplicateInitiatives(initiatives) {
+        const seen = new Map();
+        
+        return initiatives.filter(initiative => {
+            // Create a key based on name similarity
+            const key = initiative.name.toLowerCase().replace(/\s+/g, '_').substring(0, 50);
+            
+            if (seen.has(key)) {
+                // Merge sources into existing initiative
+                const existing = seen.get(key);
+                existing.derived_from_assessments.push(...initiative.derived_from_assessments);
+                return false;
+            }
+            
+            seen.set(key, initiative);
+            return true;
+        });
+    }
+
+    /**
+     * Save multi-framework initiative to database
+     */
+    static async saveMultiFrameworkInitiative(initiative, projectId, organizationId, userId) {
+        const sql = `
+            INSERT INTO multi_framework_initiatives (
+                id, assessment_id, project_id, organization_id, framework,
+                title, description, rationale,
+                source_dimension, source_area, gap_score,
+                priority, effort_estimate, impact_score,
+                recommended_technologies, expected_outcomes,
+                status, created_by, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+        `;
+
+        return new Promise((resolve, reject) => {
+            db.run(sql, [
+                initiative.id,
+                initiative.source_assessment_id,
+                projectId,
+                organizationId,
+                initiative.framework,
+                initiative.name,
+                initiative.summary,
+                initiative.hypothesis,
+                initiative.source_dimension,
+                initiative.source_dimension_name,
+                initiative.gap_size,
+                initiative.priority,
+                initiative.estimated_effort,
+                initiative.impact_score,
+                JSON.stringify(initiative.recommended_technologies || []),
+                JSON.stringify(initiative.expected_outcomes || []),
+                'DRAFT',
+                userId
+            ], (err) => {
+                if (err) return reject(err);
+                resolve(initiative);
+            });
+        });
+    }
+
+    /**
+     * Get initiatives for multi-framework assessment
+     */
+    static async getMultiFrameworkInitiatives(assessmentId) {
+        return new Promise((resolve, reject) => {
+            const sql = `
+                SELECT * FROM multi_framework_initiatives 
+                WHERE assessment_id = ?
+                ORDER BY 
+                    CASE priority 
+                        WHEN 'CRITICAL' THEN 1 
+                        WHEN 'HIGH' THEN 2 
+                        WHEN 'MEDIUM' THEN 3 
+                        WHEN 'LOW' THEN 4 
+                    END,
+                    impact_score DESC
+            `;
+
+            db.all(sql, [assessmentId], (err, rows) => {
+                if (err) return reject(err);
+                
+                // Parse JSON fields
+                const initiatives = rows.map(row => ({
+                    ...row,
+                    recommended_technologies: JSON.parse(row.recommended_technologies || '[]'),
+                    expected_outcomes: JSON.parse(row.expected_outcomes || '[]')
+                }));
+                
+                resolve(initiatives);
+            });
+        });
+    }
+
+    /**
+     * Consolidate gaps from all frameworks for a project
+     */
+    static async consolidateAllFrameworkGaps(projectId) {
+        const multiFrameworkAssessmentService = require('./multiFrameworkAssessmentService');
+        const { calculateFrameworkScore } = require('./frameworkScoreCalculators');
+        
+        const allGaps = [];
+
+        // Get all assessments for project
+        const assessments = await multiFrameworkAssessmentService.listAssessments(projectId, {
+            status: 'APPROVED'
+        });
+
+        for (const assessment of assessments) {
+            try {
+                const scoreResult = calculateFrameworkScore(assessment.framework, assessment.data);
+                const gaps = multiFrameworkAssessmentService.mapToUnifiedGaps(
+                    assessment.framework,
+                    assessment.data,
+                    scoreResult
+                );
+                
+                allGaps.push(...gaps.map(gap => ({
+                    ...gap,
+                    assessmentId: assessment.id,
+                    assessmentName: assessment.name
+                })));
+            } catch (e) {
+                console.warn(`[InitiativeGenerator] Failed to process ${assessment.framework} assessment:`, e.message);
+            }
+        }
+
+        // Sort by priority
+        allGaps.sort((a, b) => {
+            const priorityOrder = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+            return (priorityOrder[a.priority] || 4) - (priorityOrder[b.priority] || 4);
+        });
+
+        return allGaps;
     }
 }
 

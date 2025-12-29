@@ -60,7 +60,28 @@ const Scheduler = {
             });
         });
 
-        console.log('[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st)');
+        // 9. Scheduled Management Reports - Run every hour at minute 0
+        cron.schedule('0 * * * *', () => {
+            console.log('[Scheduler] Checking Scheduled Management Reports');
+            const ScheduledReportsService = require('../services/scheduledReportsService');
+            ScheduledReportsService.processScheduledReports().then(result => {
+                if (result.processed > 0) {
+                    console.log(`[Scheduler] Processed ${result.processed} scheduled report(s)`);
+                }
+            }).catch(err => {
+                console.error('[Scheduler] Scheduled Reports processing failed:', err.message);
+            });
+        });
+
+        // 10. Scheduled Emails - Run every 15 minutes
+        cron.schedule('*/15 * * * *', () => {
+            const ReportEmailService = require('../services/reportEmailService');
+            ReportEmailService.processScheduledEmails().catch(err => {
+                console.error('[Scheduler] Scheduled Emails processing failed:', err.message);
+            });
+        });
+
+        console.log('[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min)');
 
     }
 };

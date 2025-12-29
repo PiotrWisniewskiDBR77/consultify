@@ -220,7 +220,7 @@ const AIAnalyticsService = {
                     byPlaybook[row.playbook_key].total += row.count;
                     totalRuns += row.count;
 
-                    if (row.status === 'COMPLETED') {
+                    if (row.status === 'DONE') {
                         byPlaybook[row.playbook_key].completed += row.count;
                         byPlaybook[row.playbook_key].avg_duration_mins = row.avg_duration_mins
                             ? Math.round(row.avg_duration_mins * 10) / 10

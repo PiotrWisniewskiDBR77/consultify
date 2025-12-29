@@ -4,11 +4,19 @@
  * React Context for the In-App Help + Training + Playbooks system.
  * Provides contextual help based on AccessPolicy and user role.
  * 
+ * Extended with Module Documentation, FAQ, and Video Tutorials system.
+ * 
  * Step 6: Enterprise+ Ready
  */
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useAppStore } from '../store/useAppStore';
+import { AppView } from '../types';
+import { getHelpMapping, HelpModuleId, ViewHelpMapping } from '../config/viewToModuleMapping';
+import { getModuleHelp, ModuleHelp } from '../config/moduleHelpContent';
+import { getFAQsForModule, FAQItem } from '../config/faqContent';
+import { getVideosForModule, VideoTutorial } from '../config/videoTutorialsContent';
+import { CARD_DOCS, CardDocumentation } from '../config/cardDocumentation';
 
 // Types
 export interface PlaybookStep {
@@ -51,6 +59,18 @@ export interface HelpHint {
     suggestedAction: 'upgrade' | 'learn' | null;
 }
 
+// New types for contextual help system
+export type HelpTab = 'overview' | 'howto' | 'faq' | 'video';
+
+export interface ContextualHelpState {
+    moduleId: HelpModuleId;
+    cardId?: string;
+    moduleHelp: ModuleHelp | undefined;
+    cardHelp: CardDocumentation | undefined;
+    faqs: FAQItem[];
+    videos: VideoTutorial[];
+}
+
 interface HelpContextValue {
     playbooks: Playbook[];
     loading: boolean;
@@ -63,6 +83,15 @@ interface HelpContextValue {
     setPanelOpen: (open: boolean) => void;
     currentRoute: string;
     setCurrentRoute: (route: string) => void;
+    
+    // New contextual help system
+    isHelpSidePanelOpen: boolean;
+    setHelpSidePanelOpen: (open: boolean) => void;
+    toggleHelpSidePanel: () => void;
+    activeHelpTab: HelpTab;
+    setActiveHelpTab: (tab: HelpTab) => void;
+    contextualHelp: ContextualHelpState;
+    getHelpForView: (view: AppView | string) => ContextualHelpState;
 }
 
 const HelpContext = createContext<HelpContextValue | undefined>(undefined);
@@ -82,12 +111,44 @@ const getAuthToken = (): string | null => {
 };
 
 export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const { currentUser } = useAppStore();
+    const { currentUser, currentView } = useAppStore();
     const [playbooks, setPlaybooks] = useState<Playbook[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isPanelOpen, setPanelOpen] = useState(false);
     const [currentRoute, setCurrentRoute] = useState<string>('');
+    
+    // New contextual help system state
+    const [isHelpSidePanelOpen, setHelpSidePanelOpen] = useState(false);
+    const [activeHelpTab, setActiveHelpTab] = useState<HelpTab>('overview');
+    
+    // Toggle help side panel
+    const toggleHelpSidePanel = useCallback(() => {
+        setHelpSidePanelOpen(prev => !prev);
+    }, []);
+    
+    // Get contextual help for a specific view
+    const getHelpForView = useCallback((view: AppView | string): ContextualHelpState => {
+        const mapping: ViewHelpMapping = getHelpMapping(view);
+        const moduleHelp = getModuleHelp(mapping.moduleId);
+        const cardHelp = mapping.cardId ? CARD_DOCS[mapping.cardId] : undefined;
+        const faqs = getFAQsForModule(mapping.moduleId);
+        const videos = getVideosForModule(mapping.moduleId);
+        
+        return {
+            moduleId: mapping.moduleId,
+            cardId: mapping.cardId,
+            moduleHelp,
+            cardHelp,
+            faqs,
+            videos
+        };
+    }, []);
+    
+    // Memoized contextual help based on current view
+    const contextualHelp = useMemo(() => {
+        return getHelpForView(currentView);
+    }, [currentView, getHelpForView]);
 
     // Fetch playbooks
     const fetchPlaybooks = useCallback(async () => {
@@ -225,7 +286,15 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
             isPanelOpen,
             setPanelOpen,
             currentRoute,
-            setCurrentRoute
+            setCurrentRoute,
+            // New contextual help system
+            isHelpSidePanelOpen,
+            setHelpSidePanelOpen,
+            toggleHelpSidePanel,
+            activeHelpTab,
+            setActiveHelpTab,
+            contextualHelp,
+            getHelpForView
         }}>
             {children}
         </HelpContext.Provider>
@@ -250,6 +319,63 @@ export const useHelpPlaybooks = (): Playbook[] => {
 export const useHelpPanel = () => {
     const { isPanelOpen, setPanelOpen } = useHelp();
     return { isPanelOpen, openPanel: () => setPanelOpen(true), closePanel: () => setPanelOpen(false) };
+};
+
+/**
+ * Hook for the new contextual help side panel
+ */
+export const useHelpSidePanel = () => {
+    const { 
+        isHelpSidePanelOpen, 
+        setHelpSidePanelOpen, 
+        toggleHelpSidePanel,
+        activeHelpTab,
+        setActiveHelpTab,
+        contextualHelp,
+        getHelpForView
+    } = useHelp();
+    
+    return { 
+        isOpen: isHelpSidePanelOpen, 
+        setOpen: setHelpSidePanelOpen,
+        toggle: toggleHelpSidePanel,
+        activeTab: activeHelpTab,
+        setActiveTab: setActiveHelpTab,
+        help: contextualHelp,
+        getHelpForView
+    };
+};
+
+/**
+ * Hook for getting module help content
+ */
+export const useModuleHelp = () => {
+    const { contextualHelp } = useHelp();
+    return contextualHelp.moduleHelp;
+};
+
+/**
+ * Hook for getting card-specific help content
+ */
+export const useCardHelp = () => {
+    const { contextualHelp } = useHelp();
+    return contextualHelp.cardHelp;
+};
+
+/**
+ * Hook for getting FAQs for current module
+ */
+export const useModuleFAQs = () => {
+    const { contextualHelp } = useHelp();
+    return contextualHelp.faqs;
+};
+
+/**
+ * Hook for getting videos for current module
+ */
+export const useModuleVideos = () => {
+    const { contextualHelp } = useHelp();
+    return contextualHelp.videos;
 };
 
 /**

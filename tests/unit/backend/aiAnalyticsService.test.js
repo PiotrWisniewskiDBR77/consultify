@@ -83,7 +83,7 @@ describe('AI Analytics Service', () => {
     describe('getPlaybookStats', () => {
         it('should calculate completion rates and average duration', async () => {
             const mockRows = [
-                { playbook_name: 'Onboard', playbook_key: 'pb_onboard', status: 'COMPLETED', count: 10, avg_duration_mins: 120 },
+                { playbook_name: 'Onboard', playbook_key: 'pb_onboard', status: 'DONE', count: 10, avg_duration_mins: 120 },
                 { playbook_name: 'Onboard', playbook_key: 'pb_onboard', status: 'FAILED', count: 2, avg_duration_mins: 0 }
             ];
 

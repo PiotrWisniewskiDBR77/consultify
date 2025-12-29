@@ -17,13 +17,15 @@ const {
     getMetricsSummary,
     getMemoryMetrics
 } = require('../middleware/performanceMetrics');
+const metricsPersistenceService = require('../services/metricsPersistenceService');
+const alertService = require('../services/alertService');
 
 // GET /api/performance-metrics/summary
 // REFACTORED: Uses asyncHandler
 router.get('/summary', verifyToken, asyncHandler(async (req, res) => {
     const windowMinutes = parseInt(req.query.windowMinutes) || 60;
     const summary = getMetricsSummary(windowMinutes);
-    
+
     res.json({
         success: true,
         summary,
@@ -35,7 +37,7 @@ router.get('/summary', verifyToken, asyncHandler(async (req, res) => {
 // REFACTORED: Uses asyncHandler
 router.get('/memory', verifyToken, asyncHandler(async (req, res) => {
     const memory = getMemoryMetrics();
-    
+
     res.json({
         success: true,
         memory,
@@ -48,31 +50,31 @@ router.get('/memory', verifyToken, asyncHandler(async (req, res) => {
 router.get('/health', verifyToken, asyncHandler(async (req, res) => {
     const summary = getMetricsSummary(60); // Last hour
     const memory = getMemoryMetrics();
-    
+
     // Determine health status
     let status = 'healthy';
     const warnings = [];
-    
+
     if (summary.avgResponseTime > 2000) {
         status = 'degraded';
         warnings.push('High average response time');
     }
-    
+
     if (summary.errorRate > 5) {
         status = 'degraded';
         warnings.push('High error rate');
     }
-    
+
     if (memory.heapUsed > 500) { // > 500MB
         status = 'degraded';
         warnings.push('High memory usage');
     }
-    
+
     if (summary.slowRequests > summary.totalRequests * 0.1) {
         status = 'degraded';
         warnings.push('High percentage of slow requests');
     }
-    
+
     res.json({
         status,
         warnings,
@@ -83,6 +85,8 @@ router.get('/health', verifyToken, asyncHandler(async (req, res) => {
 }));
 
 module.exports = router;
+
+
 
 
 

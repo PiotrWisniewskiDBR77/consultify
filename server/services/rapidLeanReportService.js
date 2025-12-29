@@ -172,7 +172,7 @@ class RapidLeanReportService {
      * @returns {string} Status
      */
     static getStatus(score, benchmark) {
-        if (score >= benchmark) return 'excellent';
+        if (score > benchmark) return 'excellent';
         if (score >= benchmark - 0.5) return 'good';
         if (score >= benchmark - 1.0) return 'needs_improvement';
         return 'critical';

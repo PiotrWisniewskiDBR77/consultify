@@ -25,13 +25,13 @@ export const HELP_CONTENT: ViewHelpConfig[] = [
         pathPattern: '/dashboard',
         items: [
             {
-                title: 'Jak korzystać z dashboardu?',
-                content: 'Dashboard pokazuje przegląd Twojej organizacji i bieżących działań. Kliknij na karty, aby zobaczyć szczegóły.',
+                title: 'help.content.dashboard.0.title',
+                content: 'help.content.dashboard.0.content',
                 type: 'article',
             },
             {
-                title: 'Przegląd widoków PMO',
-                content: 'Poznaj różne widoki dostępne w systemie i jak się między nimi poruszać.',
+                title: 'help.content.dashboard.1.title',
+                content: 'help.content.dashboard.1.content',
                 type: 'video',
                 videoUrl: '#',
             },
@@ -42,18 +42,18 @@ export const HELP_CONTENT: ViewHelpConfig[] = [
         pathPattern: /\/assessment|\/full-step1/,
         items: [
             {
-                title: 'Jak ocenić dojrzałość?',
-                content: 'Ocena dojrzałości polega na określeniu obecnego stanu (Actual) i docelowego (Target) dla każdego obszaru. Użyj pytań pomocniczych, aby lepiej zrozumieć każdy poziom.',
+                title: 'help.content.assessment.0.title',
+                content: 'help.content.assessment.0.content',
                 type: 'article',
             },
             {
-                title: 'Co oznaczają poziomy 1-5?',
-                content: 'Poziom 1 to początkowy etap, często chaotyczny. Poziom 5 to pełna optymalizacja i ciągłe doskonalenie. Większość organizacji jest na poziomie 2-3.',
+                title: 'help.content.assessment.1.title',
+                content: 'help.content.assessment.1.content',
                 type: 'faq',
             },
             {
-                title: 'Jak wybrać odpowiedni poziom?',
-                content: 'Przeczytaj opis każdego poziomu i odpowiedz na pytania pomocnicze. Twoja odpowiedź powinna odzwierciedlać faktyczny stan, nie aspiracje.',
+                title: 'help.content.assessment.2.title',
+                content: 'help.content.assessment.2.content',
                 type: 'article',
             },
         ],
@@ -63,13 +63,13 @@ export const HELP_CONTENT: ViewHelpConfig[] = [
         pathPattern: /\/initiatives|\/full-step2/,
         items: [
             {
-                title: 'Czym jest inicjatywa?',
-                content: 'Inicjatywa to konkretne działanie transformacyjne z określonym celem, zakresem i harmonogramem.',
+                title: 'help.content.initiatives.0.title',
+                content: 'help.content.initiatives.0.content',
                 type: 'article',
             },
             {
-                title: 'Jak priorytetyzować inicjatywy?',
-                content: 'Użyj matrycy Impact/Effort. Zacznij od inicjatyw o wysokim wpływie i niskim wysiłku (quick wins).',
+                title: 'help.content.initiatives.1.title',
+                content: 'help.content.initiatives.1.content',
                 type: 'article',
             },
         ],
@@ -79,13 +79,13 @@ export const HELP_CONTENT: ViewHelpConfig[] = [
         pathPattern: /\/roadmap|\/full-step3/,
         items: [
             {
-                title: 'Jak czytać roadmapę?',
-                content: 'Roadmapa pokazuje oś czasu z fazami projektu. Kolory oznaczają status: zielony (on track), żółty (at risk), czerwony (delayed).',
+                title: 'help.content.roadmap.0.title',
+                content: 'help.content.roadmap.0.content',
                 type: 'article',
             },
             {
-                title: 'Jak edytować harmonogram?',
-                content: 'Kliknij na element, aby przesunąć go w czasie lub zmienić szczegóły. Zależności są automatycznie aktualizowane.',
+                title: 'help.content.roadmap.1.title',
+                content: 'help.content.roadmap.1.content',
                 type: 'video',
                 videoUrl: '#',
             },
@@ -96,13 +96,13 @@ export const HELP_CONTENT: ViewHelpConfig[] = [
         pathPattern: /\/team|\/users/,
         items: [
             {
-                title: 'Jak zaprosić członka zespołu?',
-                content: 'Kliknij "Zaproś", wpisz email i wybierz rolę. Osoba otrzyma zaproszenie i będzie mogła dołączyć do organizacji.',
+                title: 'help.content.team.0.title',
+                content: 'help.content.team.0.content',
                 type: 'article',
             },
             {
-                title: 'Role w systemie',
-                content: 'Admin może zarządzać wszystkim. Member może edytować treści. Viewer może tylko przeglądać.',
+                title: 'help.content.team.1.title',
+                content: 'help.content.team.1.content',
                 type: 'faq',
             },
         ],
@@ -112,18 +112,106 @@ export const HELP_CONTENT: ViewHelpConfig[] = [
         pathPattern: /\/drd|\/axis/,
         items: [
             {
-                title: 'Czym jest oś decyzyjna?',
-                content: 'Oś decyzyjna (DRD Axis) to przestrzeń do ustrukturyzowania jednego tematu strategicznego. Zbierasz tu różne perspektywy i dążysz do konsensusu.',
+                title: 'help.content.drd_workspace.0.title',
+                content: 'help.content.drd_workspace.0.content',
                 type: 'article',
             },
             {
-                title: 'Jak dodać perspektywę?',
-                content: 'Kliknij "Dodaj pozycję" i opisz swój punkt widzenia. Możesz też zaprosić innych do dodania ich perspektyw.',
+                title: 'help.content.drd_workspace.1.title',
+                content: 'help.content.drd_workspace.1.content',
                 type: 'article',
             },
             {
-                title: 'Co to jest snapshot?',
-                content: 'Snapshot to "zdjęcie" obecnego stanu dyskusji. Zapisuje wszystkie pozycje i komentarze w danym momencie. Możesz do niego wrócić później.',
+                title: 'help.content.drd_workspace.2.title',
+                content: 'help.content.drd_workspace.2.content',
+                type: 'faq',
+            },
+        ],
+    },
+    // SSO Configuration Help
+    {
+        viewId: 'sso_configuration',
+        pathPattern: /\/superadmin\/sso/,
+        items: [
+            {
+                title: 'help.content.sso.0.title',
+                content: 'help.content.sso.0.content',
+                type: 'article',
+            },
+            {
+                title: 'help.content.sso.1.title',
+                content: 'help.content.sso.1.content',
+                type: 'article',
+            },
+            {
+                title: 'help.content.sso.2.title',
+                content: 'help.content.sso.2.content',
+                type: 'faq',
+            },
+        ],
+    },
+    // Security Policies Help
+    {
+        viewId: 'security_policies',
+        pathPattern: /\/superadmin\/security/,
+        items: [
+            {
+                title: 'help.content.security.0.title',
+                content: 'help.content.security.0.content',
+                type: 'article',
+            },
+            {
+                title: 'help.content.security.1.title',
+                content: 'help.content.security.1.content',
+                type: 'article',
+            },
+            {
+                title: 'help.content.security.2.title',
+                content: 'help.content.security.2.content',
+                type: 'faq',
+            },
+        ],
+    },
+    // White-label Studio Help
+    {
+        viewId: 'whitelabel_studio',
+        pathPattern: /\/superadmin\/whitelabel/,
+        items: [
+            {
+                title: 'help.content.whitelabel.0.title',
+                content: 'help.content.whitelabel.0.content',
+                type: 'article',
+            },
+            {
+                title: 'help.content.whitelabel.1.title',
+                content: 'help.content.whitelabel.1.content',
+                type: 'article',
+            },
+            {
+                title: 'help.content.whitelabel.2.title',
+                content: 'help.content.whitelabel.2.content',
+                type: 'faq',
+            },
+        ],
+    },
+    // Integrations & Webhooks Help
+    {
+        viewId: 'integrations',
+        pathPattern: /\/settings\/integrations/,
+        items: [
+            {
+                title: 'help.content.integrations.0.title',
+                content: 'help.content.integrations.0.content',
+                type: 'article',
+            },
+            {
+                title: 'help.content.integrations.1.title',
+                content: 'help.content.integrations.1.content',
+                type: 'article',
+            },
+            {
+                title: 'help.content.integrations.2.title',
+                content: 'help.content.integrations.2.content',
                 type: 'faq',
             },
         ],
@@ -133,13 +221,13 @@ export const HELP_CONTENT: ViewHelpConfig[] = [
         pathPattern: /.*/,
         items: [
             {
-                title: 'Pierwsze kroki',
-                content: 'Zacznij od dashboardu, aby zobaczyć przegląd. Następnie przejdź do sekcji, która Cię interesuje.',
+                title: 'help.content.default.0.title',
+                content: 'help.content.default.0.content',
                 type: 'article',
             },
             {
-                title: 'Potrzebujesz pomocy?',
-                content: 'Skontaktuj się z nami przez czat lub email support@consultify.app',
+                title: 'help.content.default.1.title',
+                content: 'help.content.default.1.content',
                 type: 'faq',
             },
         ],

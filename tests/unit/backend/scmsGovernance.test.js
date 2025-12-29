@@ -26,9 +26,9 @@ describe('StatusMachine', () => {
             expect(StatusMachine.canTransitionInitiative('DRAFT', 'PLANNING')).toBe(true);
         });
 
-        it('should allow PLANNING_COMPLETE to APPROVED transition', () => {
-            // Updated: PLANNING_COMPLETE -> APPROVED is the new flow
-            expect(StatusMachine.canTransitionInitiative('PLANNING_COMPLETE', 'APPROVED')).toBe(true);
+        it('should allow REVIEW to APPROVED transition', () => {
+            // Updated: REVIEW -> APPROVED is the correct transition
+            expect(StatusMachine.canTransitionInitiative('REVIEW', 'APPROVED')).toBe(true);
         });
 
         it('should allow APPROVED to EXECUTING transition', () => {

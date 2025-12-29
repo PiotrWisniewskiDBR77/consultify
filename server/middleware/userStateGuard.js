@@ -30,8 +30,10 @@ async function attachUserState(req, res, next) {
             return next();
         }
 
+
+
         // Fetch from database
-        const user = await db.get(
+        const user = await db.getAsync(
             'SELECT user_journey_state, current_phase FROM users WHERE id = ?',
             [req.user.id]
         );
@@ -50,6 +52,7 @@ async function attachUserState(req, res, next) {
         next();
     } catch (error) {
         console.error('attachUserState error:', error);
+        console.error('DB object was:', db);
         // Fail closed - treat as ANON
         req.userState = UserStateMachine.USER_STATES.ANON;
         req.currentPhase = UserStateMachine.PHASES.A;
@@ -198,5 +201,7 @@ module.exports = {
     transitionState,
     // Re-export constants for convenience
     USER_STATES: UserStateMachine.USER_STATES,
-    PHASES: UserStateMachine.PHASES
+    PHASES: UserStateMachine.PHASES,
+    // Test helper
+    _setDb: (mock) => { db = mock; }
 };

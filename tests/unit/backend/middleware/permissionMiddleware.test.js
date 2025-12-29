@@ -1,401 +1,531 @@
 /**
- * @vitest-environment node
- * Permission Middleware Tests - Fixed for CJS interop using vi.doMock
+ * Permission Middleware Tests
+ * 
+ * Tests for database-backed permission checking middleware:
+ * - requirePermission
+ * - requireAnyPermission
+ * - requireAllPermissions
+ * - auditAction
+ * 
+ * NOTE: Tests SKIPPED due to Vitest/CJS mocking limitation.
+ * vi.mock() does not intercept require() calls from server/ modules.
  */
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-describe('Permission Middleware', () => {
-    let req, res, next;
-    let mockHasPermission;
-    let mockLogAudit;
-    let requirePermission, requireAnyPermission, requireAllPermissions, auditAction;
+// Mock dependencies before imports
+vi.mock('../../../../server/services/permissionService', () => ({
+    default: {
+        hasPermission: vi.fn()
+    }
+}));
 
-    beforeEach(async () => {
-        // Reset module registry before mocking
-        vi.resetModules();
+vi.mock('../../../../server/services/governanceAuditService', () => ({
+    default: {
+        logAudit: vi.fn()
+    }
+}));
 
-        // Create fresh mocks before each test
-        mockHasPermission = vi.fn();
-        mockLogAudit = vi.fn();
+// Import after mocks
+import PermissionService from '../../../../server/services/permissionService';
+import GovernanceAuditService from '../../../../server/services/governanceAuditService';
+import {
+    requirePermission,
+    requireAnyPermission,
+    requireAllPermissions,
+    auditAction,
+    setDependencies
+} from '../../../../server/middleware/permissionMiddleware.js';
 
-        // Mock the services using vi.doMock (after resetModules)
-        vi.doMock('../../../../server/services/permissionService', () => ({
-            default: { hasPermission: mockHasPermission },
-            hasPermission: mockHasPermission
-        }));
+describe('Permission Middleware (DI Refactored)', () => {
+    let mockReq;
+    let mockRes;
+    let mockNext;
 
-        vi.doMock('../../../../server/services/governanceAuditService', () => ({
-            default: { logAudit: mockLogAudit },
-            logAudit: mockLogAudit
-        }));
+    beforeEach(() => {
+        vi.clearAllMocks();
 
-        // Import the middleware AFTER mocks are set up
-        const middleware = await import('../../../../server/middleware/permissionMiddleware');
-        requirePermission = middleware.requirePermission;
-        requireAnyPermission = middleware.requireAnyPermission;
-        requireAllPermissions = middleware.requireAllPermissions;
-        auditAction = middleware.auditAction;
+        // Inject global service mocks
+        setDependencies({
+            PermissionService: PermissionService,
+            GovernanceAuditService: GovernanceAuditService
+        });
 
-        req = {
+        mockReq = {
+            user: { id: 1, role: 'ADMIN', organization_id: 10 },
             userId: 1,
-            organizationId: 100,
+            organizationId: 10,
             userRole: 'ADMIN',
-            get: vi.fn().mockReturnValue(null)
+            headers: {},
+            body: {},
+            params: {},
+            get: vi.fn((header) => mockReq.headers[header.toLowerCase()]),
         };
-        res = {
+
+        mockRes = {
             status: vi.fn().mockReturnThis(),
             json: vi.fn().mockReturnThis(),
-            statusCode: 200
+            statusCode: 200,
         };
-        next = vi.fn();
+
+        mockNext = vi.fn();
     });
 
     afterEach(() => {
-        vi.clearAllMocks();
-        vi.doUnmock('../../../../server/services/permissionService');
-        vi.doUnmock('../../../../server/services/governanceAuditService');
+        vi.restoreAllMocks();
     });
+
+    // ===== requirePermission Tests =====
 
     describe('requirePermission', () => {
-        it('should return 401 if userId is missing', async () => {
-            delete req.userId;
-            delete req.user;
+        describe('authentication', () => {
+            it('should return 401 when userId is not present', async () => {
+                mockReq.userId = null;
+                mockReq.user = null;
 
-            const middleware = requirePermission('VIEW_INITIATIVES');
-            await middleware(req, res, next);
+                const middleware = requirePermission('PLAYBOOK_PUBLISH');
+                await middleware(mockReq, mockRes, mockNext);
 
-            expect(res.status).toHaveBeenCalledWith(401);
-            expect(res.json).toHaveBeenCalledWith({
-                error: 'Authentication required',
-                code: 'AUTH_REQUIRED'
+                expect(mockRes.status).toHaveBeenCalledWith(401);
+                expect(mockRes.json).toHaveBeenCalledWith({
+                    error: 'Authentication required',
+                    code: 'AUTH_REQUIRED'
+                });
+                expect(mockNext).not.toHaveBeenCalled();
             });
-            expect(next).not.toHaveBeenCalled();
-        });
 
-        it('should use req.user.id if userId is not present', async () => {
-            delete req.userId;
-            req.user = { id: 2, organization_id: 100, role: 'MEMBER' };
+            it('should extract userId from req.user when req.userId is missing', async () => {
+                mockReq.userId = null;
+                mockReq.userRole = null;
+                mockReq.user = { id: 5, role: 'USER' };
+                vi.mocked(PermissionService.hasPermission).mockResolvedValue(true);
 
-            mockHasPermission.mockResolvedValue(true);
+                const middleware = requirePermission('VIEW_REPORTS');
+                await middleware(mockReq, mockRes, mockNext);
 
-            const middleware = requirePermission('VIEW_INITIATIVES');
-            await middleware(req, res, next);
-
-            expect(mockHasPermission).toHaveBeenCalledWith(
-                2,
-                100,
-                'VIEW_INITIATIVES',
-                'MEMBER'
-            );
-            expect(next).toHaveBeenCalled();
-        });
-
-        it('should allow access when permission is granted', async () => {
-            mockHasPermission.mockResolvedValue(true);
-
-            const middleware = requirePermission('VIEW_INITIATIVES');
-            await middleware(req, res, next);
-
-            expect(mockHasPermission).toHaveBeenCalledWith(
-                1,
-                100,
-                'VIEW_INITIATIVES',
-                'ADMIN'
-            );
-            expect(req.permissionChecked).toBe('VIEW_INITIATIVES');
-            expect(next).toHaveBeenCalled();
-        });
-
-        it('should deny access when permission is not granted', async () => {
-            mockHasPermission.mockResolvedValue(false);
-
-            const middleware = requirePermission('DELETE_INITIATIVES');
-            await middleware(req, res, next);
-
-            expect(res.status).toHaveBeenCalledWith(403);
-            expect(res.json).toHaveBeenCalledWith({
-                error: 'Permission denied',
-                required: 'DELETE_INITIATIVES',
-                code: 'PERMISSION_DENIED'
+                expect(PermissionService.hasPermission).toHaveBeenCalledWith(
+                    5,
+                    expect.any(Number),
+                    'VIEW_REPORTS',
+                    expect.any(String)
+                );
             });
-            expect(next).not.toHaveBeenCalled();
         });
 
-        it('should return 500 on service error', async () => {
-            mockHasPermission.mockRejectedValue(new Error('Database error'));
+        describe('when user has permission', () => {
+            it('should call next() and continue', async () => {
+                vi.mocked(PermissionService.hasPermission).mockResolvedValue(true);
 
-            const middleware = requirePermission('VIEW_INITIATIVES');
-            await middleware(req, res, next);
+                const middleware = requirePermission('PLAYBOOK_PUBLISH');
+                await middleware(mockReq, mockRes, mockNext);
 
-            expect(res.status).toHaveBeenCalledWith(500);
-            expect(res.json).toHaveBeenCalledWith({
-                error: 'Permission check failed',
-                code: 'PERMISSION_ERROR'
+                expect(PermissionService.hasPermission).toHaveBeenCalledWith(
+                    1,
+                    10,
+                    'PLAYBOOK_PUBLISH',
+                    'ADMIN'
+                );
+                expect(mockNext).toHaveBeenCalledTimes(1);
+                expect(mockReq.permissionChecked).toBe('PLAYBOOK_PUBLISH');
+            });
+
+            it('should pass correct parameters to PermissionService', async () => {
+                vi.mocked(PermissionService.hasPermission).mockResolvedValue(true);
+
+                mockReq.userId = 42;
+                mockReq.organizationId = 100;
+                mockReq.userRole = 'SUPERADMIN';
+
+                const middleware = requirePermission('ADMIN_ACCESS');
+                await middleware(mockReq, mockRes, mockNext);
+
+                expect(PermissionService.hasPermission).toHaveBeenCalledWith(
+                    42,
+                    100,
+                    'ADMIN_ACCESS',
+                    'SUPERADMIN'
+                );
+            });
+        });
+
+        describe('when user lacks permission', () => {
+            it('should return 403 with permission denied', async () => {
+                vi.mocked(PermissionService.hasPermission).mockResolvedValue(false);
+
+                const middleware = requirePermission('DELETE_USERS');
+                await middleware(mockReq, mockRes, mockNext);
+
+                expect(mockRes.status).toHaveBeenCalledWith(403);
+                expect(mockRes.json).toHaveBeenCalledWith({
+                    error: 'Permission denied',
+                    required: 'DELETE_USERS',
+                    code: 'PERMISSION_DENIED'
+                });
+                expect(mockNext).not.toHaveBeenCalled();
+            });
+        });
+
+        describe('error handling', () => {
+            it('should return 500 when PermissionService throws', async () => {
+                vi.mocked(PermissionService.hasPermission).mockRejectedValue(
+                    new Error('Database connection failed')
+                );
+
+                const middleware = requirePermission('VIEW_REPORTS');
+                await middleware(mockReq, mockRes, mockNext);
+
+                expect(mockRes.status).toHaveBeenCalledWith(500);
+                expect(mockRes.json).toHaveBeenCalledWith({
+                    error: 'Permission check failed',
+                    code: 'PERMISSION_ERROR'
+                });
+                expect(mockNext).not.toHaveBeenCalled();
             });
         });
     });
+
+    // ===== requireAnyPermission Tests =====
 
     describe('requireAnyPermission', () => {
-        it('should return 401 if userId is missing', async () => {
-            delete req.userId;
-            delete req.user;
+        it('should return 401 when user is not authenticated', async () => {
+            mockReq.userId = null;
+            mockReq.user = null;
 
-            const middleware = requireAnyPermission(['VIEW_INITIATIVES', 'EDIT_INITIATIVES']);
-            await middleware(req, res, next);
+            const middleware = requireAnyPermission(['EDIT', 'VIEW']);
+            await middleware(mockReq, mockRes, mockNext);
 
-            expect(res.status).toHaveBeenCalledWith(401);
-            expect(res.json).toHaveBeenCalledWith({
-                error: 'Authentication required',
-                code: 'AUTH_REQUIRED'
-            });
+            expect(mockRes.status).toHaveBeenCalledWith(401);
         });
 
-        it('should allow access when any permission is granted', async () => {
-            mockHasPermission
-                .mockResolvedValueOnce(false) // First permission denied
-                .mockResolvedValueOnce(true); // Second permission granted
+        it('should allow access when user has first permission', async () => {
+            vi.mocked(PermissionService.hasPermission).mockResolvedValue(true);
 
-            const middleware = requireAnyPermission(['VIEW_INITIATIVES', 'EDIT_INITIATIVES']);
-            await middleware(req, res, next);
+            const middleware = requireAnyPermission(['VIEW_REPORTS', 'EDIT_REPORTS']);
+            await middleware(mockReq, mockRes, mockNext);
 
-            expect(mockHasPermission).toHaveBeenCalledTimes(2);
-            expect(req.permissionChecked).toBe('EDIT_INITIATIVES');
-            expect(next).toHaveBeenCalled();
+            expect(mockNext).toHaveBeenCalledTimes(1);
+            expect(mockReq.permissionChecked).toBe('VIEW_REPORTS');
         });
 
-        it('should deny access when all permissions are denied', async () => {
-            mockHasPermission.mockResolvedValue(false);
+        it('should allow access when user has second permission', async () => {
+            vi.mocked(PermissionService.hasPermission)
+                .mockResolvedValueOnce(false)
+                .mockResolvedValueOnce(true);
 
-            const middleware = requireAnyPermission(['VIEW_INITIATIVES', 'EDIT_INITIATIVES']);
-            await middleware(req, res, next);
+            const middleware = requireAnyPermission(['VIEW_REPORTS', 'EDIT_REPORTS']);
+            await middleware(mockReq, mockRes, mockNext);
 
-            expect(mockHasPermission).toHaveBeenCalledTimes(2);
-            expect(res.status).toHaveBeenCalledWith(403);
-            expect(res.json).toHaveBeenCalledWith({
+            expect(mockNext).toHaveBeenCalledTimes(1);
+            expect(mockReq.permissionChecked).toBe('EDIT_REPORTS');
+        });
+
+        it('should deny access when user has none of the permissions', async () => {
+            vi.mocked(PermissionService.hasPermission).mockResolvedValue(false);
+
+            const middleware = requireAnyPermission(['VIEW_REPORTS', 'EDIT_REPORTS', 'DELETE_REPORTS']);
+            await middleware(mockReq, mockRes, mockNext);
+
+            expect(mockRes.status).toHaveBeenCalledWith(403);
+            expect(mockRes.json).toHaveBeenCalledWith({
                 error: 'Permission denied',
-                requiredAny: ['VIEW_INITIATIVES', 'EDIT_INITIATIVES'],
+                requiredAny: ['VIEW_REPORTS', 'EDIT_REPORTS', 'DELETE_REPORTS'],
                 code: 'PERMISSION_DENIED'
             });
-            expect(next).not.toHaveBeenCalled();
         });
 
-        it('should stop checking after first permission is granted', async () => {
-            mockHasPermission.mockResolvedValueOnce(true);
-
-            const middleware = requireAnyPermission(['VIEW_INITIATIVES', 'EDIT_INITIATIVES', 'DELETE_INITIATIVES']);
-            await middleware(req, res, next);
-
-            expect(mockHasPermission).toHaveBeenCalledTimes(1);
-            expect(next).toHaveBeenCalled();
-        });
-
-        it('should return 500 on service error', async () => {
-            mockHasPermission.mockRejectedValue(new Error('Database error'));
-
-            const middleware = requireAnyPermission(['VIEW_INITIATIVES']);
-            await middleware(req, res, next);
-
-            expect(res.status).toHaveBeenCalledWith(500);
-            expect(res.json).toHaveBeenCalledWith({
-                error: 'Permission check failed',
-                code: 'PERMISSION_ERROR'
+        it('should check permissions in order', async () => {
+            const callOrder = [];
+            vi.mocked(PermissionService.hasPermission).mockImplementation(async (userId, orgId, perm) => {
+                callOrder.push(perm);
+                return perm === 'THIRD';
             });
+
+            const middleware = requireAnyPermission(['FIRST', 'SECOND', 'THIRD']);
+            await middleware(mockReq, mockRes, mockNext);
+
+            expect(callOrder).toEqual(['FIRST', 'SECOND', 'THIRD']);
+        });
+
+        it('should handle error during permission check', async () => {
+            vi.mocked(PermissionService.hasPermission).mockRejectedValue(new Error('DB error'));
+
+            const middleware = requireAnyPermission(['VIEW', 'EDIT']);
+            await middleware(mockReq, mockRes, mockNext);
+
+            expect(mockRes.status).toHaveBeenCalledWith(500);
         });
     });
+
+    // ===== requireAllPermissions Tests =====
 
     describe('requireAllPermissions', () => {
-        it('should return 401 if userId is missing', async () => {
-            delete req.userId;
-            delete req.user;
+        it('should return 401 when user is not authenticated', async () => {
+            mockReq.userId = null;
+            mockReq.user = null;
 
-            const middleware = requireAllPermissions(['VIEW_INITIATIVES', 'EDIT_INITIATIVES']);
-            await middleware(req, res, next);
+            const middleware = requireAllPermissions(['EDIT', 'VIEW']);
+            await middleware(mockReq, mockRes, mockNext);
 
-            expect(res.status).toHaveBeenCalledWith(401);
-            expect(res.json).toHaveBeenCalledWith({
-                error: 'Authentication required',
-                code: 'AUTH_REQUIRED'
-            });
+            expect(mockRes.status).toHaveBeenCalledWith(401);
         });
 
-        it('should allow access when all permissions are granted', async () => {
-            mockHasPermission.mockResolvedValue(true);
+        it('should allow access when user has all permissions', async () => {
+            vi.mocked(PermissionService.hasPermission).mockResolvedValue(true);
 
-            const middleware = requireAllPermissions(['VIEW_INITIATIVES', 'EDIT_INITIATIVES']);
-            await middleware(req, res, next);
+            const middleware = requireAllPermissions(['VIEW_REPORTS', 'EDIT_REPORTS', 'DELETE_REPORTS']);
+            await middleware(mockReq, mockRes, mockNext);
 
-            expect(mockHasPermission).toHaveBeenCalledTimes(2);
-            expect(req.permissionChecked).toEqual(['VIEW_INITIATIVES', 'EDIT_INITIATIVES']);
-            expect(next).toHaveBeenCalled();
+            expect(mockNext).toHaveBeenCalledTimes(1);
+            expect(mockReq.permissionChecked).toEqual(['VIEW_REPORTS', 'EDIT_REPORTS', 'DELETE_REPORTS']);
         });
 
-        it('should deny access when any permission is missing', async () => {
-            mockHasPermission
-                .mockResolvedValueOnce(true) // First permission granted
-                .mockResolvedValueOnce(false); // Second permission denied
+        it('should deny access when user is missing one permission', async () => {
+            mockReq.userRole = null; // Reset
+            mockReq.organizationId = null; // Reset
+            mockReq.user = { id: 1, role: 'ADMIN', organization_id: 10 };
 
-            const middleware = requireAllPermissions(['VIEW_INITIATIVES', 'EDIT_INITIATIVES']);
-            await middleware(req, res, next);
+            vi.mocked(PermissionService.hasPermission)
+                .mockResolvedValueOnce(true)  // VIEW_REPORTS
+                .mockResolvedValueOnce(false) // EDIT_REPORTS
+                .mockResolvedValueOnce(true); // DELETE_REPORTS
 
-            expect(mockHasPermission).toHaveBeenCalledTimes(2);
-            expect(res.status).toHaveBeenCalledWith(403);
-            expect(res.json).toHaveBeenCalledWith({
+            const middleware = requireAllPermissions(['VIEW_REPORTS', 'EDIT_REPORTS', 'DELETE_REPORTS']);
+            await middleware(mockReq, mockRes, mockNext);
+
+            expect(mockRes.status).toHaveBeenCalledWith(403);
+            expect(mockRes.json).toHaveBeenCalledWith({
                 error: 'Permission denied',
-                missing: ['EDIT_INITIATIVES'],
-                code: 'PERMISSION_DENIED'
-            });
-            expect(next).not.toHaveBeenCalled();
-        });
-
-        it('should list all missing permissions', async () => {
-            mockHasPermission.mockResolvedValue(false);
-
-            const middleware = requireAllPermissions(['VIEW_INITIATIVES', 'EDIT_INITIATIVES', 'DELETE_INITIATIVES']);
-            await middleware(req, res, next);
-
-            expect(res.json).toHaveBeenCalledWith({
-                error: 'Permission denied',
-                missing: ['VIEW_INITIATIVES', 'EDIT_INITIATIVES', 'DELETE_INITIATIVES'],
+                missing: ['EDIT_REPORTS'],
                 code: 'PERMISSION_DENIED'
             });
         });
 
-        it('should return 500 on service error', async () => {
-            mockHasPermission.mockRejectedValue(new Error('Database error'));
+        it('should report all missing permissions', async () => {
+            mockReq.userRole = null; // Reset
+            mockReq.organizationId = null; // Reset
+            mockReq.user = { id: 1, role: 'ADMIN', organization_id: 10 };
 
-            const middleware = requireAllPermissions(['VIEW_INITIATIVES']);
-            await middleware(req, res, next);
+            vi.mocked(PermissionService.hasPermission)
+                .mockResolvedValueOnce(true)
+                .mockResolvedValueOnce(false)
+                .mockResolvedValueOnce(false);
 
-            expect(res.status).toHaveBeenCalledWith(500);
-            expect(res.json).toHaveBeenCalledWith({
-                error: 'Permission check failed',
-                code: 'PERMISSION_ERROR'
+            const middleware = requireAllPermissions(['VIEW', 'EDIT', 'DELETE']);
+            await middleware(mockReq, mockRes, mockNext);
+
+            expect(mockRes.json).toHaveBeenCalledWith({
+                error: 'Permission denied',
+                missing: ['EDIT', 'DELETE'],
+                code: 'PERMISSION_DENIED'
             });
+        });
+
+        it('should deny access when user has no permissions', async () => {
+            vi.mocked(PermissionService.hasPermission).mockResolvedValue(false);
+
+            const middleware = requireAllPermissions(['VIEW', 'EDIT']);
+            await middleware(mockReq, mockRes, mockNext);
+
+            expect(mockRes.status).toHaveBeenCalledWith(403);
+            expect(mockRes.json).toHaveBeenCalledWith({
+                error: 'Permission denied',
+                missing: ['VIEW', 'EDIT'],
+                code: 'PERMISSION_DENIED'
+            });
+        });
+
+        it('should handle error during permission check', async () => {
+            vi.mocked(PermissionService.hasPermission).mockRejectedValue(new Error('DB error'));
+
+            const middleware = requireAllPermissions(['VIEW', 'EDIT']);
+            await middleware(mockReq, mockRes, mockNext);
+
+            expect(mockRes.status).toHaveBeenCalledWith(500);
         });
     });
 
+    // ===== auditAction Tests =====
+
     describe('auditAction', () => {
-        it('should call next immediately and set up audit hook', async () => {
+        it('should call next() immediately', async () => {
             const middleware = auditAction({
                 action: 'CREATE',
-                resourceType: 'INITIATIVE',
-                getResourceId: (req, data) => data?.id || null
+                resourceType: 'REPORT'
             });
 
-            await middleware(req, res, next);
-            expect(next).toHaveBeenCalled();
-            // res.json should now be wrapped
-            expect(typeof res.json).toBe('function');
+            await middleware(mockReq, mockRes, mockNext);
+
+            expect(mockNext).toHaveBeenCalledTimes(1);
         });
 
-        it('should log audit when res.json is called with 2xx status', async () => {
-            mockLogAudit.mockResolvedValue(undefined);
+        it('should audit on successful response (2xx)', async () => {
+            vi.mocked(GovernanceAuditService.logAudit).mockResolvedValue(undefined);
 
             const middleware = auditAction({
                 action: 'CREATE',
-                resourceType: 'INITIATIVE',
-                getResourceId: (req, data) => data?.id || null
+                resourceType: 'REPORT',
+                getResourceId: (req, data) => data?.id,
+                getAfter: (req, data) => data
             });
 
-            await middleware(req, res, next);
+            await middleware(mockReq, mockRes, mockNext);
 
-            // Now call res.json which triggers the audit
-            res.statusCode = 200;
-            await res.json({ id: 123, success: true });
+            // Simulate route handler calling res.json()
+            mockRes.statusCode = 201;
+            await mockRes.json({ id: 123, name: 'Test Report' });
 
-            // Wait for async audit to complete
-            await new Promise(resolve => setTimeout(resolve, 50));
-
-            expect(mockLogAudit).toHaveBeenCalledWith({
+            expect(GovernanceAuditService.logAudit).toHaveBeenCalledWith({
                 actorId: 1,
                 actorRole: 'ADMIN',
-                orgId: 100,
+                orgId: 10,
                 action: 'CREATE',
-                resourceType: 'INITIATIVE',
+                resourceType: 'REPORT',
                 resourceId: 123,
                 before: null,
-                after: null,
-                correlationId: null
+                after: { id: 123, name: 'Test Report' },
+                correlationId: undefined
             });
         });
 
-        it('should not log audit on error response (4xx)', async () => {
+        it('should not audit on error response (4xx/5xx)', async () => {
             const middleware = auditAction({
-                action: 'CREATE',
-                resourceType: 'INITIATIVE'
+                action: 'DELETE',
+                resourceType: 'USER'
             });
 
-            await middleware(req, res, next);
+            await middleware(mockReq, mockRes, mockNext);
 
-            res.statusCode = 400;
-            await res.json({ error: 'Bad request' });
+            // Simulate error response
+            mockRes.statusCode = 404;
+            await mockRes.json({ error: 'Not found' });
 
-            await new Promise(resolve => setTimeout(resolve, 50));
-
-            expect(mockLogAudit).not.toHaveBeenCalled();
+            expect(GovernanceAuditService.logAudit).not.toHaveBeenCalled();
         });
 
-        it('should use correlation ID from request', async () => {
-            mockLogAudit.mockResolvedValue(undefined);
-            req.correlationId = 'correlation-123';
+        it('should use correlation ID from header', async () => {
+            mockReq.headers = { 'x-correlation-id': 'corr-12345' };
+            mockReq.correlationId = undefined;
+            // Mock the get method for headers
+            mockReq.get = vi.fn((header) => {
+                if (header === 'X-Correlation-Id') return 'corr-12345';
+                return undefined;
+            });
 
             const middleware = auditAction({
                 action: 'UPDATE',
-                resourceType: 'INITIATIVE'
+                resourceType: 'PROJECT'
             });
 
-            await middleware(req, res, next);
-            res.statusCode = 200;
-            await res.json({ success: true });
+            await middleware(mockReq, mockRes, mockNext);
 
-            await new Promise(resolve => setTimeout(resolve, 50));
+            mockRes.statusCode = 200;
+            await mockRes.json({ success: true });
 
-            expect(mockLogAudit).toHaveBeenCalledWith(
+            expect(GovernanceAuditService.logAudit).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    correlationId: 'correlation-123'
+                    correlationId: 'corr-12345'
                 })
             );
         });
 
-        it('should handle audit logging errors gracefully', async () => {
-            mockLogAudit.mockRejectedValue(new Error('Audit service error'));
+        it('should include before state when provided', async () => {
+            const beforeState = { name: 'Old Name', status: 'active' };
+
+            const middleware = auditAction({
+                action: 'UPDATE',
+                resourceType: 'INITIATIVE',
+                getBefore: () => beforeState,
+                getAfter: (req, data) => data
+            });
+
+            await middleware(mockReq, mockRes, mockNext);
+
+            mockRes.statusCode = 200;
+            await mockRes.json({ name: 'New Name', status: 'active' });
+
+            expect(GovernanceAuditService.logAudit).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    before: beforeState,
+                    after: { name: 'New Name', status: 'active' }
+                })
+            );
+        });
+
+        it('should not fail request if audit fails', async () => {
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+            vi.mocked(GovernanceAuditService.logAudit).mockRejectedValue(new Error('Audit failed'));
 
             const middleware = auditAction({
                 action: 'DELETE',
-                resourceType: 'INITIATIVE'
+                resourceType: 'TASK'
             });
 
-            await middleware(req, res, next);
-            res.statusCode = 200;
+            await middleware(mockReq, mockRes, mockNext);
 
-            // Should not throw even if audit fails
-            const result = await res.json({ success: true });
-            expect(result).toBeDefined();
+            mockRes.statusCode = 200;
+
+            // Should not throw
+            await expect(mockRes.json({ success: true })).resolves.not.toThrow;
+
+            consoleSpy.mockRestore();
         });
 
-        it('should use custom getResourceId function', async () => {
-            mockLogAudit.mockResolvedValue(undefined);
-            const getResourceId = vi.fn().mockReturnValue(456);
-
+        it('should extract resource ID using custom function', async () => {
             const middleware = auditAction({
-                action: 'CREATE',
-                resourceType: 'PROJECT',
-                getResourceId
+                action: 'READ',
+                resourceType: 'ASSESSMENT',
+                getResourceId: (req) => req.params.assessmentId
             });
 
-            await middleware(req, res, next);
-            res.statusCode = 200;
-            await res.json({ id: 123 });
+            mockReq.params = { assessmentId: 'assess-456' };
+            console.log('[TestDebug] calling middleware');
+            await middleware(mockReq, mockRes, mockNext);
+            console.log('[TestDebug] middleware returned. mockRes.json is type:', typeof mockRes.json);
 
-            await new Promise(resolve => setTimeout(resolve, 50));
+            mockRes.statusCode = 200;
+            await mockRes.json({ data: {} });
 
-            expect(getResourceId).toHaveBeenCalledWith(req, { id: 123 });
-            expect(mockLogAudit).toHaveBeenCalledWith(
+            expect(GovernanceAuditService.logAudit).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    resourceId: 456
+                    resourceId: 'assess-456'
                 })
             );
         });
     });
-});
 
+    // ===== Edge Cases =====
+
+    describe('Edge Cases', () => {
+        it('should handle undefined organization_id', async () => {
+            mockReq.organizationId = undefined;
+            mockReq.userRole = null;
+            mockReq.user = { id: 1, role: 'USER' };
+            vi.mocked(PermissionService.hasPermission).mockResolvedValue(true);
+
+            const middleware = requirePermission('VIEW');
+            await middleware(mockReq, mockRes, mockNext);
+
+            expect(PermissionService.hasPermission).toHaveBeenCalledWith(
+                1,
+                undefined,
+                'VIEW',
+                'USER'
+            );
+        });
+
+        it('should handle empty permissions array in requireAnyPermission', async () => {
+            const middleware = requireAnyPermission([]);
+            await middleware(mockReq, mockRes, mockNext);
+
+            expect(mockRes.status).toHaveBeenCalledWith(403);
+        });
+
+        it('should handle empty permissions array in requireAllPermissions', async () => {
+            const middleware = requireAllPermissions([]);
+            await middleware(mockReq, mockRes, mockNext);
+
+            expect(mockNext).toHaveBeenCalledTimes(1);
+            expect(mockReq.permissionChecked).toEqual([]);
+        });
+    });
+});

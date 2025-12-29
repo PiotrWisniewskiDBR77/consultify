@@ -1,0 +1,28 @@
+/**
+ * @vitest-environment jsdom
+ */
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { DemoButton } from '../../../components/Landing/DemoButton';
+
+describe('DemoButton Component', () => {
+    const user = userEvent.setup();
+
+    it('renders demo button', () => {
+        render(<DemoButton onClick={vi.fn()} />);
+
+        expect(screen.getByRole('button', { name: /Demo/i })).toBeInTheDocument();
+    });
+
+    it('calls onClick when clicked', async () => {
+        const onClick = vi.fn();
+        render(<DemoButton onClick={onClick} />);
+
+        const button = screen.getByRole('button', { name: /Demo/i });
+        await user.click(button);
+
+        expect(onClick).toHaveBeenCalled();
+    });
+});
+

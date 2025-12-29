@@ -55,10 +55,10 @@ const AIWorkloadIntelligence = {
                     COUNT(DISTINCT t.id) as active_tasks,
                     COUNT(DISTINCT i.id) as active_initiatives,
                     SUM(CASE WHEN t.status = 'BLOCKED' THEN 1 ELSE 0 END) as blocked_tasks,
-                    SUM(CASE WHEN t.due_date < date('now') AND t.status NOT IN ('done', 'DONE') THEN 1 ELSE 0 END) as overdue_tasks
+                    SUM(CASE WHEN t.due_date < date('now') AND t.status != 'DONE' THEN 1 ELSE 0 END) as overdue_tasks
                 FROM users u
-                LEFT JOIN tasks t ON u.id = t.assignee_id AND t.status NOT IN ('done', 'DONE', 'cancelled')
-                LEFT JOIN initiatives i ON u.id = i.owner_business_id AND i.status IN ('IN_EXECUTION', 'APPROVED')
+                LEFT JOIN tasks t ON u.id = t.assignee_id AND t.status NOT IN ('DONE', 'CANCELLED')
+                LEFT JOIN initiatives i ON u.id = i.owner_business_id AND i.status IN ('EXECUTING', 'APPROVED')
                 WHERE u.organization_id = ?
                 GROUP BY u.id
             `, [organizationId], (err, rows) => {
@@ -202,7 +202,7 @@ const AIWorkloadIntelligence = {
                 FROM tasks t
                 JOIN users u ON t.assignee_id = u.id
                 WHERE t.project_id = ?
-                AND t.status NOT IN ('done', 'DONE', 'cancelled')
+                AND t.status NOT IN ('DONE', 'CANCELLED')
                 GROUP BY u.id
             `, [projectId], (err, rows) => {
                 if (err) reject(err);
@@ -233,7 +233,7 @@ const AIWorkloadIntelligence = {
                 FROM tasks
                 WHERE assignee_id IN (${placeholders})
                 AND project_id = ?
-                AND status NOT IN ('done', 'DONE', 'cancelled')
+                AND status NOT IN ('DONE', 'CANCELLED')
                 AND due_date IS NOT NULL
                 GROUP BY assignee_id, strftime('%Y-%W', due_date)
             `, [...userIds, projectId], (err, rows) => {
@@ -336,7 +336,7 @@ const AIWorkloadIntelligence = {
                     COALESCE(ucp.default_weekly_hours, 40) as capacity
                 FROM users u
                 JOIN tasks t2 ON t2.project_id = ?
-                LEFT JOIN tasks t ON u.id = t.assignee_id AND t.status NOT IN ('done', 'DONE', 'cancelled')
+                LEFT JOIN tasks t ON u.id = t.assignee_id AND t.status NOT IN ('DONE', 'CANCELLED')
                 LEFT JOIN user_capacity_profile ucp ON u.id = ucp.user_id
                 WHERE u.id IN (SELECT DISTINCT assignee_id FROM tasks WHERE project_id = ?)
                 GROUP BY u.id
@@ -353,7 +353,7 @@ const AIWorkloadIntelligence = {
                     SELECT id, title, priority, effort_estimate, due_date
                     FROM tasks
                     WHERE assignee_id = ? AND project_id = ?
-                    AND status NOT IN ('done', 'DONE', 'cancelled', 'in_progress')
+                    AND status NOT IN ('DONE', 'CANCELLED', 'IN_PROGRESS')
                     ORDER BY priority DESC, due_date ASC
                     LIMIT 5
                 `, [overloaded.userId, projectId], (err, rows) => resolve(rows || []));
@@ -419,7 +419,7 @@ const AIWorkloadIntelligence = {
                     COUNT(DISTINCT assignee_id) as assignees
                 FROM tasks
                 WHERE project_id = ?
-                AND status NOT IN ('done', 'DONE', 'cancelled')
+                AND status NOT IN ('DONE', 'CANCELLED')
                 AND due_date BETWEEN date('now') AND date('now', '+14 days')
                 GROUP BY strftime('%Y-%W', due_date)
             `, [projectId], (err, rows) => resolve(rows || []));
@@ -446,7 +446,7 @@ const AIWorkloadIntelligence = {
                 WHERE project_id = ?
                 AND (effort_estimate IS NULL OR effort_estimate = 0)
                 AND due_date BETWEEN date('now') AND date('now', '+7 days')
-                AND status NOT IN ('done', 'DONE', 'cancelled')
+                AND status NOT IN ('DONE', 'CANCELLED')
             `, [projectId], (err, rows) => resolve(rows || []));
         });
 
@@ -467,10 +467,10 @@ const AIWorkloadIntelligence = {
                     COUNT(t.id) as remaining_tasks,
                     SUM(t.effort_estimate) as remaining_effort
                 FROM initiatives i
-                LEFT JOIN tasks t ON i.id = t.initiative_id AND t.status NOT IN ('done', 'DONE', 'cancelled')
+                LEFT JOIN tasks t ON i.id = t.initiative_id AND t.status NOT IN ('DONE', 'CANCELLED')
                 WHERE i.project_id = ?
                 AND i.target_date < date('now', '+30 days')
-                AND i.status IN ('IN_EXECUTION', 'APPROVED')
+                AND i.status IN ('EXECUTING', 'APPROVED')
                 GROUP BY i.id
             `, [projectId], (err, rows) => resolve(rows || []));
         });
@@ -521,7 +521,7 @@ const AIWorkloadIntelligence = {
                     COUNT(DISTINCT initiative_id) as initiative_count
                 FROM tasks
                 WHERE assignee_id = ?
-                AND status NOT IN ('done', 'DONE', 'cancelled')
+                AND status NOT IN ('DONE', 'CANCELLED')
             `;
             const params = [userId];
 
