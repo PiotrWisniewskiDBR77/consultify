@@ -261,12 +261,35 @@ function initDb() {
                 name TEXT,
                 plan TEXT DEFAULT 'free',
                 status TEXT DEFAULT 'active',
+                billing_status TEXT DEFAULT 'PENDING',
+                organization_type TEXT DEFAULT 'TRIAL',
+                token_balance INTEGER DEFAULT 0,
+                is_active INTEGER DEFAULT 1,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 valid_until TIMESTAMP,
                 discount_percent INTEGER DEFAULT 0,
                 -- MFA enforcement settings (enterprise feature)
                 mfa_required INTEGER DEFAULT 0,
-                mfa_grace_period_days INTEGER DEFAULT 7
+                mfa_grace_period_days INTEGER DEFAULT 7,
+                -- Trial Fields
+                trial_started_at TIMESTAMP,
+                trial_expires_at TIMESTAMP,
+                trial_extension_count INTEGER DEFAULT 0,
+                trial_warning_sent_at TIMESTAMP,
+                trial_tokens_used INTEGER DEFAULT 0,
+                -- Attribution
+                attribution_data TEXT,
+                -- Phase E: Onboarding Context
+                transformation_context TEXT DEFAULT '{}',
+                onboarding_status TEXT DEFAULT 'NOT_STARTED',
+                onboarding_plan_snapshot TEXT,
+                onboarding_plan_version INTEGER DEFAULT 0,
+                onboarding_accepted_at TIMESTAMP,
+                onboarding_accept_idempotency_key TEXT,
+                -- AI Governance Fields
+                ai_assertiveness_level TEXT DEFAULT 'MEDIUM',
+                ai_autonomy_level TEXT DEFAULT 'SUGGEST_ONLY',
+                created_by_user_id TEXT
             )`);
 
             // Users Table
@@ -1041,10 +1064,11 @@ function initDb() {
                 console.log('[Postgres] MFA columns migration skipped (may already exist)');
             });
 
-            // Organizations table MFA columns and discount_percent
+            // Organizations table - Add missing columns (migration)
             await query(`
                 DO $$ 
                 BEGIN
+                    -- MFA columns
                     IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
                                    WHERE table_name='organizations' AND column_name='mfa_required') THEN
                         ALTER TABLE organizations ADD COLUMN mfa_required INTEGER DEFAULT 0;
@@ -1056,6 +1080,88 @@ function initDb() {
                     IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
                                    WHERE table_name='organizations' AND column_name='discount_percent') THEN
                         ALTER TABLE organizations ADD COLUMN discount_percent INTEGER DEFAULT 0;
+                    END IF;
+                    -- Trial fields
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='trial_started_at') THEN
+                        ALTER TABLE organizations ADD COLUMN trial_started_at TIMESTAMP;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='trial_expires_at') THEN
+                        ALTER TABLE organizations ADD COLUMN trial_expires_at TIMESTAMP;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='trial_extension_count') THEN
+                        ALTER TABLE organizations ADD COLUMN trial_extension_count INTEGER DEFAULT 0;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='trial_warning_sent_at') THEN
+                        ALTER TABLE organizations ADD COLUMN trial_warning_sent_at TIMESTAMP;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='trial_tokens_used') THEN
+                        ALTER TABLE organizations ADD COLUMN trial_tokens_used INTEGER DEFAULT 0;
+                    END IF;
+                    -- Organization type and status
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='organization_type') THEN
+                        ALTER TABLE organizations ADD COLUMN organization_type TEXT DEFAULT 'TRIAL';
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='billing_status') THEN
+                        ALTER TABLE organizations ADD COLUMN billing_status TEXT DEFAULT 'PENDING';
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='is_active') THEN
+                        ALTER TABLE organizations ADD COLUMN is_active INTEGER DEFAULT 1;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='token_balance') THEN
+                        ALTER TABLE organizations ADD COLUMN token_balance INTEGER DEFAULT 0;
+                    END IF;
+                    -- Attribution
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='attribution_data') THEN
+                        ALTER TABLE organizations ADD COLUMN attribution_data TEXT;
+                    END IF;
+                    -- Onboarding
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='transformation_context') THEN
+                        ALTER TABLE organizations ADD COLUMN transformation_context TEXT DEFAULT '{}';
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='onboarding_status') THEN
+                        ALTER TABLE organizations ADD COLUMN onboarding_status TEXT DEFAULT 'NOT_STARTED';
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='onboarding_plan_snapshot') THEN
+                        ALTER TABLE organizations ADD COLUMN onboarding_plan_snapshot TEXT;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='onboarding_plan_version') THEN
+                        ALTER TABLE organizations ADD COLUMN onboarding_plan_version INTEGER DEFAULT 0;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='onboarding_accepted_at') THEN
+                        ALTER TABLE organizations ADD COLUMN onboarding_accepted_at TIMESTAMP;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='onboarding_accept_idempotency_key') THEN
+                        ALTER TABLE organizations ADD COLUMN onboarding_accept_idempotency_key TEXT;
+                    END IF;
+                    -- AI Governance
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='ai_assertiveness_level') THEN
+                        ALTER TABLE organizations ADD COLUMN ai_assertiveness_level TEXT DEFAULT 'MEDIUM';
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='ai_autonomy_level') THEN
+                        ALTER TABLE organizations ADD COLUMN ai_autonomy_level TEXT DEFAULT 'SUGGEST_ONLY';
+                    END IF;
+                    -- Created by
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='created_by_user_id') THEN
+                        ALTER TABLE organizations ADD COLUMN created_by_user_id TEXT;
                     END IF;
                 END $$;
             `).catch(err => {

@@ -30,12 +30,13 @@ function setDependencies(newDeps) {
 const getOrganizations = catchAsync(async (req, res, next) => {
     const sql = `
         SELECT 
-            o.id, o.name, o.plan, o.status, o.trial_started_at as created_at, 
+            o.id, o.name, o.plan, o.status, 
+            COALESCE(o.trial_started_at, o.created_at) as created_at, 
             COALESCE(o.discount_percent, 0) as discount_percent,
             COUNT(u.id) as user_count
         FROM organizations o
         LEFT JOIN users u ON o.id = u.organization_id
-        GROUP BY o.id
+        GROUP BY o.id, o.name, o.plan, o.status, o.trial_started_at, o.created_at, o.discount_percent
         ORDER BY o.name ASC
     `;
 
