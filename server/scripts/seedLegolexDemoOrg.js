@@ -20,7 +20,6 @@
  * @module seedLegolexDemoOrg
  */
 
-const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
@@ -39,7 +38,6 @@ if (process.env.NODE_ENV === 'production') {
 // CONFIGURATION
 // ==========================================
 
-const dbPath = path.resolve(__dirname, '../consultify.db');
 const DEFAULT_PASSWORD = '123456';
 const HASHED_PASSWORD = bcrypt.hashSync(DEFAULT_PASSWORD, 8);
 
@@ -115,13 +113,8 @@ TRIAL_EXPIRES.setDate(TRIAL_EXPIRES.getDate() + 21); // 14 + 7 days
 // DATABASE CONNECTION
 // ==========================================
 
-const db = new sqlite3.Database(dbPath, (err) => {
-    if (err) {
-        console.error('❌ Error opening database:', err.message);
-        process.exit(1);
-    }
-    console.log('📂 Connected to database:', dbPath);
-});
+// Use database abstraction to support both SQLite and PostgreSQL
+const db = require('../database');
 
 // Promisified db.run
 const dbRun = (sql, params = []) => new Promise((resolve, reject) => {
@@ -146,6 +139,10 @@ const dbAll = (sql, params = []) => new Promise((resolve, reject) => {
         else resolve(rows);
     });
 });
+
+// Database type detection
+const isPg = process.env.DB_TYPE === 'postgres' || process.env.DATABASE_URL?.startsWith('postgres');
+console.log(`📂 Using database: ${isPg ? 'PostgreSQL' : 'SQLite'}`);
 
 // ==========================================
 // CLEANUP FUNCTION
@@ -234,7 +231,10 @@ async function ensureSchema() {
     console.log('\n🛠 Ensuring database schema is ready...');
 
     // Partner Settlements adjustment columns
-    const partnerSettlementsCols = await dbAll(`PRAGMA table_info(partner_settlements)`);
+    const partnerSettlementsColsQuery = isPg
+        ? `SELECT column_name as name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'partner_settlements'`
+        : `PRAGMA table_info(partner_settlements)`;
+    const partnerSettlementsCols = await dbAll(partnerSettlementsColsQuery);
     const hasEntryType = partnerSettlementsCols.some(c => c.name === 'entry_type');
 
     if (!hasEntryType) {
@@ -249,7 +249,10 @@ async function ensureSchema() {
     }
 
     // attribution_events table column additions
-    const attributionCols = await dbAll(`PRAGMA table_info(attribution_events)`);
+    const attributionColsQuery = isPg
+        ? `SELECT column_name as name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'attribution_events'`
+        : `PRAGMA table_info(attribution_events)`;
+    const attributionCols = await dbAll(attributionColsQuery);
     const hasPartnerId = attributionCols.some(c => c.name === 'partner_id');
     if (!hasPartnerId) {
         try {
@@ -260,6 +263,7 @@ async function ensureSchema() {
     }
 
     // help_playbooks table
+    const timestampType = isPg ? 'TIMESTAMP' : 'DATETIME';
     await dbRun(`CREATE TABLE IF NOT EXISTS help_playbooks (
         id TEXT PRIMARY KEY,
         key TEXT UNIQUE NOT NULL,
@@ -269,7 +273,7 @@ async function ensureSchema() {
         target_org_type TEXT DEFAULT 'ANY',
         priority INTEGER DEFAULT 3,
         is_active INTEGER DEFAULT 1,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at ${timestampType} DEFAULT CURRENT_TIMESTAMP
     )`);
 
     // help_steps table
@@ -282,7 +286,7 @@ async function ensureSchema() {
         ui_target TEXT,
         action_type TEXT DEFAULT 'INFO',
         action_payload TEXT DEFAULT '{}',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        created_at ${timestampType} DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(playbook_id) REFERENCES help_playbooks(id) ON DELETE CASCADE
     )`);
 
@@ -294,7 +298,7 @@ async function ensureSchema() {
         playbook_key TEXT NOT NULL,
         event_type TEXT NOT NULL,              -- VIEWED | STARTED | COMPLETED | DISMISSED
         context TEXT DEFAULT '{}',             -- JSON context
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        created_at ${timestampType} DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
         FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
     )`);
@@ -307,7 +311,7 @@ async function ensureSchema() {
         organization_id TEXT,
         source TEXT,
         context TEXT DEFAULT '{}',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        created_at ${timestampType} DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL,
         FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
     )`);
@@ -800,10 +804,10 @@ async function seedSettlements() {
 async function seedHelpEvents() {
     console.log('\n📚 Phase 9: Creating Help Events...');
 
-    const tableExists = await dbGet(`
-        SELECT name FROM sqlite_master 
-        WHERE type = 'table' AND name = 'help_events'
-    `);
+    const tableExistsQuery = isPg
+        ? `SELECT table_name as name FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'help_events'`
+        : `SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'help_events'`;
+    const tableExists = await dbGet(tableExistsQuery);
 
     if (!tableExists) {
         console.log('   ⚠️ help_events table does not exist - skipping');
@@ -872,10 +876,10 @@ async function seedMetricsEvents() {
     console.log('\n📊 Phase 11: Creating Metrics Events (Step 7 Support)...');
 
     // Check if metrics_events table exists
-    const tableExists = await dbGet(`
-        SELECT name FROM sqlite_master 
-        WHERE type = 'table' AND name = 'metrics_events'
-    `);
+    const tableExistsQuery = isPg
+        ? `SELECT table_name as name FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'metrics_events'`
+        : `SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'metrics_events'`;
+    const tableExists = await dbGet(tableExistsQuery);
 
     if (!tableExists) {
         console.log('   ⚠️ metrics_events table does not exist - skipping');
@@ -1122,7 +1126,10 @@ async function verify() {
     });
 
     // Help Events
-    const helpTableExists = await dbGet(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'help_events'`);
+    const helpTableExistsQuery = isPg
+        ? `SELECT table_name as name FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'help_events'`
+        : `SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'help_events'`;
+    const helpTableExists = await dbGet(helpTableExistsQuery);
     if (helpTableExists) {
         const helpEvents = await dbAll(`SELECT event_type, COUNT(*) as count FROM help_events WHERE organization_id = ? GROUP BY event_type`, [IDS.ORG]);
         checks.push({
@@ -1134,8 +1141,11 @@ async function verify() {
         checks.push({ name: 'Help Events', passed: false, details: 'Table not created' });
     }
 
-    // Metrics Events
-    const metricsTableExists = await dbGet(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'metrics_events'`);
+    // Metrics Events  
+    const metricsTableExistsQuery = isPg
+        ? `SELECT table_name as name FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'metrics_events'`
+        : `SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'metrics_events'`;
+    const metricsTableExists = await dbGet(metricsTableExistsQuery);
     if (metricsTableExists) {
         const metricEvents = await dbAll(`SELECT event_type, COUNT(*) as count FROM metrics_events WHERE organization_id = ? GROUP BY event_type`, [IDS.ORG]);
         checks.push({
@@ -1215,13 +1225,13 @@ async function main() {
         console.log('  SuperAdmin:      super@legolex.com / 123456');
         console.log('\nUsage: node server/scripts/seedLegolexDemoOrg.js [--clean] [--verify]');
 
-        db.close();
+        if (db.close) db.close();
         process.exit(0);
 
     } catch (err) {
         console.error('\n❌ Error:', err.message);
         console.error(err.stack);
-        db.close();
+        if (db.close) db.close();
         process.exit(1);
     }
 }

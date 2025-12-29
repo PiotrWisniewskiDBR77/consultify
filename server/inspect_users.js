@@ -1,15 +1,16 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+const db = require('./database');
 
-const dbPath = path.resolve(__dirname, 'consultify.db');
-const db = new sqlite3.Database(dbPath);
+const isPg = process.env.DB_TYPE === 'postgres' || process.env.DATABASE_URL?.startsWith('postgres');
+const query = isPg
+    ? "SELECT column_name as name, data_type as type, is_nullable as notnull, column_default as dflt_value, (CASE WHEN column_name IN (SELECT column_name FROM information_schema.table_constraints tc JOIN information_schema.key_column_usage kcu ON tc.constraint_name = kcu.constraint_name WHERE tc.table_name = 'users' AND tc.constraint_type = 'PRIMARY KEY') THEN 1 ELSE 0 END) as pk FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'users' ORDER BY ordinal_position"
+    : "PRAGMA table_info(users)";
 
-console.log('Inspecting users table schema...');
-db.all("PRAGMA table_info(users)", (err, rows) => {
+console.log(`Inspecting users table schema (${isPg ? 'PostgreSQL' : 'SQLite'})...`);
+db.all(query, [], (err, rows) => {
     if (err) {
         console.error(err);
     } else {
         console.log(rows);
     }
-    db.close();
+    if (db.close) db.close();
 });

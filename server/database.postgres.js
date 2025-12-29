@@ -63,6 +63,9 @@ function adaptQuery(sql) {
     // Replace date(column) with column::date (PostgreSQL cast)
     adapted = adapted.replace(/date\(([^)]+)\)/g, "$1::date");
 
+    // Replace DATETIME column type with TIMESTAMP for PostgreSQL
+    adapted = adapted.replace(/\bDATETIME\b/gi, 'TIMESTAMP');
+
     // Replace INSERT OR REPLACE with INSERT ... ON CONFLICT DO UPDATE
     // This is complex - we'll handle common cases
     if (adapted.includes('INSERT OR REPLACE')) {
