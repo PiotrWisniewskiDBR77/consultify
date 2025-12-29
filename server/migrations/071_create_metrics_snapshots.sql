@@ -1,7 +1,8 @@
 -- Create table for storing performance metrics snapshots
+-- Note: For PostgreSQL, use: id SERIAL PRIMARY KEY and timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 CREATE TABLE IF NOT EXISTS metrics_snapshots (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    timestamp TEXT NOT NULL DEFAULT (datetime('now')),
+    id SERIAL PRIMARY KEY,
+    timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     window_minutes INTEGER DEFAULT 60,
     
     -- Request Metrics

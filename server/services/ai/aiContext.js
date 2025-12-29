@@ -735,7 +735,11 @@ class ContextBuilder {
                 }
                 
                 // Check if projects table exists (created during init)
-                db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='projects'", [], (err, row) => {
+                const isPg = process.env.DB_TYPE === 'postgres' || process.env.DATABASE_URL?.startsWith('postgres');
+                const tableCheckQuery = isPg
+                    ? "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'projects'"
+                    : "SELECT name FROM sqlite_master WHERE type='table' AND name='projects'";
+                db.get(tableCheckQuery, [], (err, row) => {
                     if (row) {
                         resolve();
                     } else if (attempts < 50) {

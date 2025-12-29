@@ -479,8 +479,12 @@ router.get('/diagnose', async (req, res) => {
 
     try {
         // 1. Check if llm_providers table exists
+        const isPg = process.env.DB_TYPE === 'postgres' || process.env.DATABASE_URL?.startsWith('postgres');
+        const tableCheckQuery = isPg 
+            ? "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'llm_providers'"
+            : "SELECT name FROM sqlite_master WHERE type='table' AND name='llm_providers'";
         const tableCheck = await new Promise((resolve) => {
-            db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='llm_providers'", [], (err, row) => {
+            db.get(tableCheckQuery, [], (err, row) => {
                 resolve(row ? true : false);
             });
         });
@@ -523,17 +527,22 @@ router.get('/diagnose', async (req, res) => {
         }
 
         // 3. Check ai_audit_logs table and tokens_used column
+        const auditTableCheckQuery = isPg
+            ? "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'ai_audit_logs'"
+            : "SELECT name FROM sqlite_master WHERE type='table' AND name='ai_audit_logs'";
         const auditTableCheck = await new Promise((resolve) => {
-            db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='ai_audit_logs'", [], (err, row) => {
+            db.get(auditTableCheckQuery, [], (err, row) => {
                 resolve(row ? true : false);
             });
         });
 
         if (!auditTableCheck) {
             diagnostics.checks.push({ name: 'ai_audit_logs_table', status: 'MISSING' });
+            const idColumn = isPg ? 'id SERIAL PRIMARY KEY' : 'id INTEGER PRIMARY KEY AUTOINCREMENT';
+            const timestampType = isPg ? 'TIMESTAMP' : 'TEXT';
             await dbRun(`CREATE TABLE IF NOT EXISTS ai_audit_logs (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                timestamp TEXT,
+                ${idColumn},
+                timestamp ${timestampType},
                 user_id TEXT,
                 organization_id TEXT,
                 capability TEXT,
@@ -549,8 +558,11 @@ router.get('/diagnose', async (req, res) => {
             diagnostics.repairs.push('Created ai_audit_logs table with cost tracking');
         } else {
             // Check for tokens_used column
+            const columnsQuery = isPg
+                ? "SELECT column_name as name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'ai_audit_logs'"
+                : "PRAGMA table_info(ai_audit_logs)";
             const columns = await new Promise((resolve) => {
-                db.all("PRAGMA table_info(ai_audit_logs)", [], (err, rows) => {
+                db.all(columnsQuery, [], (err, rows) => {
                     resolve(rows || []);
                 });
             });
@@ -764,7 +776,9 @@ router.post('/prompts', async (req, res) => {
         `, [id, key, description, content, JSON.stringify(context_config || {})]);
         res.json({ id, message: 'Prompt created' });
     } catch (err) {
-        if (err.message.includes('UNIQUE constraint failed')) {
+        if (err.message.includes('UNIQUE constraint failed') || 
+            err.message.includes('duplicate key') || 
+            err.message.includes('violates unique constraint')) {
             return res.status(409).json({ error: 'Prompt key already exists' });
         }
         res.status(500).json({ error: 'Failed to create prompt' });
@@ -1026,11 +1040,14 @@ router.get('/user/usage', async (req, res) => {
         };
 
         // Get recent usage history (last 7 days)
+        const isPg = process.env.DB_TYPE === 'postgres' || process.env.DATABASE_URL?.startsWith('postgres');
+        const dateFunction = isPg ? 'timestamp::date' : 'DATE(timestamp)';
+        const dateCompare = isPg ? "timestamp >= NOW() - INTERVAL '7 days'" : "timestamp >= date('now', '-7 days')";
         const recentUsage = await dbAll(
-            `SELECT DATE(timestamp) as date, SUM(tokens_used) as tokens, COUNT(*) as requests
+            `SELECT ${dateFunction} as date, SUM(tokens_used) as tokens, COUNT(*) as requests
              FROM ai_audit_logs 
-             WHERE user_id = ? AND timestamp >= date('now', '-7 days')
-             GROUP BY DATE(timestamp)
+             WHERE user_id = ? AND ${dateCompare}
+             GROUP BY ${dateFunction}
              ORDER BY date DESC`,
             [userId]
         );

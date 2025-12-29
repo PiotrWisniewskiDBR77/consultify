@@ -18,7 +18,12 @@ const db = require('../database');
  */
 async function getOrgColumn(tableName) {
     return new Promise((resolve, reject) => {
-        db.all(`PRAGMA table_info(${tableName})`, (err, cols) => {
+        const isPg = process.env.DB_TYPE === 'postgres' || process.env.DATABASE_URL?.startsWith('postgres');
+        const query = isPg
+            ? `SELECT column_name as name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = '${tableName}'`
+            : `PRAGMA table_info(${tableName})`;
+        
+        db.all(query, (err, cols) => {
             if (err) return reject(err);
 
             const names = (cols || []).map(c => c.name);

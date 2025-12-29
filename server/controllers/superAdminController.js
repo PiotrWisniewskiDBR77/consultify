@@ -469,7 +469,11 @@ const impersonateUser = catchAsync(async (req, res, next) => {
  * DATABASE EXPLORER - TABLES
  */
 const getDatabaseTables = catchAsync(async (req, res, next) => {
-    deps.db.all("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'", [], (err, rows) => {
+    const isPg = process.env.DB_TYPE === 'postgres' || process.env.DATABASE_URL?.startsWith('postgres');
+    const query = isPg
+        ? "SELECT table_name as name FROM information_schema.tables WHERE table_schema = 'public' AND table_name NOT LIKE 'pg_%' AND table_name NOT LIKE '_%'"
+        : "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'";
+    deps.db.all(query, [], (err, rows) => {
         if (err) return next(new AppError(err.message, 500));
         res.json(rows.map(r => r.name));
     });
@@ -482,7 +486,9 @@ const getDatabaseRows = catchAsync(async (req, res, next) => {
     const { tableName } = req.params;
     if (!/^[a-zA-Z0-9_]+$/.test(tableName)) return next(new AppError('Invalid table name', 400));
 
-    deps.db.all(`SELECT * FROM ${tableName} ORDER BY rowid DESC LIMIT 100`, [], (err, rows) => {
+    const isPg = process.env.DB_TYPE === 'postgres' || process.env.DATABASE_URL?.startsWith('postgres');
+    const orderBy = isPg ? 'ORDER BY ctid DESC' : 'ORDER BY rowid DESC';
+    deps.db.all(`SELECT * FROM ${tableName} ${orderBy} LIMIT 100`, [], (err, rows) => {
         if (err) return next(new AppError(err.message, 500));
         res.json(rows);
     });

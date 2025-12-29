@@ -26,7 +26,12 @@ interface TableColumn {
  */
 export async function getOrgColumn(tableName: string): Promise<string> {
     return new Promise((resolve, reject) => {
-        db.all(`PRAGMA table_info(${tableName})`, (err: Error | null, cols: TableColumn[]) => {
+        const isPg = process.env.DB_TYPE === 'postgres' || process.env.DATABASE_URL?.startsWith('postgres');
+        const query = isPg
+            ? `SELECT column_name as name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = '${tableName}'`
+            : `PRAGMA table_info(${tableName})`;
+        
+        db.all(query, (err: Error | null, cols: TableColumn[]) => {
             if (err) return reject(err);
 
             const names = (cols || []).map(c => c.name);

@@ -33,14 +33,17 @@ class QuotaService {
     async ensureTable() {
         if (!db || !db.run) return;
 
+        // Check database type at runtime (in case env var changes)
+        const isPg = process.env.DB_TYPE === 'postgres' || process.env.DATABASE_URL?.startsWith('postgres');
+        
         // Use PostgreSQL-compatible syntax if using PostgreSQL
-        const idColumn = this.isPg 
+        const idColumn = isPg 
             ? 'id SERIAL PRIMARY KEY'
             : 'id INTEGER PRIMARY KEY AUTOINCREMENT';
         
         // For PostgreSQL, use TIMESTAMP for created_at/updated_at, but keep TEXT for date strings
-        const createdAtType = this.isPg ? 'TIMESTAMP' : 'TEXT';
-        const updatedAtType = this.isPg ? 'TIMESTAMP' : 'TEXT';
+        const createdAtType = isPg ? 'TIMESTAMP' : 'TEXT';
+        const updatedAtType = isPg ? 'TIMESTAMP' : 'TEXT';
 
         const sql = `
             CREATE TABLE IF NOT EXISTS ai_usage_quotas (
@@ -226,23 +229,35 @@ class QuotaService {
         const today = now.toISOString().split('T')[0];
         const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
 
+        // Check database type at runtime
+        const isPg = process.env.DB_TYPE === 'postgres' || process.env.DATABASE_URL?.startsWith('postgres');
+        
+        // Use PostgreSQL-compatible date comparison
+        const dateCompare = isPg 
+            ? `(last_reset_daily::date < ?::date)`
+            : `date(last_reset_daily) < date(?)`;
+
         // Reset daily quotas
         await new Promise((resolve) => {
             db.run(
                 `UPDATE ai_usage_quotas 
                  SET tokens_used_today = 0, last_reset_daily = ?
-                 WHERE date(last_reset_daily) < date(?)`,
+                 WHERE ${dateCompare}`,
                 [now.toISOString(), today],
                 (err) => resolve()
             );
         });
+
+        const monthlyDateCompare = isPg 
+            ? `(last_reset_monthly::date < ?::date)`
+            : `date(last_reset_monthly) < date(?)`;
 
         // Reset monthly quotas
         await new Promise((resolve) => {
             db.run(
                 `UPDATE ai_usage_quotas 
                  SET tokens_used_month = 0, last_reset_monthly = ?
-                 WHERE date(last_reset_monthly) < date(?)`,
+                 WHERE ${monthlyDateCompare}`,
                 [now.toISOString(), firstOfMonth],
                 (err) => resolve()
             );
