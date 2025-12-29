@@ -26,10 +26,11 @@ WORKDIR /app
 # Set production environment
 ENV NODE_ENV=production
 
-# Copy server package files and install production deps only
-COPY server/package*.json ./server/
+# Copy root package files and install production deps only
+# Server dependencies are in root package.json, not server/package.json
+COPY package*.json ./
 # Use npm install if package-lock.json is out of sync, otherwise use npm ci for faster installs
-RUN cd server && if [ -f package-lock.json ]; then npm ci --omit=dev || npm install --omit=dev; else npm install --omit=dev; fi
+RUN if [ -f package-lock.json ]; then npm ci --omit=dev || npm install --omit=dev; else npm install --omit=dev; fi
 
 # Copy built frontend
 COPY --from=builder /app/dist ./dist
