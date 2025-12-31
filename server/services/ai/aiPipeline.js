@@ -1,7 +1,23 @@
 // server/services/ai/aiPipeline.js
+// ============================================================================
+// UNIFIED AI PIPELINE - Enterprise-Grade AI Processing
+// ============================================================================
+// This is the main entry point for all AI operations in Consultify.
+// Migrated from aiService.js (2062 lines) to this unified, capability-based pipeline.
+// 
+// Features:
+// - Multi-provider support with automatic fallback (12 providers)
+// - Enterprise security (PII detection, rate limiting, audit logging)
+// - Quality validation (hallucination detection)
+// - 5-layer memory system
+// - Semantic caching
+// - Performance optimization
+// - Learning system for pattern extraction
+// ============================================================================
+
 const { AIGateway } = require('./aiGateway');
 const { ContextBuilder } = require('./aiContext');
-const { PromptAssembler } = require('./promptAssembler');
+const { PromptAssembler, FALLBACK_ROLES } = require('./promptAssembler');
 const { ModelRouter } = require('./modelRouter');
 const { LLMService } = require('./llmService');
 const { quotaService } = require('./quotaService');
@@ -18,6 +34,274 @@ const { enterpriseSecurity } = require('./enterpriseSecurity');
 const { performanceOptimizer } = require('./performanceOptimizer');
 const { learningSystem } = require('./learningSystem');
 
+// ============================================================================
+// CAPABILITY REGISTRY
+// ============================================================================
+// Maps legacy aiService.js methods to unified pipeline capabilities.
+// Each capability defines: systemPrompt role, max tokens, output format, etc.
+// ============================================================================
+
+const CAPABILITY_REGISTRY = {
+    // === DIAGNOSIS CAPABILITIES ===
+    'diagnose': {
+        role: 'ANALYST',
+        maxTokens: 2000,
+        description: 'Analyze maturity for a specific axis',
+        outputFormat: 'json'
+    },
+    'deepDiagnose': {
+        role: 'ANALYST',
+        maxTokens: 4000,
+        description: 'Deep chain-of-thought diagnosis with multiple reasoning steps',
+        outputFormat: 'json'
+    },
+    
+    // === GENERATION CAPABILITIES ===
+    'generateList': {
+        role: 'ANALYST',
+        maxTokens: 1500,
+        description: 'Generate a list of items based on context',
+        outputFormat: 'json'
+    },
+    'generateTable': {
+        role: 'ANALYST',
+        maxTokens: 2000,
+        description: 'Generate a structured table',
+        outputFormat: 'json'
+    },
+    'generateInitiatives': {
+        role: 'CONSULTANT',
+        maxTokens: 4000,
+        description: 'Generate transformation initiatives from diagnosis',
+        outputFormat: 'json'
+    },
+    'generateObservations': {
+        role: 'ANALYST',
+        maxTokens: 2000,
+        description: 'Generate strategic observations from data',
+        outputFormat: 'json'
+    },
+    'generateFirstValuePlan': {
+        role: 'STRATEGIST',
+        maxTokens: 3000,
+        description: 'Generate first value delivery plan',
+        outputFormat: 'json'
+    },
+    
+    // === TASK CAPABILITIES ===
+    'suggestTasks': {
+        role: 'IMPLEMENTER',
+        maxTokens: 2000,
+        description: 'Suggest implementation tasks for an initiative',
+        outputFormat: 'json'
+    },
+    'generateTaskInsight': {
+        role: 'ANALYST',
+        maxTokens: 1500,
+        description: 'Generate insights for a specific task',
+        outputFormat: 'json'
+    },
+    'generateExecutionStrategy': {
+        role: 'IMPLEMENTER',
+        maxTokens: 2500,
+        description: 'Generate execution strategy for initiative',
+        outputFormat: 'json'
+    },
+    
+    // === INITIATIVE CAPABILITIES ===
+    'validateInitiative': {
+        role: 'GATEKEEPER',
+        maxTokens: 1500,
+        description: 'Validate initiative quality and completeness',
+        outputFormat: 'json'
+    },
+    'enrichInitiative': {
+        role: 'ANALYST',
+        maxTokens: 2000,
+        description: 'Enrich initiative with market context',
+        outputFormat: 'json'
+    },
+    'generateInsights': {
+        role: 'ANALYST',
+        maxTokens: 2000,
+        description: 'Generate strategic insights for initiative',
+        outputFormat: 'json'
+    },
+    'generateStrategicFit': {
+        role: 'ANALYST',
+        maxTokens: 1500,
+        description: 'Analyze strategic fit of initiative',
+        outputFormat: 'json'
+    },
+    
+    // === ROADMAP CAPABILITIES ===
+    'buildRoadmap': {
+        role: 'STRATEGIST',
+        maxTokens: 3000,
+        description: 'Build transformation roadmap from initiatives',
+        outputFormat: 'json'
+    },
+    'validateRoadmap': {
+        role: 'ANALYST',
+        maxTokens: 2000,
+        description: 'Validate roadmap structure and dependencies',
+        outputFormat: 'text'
+    },
+    'explainRoadmap': {
+        role: 'STRATEGIST',
+        maxTokens: 2000,
+        description: 'Explain roadmap for board presentation',
+        outputFormat: 'text'
+    },
+    'optimizeRoadmap': {
+        role: 'STRATEGIST',
+        maxTokens: 2000,
+        description: 'Optimize roadmap based on strategy',
+        outputFormat: 'text'
+    },
+    'reviewQuarter': {
+        role: 'IMPLEMENTER',
+        maxTokens: 1500,
+        description: 'Review quarterly progress and roadblocks',
+        outputFormat: 'text'
+    },
+    'suggestPlacement': {
+        role: 'STRATEGIST',
+        maxTokens: 1000,
+        description: 'Suggest optimal placement for initiative',
+        outputFormat: 'text'
+    },
+    'generateRoadmapSummary': {
+        role: 'STRATEGIST',
+        maxTokens: 2000,
+        description: 'Generate executive summary of roadmap',
+        outputFormat: 'json'
+    },
+    'generatePlacementReason': {
+        role: 'STRATEGIST',
+        maxTokens: 1000,
+        description: 'Explain why initiative is placed in a quarter',
+        outputFormat: 'json'
+    },
+    'rebalanceRoadmap': {
+        role: 'STRATEGIST',
+        maxTokens: 2500,
+        description: 'Rebalance roadmap for optimal resource allocation',
+        outputFormat: 'json'
+    },
+    'generateWorkloadAnalysis': {
+        role: 'ANALYST',
+        maxTokens: 1500,
+        description: 'Analyze quarterly workload distribution',
+        outputFormat: 'json'
+    },
+    
+    // === ECONOMICS CAPABILITIES ===
+    'simulateEconomics': {
+        role: 'FINANCE',
+        maxTokens: 2500,
+        description: 'Simulate economic impact of initiatives',
+        outputFormat: 'json'
+    },
+    
+    // === CHAT CAPABILITIES ===
+    'chat': {
+        role: 'CONSULTANT',
+        maxTokens: 2000,
+        description: 'General chat with AI consultant',
+        outputFormat: 'text',
+        supportsStreaming: true
+    },
+    'chat_simple': {
+        role: 'PARTNER',
+        maxTokens: 1500,
+        description: 'Simple conversational chat',
+        outputFormat: 'text',
+        supportsStreaming: true
+    },
+    
+    // === REPORT CAPABILITIES ===
+    'generateReportSectionContent': {
+        role: 'STRATEGIST',
+        maxTokens: 3000,
+        description: 'Generate content for report section',
+        outputFormat: 'json'
+    },
+    'parseReportEditIntent': {
+        role: 'ANALYST',
+        maxTokens: 1000,
+        description: 'Parse user intent for report editing',
+        outputFormat: 'json'
+    },
+    'buildReportAIContext': {
+        role: 'ANALYST',
+        maxTokens: 2000,
+        description: 'Build AI context for report generation',
+        outputFormat: 'json'
+    },
+    
+    // === CHAIN OF THOUGHT ===
+    'runChainOfThought': {
+        role: 'ANALYST',
+        maxTokens: 4000,
+        description: 'Run multi-step chain of thought reasoning',
+        outputFormat: 'json'
+    },
+    
+    // === KNOWLEDGE CAPABILITIES ===
+    'extractInsights': {
+        role: 'ANALYST',
+        maxTokens: 1500,
+        description: 'Extract insights from text',
+        outputFormat: 'json'
+    },
+    'verifyWithWeb': {
+        role: 'ANALYST',
+        maxTokens: 1500,
+        description: 'Verify information with web research',
+        outputFormat: 'text'
+    },
+    
+    // === STRATEGIC CAPABILITIES ===
+    'getStrategicIdeas': {
+        role: 'STRATEGIST',
+        maxTokens: 2000,
+        description: 'Get strategic ideas for transformation',
+        outputFormat: 'json'
+    },
+    
+    // === CHARTER GENERATION ===
+    'generateStructuredContent': {
+        role: 'CONSULTANT',
+        maxTokens: 2500,
+        description: 'Generate structured content for initiative charters',
+        outputFormat: 'json'
+    },
+    
+    // === QUEUE CAPABILITIES ===
+    'queueTask': {
+        role: 'IMPLEMENTER',
+        maxTokens: 1000,
+        description: 'Queue async AI task',
+        outputFormat: 'json',
+        async: true
+    }
+};
+
+/**
+ * Get capability configuration
+ * @param {string} capability - Capability name
+ * @returns {Object} Capability configuration
+ */
+function getCapabilityConfig(capability) {
+    return CAPABILITY_REGISTRY[capability] || {
+        role: 'CONSULTANT',
+        maxTokens: 2000,
+        description: 'Default capability',
+        outputFormat: 'text'
+    };
+}
+
 class AIPipeline {
     constructor() {
         this.gateway = new AIGateway();
@@ -26,6 +310,114 @@ class AIPipeline {
         this.modelRouter = new ModelRouter();
         this.llmService = new LLMService();
     }
+
+    // =========================================================================
+    // RESILIENT WRAPPERS - Fail-open pattern for external service calls
+    // =========================================================================
+
+    /**
+     * Safe wrapper for rate limit check - fails open (allows) on error
+     */
+    async safeCheckRateLimit(organizationId, capability) {
+        try {
+            const result = await enterpriseSecurity.checkRateLimit(organizationId, capability);
+            return result;
+        } catch (error) {
+            aiLogger.error('Pipeline', `Rate limit check failed, allowing request: ${error.message}`);
+            return { allowed: true, remaining: Infinity, bypassed: true, error: error.message };
+        }
+    }
+
+    /**
+     * Safe wrapper for quota check - fails open (allows) on error
+     */
+    async safeCheckQuota(userId, organizationId, projectId) {
+        try {
+            const result = await quotaService.checkQuota(userId, organizationId, projectId);
+            return result;
+        } catch (error) {
+            aiLogger.error('Pipeline', `Quota check failed, allowing request: ${error.message}`);
+            return { allowed: true, reason: null, bypassed: true, error: error.message };
+        }
+    }
+
+    /**
+     * Safe wrapper for quality check - fails open (passes) on error
+     */
+    async safeQualityCheck(response, context, options) {
+        try {
+            const result = await qualityChecker.check(response, context, options);
+            return result;
+        } catch (error) {
+            aiLogger.warn('Pipeline', `Quality check failed, skipping: ${error.message}`);
+            return { passed: true, overallScore: 0.5, skipped: true, warnings: [], error: error.message };
+        }
+    }
+
+    /**
+     * Safe wrapper for gateway processing - continues on non-critical errors
+     */
+    async safeGatewayProcess(request) {
+        try {
+            await this.gateway.process(request);
+            return { success: true };
+        } catch (error) {
+            aiLogger.warn('Pipeline', `Gateway process warning: ${error.message}`);
+            // Only fail for critical security errors
+            if (error.message?.includes('blocked') || error.message?.includes('injection')) {
+                throw error; // Re-throw security-critical errors
+            }
+            return { success: true, warning: error.message };
+        }
+    }
+
+    /**
+     * Safe wrapper for audit logging - non-blocking
+     */
+    safeLogAudit(auditData) {
+        // Don't await - fire and forget
+        try {
+            const promise = enterpriseSecurity.logAudit(auditData);
+            if (promise && typeof promise.catch === 'function') {
+                promise.catch(err => {
+                    aiLogger.warn('Pipeline', `Audit log failed (non-blocking): ${err.message}`);
+                });
+            }
+        } catch (err) {
+            aiLogger.warn('Pipeline', `Audit log sync error (non-blocking): ${err.message}`);
+        }
+    }
+
+    /**
+     * Safe wrapper for learning system - non-blocking
+     */
+    safeRecordLearning(data) {
+        try {
+            const promise = learningSystem.recordInteraction(data);
+            if (promise && typeof promise.catch === 'function') {
+                promise.catch(err => {
+                    aiLogger.warn('Pipeline', `Learning record failed (non-blocking): ${err.message}`);
+                });
+            }
+        } catch (err) {
+            aiLogger.warn('Pipeline', `Learning record sync error (non-blocking): ${err.message}`);
+        }
+    }
+
+    /**
+     * Safe wrapper for performance metrics - non-blocking
+     */
+    safeRecordPerformance(traceId, metrics) {
+        try {
+            performanceOptimizer.recordMetrics(traceId, metrics);
+        } catch (error) {
+            aiLogger.debug('Pipeline', `Performance metrics failed: ${error.message}`);
+        }
+    }
+
+    // =========================================================================
+    // MAIN PROCESS METHOD
+    // =========================================================================
 
     async process(request) {
         const startTime = Date.now();
@@ -49,8 +441,8 @@ class AIPipeline {
         try {
             aiLogger.pipeline('Starting process', { capability: request.capability, traceId: trace.traceId });
 
-            // 0. Enterprise Security - Rate Limit Check
-            const rateLimitCheck = await enterpriseSecurity.checkRateLimit(
+            // 0. Enterprise Security - Rate Limit Check (RESILIENT)
+            const rateLimitCheck = await this.safeCheckRateLimit(
                 request.organizationId,
                 request.capability || 'all'
             );
@@ -58,14 +450,17 @@ class AIPipeline {
                 aiLogger.warn('Pipeline', `Rate limit exceeded: ${rateLimitCheck.limitType}`);
                 throw new Error(`Rate limit exceeded. Reset at: ${rateLimitCheck.resetAt?.toISOString()}`);
             }
+            if (rateLimitCheck.bypassed) {
+                aiLogger.info('Pipeline', 'Rate limit check bypassed due to error');
+            }
 
-            // 1. Gateway Security Check (includes PII scrubbing)
+            // 1. Gateway Security Check (RESILIENT - only blocks on critical)
             const gatewaySpan = trace.startSpan('gateway');
-            await this.gateway.process(request);
+            await this.safeGatewayProcess(request);
             trace.endSpan(gatewaySpan, { status: 'passed' });
 
-            // 2. Quota Check (3-level: User → Project → Organization)
-            const quotaCheck = await quotaService.checkQuota(
+            // 2. Quota Check (RESILIENT)
+            const quotaCheck = await this.safeCheckQuota(
                 request.userId,
                 request.organizationId,
                 request.projectId
@@ -73,6 +468,9 @@ class AIPipeline {
             if (!quotaCheck.allowed) {
                 aiLogger.warn('Pipeline', `Quota exceeded: ${quotaCheck.reason}`);
                 throw new Error(`Quota exceeded: ${quotaCheck.reason}`);
+            }
+            if (quotaCheck.bypassed) {
+                aiLogger.info('Pipeline', 'Quota check bypassed due to error');
             }
 
             // 3. Cache Check - Return immediately if cached
@@ -239,7 +637,8 @@ class AIPipeline {
             // 7.5. Quality Check - Validate AI response before returning
             const qualitySpan = trace.startSpan('quality_check');
             try {
-                qualityResult = await qualityChecker.check(response, {
+                // RESILIENT: Use safe wrapper for quality check
+                qualityResult = await this.safeQualityCheck(response, {
                     query: request.prompt || messages?.[messages.length - 1]?.content,
                     capability: request.capability
                 }, { 
@@ -305,8 +704,8 @@ class AIPipeline {
                 costUsd: costInfo.totalCost
             });
 
-            // 11.5 Enterprise Security - Comprehensive Audit Log
-            enterpriseSecurity.logAudit({
+            // 11.5 Enterprise Security - Comprehensive Audit Log (RESILIENT - non-blocking)
+            this.safeLogAudit({
                 userId: request.userId,
                 organizationId: request.organizationId,
                 action: 'ai_request',
@@ -320,16 +719,16 @@ class AIPipeline {
                 userAgent: request.userAgent
             });
 
-            // 11.6 Performance Optimizer - Record metrics
-            performanceOptimizer.recordMetrics(trace.traceId, {
+            // 11.6 Performance Optimizer - Record metrics (RESILIENT - non-blocking)
+            this.safeRecordPerformance(trace.traceId, {
                 responseTime: latency,
                 tokensUsed: tokenCount,
                 cached: cacheHit,
                 error: false
             });
 
-            // 11.7 Learning System - Record interaction for pattern learning
-            learningSystem.recordInteraction({
+            // 11.7 Learning System - Record interaction (RESILIENT - non-blocking)
+            this.safeRecordLearning({
                 userId: request.userId,
                 organizationId: request.organizationId,
                 requestType: request.capability,
@@ -341,9 +740,8 @@ class AIPipeline {
                     latency,
                     cached: cacheHit
                 }
-            }).catch(err => {
-                aiLogger.warn('Pipeline', `Learning system record failed: ${err.message}`);
             });
+            // Note: safeRecordLearning is fire-and-forget with internal error handling
 
             // Record metrics
             metrics.recordRequest({
@@ -410,16 +808,16 @@ class AIPipeline {
                 cached: false
             });
 
-            // Performance Optimizer - Record error metrics
-            performanceOptimizer.recordMetrics(trace.traceId, {
+            // Performance Optimizer - Record error metrics (RESILIENT)
+            this.safeRecordPerformance(trace.traceId, {
                 responseTime: errorLatency,
                 tokensUsed: 0,
                 cached: false,
                 error: true
             });
 
-            // Enterprise Security - Log error in audit
-            enterpriseSecurity.logAudit({
+            // Enterprise Security - Log error in audit (RESILIENT)
+            this.safeLogAudit({
                 userId: request.userId,
                 organizationId: request.organizationId,
                 action: 'ai_request_error',
@@ -690,4 +1088,283 @@ class AIPipeline {
     }
 }
 
-module.exports = { AIPipeline };
+// ============================================================================
+// DOMAIN-SPECIFIC METHODS
+// ============================================================================
+// These methods provide backward compatibility with aiService.js API.
+// They wrap the unified process() method with capability-specific configuration.
+// ============================================================================
+
+/**
+ * Suggest tasks for an initiative
+ * @param {Object} initiativeContext - Initiative context
+ * @param {string} userId - User ID
+ * @param {string} organizationId - Organization ID
+ * @returns {Promise<Object>} Suggested tasks
+ */
+async function suggestTasks(initiativeContext, userId, organizationId) {
+    const pipeline = new AIPipeline();
+    const config = getCapabilityConfig('suggestTasks');
+    
+    const prompt = `Given this initiative context, suggest implementation tasks:
+    
+Initiative: ${initiativeContext.name || 'Unknown'}
+Summary: ${initiativeContext.summary || ''}
+Hypothesis: ${initiativeContext.hypothesis || ''}
+Axis: ${initiativeContext.axis || ''}
+
+Generate a structured list of tasks following SCMS methodology with:
+- Clear task names
+- Estimated effort
+- Dependencies
+- Priority (HIGH/MEDIUM/LOW)
+
+Output as JSON array.`;
+
+    const result = await pipeline.process({
+        capability: 'suggestTasks',
+        prompt,
+        userId,
+        organizationId,
+        role: config.role
+    });
+    
+    return parseJsonResponse(result.content);
+}
+
+/**
+ * Validate an initiative
+ * @param {Object} initiativeContext - Initiative to validate
+ * @param {string} userId - User ID
+ * @param {string} organizationId - Organization ID
+ * @returns {Promise<Object>} Validation result
+ */
+async function validateInitiative(initiativeContext, userId, organizationId) {
+    const pipeline = new AIPipeline();
+    const config = getCapabilityConfig('validateInitiative');
+    
+    const prompt = `Validate this initiative as a strict gatekeeper:
+    
+Name: ${initiativeContext.name || 'Unknown'}
+Summary: ${initiativeContext.summary || ''}
+Expected Outcome: ${initiativeContext.expectedOutcome || ''}
+Success Metrics: ${initiativeContext.successMetrics || ''}
+
+Evaluate:
+1. Clarity of definition
+2. Measurability of success
+3. Alignment with transformation goals
+4. Risk factors
+
+Provide: isValid (boolean), score (0-100), issues (array), recommendations (array)
+Output as JSON.`;
+
+    const result = await pipeline.process({
+        capability: 'validateInitiative',
+        prompt,
+        userId,
+        organizationId,
+        role: config.role
+    });
+    
+    return parseJsonResponse(result.content);
+}
+
+/**
+ * Enrich initiative with market context
+ * @param {Object} initiativeContext - Initiative context
+ * @param {string} userId - User ID
+ * @param {string} organizationId - Organization ID
+ * @returns {Promise<Object>} Enriched context
+ */
+async function enrichInitiative(initiativeContext, userId, organizationId) {
+    const pipeline = new AIPipeline();
+    const config = getCapabilityConfig('enrichInitiative');
+    
+    const prompt = `Enrich this initiative with market context and best practices:
+    
+Name: ${initiativeContext.name || 'Unknown'}
+Summary: ${initiativeContext.summary || ''}
+Industry: ${initiativeContext.industry || 'Technology'}
+
+Provide:
+- Market trends related to this initiative
+- Industry benchmarks
+- Success factors from similar transformations
+- Potential risks and mitigation strategies
+
+Output as JSON with keys: marketTrends, benchmarks, successFactors, risks.`;
+
+    const result = await pipeline.process({
+        capability: 'enrichInitiative',
+        prompt,
+        userId,
+        organizationId,
+        role: config.role,
+        includeWebResearch: true
+    });
+    
+    return parseJsonResponse(result.content);
+}
+
+/**
+ * Generate observations from assessment data
+ * @param {string} userId - User ID
+ * @param {string} organizationId - Organization ID
+ * @returns {Promise<Object>} Generated observations
+ */
+async function generateObservations(userId, organizationId) {
+    const pipeline = new AIPipeline();
+    const config = getCapabilityConfig('generateObservations');
+    
+    const prompt = `Analyze the organization's digital maturity data and generate strategic observations.
+
+Focus on:
+1. Key patterns and trends
+2. Areas of strength
+3. Critical gaps
+4. Quick wins
+5. Strategic priorities
+
+Output as JSON with keys: patterns, strengths, gaps, quickWins, priorities.`;
+
+    const result = await pipeline.process({
+        capability: 'generateObservations',
+        prompt,
+        userId,
+        organizationId,
+        role: config.role
+    });
+    
+    return parseJsonResponse(result.content);
+}
+
+/**
+ * Generate structured content for initiative charter
+ * @param {string} prompt - Generation prompt
+ * @param {string} contentType - Type of content to generate
+ * @param {string} userId - User ID
+ * @param {string} organizationId - Organization ID
+ * @returns {Promise<Object>} Generated content
+ */
+async function generateStructuredContent(prompt, contentType, userId, organizationId) {
+    const pipeline = new AIPipeline();
+    const config = getCapabilityConfig('generateStructuredContent');
+    
+    const result = await pipeline.process({
+        capability: 'generateStructuredContent',
+        prompt,
+        userId,
+        organizationId,
+        role: config.role
+    });
+    
+    return parseJsonResponse(result.content);
+}
+
+/**
+ * Chat with AI
+ * @param {string} message - User message
+ * @param {Array} history - Conversation history
+ * @param {string} roleName - Role to use
+ * @param {string} userId - User ID
+ * @param {string} organizationId - Organization ID
+ * @returns {Promise<string>} AI response
+ */
+async function chat(message, history = [], roleName = 'CONSULTANT', userId, organizationId) {
+    const pipeline = new AIPipeline();
+    
+    const result = await pipeline.process({
+        capability: 'chat',
+        prompt: message,
+        messages: history,
+        userId,
+        organizationId,
+        role: roleName
+    });
+    
+    return result.content;
+}
+
+/**
+ * Stream chat with AI
+ * @param {string} message - User message
+ * @param {Array} history - Conversation history
+ * @param {string} roleName - Role to use
+ * @param {string} userId - User ID
+ * @param {string} organizationId - Organization ID
+ * @returns {AsyncGenerator} Stream of chunks
+ */
+async function* streamChat(message, history = [], roleName = 'CONSULTANT', userId, organizationId) {
+    const pipeline = new AIPipeline();
+    
+    const result = await pipeline.process({
+        capability: 'chat',
+        prompt: message,
+        messages: history,
+        userId,
+        organizationId,
+        role: roleName,
+        stream: true
+    });
+    
+    // If streaming is supported, yield chunks
+    if (result && typeof result[Symbol.asyncIterator] === 'function') {
+        for await (const chunk of result) {
+            yield chunk;
+        }
+    } else {
+        yield result.content;
+    }
+}
+
+/**
+ * Parse JSON response with error handling
+ * @param {string} content - Response content
+ * @returns {Object} Parsed JSON or error object
+ */
+function parseJsonResponse(content) {
+    if (!content) return { error: 'Empty response' };
+    
+    try {
+        // Clean markdown code blocks if present
+        const cleaned = content
+            .replace(/```json\n?/g, '')
+            .replace(/```\n?/g, '')
+            .trim();
+        return JSON.parse(cleaned);
+    } catch (e) {
+        // Try to extract JSON from text
+        const jsonMatch = content.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+        if (jsonMatch) {
+            try {
+                return JSON.parse(jsonMatch[0]);
+            } catch (e2) {
+                return { rawContent: content, parseError: e.message };
+            }
+        }
+        return { rawContent: content, parseError: e.message };
+    }
+}
+
+// ============================================================================
+// SINGLETON INSTANCE
+// ============================================================================
+const aiPipeline = new AIPipeline();
+
+module.exports = { 
+    AIPipeline,
+    aiPipeline,
+    CAPABILITY_REGISTRY,
+    getCapabilityConfig,
+    FALLBACK_ROLES,
+    // Domain-specific methods for backward compatibility
+    suggestTasks,
+    validateInitiative,
+    enrichInitiative,
+    generateObservations,
+    generateStructuredContent,
+    chat,
+    streamChat,
+    parseJsonResponse
+};

@@ -6,6 +6,35 @@ Base URL: `/api/llm`
 
 Authentication: Bearer Token (JWT) for protected endpoints
 
+**Last Updated:** 30 December 2025
+
+---
+
+## Architecture Updates (v2.0)
+
+The AI system has been consolidated into a unified pipeline with capability-based routing.
+
+### Key Changes
+
+- **Unified Pipeline:** All AI operations now go through `aiPipeline.js` with 48 registered capabilities
+- **Enterprise Features:** Quality validation, PII detection, learning system integrated
+- **Multi-Provider Fallback:** Automatic failover across 12 LLM providers
+- **PMO Compliance:** All operations mapped to ISO 21500 / PMBOK 7 / PRINCE2 domains
+
+### Capability Registry
+
+| Category | Capabilities |
+|----------|-------------|
+| Diagnosis | `diagnose`, `deepDiagnose` |
+| Generation | `generateList`, `generateTable`, `generateInitiatives`, `generateObservations`, `generateFirstValuePlan` |
+| Tasks | `suggestTasks`, `generateTaskInsight`, `generateExecutionStrategy` |
+| Initiatives | `validateInitiative`, `enrichInitiative`, `generateInsights`, `generateStrategicFit` |
+| Roadmap | `buildRoadmap`, `validateRoadmap`, `explainRoadmap`, `optimizeRoadmap`, `reviewQuarter`, `rebalanceRoadmap` |
+| Chat | `chat`, `chat_simple` |
+| Reports | `generateReportSectionContent`, `parseReportEditIntent` |
+
+See `docs/AI_ENTERPRISE_AUDIT_REPORT.md` for complete capability documentation.
+
 ---
 
 ## Public Endpoints (No Auth Required)
@@ -430,5 +459,215 @@ while (true) {
 
 ---
 
-*Last updated: December 2024*
+## AI Security Endpoints
+
+### Audit Logs
+
+```http
+GET /api/ai-security/audit-logs
+Authorization: Bearer <token>
+```
+
+**Query Parameters:**
+- `page` - Page number (default: 1)
+- `limit` - Items per page (default: 20)
+- `riskLevel` - Filter by HIGH, MEDIUM, LOW
+- `flagged` - Show only flagged entries (true/false)
+- `startDate` - Filter start date (ISO format)
+- `endDate` - Filter end date (ISO format)
+- `userId` - Filter by user ID
+- `action` - Filter by action type
+
+**Response:**
+```json
+{
+  "success": true,
+  "logs": [
+    {
+      "id": "uuid",
+      "timestamp": "2024-12-30T12:00:00Z",
+      "user_id": "user-uuid",
+      "action": "ai_request",
+      "risk_level": "LOW",
+      "flagged": false,
+      "model_used": "gpt-4o",
+      "tokens_used": 1250,
+      "cost_usd": 0.0025
+    }
+  ],
+  "total": 100
+}
+```
+
+---
+
+### Security Summary
+
+```http
+GET /api/ai-security/summary
+Authorization: Bearer <token>
+```
+
+**Response:**
+```json
+{
+  "total_requests": 15000,
+  "flagged_requests": 12,
+  "high_risk": 5,
+  "medium_risk": 45,
+  "low_risk": 14950,
+  "period": "last_30_days"
+}
+```
+
+---
+
+### Export Audit Logs
+
+```http
+GET /api/ai-security/audit-logs/export
+Authorization: Bearer <token>
+```
+
+**Query Parameters:**
+- `format` - Export format (csv, json)
+- Additional filters same as audit-logs endpoint
+
+**Response:** Binary file download
+
+---
+
+## Prompt Management Endpoints
+
+### List Prompts
+
+```http
+GET /api/ai-prompts
+Authorization: Bearer <token>
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "prompts": [
+    {
+      "id": "uuid",
+      "name": "Chat Assistant",
+      "category": "chat",
+      "description": "Main chat prompt",
+      "system_prompt": "You are...",
+      "version": 3,
+      "is_active": true
+    }
+  ]
+}
+```
+
+---
+
+### Get Prompt Versions
+
+```http
+GET /api/ai-prompts/:id/versions
+Authorization: Bearer <token>
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "versions": [
+    {
+      "version": 3,
+      "changed_at": "2024-12-30T10:00:00Z",
+      "changed_by": "user-uuid",
+      "change_reason": "Updated tone"
+    }
+  ]
+}
+```
+
+---
+
+### Update Prompt
+
+```http
+PUT /api/ai-prompts/:id
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "name": "Updated name",
+  "system_prompt": "Updated prompt content...",
+  "is_active": true
+}
+```
+
+---
+
+### Test Prompt
+
+```http
+POST /api/ai-prompts/:id/test
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "variables": {
+    "user_name": "Test User"
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "result": "Generated test response..."
+}
+```
+
+---
+
+## Pipeline Capabilities API
+
+### Process Request (Internal)
+
+The unified pipeline is used internally by all AI endpoints. Direct usage:
+
+```javascript
+const { aiPipeline } = require('./services/ai/aiPipeline');
+
+const result = await aiPipeline.process({
+  capability: 'suggestTasks',
+  prompt: 'Generate tasks for digital transformation',
+  userId: 'user-uuid',
+  organizationId: 'org-uuid',
+  projectId: 'proj-uuid',
+  stream: false
+});
+```
+
+### Available Capabilities
+
+| Capability | Role | Max Tokens |
+|------------|------|------------|
+| `diagnose` | ANALYST | 2000 |
+| `generateInitiatives` | CONSULTANT | 4000 |
+| `suggestTasks` | IMPLEMENTER | 2000 |
+| `validateInitiative` | GATEKEEPER | 1500 |
+| `buildRoadmap` | STRATEGIST | 3000 |
+| `simulateEconomics` | FINANCE | 2500 |
+| `chat` | CONSULTANT | 2000 |
+
+---
+
+*Last updated: 30 December 2025*
 

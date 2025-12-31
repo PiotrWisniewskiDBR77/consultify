@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { FullSession } from '../../types';
 // import { UserTaskList } from './UserTaskList';
 import { TaskInbox } from '../MyWork/TaskInbox';
-import { NotificationCenter } from './NotificationCenter';
+import { NotificationCenter } from '../MyWork/Notifications/NotificationCenter';
 import { useAppStore } from '../../store/useAppStore';
 
 interface DashboardOverviewProps {
@@ -24,14 +24,20 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
     // Let's grab setCurrentView from store to pass down if needed, or assume the parent handles it.
     const { setCurrentView } = useAppStore();
 
-    return (
-        <div className="max-w-7xl mx-auto animate-fade-in relative z-10 w-full h-full">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full">
+    // Handler for opening task modal from notification
+    const handleOpenTaskFromNotification = useCallback((taskId: string) => {
+        if (onEditTask) {
+            onEditTask(taskId);
+        }
+    }, [onEditTask]);
 
-                {/* Left Panel: User Tasks (Action Plan) - Spans 8 columns */}
-                <div className="lg:col-span-8">
-                    {/* Replaced UserTaskList with TaskInbox */}
-                    <div className="sticky top-2 h-[calc(100vh-4rem)]">
+    return (
+        <div className="max-w-7xl mx-auto animate-fade-in relative z-10 w-full h-full flex flex-col">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 min-h-0">
+
+                {/* Left Panel: User Tasks (Action Plan) - Spans 7 columns (lepszy balans) */}
+                <div className="lg:col-span-7 flex flex-col min-h-0">
+                    <div className="flex-1 min-h-0 overflow-hidden">
                         <TaskInbox
                             onCreateTask={onCreateTask}
                             onEditTask={onEditTask || (() => { })}
@@ -39,10 +45,12 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                     </div>
                 </div>
 
-                {/* Right Panel: Notification Center - Spans 4 columns */}
-                <div className="lg:col-span-4 h-full">
-                    <div className="sticky top-2 h-[calc(100vh-4rem)]">
-                        <NotificationCenter />
+                {/* Right Panel: Notification Center - Spans 5 columns (lepszy balans) */}
+                <div className="lg:col-span-5 flex flex-col min-h-0">
+                    <div className="flex-1 min-h-0 overflow-hidden">
+                        <NotificationCenter 
+                            onOpenTaskModal={handleOpenTaskFromNotification}
+                        />
                     </div>
                 </div>
 

@@ -41,10 +41,10 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ isOpen, onClos
 
     const loadUsers = async () => {
         try {
-            // Assuming we have an endpoint for fetching users. If not, we might need to create it.
-            // Using a simple GET /users for now.
-            const data = await Api.get('/users');
-            setUsers(data.map((u: any) => ({ id: u.id, firstName: u.firstName, lastName: u.lastName })));
+            // API returns { users: [...], total: N }
+            const response = await Api.get('/users');
+            const usersArray = Array.isArray(response) ? response : (response?.users || []);
+            setUsers(usersArray.map((u: any) => ({ id: u.id, firstName: u.firstName, lastName: u.lastName })));
         } catch (error) {
             console.error('Failed to load users', error);
         }
@@ -53,7 +53,9 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ isOpen, onClos
     const loadInitiatives = async () => {
         try {
             const data = await InitiativeService.getAll();
-            setInitiatives(data.map(i => ({ id: i.id, name: i.name })));
+            // Handle both array and object response
+            const initiativesArray = Array.isArray(data) ? data : (data?.initiatives || []);
+            setInitiatives(initiativesArray.map((i: any) => ({ id: i.id, name: i.name })));
         } catch (error) {
             console.error('Failed to load initiatives', error);
         }

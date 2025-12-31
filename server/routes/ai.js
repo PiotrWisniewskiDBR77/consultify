@@ -742,5 +742,90 @@ router.get('/explanations/export', verifyToken, async (req, res) => {
     }
 });
 
+// ==================== HEALTH MONITORING ====================
+
+// GET /api/ai/health - AI System Health Status
+router.get('/health', async (req, res) => {
+    try {
+        const { healthMonitor } = require('../services/ai/healthMonitor');
+        const status = healthMonitor.getStatus();
+        
+        res.json({
+            status: status.lastCheck?.overall || 'unknown',
+            isRunning: status.isRunning,
+            lastCheck: status.lastCheck?.timestamp,
+            consecutiveFailures: status.consecutiveFailures,
+            providers: status.providers,
+            checks: status.lastCheck?.checks || []
+        });
+    } catch (err) {
+        res.status(500).json({ 
+            status: 'error', 
+            error: err.message 
+        });
+    }
+});
+
+// POST /api/ai/health/diagnose - Run Full Diagnostics
+router.post('/health/diagnose', verifyToken, async (req, res) => {
+    try {
+        const { healthMonitor } = require('../services/ai/healthMonitor');
+        const results = await healthMonitor.runDiagnostics();
+        
+        res.json(results);
+    } catch (err) {
+        res.status(500).json({ 
+            status: 'error', 
+            error: err.message 
+        });
+    }
+});
+
+// ==================== SMART SUGGESTIONS ====================
+
+// GET /api/ai/suggestions - Get context-aware suggestions
+router.get('/suggestions', verifyToken, async (req, res) => {
+    try {
+        const { projectId } = req.query;
+        const smartSuggestions = require('../services/ai/smartSuggestions');
+        
+        const suggestions = await smartSuggestions.getCachedSuggestions(
+            req.userId,
+            projectId,
+            {} // No conversation context for standalone call
+        );
+        
+        res.json({ suggestions });
+    } catch (err) {
+        console.error('[AI] Suggestions error:', err);
+        res.status(500).json({ 
+            error: err.message,
+            suggestions: [] 
+        });
+    }
+});
+
+// POST /api/ai/suggestions - Get suggestions with conversation context
+router.post('/suggestions', verifyToken, async (req, res) => {
+    try {
+        const { projectId, conversationContext } = req.body;
+        const smartSuggestions = require('../services/ai/smartSuggestions');
+        
+        const suggestions = await smartSuggestions.getSuggestions(
+            req.userId,
+            projectId,
+            conversationContext || {}
+        );
+        
+        res.json({ suggestions });
+    } catch (err) {
+        console.error('[AI] Suggestions error:', err);
+        res.status(500).json({ 
+            error: err.message,
+            suggestions: [] 
+        });
+    }
+});
+
 module.exports = router;
 

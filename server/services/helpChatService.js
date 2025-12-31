@@ -8,10 +8,16 @@
 const { OpenAI } = require('openai');
 const db = require('../database');
 
-// Initialize OpenAI
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
-});
+// Lazy initialize OpenAI client
+let openai = null;
+function getOpenAIClient() {
+    if (!openai && process.env.OPENAI_API_KEY) {
+        openai = new OpenAI({
+            apiKey: process.env.OPENAI_API_KEY
+        });
+    }
+    return openai;
+}
 
 // Help content cache
 let helpContentCache = null;
@@ -191,7 +197,11 @@ If the user's question is not related to Consultify, politely redirect them to a
     
     try {
         // Call OpenAI
-        const completion = await openai.chat.completions.create({
+        const client = getOpenAIClient();
+        if (!client) {
+            throw new Error('OpenAI client not configured - missing OPENAI_API_KEY');
+        }
+        const completion = await client.chat.completions.create({
             model: 'gpt-4-turbo-preview',
             messages,
             temperature: 0.7,

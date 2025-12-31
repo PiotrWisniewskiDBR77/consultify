@@ -51,12 +51,15 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                     <h1 className="text-2xl font-bold text-white">Dashboard</h1>
                     <p className="text-slate-400 text-sm mt-1">System overview and quick actions</p>
                 </div>
-                <button 
-                    onClick={onRefresh} 
-                    className="flex items-center gap-2 px-4 py-2 bg-navy-800 hover:bg-navy-700 rounded-lg text-sm transition-colors border border-white/10"
-                >
-                    <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Refresh
-                </button>
+                <div className="flex items-center gap-2">
+                    <InfoButton cardId="superadmin-dashboard" position="header-inline" size="md" showLabel label="Help" />
+                    <button 
+                        onClick={onRefresh} 
+                        className="flex items-center gap-2 px-4 py-2 bg-navy-800 hover:bg-navy-700 rounded-lg text-sm transition-colors border border-white/10"
+                    >
+                        <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Refresh
+                    </button>
+                </div>
             </div>
 
             {/* Quick Actions */}

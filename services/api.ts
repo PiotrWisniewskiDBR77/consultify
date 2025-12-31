@@ -2693,6 +2693,61 @@ export const Api = {
         return handleResponse(res, 'Failed to verify evidence');
     },
 
+    // --- DOCUMENTS ---
+    getProjectDocuments: async (projectId: string): Promise<any[]> => {
+        const res = await fetchWithRetry(`${API_URL}/documents/project/${projectId}`, { headers: getHeaders() });
+        return handleResponse(res, 'Failed to fetch project documents');
+    },
+
+    getUserDocuments: async (): Promise<any[]> => {
+        const res = await fetchWithRetry(`${API_URL}/documents/user`, { headers: getHeaders() });
+        return handleResponse(res, 'Failed to fetch user documents');
+    },
+
+    uploadDocumentToLibrary: async (file: File, options?: { scope?: string, projectId?: string, description?: string, tags?: string[] }): Promise<any> => {
+        const formData = new FormData();
+        formData.append('file', file);
+        if (options) {
+            if (options.scope) formData.append('scope', options.scope);
+            if (options.projectId) formData.append('projectId', options.projectId);
+            if (options.description) formData.append('description', options.description);
+            if (options.tags) formData.append('tags', JSON.stringify(options.tags));
+        }
+
+        const headers = getHeaders();
+        delete (headers as any)['Content-Type'];
+
+        const res = await fetch(`${API_URL}/documents/upload`, {
+            method: 'POST',
+            headers: headers,
+            body: formData
+        });
+        return handleResponse(res, 'Failed to upload document');
+    },
+
+    moveDocumentToProject: async (docId: string, projectId: string): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/documents/${docId}/move-to-project`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify({ projectId })
+        });
+        return handleResponse(res, 'Failed to move document');
+    },
+
+    deleteDocument: async (docId: string): Promise<void> => {
+        const res = await fetchWithRetry(`${API_URL}/documents/${docId}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        await handleResponse(res, 'Failed to delete document');
+    },
+
+    downloadDocument: async (docId: string): Promise<Blob> => {
+        const res = await fetchWithRetry(`${API_URL}/documents/${docId}/download`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to download document');
+        return res.blob();
+    },
+
     /**
      * Get evidence categories
      */
@@ -2701,6 +2756,268 @@ export const Api = {
             headers: getHeaders()
         });
         return handleResponse(res, 'Failed to load categories');
+    },
+
+    // Economics: Financial Analysis API
+    // ============================================
+
+    /**
+     * Link analysis to initiative
+     */
+    linkAnalysisToInitiative: async (analysisId: string, initiativeId: string): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/link-initiative`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ initiativeId })
+        });
+        return handleResponse(res, 'Failed to link analysis to initiative');
+    },
+
+    /**
+     * Get financial data for analysis
+     */
+    getAnalysisFinancials: async (analysisId: string): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/financials`, {
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to fetch financial data');
+    },
+
+    /**
+     * Update financial data for analysis
+     */
+    updateAnalysisFinancials: async (analysisId: string, data: {
+        costs?: Array<{ year: number; amount: number; description?: string }>;
+        benefits?: Array<{ year: number; amount: number; description?: string }>;
+        discountRate?: number;
+        investmentHorizon?: number;
+    }): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/financials`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        return handleResponse(res, 'Failed to update financial data');
+    },
+
+    /**
+     * Get benefit tracking data for analysis
+     */
+    getAnalysisBenefits: async (analysisId: string): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/benefits`, {
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to fetch benefit tracking data');
+    },
+
+    /**
+     * Update benefit tracking data for analysis
+     */
+    updateAnalysisBenefits: async (analysisId: string, data: {
+        plannedBenefits?: Array<{ period: string; amount: number }>;
+        actualBenefits?: Array<{ period: string; amount: number }>;
+        trackingPeriod?: string;
+    }): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/benefits`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        return handleResponse(res, 'Failed to update benefit tracking data');
+    },
+
+    /**
+     * Get quality assessment for analysis
+     */
+    getAnalysisQualityAssessment: async (analysisId: string): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/quality-assessment`, {
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to fetch quality assessment');
+    },
+
+    /**
+     * Calculate financial metrics (NPV, IRR, Payback, ROI)
+     */
+    calculateFinancialMetrics: async (analysisId: string): Promise<{
+        npv: number | null;
+        irr: number | null;
+        paybackPeriod: number | null;
+        roi: number | null;
+        cashFlows: Array<{ year: number; amount: number }>;
+        sensitivityAnalysis?: any;
+    }> => {
+        const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/calculate-metrics`, {
+            method: 'POST',
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to calculate financial metrics');
+    },
+
+    /**
+     * Generate business case document
+     */
+    generateBusinessCase: async (analysisId: string, options?: {
+        format?: 'pdf' | 'docx';
+        language?: 'pl' | 'en';
+        includeExecutiveSummary?: boolean;
+        includeFinancialAnalysis?: boolean;
+        includeRiskAssessment?: boolean;
+    }): Promise<{ downloadUrl: string; filename: string }> => {
+        const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/business-case`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(options || {})
+        });
+        return handleResponse(res, 'Failed to generate business case');
+    },
+
+    // ==================== CONVERSATIONS ====================
+
+    /**
+     * List user's conversations
+     */
+    getConversations: async (options?: {
+        archived?: boolean;
+        starred?: boolean;
+        projectId?: string;
+        search?: string;
+        limit?: number;
+        offset?: number;
+    }): Promise<{
+        conversations: any[];
+        total: number;
+        limit: number;
+        offset: number;
+    }> => {
+        const params = new URLSearchParams();
+        if (options?.archived !== undefined) params.append('archived', String(options.archived));
+        if (options?.starred !== undefined) params.append('starred', String(options.starred));
+        if (options?.projectId) params.append('projectId', options.projectId);
+        if (options?.search) params.append('search', options.search);
+        if (options?.limit) params.append('limit', String(options.limit));
+        if (options?.offset) params.append('offset', String(options.offset));
+
+        const res = await fetchWithRetry(`${API_URL}/conversations?${params.toString()}`, {
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to fetch conversations');
+    },
+
+    /**
+     * Create a new conversation
+     */
+    createConversation: async (data?: {
+        title?: string;
+        projectId?: string;
+        pmoContext?: Record<string, any>;
+    }): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/conversations`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(data || {})
+        });
+        return handleResponse(res, 'Failed to create conversation');
+    },
+
+    /**
+     * Get a conversation with all its messages
+     */
+    getConversation: async (id: string): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/conversations/${id}`, {
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to fetch conversation');
+    },
+
+    /**
+     * Update conversation metadata
+     */
+    updateConversation: async (id: string, updates: {
+        title?: string;
+        starred?: boolean;
+        archived?: boolean;
+        tags?: string[];
+        pmoContext?: Record<string, any>;
+    }): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/conversations/${id}`, {
+            method: 'PATCH',
+            headers: getHeaders(),
+            body: JSON.stringify(updates)
+        });
+        return handleResponse(res, 'Failed to update conversation');
+    },
+
+    /**
+     * Delete a conversation
+     */
+    deleteConversation: async (id: string): Promise<{ success: boolean; deleted: string }> => {
+        const res = await fetchWithRetry(`${API_URL}/conversations/${id}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to delete conversation');
+    },
+
+    /**
+     * Add a message to a conversation
+     */
+    addConversationMessage: async (conversationId: string, message: {
+        role: 'user' | 'ai';
+        content: string;
+        messageType?: string;
+        metadata?: Record<string, any>;
+        tokenCount?: number;
+        modelUsed?: string;
+    }): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/conversations/${conversationId}/messages`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(message)
+        });
+        return handleResponse(res, 'Failed to add message');
+    },
+
+    /**
+     * Generate title for a conversation
+     */
+    generateConversationTitle: async (conversationId: string): Promise<{ title?: string; skipped?: boolean; reason?: string }> => {
+        const res = await fetchWithRetry(`${API_URL}/conversations/${conversationId}/title/generate`, {
+            method: 'POST',
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to generate title');
+    },
+
+    /**
+     * Bulk operations on conversations
+     */
+    bulkConversationOperation: async (ids: string[], action: 'archive' | 'unarchive' | 'delete' | 'star' | 'unstar'): Promise<{
+        success: boolean;
+        affected: number;
+        ids: string[];
+    }> => {
+        const res = await fetchWithRetry(`${API_URL}/conversations/bulk`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ ids, action })
+        });
+        return handleResponse(res, 'Failed to perform bulk operation');
+    },
+
+    /**
+     * Migrate conversations from localStorage
+     */
+    migrateConversations: async (conversations: Array<{
+        projectId?: string;
+        messages: Array<{ role: string; content: string; timestamp?: Date }>;
+    }>): Promise<{ success: boolean; migrated: Array<{ conversationId: string; messageCount: number }> }> => {
+        const res = await fetchWithRetry(`${API_URL}/conversations/migrate`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ conversations })
+        });
+        return handleResponse(res, 'Failed to migrate conversations');
     }
 };
 

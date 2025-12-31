@@ -45,10 +45,10 @@ export const BottomNavigation: React.FC = () => {
 
     const navItems: NavItem[] = [
         {
-            id: 'dashboard',
-            label: t('sidebar.dashboard', 'Dashboard'),
+            id: 'mywork',
+            label: t('myWork.title', 'My Work'),
             icon: <Home size={22} />,
-            view: AppView.DASHBOARD_OVERVIEW,
+            view: AppView.MY_WORK,
         },
         {
             id: 'assessment',
@@ -101,9 +101,10 @@ export const BottomNavigation: React.FC = () => {
             return currentView === AppView.FULL_STEP2_INITIATIVES;
         }
         
-        // Check for dashboard views
-        if (item.id === 'dashboard') {
-            return currentView === AppView.DASHBOARD_OVERVIEW || 
+        // Check for MyWork views (unified home)
+        if (item.id === 'mywork') {
+            return currentView === AppView.MY_WORK || 
+                   currentView === AppView.DASHBOARD_OVERVIEW || 
                    currentView === AppView.USER_DASHBOARD ||
                    currentView === AppView.DASHBOARD;
         }

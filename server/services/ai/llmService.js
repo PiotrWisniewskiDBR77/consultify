@@ -3,10 +3,11 @@
  * Unified wrapper for model providers using the 'ai' package
  * 
  * Features:
- * - Multi-provider support (OpenAI, Google, DeepSeek, Ollama)
+ * - Multi-provider support (OpenAI, Google, DeepSeek, Ollama, and more)
  * - Circuit breaker for fault tolerance
  * - Retry with exponential backoff
  * - Structured outputs with Zod schemas
+ * - Integration with centralized LLMConfigService
  */
 
 const { generateText, streamText, generateObject, tool, jsonSchema } = require('ai');
@@ -16,8 +17,96 @@ const { z } = require('zod');
 const circuitBreaker = require('./circuitBreaker');
 const { aiLogger } = require('./logger');
 
-// Provider Factory
-function getProvider(modelConfig) {
+// Lazy-load LLMConfigService to avoid circular dependencies
+let _llmConfigService = null;
+function getLLMConfigService() {
+    if (!_llmConfigService) {
+        try {
+            const { llmConfigService } = require('./llmConfigService');
+            _llmConfigService = llmConfigService;
+        } catch (e) {
+            aiLogger.warn('LLMService', `LLMConfigService not available: ${e.message}`);
+        }
+    }
+    return _llmConfigService;
+}
+
+/**
+ * Get API key for a provider
+ * Tries: 1) passed apiKey, 2) LLMConfigService, 3) environment variable
+ */
+async function getApiKey(providerName, passedKey) {
+    // If key already passed, use it
+    if (passedKey) return passedKey;
+
+    // Try LLMConfigService
+    const configService = getLLMConfigService();
+    if (configService) {
+        const config = await configService.getProviderConfig(providerName);
+        if (config && config.api_key) {
+            return config.api_key;
+        }
+    }
+
+    // Fallback to environment variables
+    const envKeys = {
+        'openai': process.env.OPENAI_API_KEY,
+        'google': process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY,
+        'gemini': process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY,
+        'deepseek': process.env.DEEPSEEK_API_KEY,
+        'anthropic': process.env.ANTHROPIC_API_KEY,
+        'nvidia': process.env.NVIDIA_API_KEY,
+        'cohere': process.env.COHERE_API_KEY,
+        'qwen': process.env.ALIBABA_API_KEY || process.env.QWEN_API_KEY,
+        'zai': process.env.ZAI_API_KEY
+    };
+
+    return envKeys[providerName.toLowerCase()] || null;
+}
+
+/**
+ * Get endpoint for a provider
+ * Tries: 1) passed endpoint, 2) LLMConfigService, 3) default
+ */
+async function getEndpoint(providerName, passedEndpoint) {
+    if (passedEndpoint) return passedEndpoint;
+
+    // Try LLMConfigService
+    const configService = getLLMConfigService();
+    if (configService) {
+        const config = await configService.getProviderConfig(providerName);
+        if (config && config.endpoint) {
+            return config.endpoint;
+        }
+    }
+
+    // Fallback to defaults
+    const defaultEndpoints = {
+        'deepseek': 'https://api.deepseek.com',
+        'qwen': 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
+        'nvidia': 'https://integrate.api.nvidia.com/v1',
+        'zai': 'https://api.z.ai/api/paas/v4',
+        'ollama': 'http://localhost:11434/v1'
+    };
+
+    return defaultEndpoints[providerName.toLowerCase()] || null;
+}
+
+// Provider Factory - now async to support LLMConfigService
+async function getProviderAsync(modelConfig) {
+    const { provider: providerName } = modelConfig;
+    const apiKey = await getApiKey(providerName, modelConfig.apiKey);
+    const endpoint = await getEndpoint(providerName, modelConfig.endpoint);
+
+    return getProviderSync({ 
+        ...modelConfig, 
+        apiKey, 
+        endpoint 
+    });
+}
+
+// Sync version for backward compatibility
+function getProviderSync(modelConfig) {
     const { provider: providerName, apiKey, endpoint } = modelConfig;
 
     switch (providerName.toLowerCase()) {
@@ -28,16 +117,18 @@ function getProvider(modelConfig) {
         case 'google':
         case 'gemini':
             return createGoogleGenerativeAI({
-                apiKey: apiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY
+                apiKey: apiKey || process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY
             });
         case 'deepseek':
         case 'z_ai':
+        case 'zai':
         case 'qwen':
         case 'mistral':
+        case 'nvidia':
             // These providers often use OpenAI-compatible APIs
             return createOpenAI({
                 apiKey: apiKey,
-                baseURL: endpoint || (providerName === 'deepseek' ? 'https://api.deepseek.com' : undefined)
+                baseURL: endpoint || getDefaultEndpoint(providerName)
             });
         case 'ollama':
             return createOpenAI({
@@ -50,6 +141,23 @@ function getProvider(modelConfig) {
                 apiKey: apiKey || process.env.OPENAI_API_KEY
             });
     }
+}
+
+// Helper for default endpoints
+function getDefaultEndpoint(providerName) {
+    const endpoints = {
+        'deepseek': 'https://api.deepseek.com',
+        'qwen': 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
+        'nvidia': 'https://integrate.api.nvidia.com/v1',
+        'zai': 'https://api.z.ai/api/paas/v4',
+        'z_ai': 'https://api.z.ai/api/paas/v4'
+    };
+    return endpoints[providerName.toLowerCase()] || undefined;
+}
+
+// Backward compatible sync wrapper
+function getProvider(modelConfig) {
+    return getProviderSync(modelConfig);
 }
 
 // Pre-defined Zod Schemas for Structured Outputs

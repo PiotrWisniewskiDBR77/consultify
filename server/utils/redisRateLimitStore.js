@@ -27,13 +27,18 @@ class RedisStore {
             }
 
             const hits = await client.incr(rKey);
-            if (hits === 1) {
+            
+            // CRITICAL FIX: express-rate-limit v8 requires positive integer
+            // Redis incr returns 0 on fresh keys or null on errors
+            const safeHits = (typeof hits === 'number' && hits > 0) ? hits : 1;
+            
+            if (safeHits === 1) {
                 await client.expire(rKey, Math.ceil(this.windowMs / 1000));
             }
 
             const resetTime = new Date(Date.now() + this.windowMs); // Approximate
             return {
-                totalHits: hits,
+                totalHits: safeHits,
                 resetTime
             };
         } catch (error) {
@@ -67,6 +72,43 @@ class RedisStore {
             }
         } catch (error) {
             // Ignore
+        }
+    }
+
+    /**
+     * Get current hit count for a key (required by express-rate-limit v8)
+     * @param {string} key - The rate limit key
+     * @returns {Promise<{totalHits: number, resetTime: Date} | undefined>}
+     */
+    async get(key) {
+        const rKey = this.prefix + key;
+        try {
+            const client = getRedisClient();
+
+            if (!isRedisConnected() || !client) {
+                // Fail open - return undefined to indicate no stored state
+                return undefined;
+            }
+
+            const hits = await client.get(rKey);
+            
+            // If key doesn't exist, return undefined (express-rate-limit handles this)
+            if (hits === null || hits === undefined) {
+                return undefined;
+            }
+
+            const parsedHits = parseInt(hits, 10);
+            // CRITICAL: Must return positive integer or undefined
+            const safeHits = (parsedHits > 0) ? parsedHits : 1;
+
+            return {
+                totalHits: safeHits,
+                resetTime: new Date(Date.now() + this.windowMs)
+            };
+        } catch (error) {
+            console.error('[RateLimit] Redis get error:', error);
+            // Fail open - return undefined to let express-rate-limit use defaults
+            return undefined;
         }
     }
 }

@@ -3,10 +3,15 @@
  * 
  * Generates complete initiative charters from assessment gaps, templates, and organizational context.
  * Fills 80%+ of initiative card fields automatically using AI.
+ * 
+ * @todo MIGRATION: Uses legacy AIService - migrate to aiPipeline.generateStructuredContent()
+ * @see server/services/ai/aiPipeline.js for new implementation
+ * @see docs/AI_ENTERPRISE_AUDIT_REPORT.md for migration status
  */
 
 const { v4: uuidv4 } = require('uuid');
 const db = require('../database');
+// TODO: Migrate to: const { generateStructuredContent } = require('./ai/aiPipeline');
 const AIService = require('./aiService');
 const InitiativeTemplateService = require('./initiativeTemplateService');
 

@@ -13,7 +13,6 @@ import {
   ChevronRight,
   Layers,
   BookOpen,
-  Box,
   CheckCircle2,
   Lock,
   PanelLeftClose,
@@ -216,10 +215,16 @@ export const Sidebar: React.FC = () => {
   // Menu Definition
   const menuStructure: MenuItem[] = [
     {
-      id: 'DASHBOARD',
-      label: t('sidebar.dashboard'),
-      icon: <LayoutDashboard size={20} />,
-      viewId: AppView.DASHBOARD_OVERVIEW,
+      id: 'AI_CHAT',
+      label: t('sidebar.aiChat', 'AI Chat'),
+      icon: <MessageSquare size={20} />,
+      viewId: AppView.AI_CHAT,
+    },
+    {
+      id: 'MY_WORK',
+      label: t('myWork.title', 'My Work'),
+      icon: <Briefcase size={20} />,
+      viewId: AppView.MY_WORK,
     },
     // Phase G: Ecosystem Affiliate Dashboard
     ...(currentUser?.journeyState === 'ECOSYSTEM_NODE' ? [{
@@ -228,13 +233,6 @@ export const Sidebar: React.FC = () => {
       icon: <TrendingUp size={20} />,
       viewId: AppView.AFFILIATE_DASHBOARD,
     }] : []),
-
-    {
-      id: 'MY_WORK',
-      label: t('myWork.title', 'My Work'),
-      icon: <Briefcase size={20} />,
-      viewId: AppView.MY_WORK,
-    },
     {
       id: 'MODULE_2',
       label: t('sidebar.assessment'),
@@ -273,21 +271,13 @@ export const Sidebar: React.FC = () => {
         },
       ]
     },
-    // Initiative Management - Review & Approval
+    // Inicjatywy - Unified Initiative Management + Roadmap
     {
-      id: 'MODULE_INITIATIVES',
-      label: t('sidebar.initiativeManagement'),
+      id: 'MODULE_PORTFOLIO',
+      label: t('sidebar.portfolioRoadmap', 'Initiatives'),
       icon: <Lightbulb size={20} />,
-      viewId: AppView.INITIATIVE_MANAGEMENT,
+      viewId: AppView.PORTFOLIO_ROADMAP,
       requiresView: AppView.FULL_STEP1_ASSESSMENT
-    },
-    // Mapa drogowa - standalone
-    {
-      id: 'MODULE_3_ROADMAP',
-      label: t('sidebar.module3_2'),
-      icon: <Calendar size={20} />,
-      viewId: AppView.FULL_STEP3_ROADMAP,
-      requiresView: AppView.INITIATIVE_MANAGEMENT
     },
     // Wdrożenie (Implementation)
     {
@@ -295,7 +285,7 @@ export const Sidebar: React.FC = () => {
       label: t('sidebar.implementation'),
       icon: <Rocket size={20} />,
       viewId: AppView.IMPLEMENTATION,
-      requiresView: AppView.FULL_STEP3_ROADMAP
+      requiresView: AppView.PORTFOLIO_ROADMAP
     },
     // Realizacja / Benefits Tracking
     {
@@ -306,18 +296,11 @@ export const Sidebar: React.FC = () => {
       requiresView: AppView.IMPLEMENTATION
     },
     {
-      id: 'MODULE_6',
-      label: t('sidebar.module6'),
-      icon: <Box size={20} />,
-      viewId: AppView.FULL_STEP4_ROI,
-      requiresView: AppView.FULL_STEP2_INITIATIVES
-    },
-    {
       id: 'MODULE_ECONOMICS',
       label: t('sidebar.economics'),
       icon: <Calculator size={20} />,
       viewId: AppView.ECONOMICS,
-      requiresView: AppView.DASHBOARD
+      requiresView: AppView.MY_WORK
     },
     // Raporty - simplified to single item
     {
@@ -333,8 +316,8 @@ export const Sidebar: React.FC = () => {
       label: t('sidebar.tools'),
       icon: <Wrench size={20} />,
       subItems: [
-        { id: 'TOOLS_AI_ADVISOR', label: t('sidebar.aiAdvisor', 'AI Advisor'), viewId: AppView.AI_ACTION_PROPOSALS, requiresView: AppView.DASHBOARD, icon: <Sparkles size={16} /> },
-        { id: 'TOOLS_AUTOMATION', label: t('sidebar.automationScheme', 'Schemat automatyzacji'), viewId: AppView.KPI_OKR_DASHBOARD, requiresView: AppView.DASHBOARD, icon: <Workflow size={16} /> },
+        { id: 'TOOLS_AI_ADVISOR', label: t('sidebar.aiAdvisor', 'AI Advisor'), viewId: AppView.AI_ACTION_PROPOSALS, requiresView: AppView.MY_WORK, icon: <Sparkles size={16} /> },
+        { id: 'TOOLS_AUTOMATION', label: t('sidebar.automationScheme', 'Schemat automatyzacji'), viewId: AppView.KPI_OKR_DASHBOARD, requiresView: AppView.MY_WORK, icon: <Workflow size={16} /> },
       ]
     }
   ];
@@ -445,9 +428,9 @@ export const Sidebar: React.FC = () => {
       const viewNames: Record<string, string> = {
         [AppView.FULL_STEP1_ASSESSMENT]: t('sidebar.assessmentDRD'),
         [AppView.FULL_STEP2_INITIATIVES]: t('sidebar.module3_1'),
-        [AppView.FULL_STEP3_ROADMAP]: t('sidebar.module3_2'),
+        [AppView.PORTFOLIO_ROADMAP]: t('sidebar.portfolioRoadmap', 'Portfolio & Roadmap'),
         [AppView.FULL_STEP5_EXECUTION]: t('sidebar.realization'),
-        [AppView.DASHBOARD]: t('sidebar.dashboard')
+        [AppView.MY_WORK]: t('myWork.title', 'My Work')
       };
       return viewNames[view] || t('common.previousStep');
     };

@@ -9,7 +9,11 @@ import { AIRoleBadge } from './AIRoleBadge';
 import { LLMSelector } from '../LLMSelector';
 import { AIUsageIndicator } from '../AIUsageIndicator';
 
-export const ChatOverlay: React.FC = () => {
+interface ChatOverlayProps {
+    hideTrigger?: boolean;
+}
+
+export const ChatOverlay: React.FC<ChatOverlayProps> = ({ hideTrigger = false }) => {
     const { isChatOpen, toggleChat, screenContext, pmoContext, globalContext } = useAIContext();
     const {
         activeChatMessages,
@@ -94,6 +98,8 @@ export const ChatOverlay: React.FC = () => {
     };
 
     if (!isChatOpen) {
+        if (hideTrigger) return null;
+
         return (
             <button
                 data-tour="ai-panel"

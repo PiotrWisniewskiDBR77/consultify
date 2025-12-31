@@ -1,204 +1,321 @@
 /**
- * ProactiveNudgeDisplay Component
+ * Proactive Nudge Display Component
  * 
- * Displays AI proactive suggestions as floating notifications.
+ * Displays AI-driven proactive suggestions and nudges to users.
+ * Features:
+ * - Toast-style notifications
+ * - Contextual suggestions based on user activity
+ * - Dismissal tracking with feedback
+ * - Priority-based display queue
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
-    Sparkles, 
+    Lightbulb, 
     X, 
-    ThumbsUp, 
-    Clock, 
-    BellOff,
-    MessageCircle,
-    Lightbulb,
-    TrendingUp,
+    ArrowRight, 
+    Sparkles, 
+    TrendingUp, 
     AlertCircle,
-    FileText
+    CheckCircle,
+    Clock,
+    ThumbsUp,
+    ThumbsDown,
+    ChevronUp,
+    ChevronDown
 } from 'lucide-react';
-import { useProactiveNudges, Nudge } from '../../hooks/useProactiveNudges';
-import { useAIContext } from '../../contexts/AIContext';
+import api from '../../services/api';
+import { useTranslation } from 'react-i18next';
+
+interface Nudge {
+    id: string;
+    type: 'SUGGESTION' | 'REMINDER' | 'INSIGHT' | 'TIP' | 'WARNING';
+    title: string;
+    message: string;
+    actionLabel?: string;
+    actionUrl?: string;
+    priority: 'LOW' | 'MEDIUM' | 'HIGH';
+    context?: {
+        screen?: string;
+        projectId?: string;
+        initiativeId?: string;
+    };
+    expiresAt?: string;
+    dismissible: boolean;
+}
 
 interface ProactiveNudgeDisplayProps {
-    enabled?: boolean;
+    projectId?: string;
+    screen?: string;
+    maxVisible?: number;
     position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
 }
 
-const CAPABILITY_ICONS: Record<string, React.ElementType> = {
-    assessment_help: Lightbulb,
-    assessment_suggestion: TrendingUp,
-    report_generation: FileText,
-    initiative_suggestion: Sparkles,
-    task_advisor: MessageCircle,
-    improvement_recommendations: AlertCircle,
-    onboarding: Sparkles
+const nudgeStyles = {
+    SUGGESTION: {
+        icon: Lightbulb,
+        bgColor: 'bg-blue-50 dark:bg-blue-900/20',
+        borderColor: 'border-blue-200 dark:border-blue-800',
+        iconColor: 'text-blue-500',
+        titleColor: 'text-blue-900 dark:text-blue-100'
+    },
+    REMINDER: {
+        icon: Clock,
+        bgColor: 'bg-yellow-50 dark:bg-yellow-900/20',
+        borderColor: 'border-yellow-200 dark:border-yellow-800',
+        iconColor: 'text-yellow-500',
+        titleColor: 'text-yellow-900 dark:text-yellow-100'
+    },
+    INSIGHT: {
+        icon: TrendingUp,
+        bgColor: 'bg-purple-50 dark:bg-purple-900/20',
+        borderColor: 'border-purple-200 dark:border-purple-800',
+        iconColor: 'text-purple-500',
+        titleColor: 'text-purple-900 dark:text-purple-100'
+    },
+    TIP: {
+        icon: Sparkles,
+        bgColor: 'bg-green-50 dark:bg-green-900/20',
+        borderColor: 'border-green-200 dark:border-green-800',
+        iconColor: 'text-green-500',
+        titleColor: 'text-green-900 dark:text-green-100'
+    },
+    WARNING: {
+        icon: AlertCircle,
+        bgColor: 'bg-red-50 dark:bg-red-900/20',
+        borderColor: 'border-red-200 dark:border-red-800',
+        iconColor: 'text-red-500',
+        titleColor: 'text-red-900 dark:text-red-100'
+    }
 };
 
-const CAPABILITY_COLORS: Record<string, string> = {
-    assessment_help: 'from-blue-500 to-indigo-600',
-    assessment_suggestion: 'from-purple-500 to-pink-600',
-    report_generation: 'from-green-500 to-teal-600',
-    initiative_suggestion: 'from-orange-500 to-red-600',
-    task_advisor: 'from-cyan-500 to-blue-600',
-    improvement_recommendations: 'from-yellow-500 to-orange-600',
-    onboarding: 'from-indigo-500 to-purple-600'
+const positionStyles = {
+    'bottom-right': 'bottom-4 right-4',
+    'bottom-left': 'bottom-4 left-4',
+    'top-right': 'top-4 right-4',
+    'top-left': 'top-4 left-4'
 };
 
-const POSITION_CLASSES = {
-    'bottom-right': 'bottom-6 right-6',
-    'bottom-left': 'bottom-6 left-6',
-    'top-right': 'top-6 right-6',
-    'top-left': 'top-6 left-6'
-};
-
-export function ProactiveNudgeDisplay({ 
-    enabled = true,
+export function ProactiveNudgeDisplay({
+    projectId,
+    screen,
+    maxVisible = 3,
     position = 'bottom-right'
 }: ProactiveNudgeDisplayProps) {
-    const { openChat } = useAIContext();
-    const { 
-        currentNudge, 
-        pendingCount,
-        dismissNudge, 
-        actOnNudge,
-        clearNudge 
-    } = useProactiveNudges({ enabled });
+    const { t } = useTranslation();
+    const [nudges, setNudges] = useState<Nudge[]>([]);
+    const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
+    const [collapsed, setCollapsed] = useState(false);
+    const [feedbackGiven, setFeedbackGiven] = useState<Record<string, 'positive' | 'negative'>>({});
 
-    const [isVisible, setIsVisible] = useState(false);
-    const [isExiting, setIsExiting] = useState(false);
+    const fetchNudges = useCallback(async () => {
+        try {
+            const params = new URLSearchParams();
+            if (projectId) params.append('projectId', projectId);
+            if (screen) params.append('screen', screen);
+
+            const response = await api.get(`/ai/proactive-nudges?${params.toString()}`);
+            
+            if (response.data.success) {
+                const newNudges = (response.data.nudges || []).filter(
+                    (n: Nudge) => !dismissedIds.has(n.id)
+                );
+                setNudges(newNudges);
+            }
+        } catch (err) {
+            console.error('Failed to fetch nudges:', err);
+        }
+    }, [projectId, screen, dismissedIds]);
 
     useEffect(() => {
-        if (currentNudge) {
-            // Small delay before showing for smooth animation
-            const timer = setTimeout(() => setIsVisible(true), 100);
-            return () => clearTimeout(timer);
-        } else {
-            setIsVisible(false);
+        fetchNudges();
+        
+        // Refresh nudges every 5 minutes
+        const interval = setInterval(fetchNudges, 5 * 60 * 1000);
+        return () => clearInterval(interval);
+    }, [fetchNudges]);
+
+    const handleDismiss = async (nudgeId: string, feedback?: 'positive' | 'negative') => {
+        setDismissedIds(prev => new Set(prev).add(nudgeId));
+        setNudges(prev => prev.filter(n => n.id !== nudgeId));
+
+        try {
+            await api.post(`/ai/proactive-nudges/${nudgeId}/dismiss`, {
+                feedback,
+                dismissedAt: new Date().toISOString()
+            });
+        } catch (err) {
+            console.error('Failed to record dismissal:', err);
         }
-    }, [currentNudge]);
-
-    const handleDismiss = async () => {
-        if (!currentNudge) return;
-        setIsExiting(true);
-        await new Promise(r => setTimeout(r, 300));
-        await dismissNudge(currentNudge.nudgeId);
-        setIsExiting(false);
     };
 
-    const handleNeverShow = async () => {
-        if (!currentNudge) return;
-        setIsExiting(true);
-        await new Promise(r => setTimeout(r, 300));
-        // This will be stored to not show this type again
-        await dismissNudge(currentNudge.nudgeId);
-        setIsExiting(false);
+    const handleFeedback = (nudgeId: string, feedback: 'positive' | 'negative') => {
+        setFeedbackGiven(prev => ({ ...prev, [nudgeId]: feedback }));
+        // Auto-dismiss after feedback with a small delay
+        setTimeout(() => handleDismiss(nudgeId, feedback), 500);
     };
 
-    const handleAccept = async () => {
-        if (!currentNudge) return;
-        
-        // Open chat with the nudge context
-        openChat(currentNudge.message);
-        
-        // Track that user acted on this nudge
-        await actOnNudge(currentNudge.nudgeId, 'accepted');
-        clearNudge();
+    const handleAction = async (nudge: Nudge) => {
+        try {
+            await api.post(`/ai/proactive-nudges/${nudge.id}/action`, {
+                actionTaken: true,
+                actionAt: new Date().toISOString()
+            });
+        } catch (err) {
+            console.error('Failed to record action:', err);
+        }
+
+        // Navigate to action URL
+        if (nudge.actionUrl) {
+            window.location.href = nudge.actionUrl;
+        }
     };
 
-    if (!enabled || !currentNudge) {
+    const visibleNudges = nudges.slice(0, maxVisible);
+    const hiddenCount = nudges.length - maxVisible;
+
+    if (nudges.length === 0) {
         return null;
     }
 
-    const Icon = CAPABILITY_ICONS[currentNudge.capability] || Sparkles;
-    const gradientClass = CAPABILITY_COLORS[currentNudge.capability] || 'from-indigo-500 to-purple-600';
-
     return (
-        <div 
-            className={`fixed ${POSITION_CLASSES[position]} z-50 transition-all duration-300 ${
-                isVisible && !isExiting
-                    ? 'opacity-100 translate-y-0'
-                    : 'opacity-0 translate-y-4'
-            }`}
-        >
-            <div className="relative max-w-sm">
-                {/* Glow effect */}
-                <div className={`absolute inset-0 bg-gradient-to-r ${gradientClass} blur-xl opacity-30 rounded-2xl`} />
-                
-                {/* Main card */}
-                <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-                    {/* Header with gradient */}
-                    <div className={`bg-gradient-to-r ${gradientClass} p-4`}>
-                        <div className="flex items-start justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                                    <Icon className="w-5 h-5 text-white" />
+        <div className={`fixed ${positionStyles[position]} z-50 flex flex-col gap-3 max-w-sm`}>
+            {/* Collapse/Expand button when there are many nudges */}
+            {nudges.length > 1 && (
+                <button
+                    onClick={() => setCollapsed(!collapsed)}
+                    className="self-end flex items-center gap-1 px-3 py-1 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-full text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors shadow-lg"
+                >
+                    {collapsed ? (
+                        <>
+                            <ChevronUp size={14} />
+                            Show {nudges.length} suggestions
+                        </>
+                    ) : (
+                        <>
+                            <ChevronDown size={14} />
+                            Collapse
+                        </>
+                    )}
+                </button>
+            )}
+
+            {!collapsed && (
+                <>
+                    {visibleNudges.map((nudge, index) => {
+                        const style = nudgeStyles[nudge.type];
+                        const Icon = style.icon;
+                        const hasFeedback = feedbackGiven[nudge.id];
+
+                        return (
+                            <div
+                                key={nudge.id}
+                                className={`
+                                    ${style.bgColor} ${style.borderColor}
+                                    border rounded-xl shadow-lg p-4 
+                                    animate-slideIn
+                                    transition-all duration-300
+                                `}
+                                style={{
+                                    animationDelay: `${index * 100}ms`
+                                }}
+                            >
+                                {/* Header */}
+                                <div className="flex items-start gap-3">
+                                    <div className={`p-2 rounded-lg ${style.bgColor}`}>
+                                        <Icon size={18} className={style.iconColor} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center justify-between">
+                                            <h4 className={`font-medium ${style.titleColor} text-sm`}>
+                                                {nudge.title}
+                                            </h4>
+                                            {nudge.dismissible && (
+                                                <button
+                                                    onClick={() => handleDismiss(nudge.id)}
+                                                    className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg transition-colors"
+                                                >
+                                                    <X size={16} />
+                                                </button>
+                                            )}
+                                        </div>
+                                        <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
+                                            {nudge.message}
+                                        </p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="text-white font-medium text-sm">
-                                        Sugestia AI
-                                    </p>
-                                    <p className="text-white/70 text-xs">
-                                        Asystent Consultify
-                                    </p>
+
+                                {/* Actions */}
+                                <div className="flex items-center justify-between mt-3 pt-3 border-t border-black/5 dark:border-white/5">
+                                    {/* Feedback */}
+                                    <div className="flex items-center gap-1">
+                                        {hasFeedback ? (
+                                            <span className="text-xs text-slate-500 flex items-center gap-1">
+                                                <CheckCircle size={14} className="text-green-500" />
+                                                Thanks!
+                                            </span>
+                                        ) : (
+                                            <>
+                                                <button
+                                                    onClick={() => handleFeedback(nudge.id, 'positive')}
+                                                    className="p-1.5 text-slate-400 hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                                                    title="Helpful"
+                                                >
+                                                    <ThumbsUp size={14} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleFeedback(nudge.id, 'negative')}
+                                                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                                    title="Not helpful"
+                                                >
+                                                    <ThumbsDown size={14} />
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
+
+                                    {/* Action Button */}
+                                    {nudge.actionLabel && nudge.actionUrl && (
+                                        <button
+                                            onClick={() => handleAction(nudge)}
+                                            className="flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                                        >
+                                            {nudge.actionLabel}
+                                            <ArrowRight size={12} />
+                                        </button>
+                                    )}
                                 </div>
                             </div>
-                            <button
-                                onClick={handleDismiss}
-                                className="text-white/70 hover:text-white transition-colors"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-                    </div>
+                        );
+                    })}
 
-                    {/* Message */}
-                    <div className="p-4">
-                        <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
-                            {currentNudge.message}
-                        </p>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="px-4 pb-4 flex items-center gap-2">
-                        <button
-                            onClick={handleAccept}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 bg-gradient-to-r ${gradientClass} text-white rounded-xl font-medium text-sm hover:opacity-90 transition-opacity`}
-                        >
-                            <ThumbsUp className="w-4 h-4" />
-                            Tak, pomóż
-                        </button>
-                        <button
-                            onClick={handleDismiss}
-                            className="flex items-center justify-center gap-2 py-2.5 px-4 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-xl font-medium text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                        >
-                            <Clock className="w-4 h-4" />
-                            Nie teraz
-                        </button>
-                    </div>
-
-                    {/* Don't show again link */}
-                    <div className="px-4 pb-3 text-center">
-                        <button
-                            onClick={handleNeverShow}
-                            className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 inline-flex items-center gap-1"
-                        >
-                            <BellOff className="w-3 h-3" />
-                            Nie pokazuj więcej
-                        </button>
-                    </div>
-
-                    {/* Pending count indicator */}
-                    {pendingCount > 1 && (
-                        <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-lg">
-                            {pendingCount}
+                    {/* Hidden count indicator */}
+                    {hiddenCount > 0 && (
+                        <div className="text-center text-xs text-slate-500 dark:text-slate-400">
+                            +{hiddenCount} more suggestions
                         </div>
                     )}
-                </div>
-            </div>
+                </>
+            )}
+
+            {/* CSS for slide animation */}
+            <style>{`
+                @keyframes slideIn {
+                    from {
+                        opacity: 0;
+                        transform: translateY(20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+                .animate-slideIn {
+                    animation: slideIn 0.3s ease-out forwards;
+                }
+            `}</style>
         </div>
     );
 }
 
 export default ProactiveNudgeDisplay;
-

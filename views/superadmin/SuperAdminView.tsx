@@ -39,6 +39,7 @@ import { ComplianceCenterView } from './ComplianceCenterView';
 import { InvoiceCenterView } from './InvoiceCenterView';
 import { BulkOperationsView } from '../admin/BulkOperationsView';
 import { PlaybookTemplatesListView } from './PlaybookTemplatesListView';
+import { SuperAdminFeedbackView } from './SuperAdminFeedbackView';
 
 interface SuperAdminViewProps {
     currentUser: User;
@@ -261,6 +262,8 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                 return <div className="p-8 overflow-y-auto h-full"><InvoiceCenterView /></div>;
             case AppView.SUPERADMIN_BULK_OPERATIONS:
                 return <div className="p-8 overflow-y-auto h-full"><BulkOperationsView /></div>;
+            case AppView.SUPERADMIN_FEEDBACK:
+                return <div className="p-8 overflow-y-auto h-full"><SuperAdminFeedbackView /></div>;
             default:
                 // Fallback for any other view - show dashboard
                 return (

@@ -9,6 +9,7 @@ const InitiativeService = require('../services/initiativeService');
 const cacheHelper = require('../utils/cacheHelper');
 const TaskAssignmentService = require('../services/taskAssignmentService');
 const ProjectMemberService = require('../services/projectMemberService');
+const DecisionTriggerService = require('../services/decisionTriggerService');
 
 router.use(verifyToken);
 
@@ -493,9 +494,38 @@ router.put('/:id', async (req, res) => {
 
             // 2. Status Change
             if (updates.status && updates.status !== currentTask.status) {
-                // Blocked
+                // Blocked - also trigger decision creation
                 if (updates.status === 'blocked') {
                     notify('task_blocked', 'Task Blocked', `Task "${currentTask.title}" is now BLOCKED. Reason: ${updates.blockedReason || 'No reason provided'}`);
+                    
+                    // Auto-create unblock decision
+                    try {
+                        const taskData = {
+                            id: currentTask.id,
+                            title: currentTask.title,
+                            project_id: currentTask.project_id,
+                            assignee_id: currentTask.assignee_id
+                        };
+                        
+                        DecisionTriggerService.safeTrigger(
+                            () => DecisionTriggerService.onTaskBlocked(
+                                taskData, 
+                                updates.blockedReason || 'Not specified', 
+                                userId
+                            ),
+                            'TASK',
+                            currentTask.id,
+                            'TASK_UNBLOCK'
+                        ).then(decision => {
+                            if (decision && decision.id) {
+                                console.log(`[Tasks] Auto-created unblock decision: ${decision.id}`);
+                            }
+                        }).catch(err => {
+                            console.warn('[Tasks] Failed to create unblock decision:', err.message);
+                        });
+                    } catch (triggerErr) {
+                        console.warn('[Tasks] Decision trigger error:', triggerErr.message);
+                    }
                 }
                 // Done
                 else if (updates.status === 'done') {

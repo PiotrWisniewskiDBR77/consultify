@@ -238,14 +238,17 @@ export const OrganizationsView: React.FC = () => {
                     </h1>
                     <p className="text-slate-400 mt-1 text-sm">Manage organizations, subscriptions, and access requests</p>
                 </div>
-                <button
-                    onClick={fetchData}
-                    disabled={loading}
-                    className="flex items-center gap-2 px-4 py-2 bg-navy-800 hover:bg-navy-700 text-white rounded-lg text-sm transition-colors border border-white/10"
-                >
-                    <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-                    Refresh
-                </button>
+                <div className="flex items-center gap-2">
+                    <InfoButton cardId="superadmin-organizations" position="header-inline" size="md" showLabel label="Help" />
+                    <button
+                        onClick={fetchData}
+                        disabled={loading}
+                        className="flex items-center gap-2 px-4 py-2 bg-navy-800 hover:bg-navy-700 text-white rounded-lg text-sm transition-colors border border-white/10"
+                    >
+                        <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+                        Refresh
+                    </button>
+                </div>
             </div>
 
             {/* Tab Navigation */}

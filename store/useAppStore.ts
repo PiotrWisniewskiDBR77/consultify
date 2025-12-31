@@ -28,6 +28,11 @@ interface AppState {
     chatPanelWidth: number;
     setChatPanelWidth: (width: number) => void;
 
+    // Side Panels (Mutually Exclusive)
+    activeSidePanel: 'HELP' | 'DOCUMENTS' | 'FEEDBACK' | null;
+    toggleSidePanel: (panel: 'HELP' | 'DOCUMENTS' | 'FEEDBACK') => void;
+    closeSidePanel: () => void;
+
     // Report Context (for report-centric assessment workflow)
     currentReportId: string | null;
     currentReportMode: 'new' | 'view' | 'edit';
@@ -179,6 +184,13 @@ export const useAppStore = create<AppState>()(
             // Chat Panel Visibility
             isChatCollapsed: false,
             toggleChatCollapse: () => set((state) => ({ isChatCollapsed: !state.isChatCollapsed })),
+
+            // Side Panels
+            activeSidePanel: null,
+            toggleSidePanel: (panel) => set((state) => ({
+                activeSidePanel: state.activeSidePanel === panel ? null : panel
+            })),
+            closeSidePanel: () => set({ activeSidePanel: null }),
 
             // Chat Panel Width (persisted across module changes)
             chatPanelWidth: 380,

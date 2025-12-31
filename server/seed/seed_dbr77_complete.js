@@ -42,7 +42,7 @@ async function dbRun(sql, params = []) {
         return result;
     } else {
         return new Promise((resolve, reject) => {
-            db.run(sql, params, function(err) {
+            db.run(sql, params, function (err) {
                 if (err) reject(err);
                 else resolve({ lastID: this.lastID, changes: this.changes });
             });
@@ -90,86 +90,86 @@ async function dbAll(sql, params = []) {
 
 const ASSESSMENT_PROFILES = {
     logistics: {
-        processes: { actual: 3, target: 5, justification: "Organizacja posiada podstawową automatyzację procesów logistycznych. Systemy TMS i WMS są wdrożone, jednak integracja między nimi jest ograniczona. Ręczne przekazywanie danych stanowi ok. 35% operacji magazynowych." },
-        dataManagement: { actual: 2, target: 4, justification: "Dane są rozproszone w wielu systemach bez centralnego repozytorium. Brak Master Data Management. Jakość danych produktowych oscyluje na poziomie 65%. Raportowanie opiera się głównie na eksportach do Excel." },
-        culture: { actual: 4, target: 5, justification: "Kultura organizacyjna sprzyja zmianom. Zespoły operacyjne są otwarte na nowe technologie. Regularne szkolenia z obsługi systemów. Wysoki poziom zaangażowania pracowników w projekty optymalizacyjne." }
+        processes: { actual: 3, target: 5, justification: "Organization has basic logistic process automation. TMS and WMS systems are implemented, but integration between them is limited. Manual data transfer accounts for approx. 35% of warehouse operations." },
+        dataManagement: { actual: 2, target: 4, justification: "Data is scattered across multiple systems without a central repository. No Master Data Management. Product data quality hovers around 65%. Reporting relies mainly on Excel exports." },
+        culture: { actual: 4, target: 5, justification: "Organizational culture favors change. Operational teams are open to new technologies. Regular system training. High level of employee engagement in optimization projects." }
     },
     healthcare: {
-        processes: { actual: 3, target: 5, justification: "Procesy kliniczne częściowo zdigitalizowane. System HIS wdrożony w 70% oddziałów. Dokumentacja medyczna elektroniczna, ale integracja z laboratoriami manualna. Telemedycyna w fazie pilotażowej." },
-        dataManagement: { actual: 3, target: 5, justification: "Dane medyczne w systemie HIS. Anonimizacja dla badań naukowych wdrożona. Brak hurtowni danych klinicznych. Raportowanie do NFZ zautomatyzowane. Analityka predykcyjna nieobecna." },
-        culture: { actual: 3, target: 5, justification: "Kadra medyczna otwarta na innowacje technologiczne. Opór wśród personelu administracyjnego. Szkolenia cyfrowe nieregularne. Młodzi lekarze jako championowie digitalizacji." }
+        processes: { actual: 3, target: 5, justification: "Clinical processes partially digitized. HIS system implemented in 70% of wards. Electronic medical records, but lab integration is manual. Telemedicine in pilot phase." },
+        dataManagement: { actual: 3, target: 5, justification: "Medical data in HIS system. Anonymization for research implemented. No clinical data warehouse. Automated reporting to NHF. Predictive analytics absent." },
+        culture: { actual: 3, target: 5, justification: "Medical staff open to technological innovations. Resistance among administrative staff. Irregular digital training. Young doctors as digitalization champions." }
     },
     production: {
-        processes: { actual: 4, target: 6, justification: "Procesy produkcyjne są w dużej mierze zautomatyzowane. System MES zintegrowany z ERP. Planowanie produkcji wspierane przez APS. Monitoring OEE w czasie rzeczywistym na 80% linii." },
-        digitalProducts: { actual: 2, target: 4, justification: "Produkty fizyczne bez komponentów cyfrowych. Brak IoT w produktach końcowych. Dokumentacja techniczna nadal w formie papierowej. Portal klienta oferuje tylko podstawowe funkcje." },
-        businessModels: { actual: 3, target: 5, justification: "Model biznesowy oparty na tradycyjnej sprzedaży produktów. Rozpoczęto transformację w kierunku modelu subskrypcyjnego dla części zamiennych. Brak przychodów z usług cyfrowych." },
-        dataManagement: { actual: 3, target: 5, justification: "Dane produkcyjne zbierane z systemów SCADA i MES. Data Lake wdrożony, ale wykorzystanie analityczne ograniczone. Brak zaawansowanych dashboardów dla kierownictwa." },
-        culture: { actual: 3, target: 5, justification: "Kultura produkcyjna nastawiona na efektywność operacyjną. Opór przed zmianami wśród starszych pracowników. Program szkoleń cyfrowych w fazie pilotażu." },
-        cybersecurity: { actual: 5, target: 6, justification: "Dojrzały program bezpieczeństwa OT/IT. Segmentacja sieci przemysłowej. SOC działający 24/7. Regularne audyty bezpieczeństwa i testy penetracyjne." },
-        aiMaturity: { actual: 1, target: 3, justification: "Brak wdrożonych rozwiązań AI/ML w produkcji. Dane historyczne dostępne, ale nieprzetworzone. Zespół nie posiada kompetencji Data Science." }
+        processes: { actual: 4, target: 6, justification: "Production processes are largely automated. MES system integrated with ERP. Production planning supported by APS. Real-time OEE monitoring on 80% of lines." },
+        digitalProducts: { actual: 2, target: 4, justification: "Physical products without digital components. No IoT in end products. Technical documentation still in paper form. Customer portal offers only basic functions." },
+        businessModels: { actual: 3, target: 5, justification: "Business model based on traditional product sales. Started transformation towards subscription model for spare parts. No revenue from digital services." },
+        dataManagement: { actual: 3, target: 5, justification: "Production data collected from SCADA and MES systems. Data Lake implemented, but analytical usage is limited. No advanced dashboards for management." },
+        culture: { actual: 3, target: 5, justification: "Production culture focused on operational efficiency. Resistance to change among older employees. Digital training program in pilot phase." },
+        cybersecurity: { actual: 5, target: 6, justification: "Mature OT/IT security program. Industrial network segmentation. SOC operating 24/7. Regular security audits and penetration tests." },
+        aiMaturity: { actual: 1, target: 3, justification: "No AI/ML solutions implemented in production. Historical data available but unprocessed. Team lacks Data Science competencies." }
     },
     banking: {
-        processes: { actual: 4, target: 6, justification: "Core banking system stabilny ale legacy. Procesy back-office zautomatyzowane w 60%. Onboarding klienta częściowo cyfrowy. KYC/AML procesy wymagają modernizacji." },
-        digitalProducts: { actual: 4, target: 6, justification: "Bankowość mobilna z podstawowymi funkcjami. Płatności mobilne BLIK. Brak robo-advisory. PFM w wersji beta. API banking dla partnerów." },
-        businessModels: { actual: 3, target: 5, justification: "Model tradycyjny oparty na marży odsetkowej. Przychody z opłat spadające. BaaS w fazie koncepcyjnej. Marketplace produktów partnerskich planowany." },
-        dataManagement: { actual: 5, target: 6, justification: "Hurtownia danych dojrzała. 360-view klienta dla segmentu premium. Modele scoringowe regulowane. Data Lake wdrożony." },
-        culture: { actual: 3, target: 5, justification: "Kultura konserwatywna, zorientowana na compliance. Agile wdrożone w IT, brak w biznesie. Silosy między departamentami." },
-        cybersecurity: { actual: 6, target: 7, justification: "Dojrzały program cyberbezpieczeństwa zgodny z wymogami KNF. SOC 24/7. Red team exercises kwartalne. Bug bounty program." },
-        aiMaturity: { actual: 3, target: 5, justification: "ML w scoringu kredytowym. AI w wykrywaniu fraudów transakcyjnych. Chatbot obsługuje 30% zapytań. Brak: NLP dla analizy dokumentów." }
+        processes: { actual: 4, target: 6, justification: "Core banking system stable but legacy. Back-office processes 60% automated. Client onboarding partially digital. KYC/AML processes require modernization." },
+        digitalProducts: { actual: 4, target: 6, justification: "Mobile banking with basic functions. Mobile payments (BLIK). No robo-advisory. PFM in beta. API banking for partners." },
+        businessModels: { actual: 3, target: 5, justification: "Traditional model based on interest margin. Fee revenues declining. BaaS in concept phase. Partner product marketplace planned." },
+        dataManagement: { actual: 5, target: 6, justification: "Mature data warehouse. 360-view of customer for premium segment. Regulated scoring models. Data Lake implemented." },
+        culture: { actual: 3, target: 5, justification: "Conservative culture, compliance-oriented. Agile implemented in IT, absent in business. Silos between departments." },
+        cybersecurity: { actual: 6, target: 7, justification: "Mature cybersecurity program compliant with KNF requirements. SOC 24/7. Quarterly red team exercises. Bug bounty program." },
+        aiMaturity: { actual: 3, target: 5, justification: "ML in credit scoring. AI in transaction fraud detection. Chatbot handles 30% of queries. Missing: NLP for document analysis." }
     },
     smartFactory: {
-        processes: { actual: 5, target: 6, justification: "Zaawansowana automatyzacja procesów produkcyjnych. Cyfrowy bliźniak dla kluczowych linii. Integracja pionowa od ERP do PLC." },
-        digitalProducts: { actual: 3, target: 5, justification: "Produkty wyposażone w podstawowe sensory IoT. Aplikacja mobilna dla klientów w wersji beta. Dane z produktów zbierane, ale niewykorzystywane." },
-        businessModels: { actual: 4, target: 5, justification: "Model hybrydowy: sprzedaż + usługi. Serwis zdalny stanowi 25% przychodów serwisowych. Pilotaż pay-per-use dla wybranych klientów." },
-        dataManagement: { actual: 3, target: 5, justification: "Platforma danych przemysłowych wdrożona. Real-time analytics dla produkcji. Wyzwanie: integracja danych z IoT produktów." },
-        culture: { actual: 2, target: 5, justification: "Silny opór przed zmianami wśród załogi produkcyjnej. Obawy o automatyzację i utratę miejsc pracy. Komunikacja transformacji niewystarczająca." },
-        cybersecurity: { actual: 4, target: 6, justification: "Bezpieczeństwo IT na dobrym poziomie. Segmentacja OT/IT częściowa. Brak pełnej widoczności w sieci przemysłowej." },
-        aiMaturity: { actual: 2, target: 4, justification: "Wdrożone podstawowe modele ML do kontroli jakości wizualnej. Predictive maintenance w fazie pilotażu na 2 maszynach." }
+        processes: { actual: 5, target: 6, justification: "Advanced production process automation. Digital twin for key lines. Vertical integration from ERP to PLC." },
+        digitalProducts: { actual: 3, target: 5, justification: "Products equipped with basic IoT sensors. Mobile app for clients in beta. Data from products collected but unused." },
+        businessModels: { actual: 4, target: 5, justification: "Hybrid model: sales + services. Remote service accounts for 25% of service revenue. Pay-per-use pilot for selected clients." },
+        dataManagement: { actual: 3, target: 5, justification: "Industrial data platform implemented. Real-time analytics for production. Challenge: integrating IoT data from products." },
+        culture: { actual: 2, target: 5, justification: "Strong resistance to change among production crew. Fears of automation and job loss. Transformation communication insufficient." },
+        cybersecurity: { actual: 4, target: 6, justification: "IT security at good level. Partial OT/IT segmentation. No full visibility in industrial network." },
+        aiMaturity: { actual: 2, target: 4, justification: "Basic ML models implemented for visual quality control. Predictive maintenance in pilot phase on 2 machines." }
     },
     retail: {
-        processes: { actual: 3, target: 5, justification: "Procesy magazynowe zautomatyzowane. POS zintegrowany z e-commerce. Zarządzanie zapasami wymaga optymalizacji. Click & Collect wdrożony." },
-        digitalProducts: { actual: 3, target: 5, justification: "Sklep online z podstawową personalizacją. Aplikacja mobilna z programem lojalnościowym. Brak AR/VR dla product visualization." },
-        businessModels: { actual: 3, target: 5, justification: "Model omnichannel rozwijany. Marketplace dla vendorów third-party. Subskrypcje dla produktów regularnych. Private label rozwijane." },
-        dataManagement: { actual: 3, target: 5, justification: "CDP częściowo wdrożone. Unified customer view w trakcie budowy. Dane offline/online nie w pełni połączone." },
-        culture: { actual: 4, target: 5, justification: "Kultura customer-centric. Pracownicy sklepów szkoleni z technologii. E-commerce team silny. Wyzwanie: integracja kultury retail i digital." },
-        cybersecurity: { actual: 3, target: 5, justification: "PCI-DSS compliance dla płatności. Podstawowa ochrona e-commerce. Brak dedykowanego SOC. Szkolenia security nieregularne." },
-        aiMaturity: { actual: 2, target: 4, justification: "Rekomendacje produktowe oparte na regułach. Demand forecasting z podstawowym ML. Brak: dynamic pricing AI, visual search." }
+        processes: { actual: 3, target: 5, justification: "Warehouse processes automated. POS integrated with e-commerce. Inventory management needs optimization. Click & Collect implemented." },
+        digitalProducts: { actual: 3, target: 5, justification: "Online store with basic personalization. Mobile app with loyalty program. No AR/VR for product visualization." },
+        businessModels: { actual: 3, target: 5, justification: "Omnichannel model being developed. Marketplace for third-party vendors. Subscriptions for regular products. Private label developing." },
+        dataManagement: { actual: 3, target: 5, justification: "CDP partially implemented. Unified customer view under construction. Offline/online data not fully connected." },
+        culture: { actual: 4, target: 5, justification: "Customer-centric culture. Store employees trained in technology. Strong e-commerce team. Challenge: integrating retail and digital cultures." },
+        cybersecurity: { actual: 3, target: 5, justification: "PCI-DSS compliance for payments. Basic e-commerce protection. No dedicated SOC. Irregular security training." },
+        aiMaturity: { actual: 2, target: 4, justification: "Rule-based product recommendations. Demand forecasting with basic ML. Missing: AI dynamic pricing, visual search." }
     },
     ecommerce: {
-        processes: { actual: 4, target: 6, justification: "Procesy e-commerce zautomatyzowane end-to-end. Integracja z fulfillment centers. Automatyczne zarządzanie stanami magazynowymi." },
-        digitalProducts: { actual: 5, target: 7, justification: "Platforma e-commerce jako główny produkt cyfrowy. Aplikacja mobilna z wysokim engagement. Personalizacja oparta na ML." },
-        businessModels: { actual: 5, target: 6, justification: "Wielomodelowy biznes: marketplace, subskrypcje, reklama. Przychody z usług cyfrowych stanowią 40% total revenue." },
-        dataManagement: { actual: 4, target: 6, justification: "Customer Data Platform wdrożona. 360-degree customer view dla top klientów. Real-time personalization." },
-        culture: { actual: 4, target: 5, justification: "Kultura digital-native. Zespoły produktowe działające w Agile/Scrum. Eksperymenty i A/B testing jako standard." },
-        cybersecurity: { actual: 4, target: 6, justification: "PCI-DSS compliance. WAF i DDoS protection. Bug bounty program aktywny. MFA dla wszystkich pracowników." },
-        aiMaturity: { actual: 3, target: 5, justification: "ML w rekomendacjach produktowych (CTR +25%). Chatbot AI obsługuje 40% zapytań tier-1. Dynamic pricing z podstawowym ML." }
+        processes: { actual: 4, target: 6, justification: "E-commerce processes automated end-to-end. Integration with fulfillment centers. Automated inventory management." },
+        digitalProducts: { actual: 5, target: 7, justification: "E-commerce platform as main digital product. Mobile app with high engagement. ML-based personalization." },
+        businessModels: { actual: 5, target: 6, justification: "Multi-model business: marketplace, subscriptions, advertising. Revenue from digital services accounts for 40% of total revenue." },
+        dataManagement: { actual: 4, target: 6, justification: "Customer Data Platform implemented. 360-degree customer view for top clients. Real-time personalization." },
+        culture: { actual: 4, target: 5, justification: "Digital-native culture. Product teams working in Agile/Scrum. Experiments and A/B testing as standard." },
+        cybersecurity: { actual: 4, target: 6, justification: "PCI-DSS compliance. WAF and DDoS protection. Active bug bounty program. MFA for all employees." },
+        aiMaturity: { actual: 3, target: 5, justification: "ML in product recommendations (CTR +25%). AI Chatbot handles 40% of tier-1 queries. Dynamic pricing with basic ML." }
     },
     energy: {
-        processes: { actual: 4, target: 6, justification: "Systemy SCADA dla infrastruktury krytycznej. Procesy utrzymania ruchu zdigitalizowane. Billing zautomatyzowany. Smart metering wdrażane." },
-        digitalProducts: { actual: 2, target: 4, justification: "Portal klienta z podstawowymi funkcjami. Brak aplikacji mobilnej. E-faktura wdrożona. Brak: home energy management." },
-        businessModels: { actual: 2, target: 5, justification: "Model regulowany tradycyjny. Taryfy dynamiczne w pilotażu. Usługi energetyczne (ESCO) rozwijane." },
-        dataManagement: { actual: 3, target: 5, justification: "Dane pomiarowe zbierane, ale niewykorzystywane analitycznie. GIS dla sieci. Brak: predictive analytics dla demand." },
-        culture: { actual: 2, target: 4, justification: "Kultura inżynierska, konserwatywna. Silny opór przed zmianami wśród pracowników z długim stażem." },
-        cybersecurity: { actual: 5, target: 6, justification: "Cyberbezpieczeństwo OT priorytetem (infrastruktura krytyczna). Zgodność z NIS2. Segmentacja IT/OT." },
-        aiMaturity: { actual: 1, target: 4, justification: "Brak wdrożeń AI/ML. Dane historyczne dostępne dla predykcji. Rozważany pilotaż: predictive maintenance turbin." }
+        processes: { actual: 4, target: 6, justification: "SCADA systems for critical infrastructure. Maintenance processes digitized. Billing automated. Smart metering being deployed." },
+        digitalProducts: { actual: 2, target: 4, justification: "Customer portal with basic functions. No mobile app. E-invoicing implemented. Missing: home energy management." },
+        businessModels: { actual: 2, target: 5, justification: "Traditional regulated model. Dynamic tariffs in pilot. Energy services (ESCO) developing." },
+        dataManagement: { actual: 3, target: 5, justification: "Measurement data collected but not used analytically. GIS for grid. Missing: predictive analytics for demand." },
+        culture: { actual: 2, target: 4, justification: "Engineering culture, conservative. Strong resistance to change among long-tenured employees." },
+        cybersecurity: { actual: 5, target: 6, justification: "OT cybersecurity is a priority (critical infrastructure). NIS2 compliance. IT/OT segmentation." },
+        aiMaturity: { actual: 1, target: 4, justification: "No AI/ML implementations. Historical data available for prediction. Considered pilot: turbine predictive maintenance." }
     },
     transformation: {
-        processes: { actual: 5, target: 6, justification: "Procesy konsultingowe są dobrze zdefiniowane i częściowo zautomatyzowane. CRM i PSA w pełni zintegrowane. Time tracking i billing zautomatyzowane." },
-        digitalProducts: { actual: 4, target: 5, justification: "Platforma do zarządzania transformacją jako SaaS. Narzędzia assessment online. Biblioteka frameworków i templatek." },
-        businessModels: { actual: 4, target: 6, justification: "Model hybrydowy: consulting + SaaS + szkolenia. Recurring revenue: 30%. Partnerstwa z vendorami technologicznymi." },
-        dataManagement: { actual: 4, target: 6, justification: "Dane projektowe i klientów scentralizowane. Knowledge base z historią projektów. Benchmarki branżowe zbierane systematycznie." },
-        culture: { actual: 5, target: 6, justification: "Kultura innowacji i ciągłego uczenia się. Konsultanci aktywni w społeczności eksperckiej. Internal mobility wysoka." },
-        cybersecurity: { actual: 5, target: 6, justification: "SOC 2 Type II certified. Bezpieczeństwo danych klientów jako priorytet. Regularne szkolenia security awareness." },
-        aiMaturity: { actual: 2, target: 4, justification: "AI wykorzystywane do wewnętrznych analiz i raportowania. Prototyp AI copilot dla konsultantów." }
+        processes: { actual: 5, target: 6, justification: "Consulting processes are well defined and partially automated. CRM and PSA fully integrated. Time tracking and billing automated." },
+        digitalProducts: { actual: 4, target: 5, justification: "Transformation management platform as SaaS. Online assessment tools. Framework and template library." },
+        businessModels: { actual: 4, target: 6, justification: "Hybrid model: consulting + SaaS + training. Recurring revenue: 30%. Partnerships with technology vendors." },
+        dataManagement: { actual: 4, target: 6, justification: "Project and client data centralized. Knowledge base with project history. Industry benchmarks collected systematically." },
+        culture: { actual: 5, target: 6, justification: "Culture of innovation and continuous learning. Consultants active in expert community. High internal mobility." },
+        cybersecurity: { actual: 5, target: 6, justification: "SOC 2 Type II certified. Cliet data security as priority. Regular security awareness training." },
+        aiMaturity: { actual: 2, target: 4, justification: "AI used for internal analysis and reporting. AI copilot prototype for consultants." }
     },
     pharma: {
-        processes: { actual: 4, target: 6, justification: "Procesy produkcyjne zgodne z GMP. Systemy MES i LIMS wdrożone. Batch records elektroniczne. Łańcuch dostaw zdigitalizowany." },
-        digitalProducts: { actual: 3, target: 5, justification: "Platformy clinical trials management. Aplikacje dla pacjentów w badaniach klinicznych. Brak: digital therapeutics." },
-        businessModels: { actual: 3, target: 5, justification: "Tradycyjny model sprzedaży leków. Outcomes-based contracts z płatnikami. Value-based agreements rozwijane." },
-        dataManagement: { actual: 4, target: 6, justification: "Real World Evidence platform. Clinical data management dojrzały. Dane produkcyjne scentralizowane." },
-        culture: { actual: 4, target: 5, justification: "Kultura naukowa, evidence-based. Otwartość na innowacje w R&D. Commercial teams wymagają digital upskilling." },
-        cybersecurity: { actual: 5, target: 6, justification: "Zgodność z 21 CFR Part 11 i Annex 11. Ochrona IP jako priorytet. Data integrity zapewnione." },
-        aiMaturity: { actual: 3, target: 5, justification: "AI w drug discovery. ML w pharmacovigilance. Wdrożenia AI w manufacturing quality." }
+        processes: { actual: 4, target: 6, justification: "Production processes GMP compliant. MES and LIMS systems implemented. Electronic batch records. Supply chain digitized." },
+        digitalProducts: { actual: 3, target: 5, justification: "Clinical trials management platforms. Patient apps for clinical trials. Missing: digital therapeutics." },
+        businessModels: { actual: 3, target: 5, justification: "Traditional drug sales model. Outcomes-based contracts with payers. Value-based agreements developing." },
+        dataManagement: { actual: 4, target: 6, justification: "Real World Evidence platform. Clinical data management mature. Production data centralized." },
+        culture: { actual: 4, target: 5, justification: "Scientific, evidence-based culture. Openness to innovation in R&D. Commercial teams require digital upskilling." },
+        cybersecurity: { actual: 5, target: 6, justification: "Compliance with 21 CFR Part 11 and Annex 11. IP protection as priority. Data integrity assured." },
+        aiMaturity: { actual: 3, target: 5, justification: "AI in drug discovery. ML in pharmacovigilance. AI deployments in manufacturing quality." }
     }
 };
 
@@ -179,36 +179,36 @@ const ASSESSMENT_PROFILES = {
 
 const INITIATIVE_TEMPLATES = {
     processes: [
-        { name: "Automatyzacja procesów magazynowych", description: "Wdrożenie robotów AMR i systemu WCS dla automatyzacji operacji magazynowych", business_value: "HIGH", cost_capex: 500000, cost_opex: 50000, expected_roi: 180 },
-        { name: "Integracja systemów ERP-MES", description: "Pełna integracja pionowa systemów zarządzania produkcją z ERP w czasie rzeczywistym", business_value: "HIGH", cost_capex: 300000, cost_opex: 30000, expected_roi: 150 },
-        { name: "RPA dla procesów back-office", description: "Automatyzacja procesów administracyjnych poprzez wdrożenie platformy RPA", business_value: "MEDIUM", cost_capex: 150000, cost_opex: 20000, expected_roi: 200 }
+        { name: "Warehouse Automation", description: "Implementation of AMR robots and WCS system for warehouse operations automation", business_value: "HIGH", cost_capex: 500000, cost_opex: 50000, expected_roi: 180 },
+        { name: "ERP-MES Integration", description: "Full vertical integration of production management systems with ERP in real time", business_value: "HIGH", cost_capex: 300000, cost_opex: 30000, expected_roi: 150 },
+        { name: "Back-office RPA", description: "Automation of administrative processes through RPA platform deployment", business_value: "MEDIUM", cost_capex: 150000, cost_opex: 20000, expected_roi: 200 }
     ],
     digitalProducts: [
-        { name: "Aplikacja mobilna klienta", description: "Nowoczesna aplikacja mobilna z funkcjami self-service i personalizacją", business_value: "HIGH", cost_capex: 400000, cost_opex: 60000, expected_roi: 120 },
-        { name: "IoT w produktach", description: "Wyposażenie produktów w sensory IoT do zbierania danych użytkowania", business_value: "MEDIUM", cost_capex: 600000, cost_opex: 80000, expected_roi: 90 },
-        { name: "Portal B2B nowej generacji", description: "Platforma e-commerce B2B z integracją ERP i konfiguratorem produktów", business_value: "HIGH", cost_capex: 350000, cost_opex: 40000, expected_roi: 160 }
+        { name: "Client Mobile App", description: "Modern mobile application with self-service functions and personalization", business_value: "HIGH", cost_capex: 400000, cost_opex: 60000, expected_roi: 120 },
+        { name: "IoT in Products", description: "Equipping products with IoT sensors to collect usage data", business_value: "MEDIUM", cost_capex: 600000, cost_opex: 80000, expected_roi: 90 },
+        { name: "Next Gen B2B Portal", description: "B2B e-commerce platform with ERP integration and product configurator", business_value: "HIGH", cost_capex: 350000, cost_opex: 40000, expected_roi: 160 }
     ],
     businessModels: [
-        { name: "Model subskrypcyjny", description: "Transformacja modelu biznesowego z jednorazowej sprzedaży na subskrypcję", business_value: "HIGH", cost_capex: 200000, cost_opex: 100000, expected_roi: 250 },
-        { name: "Marketplace dla partnerów", description: "Uruchomienie platformy marketplace dla produktów i usług partnerskich", business_value: "MEDIUM", cost_capex: 300000, cost_opex: 50000, expected_roi: 140 }
+        { name: "Subscription Model", description: "Transformation of business model from one-time sales to subscription", business_value: "HIGH", cost_capex: 200000, cost_opex: 100000, expected_roi: 250 },
+        { name: "Partner Marketplace", description: "Launch of marketplace platform for partner products and services", business_value: "MEDIUM", cost_capex: 300000, cost_opex: 50000, expected_roi: 140 }
     ],
     dataManagement: [
-        { name: "Wdrożenie CDP", description: "Customer Data Platform z 360-stopniowym widokiem klienta", business_value: "HIGH", cost_capex: 400000, cost_opex: 80000, expected_roi: 170 },
-        { name: "Data Lake & Analytics", description: "Centralne repozytorium danych z platformą self-service analytics", business_value: "HIGH", cost_capex: 500000, cost_opex: 100000, expected_roi: 130 },
-        { name: "Master Data Management", description: "Wdrożenie systemu MDM dla danych produktowych i klientów", business_value: "MEDIUM", cost_capex: 250000, cost_opex: 30000, expected_roi: 110 }
+        { name: "CDP Implementation", description: "Customer Data Platform with 360-degree customer view", business_value: "HIGH", cost_capex: 400000, cost_opex: 80000, expected_roi: 170 },
+        { name: "Data Lake & Analytics", description: "Central data repository with self-service analytics platform", business_value: "HIGH", cost_capex: 500000, cost_opex: 100000, expected_roi: 130 },
+        { name: "Master Data Management", description: "MDM system implementation for product and customer data", business_value: "MEDIUM", cost_capex: 250000, cost_opex: 30000, expected_roi: 110 }
     ],
     culture: [
-        { name: "Program Digital Champions", description: "Program ambasadorów transformacji cyfrowej w całej organizacji", business_value: "MEDIUM", cost_capex: 100000, cost_opex: 50000, expected_roi: 180 },
-        { name: "Digital Upskilling Academy", description: "Platforma e-learningowa i program certyfikacji kompetencji cyfrowych", business_value: "HIGH", cost_capex: 200000, cost_opex: 80000, expected_roi: 150 }
+        { name: "Digital Champions Program", description: "Digital transformation ambassadors program across the organization", business_value: "MEDIUM", cost_capex: 100000, cost_opex: 50000, expected_roi: 180 },
+        { name: "Digital Upskilling Academy", description: "E-learning platform and digital competence certification program", business_value: "HIGH", cost_capex: 200000, cost_opex: 80000, expected_roi: 150 }
     ],
     cybersecurity: [
-        { name: "SOC 24/7", description: "Uruchomienie Security Operations Center z monitoringiem 24/7", business_value: "HIGH", cost_capex: 600000, cost_opex: 200000, expected_roi: 95 },
-        { name: "Zero Trust Architecture", description: "Wdrożenie modelu bezpieczeństwa Zero Trust", business_value: "HIGH", cost_capex: 400000, cost_opex: 100000, expected_roi: 80 }
+        { name: "SOC 24/7", description: "Launch of Security Operations Center with 24/7 monitoring", business_value: "HIGH", cost_capex: 600000, cost_opex: 200000, expected_roi: 95 },
+        { name: "Zero Trust Architecture", description: "Implementation of Zero Trust security model", business_value: "HIGH", cost_capex: 400000, cost_opex: 100000, expected_roi: 80 }
     ],
     aiMaturity: [
-        { name: "AI Predictive Maintenance", description: "Wdrożenie predykcyjnego utrzymania ruchu opartego na ML", business_value: "HIGH", cost_capex: 350000, cost_opex: 70000, expected_roi: 200 },
-        { name: "AI Customer Service", description: "Chatbot AI i automatyzacja obsługi klienta", business_value: "MEDIUM", cost_capex: 200000, cost_opex: 40000, expected_roi: 160 },
-        { name: "Computer Vision QC", description: "Automatyczna kontrola jakości oparta na wizji komputerowej", business_value: "HIGH", cost_capex: 300000, cost_opex: 50000, expected_roi: 180 }
+        { name: "AI Predictive Maintenance", description: "Implementation of ML-based predictive maintenance", business_value: "HIGH", cost_capex: 350000, cost_opex: 70000, expected_roi: 200 },
+        { name: "AI Customer Service", description: "AI Chatbot and customer service automation", business_value: "MEDIUM", cost_capex: 200000, cost_opex: 40000, expected_roi: 160 },
+        { name: "Computer Vision QC", description: "Automated quality control based on computer vision", business_value: "HIGH", cost_capex: 300000, cost_opex: 50000, expected_roi: 180 }
     ]
 };
 
@@ -221,6 +221,54 @@ async function seedDBR77Complete() {
     console.log(`   Database: ${isPostgres ? 'PostgreSQL' : 'SQLite'}\n`);
 
     try {
+        // Ensure tables exist to prevent SQLITE_ERROR
+        await dbRun(`CREATE TABLE IF NOT EXISTS assessment_workflows (
+            id TEXT PRIMARY KEY,
+            assessment_id TEXT NOT NULL,
+            project_id TEXT,
+            organization_id TEXT NOT NULL,
+            assessment_type TEXT DEFAULT 'DRD',
+            status TEXT DEFAULT 'DRAFT',
+            workflow_state TEXT DEFAULT 'DRAFT',
+            current_version INTEGER DEFAULT 1,
+            submitted_by TEXT, submitted_at DATETIME,
+            approved_by TEXT, approved_at DATETIME, approval_notes TEXT,
+            rejected_by TEXT, rejected_at DATETIME, rejection_reason TEXT, axis_issues TEXT,
+            created_by TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        await dbRun(`CREATE TABLE IF NOT EXISTS assessment_versions (
+            id TEXT PRIMARY KEY,
+            assessment_id TEXT NOT NULL,
+            version INTEGER NOT NULL,
+            assessment_data TEXT NOT NULL,
+            change_summary TEXT,
+            changed_axes TEXT,
+            created_by TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(assessment_id, version)
+        )`);
+
+        await dbRun(`CREATE TABLE IF NOT EXISTS assessment_reports (
+            id TEXT PRIMARY KEY,
+            project_id TEXT,
+            organization_id TEXT,
+            title TEXT,
+            assessment_snapshot TEXT,
+            summary TEXT,
+            created_by TEXT,
+            generated_at DATETIME
+        )`);
+
+        await dbRun(`CREATE TABLE IF NOT EXISTS assessment_reviews (
+             id TEXT PRIMARY KEY, workflow_id TEXT NOT NULL, reviewer_id TEXT NOT NULL, reviewer_role TEXT, status TEXT DEFAULT 'PENDING', rating INTEGER, comments TEXT, axis_comments TEXT, recommendation TEXT, requested_at DATETIME DEFAULT CURRENT_TIMESTAMP, due_date DATETIME, started_at DATETIME, completed_at DATETIME, FOREIGN KEY (workflow_id) REFERENCES assessment_workflows(id) ON DELETE CASCADE
+        )`);
+
+        await dbRun(`CREATE TABLE IF NOT EXISTS assessment_axis_comments (
+            id TEXT PRIMARY KEY, assessment_id TEXT NOT NULL, axis_id TEXT NOT NULL, user_id TEXT NOT NULL, comment TEXT NOT NULL, parent_comment_id TEXT, is_resolved BOOLEAN DEFAULT 0, resolved_by TEXT, resolved_at DATETIME, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (parent_comment_id) REFERENCES assessment_axis_comments(id) ON DELETE SET NULL
+        )`);
+
+        console.log('✅ Verified/Created assessment tables (workflows, versions, reports, reviews, comments)');
         // 1. Find DBR77 organization
         const org = await dbGet(`SELECT id FROM organizations WHERE name LIKE '%DBR77%' LIMIT 1`);
         if (!org) {
@@ -238,7 +286,7 @@ async function seedDBR77Complete() {
         let ctoId, cfoId;
         const existingCto = await dbGet(`SELECT id FROM users WHERE email = 'cto@dbr77.com'`);
         const existingCfo = await dbGet(`SELECT id FROM users WHERE email = 'cfo@dbr77.com'`);
-        
+
         if (!existingCto) {
             ctoId = uuidv4();
             const bcrypt = require('bcryptjs');
@@ -250,7 +298,7 @@ async function seedDBR77Complete() {
         } else {
             ctoId = existingCto.id;
         }
-        
+
         if (!existingCfo) {
             cfoId = uuidv4();
             const bcrypt = require('bcryptjs');
@@ -269,10 +317,10 @@ async function seedDBR77Complete() {
         console.log('\n📁 Creating 10 projects with assessments...');
 
         const projectDefs = [
-            { name: 'Transformacja Logistyki Q1 2025', profile: 'logistics', status: 'DRAFT', axes: 3 },
-            { name: 'Digitalizacja Szpitala Miejskiego', profile: 'healthcare', status: 'DRAFT', axes: 3 },
-            { name: 'Cyfryzacja Produkcji Q4 2024', profile: 'production', status: 'DRAFT', axes: 7 },
-            { name: 'Bank Cyfrowy 2025', profile: 'banking', status: 'DRAFT', axes: 7 },
+            { name: 'Logistics Transformation Q1 2025', profile: 'logistics', status: 'DRAFT', axes: 3 },
+            { name: 'City Hospital Digitalization', profile: 'healthcare', status: 'DRAFT', axes: 3 },
+            { name: 'Production Digitalization Q4 2024', profile: 'production', status: 'DRAFT', axes: 7 },
+            { name: 'Digital Bank 2025', profile: 'banking', status: 'DRAFT', axes: 7 },
             { name: 'Smart Factory Initiative', profile: 'smartFactory', status: 'IN_REVIEW', axes: 7 },
             { name: 'Retail Omnichannel Program', profile: 'retail', status: 'IN_REVIEW', axes: 7 },
             { name: 'E-Commerce Platform', profile: 'ecommerce', status: 'AWAITING_APPROVAL', axes: 7 },
@@ -298,7 +346,7 @@ async function seedDBR77Complete() {
             const allAxes = Object.keys(profile);
             const completedAxes = def.axes === 7 ? allAxes : allAxes.slice(0, def.axes);
             const axisScores = {};
-            
+
             completedAxes.forEach(axis => {
                 axisScores[axis] = profile[axis];
             });
@@ -321,7 +369,7 @@ async function seedDBR77Complete() {
                          (id, project_id, axis_scores, completed_axes, overall_as_is, overall_to_be, overall_gap, is_complete, assessment_status, updated_at)
                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
                 [assessmentId, projectId, JSON.stringify(axisScores), JSON.stringify(completedAxes),
-                 overallAsIs, overallToBe, overallGap, isComplete, assessmentStatus]);
+                    overallAsIs, overallToBe, overallGap, isComplete, assessmentStatus]);
 
             // Create workflow - set both status and workflow_state for compatibility
             await dbRun(`INSERT INTO assessment_workflows 
@@ -348,27 +396,27 @@ async function seedDBR77Complete() {
         let reviewsCreated = 0;
         try {
             await dbGet(`SELECT 1 FROM assessment_reviews LIMIT 1`);
-            
+
             for (const proj of createdProjects) {
                 if (proj.status === 'IN_REVIEW' || proj.status === 'AWAITING_APPROVAL' || proj.status === 'APPROVED') {
                     const ctoReviewId = uuidv4();
                     const cfoReviewId = uuidv4();
                     const reviewStatus = proj.status === 'IN_REVIEW' ? 'PENDING' : 'COMPLETED';
-                    
+
                     await dbRun(`INSERT INTO assessment_reviews 
                                  (id, workflow_id, reviewer_id, reviewer_role, status, rating, recommendation, requested_at)
                                  VALUES (?, ?, ?, 'CTO', ?, ?, ?, datetime('now'))`,
-                        [ctoReviewId, proj.workflowId, ctoId, reviewStatus, 
-                         reviewStatus === 'COMPLETED' ? 4 : null,
-                         reviewStatus === 'COMPLETED' ? 'APPROVE' : null]);
-                    
+                        [ctoReviewId, proj.workflowId, ctoId, reviewStatus,
+                            reviewStatus === 'COMPLETED' ? 4 : null,
+                            reviewStatus === 'COMPLETED' ? 'APPROVE' : null]);
+
                     await dbRun(`INSERT INTO assessment_reviews 
                                  (id, workflow_id, reviewer_id, reviewer_role, status, rating, recommendation, requested_at)
                                  VALUES (?, ?, ?, 'CFO', ?, ?, ?, datetime('now'))`,
                         [cfoReviewId, proj.workflowId, cfoId, reviewStatus,
-                         reviewStatus === 'COMPLETED' ? 4 : null,
-                         reviewStatus === 'COMPLETED' ? 'APPROVE' : null]);
-                    
+                            reviewStatus === 'COMPLETED' ? 4 : null,
+                            reviewStatus === 'COMPLETED' ? 'APPROVE' : null]);
+
                     reviewsCreated += 2;
                 }
             }
@@ -385,22 +433,22 @@ async function seedDBR77Complete() {
         let versionsCreated = 0;
         try {
             await dbGet(`SELECT 1 FROM assessment_versions LIMIT 1`);
-            
+
             for (const proj of createdProjects) {
                 if (proj.status === 'APPROVED') {
                     const v1Id = uuidv4();
                     const v2Id = uuidv4();
-                    
+
                     await dbRun(`INSERT INTO assessment_versions 
                                  (id, assessment_id, version, assessment_data, change_summary, created_by, created_at)
-                                 VALUES (?, ?, 1, ?, 'Wersja początkowa', ?, datetime('now', '-14 days'))`,
+                                 VALUES (?, ?, 1, ?, 'Initial version', ?, datetime('now', '-14 days'))`,
                         [v1Id, proj.assessmentId, JSON.stringify({ axis_scores: proj.axisScores }), piotrId]);
-                    
+
                     await dbRun(`INSERT INTO assessment_versions 
                                  (id, assessment_id, version, assessment_data, change_summary, created_by, created_at)
-                                 VALUES (?, ?, 2, ?, 'Wersja zatwierdzona', ?, datetime('now', '-7 days'))`,
+                                 VALUES (?, ?, 2, ?, 'Approved version', ?, datetime('now', '-7 days'))`,
                         [v2Id, proj.assessmentId, JSON.stringify({ axis_scores: proj.axisScores }), piotrId]);
-                    
+
                     versionsCreated += 2;
                 }
             }
@@ -439,11 +487,11 @@ async function seedDBR77Complete() {
                              (id, organization_id, project_id, name, description, axis, status, priority,
                               business_value, cost_capex, cost_opex, expected_roi, owner_business_id, created_at)
                              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
-                    [initiativeId, organizationId, proj.projectId, 
-                     `${template.name} - ${proj.name.split(' ')[0]}`,
-                     template.description, axis, status, priority,
-                     template.business_value, template.cost_capex, template.cost_opex, 
-                     template.expected_roi, piotrId]);
+                    [initiativeId, organizationId, proj.projectId,
+                        `${template.name} - ${proj.name.split(' ')[0]}`,
+                        template.description, axis, status, priority,
+                        template.business_value, template.cost_capex, template.cost_opex,
+                        template.expected_roi, piotrId]);
 
                 initiativesCreated++;
             }
@@ -460,18 +508,18 @@ async function seedDBR77Complete() {
 
         for (const proj of approvedProjects.slice(0, 5)) {
             const reportId = uuidv4();
-            const summary = `Raport z oceny dojrzałości cyfrowej dla projektu ${proj.name}. ` +
-                           `Średnia ocena obecna: ${(Object.values(proj.axisScores).reduce((s, a) => s + a.actual, 0) / Object.keys(proj.axisScores).length).toFixed(1)}, ` +
-                           `cel: ${(Object.values(proj.axisScores).reduce((s, a) => s + a.target, 0) / Object.keys(proj.axisScores).length).toFixed(1)}. ` +
-                           `Zidentyfikowano kluczowe obszary wymagające rozwoju.`;
+            const summary = `Digital maturity assessment report for project ${proj.name}. ` +
+                `Current Average Score: ${(Object.values(proj.axisScores).reduce((s, a) => s + a.actual, 0) / Object.keys(proj.axisScores).length).toFixed(1)}, ` +
+                `Target: ${(Object.values(proj.axisScores).reduce((s, a) => s + a.target, 0) / Object.keys(proj.axisScores).length).toFixed(1)}. ` +
+                `Key areas for improvement identified.`;
 
             await dbRun(`INSERT INTO assessment_reports 
                          (id, project_id, organization_id, title, assessment_snapshot, summary, created_by, generated_at)
                          VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
-                [reportId, proj.projectId, organizationId, 
-                 `Raport DRD: ${proj.name}`,
-                 JSON.stringify({ axisScores: proj.axisScores, generatedAt: new Date().toISOString() }),
-                 summary, piotrId]);
+                [reportId, proj.projectId, organizationId,
+                    `DRD Report: ${proj.name}`,
+                    JSON.stringify({ axisScores: proj.axisScores, generatedAt: new Date().toISOString() }),
+                    summary, piotrId]);
 
             reportsCreated++;
         }

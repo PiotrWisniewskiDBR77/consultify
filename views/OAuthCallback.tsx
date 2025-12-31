@@ -68,7 +68,7 @@ const OAuthCallback: React.FC = () => {
                     } else if (authenticatedUser.role === UserRole.ADMIN) {
                         setCurrentView(AppView.ADMIN_DASHBOARD);
                     } else {
-                        setCurrentView(AppView.USER_DASHBOARD);
+                        setCurrentView(AppView.AI_CHAT);
                     }
 
                     setStatus('success');
@@ -92,7 +92,7 @@ const OAuthCallback: React.FC = () => {
                             } else if (authenticatedUser.role === UserRole.ADMIN) {
                                 setCurrentView(AppView.ADMIN_DASHBOARD);
                             } else {
-                                setCurrentView(AppView.USER_DASHBOARD);
+                                setCurrentView(AppView.AI_CHAT);
                             }
 
                             setStatus('success');

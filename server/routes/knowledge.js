@@ -45,8 +45,9 @@ router.put('/candidates/:id/status', requireSuperAdmin, async (req, res) => {
 
 router.get('/observations/generate', requireSuperAdmin, async (req, res) => {
     try {
-        const AiService = require('../services/aiService'); // Lazy load to avoid circular dep if any
-        const observations = await AiService.generateObservations(req.user?.id);
+        // Use unified AI pipeline for observation generation
+        const { generateObservations } = require('../services/ai/aiPipeline');
+        const observations = await generateObservations(req.user?.id, req.user?.organizationId);
         res.json(observations);
     } catch (err) {
         console.error("Observation Route Error", err);

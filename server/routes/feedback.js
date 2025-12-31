@@ -1,72 +1,57 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../database');
 const { v4: uuidv4 } = require('uuid');
+const db = require('../database');
 
-// Middleware to check if user is admin (simple check based on request header or similar, 
-// strictly speaking we should use auth middleware but here we rely on the main app passing verified user info or checking role)
-// For now, we assume the main app's authentication middleware has already run and populated req.user if we use it,
-// but looking at index.js, we don't see global auth middleware. We'll implement basic checks or assume the user ID is passed.
-// Update: The plan implies trusted internal usage or identifying via param/body for now as per MVP.
-// We will assume the frontend sends the user_id.
+// POST /api/feedback - Submit new feedback
+router.post('/', (req, res) => {
+    const { userId, userEmail, type, message } = req.body;
 
-// GET all feedback (Admin only)
+    if (!message || !type) {
+        return res.status(400).json({ error: 'Message and type are required' });
+    }
+
+    const id = uuidv4();
+    const sql = `INSERT INTO system_feedback (id, user_id, user_email, type, message, status, created_at) VALUES (?, ?, ?, ?, ?, 'NEW', CURRENT_TIMESTAMP)`;
+
+    db.run(sql, [id, userId, userEmail, type, message], function (err) {
+        if (err) {
+            console.error('Error saving feedback:', err);
+            return res.status(500).json({ error: 'Failed to save feedback' });
+        }
+        res.json({ success: true, id });
+    });
+});
+
+// GET /api/feedback - List all feedback (Admin only)
+// In a real app, adding admin middleware here is recommended
 router.get('/', (req, res) => {
-    // In a real app, verify req.user.role === 'ADMIN' or 'SUPERADMIN'
-    const sql = `
-        SELECT f.*, u.first_name, u.last_name, u.email 
-        FROM feedback f
-        LEFT JOIN users u ON f.user_id = u.id
-        ORDER BY f.created_at DESC
-    `;
+    const sql = `SELECT * FROM system_feedback ORDER BY created_at DESC`;
     db.all(sql, [], (err, rows) => {
         if (err) {
-            console.error(err);
-            return res.status(500).json({ error: 'Database error' });
+            console.error('Error fetching feedback:', err);
+            return res.status(500).json({ error: 'Failed to fetch feedback' });
         }
         res.json(rows);
     });
 });
 
-// POST submit feedback
-router.post('/', (req, res) => {
-    const { user_id, type, message, screenshot, url } = req.body;
-
-    if (!user_id || !message || !type) {
-        return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    const id = uuidv4();
-    const sql = `INSERT INTO feedback (id, user_id, type, message, screenshot, url) VALUES (?, ?, ?, ?, ?, ?)`;
-
-    db.run(sql, [id, user_id, type, message, screenshot, url], function (err) {
-        if (err) {
-            console.error(err);
-            return res.status(500).json({ error: 'Database error' });
-        }
-        res.status(201).json({ id, message: 'Feedback submitted successfully' });
-    });
-});
-
-// PATCH update status (Admin only)
+// PATCH /api/feedback/:id/status - Update feedback status
 router.patch('/:id/status', (req, res) => {
-    const { id } = req.params;
     const { status } = req.body;
+    const { id } = req.params;
 
-    if (!['new', 'read', 'resolved', 'rejected'].includes(status)) {
+    if (!['NEW', 'READ', 'RESOLVED'].includes(status)) {
         return res.status(400).json({ error: 'Invalid status' });
     }
 
-    const sql = `UPDATE feedback SET status = ? WHERE id = ?`;
+    const sql = `UPDATE system_feedback SET status = ? WHERE id = ?`;
     db.run(sql, [status, id], function (err) {
         if (err) {
-            console.error(err);
-            return res.status(500).json({ error: 'Database error' });
+            console.error('Error updating feedback status:', err);
+            return res.status(500).json({ error: 'Failed to update feedback status' });
         }
-        if (this.changes === 0) {
-            return res.status(404).json({ error: 'Feedback not found' });
-        }
-        res.json({ message: 'Status updated' });
+        res.json({ success: true });
     });
 });
 

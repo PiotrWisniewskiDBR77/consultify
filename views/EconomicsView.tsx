@@ -37,11 +37,12 @@ import { ExcelImportWizard } from '../components/Economics/ExcelImportWizard';
 import { PDFExportModal } from '../components/Economics/PDFExportModal';
 import { VersionHistoryPanel } from '../components/Economics/VersionHistoryPanel';
 import { AIRecommendationsPanel } from '../components/Economics/AIRecommendationsPanel';
+import { FinancialAnalysisPanel } from '../components/Economics/FinancialAnalysisPanel';
 import { DigitizationAnalysis } from '../components/Economics/types';
 import { Api } from '../services/api';
 import { toast } from 'react-hot-toast';
 
-type EconomicsTab = 'catalog' | 'tool' | 'results' | 'compare';
+type EconomicsTab = 'catalog' | 'tool' | 'results' | 'financial' | 'compare';
 
 export const EconomicsView: React.FC = () => {
     const { t } = useTranslation();
@@ -114,6 +115,7 @@ export const EconomicsView: React.FC = () => {
         { id: 'catalog' as const, label: 'Katalog analiz', labelEn: 'Analysis Catalog', icon: FolderOpen },
         { id: 'tool' as const, label: 'Narzędzie oceny', labelEn: 'Evaluation Tool', icon: Wrench, disabled: !selectedAnalysis },
         { id: 'results' as const, label: 'Wyniki', labelEn: 'Results & Insights', icon: BarChart3, disabled: !selectedAnalysis },
+        { id: 'financial' as const, label: 'Analiza finansowa', labelEn: 'Financial Analysis', icon: Calculator, disabled: !selectedAnalysis },
         { id: 'compare' as const, label: 'Porównaj', labelEn: 'Compare', icon: GitCompare },
     ];
 
@@ -280,6 +282,12 @@ export const EconomicsView: React.FC = () => {
                                 }}
                             />
                         </div>
+                    )}
+                    {activeTab === 'financial' && selectedAnalysis && (
+                        <FinancialAnalysisPanel 
+                            analysis={selectedAnalysis}
+                            onUpdate={handleAnalysisUpdate}
+                        />
                     )}
                     {activeTab === 'compare' && (
                         <AnalysisCompareView />

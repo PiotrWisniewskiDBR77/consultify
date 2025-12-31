@@ -38,13 +38,17 @@ interface InfoButtonProps {
     position?: 'top-right' | 'header-inline';
     size?: 'sm' | 'md' | 'lg';
     className?: string;
+    showLabel?: boolean;
+    label?: string;
 }
 
 export const InfoButton: React.FC<InfoButtonProps> = ({
     cardId,
     position = 'top-right',
     size = 'md',
-    className = ''
+    className = '',
+    showLabel = false,
+    label = 'Help'
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const panelRef = useRef<HTMLDivElement>(null);
@@ -121,7 +125,7 @@ export const InfoButton: React.FC<InfoButtonProps> = ({
                 onClick={() => setIsOpen(!isOpen)}
                 className={`
                     ${positionClasses}
-                    ${sizeClasses[size]}
+                    ${showLabel ? 'px-3 py-2 gap-2' : sizeClasses[size]}
                     flex items-center justify-center
                     rounded-xl
                     text-white
@@ -141,6 +145,9 @@ export const InfoButton: React.FC<InfoButtonProps> = ({
                     size={iconSizes[size]}
                     style={{ animation: isOpen ? 'none' : 'infoIconGlow 5s ease-in-out infinite' }}
                 />
+                {showLabel && (
+                    <span className="text-sm font-medium">{label}</span>
+                )}
             </button>
 
             {/* Documentation Panel - Slide out from right */}

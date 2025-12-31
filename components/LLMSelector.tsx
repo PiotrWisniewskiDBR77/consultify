@@ -103,7 +103,11 @@ const NetworkStatus: React.FC<{ healthStatus: HealthStatus | null; isChecking: b
     );
 };
 
-export const LLMSelector: React.FC = () => {
+interface LLMSelectorProps {
+    compact?: boolean;
+}
+
+export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => {
     const { aiConfig, setAIConfig, currentUser } = useAppStore();
     const [isOpen, setIsOpen] = useState(false);
     const [models, setModels] = useState<LLMModel[]>([]);
@@ -289,7 +293,7 @@ export const LLMSelector: React.FC = () => {
         <div className="relative z-50" ref={menuRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all duration-200 ${isOpen ? 'bg-slate-100 dark:bg-white/10 border-brand/50' : 'bg-transparent border-slate-200 dark:border-white/10 hover:border-brand/50 hover:bg-slate-50 dark:hover:bg-white/5'} text-xs font-medium text-navy-900 dark:text-white`}
+                className={`flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-lg border transition-all duration-200 ${isOpen ? 'bg-slate-100 dark:bg-white/10 border-brand/50' : 'bg-transparent border-slate-200 dark:border-white/10 hover:border-brand/50 hover:bg-slate-50 dark:hover:bg-white/5'} text-xs font-medium text-navy-900 dark:text-white`}
             >
                 <StatusDot 
                     isConnected={llmConnected === true} 
@@ -297,11 +301,12 @@ export const LLMSelector: React.FC = () => {
                     hasFallback={fallbackAvailable && aiConfig.autoMode}
                     latency={latency}
                 />
-                <span>{getActiveLabel()}</span>
-                {aiConfig.autoMode && (
+                {!compact && <span>{getActiveLabel()}</span>}
+                {compact && <span className="max-w-[60px] truncate">{getActiveLabel()}</span>}
+                {aiConfig.autoMode && !compact && (
                     <Shield size={10} className="text-green-500" title="Auto-fallback aktywny" />
                 )}
-                <ChevronDown size={12} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown size={compact ? 10 : 12} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {isOpen && (

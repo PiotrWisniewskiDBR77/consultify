@@ -718,6 +718,201 @@ const EconomicsService = {
         });
     },
 
+    // ============================================
+    // Initiative & Financial Integration (Phase 4)
+    // ============================================
+
+    /**
+     * Link analysis to initiative
+     */
+    linkAnalysisToInitiative: async (analysisId, initiativeId, organizationId) => {
+        const analysis = await EconomicsService.getAnalysisById(analysisId, organizationId);
+        if (!analysis) {
+            throw new Error('Analysis not found');
+        }
+
+        const sql = `
+            UPDATE digitization_analyses 
+            SET linked_initiative_id = ?, updated_at = ?
+            WHERE id = ? AND organization_id = ?
+        `;
+
+        await queryHelpers.queryRun(sql, [initiativeId, new Date().toISOString(), analysisId, organizationId]);
+        return EconomicsService.getAnalysisById(analysisId, organizationId);
+    },
+
+    /**
+     * Get financial data for analysis
+     */
+    getAnalysisFinancials: async (analysisId, organizationId) => {
+        const sql = `
+            SELECT * FROM initiative_financials
+            WHERE analysis_id = ?
+        `;
+
+        const row = await queryHelpers.queryOne(sql, [analysisId]);
+        if (!row) return null;
+
+        return {
+            id: row.id,
+            analysisId: row.analysis_id,
+            costs: row.costs ? JSON.parse(row.costs) : [],
+            benefits: row.benefits ? JSON.parse(row.benefits) : [],
+            discountRate: row.discount_rate,
+            investmentHorizon: row.investment_horizon,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at
+        };
+    },
+
+    /**
+     * Update financial data for analysis
+     */
+    updateAnalysisFinancials: async (analysisId, data, organizationId, userId) => {
+        const existing = await EconomicsService.getAnalysisFinancials(analysisId, organizationId);
+        const now = new Date().toISOString();
+
+        if (existing) {
+            // Update
+            const sql = `
+                UPDATE initiative_financials 
+                SET costs = ?, benefits = ?, discount_rate = ?, investment_horizon = ?, updated_at = ?
+                WHERE analysis_id = ?
+            `;
+
+            await queryHelpers.queryRun(sql, [
+                JSON.stringify(data.costs || existing.costs),
+                JSON.stringify(data.benefits || existing.benefits),
+                data.discountRate !== undefined ? data.discountRate : existing.discountRate,
+                data.investmentHorizon !== undefined ? data.investmentHorizon : existing.investmentHorizon,
+                now,
+                analysisId
+            ]);
+        } else {
+            // Insert
+            const id = uuidv4();
+            const sql = `
+                INSERT INTO initiative_financials (
+                    id, analysis_id, costs, benefits, discount_rate, investment_horizon, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            `;
+
+            await queryHelpers.queryRun(sql, [
+                id,
+                analysisId,
+                JSON.stringify(data.costs || []),
+                JSON.stringify(data.benefits || []),
+                data.discountRate || 10,
+                data.investmentHorizon || 5,
+                now,
+                now
+            ]);
+        }
+
+        return EconomicsService.getAnalysisFinancials(analysisId, organizationId);
+    },
+
+    /**
+     * Get benefit tracking data for analysis
+     */
+    getAnalysisBenefits: async (analysisId, organizationId) => {
+        const sql = `
+            SELECT * FROM benefit_tracking
+            WHERE analysis_id = ?
+            ORDER BY tracked_at DESC
+        `;
+
+        const rows = await queryHelpers.queryAll(sql, [analysisId]);
+        return rows.map(row => ({
+            id: row.id,
+            analysisId: row.analysis_id,
+            trackingPeriod: row.tracking_period,
+            plannedBenefits: row.planned_benefits,
+            actualBenefits: row.actual_benefits,
+            variance: row.variance,
+            trackedAt: row.tracked_at,
+            createdBy: row.created_by
+        }));
+    },
+
+    /**
+     * Update benefit tracking data for analysis
+     */
+    updateAnalysisBenefits: async (analysisId, data, organizationId, userId) => {
+        const id = uuidv4();
+        const variance = (data.actualBenefits || 0) - (data.plannedBenefits || 0);
+        const now = new Date().toISOString();
+
+        const sql = `
+            INSERT INTO benefit_tracking (
+                id, analysis_id, tracking_period, planned_benefits, actual_benefits, variance, tracked_at, created_by
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(analysis_id, tracking_period) DO UPDATE SET
+                planned_benefits = excluded.planned_benefits,
+                actual_benefits = excluded.actual_benefits,
+                variance = excluded.variance,
+                tracked_at = excluded.tracked_at
+        `;
+
+        await queryHelpers.queryRun(sql, [
+            id,
+            analysisId,
+            data.trackingPeriod || 'Q1 2025',
+            data.plannedBenefits || 0,
+            data.actualBenefits || 0,
+            variance,
+            now,
+            userId
+        ]);
+
+        return EconomicsService.getAnalysisBenefits(analysisId, organizationId);
+    },
+
+    /**
+     * Get quality assessment for analysis
+     */
+    getAnalysisQualityAssessment: async (analysisId, organizationId) => {
+        const sql = `
+            SELECT * FROM quality_assessments
+            WHERE analysis_id = ?
+            ORDER BY assessed_at DESC
+            LIMIT 1
+        `;
+
+        const row = await queryHelpers.queryOne(sql, [analysisId]);
+        if (!row) {
+            // Calculate from analysis data
+            const analysis = await EconomicsService.getAnalysisById(analysisId, organizationId);
+            if (!analysis) return null;
+
+            // Calculate basic scores
+            const methodologyScore = analysis.completionPercent > 80 ? 4 : 
+                                     analysis.completionPercent > 60 ? 3 :
+                                     analysis.completionPercent > 40 ? 2 : 1;
+            const documentationScore = analysis.description ? 3 : 2;
+
+            return {
+                analysisId,
+                forecastAccuracy: null, // Needs actual vs planned data
+                methodologyScore,
+                documentationScore,
+                overallScore: (methodologyScore + documentationScore) / 2,
+                assessedAt: new Date().toISOString(),
+                computed: true
+            };
+        }
+
+        return {
+            id: row.id,
+            analysisId: row.analysis_id,
+            forecastAccuracy: row.forecast_accuracy,
+            methodologyScore: row.methodology_score,
+            documentationScore: row.documentation_score,
+            assessedAt: row.assessed_at,
+            assessedBy: row.assessed_by
+        };
+    },
+
     /**
      * Get value summary for a project
      */

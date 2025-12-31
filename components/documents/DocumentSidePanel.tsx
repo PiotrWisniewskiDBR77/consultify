@@ -9,18 +9,20 @@ import { Api } from '../../services/api';
 import { Document } from '../../types';
 import { useAIContext } from '../../contexts/AIContext';
 
+import { useAppStore } from '../../store/useAppStore';
+
 interface DocumentSidePanelProps {
-    isOpen: boolean;
-    onClose: () => void;
     projectId?: string;
 }
 
 export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({
-    isOpen,
-    onClose,
     projectId
 }) => {
     const { t } = useTranslation();
+    const { activeSidePanel, closeSidePanel } = useAppStore();
+    const isOpen = activeSidePanel === 'DOCUMENTS';
+
+    // Internal state
     const [activeTab, setActiveTab] = useState<'project' | 'user'>('project');
     const [projectDocs, setProjectDocs] = useState<Document[]>([]);
     const [userDocs, setUserDocs] = useState<Document[]>([]);
@@ -139,7 +141,7 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({
             {/* Backdrop */}
             <div
                 className="fixed inset-0 bg-black/20 dark:bg-black/40 z-40 transition-opacity"
-                onClick={onClose}
+                onClick={closeSidePanel}
             />
 
             <div className="fixed right-0 top-0 h-full w-96 max-w-[90vw] bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-white/10 shadow-2xl z-50 flex flex-col animate-in slide-in-from-right duration-200">
@@ -147,10 +149,10 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({
                 <div className="h-14 flex items-center justify-between px-4 border-b border-slate-200 dark:border-white/10 shrink-0">
                     <h2 className="text-sm font-bold text-navy-900 dark:text-white flex items-center gap-2">
                         <FolderOpen size={18} className="text-purple-500" />
-                        {t('documents.library', 'Biblioteka Dokumentów')}
+                        {t('documents.library')}
                     </h2>
                     <button
-                        onClick={onClose}
+                        onClick={closeSidePanel}
                         className="w-9 h-9 flex items-center justify-center text-slate-500 hover:text-red-500 dark:text-slate-300 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                         title="Zamknij"
                     >
@@ -168,7 +170,7 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({
                             }`}
                     >
                         <FolderOpen size={14} />
-                        {t('documents.projectDocs', 'Projekt')}
+                        {t('documents.projectDocs')}
                     </button>
                     <button
                         onClick={() => setActiveTab('user')}
@@ -178,7 +180,7 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({
                             }`}
                     >
                         <User size={14} />
-                        {t('documents.myDocs', 'Moje')}
+                        {t('documents.myDocs')}
                     </button>
                 </div>
 
@@ -190,7 +192,7 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({
                         ) : (
                             <Upload size={14} />
                         )}
-                        {uploading ? t('documents.uploading', 'Przesyłanie...') : t('documents.upload', 'Dodaj dokument')}
+                        {uploading ? t('documents.uploading') : t('documents.upload')}
                         <input
                             type="file"
                             className="hidden"
@@ -212,8 +214,8 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({
                             <FileText size={32} className="mx-auto mb-3 text-slate-300 dark:text-slate-600" />
                             <p className="text-sm text-slate-500 dark:text-slate-400">
                                 {activeTab === 'project'
-                                    ? t('documents.noProjectDocs', 'Brak dokumentów projektu')
-                                    : t('documents.noUserDocs', 'Brak Twoich dokumentów')
+                                    ? t('documents.noProjectDocs')
+                                    : t('documents.noUserDocs')
                                 }
                             </p>
                         </div>
@@ -241,7 +243,7 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({
                                         <button
                                             onClick={() => handleDownload(doc)}
                                             className="p-1.5 text-slate-400 hover:text-blue-500 rounded transition-colors"
-                                            title={t('documents.download', 'Pobierz')}
+                                            title={t('documents.download')}
                                         >
                                             <Download size={12} />
                                         </button>
@@ -249,7 +251,7 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({
                                             <button
                                                 onClick={() => handleMoveToProject(doc.id)}
                                                 className="p-1.5 text-slate-400 hover:text-green-500 rounded transition-colors"
-                                                title={t('documents.moveToProject', 'Przenieś do projektu')}
+                                                title={t('documents.moveToProject')}
                                             >
                                                 <FolderUp size={12} />
                                             </button>
@@ -257,7 +259,7 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({
                                         <button
                                             onClick={() => handleDelete(doc.id)}
                                             className="p-1.5 text-slate-400 hover:text-red-500 rounded transition-colors"
-                                            title={t('documents.delete', 'Usuń')}
+                                            title={t('documents.delete')}
                                         >
                                             <Trash2 size={12} />
                                         </button>
@@ -272,8 +274,8 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({
                 <div className="p-3 border-t border-slate-200 dark:border-white/10 text-center shrink-0">
                     <p className="text-[10px] text-slate-400">
                         {activeTab === 'project'
-                            ? t('documents.projectHint', 'Dokumenty dostępne dla wszystkich w projekcie')
-                            : t('documents.userHint', 'Twoje prywatne dokumenty')
+                            ? t('documents.projectHint')
+                            : t('documents.userHint')
                         }
                     </p>
                 </div>

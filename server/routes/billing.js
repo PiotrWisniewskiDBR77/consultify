@@ -80,6 +80,40 @@ router.get('/currencies', async (req, res) => {
 });
 
 /**
+ * GET /api/billing/usage
+ * Get usage statistics for current organization
+ */
+router.get('/usage', authMiddleware, async (req, res) => {
+    try {
+        const orgId = req.org?.id || req.user.organizationId;
+        
+        // Return mock usage data for now
+        res.json({
+            currentPeriod: {
+                start: new Date(new Date().setDate(1)).toISOString(),
+                end: new Date().toISOString()
+            },
+            ai: {
+                tokensUsed: 0,
+                tokensLimit: 100000,
+                requestsCount: 0
+            },
+            storage: {
+                used: 0,
+                limit: 5368709120 // 5GB
+            },
+            users: {
+                active: 1,
+                limit: 5
+            }
+        });
+    } catch (error) {
+        console.error('[Billing] Get usage error:', error);
+        res.status(500).json({ error: 'Failed to get usage data' });
+    }
+});
+
+/**
  * GET /api/billing/exchange-rates
  * Get exchange rate for currency
  */

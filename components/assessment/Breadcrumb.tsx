@@ -18,7 +18,7 @@ export const Breadcrumb: React.FC = () => {
 
     const getBreadcrumbs = (): BreadcrumbItem[] => {
         const crumbs: BreadcrumbItem[] = [
-            { label: 'Home', viewId: AppView.DASHBOARD_OVERVIEW }
+            { label: 'Home', viewId: AppView.MY_WORK }
         ];
 
         // Assessment Module breadcrumbs

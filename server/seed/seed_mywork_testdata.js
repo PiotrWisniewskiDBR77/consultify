@@ -43,7 +43,7 @@ async function dbRun(sql, params = []) {
         return result;
     } else {
         return new Promise((resolve, reject) => {
-            db.run(sql, params, function(err) {
+            db.run(sql, params, function (err) {
                 if (err) reject(err);
                 else resolve({ lastID: this.lastID, changes: this.changes });
             });
@@ -92,8 +92,8 @@ async function dbAll(sql, params = []) {
 const MY_WORK_TASKS = [
     // 🔴 BLOCKING PHASE tasks
     {
-        title: 'Przygotuj dokumentację Gate Review',
-        description: 'Niezbędna dokumentacja do przejścia bramki fazy Design do Execution. Blokuje zatwierdzenie inicjatywy.',
+        title: 'Prepare Gate Review Documentation',
+        description: 'Required documentation to pass the Design to Execution gate. Blocks initiative approval.',
         status: 'in_progress',
         priority: 'urgent',
         stepPhase: 'design',
@@ -103,8 +103,8 @@ const MY_WORK_TASKS = [
         initiativeName: 'Smart Factory Initiative'
     },
     {
-        title: 'Uzyskaj akceptację Sponsora dla budżetu Fazy 2',
-        description: 'Sponsor musi zatwierdzić budżet przed przejściem do fazy pilotażowej. Krytyczne dla harmonogramu.',
+        title: 'Obtain Sponsor Approval for Phase 2 Budget',
+        description: 'Sponsor must approve the budget before moving to the pilot phase. Critical for the schedule.',
         status: 'todo',
         priority: 'urgent',
         stepPhase: 'design',
@@ -114,21 +114,21 @@ const MY_WORK_TASKS = [
         initiativeName: 'Digital Transformation 2025'
     },
     {
-        title: 'Finalizacja planu zasobów dla Fazy Execution',
-        description: 'Plan alokacji zespołu i budżetu na fazę wykonania. Wymaga akceptacji PMO.',
+        title: 'Finalize Resource Plan for Execution Phase',
+        description: 'Team allocation and budget plan for the execution phase. Requires PMO acceptance.',
         status: 'blocked',
         priority: 'high',
         stepPhase: 'design',
         taskType: 'ANALYSIS',
         dueDateOffset: 1,
         labels: ['BLOCKING_PHASE'],
-        blockedReason: 'Brak danych z HR o dostępności konsultantów'
+        blockedReason: 'Missing HR data on consultant availability'
     },
-    
+
     // 🟠 BLOCKING INITIATIVE tasks
     {
-        title: 'Rozwiąż problem integracji API dostawcy',
-        description: 'API trzeciego dostawcy nie odpowiada zgodnie ze specyfikacją. Blokuje postęp inicjatywy IoT.',
+        title: 'Resolve Vendor API Integration Issue',
+        description: 'Third-party API is not responding according to specification. Blocking IoT initiative progress.',
         status: 'in_progress',
         priority: 'high',
         stepPhase: 'execution',
@@ -138,8 +138,8 @@ const MY_WORK_TASKS = [
         initiativeName: 'IoT Platform Integration'
     },
     {
-        title: 'Uzyskaj certyfikaty bezpieczeństwa dla środowiska produkcyjnego',
-        description: 'Wdrożenie na produkcję wymaga certyfikatów SOC2. Blokuje go-live inicjatywy.',
+        title: 'Obtain Security Certificates for Production Environment',
+        description: 'Production deployment requires SOC2 certificates. Blocks initiative go-live.',
         status: 'todo',
         priority: 'high',
         stepPhase: 'execution',
@@ -149,8 +149,8 @@ const MY_WORK_TASKS = [
         initiativeName: 'Cloud Migration Program'
     },
     {
-        title: 'Napraw błędy krytyczne z UAT',
-        description: '3 błędy krytyczne zidentyfikowane podczas testów akceptacyjnych. Bez naprawy nie ma akceptacji.',
+        title: 'Fix Critical UAT Bugs',
+        description: '3 critical bugs identified during acceptance testing. No acceptance without fixes.',
         status: 'in_progress',
         priority: 'urgent',
         stepPhase: 'pilot',
@@ -159,11 +159,11 @@ const MY_WORK_TASKS = [
         labels: ['BLOCKING_INITIATIVE'],
         initiativeName: 'E-Commerce Platform'
     },
-    
+
     // 🟡 AWAITING DECISION tasks
     {
-        title: 'Wybór dostawcy platformy CRM',
-        description: 'Należy podjąć decyzję między Salesforce a Microsoft Dynamics. Czeka na zarząd.',
+        title: 'Select CRM Platform Vendor',
+        description: 'Decision needed between Salesforce and Microsoft Dynamics. Waiting for board.',
         status: 'todo',
         priority: 'high',
         stepPhase: 'design',
@@ -173,8 +173,8 @@ const MY_WORK_TASKS = [
         initiativeName: 'CRM Implementation'
     },
     {
-        title: 'Zatwierdź scope change dla modułu raportowania',
-        description: 'Klient żąda dodatkowych dashboardów. Wymaga decyzji o rozszerzeniu scope i budżetu.',
+        title: 'Approve Scope Change for Reporting Module',
+        description: 'Client requests additional dashboards. Requires decision on scope and budget extension.',
         status: 'todo',
         priority: 'medium',
         stepPhase: 'execution',
@@ -184,8 +184,8 @@ const MY_WORK_TASKS = [
         initiativeName: 'BI Analytics Platform'
     },
     {
-        title: 'Decyzja o strategii migracji danych',
-        description: 'Big Bang vs Phased migration - wymaga decyzji przed planowaniem sprintu.',
+        title: 'Decide on Data Migration Strategy',
+        description: 'Big Bang vs Phased migration - requires decision before sprint planning.',
         status: 'in_progress',
         priority: 'medium',
         stepPhase: 'design',
@@ -194,11 +194,11 @@ const MY_WORK_TASKS = [
         labels: ['AWAITING_DECISION'],
         initiativeName: 'Legacy System Migration'
     },
-    
+
     // ⚫ OVERDUE tasks
     {
-        title: 'Dostarczyć raport z fazy Discovery',
-        description: 'Raport podsumowujący fazę discovery dla inicjatywy AI. Termin minął 5 dni temu.',
+        title: 'Deliver Discovery Phase Report',
+        description: 'Report summarizing discovery phase for AI initiative. Deadline passed 5 days ago.',
         status: 'in_progress',
         priority: 'high',
         stepPhase: 'design',
@@ -208,8 +208,8 @@ const MY_WORK_TASKS = [
         initiativeName: 'AI Predictive Maintenance'
     },
     {
-        title: 'Zaktualizować dokumentację architektury',
-        description: 'Dokumentacja wymaga aktualizacji po zmianach w designie. Opóźnienie wpływa na zespół dev.',
+        title: 'Update Architecture Documentation',
+        description: 'Documentation needs update after design changes. Delay impacts dev team.',
         status: 'todo',
         priority: 'medium',
         stepPhase: 'design',
@@ -218,11 +218,11 @@ const MY_WORK_TASKS = [
         labels: ['OVERDUE'],
         initiativeName: 'Microservices Architecture'
     },
-    
+
     // ✅ REGULAR tasks (various statuses)
     {
-        title: 'Przygotuj prezentację dla Steering Committee',
-        description: 'Prezentacja statusu portfela inicjatyw na spotkanie kwartalne.',
+        title: 'Prepare Presentation for Steering Committee',
+        description: 'Initiative portfolio status presentation for quarterly meeting.',
         status: 'todo',
         priority: 'medium',
         stepPhase: 'execution',
@@ -232,8 +232,8 @@ const MY_WORK_TASKS = [
         initiativeName: 'Portfolio Management'
     },
     {
-        title: 'Przeprowadź workshop z zespołem biznesowym',
-        description: 'Warsztaty wymagań dla nowego modułu zamówień.',
+        title: 'Conduct Workshop with Business Team',
+        description: 'Requirements workshop for new order module.',
         status: 'todo',
         priority: 'medium',
         stepPhase: 'design',
@@ -243,8 +243,8 @@ const MY_WORK_TASKS = [
         initiativeName: 'Order Management System'
     },
     {
-        title: 'Review kodu dla modułu płatności',
-        description: 'Code review przed merge do main branch. Standardowa procedura.',
+        title: 'Code Review for Payment Module',
+        description: 'Code review before merge to main branch. Standard procedure.',
         status: 'in_progress',
         priority: 'low',
         stepPhase: 'execution',
@@ -254,8 +254,8 @@ const MY_WORK_TASKS = [
         initiativeName: 'Payment Gateway Integration'
     },
     {
-        title: 'Zaktualizuj backlog sprintu',
-        description: 'Przejrzeć i zaktualizować priorytety w backlogu na następny sprint.',
+        title: 'Update Sprint Backlog',
+        description: 'Review and update priorities in backlog for next sprint.',
         status: 'completed',
         priority: 'low',
         stepPhase: 'execution',
@@ -265,8 +265,8 @@ const MY_WORK_TASKS = [
         initiativeName: 'Agile Transformation'
     },
     {
-        title: 'Napisz testy jednostkowe dla serwisu użytkowników',
-        description: 'Pokrycie testami jednostkowymi dla UserService. Target: 80%.',
+        title: 'Write Unit Tests for User Service',
+        description: 'Unit test coverage for UserService. Target: 80%.',
         status: 'in_progress',
         priority: 'medium',
         stepPhase: 'execution',
@@ -276,8 +276,8 @@ const MY_WORK_TASKS = [
         initiativeName: 'Quality Improvement Program'
     },
     {
-        title: 'Konfiguracja środowiska staging',
-        description: 'Przygotowanie środowiska staging przed deploymentem.',
+        title: 'Staging Environment Configuration',
+        description: 'Prepare staging environment before deployment.',
         status: 'completed',
         priority: 'medium',
         stepPhase: 'pilot',
@@ -287,8 +287,8 @@ const MY_WORK_TASKS = [
         initiativeName: 'DevOps Excellence'
     },
     {
-        title: 'Analiza wyników A/B testu',
-        description: 'Przeanalizować wyniki testu A/B dla nowego UI checkout.',
+        title: 'Analyze A/B Test Results',
+        description: 'Analyze A/B test results for new checkout UI.',
         status: 'todo',
         priority: 'low',
         stepPhase: 'pilot',
@@ -298,8 +298,8 @@ const MY_WORK_TASKS = [
         initiativeName: 'UX Optimization'
     },
     {
-        title: 'Szkolenie dla end-userów',
-        description: 'Przygotować i przeprowadzić szkolenie z nowego systemu.',
+        title: 'End-user Training',
+        description: 'Prepare and conduct training on the new system.',
         status: 'todo',
         priority: 'medium',
         stepPhase: 'execution',
@@ -309,8 +309,8 @@ const MY_WORK_TASKS = [
         initiativeName: 'Change Management Program'
     },
     {
-        title: 'Dokumentacja API dla partnerów',
-        description: 'Przygotować dokumentację OpenAPI dla partnerów integracyjnych.',
+        title: 'API Documentation for Partners',
+        description: 'Prepare OpenAPI documentation for integration partners.',
         status: 'in_progress',
         priority: 'low',
         stepPhase: 'execution',
@@ -330,8 +330,8 @@ const MY_WORK_NOTIFICATIONS = [
     {
         type: 'INITIATIVE_BLOCKED',
         severity: 'CRITICAL',
-        title: 'Inicjatywa zablokowana',
-        message: 'Smart Factory Initiative została zablokowana z powodu braku zasobów. Wymagana natychmiastowa interwencja.',
+        title: 'Initiative Blocked',
+        message: 'Smart Factory Initiative has been blocked due to resource shortage. Immediate intervention required.',
         relatedObjectType: 'INITIATIVE',
         actionUrl: '/initiatives/smart-factory',
         createdAtOffset: 0 // Just now
@@ -339,8 +339,8 @@ const MY_WORK_NOTIFICATIONS = [
     {
         type: 'TASK_OVERDUE',
         severity: 'CRITICAL',
-        title: 'Zadanie przeterminowane - blokuje fazę',
-        message: 'Zadanie "Przygotuj dokumentację Gate Review" przekroczyło termin i blokuje przejście fazy.',
+        title: 'Task Overdue - Blocking Phase',
+        message: 'Task "Prepare Gate Review Documentation" is overdue and blocking phase transition.',
         relatedObjectType: 'TASK',
         actionUrl: '/my-work/tasks',
         createdAtOffset: -30 // 30 min ago
@@ -348,19 +348,19 @@ const MY_WORK_NOTIFICATIONS = [
     {
         type: 'AI_RISK_DETECTED',
         severity: 'CRITICAL',
-        title: 'AI wykryło ryzyko projektu',
-        message: 'Analiza AI wskazuje na 85% prawdopodobieństwo opóźnienia projektu E-Commerce Platform o 2 tygodnie.',
+        title: 'AI Dedicated Project Risk',
+        message: 'AI analysis indicates 85% probability of E-Commerce Platform project delay by 2 weeks.',
         relatedObjectType: 'PROJECT',
         actionUrl: '/projects/ecommerce',
         createdAtOffset: -60 // 1 hour ago
     },
-    
+
     // WARNING
     {
         type: 'DECISION_REQUIRED',
         severity: 'WARNING',
-        title: 'Wymagana decyzja',
-        message: 'Decyzja o wyborze dostawcy CRM czeka na zatwierdzenie. Termin: 3 dni.',
+        title: 'Decision Required',
+        message: 'Decision on CRM vendor selection awaiting approval. Deadline: 3 days.',
         relatedObjectType: 'DECISION',
         actionUrl: '/decisions/crm-vendor',
         createdAtOffset: -120 // 2 hours ago
@@ -368,8 +368,8 @@ const MY_WORK_NOTIFICATIONS = [
     {
         type: 'GATE_APPROACHING',
         severity: 'WARNING',
-        title: 'Zbliża się Gate Review',
-        message: 'Gate Review dla projektu Digital Transformation 2025 za 5 dni. 2 zadania niezakończone.',
+        title: 'Gate Review Approaching',
+        message: 'Gate Review for Digital Transformation 2025 in 5 days. 2 tasks unfinished.',
         relatedObjectType: 'PROJECT',
         actionUrl: '/projects/dt2025',
         createdAtOffset: -180 // 3 hours ago
@@ -377,8 +377,8 @@ const MY_WORK_NOTIFICATIONS = [
     {
         type: 'TASK_OVERDUE',
         severity: 'WARNING',
-        title: 'Zadanie przeterminowane',
-        message: 'Zadanie "Dostarczyć raport z fazy Discovery" jest przeterminowane o 5 dni.',
+        title: 'Task Overdue',
+        message: 'Task "Deliver Discovery Phase Report" is overdue by 5 days.',
         relatedObjectType: 'TASK',
         actionUrl: '/my-work/tasks',
         createdAtOffset: -360 // 6 hours ago
@@ -386,19 +386,19 @@ const MY_WORK_NOTIFICATIONS = [
     {
         type: 'BOTTLENECK_DETECTED',
         severity: 'WARNING',
-        title: 'Wykryto wąskie gardło',
-        message: 'Zidentyfikowano wąskie gardło w procesie zatwierdzania. 4 zadania czekają na akceptację.',
+        title: 'Bottleneck Detected',
+        message: 'Bottleneck identified in approval process. 4 tasks waiting for acceptance.',
         relatedObjectType: 'WORKFLOW',
         actionUrl: '/my-work/inbox',
         createdAtOffset: -720 // 12 hours ago
     },
-    
+
     // INFO
     {
         type: 'TASK_ASSIGNED',
         severity: 'INFO',
-        title: 'Nowe zadanie przypisane',
-        message: 'Zostałeś przypisany do zadania "Przygotuj prezentację dla Steering Committee".',
+        title: 'New Task Assigned',
+        message: 'You have been assigned to task "Prepare Presentation for Steering Committee".',
         relatedObjectType: 'TASK',
         actionUrl: '/my-work/tasks',
         createdAtOffset: -1440 // 1 day ago
@@ -406,8 +406,8 @@ const MY_WORK_NOTIFICATIONS = [
     {
         type: 'TASK_COMPLETED',
         severity: 'INFO',
-        title: 'Zadanie zakończone',
-        message: 'Zadanie "Konfiguracja środowiska staging" zostało oznaczone jako zakończone.',
+        title: 'Task Completed',
+        message: 'Task "Staging Environment Configuration" has been marked as completed.',
         relatedObjectType: 'TASK',
         actionUrl: '/my-work/tasks',
         createdAtOffset: -2880 // 2 days ago
@@ -415,8 +415,8 @@ const MY_WORK_NOTIFICATIONS = [
     {
         type: 'WEEKLY_DIGEST',
         severity: 'INFO',
-        title: 'Podsumowanie tygodnia',
-        message: 'Ukończono 8 zadań, 3 inicjatywy awansowały do następnej fazy. Execution Score: 82/100.',
+        title: 'Weekly Digest',
+        message: 'Completed 8 tasks, 3 initiatives advanced to next phase. Execution Score: 82/100.',
         relatedObjectType: 'DIGEST',
         actionUrl: '/my-work/dashboard',
         createdAtOffset: -4320 // 3 days ago
@@ -429,40 +429,40 @@ const MY_WORK_NOTIFICATIONS = [
 
 const MY_WORK_DECISIONS = [
     {
-        title: 'Wybór dostawcy platformy CRM',
-        description: 'Decyzja strategiczna dotycząca wyboru między Salesforce a Microsoft Dynamics 365. Wpływa na budżet i timeline całego programu.',
+        title: 'Select CRM Platform Vendor',
+        description: 'Strategic decision to choose between Salesforce and Microsoft Dynamics 365. Impacts budget and timeline of the whole program.',
         status: 'PENDING',
         dueDate: 3,
         relatedObjectType: 'INITIATIVE',
         projectName: 'CRM Implementation'
     },
     {
-        title: 'Zatwierdź rozszerzenie zakresu projektu',
-        description: 'Klient żąda dodatkowych dashboardów BI. Rozszerzenie scope zwiększy budżet o 15% i wydłuży timeline o 3 tygodnie.',
+        title: 'Approve Project Scope Extension',
+        description: 'Client requests additional BI dashboards. Scope extension will increase budget by 15% and extend timeline by 3 weeks.',
         status: 'PENDING',
         dueDate: 4,
         relatedObjectType: 'INITIATIVE',
         projectName: 'BI Analytics Platform'
     },
     {
-        title: 'Strategia migracji danych',
-        description: 'Big Bang vs Phased Migration dla systemu Legacy. Big Bang = wyższe ryzyko, niższy koszt. Phased = bezpieczniej, drożej.',
+        title: 'Data Migration Strategy',
+        description: 'Big Bang vs Phased Migration for Legacy system. Big Bang = higher risk, lower cost. Phased = safer, more expensive.',
         status: 'PENDING',
         dueDate: 6,
         relatedObjectType: 'INITIATIVE',
         projectName: 'Legacy System Migration'
     },
     {
-        title: 'Zatwierdzenie budżetu Fazy 2',
-        description: 'Budżet 1.2M PLN na fazę pilotażową. Wymaga akceptacji CFO i Sponsora.',
+        title: 'Phase 2 Budget Approval',
+        description: 'Budget 1.2M PLN for pilot phase. Requires CFO and Sponsor approval.',
         status: 'PENDING',
         dueDate: 0, // Today
         relatedObjectType: 'PROJECT',
         projectName: 'Digital Transformation 2025'
     },
     {
-        title: 'Go/No-Go dla produkcyjnego wdrożenia',
-        description: 'Decyzja o przejściu z pilota na produkcję. Wszystkie kryteria techniczne spełnione, czekamy na biznes.',
+        title: 'Go/No-Go for Production Deployment',
+        description: 'Decision to move from pilot to production. All technical criteria met, awaiting business approval.',
         status: 'PENDING',
         dueDate: 7,
         relatedObjectType: 'INITIATIVE',
@@ -505,7 +505,7 @@ async function seedMyWorkTestData() {
         // CLEAR EXISTING TEST DATA (optional - for clean re-runs)
         // ============================================================
         console.log('\n🧹 Clearing existing test data...');
-        await dbRun(`DELETE FROM tasks WHERE title LIKE '%PMO Test%' OR title IN (${MY_WORK_TASKS.map(() => '?').join(',')})`, 
+        await dbRun(`DELETE FROM tasks WHERE title LIKE '%PMO Test%' OR title IN (${MY_WORK_TASKS.map(() => '?').join(',')})`,
             MY_WORK_TASKS.map(t => t.title));
         await dbRun(`DELETE FROM notifications WHERE title LIKE '%Test%' OR type IN ('INITIATIVE_BLOCKED', 'BOTTLENECK_DETECTED', 'WEEKLY_DIGEST')`);
         console.log('   ✅ Cleared existing data');
@@ -514,7 +514,7 @@ async function seedMyWorkTestData() {
         // CREATE TASKS
         // ============================================================
         console.log('\n📋 Creating tasks...');
-        
+
         let tasksCreated = 0;
         for (const taskDef of MY_WORK_TASKS) {
             const taskId = uuidv4();
@@ -534,21 +534,21 @@ async function seedMyWorkTestData() {
                  blocked_reason, created_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
                 [
-                    taskId, project.id, organizationId, 
+                    taskId, project.id, organizationId,
                     taskDef.title, taskDef.description, taskDef.status, taskDef.priority,
                     taskDef.stepPhase, taskDef.taskType, dueDate.toISOString(),
                     userId, userId, taskDef.blockedReason || null
                 ]);
 
             tasksCreated++;
-            
+
             // Log with emoji based on labels
             let emoji = '✅';
             if (taskDef.labels.includes('BLOCKING_PHASE')) emoji = '🔴';
             else if (taskDef.labels.includes('BLOCKING_INITIATIVE')) emoji = '🟠';
             else if (taskDef.labels.includes('AWAITING_DECISION')) emoji = '🟡';
             else if (taskDef.labels.includes('OVERDUE') || taskDef.dueDateOffset < 0) emoji = '⚫';
-            
+
             console.log(`   ${emoji} ${taskDef.title} (${taskDef.status}, ${taskDef.priority})`);
         }
         console.log(`\n   ✅ Created ${tasksCreated} tasks`);
@@ -557,7 +557,7 @@ async function seedMyWorkTestData() {
         // CREATE NOTIFICATIONS
         // ============================================================
         console.log('\n🔔 Creating notifications...');
-        
+
         let notificationsCreated = 0;
         for (const notifDef of MY_WORK_NOTIFICATIONS) {
             const notifId = uuidv4();
@@ -565,23 +565,30 @@ async function seedMyWorkTestData() {
             createdAt.setMinutes(createdAt.getMinutes() + notifDef.createdAtOffset);
 
             // Map severity to priority for existing schema
-            const priority = notifDef.severity === 'CRITICAL' ? 'high' : 
-                            notifDef.severity === 'WARNING' ? 'normal' : 'low';
+            const priority = notifDef.severity === 'CRITICAL' ? 'high' :
+                notifDef.severity === 'WARNING' ? 'normal' : 'low';
+
+            // Generate a related object ID if needed
+            const relatedObjectId = notifDef.relatedObjectType ? uuidv4() : null;
 
             await dbRun(`INSERT INTO notifications 
-                (id, user_id, organization_id, type, title, message, is_read, priority, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?)`,
+                (id, user_id, organization_id, project_id, type, severity, title, message, 
+                 related_object_type, related_object_id, is_read, priority, is_actionable, action_url, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`,
                 [
-                    notifId, userId, organizationId, notifDef.type, notifDef.title, notifDef.message,
-                    priority, createdAt.toISOString()
+                    notifId, userId, organizationId, project.id, notifDef.type, notifDef.severity,
+                    notifDef.title, notifDef.message,
+                    notifDef.relatedObjectType || null, relatedObjectId,
+                    priority, notifDef.actionUrl ? 1 : 0, notifDef.actionUrl || null,
+                    createdAt.toISOString()
                 ]);
 
             notificationsCreated++;
-            
+
             let emoji = '🔵';
             if (notifDef.severity === 'CRITICAL') emoji = '🔴';
             else if (notifDef.severity === 'WARNING') emoji = '🟡';
-            
+
             console.log(`   ${emoji} ${notifDef.title} (${notifDef.severity})`);
         }
         console.log(`\n   ✅ Created ${notificationsCreated} notifications`);
@@ -590,12 +597,12 @@ async function seedMyWorkTestData() {
         // CREATE DECISIONS
         // ============================================================
         console.log('\n❓ Creating decisions...');
-        
+
         let decisionsCreated = 0;
         try {
             // Check if decisions table exists
             await dbGet(`SELECT 1 FROM decisions LIMIT 1`);
-            
+
             for (const decisionDef of MY_WORK_DECISIONS) {
                 const decisionId = uuidv4();
                 const relatedObjectId = uuidv4(); // Generate a fake related object ID
@@ -623,7 +630,7 @@ async function seedMyWorkTestData() {
         // CREATE FOCUS TASKS WITH TIME BLOCKS
         // ============================================================
         console.log('\n🎯 Creating focus tasks...');
-        
+
         let focusTasksCreated = 0;
         try {
             // First, try to create focus_tasks table if it doesn't exist
@@ -637,7 +644,7 @@ async function seedMyWorkTestData() {
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
                 FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
             )`);
-            
+
             await dbRun(`CREATE TABLE IF NOT EXISTS focus_time_blocks (
                 id TEXT PRIMARY KEY,
                 focus_task_id TEXT NOT NULL,
@@ -649,11 +656,11 @@ async function seedMyWorkTestData() {
             )`);
 
             console.log('   ✅ Focus tables ready');
-            
+
             // Clear existing focus data
             await dbRun(`DELETE FROM focus_time_blocks`);
             await dbRun(`DELETE FROM focus_tasks WHERE user_id = ?`, [userId]);
-            
+
             // Get first 3 urgent/high priority tasks for focus
             const focusCandidates = await dbAll(`
                 SELECT id, title FROM tasks 
@@ -677,7 +684,7 @@ async function seedMyWorkTestData() {
             for (let i = 0; i < focusCandidates.length; i++) {
                 const task = focusCandidates[i];
                 const focusTaskId = uuidv4();
-                
+
                 await dbRun(`INSERT INTO focus_tasks (id, user_id, task_id, order_index, created_at)
                     VALUES (?, ?, ?, ?, datetime('now'))`,
                     [focusTaskId, userId, task.id, i]);
@@ -701,7 +708,7 @@ async function seedMyWorkTestData() {
         // UPDATE NOTIFICATION SETTINGS
         // ============================================================
         console.log('\n⚙️ Setting up notification preferences...');
-        
+
         try {
             // Create table if not exists
             await dbRun(`CREATE TABLE IF NOT EXISTS user_notification_settings (
@@ -717,10 +724,10 @@ async function seedMyWorkTestData() {
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             )`);
-            
+
             // Check if settings exist for user
             const existingSettings = await dbGet(`SELECT * FROM user_notification_settings WHERE user_id = ?`, [userId]);
-            
+
             if (!existingSettings) {
                 await dbRun(`INSERT INTO user_notification_settings 
                     (user_id, mute_info, mute_warning, mute_critical, muted_types, 
@@ -771,14 +778,14 @@ async function seedMyWorkTestData() {
 
 function getLabelText(code) {
     const labels = {
-        'BLOCKING_PHASE': 'Blokuje Fazę',
-        'BLOCKING_INITIATIVE': 'Blokuje Inicjatywę',
-        'GATE_BLOCKER': 'Blokuje Bramkę',
-        'AWAITING_DECISION': 'Oczekuje na Decyzję',
-        'DECISION_REQUIRED': 'Wymaga Decyzji',
-        'OVERDUE': 'Przeterminowane',
-        'BLOCKED': 'Zablokowane',
-        'UNASSIGNED': 'Nieprzypisane'
+        'BLOCKING_PHASE': 'Blocking Phase',
+        'BLOCKING_INITIATIVE': 'Blocking Initiative',
+        'GATE_BLOCKER': 'Gate Blocker',
+        'AWAITING_DECISION': 'Awaiting Decision',
+        'DECISION_REQUIRED': 'Decision Required',
+        'OVERDUE': 'Overdue',
+        'BLOCKED': 'Blocked',
+        'UNASSIGNED': 'Unassigned'
     };
     return labels[code] || code;
 }
@@ -786,7 +793,7 @@ function getLabelText(code) {
 function getLabelSeverity(code) {
     const critical = ['BLOCKING_PHASE', 'GATE_BLOCKER', 'BLOCKED', 'OVERDUE'];
     const warning = ['BLOCKING_INITIATIVE', 'AWAITING_DECISION', 'DECISION_REQUIRED'];
-    
+
     if (critical.includes(code)) return 'critical';
     if (warning.includes(code)) return 'warning';
     return 'info';

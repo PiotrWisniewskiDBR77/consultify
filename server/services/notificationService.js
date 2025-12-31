@@ -80,22 +80,32 @@ const NotificationService = {
 
     /**
      * Get notifications for a user
+     * Returns notifications with mapped fields for frontend compatibility
      */
     getForUser: async (userId, options = {}) => {
         const { unreadOnly, limit, projectId } = options;
 
-        let sql = `SELECT * FROM notifications WHERE user_id = ?`;
+        let sql = `SELECT 
+            n.id, n.user_id, n.organization_id, n.project_id,
+            n.type, n.title, n.message, n.priority, n.severity,
+            n.related_object_type, n.related_object_id,
+            n.is_read, n.is_actionable, n.action_url, n.created_at, n.read_at,
+            p.name as project_name
+            FROM notifications n
+            LEFT JOIN projects p ON n.project_id = p.id
+            WHERE n.user_id = ?`;
         const params = [userId];
 
         if (unreadOnly) {
-            sql += ` AND is_read = 0`;
+            sql += ` AND n.is_read = 0`;
         }
+
         if (projectId) {
-            sql += ` AND project_id = ?`;
+            sql += ` AND n.project_id = ?`;
             params.push(projectId);
         }
 
-        sql += ` ORDER BY created_at DESC`;
+        sql += ` ORDER BY n.created_at DESC`;
 
         if (limit) {
             sql += ` LIMIT ?`;
@@ -105,7 +115,38 @@ const NotificationService = {
         return new Promise((resolve, reject) => {
             db.all(sql, params, (err, rows) => {
                 if (err) return reject(err);
-                resolve(rows || []);
+                // Transform to frontend-compatible format
+                const transformed = (rows || []).map(row => {
+                    // Determine severity: use actual severity if exists, else map from priority
+                    let severity = row.severity;
+                    if (!severity) {
+                        severity = row.priority === 'urgent' ? 'CRITICAL' 
+                                : row.priority === 'high' ? 'WARNING' 
+                                : 'INFO';
+                    }
+                    
+                    return {
+                        id: row.id,
+                        userId: row.user_id,
+                        organizationId: row.organization_id,
+                        projectId: row.project_id,
+                        projectName: row.project_name,
+                        type: row.type,
+                        title: row.title,
+                        message: row.message,
+                        severity,
+                        read: !!row.is_read,
+                        readAt: row.read_at,
+                        createdAt: row.created_at,
+                        relatedObjectType: row.related_object_type,
+                        relatedObjectId: row.related_object_id,
+                        isActionable: !!row.is_actionable,
+                        actionUrl: row.action_url,
+                        // Determine scope based on data
+                        scope: row.project_id ? 'PROJECT' : 'PERSONAL'
+                    };
+                });
+                resolve(transformed);
             });
         });
     },

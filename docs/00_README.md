@@ -1,5 +1,7 @@
 # Documentation Overview
 
+**Last Updated:** 30 December 2025
+
 This repository follows an enterprise‑grade documentation hierarchy. The top‑level `docs/` directory contains the following sections:
 
 ## Quick Start Documentation
@@ -11,6 +13,14 @@ This repository follows an enterprise‑grade documentation hierarchy. The top�
 - **[04-development.md](04-development.md)** – Developer guide and coding standards
 - **[06-deployment.md](06-deployment.md)** – Production deployment guide
 - **[API_REFERENCE.md](API_REFERENCE.md)** – Complete API endpoint documentation
+
+## AI System Documentation (Updated 30.12.2025)
+
+- **[AI_ENTERPRISE_AUDIT_REPORT.md](AI_ENTERPRISE_AUDIT_REPORT.md)** – PMO-compliant AI system audit (ISO 21500 / PMBOK / PRINCE2)
+- **[AI_UTILIZATION_PLAN.md](AI_UTILIZATION_PLAN.md)** – AI features and implementation status
+- **[ai_research/AI_MASTER_ARCHITECTURE.md](ai_research/AI_MASTER_ARCHITECTURE.md)** – Complete AI architecture
+- **[api/AI_API_REFERENCE.md](api/AI_API_REFERENCE.md)** – AI API endpoints and capabilities
+- **[user_guides/AI_USER_GUIDE.md](user_guides/AI_USER_GUIDE.md)** – User guide for AI features
 
 ## Enterprise Documentation Structure
 

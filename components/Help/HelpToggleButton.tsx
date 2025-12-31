@@ -6,9 +6,9 @@
  */
 
 import React from 'react';
-import { HelpCircle } from 'lucide-react';
-import { useHelpSidePanel } from '../../contexts/HelpContext';
+import { MessageCircleQuestion } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useAppStore } from '../../store/useAppStore';
 
 // CSS for the color pulse animation
 const pulseAnimationStyle = `
@@ -36,42 +36,32 @@ const pulseAnimationStyle = `
 `;
 
 export const HelpToggleButton: React.FC = () => {
-    const { i18n } = useTranslation();
-    const { isOpen, toggle } = useHelpSidePanel();
-    const lang = i18n.language === 'pl' ? 'pl' : 'en';
-    
+    const { t } = useTranslation();
+    const { toggleSidePanel, activeSidePanel } = useAppStore();
+
+    // Don't show button if ANY panel is open
+    if (activeSidePanel !== null) return null;
+
     return (
         <>
             <style>{pulseAnimationStyle}</style>
             <button
-                onClick={toggle}
-                className={`
-                    w-10 h-10
-                    flex items-center justify-center
-                    rounded-xl
-                    shadow-lg
-                    transition-all duration-300
-                    group
-                    relative
-                    ${isOpen 
-                        ? 'bg-purple-600 text-white hover:bg-purple-700' 
-                        : 'text-white'
-                    }
-                `}
-                style={!isOpen ? { 
+                onClick={() => toggleSidePanel('HELP')}
+                className="w-10 h-10 flex items-center justify-center text-white rounded-l-2xl rounded-r-none shadow-lg transition-all duration-300 group relative"
+                style={{
                     animation: 'helpColorPulse 4s ease-in-out infinite',
-                } : undefined}
-                title={lang === 'pl' ? 'Centrum Pomocy' : 'Help Center'}
-                aria-label={lang === 'pl' ? 'Otwórz Centrum Pomocy' : 'Open Help Center'}
+                }}
+                title={t('widgets.help.title', 'Help Center')}
+                aria-label={t('widgets.help.title', 'Help Center')}
             >
-                <HelpCircle 
-                    size={20} 
+                <MessageCircleQuestion
+                    size={18}
                     className="transition-transform duration-300"
-                    style={!isOpen ? {
+                    style={{
                         animation: 'helpIconGlow 4s ease-in-out infinite'
-                    } : undefined}
+                    }}
                 />
-                
+
                 {/* Tooltip */}
                 <div className={`
                     absolute right-full mr-3 
@@ -85,7 +75,7 @@ export const HelpToggleButton: React.FC = () => {
                     pointer-events-none
                     shadow-lg
                 `}>
-                    {lang === 'pl' ? 'Centrum Pomocy' : 'Help Center'}
+                    {t('widgets.help.tooltip', 'Help Center')}
                     <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1 w-2 h-2 bg-slate-900 dark:bg-slate-800 rotate-45" />
                 </div>
             </button>

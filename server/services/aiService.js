@@ -1,3 +1,21 @@
+/**
+ * @deprecated LEGACY AI SERVICE - Use aiPipeline.js instead
+ * 
+ * This file is being phased out in favor of the unified AI Pipeline.
+ * Migration Status: 95% complete as of 30.12.2025
+ * 
+ * New usage:
+ *   const { aiPipeline, suggestTasks, validateInitiative } = require('./ai/aiPipeline');
+ * 
+ * For queue operations (queueTask, getJobStatus), this file is still used.
+ * 
+ * See: docs/AI_ENTERPRISE_AUDIT_REPORT.md for migration details
+ * See: server/services/ai/aiPipeline.js for new implementation
+ * 
+ * @module server/services/aiService
+ * @version 1.0.0 (DEPRECATED)
+ */
+
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const db = require('../database');
 const RagService = require('./ragService');

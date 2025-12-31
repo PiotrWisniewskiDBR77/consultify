@@ -371,14 +371,17 @@ Help leaders develop change management competencies.`
             <InfoButton cardId="superadmin-ai-config" position="top-right" />
             {/* Header */}
             <div className="shrink-0 px-8 py-6 border-b border-white/10">
-                <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
-                        <Brain className="text-white" size={24} />
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                            <Brain className="text-white" size={24} />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-bold text-white">AI Configuration</h1>
+                            <p className="text-sm text-slate-400">Manage AI behavior, providers, and system health</p>
+                        </div>
                     </div>
-                    <div>
-                        <h1 className="text-2xl font-bold text-white">AI Configuration</h1>
-                        <p className="text-sm text-slate-400">Manage AI behavior, providers, and system health</p>
-                    </div>
+                    <InfoButton cardId="superadmin-ai-config" position="header-inline" size="md" showLabel label="Help" />
                 </div>
             </div>
 

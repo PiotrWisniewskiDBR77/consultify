@@ -1,8 +1,12 @@
+// AI Service - Using unified pipeline with fallback to legacy service
+const { suggestTasks, validateInitiative, enrichInitiative } = require('../services/ai/aiPipeline');
+// Legacy AiService kept for backward compatibility (deprecated)
 const AiService = require('../services/aiService');
 const AccessPolicyService = require('../services/accessPolicyService');
 const InitiativeStatusService = require('../services/initiativeStatusService');
 const StatusMachine = require('../services/statusMachine');
 const NotificationService = require('../services/notificationService');
+const DecisionTriggerService = require('../services/decisionTriggerService');
 const express = require('express');
 const router = express.Router();
 const db = require('../database');
@@ -440,6 +444,31 @@ router.patch('/:id/status', asyncHandler(async (req, res) => {
         }
     }
 
+    // Trigger decision creation for key transitions
+    const previousStatus = result.initiative.previousStatus;
+    try {
+        const initiativeData = {
+            id,
+            project_id: result.initiative.projectId,
+            name: result.initiative.name,
+            priority: result.initiative.priority
+        };
+        
+        const decision = await DecisionTriggerService.onInitiativeStatusChange(
+            initiativeData,
+            previousStatus,
+            newStatus,
+            userId
+        );
+        
+        if (decision) {
+            console.log(`[Initiatives] Auto-created decision: ${decision.id} for initiative ${id}`);
+        }
+    } catch (triggerErr) {
+        console.warn('[Initiatives] Failed to trigger decision:', triggerErr.message);
+        // Don't fail the status change if decision trigger fails
+    }
+
     res.json({
         success: true,
         message: `Status changed to ${newStatus}`,
@@ -671,15 +700,14 @@ router.post('/:id/tasks/suggest', asyncHandler(async (req, res) => {
     }
 
     try {
-        // 2. Call AI Service
-        // Convert DB keys to camelCase if needed, or AiService handles it.
-        // AiService expects { name, summary, hypothesis, axis }
-        const tasks = await AiService.suggestTasks({
+        // 2. Call AI Pipeline (unified pipeline with enterprise features)
+        // Uses capability-based routing with automatic fallback
+        const tasks = await suggestTasks({
             name: initiative.name,
             summary: initiative.summary,
             hypothesis: initiative.hypothesis,
             axis: initiative.axis
-        });
+        }, req.user.id, orgId);
 
         res.json(tasks);
     } catch (aiError) {
@@ -705,13 +733,14 @@ router.post('/:id/validate', asyncHandler(async (req, res) => {
     }
 
     try {
-        const validationResult = await AiService.validateInitiative({
+        // Use unified AI pipeline with quality validation
+        const validationResult = await validateInitiative({
             name: initiative.name,
             hypothesis: initiative.hypothesis,
             businessValue: initiative.business_value,
             costCapex: initiative.cost_capex,
             expectedRoi: initiative.expected_roi
-        });
+        }, req.user.id, orgId);
         res.json(validationResult);
     } catch (error) {
         console.error("Validation failed", error);
@@ -735,16 +764,17 @@ router.post('/:id/enrich', asyncHandler(async (req, res) => {
     }
 
     try {
-        const marketContext = await AiService.enrichInitiative({
+        // Use unified AI pipeline with web research integration
+        const marketContext = await enrichInitiative({
             name: initiative.name,
             axis: initiative.axis,
             area: initiative.area,
             summary: initiative.summary
-        });
+        }, req.user.id, orgId);
 
         // Update DB
         const updateSql = `UPDATE initiatives SET market_context = ? WHERE id = ?`;
-        await queryHelpers.queryRun(updateSql, [marketContext, id]);
+        await queryHelpers.queryRun(updateSql, [JSON.stringify(marketContext), id]);
 
         res.json({ marketContext });
     } catch (error) {
@@ -1026,6 +1056,121 @@ router.get('/:id/kpis/:kpiId/measurements', asyncHandler(async (req, res) => {
             createdAt: m.created_at
         }))
     });
+}));
+
+// ==========================================
+// PORTFOLIO VIEW ENDPOINTS
+// ==========================================
+
+const PortfolioService = require('../services/portfolioService');
+
+/**
+ * GET /api/initiatives/portfolio
+ * Get aggregated portfolio data with roadmap information
+ */
+router.get('/portfolio', asyncHandler(async (req, res) => {
+    const orgId = req.user.organizationId;
+    const { projectId, status, priority, owner, quarter, search } = req.query;
+    
+    const filters = {
+        projectId,
+        status: status ? (Array.isArray(status) ? status : [status]) : undefined,
+        priority: priority ? (Array.isArray(priority) ? priority : [priority]) : undefined,
+        owner,
+        quarter,
+        search
+    };
+    
+    const [initiatives, stats] = await Promise.all([
+        PortfolioService.getPortfolioData(orgId, filters),
+        PortfolioService.getPortfolioStats(orgId, projectId)
+    ]);
+    
+    res.json({
+        initiatives,
+        stats
+    });
+}));
+
+/**
+ * GET /api/initiatives/portfolio/stats
+ * Get portfolio statistics only
+ */
+router.get('/portfolio/stats', asyncHandler(async (req, res) => {
+    const orgId = req.user.organizationId;
+    const { projectId } = req.query;
+    
+    const stats = await PortfolioService.getPortfolioStats(orgId, projectId);
+    res.json(stats);
+}));
+
+/**
+ * GET /api/initiatives/portfolio/dependencies
+ * Get initiative dependencies for timeline view
+ */
+router.get('/portfolio/dependencies', asyncHandler(async (req, res) => {
+    const orgId = req.user.organizationId;
+    const { projectId } = req.query;
+    
+    const dependencies = await PortfolioService.getInitiativeDependencies(orgId, projectId);
+    res.json({ dependencies });
+}));
+
+/**
+ * GET /api/initiatives/portfolio/waves/:projectId
+ * Get roadmap waves for a project
+ */
+router.get('/portfolio/waves/:projectId', asyncHandler(async (req, res) => {
+    const waves = await PortfolioService.getRoadmapWaves(req.params.projectId);
+    res.json({ waves });
+}));
+
+/**
+ * PATCH /api/initiatives/:id/quick-update
+ * Quick inline update for portfolio view
+ */
+router.patch('/:id/quick-update', asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const updates = req.body;
+    const userId = req.user.id;
+    
+    await PortfolioService.quickUpdate(id, updates, userId);
+    res.json({ success: true });
+}));
+
+/**
+ * POST /api/initiatives/bulk-status
+ * Bulk status update for multiple initiatives
+ */
+router.post('/bulk-status', asyncHandler(async (req, res) => {
+    const { initiativeIds, status, reason } = req.body;
+    const userId = req.user.id;
+    
+    if (!initiativeIds || !Array.isArray(initiativeIds) || initiativeIds.length === 0) {
+        return res.status(400).json({ error: 'Initiative IDs required' });
+    }
+    
+    if (!status) {
+        return res.status(400).json({ error: 'Status required' });
+    }
+    
+    const result = await PortfolioService.bulkUpdateStatus(initiativeIds, status, reason, userId);
+    res.json(result);
+}));
+
+/**
+ * POST /api/initiatives/reorder
+ * Reorder initiatives (for drag-drop in timeline)
+ */
+router.post('/reorder', asyncHandler(async (req, res) => {
+    const { initiativeIds } = req.body;
+    
+    if (!initiativeIds || !Array.isArray(initiativeIds)) {
+        return res.status(400).json({ error: 'Initiative IDs array required' });
+    }
+    
+    const result = await PortfolioService.reorderInitiatives(initiativeIds, initiativeIds);
+    res.json(result);
 }));
 
 module.exports = router;

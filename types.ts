@@ -1,5 +1,6 @@
 
 export enum AppView {
+  AI_CHAT = 'AI_CHAT', // Main welcome screen with AI Chat
   WELCOME = 'WELCOME',
   AUTH = 'AUTH',
   DASHBOARD = 'DASHBOARD',
@@ -99,7 +100,8 @@ export enum AppView {
   MY_WORK = 'MY_WORK', // New Module 7 (Tasks & Workflow)
 
   // Initiative Lifecycle Management
-  INITIATIVE_MANAGEMENT = 'INITIATIVE_MANAGEMENT', // REVIEW and APPROVED initiatives
+  INITIATIVE_MANAGEMENT = 'INITIATIVE_MANAGEMENT', // @deprecated - use PORTFOLIO_ROADMAP
+  PORTFOLIO_ROADMAP = 'PORTFOLIO_ROADMAP', // Unified Portfolio & Roadmap view (replaces INITIATIVE_MANAGEMENT + FULL_STEP3_ROADMAP)
   BENEFITS_REALIZATION = 'BENEFITS_REALIZATION', // DONE, BLOCKED, CANCELLED, ARCHIVED + KPIs
 
   // Step D: Executive View (Read-only reporting for executives)
@@ -139,6 +141,7 @@ export enum AppView {
   SUPERADMIN_WHITELABEL = 'SUPERADMIN_WHITELABEL',
   SUPERADMIN_COMPLIANCE = 'SUPERADMIN_COMPLIANCE',
   SUPERADMIN_INVOICES = 'SUPERADMIN_INVOICES',
+  SUPERADMIN_FEEDBACK = 'SUPERADMIN_FEEDBACK',
   SUPERADMIN_BULK_OPERATIONS = 'SUPERADMIN_BULK_OPERATIONS',
 
   // Admin Enterprise Views
@@ -358,6 +361,79 @@ export enum StageGateType {
 
 /** Initiative Module Types */
 export type InitiativeModule = 'ASSESSMENT' | 'INITIATIVE_MANAGEMENT' | 'ROADMAP' | 'EXECUTION' | 'TERMINAL' | 'UNKNOWN';
+
+// ============================================
+// PORTFOLIO VIEW TYPES
+// ============================================
+
+/** Portfolio View Mode - determines which view is active */
+export type PortfolioViewMode = 'list' | 'kanban' | 'timeline' | 'matrix';
+
+/** Portfolio Filters - filter state for portfolio view */
+export interface PortfolioFilters {
+  projectId?: string;
+  status?: InitiativeStatus[];
+  priority?: ('CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW')[];
+  owner?: string;
+  quarter?: string;
+  search?: string;
+}
+
+/** Portfolio Sort Configuration */
+export interface PortfolioSortConfig {
+  field: 'name' | 'status' | 'priority' | 'plannedStartDate' | 'budget' | 'progress';
+  direction: 'asc' | 'desc';
+}
+
+/** Portfolio Stats - KPIs for portfolio header */
+export interface PortfolioStats {
+  total: number;
+  byStatus: Record<InitiativeStatus, number>;
+  totalBudget: number;
+  averageProgress: number;
+  criticalCount: number;
+  blockedCount: number;
+}
+
+/** Portfolio Initiative - extended initiative data for portfolio view */
+export interface PortfolioInitiative {
+  id: string;
+  name: string;
+  summary?: string;
+  axis: string;
+  status: InitiativeStatus;
+  priority: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  progress: number;
+  budget: number;
+  expectedRoi?: number;
+  plannedStartDate?: string;
+  plannedEndDate?: string;
+  targetQuarter?: string;
+  waveId?: string;
+  waveName?: string;
+  projectId?: string;
+  projectName?: string;
+  ownerBusiness?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    avatarUrl?: string;
+  };
+  ownerExecution?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    avatarUrl?: string;
+  };
+  dependencies?: string[];
+  isCriticalPath?: boolean;
+  riskScore?: number;
+  valueScore?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ============================================
 
 /** Status Transition - allowed transition from current status */
 export interface StatusTransition {
@@ -1864,6 +1940,31 @@ export interface ToolCallInfo {
   status?: 'pending' | 'approved' | 'rejected' | 'executed';
 }
 
+// Citation from PMO data or external sources
+export interface ChatCitation {
+  id: string;
+  type: 'assessment' | 'initiative' | 'report' | 'roadmap' | 'external';
+  title: string;
+  reference: string; // e.g., "DRD Assessment Q4 2024"
+  link?: string;     // Deep link to source
+  excerpt?: string;  // Relevant excerpt
+  entityId?: string; // ID of the referenced entity
+}
+
+// Action button in AI response
+export interface ChatResponseAction {
+  id: string;
+  type: 'navigate' | 'execute' | 'expand' | 'copy';
+  label: string;
+  icon?: string;
+  payload: {
+    view?: string;      // AppView to navigate to
+    apiCall?: string;   // API endpoint to call
+    data?: Record<string, unknown>;
+    copyText?: string;  // Text to copy for 'copy' type
+  };
+}
+
 export interface ChatMessage {
   id: string;
   role: 'ai' | 'user';
@@ -1874,6 +1975,8 @@ export interface ChatMessage {
   multiSelect?: boolean;  // If true, allows multiple selections
   toolCalls?: ToolCallInfo[]; // For AI tool calls (MCP)
   isThinking?: boolean; // For MAX Mode deep reasoning indicator
+  citations?: ChatCitation[]; // Citations from PMO data
+  actions?: ChatResponseAction[]; // Action buttons in response
 }
 
 export interface AIMessageHistory {
@@ -4144,7 +4247,7 @@ export interface TeamMeetingReportContent {
   blockers: BlockerItem[];
   pendingDecisions: ReportDecisionItem[];
   nextPeriodPlan: PlannedItem[];
-  
+
   // Per-project breakdown (for portfolio reports)
   projectBreakdown?: {
     projectId: string;
@@ -4155,7 +4258,7 @@ export interface TeamMeetingReportContent {
     blockers: number;
     highlights: string[];
   }[];
-  
+
   // AI-generated insights
   aiHighlights?: string[];
   aiConcerns?: string[];
@@ -4171,7 +4274,7 @@ export interface SteeringCommitteeReportContent {
   risksAndIssues: RiskIssueItem[];
   decisionsRequired: DecisionForBoard[];
   forecast: ForecastSection;
-  
+
   // Per-project status (for portfolio reports)
   projectStatuses?: {
     projectId: string;
@@ -4182,10 +4285,10 @@ export interface SteeringCommitteeReportContent {
     keyIssues: string[];
     nextMilestone?: string;
   }[];
-  
+
   // AI transparency - never hide bad news
   warnings: string[];
-  
+
   // Audit trail
   auditTrail: AuditTrailInfo;
 }
@@ -4391,7 +4494,7 @@ export interface ReportComment {
 /**
  * Report Audit Log Action Types
  */
-export type ReportAuditAction = 
+export type ReportAuditAction =
   | 'CREATED'
   | 'UPDATED'
   | 'VERSION_CREATED'
@@ -4622,26 +4725,26 @@ export interface CMMIAssessmentData {
 
 export type DBR77PhaseId = 'MEASURE' | 'OPTIMIZE' | 'AUTOMATE';
 export type DBR77DimensionId = 'PROCESSES' | 'WORKSTATIONS';
-export type DBR77WasteType = 
-  | 'TRANSPORTATION' 
-  | 'INVENTORY' 
-  | 'MOTION' 
-  | 'WAITING' 
-  | 'OVERPRODUCTION' 
-  | 'OVER_PROCESSING' 
-  | 'DEFECTS' 
+export type DBR77WasteType =
+  | 'TRANSPORTATION'
+  | 'INVENTORY'
+  | 'MOTION'
+  | 'WAITING'
+  | 'OVERPRODUCTION'
+  | 'OVER_PROCESSING'
+  | 'DEFECTS'
   | 'SKILLS';
 
-export type DBR77AutomationTech = 
-  | 'RPA' 
-  | 'AI_ML' 
-  | 'IOT' 
-  | 'COBOT' 
-  | 'AMR' 
-  | 'VISION' 
-  | 'NLP' 
-  | 'DIGITAL_TWIN' 
-  | 'WORKFLOW' 
+export type DBR77AutomationTech =
+  | 'RPA'
+  | 'AI_ML'
+  | 'IOT'
+  | 'COBOT'
+  | 'AMR'
+  | 'VISION'
+  | 'NLP'
+  | 'DIGITAL_TWIN'
+  | 'WORKFLOW'
   | 'ANALYTICS';
 
 export type DBR77RoleEvolution = 'ELIMINATE' | 'TRANSFORM' | 'AUGMENT' | 'MAINTAIN';
@@ -4779,14 +4882,14 @@ export interface MultiFrameworkAssessment {
   name: string;
   framework: AssessmentFrameworkId;
   status: AssessmentStatus;
-  
+
   // Framework-specific data (only one will be populated)
   drdData?: Partial<Record<DRDAxis, AxisAssessment>>;
   siriData?: SIRIAssessmentData;
   admaData?: ADMAAssessmentData;
   cmmiData?: CMMIAssessmentData;
   leanData?: DBR77AssessmentData;
-  
+
   // Import metadata (for PDF imports)
   importSource?: {
     fileName: string;
@@ -4795,15 +4898,15 @@ export interface MultiFrameworkAssessment {
     confidence: number;
     rawText?: string;
   };
-  
+
   // Progress tracking
   progress: number; // 0-100
   completedDimensions: string[];
   totalDimensions: number;
-  
+
   // Workflow
   workflowStatus?: WorkflowState;
-  
+
   // Metadata
   createdAt: string;
   updatedAt: string;

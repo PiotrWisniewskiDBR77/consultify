@@ -71,7 +71,9 @@ db.serialize(() => {
         name TEXT,
         plan TEXT DEFAULT 'free',
         status TEXT DEFAULT 'active',
-        industry TEXT
+        industry TEXT,
+        mfa_required INTEGER DEFAULT 0,
+        mfa_grace_period_days INTEGER DEFAULT 0
     )`);
 
     db.run(`CREATE TABLE IF NOT EXISTS users (
@@ -84,7 +86,12 @@ db.serialize(() => {
         role TEXT DEFAULT 'USER',
         status TEXT DEFAULT 'active',
         avatar_url TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         last_login TEXT,
+        mfa_enabled INTEGER DEFAULT 0,
+        mfa_secret TEXT,
+        mfa_backup_codes TEXT,
+        mfa_verified_at DATETIME,
         FOREIGN KEY (organization_id) REFERENCES organizations(id)
     )`);
 

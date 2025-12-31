@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
 import { DashboardOverview } from '../components/dashboard/DashboardOverview';
@@ -8,6 +8,9 @@ import { GateStatus } from '../components/PMO/GateStatus'; // CRIT-01
 import { PMOHealthSection } from '../components/PMO/PMOHealthSection'; // Step A: PMO Health
 import { SplitLayout } from '../components/SplitLayout';
 import { useTranslation } from 'react-i18next';
+import { useDashboardShortcuts } from '../hooks/useDashboardShortcuts';
+import { Api } from '../services/api';
+import toast from 'react-hot-toast';
 
 interface UserDashboardViewProps {
     currentUser: any;
@@ -52,6 +55,30 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({ currentUse
         setSelectedTaskId(taskId);
         setIsCreateModalOpen(true);
     };
+
+    // Keyboard Shortcuts Handlers
+    const handleMarkAllRead = useCallback(async () => {
+        try {
+            await Api.markAllNotificationsRead();
+            toast.success(t('dashboard.shortcuts.allMarkedRead', 'Wszystkie powiadomienia oznaczone jako przeczytane'));
+        } catch (error) {
+            console.error('Failed to mark all as read', error);
+            toast.error(t('dashboard.shortcuts.error', 'Wystąpił błąd'));
+        }
+    }, [t]);
+
+    const handleEscapeKey = useCallback(() => {
+        if (isCreateModalOpen) {
+            setIsCreateModalOpen(false);
+        }
+    }, [isCreateModalOpen]);
+
+    // Register keyboard shortcuts
+    useDashboardShortcuts({
+        onNewTask: handleCreateTask,
+        onMarkAllRead: handleMarkAllRead,
+        onEscape: handleEscapeKey
+    });
 
     // NOTE: We pass undefined to let SplitLayout use its default AI handler
     // The default handler in SplitLayout properly calls startStream() which sends to backend

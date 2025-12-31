@@ -83,7 +83,7 @@ interface HelpContextValue {
     setPanelOpen: (open: boolean) => void;
     currentRoute: string;
     setCurrentRoute: (route: string) => void;
-    
+
     // New contextual help system
     isHelpSidePanelOpen: boolean;
     setHelpSidePanelOpen: (open: boolean) => void;
@@ -117,16 +117,27 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [error, setError] = useState<string | null>(null);
     const [isPanelOpen, setPanelOpen] = useState(false);
     const [currentRoute, setCurrentRoute] = useState<string>('');
-    
-    // New contextual help system state
-    const [isHelpSidePanelOpen, setHelpSidePanelOpen] = useState(false);
+
+    // New contextual help system state - Synced with Global Store
+    const { activeSidePanel, toggleSidePanel } = useAppStore();
+    const isHelpSidePanelOpen = activeSidePanel === 'HELP';
     const [activeHelpTab, setActiveHelpTab] = useState<HelpTab>('overview');
-    
+
     // Toggle help side panel
     const toggleHelpSidePanel = useCallback(() => {
-        setHelpSidePanelOpen(prev => !prev);
-    }, []);
-    
+        toggleSidePanel('HELP');
+    }, [toggleSidePanel]);
+
+    // Set help side panel open (internal helper to match interface, but delegates to store)
+    const setHelpSidePanelOpen = useCallback((open: boolean) => {
+        if (open) {
+            if (activeSidePanel !== 'HELP') toggleSidePanel('HELP');
+        } else {
+            if (activeSidePanel === 'HELP') toggleSidePanel('HELP');
+        }
+    }, [activeSidePanel, toggleSidePanel]);
+
+
     // Get contextual help for a specific view
     const getHelpForView = useCallback((view: AppView | string): ContextualHelpState => {
         const mapping: ViewHelpMapping = getHelpMapping(view);
@@ -134,7 +145,7 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const cardHelp = mapping.cardId ? CARD_DOCS[mapping.cardId] : undefined;
         const faqs = getFAQsForModule(mapping.moduleId);
         const videos = getVideosForModule(mapping.moduleId);
-        
+
         return {
             moduleId: mapping.moduleId,
             cardId: mapping.cardId,
@@ -144,7 +155,7 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
             videos
         };
     }, []);
-    
+
     // Memoized contextual help based on current view
     const contextualHelp = useMemo(() => {
         return getHelpForView(currentView);
@@ -325,18 +336,18 @@ export const useHelpPanel = () => {
  * Hook for the new contextual help side panel
  */
 export const useHelpSidePanel = () => {
-    const { 
-        isHelpSidePanelOpen, 
-        setHelpSidePanelOpen, 
+    const {
+        isHelpSidePanelOpen,
+        setHelpSidePanelOpen,
         toggleHelpSidePanel,
         activeHelpTab,
         setActiveHelpTab,
         contextualHelp,
         getHelpForView
     } = useHelp();
-    
-    return { 
-        isOpen: isHelpSidePanelOpen, 
+
+    return {
+        isOpen: isHelpSidePanelOpen,
         setOpen: setHelpSidePanelOpen,
         toggle: toggleHelpSidePanel,
         activeTab: activeHelpTab,

@@ -1,23 +1,48 @@
 /**
  * My Work Module - Barrel Exports
- * Part of PMO Upgrade to World-Class Standards
+ * Unified Dashboard + My Work - 65/35 Layout
  */
 
 // ============================================================================
-// FOCUS COMPONENTS
+// UNIFIED MYWORK COMPONENTS (NEW)
 // ============================================================================
-export { FocusBoard } from './Focus/FocusBoard';
+
+// Main orchestrators
+export { WorkCenter } from './WorkCenter';
+export { NotificationsHub } from './NotificationsHub';
+export type { NotificationMode } from './NotificationsHub';
+
+// Navigation components
+export { PillNavigation } from './PillNavigation';
+export type { WorkTab } from './PillNavigation';
+
+export { QuickFilterBar } from './QuickFilterBar';
+export type { QuickFilter } from './QuickFilterBar';
 
 // ============================================================================
-// INBOX COMPONENTS
+// CORE COMPONENTS (ClickUp-style redesign)
 // ============================================================================
-export { InboxTriage } from './Inbox/InboxTriage';
 
-// ============================================================================
-// TASKS COMPONENTS
-// ============================================================================
-export { TaskFiltersBar } from './Tasks/TaskFiltersBar';
-export type { TaskFilters, ViewMode, FilterPreset } from './Tasks/TaskFiltersBar';
+// Main navigation (sidebar)
+export { WorkSidebar } from './WorkSidebar';
+export type { WorkSection, TaskTimeGroup, DecisionGroup } from './WorkSidebar';
+
+// Task management
+export { MyTasksList } from './MyTasksList';
+export { TaskRow } from './TaskRow';
+
+// Decision management
+export { DecisionsList } from './DecisionsList';
+export type { Decision } from './DecisionsList';
+export { DecisionDetailModal } from './DecisionDetailModal';
+export { RelatedObjectPreview } from './RelatedObjectPreview';
+export { DecisionBottleneckPanel } from './DecisionBottleneckPanel';
+
+// Projects placeholder
+export { MyProjects } from './MyProjects';
+
+// Task detail modal (reused)
+export { TaskDetailModal } from './TaskDetailModal';
 
 // ============================================================================
 // SHARED COMPONENTS
@@ -47,8 +72,12 @@ export {
 } from './shared/EmptyState';
 
 // ============================================================================
-// LEGACY COMPONENTS (to be deprecated)
+// LEGACY COMPONENTS (kept for backward compatibility)
 // ============================================================================
+export { FocusBoard } from './Focus/FocusBoard';
+export { InboxTriage } from './Inbox/InboxTriage';
+export { TaskFiltersBar } from './Tasks/TaskFiltersBar';
+export type { TaskFilters, ViewMode, FilterPreset } from './Tasks/TaskFiltersBar';
 export { TodayDashboard } from './TodayDashboard';
 export { TaskInbox } from './TaskInbox';
 export { PersonalExecutionBar } from './PersonalExecutionBar';
@@ -56,8 +85,3 @@ export { DecisionsPanel } from './DecisionsPanel';
 export { WorkloadView } from './WorkloadView';
 export { ProgressView } from './ProgressView';
 export { NotificationSettings } from './NotificationSettings';
-
-
-
-
-

@@ -33,6 +33,7 @@ const MyWorkView = React.lazy(() => import('./views/MyWorkView').then(m => ({ de
 const ActionProposalView = React.lazy(() => import('./views/ActionProposalView').then(m => ({ default: m.ActionProposalView })));
 const InitiativeManagementView = React.lazy(() => import('./views/InitiativeManagementView').then(m => ({ default: m.InitiativeManagementView })));
 const BenefitsRealizationView = React.lazy(() => import('./views/BenefitsRealizationView').then(m => ({ default: m.BenefitsRealizationView })));
+const PortfolioView = React.lazy(() => import('./views/PortfolioView'));
 import { AppView, SessionMode, AuthStep, User, UserRole } from './types';
 import { Menu, UserCircle, ChevronRight, Loader2, LogOut, CreditCard, Cpu, Sun, Moon, Monitor, Languages, Bot, Database, Layers, Box, Sparkles } from 'lucide-react';
 import { useAppStore } from './store/useAppStore';
@@ -60,9 +61,12 @@ import { TourProvider } from './components/Onboarding/TourProvider';
 import { AIFreezeBanner } from './components/AIFreezeBanner';
 import { DemoWelcomeTour, ExitIntentModal, useExitIntent } from './components/demo';
 import { DocumentToggleButton } from './components/documents/DocumentToggleButton';
+import { DocumentSidePanel } from './components/documents/DocumentSidePanel';
 import { BottomNavigation } from './components/navigation';
 import { HelpToggleButton } from './components/Help/HelpToggleButton';
 import { HelpSidePanel } from './components/Help/HelpSidePanel';
+import { FeedbackToggleButton } from './components/Feedback/FeedbackToggleButton';
+import { FeedbackSidePanel } from './components/Feedback/FeedbackSidePanel';
 
 
 // Help system wrapper component
@@ -94,6 +98,7 @@ const InviteRouteWrapper = () => {
 };
 
 // Lazy load views
+const AIChatWelcomeView = React.lazy(() => import('./views/AIChatWelcomeView').then(module => ({ default: module.AIChatWelcomeView })));
 const OnboardingWizard = React.lazy(() => import('./views/OnboardingWizard').then(module => ({ default: module.OnboardingWizard }))); // NEW
 const OrgSetupWizard = React.lazy(() => import('./views/OrgSetupWizard').then(module => ({ default: module.OrgSetupWizard }))); // Phase D
 const ConsultantPanelView = React.lazy(() => import('./src/views/consultant/ConsultantPanelView').then(module => ({ default: module.ConsultantPanelView })));
@@ -294,10 +299,10 @@ const AppContent: React.FC = () => {
         setSessionMode(mode);
 
         if (currentUser?.isAuthenticated) {
-            // If user is already logged in, go to dashboard logic
+            // If user is already logged in, go to AI Chat (or admin dashboard)
             if (currentUser.role === 'SUPERADMIN') setCurrentView(AppView.ADMIN_DASHBOARD);
             else if (currentUser.role === UserRole.ADMIN) setCurrentView(AppView.ADMIN_DASHBOARD);
-            else setCurrentView(AppView.USER_DASHBOARD);
+            else setCurrentView(AppView.AI_CHAT);
             return;
         }
 
@@ -362,9 +367,9 @@ const AppContent: React.FC = () => {
             setCurrentView(AppView.ADMIN_DASHBOARD);
             window.history.pushState({}, '', '/dashboard');
         } else {
-            // Regular User -> Dashboard to select project
-            setCurrentView(AppView.USER_DASHBOARD);
-            window.history.pushState({}, '', '/dashboard');
+            // Regular User -> AI Chat welcome screen
+            setCurrentView(AppView.AI_CHAT);
+            window.history.pushState({}, '', '/chat');
         }
     };
 
@@ -452,8 +457,12 @@ const AppContent: React.FC = () => {
             section = t('sidebar.fullProject');
             sub = t('sidebar.fullStep2');
         } else if (currentView === AppView.FULL_STEP3_ROADMAP) {
+            // Legacy - redirect to Portfolio
             section = t('sidebar.fullProject');
-            sub = t('sidebar.fullStep3');
+            sub = t('sidebar.portfolioRoadmap', 'Portfolio & Roadmap');
+        } else if (currentView === AppView.PORTFOLIO_ROADMAP) {
+            section = t('sidebar.fullProject');
+            sub = t('sidebar.portfolioRoadmap', 'Portfolio & Roadmap');
         } else if (currentView === AppView.FULL_STEP4_ROI) {
             section = t('sidebar.fullProject');
             sub = t('sidebar.fullStep4');
@@ -517,16 +526,21 @@ const AppContent: React.FC = () => {
             section = t('consultant.section');
             sub = t('consultant.invites');
         }
-        // Dashboard Views
-        else if (currentView === AppView.USER_DASHBOARD || currentView === AppView.DASHBOARD) {
-            section = t('sidebar.dashboard');
+        // AI Chat View
+        else if (currentView === AppView.AI_CHAT) {
+            section = 'AI';
+            sub = t('sidebar.aiChat', 'Chat');
+        }
+        // MyWork Views (unified Dashboard + My Work)
+        else if (
+            currentView === AppView.MY_WORK ||
+            currentView === AppView.USER_DASHBOARD || 
+            currentView === AppView.DASHBOARD ||
+            currentView === AppView.DASHBOARD_OVERVIEW ||
+            currentView === AppView.DASHBOARD_SNAPSHOT
+        ) {
+            section = t('myWork.title', 'My Work');
             sub = '';
-        } else if (currentView === AppView.DASHBOARD_OVERVIEW) {
-            section = t('sidebar.dashboard');
-            sub = t('sidebar.dashboardSub.overview');
-        } else if (currentView === AppView.DASHBOARD_SNAPSHOT) {
-            section = t('sidebar.dashboard');
-            sub = t('sidebar.dashboardSub.snapshot');
         }
         // Affiliate Dashboard
         else if (currentView === AppView.AFFILIATE_DASHBOARD) {
@@ -561,14 +575,29 @@ const AppContent: React.FC = () => {
             );
         }
 
-        // --- USER Dashboard ---
+        // --- AI Chat Welcome Screen ---
+        if (currentView === AppView.AI_CHAT) {
+            return (
+                <React.Suspense fallback={<LoadingScreen />}>
+                    <AIChatWelcomeView />
+                </React.Suspense>
+            );
+        }
+
+        // --- MyWork (unified Dashboard + My Work) ---
+        // All Dashboard views redirect to MyWork as the primary home
         if (
+            currentView === AppView.MY_WORK ||
             currentView === AppView.USER_DASHBOARD ||
             currentView === AppView.DASHBOARD ||
             currentView === AppView.DASHBOARD_OVERVIEW ||
             currentView === AppView.DASHBOARD_SNAPSHOT
         ) {
-            return <UserDashboardView currentUser={currentUser} onNavigate={setCurrentView} />;
+            return (
+                <React.Suspense fallback={<LoadingScreen />}>
+                    <MyWorkView currentUser={currentUser} onNavigate={setCurrentView} />
+                </React.Suspense>
+            );
         }
 
         // Quick Assessment Views
@@ -706,19 +735,20 @@ const AppContent: React.FC = () => {
             );
         }
 
-        if (currentView === AppView.MY_WORK) {
+        // Portfolio & Roadmap Module (unified Initiative Management + Roadmap)
+        if (currentView === AppView.PORTFOLIO_ROADMAP) {
             return (
                 <React.Suspense fallback={<LoadingScreen />}>
-                    <MyWorkView />
+                    <PortfolioView />
                 </React.Suspense>
             );
         }
 
-        // Initiative Management Module
+        // Initiative Management Module (legacy - kept for backward compatibility)
         if (currentView === AppView.INITIATIVE_MANAGEMENT) {
             return (
                 <React.Suspense fallback={<LoadingScreen />}>
-                    <InitiativeManagementView />
+                    <PortfolioView />
                 </React.Suspense>
             );
         }
@@ -919,7 +949,6 @@ const AppContent: React.FC = () => {
         <ErrorBoundary>
             <div className="flex h-screen w-full bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white font-sans overflow-hidden">
                 <Toaster position="bottom-right" />
-                <ChatOverlay />
 
                 {/* Demo Conversion Modal */}
                 {currentUser?.isDemo && (
@@ -943,11 +972,15 @@ const AppContent: React.FC = () => {
                 {isSessionView && (
                     <>
                         {/* Floating action buttons - positioned together on the right */}
-                        <div className="fixed right-0 top-1/3 z-50 flex flex-col gap-3 items-end translate-x-0 pointer-events-none">
-                            <div className="pointer-events-auto"><DocumentToggleButton /></div>
+                        <div className="fixed right-0 top-[66%] z-50 flex flex-col gap-3 items-end translate-x-0 pointer-events-none">
                             <div className="pointer-events-auto"><HelpToggleButton /></div>
+                            <div className="pointer-events-auto"><DocumentToggleButton /></div>
+                            <div className="pointer-events-auto"><FeedbackToggleButton /></div>
                         </div>
                         <HelpSidePanel />
+                        <DocumentSidePanel />
+                        <FeedbackSidePanel />
+                        <ChatOverlay hideTrigger />
                     </>
                 )}
 

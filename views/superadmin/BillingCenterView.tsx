@@ -938,14 +938,17 @@ export const BillingCenterView: React.FC = () => {
         <div className="h-full overflow-y-auto p-8 bg-navy-950 relative">
             <InfoButton cardId="superadmin-billing" position="top-right" />
             {/* Header */}
-            <div className="mb-8">
-                <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-blue-600 flex items-center justify-center">
-                        <CreditCard size={20} className="text-white" />
-                    </div>
-                    Billing Center
-                </h1>
-                <p className="text-slate-400 mt-2">Manage subscriptions, token pricing, and revenue analytics</p>
+            <div className="flex items-center justify-between mb-8">
+                <div>
+                    <h1 className="text-2xl font-bold text-white flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-blue-600 flex items-center justify-center">
+                            <CreditCard size={20} className="text-white" />
+                        </div>
+                        Billing Center
+                    </h1>
+                    <p className="text-slate-400 mt-2">Manage subscriptions, token pricing, and revenue analytics</p>
+                </div>
+                <InfoButton cardId="superadmin-billing" position="header-inline" size="md" showLabel label="Help" />
             </div>
 
             {/* Tab Navigation */}

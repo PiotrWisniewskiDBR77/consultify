@@ -8,10 +8,144 @@
  * - Rate limiting per organization
  * - Content filtering
  * - PII detection
+ * 
+ * RESILIENCE FEATURES:
+ * - All DB calls wrapped in Promises (SQLite3 compatibility)
+ * - Fail-open pattern: on errors, allow requests rather than block
+ * - Defensive type checking to prevent "is not iterable" errors
  */
 
 const db = require('../../database');
 const { aiLogger } = require('./logger');
+
+// =============================================================================
+// DATABASE PROMISE HELPERS (SQLite3 uses callbacks, not Promises!)
+// =============================================================================
+
+/**
+ * Promise wrapper for db.all() - returns array of rows
+ * Works with both SQLite3 (callback-based) and PostgreSQL (hybrid Promise/callback)
+ * @param {string} sql - SQL query
+ * @param {Array} params - Query parameters
+ * @returns {Promise<Array>} - Array of rows (empty on error)
+ */
+function dbAll(sql, params = []) {
+    return new Promise((resolve) => {
+        let resolved = false;
+        
+        // Timeout protection - don't hang forever
+        const timeout = setTimeout(() => {
+            if (!resolved) {
+                resolved = true;
+                aiLogger.warn('EnterpriseSecurity', 'DB query timeout, returning empty');
+                resolve([]);
+            }
+        }, 5000);
+
+        const safeResolve = (result) => {
+            if (!resolved) {
+                resolved = true;
+                clearTimeout(timeout);
+                // Ensure we always return an array
+                if (Array.isArray(result)) {
+                    resolve(result);
+                } else if (result === null || result === undefined) {
+                    resolve([]);
+                } else {
+                    aiLogger.warn('EnterpriseSecurity', `Unexpected result type: ${typeof result}`);
+                    resolve([]);
+                }
+            }
+        };
+
+        try {
+            // Check if db.all exists
+            if (typeof db.all !== 'function') {
+                aiLogger.warn('EnterpriseSecurity', 'db.all is not a function');
+                safeResolve([]);
+                return;
+            }
+            
+            db.all(sql, params, (err, rows) => {
+                if (err) {
+                    aiLogger.warn('EnterpriseSecurity', `DB all error: ${err.message}`);
+                    safeResolve([]); // Fail-open: return empty array
+                } else {
+                    safeResolve(rows);
+                }
+            });
+        } catch (error) {
+            aiLogger.warn('EnterpriseSecurity', `DB all exception: ${error.message}`);
+            safeResolve([]);
+        }
+    });
+}
+
+/**
+ * Promise wrapper for db.get() - returns single row
+ * @param {string} sql - SQL query
+ * @param {Array} params - Query parameters
+ * @returns {Promise<Object|null>} - Single row or null
+ */
+function dbGet(sql, params = []) {
+    return new Promise((resolve) => {
+        const timeout = setTimeout(() => {
+            aiLogger.warn('EnterpriseSecurity', 'DB get timeout, returning null');
+            resolve(null);
+        }, 5000);
+
+        try {
+            db.get(sql, params, (err, row) => {
+                clearTimeout(timeout);
+                if (err) {
+                    aiLogger.warn('EnterpriseSecurity', `DB get error: ${err.message}`);
+                    resolve(null);
+                } else {
+                    resolve(row || null);
+                }
+            });
+        } catch (error) {
+            clearTimeout(timeout);
+            aiLogger.warn('EnterpriseSecurity', `DB get exception: ${error.message}`);
+            resolve(null);
+        }
+    });
+}
+
+/**
+ * Promise wrapper for db.run() - executes INSERT/UPDATE/DELETE
+ * @param {string} sql - SQL statement
+ * @param {Array} params - Statement parameters
+ * @returns {Promise<{success: boolean, lastID?: number, changes?: number}>}
+ */
+function dbRun(sql, params = []) {
+    return new Promise((resolve) => {
+        const timeout = setTimeout(() => {
+            aiLogger.warn('EnterpriseSecurity', 'DB run timeout');
+            resolve({ success: false, error: 'timeout' });
+        }, 5000);
+
+        try {
+            db.run(sql, params, function(err) {
+                clearTimeout(timeout);
+                if (err) {
+                    aiLogger.warn('EnterpriseSecurity', `DB run error: ${err.message}`);
+                    resolve({ success: false, error: err.message });
+                } else {
+                    resolve({ success: true, lastID: this.lastID, changes: this.changes });
+                }
+            });
+        } catch (error) {
+            clearTimeout(timeout);
+            aiLogger.warn('EnterpriseSecurity', `DB run exception: ${error.message}`);
+            resolve({ success: false, error: error.message });
+        }
+    });
+}
+
+// =============================================================================
+// PII & RISK PATTERNS
+// =============================================================================
 
 // PII patterns for detection
 const PII_PATTERNS = {
@@ -36,6 +170,10 @@ const RISK_RULES = {
     ]
 };
 
+// =============================================================================
+// ENTERPRISE SECURITY SERVICE
+// =============================================================================
+
 class EnterpriseSecurityService {
     constructor() {
         this.rateLimitCache = new Map();
@@ -50,99 +188,110 @@ class EnterpriseSecurityService {
      * Log AI audit entry
      */
     async logAudit(entry) {
-        const {
-            userId,
-            organizationId,
-            action,
-            resourceType,
-            resourceId,
-            requestSummary,
-            responseSummary,
-            modelUsed,
-            tokensUsed,
-            costUsd,
-            ipAddress,
-            userAgent
-        } = entry;
+        try {
+            const {
+                userId,
+                organizationId,
+                action,
+                resourceType,
+                resourceId,
+                requestSummary,
+                responseSummary,
+                modelUsed,
+                tokensUsed,
+                costUsd,
+                ipAddress,
+                userAgent
+            } = entry;
 
-        // Assess risk level
-        const riskAssessment = this.assessRisk(requestSummary, responseSummary);
+            // Assess risk level
+            const riskAssessment = this.assessRisk(requestSummary, responseSummary);
 
-        const auditEntry = {
-            id: require('crypto').randomUUID(),
-            timestamp: new Date().toISOString(),
-            user_id: userId,
-            organization_id: organizationId,
-            action,
-            resource_type: resourceType,
-            resource_id: resourceId,
-            request_summary: this.sanitizePII(requestSummary),
-            response_summary: this.sanitizePII(responseSummary, true), // Truncate response
-            model_used: modelUsed,
-            tokens_used: tokensUsed,
-            cost_usd: costUsd,
-            ip_address: ipAddress,
-            user_agent: userAgent,
-            risk_level: riskAssessment.level,
-            flagged: riskAssessment.flagged,
-            flag_reason: riskAssessment.reason
-        };
+            const auditEntry = {
+                id: require('crypto').randomUUID(),
+                timestamp: new Date().toISOString(),
+                user_id: userId,
+                organization_id: organizationId,
+                action,
+                resource_type: resourceType,
+                resource_id: resourceId,
+                request_summary: this.sanitizePII(requestSummary),
+                response_summary: this.sanitizePII(responseSummary, true),
+                model_used: modelUsed,
+                tokens_used: tokensUsed,
+                cost_usd: costUsd,
+                ip_address: ipAddress,
+                user_agent: userAgent,
+                risk_level: riskAssessment.level,
+                flagged: riskAssessment.flagged,
+                flag_reason: riskAssessment.reason
+            };
 
-        // Add to buffer for batch insert
-        this.auditBuffer.push(auditEntry);
+            // Add to buffer for batch insert
+            this.auditBuffer.push(auditEntry);
 
-        // Alert on high risk
-        if (riskAssessment.flagged) {
-            aiLogger.warn('EnterpriseSecurity', 
-                `Flagged AI request: ${riskAssessment.reason} (user: ${userId})`);
+            // Alert on high risk
+            if (riskAssessment.flagged) {
+                aiLogger.warn('EnterpriseSecurity', 
+                    `Flagged AI request: ${riskAssessment.reason} (user: ${userId})`);
+            }
+
+            return riskAssessment;
+        } catch (error) {
+            // Don't let audit logging break the main flow
+            aiLogger.error('EnterpriseSecurity', `logAudit failed: ${error.message}`);
+            return { level: 'LOW', flagged: false, reason: null };
         }
-
-        return riskAssessment;
     }
 
     /**
      * Assess risk level of request
      */
     assessRisk(request, response) {
-        const content = `${request || ''} ${response || ''}`.toLowerCase();
-        
-        // Check high risk patterns
-        for (const rule of RISK_RULES.HIGH) {
-            if (rule.pattern.test(content)) {
-                return {
-                    level: 'HIGH',
-                    flagged: true,
-                    reason: rule.reason
-                };
+        try {
+            const content = `${request || ''} ${response || ''}`.toLowerCase();
+            
+            // Check high risk patterns
+            for (const rule of RISK_RULES.HIGH) {
+                if (rule.pattern.test(content)) {
+                    return {
+                        level: 'HIGH',
+                        flagged: true,
+                        reason: rule.reason
+                    };
+                }
             }
-        }
 
-        // Check medium risk patterns
-        for (const rule of RISK_RULES.MEDIUM) {
-            if (rule.pattern.test(content)) {
+            // Check medium risk patterns
+            for (const rule of RISK_RULES.MEDIUM) {
+                if (rule.pattern.test(content)) {
+                    return {
+                        level: 'MEDIUM',
+                        flagged: false,
+                        reason: rule.reason
+                    };
+                }
+            }
+
+            // Check for PII
+            const piiFound = this.detectPII(content);
+            if (piiFound.length > 0) {
                 return {
                     level: 'MEDIUM',
-                    flagged: false,
-                    reason: rule.reason
+                    flagged: piiFound.length > 3,
+                    reason: `PII detected: ${piiFound.join(', ')}`
                 };
             }
-        }
 
-        // Check for PII
-        const piiFound = this.detectPII(content);
-        if (piiFound.length > 0) {
             return {
-                level: 'MEDIUM',
-                flagged: piiFound.length > 3,
-                reason: `PII detected: ${piiFound.join(', ')}`
+                level: 'LOW',
+                flagged: false,
+                reason: null
             };
+        } catch (error) {
+            aiLogger.warn('EnterpriseSecurity', `assessRisk error: ${error.message}`);
+            return { level: 'LOW', flagged: false, reason: null };
         }
-
-        return {
-            level: 'LOW',
-            flagged: false,
-            reason: null
-        };
     }
 
     /**
@@ -151,10 +300,16 @@ class EnterpriseSecurityService {
     detectPII(content) {
         const found = [];
         
-        for (const [type, pattern] of Object.entries(PII_PATTERNS)) {
-            if (pattern.test(content)) {
-                found.push(type);
+        try {
+            for (const [type, pattern] of Object.entries(PII_PATTERNS)) {
+                // Reset regex lastIndex for global patterns
+                pattern.lastIndex = 0;
+                if (pattern.test(content)) {
+                    found.push(type);
+                }
             }
+        } catch (error) {
+            aiLogger.warn('EnterpriseSecurity', `detectPII error: ${error.message}`);
         }
 
         return found;
@@ -166,58 +321,96 @@ class EnterpriseSecurityService {
     sanitizePII(content, truncate = false) {
         if (!content) return content;
 
-        let sanitized = content;
+        try {
+            let sanitized = content;
 
-        for (const [type, pattern] of Object.entries(PII_PATTERNS)) {
-            sanitized = sanitized.replace(pattern, `[${type.toUpperCase()}_REDACTED]`);
+            for (const [type, pattern] of Object.entries(PII_PATTERNS)) {
+                sanitized = sanitized.replace(pattern, `[${type.toUpperCase()}_REDACTED]`);
+            }
+
+            if (truncate && sanitized.length > 500) {
+                sanitized = sanitized.substring(0, 500) + '... [TRUNCATED]';
+            }
+
+            return sanitized;
+        } catch (error) {
+            return content?.substring(0, 500) || '';
         }
-
-        if (truncate && sanitized.length > 500) {
-            sanitized = sanitized.substring(0, 500) + '... [TRUNCATED]';
-        }
-
-        return sanitized;
     }
 
     /**
      * Check rate limit for organization
+     * RESILIENT: Uses fail-open pattern - if check fails, allow the request
      */
     async checkRateLimit(organizationId, action = 'all') {
-        const cacheKey = `${organizationId}:${action}`;
-        
-        // Get limits from database (with caching)
-        const limits = await this.getOrganizationLimits(organizationId, action);
-        
-        if (!limits || limits.length === 0) {
-            return { allowed: true, remaining: Infinity };
-        }
-
-        for (const limit of limits) {
-            const usage = await this.getUsage(organizationId, action, limit.limit_type);
-            
-            if (usage >= limit.limit_value) {
-                return {
-                    allowed: false,
-                    remaining: 0,
-                    resetAt: this.getResetTime(limit.limit_type),
-                    limitType: limit.limit_type,
-                    limit: limit.limit_value
-                };
+        try {
+            // Get limits from database
+            let limits;
+            try {
+                limits = await this.getOrganizationLimits(organizationId, action);
+            } catch (fetchError) {
+                aiLogger.warn('EnterpriseSecurity', `Failed to fetch limits (allowing): ${fetchError.message}`);
+                return { allowed: true, remaining: Infinity, bypassed: true };
             }
-        }
+            
+            // ULTRA-DEFENSIVE: Triple-check limits is iterable
+            if (limits === null || limits === undefined) {
+                aiLogger.debug('EnterpriseSecurity', 'Limits is null/undefined, allowing request');
+                return { allowed: true, remaining: Infinity };
+            }
+            
+            if (!Array.isArray(limits)) {
+                aiLogger.warn('EnterpriseSecurity', `Limits is not an array (${typeof limits}), allowing request`);
+                return { allowed: true, remaining: Infinity, bypassed: true };
+            }
+            
+            if (limits.length === 0) {
+                // No limits configured - allow request
+                return { allowed: true, remaining: Infinity };
+            }
 
-        return { allowed: true, remaining: limits[0]?.limit_value - 1 || Infinity };
+            // Safe iteration with try-catch
+            try {
+                for (const limit of limits) {
+                    if (!limit || typeof limit !== 'object') continue;
+                    
+                    const usage = await this.getUsage(organizationId, action, limit.limit_type);
+                    
+                    if (usage >= limit.limit_value) {
+                        return {
+                            allowed: false,
+                            remaining: 0,
+                            resetAt: this.getResetTime(limit.limit_type),
+                            limitType: limit.limit_type,
+                            limit: limit.limit_value
+                        };
+                    }
+                }
+            } catch (iterError) {
+                aiLogger.error('EnterpriseSecurity', `Iteration error (allowing): ${iterError.message}`);
+                return { allowed: true, remaining: Infinity, bypassed: true, error: iterError.message };
+            }
+
+            return { allowed: true, remaining: limits[0]?.limit_value - 1 || Infinity };
+        } catch (error) {
+            // FAIL-OPEN: On any error, allow the request to proceed
+            aiLogger.error('EnterpriseSecurity', `Rate limit check failed (allowing): ${error.message}`);
+            return { allowed: true, remaining: Infinity, bypassed: true, error: error.message };
+        }
     }
 
     /**
-     * Get organization rate limits
+     * Get organization rate limits from database
+     * Returns empty array on any failure (fail-open)
      */
     async getOrganizationLimits(organizationId, action) {
         try {
-            return await db.all(`
+            const rows = await dbAll(`
                 SELECT * FROM ai_rate_limits
                 WHERE organization_id = ? AND (applies_to = 'all' OR applies_to = ?)
             `, [organizationId, action]);
+            
+            return Array.isArray(rows) ? rows : [];
         } catch (error) {
             aiLogger.debug('EnterpriseSecurity', `Limit fetch failed: ${error.message}`);
             return [];
@@ -225,13 +418,14 @@ class EnterpriseSecurityService {
     }
 
     /**
-     * Get usage count
+     * Get usage count for rate limiting
+     * Returns 0 on any failure (fail-open)
      */
     async getUsage(organizationId, action, limitType) {
-        const timeWindow = this.getTimeWindow(limitType);
-        
         try {
-            const result = await db.get(`
+            const timeWindow = this.getTimeWindow(limitType);
+            
+            const result = await dbGet(`
                 SELECT COUNT(*) as count FROM ai_audit_log
                 WHERE organization_id = ? 
                   AND timestamp > datetime('now', ?)
@@ -278,13 +472,13 @@ class EnterpriseSecurityService {
     }
 
     /**
-     * Log data access
+     * Log data access (non-blocking)
      */
     async logDataAccess(entry) {
-        const { userId, organizationId, dataType, dataId, accessType, purpose, aiRequestId } = entry;
-
         try {
-            await db.run(`
+            const { userId, organizationId, dataType, dataId, accessType, purpose, aiRequestId } = entry;
+
+            await dbRun(`
                 INSERT INTO ai_data_access_log 
                 (id, user_id, organization_id, data_type, data_id, access_type, purpose, ai_request_id)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -295,44 +489,47 @@ class EnterpriseSecurityService {
             ]);
         } catch (error) {
             aiLogger.debug('EnterpriseSecurity', `Data access log failed: ${error.message}`);
+            // Non-blocking - don't throw
         }
     }
 
     /**
      * Get audit log entries
+     * Returns empty array on any failure
      */
     async getAuditLog(filters = {}) {
-        const { organizationId, userId, action, riskLevel, flagged, limit = 100, offset = 0 } = filters;
-
-        let query = `SELECT * FROM ai_audit_log WHERE 1=1`;
-        const params = [];
-
-        if (organizationId) {
-            query += ` AND organization_id = ?`;
-            params.push(organizationId);
-        }
-        if (userId) {
-            query += ` AND user_id = ?`;
-            params.push(userId);
-        }
-        if (action) {
-            query += ` AND action = ?`;
-            params.push(action);
-        }
-        if (riskLevel) {
-            query += ` AND risk_level = ?`;
-            params.push(riskLevel);
-        }
-        if (flagged !== undefined) {
-            query += ` AND flagged = ?`;
-            params.push(flagged ? 1 : 0);
-        }
-
-        query += ` ORDER BY timestamp DESC LIMIT ? OFFSET ?`;
-        params.push(limit, offset);
-
         try {
-            return await db.all(query, params);
+            const { organizationId, userId, action, riskLevel, flagged, limit = 100, offset = 0 } = filters;
+
+            let query = `SELECT * FROM ai_audit_log WHERE 1=1`;
+            const params = [];
+
+            if (organizationId) {
+                query += ` AND organization_id = ?`;
+                params.push(organizationId);
+            }
+            if (userId) {
+                query += ` AND user_id = ?`;
+                params.push(userId);
+            }
+            if (action) {
+                query += ` AND action = ?`;
+                params.push(action);
+            }
+            if (riskLevel) {
+                query += ` AND risk_level = ?`;
+                params.push(riskLevel);
+            }
+            if (flagged !== undefined) {
+                query += ` AND flagged = ?`;
+                params.push(flagged ? 1 : 0);
+            }
+
+            query += ` ORDER BY timestamp DESC LIMIT ? OFFSET ?`;
+            params.push(limit, offset);
+
+            const rows = await dbAll(query, params);
+            return Array.isArray(rows) ? rows : [];
         } catch (error) {
             aiLogger.debug('EnterpriseSecurity', `Audit log fetch failed: ${error.message}`);
             return [];
@@ -341,6 +538,7 @@ class EnterpriseSecurityService {
 
     /**
      * Flush audit buffer to database
+     * Non-blocking with retry on failure
      */
     async flushAuditBuffer() {
         if (this.auditBuffer.length === 0) return;
@@ -348,9 +546,9 @@ class EnterpriseSecurityService {
         const entries = [...this.auditBuffer];
         this.auditBuffer = [];
 
-        try {
-            for (const entry of entries) {
-                await db.run(`
+        for (const entry of entries) {
+            try {
+                await dbRun(`
                     INSERT INTO ai_audit_log 
                     (id, timestamp, user_id, organization_id, action, resource_type, resource_id,
                      request_summary, response_summary, model_used, tokens_used, cost_usd,
@@ -363,11 +561,14 @@ class EnterpriseSecurityService {
                     entry.tokens_used, entry.cost_usd, entry.ip_address, entry.user_agent,
                     entry.risk_level, entry.flagged ? 1 : 0, entry.flag_reason
                 ]);
+            } catch (error) {
+                aiLogger.warn('EnterpriseSecurity', `Audit entry insert failed: ${error.message}`);
+                // Re-add failed entry to buffer for retry (max once)
+                if (!entry._retried) {
+                    entry._retried = true;
+                    this.auditBuffer.push(entry);
+                }
             }
-        } catch (error) {
-            aiLogger.error('EnterpriseSecurity', `Audit buffer flush failed: ${error.message}`);
-            // Re-add entries to buffer
-            this.auditBuffer.push(...entries);
         }
     }
 
@@ -376,7 +577,9 @@ class EnterpriseSecurityService {
      */
     startFlushInterval() {
         setInterval(() => {
-            this.flushAuditBuffer();
+            this.flushAuditBuffer().catch(err => {
+                aiLogger.warn('EnterpriseSecurity', `Flush interval error: ${err.message}`);
+            });
         }, this.flushInterval);
     }
 
@@ -385,7 +588,7 @@ class EnterpriseSecurityService {
      */
     async getSecuritySummary(organizationId) {
         try {
-            const today = await db.get(`
+            const today = await dbGet(`
                 SELECT 
                     COUNT(*) as total_requests,
                     SUM(CASE WHEN flagged = 1 THEN 1 ELSE 0 END) as flagged_requests,
@@ -395,7 +598,7 @@ class EnterpriseSecurityService {
                 WHERE organization_id = ? AND timestamp > datetime('now', '-1 day')
             `, [organizationId]);
 
-            const dataAccess = await db.get(`
+            const dataAccess = await dbGet(`
                 SELECT COUNT(*) as count, COUNT(DISTINCT data_type) as types
                 FROM ai_data_access_log
                 WHERE organization_id = ? AND timestamp > datetime('now', '-1 day')
@@ -412,7 +615,16 @@ class EnterpriseSecurityService {
             };
         } catch (error) {
             aiLogger.debug('EnterpriseSecurity', `Summary failed: ${error.message}`);
-            return { error: error.message };
+            return { 
+                period: 'last_24h',
+                totalRequests: 0,
+                flaggedRequests: 0,
+                highRiskCount: 0,
+                mediumRiskCount: 0,
+                dataAccessCount: 0,
+                dataTypesAccessed: 0,
+                error: error.message 
+            };
         }
     }
 }
@@ -424,6 +636,9 @@ module.exports = {
     EnterpriseSecurityService,
     enterpriseSecurity,
     PII_PATTERNS,
-    RISK_RULES
+    RISK_RULES,
+    // Export helpers for use by other modules
+    dbAll,
+    dbGet,
+    dbRun
 };
-

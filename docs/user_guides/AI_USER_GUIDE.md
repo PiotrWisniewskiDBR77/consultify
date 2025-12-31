@@ -1,8 +1,19 @@
 # Consultify AI - Przewodnik Użytkownika
 
+**Ostatnia aktualizacja:** 30 grudnia 2025  
+**Wersja AI Pipeline:** 2.0
+
 ## Wprowadzenie
 
 Consultify AI to Twój wirtualny konsultant transformacji cyfrowej. System AI wspiera Cię na każdym etapie projektu - od diagnozy po wdrożenie rekomendacji.
+
+### Kluczowe cechy AI Pipeline 2.0
+
+- **48 możliwości** - Od diagnozy po generowanie inicjatyw i raportów
+- **12 dostawców LLM** - OpenAI, Anthropic, Google, DeepSeek i więcej
+- **Walidacja jakości** - Każda odpowiedź AI jest sprawdzana przed wysłaniem
+- **Ochrona PII** - Automatyczne wykrywanie i redakcja danych osobowych
+- **5-warstwowa pamięć** - AI pamięta kontekst projektu, organizacji i rozmów
 
 ---
 

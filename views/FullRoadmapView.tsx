@@ -1,3 +1,12 @@
+/**
+ * FullRoadmapView
+ * 
+ * @deprecated This view is replaced by PortfolioView (AppView.PORTFOLIO_ROADMAP)
+ * which provides a unified Portfolio & Roadmap experience with List, Kanban, 
+ * Timeline, and Matrix views.
+ * 
+ * Kept for backward compatibility and AI-assisted roadmap generation features.
+ */
 
 import React, { useEffect, useCallback } from 'react';
 import { SplitLayout } from '../components/SplitLayout';

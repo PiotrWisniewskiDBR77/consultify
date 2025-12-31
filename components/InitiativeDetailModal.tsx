@@ -14,6 +14,7 @@ import { Button } from './Button';
 import { Select } from './Select';
 import { InitiativeTasksTab } from './InitiativeTasksTab';
 import { InitiativeIntelligenceTab } from './InitiativeIntelligenceTab';
+import { InitiativeFinancialIntegration } from './Economics/InitiativeFinancialIntegration';
 
 interface InitiativeDetailModalProps {
     initiative: FullInitiative;
@@ -1289,6 +1290,25 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                     <span className="text-xs uppercase text-slate-500">{t('initiative.socialImpact')}</span>
                                     <p className="text-navy-900 dark:text-white mt-1 text-sm">{initiative.socialImpact || t('common.notDefined')}</p>
                                 </div>
+                            </div>
+
+                            {/* Detailed Financial Analysis Integration */}
+                            <div className="col-span-2 mt-4">
+                                <InitiativeFinancialIntegration
+                                    initiative={{
+                                        id: initiative.id,
+                                        name: initiative.name,
+                                        costCapex: initiative.costCapex,
+                                        costOpex: initiative.costOpex,
+                                        annualBenefit: initiative.annualBenefit,
+                                        expectedRoi: initiative.expectedRoi,
+                                        valueDriver: initiative.valueDriver
+                                    }}
+                                    onNavigateToAnalysis={(analysisId) => {
+                                        // Navigate to economics module with the analysis
+                                        window.location.href = `/economics?analysis=${analysisId}`;
+                                    }}
+                                />
                             </div>
                         </div>
                     )}

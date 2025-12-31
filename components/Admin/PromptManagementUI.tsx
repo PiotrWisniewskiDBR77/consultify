@@ -1,542 +1,719 @@
 /**
- * PromptManagementUI Component
+ * Prompt Management UI Component
  * 
- * Super Admin panel for managing AI system prompts with version history and testing.
+ * Super Admin interface for managing AI prompts and templates.
+ * Features:
+ * - CRUD operations for prompts
+ * - Version history
+ * - Live preview/testing
+ * - Category organization
+ * - Variables/placeholders management
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-    FileText,
-    Plus,
-    Edit3,
+import { 
+    FileText, 
+    Plus, 
+    Search, 
+    Edit, 
     Trash2,
-    History,
-    Play,
     Save,
     X,
-    Search,
-    RefreshCw,
-    Check,
-    AlertCircle,
-    ChevronDown,
+    History,
+    PlayCircle,
     Copy,
-    RotateCcw
+    CheckCircle,
+    AlertTriangle,
+    Loader2,
+    ChevronDown,
+    ChevronRight,
+    Tag,
+    Wand2,
+    RefreshCw,
+    Eye
 } from 'lucide-react';
-import { Button } from '../Button';
 import api from '../../services/api';
+import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
 
-interface SystemPrompt {
+interface PromptTemplate {
     id: string;
     name: string;
     category: string;
-    description?: string;
-    template: string;
+    description: string;
+    system_prompt: string;
+    user_prompt_template: string;
     variables: string[];
-    is_active: boolean;
     version: number;
+    is_active: boolean;
     created_at: string;
     updated_at: string;
-    versions?: PromptVersion[];
+    created_by: string;
 }
 
 interface PromptVersion {
     id: string;
+    prompt_id: string;
     version: number;
-    template: string;
-    created_at: string;
-    created_by?: string;
+    system_prompt: string;
+    user_prompt_template: string;
+    changed_by: string;
+    changed_at: string;
+    change_reason?: string;
 }
 
-interface TestResult {
-    original: string;
-    rendered: string;
-    unreplacedVariables: string[];
-    characterCount: number;
-}
-
-const CATEGORIES = [
-    { id: 'system', label: 'System' },
-    { id: 'report', label: 'Raport' },
-    { id: 'initiative', label: 'Inicjatywa' },
-    { id: 'assessment', label: 'Ocena' },
-    { id: 'chat', label: 'Chat' },
-    { id: 'analysis', label: 'Analiza' }
+const PROMPT_CATEGORIES = [
+    { id: 'chat', name: 'Chat Assistant', icon: '💬' },
+    { id: 'analysis', name: 'Analysis & Reports', icon: '📊' },
+    { id: 'generation', name: 'Content Generation', icon: '✨' },
+    { id: 'assessment', name: 'Assessment AI', icon: '🎯' },
+    { id: 'initiative', name: 'Initiative Generator', icon: '🚀' },
+    { id: 'task', name: 'Task Advisor', icon: '📋' },
+    { id: 'system', name: 'System Prompts', icon: '⚙️' }
 ];
 
 export function PromptManagementUI() {
-    const [prompts, setPrompts] = useState<SystemPrompt[]>([]);
+    const { t } = useTranslation();
+    const [prompts, setPrompts] = useState<PromptTemplate[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [selectedPrompt, setSelectedPrompt] = useState<SystemPrompt | null>(null);
-    const [editMode, setEditMode] = useState(false);
-    const [editedTemplate, setEditedTemplate] = useState('');
-    const [showVersions, setShowVersions] = useState(false);
-    const [showTest, setShowTest] = useState(false);
-    const [testVariables, setTestVariables] = useState<Record<string, string>>({});
-    const [testResult, setTestResult] = useState<TestResult | null>(null);
-    const [saving, setSaving] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const [filterCategory, setFilterCategory] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState<string>('all');
+    const [selectedPrompt, setSelectedPrompt] = useState<PromptTemplate | null>(null);
+    const [isEditing, setIsEditing] = useState(false);
+    const [showVersions, setShowVersions] = useState(false);
+    const [versions, setVersions] = useState<PromptVersion[]>([]);
+    const [showPreview, setShowPreview] = useState(false);
+    const [previewResult, setPreviewResult] = useState<string | null>(null);
+    const [previewLoading, setPreviewLoading] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [editForm, setEditForm] = useState<Partial<PromptTemplate>>({});
+    const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(['chat', 'analysis']));
 
     const fetchPrompts = useCallback(async () => {
         setLoading(true);
         setError(null);
 
         try {
-            const params = new URLSearchParams();
-            if (filterCategory) params.append('category', filterCategory);
-            if (searchQuery) params.append('search', searchQuery);
-
-            const response = await api.get(`/ai-prompts?${params.toString()}`);
+            const response = await api.get('/ai-prompts');
             
             if (response.data.success) {
-                setPrompts(response.data.data || []);
+                setPrompts(response.data.prompts || []);
             } else {
-                setError(response.data.error || 'Failed to fetch prompts');
+                throw new Error(response.data.error || 'Failed to fetch prompts');
             }
         } catch (err: any) {
             setError(err.message || 'Failed to fetch prompts');
+            setPrompts([]);
         } finally {
             setLoading(false);
         }
-    }, [filterCategory, searchQuery]);
+    }, []);
 
     useEffect(() => {
         fetchPrompts();
     }, [fetchPrompts]);
 
-    const fetchPromptDetails = async (promptId: string) => {
+    const fetchVersionHistory = async (promptId: string) => {
         try {
-            const response = await api.get(`/ai-prompts/${promptId}`);
+            const response = await api.get(`/ai-prompts/${promptId}/versions`);
             if (response.data.success) {
-                setSelectedPrompt(response.data.data);
-                setEditedTemplate(response.data.data.template);
-                
-                // Initialize test variables
-                const vars: Record<string, string> = {};
-                response.data.data.variables?.forEach((v: string) => {
-                    vars[v] = '';
-                });
-                setTestVariables(vars);
+                setVersions(response.data.versions || []);
             }
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err) {
+            console.error('Failed to fetch versions:', err);
+            setVersions([]);
+        }
+    };
+
+    const handleSelectPrompt = async (prompt: PromptTemplate) => {
+        setSelectedPrompt(prompt);
+        setIsEditing(false);
+        setShowVersions(false);
+        setShowPreview(false);
+        await fetchVersionHistory(prompt.id);
+    };
+
+    const handleEdit = () => {
+        if (selectedPrompt) {
+            setEditForm({
+                ...selectedPrompt
+            });
+            setIsEditing(true);
         }
     };
 
     const handleSave = async () => {
-        if (!selectedPrompt) return;
+        if (!editForm.id) return;
         
-        setSaving(true);
+        setIsSaving(true);
         try {
-            const response = await api.put(`/ai-prompts/${selectedPrompt.id}`, {
-                template: editedTemplate
-            });
-
+            const response = await api.put(`/ai-prompts/${editForm.id}`, editForm);
+            
             if (response.data.success) {
-                setEditMode(false);
-                await fetchPromptDetails(selectedPrompt.id);
+                toast.success('Prompt saved successfully');
+                setIsEditing(false);
                 await fetchPrompts();
+                if (selectedPrompt) {
+                    await handleSelectPrompt({ ...selectedPrompt, ...editForm } as PromptTemplate);
+                }
             } else {
-                setError(response.data.error || 'Failed to save');
+                throw new Error(response.data.error || 'Failed to save prompt');
             }
         } catch (err: any) {
-            setError(err.message);
+            toast.error(err.message || 'Failed to save prompt');
         } finally {
-            setSaving(false);
+            setIsSaving(false);
         }
     };
 
-    const handleTest = async () => {
+    const handleDelete = async () => {
+        if (!selectedPrompt || !confirm('Are you sure you want to delete this prompt?')) return;
+
+        try {
+            const response = await api.delete(`/ai-prompts/${selectedPrompt.id}`);
+            
+            if (response.data.success) {
+                toast.success('Prompt deleted');
+                setSelectedPrompt(null);
+                await fetchPrompts();
+            } else {
+                throw new Error(response.data.error || 'Failed to delete');
+            }
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to delete prompt');
+        }
+    };
+
+    const handleCreateNew = () => {
+        setEditForm({
+            name: 'New Prompt',
+            category: 'chat',
+            description: '',
+            system_prompt: '',
+            user_prompt_template: '',
+            variables: [],
+            is_active: true
+        });
+        setSelectedPrompt(null);
+        setIsEditing(true);
+    };
+
+    const handleTestPrompt = async () => {
         if (!selectedPrompt) return;
+        
+        setPreviewLoading(true);
+        setShowPreview(true);
+        setPreviewResult(null);
 
         try {
             const response = await api.post(`/ai-prompts/${selectedPrompt.id}/test`, {
-                variables: testVariables
+                variables: {}
             });
-
+            
             if (response.data.success) {
-                setTestResult(response.data.data);
+                setPreviewResult(response.data.result || 'No response');
             } else {
-                setError(response.data.error || 'Test failed');
+                setPreviewResult(`Error: ${response.data.error}`);
             }
         } catch (err: any) {
-            setError(err.message);
+            setPreviewResult(`Error: ${err.message}`);
+        } finally {
+            setPreviewLoading(false);
         }
     };
 
-    const handleRestoreVersion = async (version: number) => {
-        if (!selectedPrompt) return;
-
-        try {
-            const response = await api.post(`/ai-prompts/${selectedPrompt.id}/restore-version`, {
-                version
-            });
-
-            if (response.data.success) {
-                setShowVersions(false);
-                await fetchPromptDetails(selectedPrompt.id);
-                await fetchPrompts();
-            } else {
-                setError(response.data.error || 'Restore failed');
-            }
-        } catch (err: any) {
-            setError(err.message);
+    const handleCopyPrompt = () => {
+        if (selectedPrompt) {
+            navigator.clipboard.writeText(selectedPrompt.system_prompt);
+            toast.success('Prompt copied to clipboard');
         }
     };
 
-    const handleToggleActive = async (prompt: SystemPrompt) => {
-        try {
-            await api.put(`/ai-prompts/${prompt.id}`, {
-                is_active: !prompt.is_active
-            });
-            await fetchPrompts();
-        } catch (err: any) {
-            setError(err.message);
+    const toggleCategory = (category: string) => {
+        const newExpanded = new Set(expandedCategories);
+        if (newExpanded.has(category)) {
+            newExpanded.delete(category);
+        } else {
+            newExpanded.add(category);
         }
-    };
-
-    const extractVariables = (template: string): string[] => {
-        const matches = template.match(/\{\{\s*\w+\s*\}\}/g) || [];
-        return [...new Set(matches.map(m => m.replace(/\{\{\s*|\s*\}\}/g, '')))];
+        setExpandedCategories(newExpanded);
     };
 
     const filteredPrompts = prompts.filter(p => {
-        if (filterCategory && p.category !== filterCategory) return false;
-        if (searchQuery && !p.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-        return true;
+        const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                             p.description.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
+        return matchesSearch && matchesCategory;
     });
 
-    return (
-        <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-            {/* Left Panel - Prompt List */}
-            <div className="w-80 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex flex-col">
-                <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center gap-2 mb-4">
-                        <FileText className="w-6 h-6 text-indigo-600" />
-                        <h1 className="text-lg font-bold text-gray-900 dark:text-white">
-                            Prompty AI
-                        </h1>
-                    </div>
+    const promptsByCategory = PROMPT_CATEGORIES.map(cat => ({
+        ...cat,
+        prompts: filteredPrompts.filter(p => p.category === cat.id)
+    })).filter(cat => cat.prompts.length > 0 || selectedCategory === cat.id);
 
-                    <div className="relative mb-3">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+    const formatDate = (dateStr: string) => {
+        return new Date(dateStr).toLocaleDateString('pl-PL', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
+    return (
+        <div className="min-h-screen bg-slate-50 dark:bg-navy-900 flex">
+            {/* Sidebar - Prompt List */}
+            <div className="w-80 border-r border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 flex flex-col">
+                {/* Header */}
+                <div className="p-4 border-b border-slate-200 dark:border-white/10">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                            <Wand2 size={20} className="text-purple-500" />
+                            <h2 className="font-semibold text-slate-900 dark:text-white">Prompts</h2>
+                        </div>
+                        <button
+                            onClick={handleCreateNew}
+                            className="p-2 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+                            title="New Prompt"
+                        >
+                            <Plus size={20} />
+                        </button>
+                    </div>
+                    
+                    {/* Search */}
+                    <div className="relative">
+                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input
                             type="text"
+                            placeholder="Search prompts..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Szukaj..."
-                            className="w-full pl-10 pr-4 py-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-sm"
+                            className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white placeholder-slate-400"
                         />
                     </div>
+                </div>
 
+                {/* Category Filter */}
+                <div className="p-2 border-b border-slate-200 dark:border-white/10">
                     <select
-                        value={filterCategory}
-                        onChange={(e) => setFilterCategory(e.target.value)}
-                        className="w-full px-3 py-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-sm"
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white"
                     >
-                        <option value="">Wszystkie kategorie</option>
-                        {CATEGORIES.map(cat => (
-                            <option key={cat.id} value={cat.id}>{cat.label}</option>
+                        <option value="all">All Categories</option>
+                        {PROMPT_CATEGORIES.map(cat => (
+                            <option key={cat.id} value={cat.id}>{cat.icon} {cat.name}</option>
                         ))}
                     </select>
                 </div>
 
+                {/* Prompt List */}
                 <div className="flex-1 overflow-y-auto">
                     {loading ? (
-                        <div className="p-4 text-center text-gray-500">
-                            <RefreshCw className="w-6 h-6 animate-spin mx-auto" />
+                        <div className="flex items-center justify-center py-10">
+                            <Loader2 size={24} className="animate-spin text-purple-500" />
                         </div>
-                    ) : filteredPrompts.length === 0 ? (
-                        <div className="p-4 text-center text-gray-500 text-sm">
-                            Brak promptów
+                    ) : error ? (
+                        <div className="p-4 text-center text-red-500">
+                            <AlertTriangle size={24} className="mx-auto mb-2" />
+                            <p className="text-sm">{error}</p>
+                        </div>
+                    ) : promptsByCategory.length === 0 ? (
+                        <div className="p-4 text-center text-slate-500">
+                            <FileText size={32} className="mx-auto mb-2 opacity-50" />
+                            <p className="text-sm">No prompts found</p>
                         </div>
                     ) : (
-                        filteredPrompts.map(prompt => (
-                            <div
-                                key={prompt.id}
-                                onClick={() => fetchPromptDetails(prompt.id)}
-                                className={`p-4 border-b border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 ${
-                                    selectedPrompt?.id === prompt.id ? 'bg-indigo-50 dark:bg-indigo-900/30' : ''
-                                }`}
-                            >
-                                <div className="flex items-start justify-between">
-                                    <div className="flex-1 min-w-0">
-                                        <p className="font-medium text-gray-900 dark:text-white truncate">
-                                            {prompt.name}
-                                        </p>
-                                        <p className="text-xs text-gray-500 mt-1">
-                                            {prompt.category} • v{prompt.version}
-                                        </p>
-                                    </div>
-                                    <span className={`px-2 py-0.5 rounded-full text-xs ${
-                                        prompt.is_active 
-                                            ? 'bg-green-100 text-green-700' 
-                                            : 'bg-gray-100 text-gray-500'
-                                    }`}>
-                                        {prompt.is_active ? 'Aktywny' : 'Nieaktywny'}
-                                    </span>
+                        <div className="py-2">
+                            {promptsByCategory.map(category => (
+                                <div key={category.id}>
+                                    <button
+                                        onClick={() => toggleCategory(category.id)}
+                                        className="w-full px-4 py-2 flex items-center justify-between text-left hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                                    >
+                                        <span className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300">
+                                            <span>{category.icon}</span>
+                                            {category.name}
+                                            <span className="text-xs text-slate-400">({category.prompts.length})</span>
+                                        </span>
+                                        {expandedCategories.has(category.id) ? (
+                                            <ChevronDown size={16} className="text-slate-400" />
+                                        ) : (
+                                            <ChevronRight size={16} className="text-slate-400" />
+                                        )}
+                                    </button>
+                                    {expandedCategories.has(category.id) && (
+                                        <div className="py-1">
+                                            {category.prompts.map(prompt => (
+                                                <button
+                                                    key={prompt.id}
+                                                    onClick={() => handleSelectPrompt(prompt)}
+                                                    className={`w-full px-4 py-2 text-left transition-colors ${
+                                                        selectedPrompt?.id === prompt.id
+                                                            ? 'bg-purple-50 dark:bg-purple-900/20 border-l-2 border-purple-500'
+                                                            : 'hover:bg-slate-50 dark:hover:bg-white/5'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`w-2 h-2 rounded-full ${prompt.is_active ? 'bg-green-500' : 'bg-slate-300'}`} />
+                                                        <span className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                                                            {prompt.name}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-1 pl-4">
+                                                        {prompt.description || 'No description'}
+                                                    </p>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
-                            </div>
-                        ))
+                            ))}
+                        </div>
                     )}
                 </div>
             </div>
 
-            {/* Right Panel - Prompt Editor */}
+            {/* Main Content */}
             <div className="flex-1 flex flex-col">
-                {error && (
-                    <div className="m-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 flex items-center gap-2">
-                        <AlertCircle className="w-5 h-5" />
-                        {error}
-                        <button onClick={() => setError(null)} className="ml-auto">
-                            <X className="w-4 h-4" />
-                        </button>
+                {!selectedPrompt && !isEditing ? (
+                    <div className="flex-1 flex items-center justify-center text-slate-500">
+                        <div className="text-center">
+                            <Wand2 size={48} className="mx-auto mb-4 opacity-50" />
+                            <p>Select a prompt to view or edit</p>
+                            <button
+                                onClick={handleCreateNew}
+                                className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 mx-auto"
+                            >
+                                <Plus size={16} />
+                                Create New Prompt
+                            </button>
+                        </div>
                     </div>
-                )}
-
-                {selectedPrompt ? (
+                ) : (
                     <>
-                        {/* Header */}
-                        <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                                        {selectedPrompt.name}
-                                    </h2>
-                                    <p className="text-sm text-gray-500">
-                                        {selectedPrompt.description || selectedPrompt.category} • Wersja {selectedPrompt.version}
-                                    </p>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setShowVersions(!showVersions)}
-                                    >
-                                        <History className="w-4 h-4 mr-1" />
-                                        Historia
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setShowTest(!showTest)}
-                                    >
-                                        <Play className="w-4 h-4 mr-1" />
-                                        Test
-                                    </Button>
-                                    {editMode ? (
-                                        <>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => {
-                                                    setEditMode(false);
-                                                    setEditedTemplate(selectedPrompt.template);
-                                                }}
-                                            >
-                                                Anuluj
-                                            </Button>
-                                            <Button
-                                                variant="primary"
-                                                size="sm"
-                                                onClick={handleSave}
-                                                disabled={saving}
-                                            >
-                                                {saving ? (
-                                                    <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
-                                                ) : (
-                                                    <Save className="w-4 h-4 mr-1" />
-                                                )}
-                                                Zapisz
-                                            </Button>
-                                        </>
-                                    ) : (
-                                        <Button
-                                            variant="primary"
-                                            size="sm"
-                                            onClick={() => setEditMode(true)}
-                                        >
-                                            <Edit3 className="w-4 h-4 mr-1" />
-                                            Edytuj
-                                        </Button>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Variables */}
-                            <div className="mt-3 flex flex-wrap gap-2">
-                                {selectedPrompt.variables?.map(v => (
-                                    <span
-                                        key={v}
-                                        className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-mono"
-                                    >
-                                        {`{{${v}}}`}
+                        {/* Toolbar */}
+                        <div className="px-6 py-4 border-b border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                                    {isEditing ? (editForm.id ? 'Edit Prompt' : 'New Prompt') : selectedPrompt?.name}
+                                </h2>
+                                {selectedPrompt && !isEditing && (
+                                    <span className="text-sm text-slate-500 dark:text-slate-400">
+                                        v{selectedPrompt.version}
                                     </span>
-                                ))}
+                                )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                                {isEditing ? (
+                                    <>
+                                        <button
+                                            onClick={() => {
+                                                setIsEditing(false);
+                                                if (!editForm.id) setSelectedPrompt(null);
+                                            }}
+                                            className="px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={handleSave}
+                                            disabled={isSaving}
+                                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                                        >
+                                            {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                                            Save
+                                        </button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <button
+                                            onClick={handleCopyPrompt}
+                                            className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                                            title="Copy to clipboard"
+                                        >
+                                            <Copy size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => setShowVersions(!showVersions)}
+                                            className={`p-2 rounded-lg transition-colors ${
+                                                showVersions
+                                                    ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30'
+                                                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10'
+                                            }`}
+                                            title="Version history"
+                                        >
+                                            <History size={18} />
+                                        </button>
+                                        <button
+                                            onClick={handleTestPrompt}
+                                            className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                                            title="Test prompt"
+                                        >
+                                            <PlayCircle size={18} />
+                                        </button>
+                                        <button
+                                            onClick={handleEdit}
+                                            className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                                            title="Edit"
+                                        >
+                                            <Edit size={18} />
+                                        </button>
+                                        <button
+                                            onClick={handleDelete}
+                                            className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                            title="Delete"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </>
+                                )}
                             </div>
                         </div>
 
-                        {/* Editor Area */}
-                        <div className="flex-1 overflow-hidden flex">
-                            <div className="flex-1 p-4 overflow-auto">
-                                {editMode ? (
-                                    <textarea
-                                        value={editedTemplate}
-                                        onChange={(e) => setEditedTemplate(e.target.value)}
-                                        className="w-full h-full p-4 font-mono text-sm bg-gray-900 text-gray-100 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                        spellCheck={false}
-                                    />
-                                ) : (
-                                    <pre className="w-full h-full p-4 font-mono text-sm bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 rounded-lg overflow-auto whitespace-pre-wrap">
-                                        {selectedPrompt.template}
-                                    </pre>
-                                )}
-                            </div>
-
-                            {/* Side Panels */}
-                            {showVersions && selectedPrompt.versions && (
-                                <div className="w-80 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-y-auto">
-                                    <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                                        <h3 className="font-medium text-gray-900 dark:text-white">
-                                            Historia wersji
-                                        </h3>
+                        {/* Content */}
+                        <div className="flex-1 overflow-y-auto p-6">
+                            {isEditing ? (
+                                <div className="max-w-4xl space-y-6">
+                                    {/* Name & Category */}
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                                Name
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={editForm.name || ''}
+                                                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                                                className="w-full px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                                Category
+                                            </label>
+                                            <select
+                                                value={editForm.category || 'chat'}
+                                                onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
+                                                className="w-full px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
+                                            >
+                                                {PROMPT_CATEGORIES.map(cat => (
+                                                    <option key={cat.id} value={cat.id}>{cat.icon} {cat.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
                                     </div>
-                                    <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                                        {selectedPrompt.versions.map(ver => (
-                                            <div key={ver.id} className="p-4">
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <span className="font-medium">
-                                                        Wersja {ver.version}
+
+                                    {/* Description */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                            Description
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={editForm.description || ''}
+                                            onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                                            placeholder="Brief description of this prompt..."
+                                            className="w-full px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
+                                        />
+                                    </div>
+
+                                    {/* System Prompt */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                            System Prompt
+                                        </label>
+                                        <textarea
+                                            value={editForm.system_prompt || ''}
+                                            onChange={(e) => setEditForm({ ...editForm, system_prompt: e.target.value })}
+                                            rows={8}
+                                            placeholder="Enter the system prompt..."
+                                            className="w-full px-4 py-3 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white font-mono text-sm resize-y"
+                                        />
+                                    </div>
+
+                                    {/* User Prompt Template */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                            User Prompt Template
+                                        </label>
+                                        <textarea
+                                            value={editForm.user_prompt_template || ''}
+                                            onChange={(e) => setEditForm({ ...editForm, user_prompt_template: e.target.value })}
+                                            rows={4}
+                                            placeholder="Enter the user prompt template with {{variables}}..."
+                                            className="w-full px-4 py-3 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white font-mono text-sm resize-y"
+                                        />
+                                        <p className="mt-2 text-xs text-slate-500">
+                                            Use {'{{variable_name}}'} for dynamic content
+                                        </p>
+                                    </div>
+
+                                    {/* Active Toggle */}
+                                    <div className="flex items-center gap-3">
+                                        <label className="relative inline-flex items-center cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={editForm.is_active}
+                                                onChange={(e) => setEditForm({ ...editForm, is_active: e.target.checked })}
+                                                className="sr-only peer"
+                                            />
+                                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                                        </label>
+                                        <span className="text-sm text-slate-700 dark:text-slate-300">
+                                            Active
+                                        </span>
+                                    </div>
+                                </div>
+                            ) : selectedPrompt && (
+                                <div className="max-w-4xl space-y-6">
+                                    {/* Metadata */}
+                                    <div className="grid grid-cols-3 gap-4 text-sm">
+                                        <div>
+                                            <p className="text-slate-500 dark:text-slate-400">Category</p>
+                                            <p className="text-slate-900 dark:text-white font-medium flex items-center gap-2">
+                                                <Tag size={14} />
+                                                {PROMPT_CATEGORIES.find(c => c.id === selectedPrompt.category)?.name || selectedPrompt.category}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-slate-500 dark:text-slate-400">Created</p>
+                                            <p className="text-slate-900 dark:text-white font-medium">
+                                                {formatDate(selectedPrompt.created_at)}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-slate-500 dark:text-slate-400">Status</p>
+                                            <p className={`font-medium flex items-center gap-2 ${
+                                                selectedPrompt.is_active ? 'text-green-600' : 'text-slate-400'
+                                            }`}>
+                                                {selectedPrompt.is_active ? (
+                                                    <>
+                                                        <CheckCircle size={14} />
+                                                        Active
+                                                    </>
+                                                ) : (
+                                                    'Inactive'
+                                                )}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Description */}
+                                    {selectedPrompt.description && (
+                                        <div>
+                                            <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                                Description
+                                            </h3>
+                                            <p className="text-slate-600 dark:text-slate-400">
+                                                {selectedPrompt.description}
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {/* System Prompt */}
+                                    <div>
+                                        <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                            System Prompt
+                                        </h3>
+                                        <div className="p-4 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg">
+                                            <pre className="text-sm text-slate-700 dark:text-slate-300 font-mono whitespace-pre-wrap">
+                                                {selectedPrompt.system_prompt}
+                                            </pre>
+                                        </div>
+                                    </div>
+
+                                    {/* User Prompt Template */}
+                                    {selectedPrompt.user_prompt_template && (
+                                        <div>
+                                            <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                                User Prompt Template
+                                            </h3>
+                                            <div className="p-4 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg">
+                                                <pre className="text-sm text-slate-700 dark:text-slate-300 font-mono whitespace-pre-wrap">
+                                                    {selectedPrompt.user_prompt_template}
+                                                </pre>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Variables */}
+                                    {selectedPrompt.variables && selectedPrompt.variables.length > 0 && (
+                                        <div>
+                                            <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                                Variables
+                                            </h3>
+                                            <div className="flex flex-wrap gap-2">
+                                                {selectedPrompt.variables.map(v => (
+                                                    <span
+                                                        key={v}
+                                                        className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-sm font-mono"
+                                                    >
+                                                        {'{{'}{v}{'}}'}
                                                     </span>
-                                                    {ver.version !== selectedPrompt.version && (
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => handleRestoreVersion(ver.version)}
-                                                        >
-                                                            <RotateCcw className="w-3 h-3 mr-1" />
-                                                            Przywróć
-                                                        </Button>
-                                                    )}
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Version History Panel */}
+                            {showVersions && versions.length > 0 && (
+                                <div className="mt-6 max-w-4xl">
+                                    <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
+                                        <History size={16} />
+                                        Version History
+                                    </h3>
+                                    <div className="space-y-3">
+                                        {versions.map(version => (
+                                            <div
+                                                key={version.id}
+                                                className="p-4 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg"
+                                            >
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <span className="font-medium text-slate-900 dark:text-white">
+                                                        Version {version.version}
+                                                    </span>
+                                                    <span className="text-sm text-slate-500">
+                                                        {formatDate(version.changed_at)}
+                                                    </span>
                                                 </div>
-                                                <p className="text-xs text-gray-500">
-                                                    {new Date(ver.created_at).toLocaleString('pl-PL')}
-                                                </p>
+                                                {version.change_reason && (
+                                                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                                                        {version.change_reason}
+                                                    </p>
+                                                )}
                                             </div>
                                         ))}
                                     </div>
                                 </div>
                             )}
 
-                            {showTest && (
-                                <div className="w-96 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex flex-col">
-                                    <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                                        <h3 className="font-medium text-gray-900 dark:text-white">
-                                            Test prompta
-                                        </h3>
-                                    </div>
-                                    
-                                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                                        {/* Variables Input */}
-                                        <div className="space-y-3">
-                                            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                Zmienne
-                                            </h4>
-                                            {Object.keys(testVariables).map(varName => (
-                                                <div key={varName}>
-                                                    <label className="block text-xs text-gray-500 mb-1">
-                                                        {varName}
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        value={testVariables[varName]}
-                                                        onChange={(e) => setTestVariables({
-                                                            ...testVariables,
-                                                            [varName]: e.target.value
-                                                        })}
-                                                        className="w-full px-3 py-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-sm"
-                                                        placeholder={`Wartość dla ${varName}`}
-                                                    />
-                                                </div>
-                                            ))}
-                                        </div>
-
-                                        <Button
-                                            variant="primary"
-                                            className="w-full"
-                                            onClick={handleTest}
-                                        >
-                                            <Play className="w-4 h-4 mr-2" />
-                                            Uruchom test
-                                        </Button>
-
-                                        {/* Test Result */}
-                                        {testResult && (
-                                            <div className="space-y-3">
-                                                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                    Wynik
-                                                </h4>
-                                                
-                                                {testResult.unreplacedVariables.length > 0 && (
-                                                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                                                        <p className="text-xs text-yellow-700 font-medium mb-1">
-                                                            Nieuzupełnione zmienne:
-                                                        </p>
-                                                        <p className="text-xs text-yellow-600">
-                                                            {testResult.unreplacedVariables.join(', ')}
-                                                        </p>
-                                                    </div>
-                                                )}
-
-                                                <div>
-                                                    <div className="flex items-center justify-between mb-1">
-                                                        <span className="text-xs text-gray-500">
-                                                            Wyrenderowany prompt
-                                                        </span>
-                                                        <span className="text-xs text-gray-400">
-                                                            {testResult.characterCount} znaków
-                                                        </span>
-                                                    </div>
-                                                    <pre className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg text-xs overflow-auto max-h-64 whitespace-pre-wrap">
-                                                        {testResult.rendered}
-                                                    </pre>
-                                                </div>
+                            {/* Preview Panel */}
+                            {showPreview && (
+                                <div className="mt-6 max-w-4xl">
+                                    <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
+                                        <Eye size={16} />
+                                        Test Result
+                                    </h3>
+                                    <div className="p-4 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg">
+                                        {previewLoading ? (
+                                            <div className="flex items-center justify-center py-8">
+                                                <Loader2 size={24} className="animate-spin text-purple-500" />
                                             </div>
+                                        ) : (
+                                            <pre className="text-sm text-slate-700 dark:text-slate-300 font-mono whitespace-pre-wrap">
+                                                {previewResult || 'No result'}
+                                            </pre>
                                         )}
                                     </div>
                                 </div>
                             )}
                         </div>
-
-                        {/* Status Bar */}
-                        <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between text-xs text-gray-500">
-                            <span>
-                                {editedTemplate.length} znaków • {extractVariables(editedTemplate).length} zmiennych
-                            </span>
-                            <div className="flex items-center gap-4">
-                                <button
-                                    onClick={() => handleToggleActive(selectedPrompt)}
-                                    className={`flex items-center gap-1 ${
-                                        selectedPrompt.is_active ? 'text-green-600' : 'text-gray-400'
-                                    }`}
-                                >
-                                    <Check className="w-4 h-4" />
-                                    {selectedPrompt.is_active ? 'Aktywny' : 'Nieaktywny'}
-                                </button>
-                                <span>
-                                    Ostatnia modyfikacja: {new Date(selectedPrompt.updated_at).toLocaleString('pl-PL')}
-                                </span>
-                            </div>
-                        </div>
                     </>
-                ) : (
-                    <div className="flex-1 flex items-center justify-center text-gray-500">
-                        <div className="text-center">
-                            <FileText className="w-16 h-16 mx-auto mb-4 opacity-20" />
-                            <p>Wybierz prompt z listy</p>
-                        </div>
-                    </div>
                 )}
             </div>
         </div>
@@ -544,4 +721,3 @@ export function PromptManagementUI() {
 }
 
 export default PromptManagementUI;
-

@@ -1,5 +1,6 @@
 {
   "sidebar": {
+    "aiChat": "AI Chat",
     "dashboard": "Dashboard",
     "quickAssessment": "Quick Assessment",
     "fullProject": "Full Transformation",
@@ -83,7 +84,89 @@
     "affiliateDashboard": "Ecosystem Impact",
     "collapse": "Collapse",
     "expand": "Expand",
-    "metrics": "Metrics & Conversion"
+    "metrics": "Metrics & Conversion",
+    "portfolioRoadmap": "Initiatives"
+  },
+  "portfolio": {
+    "title": "Initiatives",
+    "subtitle": "Manage initiatives from idea to execution",
+    "views": {
+      "list": "List",
+      "kanban": "Kanban",
+      "timeline": "Timeline",
+      "matrix": "Matrix"
+    },
+    "filters": {
+      "allProjects": "All Projects",
+      "allStatuses": "All Statuses",
+      "allOwners": "All Owners",
+      "allQuarters": "All Quarters",
+      "search": "Search initiatives..."
+    },
+    "stats": {
+      "total": "Total Initiatives",
+      "inProgress": "In Progress",
+      "approved": "Approved",
+      "totalBudget": "Total Budget"
+    },
+    "kanban": {
+      "draft": "Draft",
+      "planning": "Planning",
+      "review": "Review",
+      "approved": "Approved",
+      "executing": "Executing"
+    },
+    "timeline": {
+      "today": "Today",
+      "criticalPath": "Critical Path",
+      "dependencies": "Dependencies"
+    },
+    "matrix": {
+      "quickWins": "Quick Wins",
+      "majorInvest": "Major Investment",
+      "niceToHave": "Nice to Have",
+      "avoid": "Avoid/Reduce"
+    },
+    "sidePanel": {
+      "overview": "Overview",
+      "financials": "Financials",
+      "stakeholders": "Stakeholders",
+      "risks": "Risks",
+      "timeline": "Timeline",
+      "activity": "Activity"
+    },
+    "actions": {
+      "newInitiative": "New Initiative",
+      "bulkActions": "Bulk Actions",
+      "export": "Export",
+      "refresh": "Refresh"
+    },
+    "empty": {
+      "title": "No initiatives yet",
+      "description": "Create your first initiative or generate from assessment"
+    }
+  },
+  "myWork": {
+    "title": "My Work",
+    "tasks": "Tasks",
+    "decisions": "Decisions",
+    "projects": "Projects",
+    "notifications": "Notifications",
+    "overdue": "Overdue",
+    "today": "Today",
+    "thisWeek": "This Week",
+    "urgent": "Urgent",
+    "newTask": "New Task",
+    "newDecision": "New Decision",
+    "myDecisions": "My Decisions",
+    "awaitingOthers": "Awaiting Others",
+    "projectNotifications": "Project",
+    "personalNotifications": "Personal",
+    "allNotifications": "All",
+    "markAllRead": "Mark all read",
+    "noTasks": "No tasks found",
+    "noDecisions": "No decisions found",
+    "noNotifications": "No notifications"
   },
   "auth": {
     "startQuick": "Start Your Quick Assessment",
@@ -3614,6 +3697,88 @@
     },
     "lastUpdated": "Last updated"
   },
+  "aiChat": {
+    "greeting": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening"
+    },
+    "subtitle": {
+      "morning": "Ready to drive your transformation forward?",
+      "afternoon": "Let's make progress on your initiatives",
+      "evening": "Review your transformation journey"
+    },
+    "placeholder": "Ask anything...",
+    "frozenPlaceholder": "AI temporarily unavailable",
+    "listening": "Listening...",
+    "send": "Send",
+    "actions": {
+      "assess": "Assess",
+      "generate": "Generate",
+      "plan": "Plan",
+      "report": "Report",
+      "rename": "Rename",
+      "star": "Pin to top",
+      "unstar": "Unpin",
+      "archive": "Archive",
+      "unarchive": "Unarchive",
+      "delete": "Delete",
+      "export": "Export"
+    },
+    "history": "History",
+    "newSession": "New Strategy Session",
+    "searchPlaceholder": "Search conversations...",
+    "noConversations": "No conversations yet",
+    "noResults": "No conversations found",
+    "startNewChat": "Start a new chat to begin",
+    "expandSidebar": "Expand sidebar",
+    "collapseSidebar": "Collapse sidebar",
+    "confirmDelete": "Are you sure you want to delete this conversation?",
+    "sections": {
+      "pinned": "Pinned",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "thisWeek": "This Week",
+      "lastMonth": "Last 30 Days",
+      "older": "Older",
+      "archived": "Archived",
+      "byProject": "By Project"
+    },
+    "menu": {
+      "addFiles": "Add Files & Media",
+      "tools": "Tools & Integrations",
+      "uploadFile": "Upload File",
+      "pasteContent": "Paste Content",
+      "addLink": "Add Link / URL",
+      "enterUrl": "Enter URL",
+      "fromPmo": "From Your PMO Data",
+      "importAssessment": "Import Assessment",
+      "importInitiative": "Import Initiative",
+      "importRoadmap": "Import Roadmap",
+      "importReport": "Import Report",
+      "aiModes": "AI Modes",
+      "deepResearch": "Deep Research",
+      "webSearch": "Web Search",
+      "showReasoning": "Show Reasoning",
+      "pmoTools": "PMO Tools",
+      "startAssessment": "Start Assessment",
+      "generateInitiatives": "Generate Initiatives",
+      "calculateRoi": "Calculate ROI",
+      "buildReport": "Build Report",
+      "connections": "Connections",
+      "manageConnectors": "Manage Connectors",
+      "knowledgeBases": "Knowledge Bases"
+    },
+    "sources": "Sources",
+    "suggestions": {
+      "title": "Suggested for you",
+      "startAssessment": "Start your digital maturity assessment"
+    },
+    "startRecording": "Voice input",
+    "stopRecording": "Stop",
+    "voiceModeOn": "Voice conversation active - click to disable",
+    "voiceModeOff": "Enable voice conversation"
+  },
   "common": {
     "backToDashboard": "Back to Dashboard",
     "level": "Level",
@@ -4257,5 +4422,57 @@
         "requiredNewCompetencies": "Required New Competencies"
       }
     }
+  },
+  "widgets": {
+    "help": {
+      "title": "Help Center",
+      "tooltip": "Help Center"
+    },
+    "documents": {
+      "title": "Document Library",
+      "tooltip": "Documents"
+    },
+    "feedback": {
+      "title": "Feedback / Bug Report",
+      "tooltip": "Feedback"
+    }
+  },
+  "feedback": {
+    "title": "Submit Feedback",
+    "type": {
+      "bug": "Bug",
+      "idea": "Idea"
+    },
+    "label": {
+      "bug": "Bug Description",
+      "idea": "Idea Description"
+    },
+    "placeholder": {
+      "bug": "Describe what's not working and how to reproduce it...",
+      "idea": "Describe your idea for improvement..."
+    },
+    "submit": "Submit Report",
+    "submitting": "Sending...",
+    "success": {
+      "title": "Message Sent!",
+      "message": "Thank you for your feedback. We will analyze it as soon as possible."
+    },
+    "intro": "Your feedback helps us improve the platform. Report a bug or share an idea.",
+    "footer": "Submission will include data:"
+  },
+  "documents": {
+    "library": "Document Library",
+    "projectDocs": "Project",
+    "myDocs": "My Docs",
+    "upload": "Add Document",
+    "uploading": "Uploading...",
+    "noProjectDocs": "No project documents",
+    "noUserDocs": "No user documents",
+    "download": "Download",
+    "moveToProject": "Move to project",
+    "delete": "Delete",
+    "projectHint": "Documents available to everyone in the project",
+    "userHint": "Your private documents",
+    "confirmDelete": "Are you sure you want to delete this document?"
   }
 }

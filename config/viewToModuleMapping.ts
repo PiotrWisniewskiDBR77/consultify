@@ -38,14 +38,15 @@ export interface ViewHelpMapping {
  */
 export const VIEW_TO_MODULE_MAP: Record<string, ViewHelpMapping> = {
     // ==========================================
-    // DASHBOARD MODULE
+    // MYWORK MODULE (unified Dashboard + My Work)
     // ==========================================
     [AppView.WELCOME]: { moduleId: 'onboarding' },
     [AppView.AUTH]: { moduleId: 'onboarding' },
-    [AppView.DASHBOARD]: { moduleId: 'dashboard', cardId: 'dashboard-overview' },
-    [AppView.USER_DASHBOARD]: { moduleId: 'dashboard', cardId: 'dashboard-overview' },
-    [AppView.DASHBOARD_OVERVIEW]: { moduleId: 'dashboard', cardId: 'dashboard-overview' },
-    [AppView.DASHBOARD_SNAPSHOT]: { moduleId: 'dashboard', cardId: 'dashboard-snapshot' },
+    [AppView.MY_WORK]: { moduleId: 'mywork', cardId: 'mywork-tasks' },
+    [AppView.DASHBOARD]: { moduleId: 'mywork', cardId: 'mywork-tasks' },
+    [AppView.USER_DASHBOARD]: { moduleId: 'mywork', cardId: 'mywork-tasks' },
+    [AppView.DASHBOARD_OVERVIEW]: { moduleId: 'mywork', cardId: 'mywork-tasks' },
+    [AppView.DASHBOARD_SNAPSHOT]: { moduleId: 'mywork', cardId: 'mywork-tasks' },
 
     // ==========================================
     // ONBOARDING MODULE
@@ -95,9 +96,11 @@ export const VIEW_TO_MODULE_MAP: Record<string, ViewHelpMapping> = {
     [AppView.INITIATIVE_GENERATOR]: { moduleId: 'initiatives', cardId: 'initiative-generator' },
 
     // ==========================================
-    // ROADMAP MODULE
+    // PORTFOLIO & ROADMAP MODULE (unified)
     // ==========================================
-    [AppView.FULL_STEP3_ROADMAP]: { moduleId: 'roadmap', cardId: 'roadmap-view' },
+    [AppView.PORTFOLIO_ROADMAP]: { moduleId: 'roadmap', cardId: 'portfolio-roadmap' },
+    [AppView.FULL_STEP3_ROADMAP]: { moduleId: 'roadmap', cardId: 'roadmap-view' }, // @deprecated - use PORTFOLIO_ROADMAP
+    [AppView.INITIATIVE_MANAGEMENT]: { moduleId: 'initiatives', cardId: 'initiative-management' }, // @deprecated - use PORTFOLIO_ROADMAP
 
     // ==========================================
     // IMPLEMENTATION MODULE
@@ -114,11 +117,6 @@ export const VIEW_TO_MODULE_MAP: Record<string, ViewHelpMapping> = {
     [AppView.DRD_AUDIT_REPORT]: { moduleId: 'reports', cardId: 'reports-drd-audit' },
     [AppView.KPI_OKR_DASHBOARD]: { moduleId: 'reports', cardId: 'reports-kpi-okr' },
     [AppView.EXECUTIVE_VIEW]: { moduleId: 'reports', cardId: 'reports-executive' },
-
-    // ==========================================
-    // MY WORK MODULE
-    // ==========================================
-    [AppView.MY_WORK]: { moduleId: 'mywork', cardId: 'mywork-tasks' },
 
     // ==========================================
     // ORGANIZATION MODULE (Context Builder)

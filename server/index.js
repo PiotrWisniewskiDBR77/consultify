@@ -32,6 +32,36 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
     const { startHealthCheck } = require('./cron/healthCheckJob');
     startHealthCheck();
 
+    // ============================================================
+    // LLM STARTUP VALIDATION - Single Source of Truth
+    // ============================================================
+    // This validates all LLM providers on startup and reports their status
+    (async () => {
+        try {
+            const { validateOnStartup } = require('./services/ai/startupValidator');
+            const healthReport = await validateOnStartup({ 
+                testConnectivity: true, 
+                parallel: true 
+            });
+
+            // Store health report for API access
+            global.llmHealthReport = healthReport;
+
+            if (healthReport.criticalErrors.length > 0) {
+                console.error('[Server] ⚠️  LLM CRITICAL: Some AI features may not work');
+                healthReport.criticalErrors.forEach(err => console.error(`  - ${err}`));
+            }
+
+            if (healthReport.summary.healthy > 0) {
+                console.log(`[Server] ✅ LLM Ready: ${healthReport.summary.healthy} provider(s) healthy`);
+            }
+        } catch (err) {
+            console.error('[Server] LLM Startup Validation failed:', err.message);
+            // Don't block server startup - allow degraded mode
+        }
+    })();
+    // ============================================================
+
     // Init LLM Provider Health Monitoring (Auto-Fallback)
     try {
         const llmFallbackService = require('./services/llmFallbackService');
@@ -39,6 +69,22 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
         console.log('[Server] LLM Provider Health Monitoring started');
     } catch (err) {
         console.warn('[Server] LLM Fallback Service not available:', err.message);
+    }
+
+    // Init AI Health Monitor (Self-Healing System)
+    try {
+        const { healthMonitor } = require('./services/ai/healthMonitor');
+        healthMonitor.start(60000); // Check every minute
+        
+        // Register alert handler
+        healthMonitor.onAlert((alert) => {
+            console.error('[AI Health] CRITICAL ALERT:', alert.message);
+            console.error('[AI Health] Failed checks:', alert.checks?.join(', '));
+        });
+        
+        console.log('[Server] AI Health Monitor started (self-healing enabled)');
+    } catch (err) {
+        console.warn('[Server] AI Health Monitor not available:', err.message);
     }
 }
 
@@ -220,6 +266,8 @@ app.use(demoGuard);
 app.use('/api/users', userRoutes);
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/ai', aiRoutes);
+const conversationsRoutes = require('./routes/conversations');
+app.use('/api/conversations', conversationsRoutes);
 const aiDraftsRoutes = require('./routes/ai-drafts');
 app.use('/api/ai-drafts', aiDraftsRoutes);
 const taskAdvisorRoutes = require('./routes/task-advisor');

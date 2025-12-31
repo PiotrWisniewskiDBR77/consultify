@@ -103,7 +103,7 @@ const storage = multer.diskStorage({
         try {
             await fs.mkdir(uploadDir, { recursive: true });
             cb(null, uploadDir);
-        } catch (err) {
+    } catch (err) {
             cb(err);
         }
     },
@@ -196,7 +196,7 @@ router.get('/analyses',
             };
 
             const result = await EconomicsService.getAnalyses(req.organizationId, filters);
-            res.json(result);
+        res.json(result);
         } catch (error) {
             console.error('[Economics API] List analyses error:', error);
             res.status(500).json({ error: 'Failed to retrieve analyses', code: 'LIST_FAILED' });
@@ -1187,6 +1187,971 @@ router.post('/evidence/:id/verify',
 router.get('/evidence/categories',
     async (req, res) => {
         res.json({ categories: EvidenceService.getCategories() });
+    }
+);
+
+// ============================================
+// Initiative Integration Endpoints
+// ============================================
+
+/**
+ * POST /api/economics/analyses/:id/link-initiative
+ * Link analysis to an initiative
+ */
+router.post('/analyses/:id/link-initiative',
+    requireOrganization,
+    validateAnalysisId,
+    async (req, res) => {
+        try {
+            const { initiativeId } = req.body;
+
+            if (!initiativeId) {
+                return res.status(400).json({ 
+                    error: 'Initiative ID is required', 
+                    code: 'INITIATIVE_REQUIRED' 
+                });
+            }
+
+            const analysis = await EconomicsService.linkAnalysisToInitiative(
+                req.params.id,
+                initiativeId,
+                req.organizationId
+            );
+
+            if (!analysis) {
+                return res.status(404).json({ error: 'Analysis not found', code: 'NOT_FOUND' });
+            }
+
+            // Audit log
+            await logAudit(
+                req,
+                GovernanceAuditService.AUDIT_ACTIONS.UPDATE,
+                GovernanceAuditService.RESOURCE_TYPES.DIGITIZATION_ANALYSIS,
+                req.params.id,
+                { initiative_id: null },
+                { initiative_id: initiativeId }
+            );
+
+            res.json(analysis);
+        } catch (error) {
+            console.error('[Economics API] Link initiative error:', error);
+            res.status(500).json({ error: 'Failed to link initiative', code: 'LINK_FAILED' });
+        }
+    }
+);
+
+/**
+ * DELETE /api/economics/analyses/:id/link-initiative
+ * Unlink analysis from initiative
+ */
+router.delete('/analyses/:id/link-initiative',
+    requireOrganization,
+    validateAnalysisId,
+    async (req, res) => {
+        try {
+            const before = await EconomicsService.getAnalysisById(req.params.id, req.organizationId);
+            
+            const analysis = await EconomicsService.unlinkFromInitiative(
+                req.params.id,
+                req.organizationId
+            );
+
+            if (!analysis) {
+                return res.status(404).json({ error: 'Analysis not found', code: 'NOT_FOUND' });
+            }
+
+            // Audit log
+            await logAudit(
+                req,
+                GovernanceAuditService.AUDIT_ACTIONS.UPDATE,
+                GovernanceAuditService.RESOURCE_TYPES.DIGITIZATION_ANALYSIS,
+                req.params.id,
+                { initiative_id: before?.initiative_id },
+                { initiative_id: null }
+            );
+
+            res.json(analysis);
+        } catch (error) {
+            console.error('[Economics API] Unlink initiative error:', error);
+            res.status(500).json({ error: 'Failed to unlink initiative', code: 'UNLINK_FAILED' });
+        }
+    }
+);
+
+// ============================================
+// Financial Analysis Endpoints (Analysis-based)
+// ============================================
+
+/**
+ * GET /api/economics/analyses/:id/financials
+ * Get financial data for an analysis
+ */
+router.get('/analyses/:id/financials',
+    requireOrganization,
+    validateAnalysisId,
+    async (req, res) => {
+        try {
+            const financials = await EconomicsService.getAnalysisFinancials(
+                req.params.id,
+                req.organizationId
+            );
+
+            if (!financials) {
+                // Return empty structure if no financials exist yet
+                return res.json({
+                    analysisId: req.params.id,
+                    costs: [],
+                    benefits: [],
+                    discountRate: 10,
+                    investmentHorizon: 5
+                });
+            }
+
+            res.json(financials);
+        } catch (error) {
+            console.error('[Economics API] Get analysis financials error:', error);
+            res.status(500).json({ error: 'Failed to retrieve financial data', code: 'GET_FAILED' });
+        }
+    }
+);
+
+/**
+ * PUT /api/economics/analyses/:id/financials
+ * Update financial data for an analysis
+ */
+router.put('/analyses/:id/financials',
+    requireOrganization,
+    validateAnalysisId,
+    async (req, res) => {
+        try {
+            const financials = await EconomicsService.updateAnalysisFinancials(
+                req.params.id,
+                {
+                    costs: req.body.costs,
+                    benefits: req.body.benefits,
+                    discountRate: req.body.discountRate,
+                    investmentHorizon: req.body.investmentHorizon
+                },
+                req.organizationId,
+                req.user.id
+            );
+
+            // Audit log
+            await logAudit(
+                req,
+                GovernanceAuditService.AUDIT_ACTIONS.UPDATE,
+                'ANALYSIS_FINANCIALS',
+                req.params.id,
+                null,
+                financials
+            );
+
+            res.json(financials);
+        } catch (error) {
+            console.error('[Economics API] Update analysis financials error:', error);
+            res.status(500).json({ error: 'Failed to update financial data', code: 'UPDATE_FAILED' });
+        }
+    }
+);
+
+/**
+ * POST /api/economics/analyses/:id/calculate-metrics
+ * Calculate financial metrics (NPV, IRR, Payback, ROI)
+ */
+router.post('/analyses/:id/calculate-metrics',
+    requireOrganization,
+    validateAnalysisId,
+    async (req, res) => {
+        try {
+            const FinancialCalc = require('../services/financialCalculatorService');
+            
+            // Get financial data for the analysis
+            const financials = await EconomicsService.getAnalysisFinancials(
+                req.params.id,
+                req.organizationId
+            );
+
+            if (!financials || (!financials.costs?.length && !financials.benefits?.length)) {
+                return res.status(400).json({ 
+                    error: 'No financial data available for calculation', 
+                    code: 'NO_FINANCIAL_DATA' 
+                });
+            }
+
+            const discountRate = (financials.discountRate || 10) / 100;
+            const horizon = financials.investmentHorizon || 5;
+
+            // Build cash flows from costs and benefits
+            const cashFlows = [];
+            
+            // Year 0: Initial costs
+            const initialCosts = financials.costs
+                .filter(c => c.year === 0)
+                .reduce((sum, c) => sum + (c.amount || 0), 0);
+            
+            if (initialCosts > 0) {
+                cashFlows.push({ year: 0, amount: -initialCosts });
+            }
+
+            // Years 1+: Net of benefits minus operating costs
+            for (let year = 1; year <= horizon; year++) {
+                const yearBenefits = financials.benefits
+                    .filter(b => b.year === year || b.year === 1) // Annual benefits
+                    .reduce((sum, b) => sum + (b.amount || 0), 0);
+                
+                const yearCosts = financials.costs
+                    .filter(c => c.year === year || c.year === 1) // Annual costs
+                    .reduce((sum, c) => sum + (c.amount || 0), 0);
+                
+                cashFlows.push({ year, amount: yearBenefits - yearCosts });
+            }
+
+            // Calculate metrics
+            const npv = FinancialCalc.calculateNPV(cashFlows, discountRate);
+            const irr = FinancialCalc.calculateIRR(cashFlows);
+            const paybackPeriod = FinancialCalc.calculatePaybackPeriod(cashFlows);
+            
+            const totalBenefits = financials.benefits.reduce((sum, b) => sum + (b.amount || 0) * horizon, 0);
+            const totalCosts = financials.costs.reduce((sum, c) => sum + (c.amount || 0), 0) + 
+                              financials.costs.filter(c => c.year >= 1).reduce((sum, c) => sum + (c.amount || 0) * horizon, 0);
+            const roi = FinancialCalc.calculateROI(totalBenefits, totalCosts);
+
+            // Build cumulative cash flow for chart
+            let cumulative = 0;
+            const cashFlowsWithCumulative = cashFlows.map(cf => {
+                cumulative += cf.amount;
+                return {
+                    ...cf,
+                    costs: cf.amount < 0 ? Math.abs(cf.amount) : 0,
+                    benefits: cf.amount > 0 ? cf.amount : 0,
+                    netCashFlow: cf.amount,
+                    cumulativeCashFlow: cumulative
+                };
+            });
+
+            res.json({
+                npv,
+                irr,
+                paybackPeriod,
+                roi,
+                totalCosts,
+                totalBenefits,
+                netBenefit: totalBenefits - totalCosts,
+                cashFlows: cashFlowsWithCumulative,
+                discountRate: financials.discountRate,
+                horizon,
+                calculatedAt: new Date().toISOString()
+            });
+        } catch (error) {
+            console.error('[Economics API] Calculate metrics error:', error);
+            res.status(500).json({ error: 'Failed to calculate financial metrics', code: 'CALC_FAILED' });
+        }
+    }
+);
+
+/**
+ * GET /api/economics/analyses/:id/benefits
+ * Get benefit tracking data for an analysis
+ */
+router.get('/analyses/:id/benefits',
+    requireOrganization,
+    validateAnalysisId,
+    async (req, res) => {
+        try {
+            const benefits = await EconomicsService.getAnalysisBenefits(
+                req.params.id,
+                req.organizationId
+            );
+            res.json({ benefits });
+        } catch (error) {
+            console.error('[Economics API] Get benefits error:', error);
+            res.status(500).json({ error: 'Failed to retrieve benefits', code: 'GET_FAILED' });
+        }
+    }
+);
+
+/**
+ * PUT /api/economics/analyses/:id/benefits
+ * Update benefit tracking data for an analysis
+ */
+router.put('/analyses/:id/benefits',
+    requireOrganization,
+    validateAnalysisId,
+    async (req, res) => {
+        try {
+            const benefits = await EconomicsService.updateAnalysisBenefits(
+                req.params.id,
+                {
+                    trackingPeriod: req.body.trackingPeriod,
+                    plannedBenefits: req.body.plannedBenefits,
+                    actualBenefits: req.body.actualBenefits
+                },
+                req.organizationId,
+                req.user.id
+            );
+            res.json({ benefits });
+        } catch (error) {
+            console.error('[Economics API] Update benefits error:', error);
+            res.status(500).json({ error: 'Failed to update benefits', code: 'UPDATE_FAILED' });
+        }
+    }
+);
+
+/**
+ * GET /api/economics/analyses/:id/quality-assessment
+ * Get quality assessment for an analysis
+ */
+router.get('/analyses/:id/quality-assessment',
+    requireOrganization,
+    validateAnalysisId,
+    async (req, res) => {
+        try {
+            const assessment = await EconomicsService.getAnalysisQualityAssessment(
+                req.params.id,
+                req.organizationId
+            );
+            res.json(assessment);
+        } catch (error) {
+            console.error('[Economics API] Get quality assessment error:', error);
+            res.status(500).json({ error: 'Failed to retrieve quality assessment', code: 'GET_FAILED' });
+        }
+    }
+);
+
+/**
+ * POST /api/economics/analyses/:id/business-case
+ * Generate business case document
+ */
+router.post('/analyses/:id/business-case',
+    requireOrganization,
+    validateAnalysisId,
+    async (req, res) => {
+        try {
+            const analysis = await EconomicsService.getAnalysisById(req.params.id, req.organizationId);
+            if (!analysis) {
+                return res.status(404).json({ error: 'Analysis not found', code: 'NOT_FOUND' });
+            }
+
+            const options = {
+                format: req.body.format || 'pdf',
+                language: req.body.language || 'pl',
+                includeExecutiveSummary: req.body.includeExecutiveSummary !== false,
+                includeFinancialAnalysis: req.body.includeFinancialAnalysis !== false,
+                includeRiskAssessment: req.body.includeRiskAssessment !== false
+            };
+
+            // For now, redirect to PDF export with business case template
+            const timestamp = Date.now();
+            const filename = `business_case_${analysis.name.replace(/[^a-z0-9]/gi, '_')}_${timestamp}.${options.format}`;
+            
+            // Use PDFExportService for business case generation
+            const result = await PDFExportService.exportBusinessCase(
+                analysis,
+                options,
+                req.user.id
+            );
+
+            res.json({
+                downloadUrl: result.downloadUrl || `/api/economics/exports/${result.id}/download`,
+                filename: result.filename || filename,
+                format: options.format
+            });
+        } catch (error) {
+            console.error('[Economics API] Generate business case error:', error);
+            res.status(500).json({ error: 'Failed to generate business case', code: 'GENERATE_FAILED' });
+        }
+    }
+);
+
+// ============================================
+// Financial Analysis Endpoints (Initiative-based)
+// ============================================
+
+// Import Financial Calculator Service (lazy load to avoid circular deps)
+let FinancialCalculatorService;
+const getFinancialService = () => {
+    if (!FinancialCalculatorService) {
+        FinancialCalculatorService = require('../services/financialCalculatorService');
+    }
+    return FinancialCalculatorService;
+};
+
+/**
+ * GET /api/economics/initiatives/:initiativeId/financials
+ * Get financial analysis for an initiative
+ */
+router.get('/initiatives/:initiativeId/financials',
+    requireOrganization,
+    async (req, res) => {
+        try {
+            const financials = await getFinancialService().getFinancials(
+                req.params.initiativeId,
+                req.organizationId
+            );
+
+            if (!financials) {
+                return res.status(404).json({ 
+                    error: 'Financial analysis not found', 
+                    code: 'NOT_FOUND',
+                    message: 'No financial analysis exists for this initiative. Create one first.'
+                });
+            }
+
+            res.json(financials);
+        } catch (error) {
+            console.error('[Economics API] Get financials error:', error);
+            res.status(500).json({ error: 'Failed to retrieve financial analysis', code: 'GET_FAILED' });
+        }
+    }
+);
+
+/**
+ * POST /api/economics/initiatives/:initiativeId/financials
+ * Create or update financial analysis for an initiative
+ */
+router.post('/initiatives/:initiativeId/financials',
+    requireOrganization,
+    async (req, res) => {
+        try {
+            const financialData = {
+                // Cost Structure
+                initialInvestment: req.body.initialInvestment,
+                implementationCost: req.body.implementationCost,
+                annualOperatingCost: req.body.annualOperatingCost,
+                trainingCost: req.body.trainingCost,
+                contingencyPercent: req.body.contingencyPercent,
+                
+                // Benefits Structure
+                annualCostSavings: req.body.annualCostSavings,
+                annualRevenueIncrease: req.body.annualRevenueIncrease,
+                productivityGainsPercent: req.body.productivityGainsPercent,
+                riskReductionValue: req.body.riskReductionValue,
+                
+                // Time Parameters
+                implementationMonths: req.body.implementationMonths,
+                benefitRealizationMonths: req.body.benefitRealizationMonths,
+                analysisHorizonYears: req.body.analysisHorizonYears,
+                discountRate: req.body.discountRate,
+                
+                // Metadata
+                currency: req.body.currency || 'PLN',
+                assumptions: req.body.assumptions,
+                analysisId: req.body.analysisId
+            };
+
+            const financials = await getFinancialService().createOrUpdateFinancials(
+                req.params.initiativeId,
+                financialData,
+                req.organizationId,
+                req.user.id
+            );
+
+            // Audit log
+            await logAudit(
+                req,
+                GovernanceAuditService.AUDIT_ACTIONS.CREATE,
+                'INITIATIVE_FINANCIALS',
+                financials.id,
+                null,
+                { initiativeId: req.params.initiativeId, npv: financials.npv, roi: financials.roi_percent }
+            );
+
+            res.status(201).json(financials);
+        } catch (error) {
+            console.error('[Economics API] Create financials error:', error);
+            res.status(500).json({ error: 'Failed to create financial analysis', code: 'CREATE_FAILED' });
+        }
+    }
+);
+
+/**
+ * PUT /api/economics/initiatives/:initiativeId/financials
+ * Update financial analysis
+ */
+router.put('/initiatives/:initiativeId/financials',
+    requireOrganization,
+    async (req, res) => {
+        try {
+            const before = await getFinancialService().getFinancials(
+                req.params.initiativeId,
+                req.organizationId
+            );
+
+            if (!before) {
+                return res.status(404).json({ error: 'Financial analysis not found', code: 'NOT_FOUND' });
+            }
+
+            const financials = await getFinancialService().updateFinancials(
+                req.params.initiativeId,
+                req.body,
+                req.organizationId,
+                req.user.id
+            );
+
+            // Audit log
+            await logAudit(
+                req,
+                GovernanceAuditService.AUDIT_ACTIONS.UPDATE,
+                'INITIATIVE_FINANCIALS',
+                financials.id,
+                before,
+                financials
+            );
+
+            res.json(financials);
+        } catch (error) {
+            console.error('[Economics API] Update financials error:', error);
+            res.status(500).json({ error: 'Failed to update financial analysis', code: 'UPDATE_FAILED' });
+        }
+    }
+);
+
+/**
+ * POST /api/economics/initiatives/:initiativeId/financials/calculate
+ * Recalculate financial metrics (NPV, IRR, etc.)
+ */
+router.post('/initiatives/:initiativeId/financials/calculate',
+    requireOrganization,
+    async (req, res) => {
+        try {
+            const result = await getFinancialService().recalculateMetrics(
+                req.params.initiativeId,
+                req.organizationId
+            );
+
+            res.json(result);
+        } catch (error) {
+            console.error('[Economics API] Calculate financials error:', error);
+            if (error.message === 'Financial analysis not found') {
+                return res.status(404).json({ error: error.message, code: 'NOT_FOUND' });
+            }
+            res.status(500).json({ error: 'Failed to calculate metrics', code: 'CALC_FAILED' });
+        }
+    }
+);
+
+/**
+ * POST /api/economics/initiatives/:initiativeId/financials/sensitivity
+ * Run sensitivity analysis
+ */
+router.post('/initiatives/:initiativeId/financials/sensitivity',
+    requireOrganization,
+    async (req, res) => {
+        try {
+            const { variables, ranges } = req.body;
+
+            const result = await getFinancialService().runSensitivityAnalysis(
+                req.params.initiativeId,
+                variables || ['discount_rate', 'annual_cost_savings', 'initial_investment'],
+                ranges || { min: -20, max: 20, steps: 5 },
+                req.organizationId
+            );
+
+            res.json(result);
+        } catch (error) {
+            console.error('[Economics API] Sensitivity analysis error:', error);
+            res.status(500).json({ error: 'Failed to run sensitivity analysis', code: 'SENSITIVITY_FAILED' });
+        }
+    }
+);
+
+/**
+ * GET /api/economics/initiatives/:initiativeId/financials/cash-flow
+ * Get cash flow projections
+ */
+router.get('/initiatives/:initiativeId/financials/cash-flow',
+    requireOrganization,
+    async (req, res) => {
+        try {
+            const cashFlow = await getFinancialService().getCashFlowProjections(
+                req.params.initiativeId,
+                req.organizationId
+            );
+
+            res.json(cashFlow);
+        } catch (error) {
+            console.error('[Economics API] Cash flow error:', error);
+            res.status(500).json({ error: 'Failed to get cash flow projections', code: 'CASHFLOW_FAILED' });
+        }
+    }
+);
+
+/**
+ * POST /api/economics/initiatives/:initiativeId/financials/business-case
+ * Generate business case document
+ */
+router.post('/initiatives/:initiativeId/financials/business-case',
+    requireOrganization,
+    exportLimiter,
+    async (req, res) => {
+        try {
+            const options = {
+                template: req.body.template || 'executive',
+                language: req.body.language || 'pl',
+                includeCharts: req.body.includeCharts !== false,
+                includeSensitivity: req.body.includeSensitivity !== false
+            };
+
+            const result = await getFinancialService().generateBusinessCase(
+                req.params.initiativeId,
+                options,
+                req.organizationId
+            );
+
+            // Audit log
+            await logAudit(
+                req,
+                GovernanceAuditService.AUDIT_ACTIONS.PUBLISH,
+                'BUSINESS_CASE',
+                req.params.initiativeId,
+                null,
+                { template: options.template, language: options.language }
+            );
+
+            res.json(result);
+        } catch (error) {
+            console.error('[Economics API] Business case error:', error);
+            res.status(500).json({ error: 'Failed to generate business case', code: 'BUSINESS_CASE_FAILED' });
+        }
+    }
+);
+
+// ============================================
+// Benefits Tracking Endpoints
+// ============================================
+
+/**
+ * GET /api/economics/initiatives/:initiativeId/benefits
+ * Get benefit tracking data for an initiative
+ */
+router.get('/initiatives/:initiativeId/benefits',
+    requireOrganization,
+    async (req, res) => {
+        try {
+            const filters = {
+                periodType: req.query.periodType,
+                startDate: req.query.startDate,
+                endDate: req.query.endDate,
+                verificationStatus: req.query.verificationStatus
+            };
+
+            const benefits = await getFinancialService().getBenefitTracking(
+                req.params.initiativeId,
+                filters,
+                req.organizationId
+            );
+
+            res.json(benefits);
+        } catch (error) {
+            console.error('[Economics API] Get benefits error:', error);
+            res.status(500).json({ error: 'Failed to retrieve benefit tracking', code: 'GET_FAILED' });
+        }
+    }
+);
+
+/**
+ * POST /api/economics/initiatives/:initiativeId/benefits
+ * Record a benefit measurement
+ */
+router.post('/initiatives/:initiativeId/benefits',
+    requireOrganization,
+    async (req, res) => {
+        try {
+            const measurementData = {
+                periodStart: req.body.periodStart,
+                periodEnd: req.body.periodEnd,
+                periodType: req.body.periodType || 'monthly',
+                
+                // Planned values
+                plannedCostSavings: req.body.plannedCostSavings,
+                plannedRevenueIncrease: req.body.plannedRevenueIncrease,
+                plannedProductivityGains: req.body.plannedProductivityGains,
+                
+                // Actual values
+                actualCostSavings: req.body.actualCostSavings,
+                actualRevenueIncrease: req.body.actualRevenueIncrease,
+                actualProductivityGains: req.body.actualProductivityGains,
+                
+                // Qualitative
+                varianceNotes: req.body.varianceNotes,
+                achievements: req.body.achievements,
+                challenges: req.body.challenges,
+                evidenceLinks: req.body.evidenceLinks
+            };
+
+            const measurement = await getFinancialService().recordBenefitMeasurement(
+                req.params.initiativeId,
+                measurementData,
+                req.organizationId,
+                req.user.id
+            );
+
+            // Audit log
+            await logAudit(
+                req,
+                GovernanceAuditService.AUDIT_ACTIONS.CREATE,
+                'BENEFIT_TRACKING',
+                measurement.id,
+                null,
+                { initiativeId: req.params.initiativeId, period: `${measurementData.periodStart} to ${measurementData.periodEnd}` }
+            );
+
+            res.status(201).json(measurement);
+        } catch (error) {
+            console.error('[Economics API] Record benefit error:', error);
+            res.status(500).json({ error: 'Failed to record benefit measurement', code: 'RECORD_FAILED' });
+        }
+    }
+);
+
+/**
+ * PUT /api/economics/initiatives/:initiativeId/benefits/:benefitId
+ * Update a benefit measurement
+ */
+router.put('/initiatives/:initiativeId/benefits/:benefitId',
+    requireOrganization,
+    async (req, res) => {
+        try {
+            const measurement = await getFinancialService().updateBenefitMeasurement(
+                req.params.benefitId,
+                req.body,
+                req.organizationId,
+                req.user.id
+            );
+
+            if (!measurement) {
+                return res.status(404).json({ error: 'Measurement not found', code: 'NOT_FOUND' });
+            }
+
+            res.json(measurement);
+        } catch (error) {
+            console.error('[Economics API] Update benefit error:', error);
+            res.status(500).json({ error: 'Failed to update measurement', code: 'UPDATE_FAILED' });
+        }
+    }
+);
+
+/**
+ * POST /api/economics/initiatives/:initiativeId/benefits/:benefitId/verify
+ * Verify a benefit measurement
+ */
+router.post('/initiatives/:initiativeId/benefits/:benefitId/verify',
+    requireOrganization,
+    async (req, res) => {
+        try {
+            const measurement = await getFinancialService().verifyBenefitMeasurement(
+                req.params.benefitId,
+                req.user.id
+            );
+
+            if (!measurement) {
+                return res.status(404).json({ error: 'Measurement not found', code: 'NOT_FOUND' });
+            }
+
+            // Audit log
+            await logAudit(
+                req,
+                GovernanceAuditService.AUDIT_ACTIONS.UPDATE,
+                'BENEFIT_TRACKING',
+                req.params.benefitId,
+                { verification_status: 'pending' },
+                { verification_status: 'verified', verified_by: req.user.id }
+            );
+
+            res.json(measurement);
+        } catch (error) {
+            console.error('[Economics API] Verify benefit error:', error);
+            res.status(500).json({ error: 'Failed to verify measurement', code: 'VERIFY_FAILED' });
+        }
+    }
+);
+
+/**
+ * GET /api/economics/initiatives/:initiativeId/benefits/summary
+ * Get benefit tracking summary
+ */
+router.get('/initiatives/:initiativeId/benefits/summary',
+    requireOrganization,
+    async (req, res) => {
+        try {
+            const summary = await getFinancialService().getBenefitSummary(
+                req.params.initiativeId,
+                req.organizationId
+            );
+
+        res.json(summary);
+        } catch (error) {
+            console.error('[Economics API] Benefit summary error:', error);
+            res.status(500).json({ error: 'Failed to get benefit summary', code: 'SUMMARY_FAILED' });
+        }
+    }
+);
+
+/**
+ * GET /api/economics/initiatives/:initiativeId/benefits/variance
+ * Get variance analysis
+ */
+router.get('/initiatives/:initiativeId/benefits/variance',
+    requireOrganization,
+    async (req, res) => {
+        try {
+            const variance = await getFinancialService().getVarianceAnalysis(
+                req.params.initiativeId,
+                req.organizationId
+            );
+
+            res.json(variance);
+        } catch (error) {
+            console.error('[Economics API] Variance analysis error:', error);
+            res.status(500).json({ error: 'Failed to get variance analysis', code: 'VARIANCE_FAILED' });
+        }
+    }
+);
+
+// ============================================
+// Quality Assessment Endpoints
+// ============================================
+
+/**
+ * GET /api/economics/initiatives/:initiativeId/quality
+ * Get quality assessment for an initiative
+ */
+router.get('/initiatives/:initiativeId/quality',
+    requireOrganization,
+    async (req, res) => {
+        try {
+            const QualityService = require('../services/qualityAssessmentService');
+            const assessment = await QualityService.getQualityAssessment(
+                req.params.initiativeId,
+                req.organizationId
+            );
+
+            if (!assessment) {
+                return res.status(404).json({ 
+                    error: 'Quality assessment not found', 
+                    code: 'NOT_FOUND',
+                    message: 'No quality assessment exists for this initiative.'
+                });
+            }
+
+            res.json(assessment);
+        } catch (error) {
+            console.error('[Economics API] Get quality error:', error);
+            res.status(500).json({ error: 'Failed to retrieve quality assessment', code: 'GET_FAILED' });
+        }
+    }
+);
+
+/**
+ * POST /api/economics/initiatives/:initiativeId/quality
+ * Create quality assessment
+ */
+router.post('/initiatives/:initiativeId/quality',
+    requireOrganization,
+    async (req, res) => {
+        try {
+            const QualityService = require('../services/qualityAssessmentService');
+            const assessmentData = {
+                assessmentType: req.body.assessmentType || 'post_implementation',
+                lessonsLearned: req.body.lessonsLearned,
+                improvementRecommendations: req.body.improvementRecommendations,
+                assessmentNotes: req.body.assessmentNotes
+            };
+
+            const assessment = await QualityService.createQualityAssessment(
+                req.params.initiativeId,
+                assessmentData,
+                req.organizationId,
+                req.user.id
+            );
+
+            // Audit log
+            await logAudit(
+                req,
+                GovernanceAuditService.AUDIT_ACTIONS.CREATE,
+                'QUALITY_ASSESSMENT',
+                assessment.id,
+                null,
+                { initiativeId: req.params.initiativeId, rating: assessment.overall_quality_rating }
+            );
+
+            res.status(201).json(assessment);
+        } catch (error) {
+            console.error('[Economics API] Create quality error:', error);
+            res.status(500).json({ error: 'Failed to create quality assessment', code: 'CREATE_FAILED' });
+        }
+    }
+);
+
+/**
+ * PUT /api/economics/initiatives/:initiativeId/quality
+ * Update quality assessment
+ */
+router.put('/initiatives/:initiativeId/quality',
+    requireOrganization,
+    async (req, res) => {
+        try {
+            const QualityService = require('../services/qualityAssessmentService');
+            const assessment = await QualityService.updateQualityAssessment(
+                req.params.initiativeId,
+                req.body,
+                req.organizationId,
+                req.user.id
+            );
+
+            if (!assessment) {
+                return res.status(404).json({ error: 'Quality assessment not found', code: 'NOT_FOUND' });
+            }
+
+            res.json(assessment);
+        } catch (error) {
+            console.error('[Economics API] Update quality error:', error);
+            res.status(500).json({ error: 'Failed to update quality assessment', code: 'UPDATE_FAILED' });
+        }
+    }
+);
+
+/**
+ * POST /api/economics/initiatives/:initiativeId/quality/recalculate
+ * Recalculate quality scores based on current data
+ */
+router.post('/initiatives/:initiativeId/quality/recalculate',
+    requireOrganization,
+    async (req, res) => {
+        try {
+            const QualityService = require('../services/qualityAssessmentService');
+            const assessment = await QualityService.recalculateQualityScores(
+                req.params.initiativeId,
+                req.organizationId
+            );
+
+            res.json(assessment);
+        } catch (error) {
+            console.error('[Economics API] Recalculate quality error:', error);
+            res.status(500).json({ error: 'Failed to recalculate quality scores', code: 'RECALC_FAILED' });
+        }
+    }
+);
+
+/**
+ * GET /api/economics/initiatives/:initiativeId/quality/lessons
+ * Get lessons learned for an initiative
+ */
+router.get('/initiatives/:initiativeId/quality/lessons',
+    requireOrganization,
+    async (req, res) => {
+        try {
+            const QualityService = require('../services/qualityAssessmentService');
+            const lessons = await QualityService.getLessonsLearned(
+                req.params.initiativeId,
+                req.organizationId
+            );
+
+            res.json({ lessons });
+        } catch (error) {
+            console.error('[Economics API] Get lessons error:', error);
+            res.status(500).json({ error: 'Failed to retrieve lessons learned', code: 'GET_FAILED' });
+        }
     }
 );
 

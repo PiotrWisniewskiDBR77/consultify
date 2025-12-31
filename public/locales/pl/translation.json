@@ -1,5 +1,6 @@
 {
   "sidebar": {
+    "aiChat": "AI Chat",
     "dashboard": "Pulpit",
     "quickAssessment": "Szybka Diagnoza",
     "fullProject": "Pełna Transformacja",
@@ -78,9 +79,91 @@
     "assessmentLean": "Lean 4.0",
     "assessmentOther": "Inne",
     "affiliateDashboard": "Ecosystem Impact",
-    "collapse": "Collapse",
-    "expand": "Expand",
-    "metrics": "Metrics & Conversion"
+    "collapse": "Zwiń",
+    "expand": "Rozwiń",
+    "metrics": "Metryki & Konwersja",
+    "portfolioRoadmap": "Inicjatywy"
+  },
+  "portfolio": {
+    "title": "Inicjatywy",
+    "subtitle": "Zarządzaj inicjatywami od pomysłu do realizacji",
+    "views": {
+      "list": "Lista",
+      "kanban": "Kanban",
+      "timeline": "Oś czasu",
+      "matrix": "Macierz"
+    },
+    "filters": {
+      "allProjects": "Wszystkie projekty",
+      "allStatuses": "Wszystkie statusy",
+      "allOwners": "Wszyscy właściciele",
+      "allQuarters": "Wszystkie kwartały",
+      "search": "Szukaj inicjatyw..."
+    },
+    "stats": {
+      "total": "Łączna liczba inicjatyw",
+      "inProgress": "W toku",
+      "approved": "Zatwierdzone",
+      "totalBudget": "Łączny budżet"
+    },
+    "kanban": {
+      "draft": "Szkic",
+      "planning": "Planowanie",
+      "review": "Przegląd",
+      "approved": "Zatwierdzone",
+      "executing": "Realizacja"
+    },
+    "timeline": {
+      "today": "Dziś",
+      "criticalPath": "Ścieżka krytyczna",
+      "dependencies": "Zależności"
+    },
+    "matrix": {
+      "quickWins": "Szybkie wygrane",
+      "majorInvest": "Główne inwestycje",
+      "niceToHave": "Dobrze mieć",
+      "avoid": "Unikaj/Ogranicz"
+    },
+    "sidePanel": {
+      "overview": "Przegląd",
+      "financials": "Finanse",
+      "stakeholders": "Interesariusze",
+      "risks": "Ryzyka",
+      "timeline": "Oś czasu",
+      "activity": "Aktywność"
+    },
+    "actions": {
+      "newInitiative": "Nowa inicjatywa",
+      "bulkActions": "Akcje grupowe",
+      "export": "Eksportuj",
+      "refresh": "Odśwież"
+    },
+    "empty": {
+      "title": "Brak inicjatyw",
+      "description": "Utwórz pierwszą inicjatywę lub wygeneruj z oceny"
+    }
+  },
+  "myWork": {
+    "title": "Moja Praca",
+    "tasks": "Zadania",
+    "decisions": "Decyzje",
+    "projects": "Projekty",
+    "notifications": "Powiadomienia",
+    "overdue": "Zaległe",
+    "today": "Dziś",
+    "thisWeek": "Ten tydzień",
+    "urgent": "Pilne",
+    "newTask": "Nowe Zadanie",
+    "newDecision": "Nowa Decyzja",
+    "myDecisions": "Moje Decyzje",
+    "awaitingOthers": "Oczekujące na innych",
+    "projectNotifications": "Projekt",
+    "personalNotifications": "Osobiste",
+    "allNotifications": "Wszystkie",
+    "markAllRead": "Oznacz wszystkie jako przeczytane",
+    "noTasks": "Brak zadań",
+    "noDecisions": "Brak decyzji",
+    "noNotifications": "Brak powiadomień"
   },
   "auth": {
     "startQuick": "Rozpocznij Szybką Diagnozę",
@@ -2385,6 +2468,88 @@
     },
     "currentAxis": "Bieżąca Oś"
   },
+  "aiChat": {
+    "greeting": {
+      "morning": "Dzień dobry",
+      "afternoon": "Dzień dobry",
+      "evening": "Dobry wieczór"
+    },
+    "subtitle": {
+      "morning": "Gotowy, by pchnąć transformację do przodu?",
+      "afternoon": "Popracujmy nad Twoimi inicjatywami",
+      "evening": "Przejrzyj swoją podróż transformacyjną"
+    },
+    "placeholder": "Zapytaj o cokolwiek...",
+    "frozenPlaceholder": "AI tymczasowo niedostępne",
+    "listening": "Słucham...",
+    "send": "Wyślij",
+    "actions": {
+      "assess": "Oceń",
+      "generate": "Generuj",
+      "plan": "Planuj",
+      "report": "Raportuj",
+      "rename": "Zmień nazwę",
+      "star": "Przypnij na górze",
+      "unstar": "Odepnij",
+      "archive": "Archiwizuj",
+      "unarchive": "Przywróć z archiwum",
+      "delete": "Usuń",
+      "export": "Eksportuj"
+    },
+    "history": "Historia",
+    "newSession": "Nowa sesja strategiczna",
+    "searchPlaceholder": "Szukaj rozmów...",
+    "noConversations": "Brak rozmów",
+    "noResults": "Nie znaleziono rozmów",
+    "startNewChat": "Rozpocznij nowy czat",
+    "expandSidebar": "Rozwiń panel",
+    "collapseSidebar": "Zwiń panel",
+    "confirmDelete": "Czy na pewno chcesz usunąć tę rozmowę?",
+    "sections": {
+      "pinned": "Przypięte",
+      "today": "Dzisiaj",
+      "yesterday": "Wczoraj",
+      "thisWeek": "Ten tydzień",
+      "lastMonth": "Ostatnie 30 dni",
+      "older": "Starsze",
+      "archived": "Archiwum",
+      "byProject": "Według projektu"
+    },
+    "menu": {
+      "addFiles": "Dodaj pliki i media",
+      "tools": "Narzędzia i integracje",
+      "uploadFile": "Prześlij plik",
+      "pasteContent": "Wklej zawartość",
+      "addLink": "Dodaj link / URL",
+      "enterUrl": "Wprowadź URL",
+      "fromPmo": "Z Twoich danych PMO",
+      "importAssessment": "Importuj ocenę",
+      "importInitiative": "Importuj inicjatywę",
+      "importRoadmap": "Importuj mapę drogową",
+      "importReport": "Importuj raport",
+      "aiModes": "Tryby AI",
+      "deepResearch": "Głęboka analiza",
+      "webSearch": "Wyszukiwanie w sieci",
+      "showReasoning": "Pokaż rozumowanie",
+      "pmoTools": "Narzędzia PMO",
+      "startAssessment": "Rozpocznij ocenę",
+      "generateInitiatives": "Generuj inicjatywy",
+      "calculateRoi": "Oblicz ROI",
+      "buildReport": "Utwórz raport",
+      "connections": "Połączenia",
+      "manageConnectors": "Zarządzaj konektorami",
+      "knowledgeBases": "Bazy wiedzy"
+    },
+    "sources": "Źródła",
+    "suggestions": {
+      "title": "Sugerowane dla Ciebie",
+      "startAssessment": "Rozpocznij ocenę dojrzałości cyfrowej"
+    },
+    "startRecording": "Wprowadzanie głosowe",
+    "stopRecording": "Stop",
+    "voiceModeOn": "Rozmowa głosowa aktywna - kliknij aby wyłączyć",
+    "voiceModeOff": "Włącz rozmowę głosową"
+  },
   "common": {
     "locked": "Locked",
     "complete": "Complete",
@@ -4367,5 +4532,57 @@
     "observations": "Key Observations & Risks",
     "recommendations": "Recommended Actions",
     "optimization": "Optimization Strategy"
+  },
+  "widgets": {
+    "help": {
+      "title": "Centrum Pomocy",
+      "tooltip": "Centrum Pomocy"
+    },
+    "documents": {
+      "title": "Biblioteka Dokumentów",
+      "tooltip": "Dokumenty"
+    },
+    "feedback": {
+      "title": "Zgłoś błąd / Pomysł",
+      "tooltip": "Zgłoś uwagi"
+    }
+  },
+  "feedback": {
+    "title": "Prześlij Feedback",
+    "type": {
+      "bug": "Błąd",
+      "idea": "Pomysł"
+    },
+    "label": {
+      "bug": "Opis błędu",
+      "idea": "Opis pomysłu"
+    },
+    "placeholder": {
+      "bug": "Opisz co nie działa i jak to odtworzyć...",
+      "idea": "Opisz swój pomysł na usprawnienie..."
+    },
+    "submit": "Wyślij Zgłoszenie",
+    "submitting": "Wysyłanie...",
+    "success": {
+      "title": "Wiadomość wysłana!",
+      "message": "Dziękujemy za Twoją opinię. Przeanalizujemy ją najszybciej jak to możliwe."
+    },
+    "intro": "Twoja opinia pomaga nam ulepszać platformę. Zgłoś błąd lub podziel się pomysłem.",
+    "footer": "Zgłoszenie pociągnie dane:"
+  },
+  "documents": {
+    "library": "Biblioteka Dokumentów",
+    "projectDocs": "Projekt",
+    "myDocs": "Moje",
+    "upload": "Dodaj dokument",
+    "uploading": "Przesyłanie...",
+    "noProjectDocs": "Brak dokumentów projektu",
+    "noUserDocs": "Brak Twoich dokumentów",
+    "download": "Pobierz",
+    "moveToProject": "Przenieś do projektu",
+    "delete": "Usuń",
+    "projectHint": "Dokumenty dostępne dla wszystkich w projekcie",
+    "userHint": "Twoje prywatne dokumenty",
+    "confirmDelete": "Czy na pewno chcesz usunąć ten dokument?"
   }
 }

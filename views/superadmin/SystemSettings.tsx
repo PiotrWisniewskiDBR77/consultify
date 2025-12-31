@@ -841,12 +841,15 @@ export const SystemSettings: React.FC = () => {
             <InfoButton cardId="superadmin-settings" position="top-right" />
             <div className="flex items-center justify-between mb-6">
                 <h1 className="text-2xl font-bold text-white">System Settings</h1>
-                <button
-                    onClick={fetchSettings}
-                    className="flex items-center gap-2 px-4 py-2 bg-navy-800 hover:bg-navy-700 rounded-lg text-sm transition-colors text-white"
-                >
-                    <RefreshCw size={16} /> Refresh
-                </button>
+                <div className="flex items-center gap-2">
+                    <InfoButton cardId="superadmin-settings" position="header-inline" size="md" showLabel label="Help" />
+                    <button
+                        onClick={fetchSettings}
+                        className="flex items-center gap-2 px-4 py-2 bg-navy-800 hover:bg-navy-700 rounded-lg text-sm transition-colors text-white"
+                    >
+                        <RefreshCw size={16} /> Refresh
+                    </button>
+                </div>
             </div>
 
             {renderTabs()}

@@ -698,13 +698,16 @@ export const SSOConfigurationView: React.FC = () => {
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white">SSO Configuration</h1>
                     <p className="text-slate-500 mt-1">Manage Single Sign-On for enterprise organizations</p>
                 </div>
-                <button
-                    onClick={fetchSSOConfigs}
-                    className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
-                    title="Refresh"
-                >
-                    <RefreshCw size={18} className={`text-slate-400 ${loading ? 'animate-spin' : ''}`} />
-                </button>
+                <div className="flex items-center gap-2">
+                    <InfoButton cardId="superadmin-sso" position="header-inline" size="md" showLabel label="Help" />
+                    <button
+                        onClick={fetchSSOConfigs}
+                        className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                        title="Refresh"
+                    >
+                        <RefreshCw size={18} className={`text-slate-400 ${loading ? 'animate-spin' : ''}`} />
+                    </button>
+                </div>
             </div>
 
             {/* Tabs */}

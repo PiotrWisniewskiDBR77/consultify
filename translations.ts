@@ -58,6 +58,28 @@ export const translations = {
     mobileApp: 'Mobile App',
     logOut: 'Log Out',
   },
+  myWork: {
+    title: 'My Work',
+    tasks: 'Tasks',
+    decisions: 'Decisions',
+    projects: 'Projects',
+    notifications: 'Notifications',
+    overdue: 'Overdue',
+    today: 'Today',
+    thisWeek: 'This Week',
+    urgent: 'Urgent',
+    newTask: 'New Task',
+    newDecision: 'New Decision',
+    myDecisions: 'My Decisions',
+    awaitingOthers: 'Awaiting Others',
+    projectNotifications: 'Project',
+    personalNotifications: 'Personal',
+    allNotifications: 'All',
+    markAllRead: 'Mark all read',
+    noTasks: 'No tasks found',
+    noDecisions: 'No decisions found',
+    noNotifications: 'No notifications'
+  },
   settings: {
     menu: {
       header: 'Settings',

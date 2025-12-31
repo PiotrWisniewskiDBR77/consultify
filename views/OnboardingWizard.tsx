@@ -80,8 +80,8 @@ export const OnboardingWizard = () => {
 
             toast.success("Plan Accepted! Initiatives created.");
 
-            // Redirect to User Dashboard
-            setCurrentView(AppView.USER_DASHBOARD);
+            // Redirect to AI Chat welcome screen
+            setCurrentView(AppView.AI_CHAT);
         } catch (error: any) {
             console.error(error);
             if (error.message?.includes('already accepted')) {

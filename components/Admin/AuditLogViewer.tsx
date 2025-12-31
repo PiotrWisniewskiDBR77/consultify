@@ -1,556 +1,665 @@
 /**
- * AuditLogViewer Component
+ * AI Audit Log Viewer Component
  * 
- * Super Admin panel for viewing AI audit logs with filtering and export capabilities.
+ * Super Admin dashboard for viewing AI audit logs, security events, and compliance.
+ * Features:
+ * - Searchable audit log table
+ * - Filters by user, date, risk level, action type
+ * - Export to CSV/PDF
+ * - Risk-flagged entries highlighting
+ * - PII redaction display
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-    Shield,
+import { 
+    Shield, 
+    Search, 
+    Download, 
+    RefreshCw,
     AlertTriangle,
     AlertCircle,
     CheckCircle,
-    Download,
-    RefreshCw,
-    Search,
     Filter,
-    ChevronDown,
-    ChevronUp,
-    Clock,
+    Calendar,
     User,
-    Cpu,
-    DollarSign,
-    X
+    Clock,
+    FileText,
+    ChevronLeft,
+    ChevronRight,
+    X,
+    Eye,
+    Loader2
 } from 'lucide-react';
-import { Button } from '../Button';
 import api from '../../services/api';
+import { useTranslation } from 'react-i18next';
 
 interface AuditLogEntry {
     id: string;
     timestamp: string;
     user_id: string;
+    user_email?: string;
     organization_id: string;
     action: string;
     resource_type: string;
     resource_id?: string;
-    request_summary?: string;
-    response_summary?: string;
-    model_used?: string;
+    request_summary: string;
+    response_summary: string;
+    model_used: string;
     tokens_used: number;
     cost_usd: number;
     ip_address?: string;
     user_agent?: string;
-    risk_level: 'LOW' | 'MEDIUM' | 'HIGH';
+    risk_level: 'HIGH' | 'MEDIUM' | 'LOW';
     flagged: boolean;
     flag_reason?: string;
 }
 
-interface Filters {
+interface AuditLogFilters {
     search: string;
-    riskLevel: string;
-    action: string;
+    riskLevel: 'ALL' | 'HIGH' | 'MEDIUM' | 'LOW';
     flaggedOnly: boolean;
-    dateFrom: string;
-    dateTo: string;
+    startDate: string;
+    endDate: string;
+    userId: string;
+    action: string;
 }
 
-const RISK_COLORS = {
-    LOW: 'bg-green-100 text-green-800 border-green-200',
-    MEDIUM: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    HIGH: 'bg-red-100 text-red-800 border-red-200'
-};
+interface AuditLogStats {
+    total_requests: number;
+    flagged_requests: number;
+    high_risk: number;
+    medium_risk: number;
+    low_risk: number;
+    period: string;
+}
 
-const RISK_ICONS = {
-    LOW: CheckCircle,
-    MEDIUM: AlertCircle,
-    HIGH: AlertTriangle
+const defaultFilters: AuditLogFilters = {
+    search: '',
+    riskLevel: 'ALL',
+    flaggedOnly: false,
+    startDate: '',
+    endDate: '',
+    userId: '',
+    action: ''
 };
 
 export function AuditLogViewer() {
+    const { t } = useTranslation();
     const [logs, setLogs] = useState<AuditLogEntry[]>([]);
+    const [stats, setStats] = useState<AuditLogStats | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [selectedLog, setSelectedLog] = useState<AuditLogEntry | null>(null);
+    const [filters, setFilters] = useState<AuditLogFilters>(defaultFilters);
     const [showFilters, setShowFilters] = useState(false);
-    const [pagination, setPagination] = useState({ offset: 0, limit: 50, total: 0 });
-    
-    const [filters, setFilters] = useState<Filters>({
-        search: '',
-        riskLevel: '',
-        action: '',
-        flaggedOnly: false,
-        dateFrom: '',
-        dateTo: ''
-    });
+    const [selectedLog, setSelectedLog] = useState<AuditLogEntry | null>(null);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [exporting, setExporting] = useState(false);
+    const pageSize = 20;
 
     const fetchLogs = useCallback(async () => {
         setLoading(true);
         setError(null);
 
         try {
-            const params = new URLSearchParams();
-            params.append('limit', pagination.limit.toString());
-            params.append('offset', pagination.offset.toString());
-            
-            if (filters.riskLevel) params.append('riskLevel', filters.riskLevel);
-            if (filters.action) params.append('action', filters.action);
-            if (filters.flaggedOnly) params.append('flagged', 'true');
-            if (filters.search) params.append('userId', filters.search);
+            const params = new URLSearchParams({
+                page: page.toString(),
+                limit: pageSize.toString(),
+                ...(filters.riskLevel !== 'ALL' && { riskLevel: filters.riskLevel }),
+                ...(filters.flaggedOnly && { flagged: 'true' }),
+                ...(filters.startDate && { startDate: filters.startDate }),
+                ...(filters.endDate && { endDate: filters.endDate }),
+                ...(filters.userId && { userId: filters.userId }),
+                ...(filters.action && { action: filters.action }),
+                ...(filters.search && { search: filters.search })
+            });
 
-            const response = await api.get(`/ai-security/audit-log?${params.toString()}`);
+            const response = await api.get(`/ai-security/audit-logs?${params.toString()}`);
             
             if (response.data.success) {
-                setLogs(response.data.data || []);
-                setPagination(prev => ({ ...prev, total: response.data.count || 0 }));
+                setLogs(response.data.logs || []);
+                setTotalPages(Math.ceil((response.data.total || 0) / pageSize));
             } else {
-                setError(response.data.error || 'Failed to fetch logs');
+                throw new Error(response.data.error || 'Failed to fetch logs');
             }
         } catch (err: any) {
             setError(err.message || 'Failed to fetch audit logs');
+            setLogs([]);
         } finally {
             setLoading(false);
         }
-    }, [pagination.offset, pagination.limit, filters]);
+    }, [page, filters]);
+
+    const fetchStats = useCallback(async () => {
+        try {
+            const response = await api.get('/ai-security/summary');
+            if (response.data.success || response.data.period) {
+                setStats(response.data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch stats:', err);
+        }
+    }, []);
 
     useEffect(() => {
         fetchLogs();
-    }, [fetchLogs]);
+        fetchStats();
+    }, [fetchLogs, fetchStats]);
 
-    const handleExportCSV = () => {
-        if (logs.length === 0) return;
+    const handleExportCSV = async () => {
+        setExporting(true);
+        try {
+            const params = new URLSearchParams({
+                format: 'csv',
+                ...(filters.riskLevel !== 'ALL' && { riskLevel: filters.riskLevel }),
+                ...(filters.flaggedOnly && { flagged: 'true' }),
+                ...(filters.startDate && { startDate: filters.startDate }),
+                ...(filters.endDate && { endDate: filters.endDate })
+            });
 
-        const headers = ['Timestamp', 'User ID', 'Action', 'Resource', 'Model', 'Tokens', 'Cost (USD)', 'Risk', 'Flagged'];
-        const rows = logs.map(log => [
-            log.timestamp,
-            log.user_id,
-            log.action,
-            log.resource_type,
-            log.model_used || '',
-            log.tokens_used.toString(),
-            log.cost_usd.toFixed(4),
-            log.risk_level,
-            log.flagged ? 'Yes' : 'No'
-        ]);
+            const response = await api.get(`/ai-security/audit-logs/export?${params.toString()}`, {
+                responseType: 'blob'
+            });
 
-        const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `audit-log-${new Date().toISOString().split('T')[0]}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `audit-log-${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (err) {
+            console.error('Export failed:', err);
+        } finally {
+            setExporting(false);
+        }
+    };
+
+    const getRiskBadge = (riskLevel: string, flagged: boolean) => {
+        const base = 'px-2 py-1 rounded-full text-xs font-medium';
+        if (flagged) {
+            return (
+                <span className={`${base} bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 flex items-center gap-1`}>
+                    <AlertTriangle size={12} />
+                    FLAGGED
+                </span>
+            );
+        }
+        switch (riskLevel) {
+            case 'HIGH':
+                return <span className={`${base} bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400`}>HIGH</span>;
+            case 'MEDIUM':
+                return <span className={`${base} bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400`}>MEDIUM</span>;
+            default:
+                return <span className={`${base} bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400`}>LOW</span>;
+        }
     };
 
     const formatDate = (dateStr: string) => {
-        return new Date(dateStr).toLocaleString('pl-PL', {
-            day: '2-digit',
-            month: '2-digit',
+        const date = new Date(dateStr);
+        return date.toLocaleString('pl-PL', {
             year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
             hour: '2-digit',
             minute: '2-digit'
         });
     };
 
-    const RiskIcon = ({ level }: { level: 'LOW' | 'MEDIUM' | 'HIGH' }) => {
-        const Icon = RISK_ICONS[level];
-        return <Icon className="w-4 h-4" />;
+    const truncateText = (text: string, maxLength: number = 50) => {
+        if (!text) return '-';
+        return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
     };
 
     return (
-        <div className="p-6 space-y-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
-            {/* Header */}
-            <div className="flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                    <Shield className="w-8 h-8 text-indigo-600" />
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                            AI Audit Log
-                        </h1>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Enterprise security monitoring
-                        </p>
+        <div className="min-h-screen bg-slate-50 dark:bg-navy-900 p-6">
+            <div className="max-w-7xl mx-auto space-y-6">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="p-3 bg-purple-500/10 rounded-xl">
+                            <Shield size={24} className="text-purple-500" />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+                                AI Audit Log
+                            </h1>
+                            <p className="text-slate-500 dark:text-slate-400">
+                                Security monitoring and compliance tracking
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => {
+                                fetchLogs();
+                                fetchStats();
+                            }}
+                            className="p-2 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
+                        >
+                            <RefreshCw size={20} />
+                        </button>
+                        <button
+                            onClick={handleExportCSV}
+                            disabled={exporting}
+                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+                        >
+                            {exporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                            Export CSV
+                        </button>
                     </div>
                 </div>
-                <div className="flex gap-2">
-                    <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => setShowFilters(!showFilters)}
-                    >
-                        <Filter className="w-4 h-4 mr-2" />
-                        Filtry
-                    </Button>
-                    <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={handleExportCSV}
-                        disabled={logs.length === 0}
-                    >
-                        <Download className="w-4 h-4 mr-2" />
-                        Export CSV
-                    </Button>
-                    <Button 
-                        variant="primary" 
-                        size="sm" 
-                        onClick={fetchLogs}
-                    >
-                        <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                        Odśwież
-                    </Button>
-                </div>
-            </div>
 
-            {/* Filters Panel */}
-            {showFilters && (
-                <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Szukaj (User ID)
-                            </label>
+                {/* Stats Cards */}
+                {stats && (
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 p-4">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-blue-500/10 rounded-lg">
+                                    <FileText size={18} className="text-blue-500" />
+                                </div>
+                                <div>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">Total Requests</p>
+                                    <p className="text-xl font-bold text-slate-900 dark:text-white">
+                                        {stats.total_requests?.toLocaleString() || 0}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 p-4">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-red-500/10 rounded-lg">
+                                    <AlertTriangle size={18} className="text-red-500" />
+                                </div>
+                                <div>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">Flagged</p>
+                                    <p className="text-xl font-bold text-red-600 dark:text-red-400">
+                                        {stats.flagged_requests || 0}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 p-4">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-red-500/10 rounded-lg">
+                                    <AlertCircle size={18} className="text-red-500" />
+                                </div>
+                                <div>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">High Risk</p>
+                                    <p className="text-xl font-bold text-slate-900 dark:text-white">
+                                        {stats.high_risk || 0}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 p-4">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-yellow-500/10 rounded-lg">
+                                    <AlertCircle size={18} className="text-yellow-500" />
+                                </div>
+                                <div>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">Medium Risk</p>
+                                    <p className="text-xl font-bold text-slate-900 dark:text-white">
+                                        {stats.medium_risk || 0}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 p-4">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-green-500/10 rounded-lg">
+                                    <CheckCircle size={18} className="text-green-500" />
+                                </div>
+                                <div>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">Low Risk</p>
+                                    <p className="text-xl font-bold text-slate-900 dark:text-white">
+                                        {stats.low_risk || 0}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Filters */}
+                <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 p-4">
+                    <div className="flex items-center gap-4 flex-wrap">
+                        {/* Search */}
+                        <div className="flex-1 min-w-[200px]">
                             <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                                 <input
                                     type="text"
+                                    placeholder="Search logs..."
                                     value={filters.search}
-                                    onChange={(e) => setFilters(f => ({ ...f, search: e.target.value }))}
-                                    placeholder="ID użytkownika..."
-                                    className="w-full pl-10 pr-4 py-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600"
+                                    onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                                    className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white placeholder-slate-400"
                                 />
                             </div>
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Poziom ryzyka
-                            </label>
-                            <select
-                                value={filters.riskLevel}
-                                onChange={(e) => setFilters(f => ({ ...f, riskLevel: e.target.value }))}
-                                className="w-full px-4 py-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600"
-                            >
-                                <option value="">Wszystkie</option>
-                                <option value="LOW">Niski</option>
-                                <option value="MEDIUM">Średni</option>
-                                <option value="HIGH">Wysoki</option>
-                            </select>
-                        </div>
+                        {/* Risk Level Filter */}
+                        <select
+                            value={filters.riskLevel}
+                            onChange={(e) => setFilters({ ...filters, riskLevel: e.target.value as any })}
+                            className="px-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
+                        >
+                            <option value="ALL">All Risk Levels</option>
+                            <option value="HIGH">High Risk</option>
+                            <option value="MEDIUM">Medium Risk</option>
+                            <option value="LOW">Low Risk</option>
+                        </select>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Akcja
-                            </label>
-                            <select
-                                value={filters.action}
-                                onChange={(e) => setFilters(f => ({ ...f, action: e.target.value }))}
-                                className="w-full px-4 py-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600"
-                            >
-                                <option value="">Wszystkie</option>
-                                <option value="ai_request">AI Request</option>
-                                <option value="ai_request_error">AI Error</option>
-                                <option value="tool_use">Tool Use</option>
-                            </select>
-                        </div>
+                        {/* Flagged Only Toggle */}
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={filters.flaggedOnly}
+                                onChange={(e) => setFilters({ ...filters, flaggedOnly: e.target.checked })}
+                                className="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500"
+                            />
+                            <span className="text-sm text-slate-700 dark:text-slate-300">Flagged Only</span>
+                        </label>
 
-                        <div className="flex items-end">
-                            <label className="flex items-center gap-2 cursor-pointer">
+                        {/* Toggle More Filters */}
+                        <button
+                            onClick={() => setShowFilters(!showFilters)}
+                            className="flex items-center gap-2 px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
+                        >
+                            <Filter size={16} />
+                            More Filters
+                        </button>
+
+                        {/* Clear Filters */}
+                        {(filters.search || filters.riskLevel !== 'ALL' || filters.flaggedOnly || filters.startDate || filters.endDate) && (
+                            <button
+                                onClick={() => setFilters(defaultFilters)}
+                                className="flex items-center gap-1 px-3 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors text-sm"
+                            >
+                                <X size={14} />
+                                Clear
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Extended Filters */}
+                    {showFilters && (
+                        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-white/10 grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div>
+                                <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1">Start Date</label>
                                 <input
-                                    type="checkbox"
-                                    checked={filters.flaggedOnly}
-                                    onChange={(e) => setFilters(f => ({ ...f, flaggedOnly: e.target.checked }))}
-                                    className="w-4 h-4 rounded border-gray-300"
+                                    type="date"
+                                    value={filters.startDate}
+                                    onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
+                                    className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
                                 />
-                                <span className="text-sm text-gray-700 dark:text-gray-300">
-                                    Tylko oflagowane
-                                </span>
-                            </label>
+                            </div>
+                            <div>
+                                <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1">End Date</label>
+                                <input
+                                    type="date"
+                                    value={filters.endDate}
+                                    onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
+                                    className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1">User ID</label>
+                                <input
+                                    type="text"
+                                    placeholder="Enter user ID..."
+                                    value={filters.userId}
+                                    onChange={(e) => setFilters({ ...filters, userId: e.target.value })}
+                                    className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1">Action Type</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g., ai_request"
+                                    value={filters.action}
+                                    onChange={(e) => setFilters({ ...filters, action: e.target.value })}
+                                    className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
+                                />
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
-            )}
 
-            {/* Stats Summary */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-500">Wszystkie logi</span>
-                        <Clock className="w-5 h-5 text-gray-400" />
-                    </div>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                        {pagination.total || logs.length}
-                    </p>
-                </div>
-                <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-500">Wysokie ryzyko</span>
-                        <AlertTriangle className="w-5 h-5 text-red-500" />
-                    </div>
-                    <p className="text-2xl font-bold text-red-600 mt-1">
-                        {logs.filter(l => l.risk_level === 'HIGH').length}
-                    </p>
-                </div>
-                <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-500">Oflagowane</span>
-                        <AlertCircle className="w-5 h-5 text-yellow-500" />
-                    </div>
-                    <p className="text-2xl font-bold text-yellow-600 mt-1">
-                        {logs.filter(l => l.flagged).length}
-                    </p>
-                </div>
-                <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-500">Łączny koszt</span>
-                        <DollarSign className="w-5 h-5 text-green-500" />
-                    </div>
-                    <p className="text-2xl font-bold text-green-600 mt-1">
-                        ${logs.reduce((sum, l) => sum + l.cost_usd, 0).toFixed(2)}
-                    </p>
-                </div>
-            </div>
-
-            {/* Error State */}
-            {error && (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700">
-                    {error}
-                </div>
-            )}
-
-            {/* Logs Table */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead className="bg-gray-50 dark:bg-gray-700">
-                            <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Timestamp
-                                </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    User
-                                </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Action
-                                </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Model
-                                </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Tokens
-                                </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Cost
-                                </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Risk
-                                </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Actions
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                            {loading ? (
-                                <tr>
-                                    <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
-                                        <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2" />
-                                        Ładowanie...
-                                    </td>
-                                </tr>
-                            ) : logs.length === 0 ? (
-                                <tr>
-                                    <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
-                                        Brak logów do wyświetlenia
-                                    </td>
-                                </tr>
-                            ) : (
-                                logs.map((log) => (
-                                    <tr 
-                                        key={log.id}
-                                        className={`hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer ${
-                                            log.flagged ? 'bg-red-50 dark:bg-red-900/20' : ''
-                                        }`}
-                                        onClick={() => setSelectedLog(log)}
-                                    >
-                                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                                            {formatDate(log.timestamp)}
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300 font-mono">
-                                            {log.user_id?.substring(0, 8)}...
-                                        </td>
-                                        <td className="px-4 py-3 text-sm">
-                                            <span className="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full text-xs">
-                                                {log.action}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
-                                            {log.model_used || '-'}
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
-                                            {log.tokens_used.toLocaleString()}
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
-                                            ${log.cost_usd.toFixed(4)}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs border ${RISK_COLORS[log.risk_level]}`}>
-                                                <RiskIcon level={log.risk_level} />
-                                                {log.risk_level}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setSelectedLog(log);
-                                                }}
-                                            >
-                                                Szczegóły
-                                            </Button>
-                                        </td>
+                {/* Logs Table */}
+                <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
+                    {loading ? (
+                        <div className="flex items-center justify-center py-20">
+                            <Loader2 size={32} className="animate-spin text-purple-500" />
+                        </div>
+                    ) : error ? (
+                        <div className="flex flex-col items-center justify-center py-20 text-red-500">
+                            <AlertTriangle size={32} className="mb-2" />
+                            <p>{error}</p>
+                            <button 
+                                onClick={fetchLogs}
+                                className="mt-4 px-4 py-2 bg-red-100 dark:bg-red-900/20 text-red-600 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/30 transition-colors"
+                            >
+                                Retry
+                            </button>
+                        </div>
+                    ) : logs.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-20 text-slate-500">
+                            <FileText size={48} className="mb-4 opacity-50" />
+                            <p>No audit logs found</p>
+                            <p className="text-sm">Try adjusting your filters</p>
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-slate-50 dark:bg-navy-900/50">
+                                    <tr>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                                            Timestamp
+                                        </th>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                                            User
+                                        </th>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                                            Action
+                                        </th>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                                            Request Summary
+                                        </th>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                                            Model
+                                        </th>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                                            Tokens
+                                        </th>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                                            Risk
+                                        </th>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                                            Actions
+                                        </th>
                                     </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                                    {logs.map((log) => (
+                                        <tr 
+                                            key={log.id}
+                                            className={`hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${
+                                                log.flagged ? 'bg-red-50/50 dark:bg-red-900/10' : ''
+                                            }`}
+                                        >
+                                            <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                                                <div className="flex items-center gap-2">
+                                                    <Clock size={14} className="text-slate-400" />
+                                                    {formatDate(log.timestamp)}
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3 text-sm text-slate-900 dark:text-white">
+                                                <div className="flex items-center gap-2">
+                                                    <User size={14} className="text-slate-400" />
+                                                    {log.user_email || log.user_id?.slice(0, 8) || '-'}
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3 text-sm">
+                                                <span className="px-2 py-1 bg-slate-100 dark:bg-white/10 rounded text-slate-700 dark:text-slate-300">
+                                                    {log.action}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300 max-w-xs truncate">
+                                                {truncateText(log.request_summary, 60)}
+                                            </td>
+                                            <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                                                {log.model_used || '-'}
+                                            </td>
+                                            <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                                                {log.tokens_used?.toLocaleString() || '-'}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                {getRiskBadge(log.risk_level, log.flagged)}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <button
+                                                    onClick={() => setSelectedLog(log)}
+                                                    className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                                                    title="View Details"
+                                                >
+                                                    <Eye size={16} />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
 
-                {/* Pagination */}
-                <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                    <span className="text-sm text-gray-500">
-                        Pokazuję {pagination.offset + 1} - {Math.min(pagination.offset + pagination.limit, pagination.total || logs.length)} z {pagination.total || logs.length}
-                    </span>
-                    <div className="flex gap-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={pagination.offset === 0}
-                            onClick={() => setPagination(p => ({ ...p, offset: Math.max(0, p.offset - p.limit) }))}
-                        >
-                            Poprzednie
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={pagination.offset + pagination.limit >= (pagination.total || logs.length)}
-                            onClick={() => setPagination(p => ({ ...p, offset: p.offset + p.limit }))}
-                        >
-                            Następne
-                        </Button>
-                    </div>
+                    {/* Pagination */}
+                    {!loading && logs.length > 0 && (
+                        <div className="px-4 py-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                                Page {page} of {totalPages}
+                            </p>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => setPage(Math.max(1, page - 1))}
+                                    disabled={page === 1}
+                                    className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    <ChevronLeft size={20} />
+                                </button>
+                                <button
+                                    onClick={() => setPage(Math.min(totalPages, page + 1))}
+                                    disabled={page === totalPages}
+                                    className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    <ChevronRight size={20} />
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
             {/* Detail Modal */}
             {selectedLog && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                        <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-start">
-                            <div>
-                                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                                    Szczegóły logu
-                                </h2>
-                                <p className="text-sm text-gray-500">
-                                    {formatDate(selectedLog.timestamp)}
-                                </p>
-                            </div>
+                    <div className="bg-white dark:bg-navy-800 rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+                        <div className="px-6 py-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
+                            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                                Audit Log Details
+                            </h3>
                             <button
                                 onClick={() => setSelectedLog(null)}
-                                className="text-gray-400 hover:text-gray-600"
+                                className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
                             >
-                                <X className="w-6 h-6" />
+                                <X size={20} />
                             </button>
                         </div>
-
-                        <div className="p-6 space-y-4">
-                            {selectedLog.flagged && (
-                                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                                    <div className="flex items-center gap-2 text-red-700">
-                                        <AlertTriangle className="w-5 h-5" />
-                                        <span className="font-medium">Oflagowane</span>
-                                    </div>
-                                    <p className="text-sm text-red-600 mt-1">
-                                        {selectedLog.flag_reason || 'Brak powodu'}
-                                    </p>
-                                </div>
-                            )}
-
+                        <div className="p-6 overflow-y-auto max-h-[70vh] space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-xs text-gray-500 uppercase">User ID</label>
-                                    <p className="font-mono text-sm">{selectedLog.user_id}</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">Timestamp</p>
+                                    <p className="text-slate-900 dark:text-white font-medium">
+                                        {formatDate(selectedLog.timestamp)}
+                                    </p>
                                 </div>
                                 <div>
-                                    <label className="text-xs text-gray-500 uppercase">Organization ID</label>
-                                    <p className="font-mono text-sm">{selectedLog.organization_id}</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">Risk Level</p>
+                                    <div className="mt-1">
+                                        {getRiskBadge(selectedLog.risk_level, selectedLog.flagged)}
+                                    </div>
                                 </div>
                                 <div>
-                                    <label className="text-xs text-gray-500 uppercase">Action</label>
-                                    <p className="text-sm">{selectedLog.action}</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">User ID</p>
+                                    <p className="text-slate-900 dark:text-white font-mono text-sm">
+                                        {selectedLog.user_id}
+                                    </p>
                                 </div>
                                 <div>
-                                    <label className="text-xs text-gray-500 uppercase">Resource Type</label>
-                                    <p className="text-sm">{selectedLog.resource_type}</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">Organization ID</p>
+                                    <p className="text-slate-900 dark:text-white font-mono text-sm">
+                                        {selectedLog.organization_id}
+                                    </p>
                                 </div>
                                 <div>
-                                    <label className="text-xs text-gray-500 uppercase">Model</label>
-                                    <p className="text-sm">{selectedLog.model_used || '-'}</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">Action</p>
+                                    <p className="text-slate-900 dark:text-white">{selectedLog.action}</p>
                                 </div>
                                 <div>
-                                    <label className="text-xs text-gray-500 uppercase">Tokens</label>
-                                    <p className="text-sm">{selectedLog.tokens_used.toLocaleString()}</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">Model Used</p>
+                                    <p className="text-slate-900 dark:text-white">{selectedLog.model_used || '-'}</p>
                                 </div>
                                 <div>
-                                    <label className="text-xs text-gray-500 uppercase">Cost</label>
-                                    <p className="text-sm">${selectedLog.cost_usd.toFixed(4)}</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">Tokens Used</p>
+                                    <p className="text-slate-900 dark:text-white">{selectedLog.tokens_used?.toLocaleString() || '-'}</p>
                                 </div>
                                 <div>
-                                    <label className="text-xs text-gray-500 uppercase">Risk Level</label>
-                                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs border ${RISK_COLORS[selectedLog.risk_level]}`}>
-                                        <RiskIcon level={selectedLog.risk_level} />
-                                        {selectedLog.risk_level}
-                                    </span>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">Cost (USD)</p>
+                                    <p className="text-slate-900 dark:text-white">${selectedLog.cost_usd?.toFixed(4) || '0'}</p>
                                 </div>
                             </div>
 
-                            {selectedLog.request_summary && (
-                                <div>
-                                    <label className="text-xs text-gray-500 uppercase">Request Summary</label>
-                                    <p className="text-sm bg-gray-50 dark:bg-gray-700 p-3 rounded-lg mt-1">
-                                        {selectedLog.request_summary}
-                                    </p>
+                            {selectedLog.flagged && selectedLog.flag_reason && (
+                                <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                                    <div className="flex items-center gap-2 text-red-700 dark:text-red-400 font-medium mb-1">
+                                        <AlertTriangle size={16} />
+                                        Flag Reason
+                                    </div>
+                                    <p className="text-red-600 dark:text-red-300">{selectedLog.flag_reason}</p>
                                 </div>
                             )}
 
-                            {selectedLog.response_summary && (
-                                <div>
-                                    <label className="text-xs text-gray-500 uppercase">Response Summary</label>
-                                    <p className="text-sm bg-gray-50 dark:bg-gray-700 p-3 rounded-lg mt-1">
-                                        {selectedLog.response_summary}
-                                    </p>
+                            <div>
+                                <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">Request Summary</p>
+                                <div className="p-3 bg-slate-50 dark:bg-navy-900 rounded-lg text-sm text-slate-700 dark:text-slate-300 font-mono whitespace-pre-wrap break-words">
+                                    {selectedLog.request_summary || '-'}
                                 </div>
-                            )}
+                            </div>
+
+                            <div>
+                                <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">Response Summary</p>
+                                <div className="p-3 bg-slate-50 dark:bg-navy-900 rounded-lg text-sm text-slate-700 dark:text-slate-300 font-mono whitespace-pre-wrap break-words max-h-40 overflow-y-auto">
+                                    {selectedLog.response_summary || '-'}
+                                </div>
+                            </div>
 
                             {selectedLog.ip_address && (
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="text-xs text-gray-500 uppercase">IP Address</label>
-                                        <p className="font-mono text-sm">{selectedLog.ip_address}</p>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400">IP Address</p>
+                                        <p className="text-slate-900 dark:text-white font-mono text-sm">
+                                            {selectedLog.ip_address}
+                                        </p>
                                     </div>
                                     <div>
-                                        <label className="text-xs text-gray-500 uppercase">User Agent</label>
-                                        <p className="text-sm truncate">{selectedLog.user_agent}</p>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400">User Agent</p>
+                                        <p className="text-slate-600 dark:text-slate-400 text-xs truncate">
+                                            {selectedLog.user_agent || '-'}
+                                        </p>
                                     </div>
                                 </div>
                             )}
-                        </div>
-
-                        <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end">
-                            <Button variant="outline" onClick={() => setSelectedLog(null)}>
-                                Zamknij
-                            </Button>
                         </div>
                     </div>
                 </div>
@@ -560,4 +669,3 @@ export function AuditLogViewer() {
 }
 
 export default AuditLogViewer;
-

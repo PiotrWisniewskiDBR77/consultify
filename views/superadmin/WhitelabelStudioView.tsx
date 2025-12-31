@@ -678,12 +678,14 @@ export const WhitelabelStudioView: React.FC = () => {
 
     if (!selectedOrg) {
         return (
-            <div className="space-y-6">
+            <div className="space-y-6 relative">
+                <InfoButton cardId="superadmin-whitelabel" position="top-right" />
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">White-label Studio</h1>
                         <p className="text-slate-500 mt-1">Customize branding for organizations</p>
                     </div>
+                    <InfoButton cardId="superadmin-whitelabel" position="header-inline" size="md" showLabel label="Help" />
                 </div>
 
                 {loading ? (
@@ -765,6 +767,7 @@ export const WhitelabelStudioView: React.FC = () => {
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
+                    <InfoButton cardId="superadmin-whitelabel" position="header-inline" size="md" showLabel label="Help" />
                     <button className="px-4 py-2 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 flex items-center gap-2">
                         <Eye size={16} />
                         Preview

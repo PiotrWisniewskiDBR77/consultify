@@ -624,6 +624,7 @@ export const ComplianceCenterView: React.FC = () => {
                     <p className="text-slate-500 mt-1">Manage regulatory compliance and audits</p>
                 </div>
                 <div className="flex items-center gap-3">
+                    <InfoButton cardId="superadmin-compliance" position="header-inline" size="md" showLabel label="Help" />
                     <select
                         value={selectedOrg}
                         onChange={(e) => setSelectedOrg(e.target.value)}

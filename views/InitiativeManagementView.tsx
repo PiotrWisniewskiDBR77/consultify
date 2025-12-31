@@ -1,6 +1,12 @@
 /**
  * InitiativeManagementView
  * 
+ * @deprecated This view is replaced by PortfolioView (AppView.PORTFOLIO_ROADMAP)
+ * which provides a unified Portfolio & Roadmap experience with List, Kanban, 
+ * Timeline, and Matrix views.
+ * 
+ * Kept for backward compatibility. Routes redirect to PortfolioView.
+ * 
  * Module 2: Initiative Management
  * Shows initiatives in REVIEW and APPROVED status
  * Handles approval workflow and transfer to roadmap

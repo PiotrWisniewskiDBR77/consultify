@@ -20,7 +20,8 @@ import {
     Receipt,
     Lock,
     Upload,
-    Layers
+    Layers,
+    MessageSquareWarning
 } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { Api } from '../services/api';
@@ -42,6 +43,7 @@ export type SuperAdminSection =
     | 'whitelabel'
     | 'compliance'
     | 'invoices'
+    | 'feedback'
     | 'playbooks'
     | 'bulk-operations';
 
@@ -61,6 +63,7 @@ export const sectionToAppView: Record<SuperAdminSection, AppView> = {
     'whitelabel': AppView.SUPERADMIN_WHITELABEL,
     'compliance': AppView.SUPERADMIN_COMPLIANCE,
     'invoices': AppView.SUPERADMIN_INVOICES,
+    'feedback': AppView.SUPERADMIN_FEEDBACK,
     'playbooks': AppView.SUPERADMIN_PLAYBOOK_TEMPLATES,
     'bulk-operations': AppView.SUPERADMIN_BULK_OPERATIONS,
 };
@@ -80,6 +83,7 @@ export const appViewToSection: Record<string, SuperAdminSection> = {
     [AppView.SUPERADMIN_WHITELABEL]: 'whitelabel',
     [AppView.SUPERADMIN_COMPLIANCE]: 'compliance',
     [AppView.SUPERADMIN_INVOICES]: 'invoices',
+    [AppView.SUPERADMIN_FEEDBACK]: 'feedback',
     [AppView.SUPERADMIN_PLAYBOOK_TEMPLATES]: 'playbooks',
     [AppView.SUPERADMIN_BULK_OPERATIONS]: 'bulk-operations',
 };
@@ -161,6 +165,7 @@ const menuItems: MenuItem[] = [
     { id: 'invoices', viewId: AppView.SUPERADMIN_INVOICES, label: 'Invoices', icon: <Receipt size={20} />, category: 'enterprise' },
     { id: 'whitelabel', viewId: AppView.SUPERADMIN_WHITELABEL, label: 'White-label Studio', icon: <Palette size={20} />, category: 'enterprise' },
     { id: 'compliance', viewId: AppView.SUPERADMIN_COMPLIANCE, label: 'Compliance Center', icon: <FileCheck size={20} />, category: 'enterprise' },
+    { id: 'feedback', viewId: AppView.SUPERADMIN_FEEDBACK, label: 'User Feedback', icon: <MessageSquareWarning size={20} />, category: 'core' },
     { id: 'bulk-operations', viewId: AppView.SUPERADMIN_BULK_OPERATIONS, label: 'Bulk Operations', icon: <Upload size={20} />, category: 'enterprise' },
 
     // System

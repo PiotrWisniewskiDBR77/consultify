@@ -56,29 +56,33 @@ export const TrialProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (!storedToken) return;
 
         try {
-            // Fetch policy snapshot
-            const response = await fetch('/api/access-control/policy', {
-                headers: { Authorization: `Bearer ${token}` }
+            // Fetch policy snapshot - correct endpoint
+            const response = await fetch('/api/organization/policy-snapshot', {
+                headers: { Authorization: `Bearer ${storedToken}` }
             });
 
             if (response.ok) {
                 const policy = await response.json();
                 setState({
-                    isTrial: policy.isTrial,
-                    isExpired: policy.isTrialExpired,
-                    daysRemaining: policy.trialDaysLeft,
-                    trialExpiresAt: policy.trialExpiresAt,
-                    limits: policy.limits,
+                    isTrial: policy.isTrial ?? false,
+                    isExpired: policy.isTrialExpired ?? false,
+                    daysRemaining: policy.trialDaysLeft ?? 0,
+                    trialExpiresAt: policy.trialExpiresAt ?? null,
+                    limits: policy.limits ?? null,
                     usage: {
-                        aiCalls: policy.usageToday.aiCalls,
-                        projects: policy.usageToday.projects,
-                        users: policy.usageToday.users,
-                        trialTokensUsed: policy.trialTokenUsage?.tokensUsed || 0 // Assuming backend returns this
+                        aiCalls: policy.usageToday?.aiCalls ?? 0,
+                        projects: policy.usageToday?.projects ?? 0,
+                        users: policy.usageToday?.users ?? 0,
+                        trialTokensUsed: policy.trialTokenUsage?.tokensUsed ?? 0
                     },
-                    blockedActions: policy.blockedActions,
+                    blockedActions: Array.isArray(policy.blockedActions) ? policy.blockedActions : [],
                     loading: false,
                     refreshTrialStatus
                 });
+            } else {
+                // API returned non-200 - set safe defaults
+                console.warn('[TrialContext] Policy snapshot returned:', response.status);
+                setState(prev => ({ ...prev, loading: false }));
             }
         } catch (err) {
             console.error("Failed to fetch trial status", err);

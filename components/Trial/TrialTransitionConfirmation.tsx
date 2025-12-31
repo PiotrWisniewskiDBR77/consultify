@@ -82,7 +82,7 @@ export const TrialTransitionConfirmation: React.FC<TrialTransitionConfirmationPr
         if (onCancel) {
             onCancel();
         } else {
-            setCurrentView(AppView.USER_DASHBOARD);
+            setCurrentView(AppView.AI_CHAT);
         }
     };
 
