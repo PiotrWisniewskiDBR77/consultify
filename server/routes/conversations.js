@@ -503,4 +503,107 @@ router.post('/migrate', verifyToken, async (req, res) => {
     }
 });
 
+// ==================== EXPORT CONVERSATION ====================
+/**
+ * GET /api/conversations/:id/export/:format
+ * Export conversation to specified format (markdown, txt, json)
+ */
+router.get('/:id/export/:format', verifyToken, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { id, format } = req.params;
+
+        // Validate format
+        const validFormats = ['markdown', 'md', 'txt', 'json'];
+        if (!validFormats.includes(format.toLowerCase())) {
+            return res.status(400).json({ 
+                error: 'Invalid format',
+                validFormats 
+            });
+        }
+
+        // Fetch conversation with messages
+        const conversation = await dbGet(`
+            SELECT * FROM conversations
+            WHERE id = ? AND user_id = ?
+        `, [id, userId]);
+
+        if (!conversation) {
+            return res.status(404).json({ error: 'Conversation not found' });
+        }
+
+        const messages = await dbAll(`
+            SELECT role, content, created_at
+            FROM conversation_messages
+            WHERE conversation_id = ?
+            ORDER BY created_at ASC
+        `, [id]);
+
+        const exportFormat = format.toLowerCase();
+        let content = '';
+        let contentType = 'text/plain';
+        let filename = `conversation-${id}`;
+
+        const formatDate = (dateStr) => {
+            const date = new Date(dateStr);
+            return date.toLocaleString('pl-PL', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        };
+
+        if (exportFormat === 'json') {
+            content = JSON.stringify({
+                id: conversation.id,
+                title: conversation.title,
+                exportedAt: new Date().toISOString(),
+                messageCount: messages.length,
+                messages: messages.map(m => ({
+                    role: m.role,
+                    content: m.content,
+                    timestamp: m.created_at
+                }))
+            }, null, 2);
+            contentType = 'application/json';
+            filename += '.json';
+        } else if (exportFormat === 'markdown' || exportFormat === 'md') {
+            content = `# ${conversation.title || 'Rozmowa AI'}\n\n`;
+            content += `*Eksport: ${formatDate(new Date().toISOString())}*\n\n`;
+            content += `---\n\n`;
+
+            messages.forEach(msg => {
+                const roleLabel = msg.role === 'user' ? '**Ty:**' : '**AI:**';
+                content += `${roleLabel}\n\n${msg.content}\n\n---\n\n`;
+            });
+
+            contentType = 'text/markdown';
+            filename += '.md';
+        } else {
+            // Plain text
+            content = `${conversation.title || 'Rozmowa AI'}\n`;
+            content += `Eksport: ${formatDate(new Date().toISOString())}\n`;
+            content += `${'='.repeat(50)}\n\n`;
+
+            messages.forEach(msg => {
+                const roleLabel = msg.role === 'user' ? 'Ty:' : 'AI:';
+                content += `${roleLabel}\n${msg.content}\n\n${'─'.repeat(30)}\n\n`;
+            });
+
+            contentType = 'text/plain';
+            filename += '.txt';
+        }
+
+        res.setHeader('Content-Type', `${contentType}; charset=utf-8`);
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.send(content);
+
+    } catch (err) {
+        console.error('[Conversations] Export error:', err);
+        res.status(500).json({ error: 'Failed to export conversation' });
+    }
+});
+
 module.exports = router;

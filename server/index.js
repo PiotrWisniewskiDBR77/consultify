@@ -268,6 +268,12 @@ app.use('/api/sessions', sessionRoutes);
 app.use('/api/ai', aiRoutes);
 const conversationsRoutes = require('./routes/conversations');
 app.use('/api/conversations', conversationsRoutes);
+const dailyBriefRoutes = require('./routes/daily-brief');
+app.use('/api/daily-brief', dailyBriefRoutes);
+const pinnedPromptsRoutes = require('./routes/pinned-prompts');
+app.use('/api/pinned-prompts', pinnedPromptsRoutes);
+const aiMemoryRoutes = require('./routes/ai-memory');
+app.use('/api/ai-memory', aiMemoryRoutes);
 const aiDraftsRoutes = require('./routes/ai-drafts');
 app.use('/api/ai-drafts', aiDraftsRoutes);
 const taskAdvisorRoutes = require('./routes/task-advisor');
@@ -284,6 +290,9 @@ const aiSecurityRoutes = require('./routes/ai-security');
 app.use('/api/ai-security', aiSecurityRoutes);
 const aiNudgesRoutes = require('./routes/ai-nudges');
 app.use('/api/ai/nudges', aiNudgesRoutes);
+// AI Actions (Co-Thinker Action Executor)
+const aiActionsRoutes = require('./routes/aiActions');
+app.use('/api/ai/actions', aiActionsRoutes);
 app.use('/api/documents', documentRoutes); // New Document Route
 app.use('/api/settings', settingsRoutes);
 app.use('/api/superadmin', superAdminRoutes);
@@ -310,6 +319,10 @@ const pricingRoutes = require('./routes/pricing');
 app.use('/api/pricing', pricingRoutes);
 app.use('/api/megatrends', megatrendRoutes);
 app.use('/api/organizations', organizationRoutes);
+
+// Enterprise AI Consulting - Organization Profiles
+const organizationProfilesRoutes = require('./routes/organization-profiles');
+app.use('/api/organization-profiles', organizationProfilesRoutes);
 
 const onboardingRoutes = require('./routes/onboarding');
 app.use('/api/onboarding', onboardingRoutes);
@@ -392,6 +405,14 @@ app.use('/api/assessment-workflow', assessmentWorkflowRoutes);
 // Assessment Hub Routes (for 4-tab UI)
 app.use('/api/assessments', assessmentHubRoutes);
 app.use('/api/assessment-reports', assessmentReportsRoutes);
+
+// Assessment Level Attachments (evidence files for maturity levels)
+const assessmentLevelAttachmentsRoutes = require('./routes/assessment-level-attachments');
+app.use('/api/assessment-level-attachments', assessmentLevelAttachmentsRoutes);
+
+// Report Comments (collaborative feedback on report sections)
+const reportCommentsRoutes = require('./routes/report-comments');
+app.use('/api/report-comments', reportCommentsRoutes);
 
 // Multi-Framework Assessment Routes (SIRI, ADMA, CMMI, LEAN)
 const multiFrameworkAssessmentRoutes = require('./routes/multi-framework-assessment');

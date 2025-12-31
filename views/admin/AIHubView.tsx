@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { 
-    Brain, 
-    Settings, 
-    MessageSquare, 
-    Wand2, 
-    FileText, 
+import {
+    Brain,
+    Settings,
+    MessageSquare,
+    Wand2,
+    FileText,
     Target,
     BarChart3,
     Shield,
@@ -29,50 +29,50 @@ import { toast } from 'react-hot-toast';
 
 // AI Capability definitions with their prompt keys
 const AI_CAPABILITIES = [
-    { 
-        id: 'chat', 
-        name: 'AI Chat', 
-        icon: MessageSquare, 
+    {
+        id: 'chat',
+        name: 'AI Chat',
+        icon: MessageSquare,
         description: 'Główny asystent AI w rozmowach',
         promptKey: 'system_chat',
         color: 'from-blue-500 to-blue-600'
     },
-    { 
-        id: 'magic_wand', 
-        name: 'Magic Wand', 
-        icon: Wand2, 
+    {
+        id: 'magic_wand',
+        name: 'Magic Wand',
+        icon: Wand2,
         description: 'Sugestie dla pól formularzy',
         promptKey: 'system_magic_wand',
         color: 'from-purple-500 to-purple-600'
     },
-    { 
-        id: 'reports', 
-        name: 'Report Generator', 
-        icon: FileText, 
+    {
+        id: 'reports',
+        name: 'Report Generator',
+        icon: FileText,
         description: 'Generowanie raportów i analiz',
         promptKey: 'system_reports',
         color: 'from-emerald-500 to-emerald-600'
     },
-    { 
-        id: 'initiative_analysis', 
-        name: 'Initiative Analysis', 
-        icon: Target, 
+    {
+        id: 'initiative_analysis',
+        name: 'Initiative Analysis',
+        icon: Target,
         description: 'Analiza i scoring inicjatyw',
         promptKey: 'system_initiative',
         color: 'from-amber-500 to-amber-600'
     },
-    { 
-        id: 'max_mode', 
-        name: 'MAX Mode (Deep Reasoning)', 
-        icon: Sparkles, 
+    {
+        id: 'max_mode',
+        name: 'MAX Mode (Deep Reasoning)',
+        icon: Sparkles,
         description: 'Głęboka analiza z chain-of-thought',
         promptKey: 'system_max_reasoner',
         color: 'from-rose-500 to-rose-600'
     },
-    { 
-        id: 'coach', 
-        name: 'AI Coach', 
-        icon: Brain, 
+    {
+        id: 'coach',
+        name: 'AI Coach',
+        icon: Brain,
         description: 'Coaching i mentoring PMO',
         promptKey: 'system_coach',
         color: 'from-cyan-500 to-cyan-600'
@@ -89,14 +89,14 @@ export const AIHubView: React.FC = () => {
     const [editingPrompt, setEditingPrompt] = useState<string>('');
     const [saving, setSaving] = useState(false);
     const [loading, setLoading] = useState(true);
-    
+
     // Usage stats
     const [usageStats, setUsageStats] = useState<any>(null);
     const [costStats, setCostStats] = useState<any>(null);
-    
+
     // Health status
     const [healthStatus, setHealthStatus] = useState<any>(null);
-    
+
     // Providers
     const [providers, setProviders] = useState<any[]>([]);
 
@@ -158,7 +158,7 @@ export const AIHubView: React.FC = () => {
 
     const getDefaultPrompt = (capabilityId: string): string => {
         const defaults: Record<string, string> = {
-            chat: `Jesteś profesjonalnym konsultantem AI dla platformy Consultify.
+            chat: `Jesteś profesjonalnym konsultantem AI dla platformy TechnoLex.
 Twoja rola: Pomagać użytkownikom w zarządzaniu projektami transformacji cyfrowej.
 
 ZASADY:
@@ -227,7 +227,7 @@ PODEJŚCIE:
 
     const savePrompt = async () => {
         if (!selectedCapability) return;
-        
+
         const cap = AI_CAPABILITIES.find(c => c.id === selectedCapability);
         if (!cap) return;
 
@@ -274,11 +274,10 @@ PODEJŚCIE:
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                            activeTab === tab.id
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === tab.id
                                 ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
                                 : 'text-slate-400 hover:text-white hover:bg-white/5'
-                        }`}
+                            }`}
                     >
                         <tab.icon size={16} />
                         {tab.label}
@@ -303,11 +302,10 @@ PODEJŚCIE:
                                         <button
                                             key={cap.id}
                                             onClick={() => selectCapability(cap.id)}
-                                            className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left ${
-                                                selectedCapability === cap.id
+                                            className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left ${selectedCapability === cap.id
                                                     ? 'bg-white/10 border border-purple-500/50'
                                                     : 'hover:bg-white/5 border border-transparent'
-                                            }`}
+                                                }`}
                                         >
                                             <div className={`p-2 rounded-lg bg-gradient-to-br ${cap.color}`}>
                                                 <Icon size={18} className="text-white" />
@@ -394,9 +392,8 @@ PODEJŚCIE:
                                                 <div className="text-xs text-slate-500">{provider.provider}</div>
                                             </div>
                                         </div>
-                                        <span className={`px-2 py-1 rounded text-xs ${
-                                            provider.is_active ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700 text-slate-400'
-                                        }`}>
+                                        <span className={`px-2 py-1 rounded text-xs ${provider.is_active ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700 text-slate-400'
+                                            }`}>
                                             {provider.is_active ? 'Aktywny' : 'Nieaktywny'}
                                         </span>
                                     </div>
@@ -421,7 +418,7 @@ PODEJŚCIE:
                                 <p className="text-sm text-slate-400 mb-6">
                                     Określ, który model LLM ma być używany dla różnych poziomów złożoności zadań.
                                 </p>
-                                
+
                                 <div className="space-y-4">
                                     {[
                                         { tier: 'BUDGET', label: 'Budget Tier', desc: 'Proste pytania, szybkie odpowiedzi', default: 'deepseek-chat' },
@@ -451,27 +448,27 @@ PODEJŚCIE:
                 {activeTab === 'usage' && (
                     <div className="p-6 overflow-y-auto h-full">
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                            <StatCard 
-                                icon={Zap} 
-                                label="Tokeny dzisiaj" 
+                            <StatCard
+                                icon={Zap}
+                                label="Tokeny dzisiaj"
                                 value={usageStats?.user?.tokens_used_today?.toLocaleString() || '0'}
                                 color="text-yellow-400"
                             />
-                            <StatCard 
-                                icon={DollarSign} 
-                                label="Koszt (30 dni)" 
+                            <StatCard
+                                icon={DollarSign}
+                                label="Koszt (30 dni)"
                                 value={`$${(costStats?.totals?.costUsd || 0).toFixed(4)}`}
                                 color="text-emerald-400"
                             />
-                            <StatCard 
-                                icon={Activity} 
-                                label="Requesty (30 dni)" 
+                            <StatCard
+                                icon={Activity}
+                                label="Requesty (30 dni)"
                                 value={costStats?.totals?.requests?.toLocaleString() || '0'}
                                 color="text-blue-400"
                             />
-                            <StatCard 
-                                icon={TrendingUp} 
-                                label="Cache Hit Rate" 
+                            <StatCard
+                                icon={TrendingUp}
+                                label="Cache Hit Rate"
                                 value={`${usageStats?.cache?.hitRate || 0}%`}
                                 color="text-purple-400"
                             />
@@ -506,23 +503,21 @@ PODEJŚCIE:
                             <div className="bg-slate-900 border border-white/10 rounded-xl p-6 mb-6">
                                 <div className="flex items-center justify-between mb-4">
                                     <h3 className="text-lg font-semibold text-white">Status Systemu AI</h3>
-                                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                        healthStatus?.status === 'OK' 
-                                            ? 'bg-emerald-500/20 text-emerald-400' 
+                                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${healthStatus?.status === 'OK'
+                                            ? 'bg-emerald-500/20 text-emerald-400'
                                             : 'bg-amber-500/20 text-amber-400'
-                                    }`}>
+                                        }`}>
                                         {healthStatus?.status || 'Unknown'}
                                     </span>
                                 </div>
-                                
+
                                 <div className="space-y-3">
                                     {healthStatus?.checks?.map((check: any, idx: number) => (
                                         <div key={idx} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
                                             <span className="text-sm text-slate-300">{check.name}</span>
-                                            <span className={`text-sm ${
-                                                check.status === 'OK' ? 'text-emerald-400' : 
-                                                check.status === 'MISSING' ? 'text-amber-400' : 'text-slate-400'
-                                            }`}>
+                                            <span className={`text-sm ${check.status === 'OK' ? 'text-emerald-400' :
+                                                    check.status === 'MISSING' ? 'text-amber-400' : 'text-slate-400'
+                                                }`}>
                                                 {check.status || check.value}
                                             </span>
                                         </div>

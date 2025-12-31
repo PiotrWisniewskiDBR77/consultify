@@ -14,19 +14,21 @@ import { Api } from '../services/api';
 interface ProductEntryPageProps {
     onStartSession: (mode: SessionMode) => void;
     onLoginClick: () => void;
+    onRegisterClick: () => void;
 }
 
 export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
     onStartSession,
-    onLoginClick
+    onLoginClick,
+    onRegisterClick
 }) => {
     const { i18n } = useTranslation();
     const { currentUser, setAuthInitialStep, setCurrentView, setSessionMode, setCurrentUser } = useAppStore();
-    
+
     // Demo Modal State (only for Trial now)
     const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
     const [demoModalMode, setDemoModalMode] = useState<'demo' | 'trial'>('trial');
-    
+
     // Instant Demo Loading State
     const [isLoadingDemo, setIsLoadingDemo] = useState(false);
     const [demoReady, setDemoReady] = useState(false);
@@ -39,20 +41,20 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
     // Handle instant demo start (no modal)
     const startInstantDemo = useCallback(async () => {
         if (isLoadingDemo) return;
-        
+
         setIsLoadingDemo(true);
-        
+
         try {
             console.log('[ProductEntryPage] Starting instant demo...');
             const demoUser = await Api.demoLogin();
             console.log('[ProductEntryPage] Demo login successful:', demoUser);
-            
+
             // Set user in store with demo flag
             setCurrentUser({
                 ...demoUser,
                 hasWorkspace: true
             } as any);
-            
+
             // Mark demo as ready - loading overlay will transition
             setDemoReady(true);
         } catch (error) {
@@ -79,13 +81,13 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
             console.log('[ProductEntryPage] Starting demo from modal...');
             const demoUser = await Api.demoLogin();
             console.log('[ProductEntryPage] Demo login successful:', demoUser);
-            
+
             // Set user in store with demo flag
             setCurrentUser({
                 ...demoUser,
                 hasWorkspace: true
             } as any);
-            
+
             // Close modal and navigate to dashboard
             setIsDemoModalOpen(false);
             setSessionMode(SessionMode.DEMO);
@@ -139,7 +141,7 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
                 <HeroSection
                     onDemoClick={handleDemoRedirect}
                     onTrialClick={handleTrialRedirect}
-                    onLoginClick={onLoginClick}
+                    onLoginClick={onRegisterClick}
                     onExpertClick={handleExpertRedirect}
                 />
 

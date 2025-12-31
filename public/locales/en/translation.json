@@ -854,6 +854,283 @@
             "Engage change champions early",
             "Document everything for future reference"
           ]
+        },
+        "reports": {
+          "name": "Reports",
+          "description": "Generate comprehensive reports and analytics from your assessments and initiatives. Export data for stakeholders and track progress over time.",
+          "purpose": "Document and communicate transformation progress through professional reports and data-driven insights.",
+          "keyFeatures": [
+            "Assessment report generation",
+            "Executive summary reports",
+            "Progress tracking dashboards",
+            "Export to PDF, Excel, and PowerPoint",
+            "Custom report builder",
+            "Scheduled report delivery"
+          ],
+          "workflow": [
+            "Select report type and scope",
+            "Choose data sources and time range",
+            "Customize report sections",
+            "Generate and review report",
+            "Export or share with stakeholders"
+          ],
+          "tips": [
+            "Schedule regular reports for stakeholders",
+            "Use executive summaries for leadership",
+            "Include visual charts for impact"
+          ]
+        },
+        "mywork": {
+          "name": "My Work",
+          "description": "Personal workspace for managing your tasks, assignments, and daily activities. Stay organized and track your individual contributions to transformation initiatives.",
+          "purpose": "Centralize your personal tasks and responsibilities for efficient daily work management.",
+          "keyFeatures": [
+            "Task inbox and notifications",
+            "Personal task list",
+            "Calendar integration",
+            "Focus mode for deep work",
+            "Activity timeline"
+          ],
+          "workflow": [
+            "Check your inbox for new assignments",
+            "Review and prioritize tasks",
+            "Update task status as you work",
+            "Log activities and time spent"
+          ],
+          "tips": [
+            "Start each day by reviewing your inbox",
+            "Use focus mode to minimize distractions",
+            "Keep task statuses updated for team visibility"
+          ]
+        },
+        "organization": {
+          "name": "Organization",
+          "description": "Manage your organization's profile, structure, and settings. Configure teams, departments, and organizational hierarchy for accurate assessments.",
+          "purpose": "Establish organizational context that enables accurate assessments and relevant recommendations.",
+          "keyFeatures": [
+            "Organization profile management",
+            "Team and department structure",
+            "Industry and market context",
+            "Strategic priorities configuration",
+            "Technology stack documentation"
+          ],
+          "workflow": [
+            "Complete organization profile",
+            "Define organizational structure",
+            "Set strategic priorities",
+            "Configure industry benchmarks"
+          ],
+          "tips": [
+            "Keep organization profile updated",
+            "Define clear team boundaries",
+            "Link strategic priorities to assessments"
+          ]
+        },
+        "settings": {
+          "name": "Settings",
+          "description": "Configure your personal preferences, notifications, and account settings. Customize the application to match your workflow.",
+          "purpose": "Personalize your experience and manage account security.",
+          "keyFeatures": [
+            "Profile management",
+            "Notification preferences",
+            "Language and regional settings",
+            "Security settings",
+            "Integration configuration"
+          ],
+          "workflow": [
+            "Update profile information",
+            "Configure notification preferences",
+            "Set language and timezone",
+            "Review security settings"
+          ],
+          "tips": [
+            "Enable relevant notifications only",
+            "Set up two-factor authentication",
+            "Review settings periodically"
+          ]
+        },
+        "admin": {
+          "name": "Admin Panel",
+          "description": "Administrative dashboard for managing users, projects, and organization-wide settings. Monitor system health and configure platform features.",
+          "purpose": "Administer and oversee your organization's use of the platform with full control over users and settings.",
+          "keyFeatures": [
+            "User management",
+            "Project oversight",
+            "Usage analytics",
+            "System configuration",
+            "Audit logs",
+            "LLM model management"
+          ],
+          "workflow": [
+            "Review system dashboard",
+            "Manage user accounts and permissions",
+            "Monitor project activity",
+            "Configure organization settings",
+            "Review audit logs"
+          ],
+          "tips": [
+            "Regularly review user permissions",
+            "Monitor usage analytics for optimization",
+            "Keep audit logs for compliance"
+          ]
+        },
+        "superadmin": {
+          "name": "Super Admin",
+          "description": "Platform-wide administration for managing multiple organizations, system health, and global configurations. Reserved for platform administrators.",
+          "purpose": "Manage the entire platform infrastructure and support multiple tenant organizations.",
+          "keyFeatures": [
+            "Multi-tenant management",
+            "System health monitoring",
+            "Global configurations",
+            "Feature flags",
+            "Support tools"
+          ],
+          "workflow": [
+            "Monitor system health",
+            "Manage organizations",
+            "Configure global settings",
+            "Handle support escalations"
+          ],
+          "tips": [
+            "Monitor system metrics regularly",
+            "Document configuration changes",
+            "Test features before enabling globally"
+          ]
+        },
+        "playbookTemplates": {
+          "name": "Playbook Templates",
+          "description": "Create and manage AI Playbook Templates that define standard automation workflows. These templates are distributed to tenant organizations for local execution.",
+          "purpose": "Standardize AI automation logic across the platform, allowing specific triggers (Data Changes, Time, Events) to launch deterministic agent workflows.",
+          "keyFeatures": [
+            "Visual Playbook Builder",
+            "Versioning & Lifecycle Management",
+            "Trigger Configuration",
+            "Validation Engine",
+            "One-click Publishing"
+          ],
+          "workflow": [
+            "Create a new template draft",
+            "Define triggers and agent logic",
+            "Validate the template structure",
+            "Publish to make available for all organizations"
+          ],
+          "tips": [
+            "Always validate templates before publishing",
+            "Use descriptive keys for easier programmatic access",
+            "Deprecate old versions instead of deleting them to preserve history"
+          ]
+        },
+        "ai-tools": {
+          "name": "AI Tools",
+          "description": "AI-powered assistants for analysis, recommendations, and content generation. Leverage artificial intelligence to accelerate transformation work.",
+          "purpose": "Augment your capabilities with AI that understands transformation contexts and provides actionable insights.",
+          "keyFeatures": [
+            "AI Chat assistant",
+            "Assessment analysis",
+            "Initiative recommendations",
+            "Content generation",
+            "Gap analysis"
+          ],
+          "workflow": [
+            "Describe your question or need",
+            "Review AI suggestions",
+            "Refine and apply recommendations",
+            "Provide feedback to improve"
+          ],
+          "tips": [
+            "Be specific in your questions",
+            "Provide context for better results",
+            "Use AI suggestions as starting points"
+          ]
+        },
+        "knowledge": {
+          "name": "Knowledge Base",
+          "description": "Access transformation knowledge, best practices, and reference materials. Learn from industry expertise and organizational documentation.",
+          "purpose": "Provide a centralized repository of transformation knowledge and learning resources.",
+          "keyFeatures": [
+            "Best practices library",
+            "Industry frameworks",
+            "Case studies",
+            "Document repository",
+            "Search and discovery"
+          ],
+          "workflow": [
+            "Search for relevant topics",
+            "Browse categories",
+            "Read and apply knowledge",
+            "Contribute documentation"
+          ],
+          "tips": [
+            "Bookmark frequently used resources",
+            "Share relevant content with team",
+            "Contribute learnings back"
+          ]
+        },
+        "onboarding": {
+          "name": "Onboarding",
+          "description": "Guided introduction to the platform for new users. Step-by-step tutorials and setup assistance.",
+          "purpose": "Help new users get started quickly and understand platform capabilities.",
+          "keyFeatures": [
+            "Interactive tutorials",
+            "Setup wizard",
+            "Feature tours",
+            "Progress tracking"
+          ],
+          "workflow": [
+            "Complete account setup",
+            "Follow guided tutorials",
+            "Configure initial settings",
+            "Start first assessment"
+          ],
+          "tips": [
+            "Complete all onboarding steps",
+            "Ask questions via help center",
+            "Revisit tutorials as needed"
+          ]
+        },
+        "consultant": {
+          "name": "Consultant Portal",
+          "description": "Tools for consultants managing multiple client organizations. Access client portfolios and deliver transformation services.",
+          "purpose": "Enable consultants to efficiently manage and support multiple client transformations.",
+          "keyFeatures": [
+            "Client portfolio view",
+            "Cross-client analytics",
+            "Service delivery tracking",
+            "Resource management"
+          ],
+          "workflow": [
+            "Review client portfolio",
+            "Monitor engagement health",
+            "Plan service delivery",
+            "Report to stakeholders"
+          ],
+          "tips": [
+            "Use templates for consistency",
+            "Benchmark across clients",
+            "Document best practices"
+          ]
+        },
+        "ecosystem": {
+          "name": "Ecosystem",
+          "description": "Connect with partners, vendors, and the broader transformation community. Discover solutions and collaborate externally.",
+          "purpose": "Extend transformation capabilities through ecosystem partnerships and integrations.",
+          "keyFeatures": [
+            "Partner directory",
+            "Solution marketplace",
+            "Community forums",
+            "Integration catalog"
+          ],
+          "workflow": [
+            "Explore available partners",
+            "Evaluate solutions",
+            "Initiate partnerships",
+            "Configure integrations"
+          ],
+          "tips": [
+            "Verify partner credentials",
+            "Start with proven integrations",
+            "Engage with community"
+          ]
         }
       },
       "tabs": {
@@ -3478,6 +3755,26 @@
       "accuracyHint": "Accurate notes help generate better recommendations.",
       "save": "Save",
       "ai": "AI"
+    },
+    "attachments": {
+      "title": "Attachments",
+      "add": "Add",
+      "noAttachments": "No attachments for this level",
+      "addAttachment": "Add attachment",
+      "type": "Attachment type",
+      "description": "Description (optional)",
+      "descriptionPlaceholder": "Brief description of the attachment...",
+      "selectFile": "Select file",
+      "uploading": "Uploading...",
+      "allowedTypes": "Allowed: PDF, Word, Excel, PowerPoint, images, CSV, TXT, JSON (max 25MB)",
+      "deleteConfirm": "Are you sure you want to delete this attachment?",
+      "types": {
+        "EVIDENCE": "Evidence",
+        "SCREENSHOT": "Screenshot",
+        "DOCUMENT": "Document",
+        "REPORT": "Report",
+        "OTHER": "Other"
+      }
     }
   },
   "landing": {

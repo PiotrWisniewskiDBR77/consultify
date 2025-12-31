@@ -30,7 +30,12 @@ const MODEL_COSTS = {
     // Budget tier (chat)
     'gpt-4o-mini': { input: 0.00015, output: 0.0006 },
     'claude-3-haiku': { input: 0.00025, output: 0.00125 },
-    'glm-4': { input: 0.001, output: 0.001 }
+    'glm-4': { input: 0.001, output: 0.001 },
+    'glm-4-plus': { input: 0.01, output: 0.01 },         // Estimated Z.AI Plus
+    'qwen-turbo': { input: 0.002, output: 0.006 },       // Alibaba
+    'command-r-plus': { input: 0.003, output: 0.015 },   // Cohere
+    'deepseek-chat': { input: 0.001, output: 0.002 },    // DeepSeek
+    'meta/llama-3.1-405b-instruct': { input: 0.003, output: 0.005 } // Nvidia Llama 3.1
 };
 
 // Model categories and their tier mapping

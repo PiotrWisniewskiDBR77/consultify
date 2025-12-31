@@ -295,18 +295,28 @@ const AppContent: React.FC = () => {
         }
     }, [currentUser, currentView, setCurrentView]);
 
+    // AI Chat is the primary entry point for authenticated users
+    // Redirect from old USER_DASHBOARD to AI Chat on initial load
+    // Note: ADMIN_DASHBOARD is intentionally NOT redirected - it's used by Admin menu
+    useEffect(() => {
+        const oldDashboardViews = [AppView.USER_DASHBOARD];
+        if (currentUser?.isAuthenticated && oldDashboardViews.includes(currentView)) {
+            setCurrentView(AppView.AI_CHAT);
+            window.history.pushState({}, '', '/chat');
+        }
+    }, [currentUser, currentView, setCurrentView]);
+
     const handleStartSession = (mode: SessionMode) => {
         setSessionMode(mode);
 
         if (currentUser?.isAuthenticated) {
-            // If user is already logged in, go to AI Chat (or admin dashboard)
-            if (currentUser.role === 'SUPERADMIN') setCurrentView(AppView.ADMIN_DASHBOARD);
-            else if (currentUser.role === UserRole.ADMIN) setCurrentView(AppView.ADMIN_DASHBOARD);
-            else setCurrentView(AppView.AI_CHAT);
+            // All users start with AI Chat - the new primary entry point
+            setCurrentView(AppView.AI_CHAT);
+            window.history.pushState({}, '', '/chat');
             return;
         }
 
-        if (mode === SessionMode.FREE) {
+        if (mode === SessionMode.FREE || mode === SessionMode.DEMO) {
             window.history.pushState({}, '', '/demo');
             setAuthInitialStep(AuthStep.REGISTER);
             setCurrentView(AppView.AUTH);
@@ -323,6 +333,13 @@ const AppContent: React.FC = () => {
         setCurrentView(AppView.AUTH);
         // Update URL to /login so RouterSync doesn't override it back to WELCOME
         window.history.pushState({}, '', '/login');
+    };
+
+    const handleRegisterRequest = () => {
+        setSessionMode(SessionMode.FREE);
+        setAuthInitialStep(AuthStep.REGISTER);
+        setCurrentView(AppView.AUTH);
+        window.history.pushState({}, '', '/register');
     };
 
     const handleAuthSuccess = (user: User | { status?: string; message?: string }) => {
@@ -359,18 +376,10 @@ const AppContent: React.FC = () => {
         };
         setCurrentUser(authenticatedUser);
 
-        // Redirect logic - change URL to clear /login path
-        if (validUser.role === 'SUPERADMIN') {
-            setCurrentView(AppView.ADMIN_DASHBOARD);
-            window.history.pushState({}, '', '/admin');
-        } else if (validUser.role === UserRole.ADMIN) {
-            setCurrentView(AppView.ADMIN_DASHBOARD);
-            window.history.pushState({}, '', '/dashboard');
-        } else {
-            // Regular User -> AI Chat welcome screen
-            setCurrentView(AppView.AI_CHAT);
-            window.history.pushState({}, '', '/chat');
-        }
+        // Redirect logic - ALL users start with AI Chat as primary entry point
+        // Admin panel is accessible via sidebar navigation
+        setCurrentView(AppView.AI_CHAT);
+        window.history.pushState({}, '', '/chat');
     };
 
     const handleStopImpersonation = async () => {
@@ -534,7 +543,7 @@ const AppContent: React.FC = () => {
         // MyWork Views (unified Dashboard + My Work)
         else if (
             currentView === AppView.MY_WORK ||
-            currentView === AppView.USER_DASHBOARD || 
+            currentView === AppView.USER_DASHBOARD ||
             currentView === AppView.DASHBOARD ||
             currentView === AppView.DASHBOARD_OVERVIEW ||
             currentView === AppView.DASHBOARD_SNAPSHOT
@@ -980,7 +989,8 @@ const AppContent: React.FC = () => {
                         <HelpSidePanel />
                         <DocumentSidePanel />
                         <FeedbackSidePanel />
-                        <ChatOverlay hideTrigger />
+                        {/* ChatOverlay is disabled - replaced by new AI Chat in left sidebar */}
+                        {/* <ChatOverlay hideTrigger /> */}
                     </>
                 )}
 
@@ -1276,6 +1286,7 @@ const AppContent: React.FC = () => {
                                             <ProductEntryPage
                                                 onStartSession={handleStartSession}
                                                 onLoginClick={handleLoginRequest}
+                                                onRegisterClick={handleRegisterRequest}
                                             />
                                         </PageTransition>
                                     )}

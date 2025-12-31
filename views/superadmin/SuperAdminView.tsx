@@ -39,7 +39,17 @@ import { ComplianceCenterView } from './ComplianceCenterView';
 import { InvoiceCenterView } from './InvoiceCenterView';
 import { BulkOperationsView } from '../admin/BulkOperationsView';
 import { PlaybookTemplatesListView } from './PlaybookTemplatesListView';
+
 import { SuperAdminFeedbackView } from './SuperAdminFeedbackView';
+
+// Floating Widgets
+import { HelpToggleButton } from '../../components/Help/HelpToggleButton';
+import { HelpSidePanel } from '../../components/Help/HelpSidePanel';
+import { DocumentToggleButton } from '../../components/documents/DocumentToggleButton';
+import { DocumentSidePanel } from '../../components/documents/DocumentSidePanel';
+import { FeedbackToggleButton } from '../../components/Feedback/FeedbackToggleButton';
+import { FeedbackSidePanel } from '../../components/Feedback/FeedbackSidePanel';
+
 
 interface SuperAdminViewProps {
     currentUser: User;
@@ -729,8 +739,6 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                 {renderContent()}
             </main>
 
-            {/* Edit Organization Modal */}
-            {/* Edit Organization Modal */}
             {showEditModal && editingOrg && (
                 <SuperAdminOrgDetailsModal
                     org={editingOrg}
@@ -738,6 +746,16 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                     onUpdate={() => { setShowEditModal(false); setEditingOrg(null); fetchData(); }}
                 />
             )}
+
+            {/* Floating Action Buttons */}
+            <div className="fixed right-0 top-[66%] z-50 flex flex-col gap-3 items-end translate-x-0 pointer-events-none">
+                <div className="pointer-events-auto"><HelpToggleButton /></div>
+                <div className="pointer-events-auto"><DocumentToggleButton /></div>
+                <div className="pointer-events-auto"><FeedbackToggleButton /></div>
+            </div>
+            <HelpSidePanel />
+            <DocumentSidePanel />
+            <FeedbackSidePanel />
 
             {/* Reset Password Link Modal */}
             {resetLinkData && (

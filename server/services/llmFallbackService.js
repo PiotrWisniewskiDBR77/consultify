@@ -31,10 +31,13 @@ const PROVIDER_ENDPOINTS = {
     gemini: 'https://generativelanguage.googleapis.com/v1beta/models',
     google: 'https://generativelanguage.googleapis.com/v1beta/models',
     deepseek: 'https://api.deepseek.com/v1/chat/completions',
-    qwen: 'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation',
+    qwen: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions',
     groq: 'https://api.groq.com/openai/v1/chat/completions',
     together: 'https://api.together.xyz/v1/chat/completions',
     mistral: 'https://api.mistral.ai/v1/chat/completions',
+    nvidia: 'https://integrate.api.nvidia.com/v1/chat/completions',
+    cohere: 'https://api.cohere.ai/v1/chat',
+    zai: 'https://api.z.ai/api/paas/v4/chat/completions',
     ollama: 'http://localhost:11434/api'
 };
 
@@ -94,14 +97,14 @@ class LLMFallbackService {
             }).catch(() => null);
 
             const latency = Date.now() - start;
-            
+
             // Even 401/403 means the endpoint is reachable (just not authenticated)
             const available = response !== null;
-            
+
             return { available, latency };
         } catch (error) {
-            return { 
-                available: false, 
+            return {
+                available: false,
                 reason: error.message,
                 error: error.name === 'TimeoutError' ? 'timeout' : 'network_error'
             };
@@ -118,7 +121,7 @@ class LLMFallbackService {
         for (const provider of providers) {
             const providerType = provider.provider;
             const status = await this.checkProviderConnectivity(providerType);
-            
+
             // Update health map
             providerHealth.set(providerType, {
                 ...status,
@@ -126,7 +129,7 @@ class LLMFallbackService {
                 provider: providerType,
                 modelId: provider.model_id
             });
-            
+
             results[providerType] = status;
 
             // Update circuit breaker state if provider is healthy
@@ -188,7 +191,7 @@ class LLMFallbackService {
     async selectFallbackProvider(tier, failedModelId = null, options = {}) {
         const chain = this.getFallbackChain(tier);
         const failedProviders = options.failedProviders || [];
-        
+
         // Add failed model to list
         if (failedModelId) {
             failedProviders.push(failedModelId);
@@ -250,7 +253,7 @@ class LLMFallbackService {
 
         while (attempt < maxRetries) {
             attempt++;
-            
+
             try {
                 // Select provider (first attempt uses primary, then fallbacks)
                 let providerInfo;
@@ -260,8 +263,8 @@ class LLMFallbackService {
                 } else {
                     // Get fallback
                     providerInfo = await this.selectFallbackProvider(
-                        effectiveTier, 
-                        null, 
+                        effectiveTier,
+                        null,
                         { failedProviders, multiModel: aiConfig.multiModel }
                     );
                 }
@@ -272,7 +275,7 @@ class LLMFallbackService {
 
                 // Execute the LLM call
                 const result = await llmCallFn(providerInfo);
-                
+
                 // Success - return result with metadata
                 return {
                     success: true,
@@ -284,10 +287,10 @@ class LLMFallbackService {
 
             } catch (error) {
                 lastError = error;
-                
+
                 // Determine if we should retry
                 const shouldRetry = this.shouldRetryOnError(error);
-                
+
                 if (!shouldRetry) {
                     console.log(`[LLMFallback] Non-retryable error: ${error.message}`);
                     break;
@@ -320,12 +323,12 @@ class LLMFallbackService {
      */
     shouldRetryOnError(error) {
         const message = (error.message || '').toLowerCase();
-        
+
         // Don't retry on auth/budget errors
         if (message.includes('unauthorized') || message.includes('auth')) return false;
         if (message.includes('budget') || message.includes('insufficient')) return false;
         if (message.includes('access denied')) return false;
-        
+
         // Retry on network/availability errors
         if (message.includes('timeout')) return true;
         if (message.includes('rate limit') || message.includes('429')) return true;
@@ -333,7 +336,7 @@ class LLMFallbackService {
         if (message.includes('unavailable')) return true;
         if (message.includes('network')) return true;
         if (error.isCircuitOpen) return true;
-        
+
         return false;
     }
 
@@ -370,14 +373,14 @@ class LLMFallbackService {
     async getRecommendedProvider(tier = 'STANDARD') {
         const providers = await this.getActiveProviders();
         const chain = this.getFallbackChain(tier);
-        
+
         for (const modelId of chain) {
             const provider = providers.find(p => p.model_id === modelId);
             if (!provider) continue;
 
             const health = providerHealth.get(provider.provider);
             const breaker = CircuitBreakerService.getBreaker(`llm-${provider.provider}`).getStatus();
-            
+
             if (health?.available && breaker.state !== 'OPEN') {
                 return {
                     provider,

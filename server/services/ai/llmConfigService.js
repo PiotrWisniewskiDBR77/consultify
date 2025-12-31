@@ -195,7 +195,7 @@ class LLMConfigService {
     }
 
     /**
-     * Ensure llm_providers table exists with correct schema
+     * Ensure llm_providers and organization_llm_settings tables exist
      */
     async ensureTableExists() {
         return new Promise((resolve, reject) => {
@@ -204,6 +204,7 @@ class LLMConfigService {
                     id TEXT PRIMARY KEY,
                     name TEXT NOT NULL,
                     provider TEXT NOT NULL,
+                    description TEXT,
                     api_key TEXT,
                     endpoint TEXT,
                     model_id TEXT,
@@ -225,8 +226,26 @@ class LLMConfigService {
                     aiLogger.error('LLMConfigService', `Table creation failed: ${err.message}`);
                     reject(err);
                 } else {
-                    // Add new columns if they don't exist (migration)
-                    this.migrateTable().then(resolve).catch(resolve); // Don't fail on migration errors
+                    // Create organization settings table
+                    const orgSettingsSql = `
+                        CREATE TABLE IF NOT EXISTS organization_llm_settings (
+                            organization_id TEXT,
+                            provider_id TEXT,
+                            is_enabled INTEGER DEFAULT 1,
+                            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                            PRIMARY KEY (organization_id, provider_id)
+                        )
+                    `;
+
+                    db.run(orgSettingsSql, (err2) => {
+                        if (err2) {
+                            aiLogger.error('LLMConfigService', `Org settings table creation failed: ${err2.message}`);
+                            reject(err2);
+                        } else {
+                            // Run migrations
+                            this.migrateTable().then(resolve).catch(resolve);
+                        }
+                    });
                 }
             });
         });
@@ -240,7 +259,8 @@ class LLMConfigService {
             'ALTER TABLE llm_providers ADD COLUMN priority INTEGER DEFAULT 0',
             'ALTER TABLE llm_providers ADD COLUMN last_health_check TEXT',
             'ALTER TABLE llm_providers ADD COLUMN health_status TEXT DEFAULT \'unknown\'',
-            'ALTER TABLE llm_providers ADD COLUMN updated_at TEXT DEFAULT CURRENT_TIMESTAMP'
+            'ALTER TABLE llm_providers ADD COLUMN updated_at TEXT DEFAULT CURRENT_TIMESTAMP',
+            'ALTER TABLE llm_providers ADD COLUMN description TEXT'
         ];
 
         for (const sql of migrations) {
@@ -274,7 +294,7 @@ class LLMConfigService {
             for (const alias of definition.envKeyAliases) {
                 apiKey = process.env[alias];
                 if (apiKey && apiKey.trim()) {
-                    aiLogger.warn('LLMConfigService', 
+                    aiLogger.warn('LLMConfigService',
                         `Using deprecated env var ${alias} for ${providerId}. Please use ${definition.envKey}`);
                     return apiKey.trim();
                 }
@@ -285,41 +305,71 @@ class LLMConfigService {
     }
 
     /**
-     * Sync database providers with environment variables
-     * Creates missing providers, updates API keys
+     * Sync database providers with environment variables and code definitions
+     * Enforces active/inactive state based on env vars
      */
     async syncDatabaseWithEnv() {
-        aiLogger.info('LLMConfigService', 'Syncing database with environment...');
+        aiLogger.info('LLMConfigService', 'Syncing database with environment definitions...');
 
+        const definedProviderIds = new Set(Object.keys(PROVIDER_DEFINITIONS));
+
+        // 1. Upsert Defined Providers
         for (const [providerId, definition] of Object.entries(PROVIDER_DEFINITIONS)) {
             const apiKey = this.getApiKeyFromEnv(providerId);
+
+            // Common updates from code definition (Code is Truth for these fields)
+            const changes = {
+                name: definition.name,
+                endpoint: definition.defaultEndpoint,
+                model_id: definition.defaultModel,
+                cost_per_1k: definition.costPer1k,
+                priority: TIER_PRIORITY[definition.tier] || 1
+            };
 
             // Check if provider exists in database
             const existingProvider = await this.getProviderFromDb(providerId);
 
             if (existingProvider) {
-                // Update API key if we have one from env and DB doesn't have it
-                if (apiKey && (!existingProvider.api_key || existingProvider.api_key !== apiKey)) {
-                    await this.updateProviderInDb(providerId, { api_key: apiKey });
-                    aiLogger.info('LLMConfigService', `Updated API key for ${providerId} from env`);
+                // If we have an ENV key, strictly enforce it and activate
+                if (apiKey) {
+                    changes.api_key = apiKey;
+                    changes.is_active = 1;
+                } else {
+                    // Strict Sync: If definition exists but no Env Key, deactivate.
+                    changes.is_active = 0;
                 }
-            } else if (apiKey) {
-                // Create new provider if we have an API key
+
+                await this.updateProviderInDb(providerId, changes);
+                aiLogger.info('LLMConfigService', `Updated provider ${providerId} (Active: ${!!apiKey})`);
+            } else {
+                // Create new provider
                 await this.createProviderInDb({
                     id: `${providerId}-01`,
-                    name: definition.name,
                     provider: providerId,
-                    api_key: apiKey,
-                    endpoint: definition.defaultEndpoint,
-                    model_id: definition.defaultModel,
-                    cost_per_1k: definition.costPer1k,
-                    is_active: 1,
-                    is_default: providerId === 'google' ? 1 : 0, // Google as default
-                    priority: TIER_PRIORITY[definition.tier] || 1
+                    api_key: apiKey || null,
+                    is_active: apiKey ? 1 : 0,
+                    is_default: definition.id === 'google' ? 1 : 0,
+                    ...changes
                 });
-                aiLogger.info('LLMConfigService', `Created provider ${providerId} from env`);
+                aiLogger.info('LLMConfigService', `Created provider ${providerId} (Active: ${!!apiKey})`);
             }
         }
+
+        // 2. Deactivate Oprhans (Providers in DB but not in Code)
+        await new Promise((resolve) => {
+            db.all('SELECT provider FROM llm_providers', [], async (err, rows) => {
+                if (err || !rows) return resolve();
+
+                for (const row of rows) {
+                    if (!definedProviderIds.has(row.provider)) {
+                        // This is an orphan (e.g., removed provider type)
+                        await this.updateProviderInDb(row.provider, { is_active: 0 });
+                        aiLogger.warn('LLMConfigService', `Deactivated orphan provider: ${row.provider}`);
+                    }
+                }
+                resolve();
+            });
+        });
 
         // Clear cache after sync
         this.clearCache();
@@ -375,7 +425,7 @@ class LLMConfigService {
             db.run(
                 `UPDATE llm_providers SET ${setClauses.join(', ')} WHERE provider = ?`,
                 values,
-                function(err) {
+                function (err) {
                     if (err) reject(err);
                     else resolve(this.changes);
                 }
@@ -404,11 +454,73 @@ class LLMConfigService {
                     provider.is_default ?? 0,
                     provider.priority ?? 0
                 ],
-                function(err) {
+                function (err) {
                     if (err) reject(err);
                     else resolve(this.lastID);
                 }
             );
+        });
+    }
+
+    // ========================================================================
+    // ORGANIZATION MANAGEMENT
+    // ========================================================================
+
+    /**
+     * Get providers for a specific organization (including enabled/disabled status)
+     */
+    async getOrganizationProviders(organizationId) {
+        const providers = await this.getAllProviders();
+        if (!organizationId) return providers;
+
+        return new Promise((resolve, reject) => {
+            db.all(
+                'SELECT provider_id, is_enabled FROM organization_llm_settings WHERE organization_id = ?',
+                [organizationId],
+                (err, rows) => {
+                    if (err) {
+                        aiLogger.error('LLMConfigService', `Failed to get org settings: ${err.message}`);
+                        // Fallback to all providers enabled
+                        resolve(providers.map(p => ({ ...p, is_enabled_for_org: true })));
+                        return;
+                    }
+
+                    const settingsMap = new Map();
+                    rows.forEach(r => settingsMap.set(r.provider_id, r.is_enabled === 1));
+
+                    // Merge settings
+                    const orgProviders = providers.map(p => ({
+                        ...p,
+                        // Enabled if not explicitly disabled (opt-out model)
+                        is_enabled_for_org: settingsMap.has(p.id) ? settingsMap.get(p.id) : true
+                    }));
+
+                    resolve(orgProviders);
+                }
+            );
+        });
+    }
+
+    /**
+     * Toggle provider enabled status for an organization
+     */
+    async toggleOrganizationProvider(organizationId, providerId, isEnabled) {
+        return new Promise((resolve, reject) => {
+            const sql = `
+                INSERT INTO organization_llm_settings (organization_id, provider_id, is_enabled, created_at)
+                VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(organization_id, provider_id) 
+                DO UPDATE SET is_enabled = excluded.is_enabled
+            `;
+
+            db.run(sql, [organizationId, providerId, isEnabled ? 1 : 0], (err) => {
+                if (err) {
+                    aiLogger.error('LLMConfigService', `Failed to toggle provider: ${err.message}`);
+                    reject(err);
+                } else {
+                    resolve({ success: true });
+                }
+            });
         });
     }
 

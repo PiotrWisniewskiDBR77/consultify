@@ -3099,22 +3099,36 @@ export interface KnowledgeDoc {
 export interface LLMProvider {
   id: string;
   name: string;
-  provider: 'openai' | 'anthropic' | 'google' | 'ollama' | 'local' | 'tavily' | 'google_search';
+  provider: 'openai' | 'anthropic' | 'google' | 'mistral' | 'groq' | 'together' | 'nvidia' | 'deepseek' | 'qwen' | 'ernie' | 'z_ai' | 'ollama' | 'tavily' | 'google_search' | 'cohere';
   api_key: string;
-  endpoint: string;
+  endpoint?: string;
   model_id: string;
   cost_per_1k: number;
   input_cost_per_1k?: number;
   output_cost_per_1k?: number;
   markup_multiplier?: number;
   is_active: boolean;
+  is_default?: boolean;
   visibility: 'admin' | 'public' | 'beta';
+  priority?: number;
+
+  // Organization Context
+  is_enabled_for_org?: boolean;
 
   // Technical Conditions
   context_window?: number;
   max_outputs?: number; // Max output tokens
   description?: string;
   capabilities?: string[]; // e.g. "vision", "reasoning", "coding"
+
+  // Runtime status (optional)
+  healthStatus?: 'healthy' | 'degraded' | 'unhealthy' | 'unknown';
+  lastHealthCheck?: string;
+  supportsVision?: boolean;
+  supportsTools?: boolean;
+  supportsStreaming?: boolean;
+  tier?: string;
+  isConfigured?: boolean;
 }
 
 export type AIProviderType = 'system' | 'openai' | 'gemini' | 'ollama';
@@ -3342,8 +3356,32 @@ export interface User {
   tokenLimit?: number;
   tokenResetAt?: string;
   aiConfig?: AIProviderConfig;
+  aiPreferences?: AIPreferences;
   licensePlanId?: string;
   mfaEnabled?: boolean;
+}
+
+export interface AIPreferences {
+  responseStyle: 'concise' | 'balanced' | 'detailed';
+  writingTone: 'professional' | 'casual' | 'technical';
+  autoSuggestions: boolean;
+  contextRetention: 'session' | 'persistent' | 'minimal';
+  preferredLanguage: 'auto' | 'en' | 'pl';
+  codeExplanations: boolean;
+  showSources: boolean;
+  userRole?: string;
+  supportLevel?: string;
+  autonomyLevel?: string;
+}
+
+export interface UserAIProvider {
+  id: string; // uuid
+  name: string;
+  provider: 'openai' | 'anthropic' | 'google' | 'ollama' | 'deepseek';
+  apiKey?: string; // Stored locally only
+  endpoint?: string; // For Ollama/Local
+  isEnabled: boolean;
+  isLocal: boolean;
 }
 
 // Organization with extended fields

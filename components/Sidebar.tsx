@@ -53,7 +53,6 @@ import {
   ClipboardList, // Work preferences
   Calculator, // Economics module
 } from 'lucide-react';
-import { SidebarUsage } from './SidebarUsage';
 import { PhaseIndicator } from './PMO/PhaseIndicator';
 
 interface MenuItem {
@@ -615,11 +614,6 @@ export const Sidebar: React.FC = () => {
             {menuStructure.map(item => renderMenuItem(item))}
           </div>
         </nav>
-
-        {/* Usage Stats */}
-        <div className="border-t border-slate-200 dark:border-white/5 py-2">
-          <SidebarUsage showFull={showFull} />
-        </div>
 
         {/* Bottom Actions */}
         <div className="p-3 border-t border-slate-200 dark:border-white/5 shrink-0">

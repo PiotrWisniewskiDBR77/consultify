@@ -129,23 +129,23 @@ export const WhitelabelStudioView: React.FC = () => {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-    
+
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
             // Use the branding list endpoint to get all data at once
             const result = await Api.get('/branding');
-            
+
             // Get all organizations
             const orgs = await Api.getOrganizations();
-            
+
             // Map branding to organizations
             const brandingMap = new Map((result.brandings || []).map((b: any) => [b.organizationId, b]));
             const orgsWithBranding = orgs.map((org: any) => ({
                 ...org,
                 hasBranding: brandingMap.has(org.id)
             }));
-            
+
             setOrganizations(orgsWithBranding);
         } catch (error) {
             console.error('Failed to fetch organizations:', error);
@@ -192,12 +192,12 @@ export const WhitelabelStudioView: React.FC = () => {
             setSaving(false);
         }
     };
-    
+
     const handleDelete = async (orgId: string) => {
         if (!window.confirm('Are you sure you want to reset branding to defaults? This will remove all custom branding for this organization.')) {
             return;
         }
-        
+
         try {
             await Api.delete(`/branding/${orgId}`);
             setMessage({ type: 'success', text: 'Branding reset to defaults' });
@@ -210,12 +210,12 @@ export const WhitelabelStudioView: React.FC = () => {
             setMessage({ type: 'error', text: error.response?.data?.error || 'Failed to delete branding' });
         }
     };
-    
+
     const handleClone = async (targetOrgId: string, sourceOrgId: string) => {
         if (!window.confirm(`Clone branding from the selected organization to ${targetOrgId}?`)) {
             return;
         }
-        
+
         try {
             await Api.post(`/branding/${targetOrgId}/clone`, { sourceOrgId });
             setMessage({ type: 'success', text: 'Branding cloned successfully!' });
@@ -235,11 +235,11 @@ export const WhitelabelStudioView: React.FC = () => {
             formData.append('type', type);
 
             const result = await Api.upload(`/api/superadmin/branding/${selectedOrg}/logo`, formData);
-            
+
             // Update branding with new URL
             const urlField = type === 'light' ? 'logoLightUrl' :
-                            type === 'dark' ? 'logoDarkUrl' :
-                            type === 'icon' ? 'logoIconUrl' : 'faviconUrl';
+                type === 'dark' ? 'logoDarkUrl' :
+                    type === 'icon' ? 'logoIconUrl' : 'faviconUrl';
             setBranding(prev => ({ ...prev, [urlField]: result.url }));
         } catch (error) {
             console.error('Failed to upload logo:', error);
@@ -285,16 +285,15 @@ export const WhitelabelStudioView: React.FC = () => {
                         <img
                             src={currentUrl}
                             alt={label}
-                            className={`object-contain rounded-lg border border-slate-200 dark:border-white/10 ${
-                                type === 'favicon' ? 'w-8 h-8' : type === 'icon' ? 'w-12 h-12' : 'h-12 w-auto max-w-32'
-                            }`}
+                            className={`object-contain rounded-lg border border-slate-200 dark:border-white/10 ${type === 'favicon' ? 'w-8 h-8' : type === 'icon' ? 'w-12 h-12' : 'h-12 w-auto max-w-32'
+                                }`}
                             style={{ backgroundColor: previewMode === 'dark' ? '#0F172A' : '#F8FAFC' }}
                         />
                         <button
                             onClick={() => {
                                 const urlField = type === 'light' ? 'logoLightUrl' :
-                                                type === 'dark' ? 'logoDarkUrl' :
-                                                type === 'icon' ? 'logoIconUrl' : 'faviconUrl';
+                                    type === 'dark' ? 'logoDarkUrl' :
+                                        type === 'icon' ? 'logoIconUrl' : 'faviconUrl';
                                 updateField(urlField, undefined);
                             }}
                             className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center"
@@ -303,9 +302,8 @@ export const WhitelabelStudioView: React.FC = () => {
                         </button>
                     </div>
                 ) : (
-                    <div className={`flex items-center justify-center bg-slate-100 dark:bg-navy-700 rounded-lg ${
-                        type === 'favicon' ? 'w-8 h-8' : type === 'icon' ? 'w-12 h-12' : 'h-12 w-32'
-                    }`}>
+                    <div className={`flex items-center justify-center bg-slate-100 dark:bg-navy-700 rounded-lg ${type === 'favicon' ? 'w-8 h-8' : type === 'icon' ? 'w-12 h-12' : 'h-12 w-32'
+                        }`}>
                         <Image size={type === 'favicon' ? 12 : 20} className="text-slate-400" />
                     </div>
                 )}
@@ -356,7 +354,7 @@ export const WhitelabelStudioView: React.FC = () => {
                             className="w-4 h-4 rounded border-slate-300 text-violet-600"
                         />
                         <span className="text-sm text-slate-700 dark:text-slate-300">
-                            Hide "Powered by Consultify" branding
+                            Hide "Powered by TechnoLex" branding
                         </span>
                     </label>
                     <div className="grid grid-cols-2 gap-4">
@@ -436,7 +434,7 @@ export const WhitelabelStudioView: React.FC = () => {
             </div>
 
             {/* Preview */}
-            <div 
+            <div
                 className="rounded-xl p-6 border"
                 style={{
                     backgroundColor: previewMode === 'dark' ? branding.darkBackgroundColor : branding.backgroundColor,
@@ -447,19 +445,19 @@ export const WhitelabelStudioView: React.FC = () => {
                 <h4 className="text-lg font-semibold mb-3">Preview</h4>
                 <p className="mb-4">This is how your branded interface will look.</p>
                 <div className="flex gap-3">
-                    <button 
+                    <button
                         style={{ backgroundColor: previewMode === 'dark' ? branding.darkPrimaryColor : branding.primaryColor }}
                         className="px-4 py-2 rounded-lg text-white font-medium"
                     >
                         Primary Button
                     </button>
-                    <button 
+                    <button
                         style={{ backgroundColor: previewMode === 'dark' ? branding.darkSecondaryColor : branding.secondaryColor }}
                         className="px-4 py-2 rounded-lg text-white font-medium"
                     >
                         Secondary Button
                     </button>
-                    <button 
+                    <button
                         style={{ backgroundColor: branding.accentColor }}
                         className="px-4 py-2 rounded-lg text-white font-medium"
                     >
@@ -559,7 +557,7 @@ export const WhitelabelStudioView: React.FC = () => {
                 </div>
 
                 {/* Login Preview */}
-                <div 
+                <div
                     className="rounded-xl overflow-hidden border border-slate-200 dark:border-white/10"
                     style={{
                         backgroundImage: branding.loginBackgroundUrl ? `url(${branding.loginBackgroundUrl})` : undefined,
@@ -589,7 +587,7 @@ export const WhitelabelStudioView: React.FC = () => {
                                 className="w-full px-4 py-3 bg-slate-100 dark:bg-navy-800 rounded-lg"
                                 disabled
                             />
-                            <button 
+                            <button
                                 className="w-full py-3 rounded-lg text-white font-medium"
                                 style={{ backgroundColor: branding.primaryColor }}
                             >
@@ -606,7 +604,7 @@ export const WhitelabelStudioView: React.FC = () => {
         <div className="space-y-6">
             <div className="bg-white dark:bg-navy-800 rounded-xl p-6 border border-slate-200 dark:border-white/10">
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Custom Domain</h3>
-                
+
                 <div className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
@@ -642,7 +640,7 @@ export const WhitelabelStudioView: React.FC = () => {
                                     </span>
                                 )}
                             </div>
-                            
+
                             <div className="space-y-2 text-sm">
                                 <p className="text-slate-600 dark:text-slate-400">Add the following DNS records:</p>
                                 <div className="bg-white dark:bg-navy-800 rounded p-3 font-mono text-xs">
@@ -653,7 +651,7 @@ export const WhitelabelStudioView: React.FC = () => {
                                         </button>
                                     </div>
                                     <code className="text-slate-700 dark:text-slate-300">
-                                        {branding.customDomain} → app.consultify.com
+                                        {branding.customDomain} → app.technolex.com
                                     </code>
                                 </div>
                             </div>
@@ -662,13 +660,12 @@ export const WhitelabelStudioView: React.FC = () => {
 
                     <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-white/10">
                         <span className="text-sm text-slate-700 dark:text-slate-300">SSL Certificate</span>
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                            branding.customDomainSslStatus === 'active' ? 'bg-emerald-500/10 text-emerald-600' :
-                            branding.customDomainSslStatus === 'failed' ? 'bg-red-500/10 text-red-600' :
-                            'bg-amber-500/10 text-amber-600'
-                        }`}>
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${branding.customDomainSslStatus === 'active' ? 'bg-emerald-500/10 text-emerald-600' :
+                                branding.customDomainSslStatus === 'failed' ? 'bg-red-500/10 text-red-600' :
+                                    'bg-amber-500/10 text-amber-600'
+                            }`}>
                             {branding.customDomainSslStatus === 'active' ? 'Active' :
-                             branding.customDomainSslStatus === 'failed' ? 'Failed' : 'Pending'}
+                                branding.customDomainSslStatus === 'failed' ? 'Failed' : 'Pending'}
                         </span>
                     </div>
                 </div>
@@ -785,10 +782,10 @@ export const WhitelabelStudioView: React.FC = () => {
 
             {/* Status Message */}
             {message && (
-                <div className={`p-4 rounded-lg border ${message.type === 'success' 
-                    ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400' 
+                <div className={`p-4 rounded-lg border ${message.type === 'success'
+                    ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400'
                     : 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-400'
-                }`}>
+                    }`}>
                     <div className="flex items-center gap-2">
                         {message.type === 'success' ? <CheckCircle2 size={18} /> : <XCircle size={18} />}
                         {message.text}
@@ -808,11 +805,10 @@ export const WhitelabelStudioView: React.FC = () => {
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as TabType)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                            activeTab === tab.id
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id
                                 ? 'bg-white dark:bg-navy-800 text-violet-600 dark:text-violet-400 shadow-sm'
                                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                        }`}
+                            }`}
                     >
                         {tab.icon}
                         {tab.label}

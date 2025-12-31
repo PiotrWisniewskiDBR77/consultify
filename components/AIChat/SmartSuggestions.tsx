@@ -2,7 +2,9 @@
  * SmartSuggestions
  * 
  * Displays context-aware suggestions based on user's PMO state.
- * Appears below chat input when relevant suggestions are available.
+ * Supports two variants:
+ * - 'full': Rich suggestions with icons, colors, and dismiss buttons
+ * - 'minimal': 3 short, subtle text prompts for welcome screen
  */
 
 import React, { useEffect, useState } from 'react';
@@ -18,7 +20,6 @@ import {
     X
 } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
-import { Api } from '../../services/api';
 import { AppView } from '../../types';
 
 interface Suggestion {
@@ -39,6 +40,7 @@ interface SmartSuggestionsProps {
     projectId?: string;
     onSuggestionClick: (suggestion: Suggestion) => void;
     className?: string;
+    variant?: 'full' | 'minimal';
 }
 
 const SUGGESTION_ICONS: Record<string, React.ElementType> = {
@@ -57,10 +59,18 @@ const SUGGESTION_COLORS: Record<string, string> = {
     expand: 'from-purple-500/10 to-purple-600/5 border-purple-200/50 dark:border-purple-800/50'
 };
 
+// Minimal static suggestions for welcome screen
+const MINIMAL_SUGGESTIONS = [
+    { id: 'brief', text: 'Dzienny brief', prompt: '__DAILY_BRIEF__' },
+    { id: 'week', text: 'Zaplanuj tydzień', prompt: 'Pomóż mi zaplanować priorytety na najbliższy tydzień' },
+    { id: 'risks', text: 'Przeanalizuj ryzyka', prompt: 'Przeanalizuj główne ryzyka w moich inicjatywach' }
+];
+
 export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({
     projectId,
     onSuggestionClick,
-    className = ''
+    className = '',
+    variant = 'full'
 }) => {
     const { t } = useTranslation();
     const { setCurrentView } = useAppStore();
@@ -68,15 +78,16 @@ export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({
     const [isLoading, setIsLoading] = useState(false);
     const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 
-    // Fetch suggestions on mount and when projectId changes
+    // Fetch suggestions on mount and when projectId changes (only for full variant)
     useEffect(() => {
-        fetchSuggestions();
-    }, [projectId]);
+        if (variant === 'full') {
+            fetchSuggestions();
+        }
+    }, [projectId, variant]);
 
     const fetchSuggestions = async () => {
         setIsLoading(true);
         try {
-            // Call the suggestions API
             const response = await fetch(`/api/ai/suggestions${projectId ? `?projectId=${projectId}` : ''}`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -89,7 +100,6 @@ export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({
             }
         } catch (err) {
             console.error('[SmartSuggestions] Fetch error:', err);
-            // Fallback suggestions when API fails
             setSuggestions([
                 {
                     id: 'start-assessment',
@@ -113,12 +123,48 @@ export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({
         }
     };
 
+    const handleMinimalClick = (prompt: string) => {
+        onSuggestionClick({
+            id: 'minimal',
+            type: 'action',
+            text: prompt,
+            priority: 100,
+            context: ['minimal'],
+            action: { type: 'chat', prompt }
+        });
+    };
+
     const handleDismiss = (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
         setDismissed(prev => new Set(prev).add(id));
     };
 
-    // Filter out dismissed suggestions
+    // Minimal variant - 3 subtle text suggestions
+    if (variant === 'minimal') {
+        return (
+            <div className={`flex items-center justify-center gap-4 ${className}`}>
+                {MINIMAL_SUGGESTIONS.map((item, idx) => (
+                    <React.Fragment key={item.id}>
+                        {idx > 0 && (
+                            <span className="text-slate-300 dark:text-slate-700">·</span>
+                        )}
+                        <button
+                            onClick={() => handleMinimalClick(item.prompt)}
+                            className="
+                                text-xs text-slate-400 dark:text-slate-500
+                                hover:text-slate-600 dark:hover:text-slate-300
+                                transition-colors duration-200
+                            "
+                        >
+                            {item.text}
+                        </button>
+                    </React.Fragment>
+                ))}
+            </div>
+        );
+    }
+
+    // Full variant - rich suggestions
     const visibleSuggestions = suggestions.filter(s => !dismissed.has(s.id));
 
     if (isLoading || visibleSuggestions.length === 0) {

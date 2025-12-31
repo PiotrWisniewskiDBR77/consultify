@@ -95,7 +95,7 @@ const SERVICE_NAMES: Record<string, { en: string; pl: string }> = {
 export const StatusPageView: React.FC = () => {
     const { i18n } = useTranslation();
     const lang = i18n.language === 'pl' ? 'pl' : 'en';
-    
+
     // State
     const [status, setStatus] = useState<SystemStatus | null>(null);
     const [incidents, setIncidents] = useState<Incident[]>([]);
@@ -105,14 +105,14 @@ export const StatusPageView: React.FC = () => {
     const [expandedIncident, setExpandedIncident] = useState<string | null>(null);
     const [subscribeEmail, setSubscribeEmail] = useState('');
     const [subscribeSuccess, setSubscribeSuccess] = useState(false);
-    
+
     // Fetch data
     useEffect(() => {
         fetchData();
         const interval = setInterval(fetchData, 60000); // Refresh every minute
         return () => clearInterval(interval);
     }, []);
-    
+
     const fetchData = async () => {
         try {
             const [statusRes, incidentsRes, maintenanceRes, uptimeRes] = await Promise.all([
@@ -121,7 +121,7 @@ export const StatusPageView: React.FC = () => {
                 Api.get('/api/status/maintenance'),
                 Api.get('/api/status/uptime')
             ]);
-            
+
             setStatus(statusRes);
             setIncidents(incidentsRes.incidents || []);
             setMaintenance(maintenanceRes.schedule || []);
@@ -132,7 +132,7 @@ export const StatusPageView: React.FC = () => {
             setLoading(false);
         }
     };
-    
+
     // Handle subscribe
     const handleSubscribe = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -145,11 +145,11 @@ export const StatusPageView: React.FC = () => {
             console.error('Subscribe failed:', error);
         }
     };
-    
+
     // Text
     const t = {
         title: { en: 'System Status', pl: 'Status Systemu' },
-        subtitle: { en: 'Current operational status of Consultify services', pl: 'Aktualny status operacyjny usług Consultify' },
+        subtitle: { en: 'Current operational status of TechnoLex services', pl: 'Aktualny status operacyjny usług TechnoLex' },
         allOperational: { en: 'All Systems Operational', pl: 'Wszystkie systemy działają' },
         services: { en: 'Services', pl: 'Usługi' },
         uptime: { en: 'Uptime', pl: 'Dostępność' },
@@ -163,7 +163,7 @@ export const StatusPageView: React.FC = () => {
         refresh: { en: 'Refresh', pl: 'Odśwież' },
         lastUpdated: { en: 'Last updated', pl: 'Ostatnia aktualizacja' }
     };
-    
+
     if (loading) {
         return (
             <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
@@ -171,10 +171,10 @@ export const StatusPageView: React.FC = () => {
             </div>
         );
     }
-    
+
     const overallConfig = status ? STATUS_CONFIG[status.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.operational : STATUS_CONFIG.operational;
     const OverallIcon = overallConfig.icon;
-    
+
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
             {/* Header */}
@@ -188,7 +188,7 @@ export const StatusPageView: React.FC = () => {
                     </p>
                 </div>
             </header>
-            
+
             <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
                 {/* Overall Status */}
                 <motion.div
@@ -215,7 +215,7 @@ export const StatusPageView: React.FC = () => {
                         <RefreshCw size={20} className="text-slate-600 dark:text-slate-300" />
                     </button>
                 </motion.div>
-                
+
                 {/* Services */}
                 <section>
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
@@ -226,13 +226,12 @@ export const StatusPageView: React.FC = () => {
                             const ServiceIcon = SERVICE_ICONS[key] || Server;
                             const serviceConfig = STATUS_CONFIG[service.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.operational;
                             const StatusIcon = serviceConfig.icon;
-                            
+
                             return (
                                 <div
                                     key={key}
-                                    className={`flex items-center justify-between px-6 py-4 ${
-                                        i > 0 ? 'border-t border-slate-200 dark:border-slate-700' : ''
-                                    }`}
+                                    className={`flex items-center justify-between px-6 py-4 ${i > 0 ? 'border-t border-slate-200 dark:border-slate-700' : ''
+                                        }`}
                                 >
                                     <div className="flex items-center gap-3">
                                         <ServiceIcon size={20} className="text-slate-400" />
@@ -256,7 +255,7 @@ export const StatusPageView: React.FC = () => {
                         })}
                     </div>
                 </section>
-                
+
                 {/* Uptime */}
                 {uptime && (
                     <section>
@@ -287,7 +286,7 @@ export const StatusPageView: React.FC = () => {
                         </div>
                     </section>
                 )}
-                
+
                 {/* Scheduled Maintenance */}
                 <section>
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
@@ -316,7 +315,7 @@ export const StatusPageView: React.FC = () => {
                         )}
                     </div>
                 </section>
-                
+
                 {/* Recent Incidents */}
                 <section>
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
@@ -367,7 +366,7 @@ export const StatusPageView: React.FC = () => {
                         )}
                     </div>
                 </section>
-                
+
                 {/* Subscribe */}
                 <section className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm">
                     <div className="flex items-center gap-3 mb-2">

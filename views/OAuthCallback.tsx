@@ -62,18 +62,12 @@ const OAuthCallback: React.FC = () => {
                     };
                     setCurrentUser(authenticatedUser);
 
-                    // Redirect based on user role
-                    if (authenticatedUser.role === 'SUPERADMIN') {
-                        setCurrentView(AppView.ADMIN_DASHBOARD);
-                    } else if (authenticatedUser.role === UserRole.ADMIN) {
-                        setCurrentView(AppView.ADMIN_DASHBOARD);
-                    } else {
-                        setCurrentView(AppView.AI_CHAT);
-                    }
+                    // All users start with AI Chat as primary entry point
+                    setCurrentView(AppView.AI_CHAT);
 
                     setStatus('success');
                     setTimeout(() => {
-                        navigate('/');
+                        navigate('/chat');
                     }, 1000);
                 } else {
                     // If no user data, try to fetch from API
@@ -87,17 +81,12 @@ const OAuthCallback: React.FC = () => {
                             };
                             setCurrentUser(authenticatedUser);
 
-                            if (authenticatedUser.role === 'SUPERADMIN') {
-                                setCurrentView(AppView.ADMIN_DASHBOARD);
-                            } else if (authenticatedUser.role === UserRole.ADMIN) {
-                                setCurrentView(AppView.ADMIN_DASHBOARD);
-                            } else {
-                                setCurrentView(AppView.AI_CHAT);
-                            }
+                            // All users start with AI Chat as primary entry point
+                            setCurrentView(AppView.AI_CHAT);
 
                             setStatus('success');
                             setTimeout(() => {
-                                navigate('/');
+                                navigate('/chat');
                             }, 1000);
                         } else {
                             throw new Error('Failed to fetch user data');

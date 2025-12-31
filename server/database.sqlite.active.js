@@ -4401,6 +4401,239 @@ function initDb() {
                     FOREIGN KEY(organization_id) REFERENCES organizations(id)
                 )`);
 
+        // ==========================================
+        // ASSESSMENT LEVEL ATTACHMENTS
+        // For attaching evidence files to specific maturity levels
+        // ==========================================
+        db.run(`CREATE TABLE IF NOT EXISTS assessment_level_attachments(
+                    id TEXT PRIMARY KEY,
+                    assessment_id TEXT NOT NULL,
+                    axis_id TEXT NOT NULL,
+                    area_id TEXT,
+                    level_number INTEGER NOT NULL,
+                    attachment_type TEXT DEFAULT 'EVIDENCE',
+                    file_name TEXT NOT NULL,
+                    file_path TEXT NOT NULL,
+                    file_size INTEGER,
+                    mime_type TEXT,
+                    description TEXT,
+                    uploaded_by TEXT NOT NULL,
+                    organization_id TEXT NOT NULL,
+                    ai_analysis TEXT,
+                    ai_suggested_score INTEGER,
+                    ai_confidence REAL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY(assessment_id) REFERENCES maturity_assessments(id) ON DELETE CASCADE,
+                    FOREIGN KEY(uploaded_by) REFERENCES users(id) ON DELETE SET NULL,
+                    FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+                )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_level_attachments_assessment ON assessment_level_attachments(assessment_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_level_attachments_axis ON assessment_level_attachments(axis_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_level_attachments_level ON assessment_level_attachments(level_number)`);
+
+        // ==========================================
+        // ORGANIZATION PROFILES (Enterprise AI)
+        // ==========================================
+        db.run(`CREATE TABLE IF NOT EXISTS organization_profiles(
+                    id TEXT PRIMARY KEY,
+                    organization_id TEXT NOT NULL UNIQUE,
+                    industry TEXT,
+                    industry_code TEXT,
+                    industry_subsector TEXT,
+                    company_size TEXT,
+                    employee_count INTEGER,
+                    annual_revenue REAL,
+                    founding_year INTEGER,
+                    headquarters_country TEXT,
+                    strategic_priorities TEXT DEFAULT '[]',
+                    competitive_position TEXT,
+                    growth_stage TEXT,
+                    mission_statement TEXT,
+                    vision_statement TEXT,
+                    digital_maturity_overall REAL,
+                    technology_stack TEXT DEFAULT '[]',
+                    digital_budget_percent REAL,
+                    cloud_adoption_level TEXT,
+                    primary_markets TEXT DEFAULT '[]',
+                    customer_segments TEXT DEFAULT '[]',
+                    key_competitors TEXT DEFAULT '[]',
+                    market_share_estimate REAL,
+                    regulatory_environment TEXT DEFAULT '[]',
+                    risk_appetite TEXT DEFAULT 'MODERATE',
+                    budget_constraints TEXT,
+                    timeline_constraints TEXT,
+                    preferred_language TEXT DEFAULT 'pl',
+                    communication_style TEXT DEFAULT 'PROFESSIONAL',
+                    industry_jargon_level TEXT DEFAULT 'MEDIUM',
+                    last_assessment_date DATETIME,
+                    profile_completeness REAL DEFAULT 0,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    created_by TEXT,
+                    updated_by TEXT,
+                    FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+                )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_org_profiles_org_id ON organization_profiles(organization_id)`);
+
+        // ==========================================
+        // PINNED PROMPTS (AI Chat)
+        // User's frequently used AI prompts
+        // ==========================================
+        db.run(`CREATE TABLE IF NOT EXISTS pinned_prompts(
+                    id TEXT PRIMARY KEY,
+                    user_id TEXT NOT NULL,
+                    organization_id TEXT,
+                    prompt TEXT NOT NULL,
+                    label TEXT,
+                    category TEXT DEFAULT 'general',
+                    usage_count INTEGER DEFAULT 0,
+                    last_used_at DATETIME,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_pinned_prompts_user ON pinned_prompts(user_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_pinned_prompts_org ON pinned_prompts(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_pinned_prompts_usage ON pinned_prompts(user_id, usage_count DESC)`);
+
+        // ==========================================
+        // AI USER MEMORY
+        // Stores user preferences and context learned by AI
+        // ==========================================
+        db.run(`CREATE TABLE IF NOT EXISTS ai_user_memory(
+                    id TEXT PRIMARY KEY,
+                    user_id TEXT NOT NULL,
+                    organization_id TEXT,
+                    key TEXT NOT NULL,
+                    value TEXT,
+                    source TEXT DEFAULT 'explicit' CHECK(source IN ('explicit', 'inferred')),
+                    confidence REAL DEFAULT 1.0,
+                    context TEXT,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(user_id, key)
+                )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_ai_memory_user ON ai_user_memory(user_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_ai_memory_user_key ON ai_user_memory(user_id, key)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_ai_memory_org ON ai_user_memory(organization_id)`);
+
+        // ==========================================
+        // CONVERSATIONS (AI Chat)
+        // Stores AI chat conversation metadata
+        // ==========================================
+        db.run(`CREATE TABLE IF NOT EXISTS conversations(
+                    id TEXT PRIMARY KEY,
+                    user_id TEXT NOT NULL,
+                    organization_id TEXT,
+                    project_id TEXT,
+                    title TEXT NOT NULL DEFAULT 'Nowa rozmowa',
+                    title_source TEXT DEFAULT 'auto' CHECK (title_source IN ('auto', 'user')),
+                    starred INTEGER DEFAULT 0,
+                    archived INTEGER DEFAULT 0,
+                    tags TEXT DEFAULT '[]',
+                    pmo_context TEXT DEFAULT '{}',
+                    message_count INTEGER DEFAULT 0,
+                    last_message_preview TEXT,
+                    last_message_at DATETIME,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+                    FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE SET NULL
+                )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_conversations_user_list ON conversations(user_id, archived, updated_at DESC)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_conversations_project ON conversations(project_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_conversations_starred ON conversations(user_id, starred)`);
+
+        // ==========================================
+        // CONVERSATION MESSAGES (AI Chat)
+        // Stores individual messages within conversations
+        // ==========================================
+        db.run(`CREATE TABLE IF NOT EXISTS conversation_messages(
+                    id TEXT PRIMARY KEY,
+                    conversation_id TEXT NOT NULL,
+                    role TEXT NOT NULL CHECK (role IN ('user', 'ai')),
+                    content TEXT NOT NULL,
+                    message_type TEXT DEFAULT 'text' CHECK (message_type IN ('text', 'action_request', 'summary', 'file', 'tool_call')),
+                    metadata TEXT DEFAULT '{}',
+                    token_count INTEGER,
+                    model_used TEXT,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY(conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
+                )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_messages_conversation ON conversation_messages(conversation_id, created_at ASC)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_messages_recent ON conversation_messages(conversation_id, created_at DESC)`);
+
+        // ==========================================
+        // REPORT COMMENTS
+        // Collaborative feedback on report sections
+        // ==========================================
+        db.run(`CREATE TABLE IF NOT EXISTS report_comments(
+                    id TEXT PRIMARY KEY,
+                    report_id TEXT NOT NULL,
+                    section_id TEXT,
+                    section_type TEXT,
+                    user_id TEXT NOT NULL,
+                    user_name TEXT,
+                    comment_type TEXT DEFAULT 'FEEDBACK',
+                    content TEXT NOT NULL,
+                    ai_response TEXT,
+                    ai_suggested_edits TEXT,
+                    ai_processed_at TEXT,
+                    status TEXT DEFAULT 'OPEN',
+                    resolved_by TEXT,
+                    resolved_at TEXT,
+                    resolution_notes TEXT,
+                    parent_comment_id TEXT,
+                    thread_position INTEGER DEFAULT 0,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY(report_id) REFERENCES assessment_reports(id) ON DELETE CASCADE,
+                    FOREIGN KEY(user_id) REFERENCES users(id),
+                    FOREIGN KEY(resolved_by) REFERENCES users(id),
+                    FOREIGN KEY(parent_comment_id) REFERENCES report_comments(id) ON DELETE CASCADE
+                )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_report_comments_report ON report_comments(report_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_report_comments_section ON report_comments(report_id, section_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_report_comments_status ON report_comments(status)`);
+
+        // ==========================================
+        // REPORT EDIT HISTORY
+        // Track all changes to report sections
+        // ==========================================
+        db.run(`CREATE TABLE IF NOT EXISTS report_edit_history(
+                    id TEXT PRIMARY KEY,
+                    report_id TEXT NOT NULL,
+                    section_id TEXT NOT NULL,
+                    edit_type TEXT DEFAULT 'MANUAL',
+                    editor_id TEXT NOT NULL,
+                    editor_name TEXT,
+                    previous_content TEXT,
+                    new_content TEXT,
+                    change_summary TEXT,
+                    related_comment_id TEXT,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY(report_id) REFERENCES assessment_reports(id) ON DELETE CASCADE,
+                    FOREIGN KEY(editor_id) REFERENCES users(id),
+                    FOREIGN KEY(related_comment_id) REFERENCES report_comments(id) ON DELETE SET NULL
+                )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_report_edit_history_report ON report_edit_history(report_id)`);
+
+        // ==========================================
+        // SYSTEM FEEDBACK
+        // General bugs and ideas from users
+        // ==========================================
+        db.run(`CREATE TABLE IF NOT EXISTS system_feedback (
+            id TEXT PRIMARY KEY,
+            user_id TEXT,
+            user_email TEXT,
+            type TEXT,
+            message TEXT,
+            status TEXT DEFAULT 'NEW',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_feedback_created ON system_feedback(created_at DESC)`);
+
         // Seed Super Admin & Default Organization
         const superAdminOrgId = 'org-dbr77-system';
         const superAdminId = 'admin-001';

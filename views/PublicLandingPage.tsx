@@ -33,9 +33,9 @@ export const PublicLandingPage: React.FC = () => {
                 <div className="max-w-7xl mx-auto flex justify-between items-center">
                     <div className="flex items-center gap-3 group cursor-default">
                         <div className="h-10 px-3 rounded bg-brand-600 flex items-center justify-center shadow-lg shadow-brand-600/20 group-hover:shadow-brand-600/40 transition-all duration-500">
-                            <span className="text-white font-bold text-sm tracking-tight">DBR77</span>
+                            <span className="text-white font-bold text-sm tracking-tight">TL</span>
                         </div>
-                        <span className="text-xl font-bold tracking-[0.2em] text-white/90 group-hover:text-white transition-colors duration-500">CONSULTIFY</span>
+                        <span className="text-xl font-bold tracking-[0.2em] text-white/90 group-hover:text-white transition-colors duration-500">TECHNOLEX</span>
                     </div>
                     {/* Minimal trust indicator */}
                     <div className="hidden md:flex items-center gap-2 text-xs font-medium text-white/40 uppercase tracking-widest">
@@ -114,7 +114,7 @@ export const PublicLandingPage: React.FC = () => {
                         "
                     >
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-                        <span>Poznaj Metodę DBR77</span>
+                        <span>Poznaj Metodę TechnoLex</span>
                         <ArrowRight className="group-hover:translate-x-2 transition-transform duration-500" size={24} />
                     </button>
 
@@ -131,9 +131,9 @@ export const PublicLandingPage: React.FC = () => {
 
                     <div className="flex items-center gap-3 opacity-30 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-500">
                         <div className="h-6 px-2 rounded bg-brand-600 flex items-center justify-center">
-                            <span className="text-white font-bold text-[10px] tracking-tight">DBR77</span>
+                            <span className="text-white font-bold text-[10px] tracking-tight">TL</span>
                         </div>
-                        <span className="text-sm font-bold tracking-[0.2em] text-white">CONSULTIFY</span>
+                        <span className="text-sm font-bold tracking-[0.2em] text-white">TECHNOLEX</span>
                     </div>
 
                     <div className="flex items-center gap-8 text-xs font-semibold text-white/30 tracking-widest uppercase">

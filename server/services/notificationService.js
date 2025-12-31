@@ -135,7 +135,8 @@ const NotificationService = {
                         title: row.title,
                         message: row.message,
                         severity,
-                        read: !!row.is_read,
+                        isRead: !!row.is_read,
+                        read: !!row.is_read, // For backwards compatibility
                         readAt: row.read_at,
                         createdAt: row.created_at,
                         relatedObjectType: row.related_object_type,

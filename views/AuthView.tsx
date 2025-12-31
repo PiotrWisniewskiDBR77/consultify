@@ -7,8 +7,8 @@ import { Api } from '../services/api';
 
 // Helper to check if email is from DBR77 domain (allowed full access)
 const isDBR77Domain = (email: string): boolean => {
-    const domain = email.toLowerCase().split('@')[1];
-    return domain === 'dbr77.com';
+  const domain = email.toLowerCase().split('@')[1];
+  return domain === 'dbr77.com';
 };
 
 // Google Icon Component
@@ -42,6 +42,15 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
   const [isPending, setIsPending] = useState(false);
   const [showDemoRedirect, setShowDemoRedirect] = useState(false);
   const [isDemoLoading, setIsDemoLoading] = useState(false);
+
+  // Auto-trigger demo redirect when in DEMO mode
+  // Auto-trigger demo Login when in DEMO mode
+  React.useEffect(() => {
+    if (targetMode === SessionMode.DEMO) {
+      // Auto-login for seamless demo experience
+      startDemo();
+    }
+  }, [targetMode]);
 
   // OAuth Login Handlers
   const handleGoogleLogin = () => {
@@ -98,14 +107,14 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Check if email is from DBR77 domain
     if (!isDBR77Domain(formData.email)) {
       // Non-DBR77 users should use demo mode
       setShowDemoRedirect(true);
       return;
     }
-    
+
     try {
       // The backend returns { status: 'pending', message: ... } if pending
       const user: { status?: string; message?: string } = await Api.register({
@@ -169,7 +178,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
     e.preventDefault();
     setError(null);
     console.log('handleLogin called with:', formData.email);
-    
+
     // Validate input
     if (!formData.email || !formData.password) {
       setError('Email and password are required');
@@ -191,7 +200,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
       try {
         console.log('Calling Api.login... (attempts remaining:', retries, ')');
         const user = await Api.login(formData.email, formData.password);
-        
+
         // Verify token was stored
         const token = localStorage.getItem('token');
         if (!token) {
@@ -204,7 +213,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
       } catch (err: any) {
         lastError = err;
         console.error('Login error:', err);
-        
+
         // Don't retry on authentication errors (wrong password, etc.)
         if (err.message && (
           err.message.includes('Invalid email or password') ||
@@ -276,7 +285,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
         <p className="text-sm text-indigo-800 dark:text-indigo-300 text-center">
           <span className="font-medium">{t('auth.loginAs', 'You will be logged in as:')}</span>
           <br />
-          <code className="text-indigo-600 dark:text-indigo-400 font-mono">demo@legolex.com</code>
+          <code className="text-indigo-600 dark:text-indigo-400 font-mono">demo@technolex.com</code>
         </p>
       </div>
 
@@ -535,8 +544,8 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
         <div className="space-y-1.5">
           <div className="flex justify-between">
             <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t('auth.password')}</label>
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={() => window.location.href = '/forgot-password'}
               className="text-xs text-purple-600 dark:text-purple-400 hover:underline"
             >
@@ -603,15 +612,15 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
 
       {/* Privacy Policy Link */}
       <div className="text-center pt-3 border-t border-slate-200 dark:border-white/5">
-        <a 
-          href="/privacy" 
+        <a
+          href="/privacy"
           className="text-xs text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
         >
           {t('auth.privacyLink', 'Polityka prywatności')}
         </a>
         <span className="text-slate-300 dark:text-slate-600 mx-2">•</span>
-        <a 
-          href="/terms" 
+        <a
+          href="/terms"
           className="text-xs text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
         >
           {t('auth.termsLink', 'Regulamin')}
@@ -633,12 +642,12 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
           <img
             src="/assets/logos/logo-dark.png"
             className="h-10 w-auto object-contain hidden dark:block"
-            alt="Consultify"
+            alt="TechnoLex"
           />
           <img
             src="/assets/logos/logo-light.png"
             className="h-10 w-auto object-contain block dark:hidden"
-            alt="Consultify"
+            alt="TechnoLex"
           />
         </div>
 
@@ -650,9 +659,15 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
           <X size={20} />
         </button>
 
-        {!isPending && !showDemoRedirect && step === AuthStep.CODE_ENTRY && renderCodeEntry()}
-        {!isPending && !showDemoRedirect && step === AuthStep.REGISTER && renderRegister()}
-        {!isPending && !showDemoRedirect && step === AuthStep.LOGIN && renderLogin()}
+        {isDemoLoading && (
+          <div className="text-center py-12 space-y-4 animate-in fade-in zoom-in-95 duration-300">
+            <div className="w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto shadow-lg shadow-purple-500/20"></div>
+            <p className="text-slate-600 dark:text-slate-300 font-medium animate-pulse">{t('auth.loading', 'Initializing Demo Context...')}</p>
+          </div>
+        )}
+        {!isDemoLoading && !isPending && !showDemoRedirect && step === AuthStep.CODE_ENTRY && renderCodeEntry()}
+        {!isDemoLoading && !isPending && !showDemoRedirect && step === AuthStep.REGISTER && renderRegister()}
+        {!isDemoLoading && !isPending && !showDemoRedirect && step === AuthStep.LOGIN && renderLogin()}
         {isPending && renderPending()}
         {showDemoRedirect && renderDemoRedirect()}
 

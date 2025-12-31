@@ -83,8 +83,8 @@ export const RouterSync: React.FC = () => {
             // Login/Auth route - show auth view ONLY if not authenticated
             // If user is already authenticated, redirect to dashboard
             if (currentUser?.isAuthenticated) {
-                console.log('[RouterSync] User authenticated, redirecting to dashboard');
-                navigate('/', { replace: true });
+                console.log('[RouterSync] User authenticated, redirecting to chat');
+                navigate('/chat', { replace: true });
                 return;
             }
             if (currentView !== AppView.AUTH) {
@@ -92,12 +92,35 @@ export const RouterSync: React.FC = () => {
                 setAuthInitialStep(AuthStep.LOGIN);
                 setCurrentView(AppView.AUTH);
             }
+        } else if (path === '/chat') {
+            // AI Chat - primary entry point for authenticated users
+            if (!currentUser?.isAuthenticated) {
+                console.log('[RouterSync] Not authenticated, redirecting to login');
+                navigate('/login', { replace: true });
+                return;
+            }
+            // Don't override Admin/SuperAdmin/Settings views - they share /chat URL
+            const preservedViews = [
+                'ADMIN_', 'SUPERADMIN_', 'SETTINGS_', 'CONTEXT_BUILDER_',
+                'MY_WORK', 'PORTFOLIO_', 'IMPLEMENTATION', 'BENEFITS_', 
+                'ECONOMICS', 'ASSESSMENT_', 'AI_ACTION_', 'KPI_OKR_'
+            ];
+            const shouldPreserve = preservedViews.some(prefix => currentView.startsWith(prefix));
+            if (!shouldPreserve && currentView !== AppView.AI_CHAT) {
+                console.log('[RouterSync] Navigating to AI Chat');
+                setCurrentView(AppView.AI_CHAT);
+            }
         } else if (path === '/' || path === '') {
             // Phase A: Public Landing Page (ProductEntryPage)
-            // If already logged in, we stay on landing but TopBar shows "Go to Workspace"
+            // If authenticated, redirect to AI Chat
+            if (currentUser?.isAuthenticated) {
+                console.log('[RouterSync] User authenticated, redirecting to AI Chat');
+                navigate('/chat', { replace: true });
+                return;
+            }
             // Only set to WELCOME if we're not already in AUTH (login dialog might be open)
             console.log('[RouterSync] Phase A: Product Entry Page');
-            if (currentView !== AppView.WELCOME && currentView !== AppView.AUTH && !currentUser) {
+            if (currentView !== AppView.WELCOME && currentView !== AppView.AUTH) {
                 setCurrentView(AppView.WELCOME);
             }
         }

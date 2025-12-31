@@ -84,7 +84,7 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({ hideTrigger = false })
 
         // Build full context for AI
         const fullContext = {
-            ...screenContext,
+            screenContext,
             pmo: pmoContext,
             global: globalContext
         };

@@ -33,17 +33,17 @@ type ReleaseType = 'all' | 'major' | 'minor' | 'patch';
 export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
     const { i18n } = useTranslation();
     const lang = i18n.language === 'pl' ? 'pl' : 'en';
-    
+
     const [filter, setFilter] = useState<ReleaseType>('all');
     const [expandedVersions, setExpandedVersions] = useState<Set<string>>(
         new Set([RELEASE_NOTES[0]?.version])
     );
-    
+
     // Filter releases
-    const filteredReleases = filter === 'all' 
-        ? RELEASE_NOTES 
+    const filteredReleases = filter === 'all'
+        ? RELEASE_NOTES
         : RELEASE_NOTES.filter(r => r.type === filter);
-    
+
     // Toggle expansion
     const toggleVersion = (version: string) => {
         const newExpanded = new Set(expandedVersions);
@@ -54,18 +54,18 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
         }
         setExpandedVersions(newExpanded);
     };
-    
+
     // Type badge config
     const typeBadge = {
         major: { color: 'bg-purple-500', label: { en: 'Major', pl: 'Główna' } },
         minor: { color: 'bg-blue-500', label: { en: 'Minor', pl: 'Mniejsza' } },
         patch: { color: 'bg-green-500', label: { en: 'Patch', pl: 'Poprawka' } }
     };
-    
+
     // Text
     const t = {
         title: { en: 'Changelog', pl: 'Historia Zmian' },
-        subtitle: { en: 'Track all updates and improvements to Consultify', pl: 'Śledź wszystkie aktualizacje i ulepszenia Consultify' },
+        subtitle: { en: 'Track all updates and improvements to TechnoLex', pl: 'Śledź wszystkie aktualizacje i ulepszenia TechnoLex' },
         all: { en: 'All', pl: 'Wszystkie' },
         major: { en: 'Major', pl: 'Główne' },
         minor: { en: 'Minor', pl: 'Mniejsze' },
@@ -76,7 +76,7 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
         breaking: { en: 'Breaking Changes', pl: 'Zmiany Przełomowe' },
         rss: { en: 'RSS Feed', pl: 'Kanał RSS' }
     };
-    
+
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
             {/* Header */}
@@ -112,7 +112,7 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                     </div>
                 </div>
             </header>
-            
+
             <main className="max-w-4xl mx-auto px-4 py-8">
                 {/* Filters */}
                 <div className="flex items-center gap-2 mb-8">
@@ -121,28 +121,27 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                         <button
                             key={type}
                             onClick={() => setFilter(type)}
-                            className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
-                                filter === type
+                            className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${filter === type
                                     ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-medium'
                                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                            }`}
+                                }`}
                         >
                             {t[type][lang]}
                         </button>
                     ))}
                 </div>
-                
+
                 {/* Timeline */}
                 <div className="relative">
                     {/* Timeline line */}
                     <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-slate-200 dark:bg-slate-700" />
-                    
+
                     {/* Releases */}
                     <div className="space-y-6">
                         {filteredReleases.map((release, index) => {
                             const isExpanded = expandedVersions.has(release.version);
                             const badge = typeBadge[release.type];
-                            
+
                             return (
                                 <motion.div
                                     key={release.version}
@@ -153,7 +152,7 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                                 >
                                     {/* Timeline dot */}
                                     <div className={`absolute left-4 w-5 h-5 rounded-full ${badge.color} border-4 border-slate-50 dark:border-slate-900`} />
-                                    
+
                                     {/* Release card */}
                                     <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden">
                                         {/* Header */}
@@ -190,7 +189,7 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                                                 <ChevronDown size={20} className="text-slate-400 flex-shrink-0" />
                                             )}
                                         </button>
-                                        
+
                                         {/* Content */}
                                         {isExpanded && (
                                             <motion.div
@@ -227,7 +226,7 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                                                         </div>
                                                     </div>
                                                 )}
-                                                
+
                                                 {/* Improvements */}
                                                 {release.improvements.length > 0 && (
                                                     <div>
@@ -245,7 +244,7 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                                                         </ul>
                                                     </div>
                                                 )}
-                                                
+
                                                 {/* Fixes */}
                                                 {release.fixes.length > 0 && (
                                                     <div>
@@ -263,7 +262,7 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                                                         </ul>
                                                     </div>
                                                 )}
-                                                
+
                                                 {/* Breaking Changes */}
                                                 {release.breaking && release.breaking.length > 0 && (
                                                     <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4">

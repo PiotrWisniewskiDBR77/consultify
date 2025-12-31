@@ -802,6 +802,121 @@ export const CARD_DOCS: Record<string, CardDocumentation> = {
         moduleId: 'superadmin'
     },
 
+    'superadmin-feedback': {
+        id: 'superadmin-feedback',
+        title: 'User Feedback Center',
+        description: 'Central hub for reviewing and managing user-submitted feedback across the platform. Track bug reports, feature ideas, and user suggestions from all organizations.',
+        features: [
+            'View all user feedback submissions',
+            'Filter by type (Bug/Idea)',
+            'Track feedback status (New/Read/Resolved)',
+            'Search across all feedback',
+            'Mark items as resolved',
+            'View submitter details and organization'
+        ],
+        howToUse: [
+            'Review new feedback submissions daily',
+            'Filter by type to prioritize bug reports',
+            'Mark items as read when reviewed',
+            'Update status to resolved when addressed',
+            'Use search to find related feedback',
+            'Export feedback for team review'
+        ],
+        tips: [
+            'Bug reports should be prioritized over feature ideas',
+            'Respond to critical bugs within 24 hours',
+            'Group similar feedback for pattern identification'
+        ],
+        moduleId: 'superadmin'
+    },
+
+    'superadmin-bulk-ops': {
+        id: 'superadmin-bulk-ops',
+        title: 'Bulk Operations',
+        description: 'Execute mass operations across multiple organizations, users, or entities. Perform bulk updates, migrations, and administrative actions efficiently.',
+        features: [
+            'Bulk user operations (activate/deactivate)',
+            'Mass organization updates',
+            'Batch data migrations',
+            'Bulk notification sending',
+            'Multi-tenant data operations',
+            'Scheduled bulk tasks'
+        ],
+        howToUse: [
+            'Select operation type from available options',
+            'Define target entities using filters',
+            'Preview affected records before execution',
+            'Confirm operation with admin verification',
+            'Monitor progress in real-time',
+            'Review operation log upon completion'
+        ],
+        tips: [
+            'Always preview before executing bulk operations',
+            'Schedule large operations during off-peak hours',
+            'Keep backup before major data migrations'
+        ],
+        moduleId: 'superadmin'
+    },
+
+    'superadmin-playbooks': {
+        id: 'superadmin-playbooks',
+        title: 'Playbook Templates',
+        description: 'Manage AI automation playbook templates that define standard workflows distributed to all tenant organizations. Create, validate, and publish templates for platform-wide use.',
+        features: [
+            'List all playbook templates with status',
+            'Create new playbook templates',
+            'Validate template structure',
+            'Publish templates to make available',
+            'Archive deprecated templates',
+            'View template usage statistics'
+        ],
+        howToUse: [
+            'Browse existing templates by status',
+            'Click "+ New Template" to create',
+            'Use "Validate" to check template structure',
+            'Publish valid templates for organization use',
+            'Archive old versions instead of deleting',
+            'Monitor usage across organizations'
+        ],
+        tips: [
+            'Always validate templates before publishing',
+            'Use descriptive keys for programmatic access',
+            'Deprecate old versions to preserve history'
+        ],
+        moduleId: 'playbook-templates'
+    },
+
+    'superadmin-playbook-editor': {
+        id: 'superadmin-playbook-editor',
+        title: 'Playbook Visual Editor',
+        description: 'Visual drag-and-drop editor for designing AI automation playbooks. Define triggers, agent actions, conditions, and workflow logic graphically.',
+        features: [
+            'Visual node-based editor',
+            'Drag-and-drop workflow design',
+            'Node types: Trigger, Agent Task, Human Review, Condition, End',
+            'Edge connections between nodes',
+            'Real-time validation',
+            'Template metadata editing',
+            'Graph export/import'
+        ],
+        howToUse: [
+            'Start with a Trigger node defining activation condition',
+            'Add Agent Task nodes for AI actions',
+            'Use Condition nodes for branching logic',
+            'Connect nodes with edges to define flow',
+            'Add Human Review nodes for approval steps',
+            'End flows with End nodes',
+            'Validate and save template'
+        ],
+        tips: [
+            'Every playbook needs exactly one Trigger node',
+            'Ensure all paths lead to End nodes',
+            'Test playbooks with sample data before publishing',
+            'Use clear node labels for maintainability'
+        ],
+        moduleId: 'playbook-templates'
+    },
+
     // ==========================================
     // ASSESSMENT MODULE
     // ==========================================

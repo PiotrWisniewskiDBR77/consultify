@@ -3,6 +3,9 @@ const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const db = require('../database');
 
+const whatsappService = require('../services/whatsappService');
+const slackService = require('../services/slackService');
+
 // POST /api/feedback - Submit new feedback
 router.post('/', (req, res) => {
     const { userId, userEmail, type, message } = req.body;
@@ -19,6 +22,11 @@ router.post('/', (req, res) => {
             console.error('Error saving feedback:', err);
             return res.status(500).json({ error: 'Failed to save feedback' });
         }
+
+        // Send Notifications (Async - fire and forget)
+        whatsappService.sendNewFeedbackAlert({ userId, userEmail, type, message });
+        slackService.sendNewFeedbackAlert({ userId, userEmail, type, message });
+
         res.json({ success: true, id });
     });
 });

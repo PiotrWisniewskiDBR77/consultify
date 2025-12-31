@@ -39,19 +39,19 @@ const CAPABILITY_TIERS = {
     'chat_simple': 'BUDGET',
     'magic_wand': 'BUDGET',
     'chat_complex': 'STANDARD',
-    
+
     // Report & Analysis
     'report_section': 'STANDARD',
     'analysis': 'STANDARD',
     'full_report': 'PREMIUM',
     'assessment': 'PREMIUM',
-    
+
     // Advanced
     'max_mode': 'REASONING',
     'strategic': 'REASONING',
     'vision': 'VISION',
     'coding': 'STANDARD',
-    
+
     // Task & Initiative
     'suggestTasks': 'BUDGET',
     'validateInitiative': 'STANDARD',
@@ -60,48 +60,50 @@ const CAPABILITY_TIERS = {
 };
 
 // Tier to Model defaults
+// Tier to Model defaults
 const TIER_DEFAULTS = {
-    'BUDGET': 'gemini-2.0-flash',      // Free tier available, good quality
-    'STANDARD': 'gpt-4o',               // Best balance of quality/cost
-    'PREMIUM': 'gpt-4o',                // Same as standard for now
-    'REASONING': 'o1-preview',          // MAX Mode - Deep reasoning
-    'VISION': 'gpt-4o'                  // Vision capable
+    'BUDGET': 'gpt-4o-mini',            // Verified - High speed/low cost
+    'STANDARD': 'gpt-4o',               // Verified - Best balance
+    'PREMIUM': 'gpt-4o',                // Verified - High intelligence
+    'REASONING': 'gpt-4o',              // Verified - Fallback for O1 if not available
+    'VISION': 'gpt-4o'                  // Verified - Excellent vision
 };
 
-// Fallback chains per tier (ordered by preference: quality → cost → availability)
+// Fallback chains per tier (ordered by preference)
 const TIER_FALLBACK_CHAINS = {
     'BUDGET': [
-        'gemini-2.0-flash',     // Free, good quality
-        'deepseek-chat',        // Very cheap
-        'qwen-max',             // Cheap
-        'gpt-4o-mini',          // Reliable fallback
-        'claude-3-haiku'        // Fast
+        'gpt-4o-mini',          // OpenAI
+        'deepseek-chat',        // DeepSeek (Verified)
+        'gemini-1.5-flash',     // Google
+        'qwen-turbo',           // Alibaba (Verified)
+        'glm-4-flash'           // Z.AI
     ],
     'STANDARD': [
-        'gpt-4o',               // Best quality
-        'claude-3-5-sonnet',    // Close second
-        'gemini-1.5-pro',       // Good alternative
-        'deepseek-chat',        // Budget fallback
-        'gpt-4o-mini'           // Ultimate fallback
+        'gpt-4o',
+        'gemini-1.5-pro',
+        'claude-3-5-sonnet',    // Anthropic (if key exists)
+        'command-r-plus',       // Cohere (Verified)
+        'qwen-max',             // Alibaba
+        'glm-4-plus'            // Z.AI (Verified)
     ],
     'PREMIUM': [
         'gpt-4o',
-        'claude-3-5-sonnet',
+        'claude-3-opus',
         'gemini-1.5-pro',
-        'o1-preview',           // For complex tasks
-        'gpt-4o-mini'
+        'meta/llama-3.1-405b-instruct', // Nvidia (Verified)
+        'glm-4-plus'
     ],
     'REASONING': [
-        'o1-preview',           // Primary reasoning
-        'o1',                   // Older reasoning
-        'claude-3-opus',        // Claude reasoning
-        'gpt-4o'                // Fallback
+        'o1-preview',
+        'gpt-4o',               // Strong reasoning fallback
+        'deepseek-chat',        // Good reasoning
+        'claude-3-opus'
     ],
     'VISION': [
-        'gpt-4o',               // Best vision
-        'gemini-1.5-pro',       // Good vision
-        'claude-3-5-sonnet',    // Has vision
-        'gemini-2.0-flash'      // Budget vision
+        'gpt-4o',
+        'gemini-1.5-pro',
+        'claude-3-5-sonnet',
+        'qwen-vl-max'           // Alibaba Vision
     ]
 };
 
@@ -124,7 +126,7 @@ const MODEL_PROVIDER_MAP = {
     'o1-preview': 'openai',
     'o1': 'openai',
     'o1-mini': 'openai',
-    
+
     // Anthropic
     'claude-3-5-sonnet': 'anthropic',
     'claude-3-5-sonnet-20241022': 'anthropic',
@@ -132,31 +134,32 @@ const MODEL_PROVIDER_MAP = {
     'claude-3-sonnet': 'anthropic',
     'claude-3-haiku': 'anthropic',
     'claude-3-haiku-20240307': 'anthropic',
-    
+
     // Google
     'gemini-2.0-flash': 'google',
     'gemini-1.5-flash': 'google',
     'gemini-1.5-pro': 'google',
     'gemini-pro': 'google',
-    
+
     // DeepSeek
     'deepseek-chat': 'deepseek',
     'deepseek-coder': 'deepseek',
-    
+
     // Alibaba
     'qwen-max': 'qwen',
     'qwen-turbo': 'qwen',
     'qwen-plus': 'qwen',
-    
+
     // Cohere
     'command-r': 'cohere',
     'command-r-plus': 'cohere',
-    
+
     // Nvidia
     'meta/llama-3.1-70b-instruct': 'nvidia',
     'meta/llama3-8b-instruct': 'nvidia',
-    
+
     // z.ai
+    'glm-4-plus': 'zai',
     'glm-4': 'zai',
     'glm-4.6': 'zai'
 };
@@ -210,7 +213,7 @@ class ModelRouter {
         if (configService) {
             try {
                 const fallbackChain = await configService.getFallbackChain(tier);
-                
+
                 // Find first healthy provider
                 for (const providerId of fallbackChain) {
                     const providerConfig = await configService.getProviderConfig(providerId);
@@ -285,10 +288,10 @@ class ModelRouter {
 
         // Fallback to static chain
         const chain = this.getFallbackChain(tier);
-        
+
         for (const modelId of chain) {
             if (excludeSet.has(modelId.toLowerCase())) continue;
-            
+
             // Check if we have this model configured and active
             const config = await this.getProviderConfig(modelId, tier);
             if (config && config.apiKey) {
@@ -296,7 +299,7 @@ class ModelRouter {
                 return config;
             }
         }
-        
+
         // Ultimate fallback: try any active provider
         return this.getAnyActiveProvider(tier, excludeModels);
     }
@@ -460,7 +463,7 @@ class ModelRouter {
      */
     inferProvider(modelId) {
         if (!modelId) return 'openai';
-        
+
         // Check explicit mapping first
         const mapped = MODEL_PROVIDER_MAP[modelId];
         if (mapped) return mapped;
@@ -475,7 +478,7 @@ class ModelRouter {
         if (modelLower.startsWith('command')) return 'cohere';
         if (modelLower.startsWith('glm')) return 'zai';
         if (modelLower.includes('llama') || modelLower.includes('meta/')) return 'nvidia';
-        
+
         return 'openai';
     }
 
@@ -557,10 +560,10 @@ class ModelRouter {
 // EXPORTS
 // ============================================================================
 
-module.exports = { 
-    ModelRouter, 
-    CAPABILITY_TIERS, 
-    TIER_DEFAULTS, 
+module.exports = {
+    ModelRouter,
+    CAPABILITY_TIERS,
+    TIER_DEFAULTS,
     TIER_FALLBACK_CHAINS,
     TIER_FALLBACKS,
     MODEL_PROVIDER_MAP

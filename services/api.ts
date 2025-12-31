@@ -714,10 +714,24 @@ export const Api = {
     },
 
     // --- LLM MANAGEMENT ---
-    getLLMProviders: async (): Promise<any[]> => {
-        const res = await fetch(`${API_URL}/llm/providers`, { headers: getHeaders() });
+    getLLMProviders: async (adminContext = false): Promise<any[]> => {
+        const headers: Record<string, string> = { ...getHeaders() };
+        if (adminContext) {
+            const user = await Api.getMe();
+            headers['x-org-context'] = user?.organizationId || '';
+        }
+        const res = await fetch(`${API_URL}/llm/providers`, { headers });
         if (!res.ok) throw new Error('Failed to fetch LLM providers');
         return res.json();
+    },
+
+    toggleOrganizationLLM: async (providerId: string, enabled: boolean): Promise<any> => {
+        const res = await fetch(`${API_URL}/llm/providers/organization/toggle`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ providerId, enabled })
+        });
+        return handleResponse(res, 'Failed to toggle provider');
     },
 
     addLLMProvider: async (provider: any): Promise<void> => {

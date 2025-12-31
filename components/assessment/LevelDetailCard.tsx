@@ -1,7 +1,9 @@
-import { CheckCircle2, Circle, MessageSquare, AlertCircle, Sparkles, BrainCircuit, Loader2, X } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { CheckCircle2, Circle, MessageSquare, AlertCircle, Sparkles, BrainCircuit, Loader2, X, Paperclip, Wand2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getAssessmentButtonClasses } from '../../utils/assessmentColors';
 import { useDeviceType } from '../../hooks/useDeviceType';
+import { LevelAttachments } from './LevelAttachments';
 
 interface LevelDetailCardProps {
     level: number;
@@ -18,6 +20,14 @@ interface LevelDetailCardProps {
     onNotesChange: (notes: string) => void;
     onAiAssist?: () => void;
     isAiLoading?: boolean;
+    // Attachments support
+    assessmentId?: string;
+    axisId?: string;
+    areaId?: string;
+    readOnly?: boolean;
+    // AI Auto-fill
+    enableAutoFill?: boolean;
+    onAutoFillTrigger?: (level: number, type: 'actual' | 'target') => Promise<string | null>;
 }
 
 export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
@@ -34,12 +44,70 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
     notes,
     onNotesChange,
     onAiAssist,
-    isAiLoading = false
+    isAiLoading = false,
+    assessmentId,
+    axisId,
+    areaId,
+    readOnly = false,
+    enableAutoFill = true,
+    onAutoFillTrigger
 }) => {
     const { t } = useTranslation();
     const cardT = t('assessment.card', { returnObjects: true }) as any;
     const { isTablet, isMobile, isTouchDevice } = useDeviceType();
     const isCompact = isTablet || isMobile;
+
+    // State for AI auto-fill
+    const [isAutoFilling, setIsAutoFilling] = useState(false);
+    const [showAutoFillBadge, setShowAutoFillBadge] = useState(false);
+    const [autoFillSource, setAutoFillSource] = useState<'actual' | 'target' | null>(null);
+
+    // Handle Actual button with auto-fill
+    const handleSetActual = useCallback(async () => {
+        onSetActual();
+        
+        // Trigger auto-fill if enabled and no notes exist
+        if (enableAutoFill && onAutoFillTrigger && !notes?.trim()) {
+            setIsAutoFilling(true);
+            setAutoFillSource('actual');
+            try {
+                const suggestion = await onAutoFillTrigger(level, 'actual');
+                if (suggestion) {
+                    onNotesChange(suggestion);
+                    setShowAutoFillBadge(true);
+                    // Hide badge after 3 seconds
+                    setTimeout(() => setShowAutoFillBadge(false), 3000);
+                }
+            } catch (error) {
+                console.error('[LevelDetailCard] Auto-fill error:', error);
+            } finally {
+                setIsAutoFilling(false);
+            }
+        }
+    }, [onSetActual, enableAutoFill, onAutoFillTrigger, notes, level, onNotesChange]);
+
+    // Handle Target button with auto-fill
+    const handleSetTarget = useCallback(async () => {
+        onSetTarget();
+        
+        // Trigger auto-fill if enabled and no notes exist
+        if (enableAutoFill && onAutoFillTrigger && !notes?.trim()) {
+            setIsAutoFilling(true);
+            setAutoFillSource('target');
+            try {
+                const suggestion = await onAutoFillTrigger(level, 'target');
+                if (suggestion) {
+                    onNotesChange(suggestion);
+                    setShowAutoFillBadge(true);
+                    setTimeout(() => setShowAutoFillBadge(false), 3000);
+                }
+            } catch (error) {
+                console.error('[LevelDetailCard] Auto-fill error:', error);
+            } finally {
+                setIsAutoFilling(false);
+            }
+        }
+    }, [onSetTarget, enableAutoFill, onAutoFillTrigger, notes, level, onNotesChange]);
 
     return (
         <div className={`bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-white/5 rounded-2xl relative overflow-hidden flex flex-col items-center text-center shadow-lg dark:shadow-none ${isCompact ? 'p-4 md:p-6' : 'p-8'}`}>
@@ -95,7 +163,8 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
                 {/* Actions - Horizontal layout */}
                 <div className={`flex flex-wrap items-center justify-center gap-3 ${isCompact ? 'mb-4' : 'mb-8'}`}>
                     <button
-                        onClick={onSetActual}
+                        onClick={handleSetActual}
+                        disabled={isAutoFilling}
                         className={`
                             touch-target touch-ripple rounded-xl font-bold transition-all border flex items-center justify-center gap-2
                             ${getAssessmentButtonClasses('actual', isActual)}
@@ -103,14 +172,20 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
                                 ? 'px-3 py-4 text-sm flex-col'
                                 : 'px-6 py-3 text-sm min-w-[160px]'
                             }
+                            ${isAutoFilling && autoFillSource === 'actual' ? 'ring-2 ring-purple-500 ring-offset-2' : ''}
                         `}
                     >
-                        {isActual && <CheckCircle2 size={isCompact ? 20 : 16} />}
+                        {isAutoFilling && autoFillSource === 'actual' ? (
+                            <Loader2 size={isCompact ? 20 : 16} className="animate-spin" />
+                        ) : isActual ? (
+                            <CheckCircle2 size={isCompact ? 20 : 16} />
+                        ) : null}
                         <span className={isCompact ? 'text-xs' : ''}>{cardT.actual || 'Actual'}</span>
                     </button>
 
                     <button
-                        onClick={onSetTarget}
+                        onClick={handleSetTarget}
+                        disabled={isAutoFilling}
                         className={`
                             touch-target touch-ripple rounded-xl font-bold transition-all border flex items-center justify-center gap-2
                             ${getAssessmentButtonClasses('target', isTarget)}
@@ -118,9 +193,14 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
                                 ? 'px-3 py-4 text-sm flex-col'
                                 : 'px-6 py-3 text-sm min-w-[160px]'
                             }
+                            ${isAutoFilling && autoFillSource === 'target' ? 'ring-2 ring-purple-500 ring-offset-2' : ''}
                         `}
                     >
-                        {isTarget && <CheckCircle2 size={isCompact ? 20 : 16} />}
+                        {isAutoFilling && autoFillSource === 'target' ? (
+                            <Loader2 size={isCompact ? 20 : 16} className="animate-spin" />
+                        ) : isTarget ? (
+                            <CheckCircle2 size={isCompact ? 20 : 16} />
+                        ) : null}
                         <span className={isCompact ? 'text-xs' : ''}>{cardT.target || 'Target'}</span>
                     </button>
 
@@ -144,11 +224,19 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
 
                 {/* Notes Section */}
                 <div className="w-full text-left bg-slate-50 dark:bg-navy-950/30 rounded-xl p-4 border border-slate-200 dark:border-white/5">
-                    <div className="flex items-center mb-3">
+                    <div className="flex items-center justify-between mb-3">
                         <label className="text-xs text-slate-500 font-bold uppercase tracking-wider flex items-center gap-2">
                             <MessageSquare size={14} />
                             {cardT.note || 'Note'}
                         </label>
+                        
+                        {/* AI Generated Badge */}
+                        {showAutoFillBadge && (
+                            <span className="flex items-center gap-1 text-[10px] font-medium text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 px-2 py-0.5 rounded-full animate-pulse">
+                                <Wand2 size={10} />
+                                AI Generated - Review & Edit
+                            </span>
+                        )}
                     </div>
 
                     <div className="relative">
@@ -195,6 +283,18 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
                         </div>
                     </div>
                 </div>
+
+                {/* Attachments Section */}
+                {assessmentId && axisId && (
+                    <LevelAttachments
+                        assessmentId={assessmentId}
+                        axisId={axisId}
+                        levelNumber={level}
+                        areaId={areaId}
+                        readOnly={readOnly}
+                        compact={isCompact}
+                    />
+                )}
 
             </div>
         </div>

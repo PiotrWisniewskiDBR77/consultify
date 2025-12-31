@@ -7,6 +7,9 @@
  * - Enhanced input with file upload and AI tools
  * - Smart suggestions based on PMO context
  * - Citations and action buttons in responses
+ * - Harvard-Level Co-Thinker AI System integration
+ * - Continuous voice conversation mode
+ * - Action execution capabilities
  */
 
 import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react';
@@ -16,23 +19,18 @@ import { useConversationStore, Conversation } from '../store/useConversationStor
 import { useAIStream } from '../hooks/useAIStream';
 import { useAIContext } from '../contexts/AIContext';
 import { useTextToSpeech, cleanTextForSpeech } from '../hooks/useTextToSpeech';
+import { useVoiceConversation } from '../hooks/useVoiceConversation';
+import { useActionHandler, ActionPayload, ACTION_TYPES } from '../hooks/useActionHandler';
 import { ChatMessage, ChatCitation, ChatResponseAction } from '../types';
 
 // Components
+import { ChatMenu } from '../components/AIChat/ChatMenu';
 import { ChatHistorySidebar } from '../components/AIChat/ChatHistorySidebar';
+import { ChatExportModal } from '../components/AIChat/ChatExportModal';
 import { EnhancedChatInput } from '../components/AIChat/EnhancedChatInput';
 import { SmartSuggestions } from '../components/AIChat/SmartSuggestions';
 import { CitationList } from '../components/AIChat/CitationList';
 import { ResponseActions } from '../components/AIChat/ResponseActions';
-
-import { 
-    Target, 
-    TrendingUp, 
-    FileText,
-    Lightbulb,
-    MessageSquare,
-    Sparkles
-} from 'lucide-react';
 
 // Time-aware greeting helper
 const getTimeContext = () => {
@@ -61,38 +59,6 @@ const getTimeContext = () => {
     }
 };
 
-// Quick action definitions
-const QUICK_ACTIONS = [
-    {
-        id: 'assessment',
-        icon: Target,
-        labelKey: 'aiChat.actions.assess',
-        label: 'Assess',
-        prompt: 'Help me assess our digital maturity across key dimensions'
-    },
-    {
-        id: 'initiatives',
-        icon: Lightbulb,
-        labelKey: 'aiChat.actions.generate',
-        label: 'Generate',
-        prompt: 'Suggest strategic initiatives for our digital transformation'
-    },
-    {
-        id: 'roadmap',
-        icon: TrendingUp,
-        labelKey: 'aiChat.actions.plan',
-        label: 'Plan',
-        prompt: 'Help me create a transformation roadmap with priorities'
-    },
-    {
-        id: 'report',
-        icon: FileText,
-        labelKey: 'aiChat.actions.report',
-        label: 'Report',
-        prompt: 'Generate a comprehensive transformation analysis report'
-    }
-];
-
 export const AIChatWelcomeView: React.FC = () => {
     const { t } = useTranslation();
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -113,8 +79,23 @@ export const AIChatWelcomeView: React.FC = () => {
         generateTitle
     } = useConversationStore();
 
-    // AI stream
-    const { isStreaming, streamedContent, startStream } = useAIStream();
+    // AI stream with persistence callback
+    const handleStreamDone = useCallback(async (fullText: string) => {
+        // Persist AI response to conversation store (backend)
+        try {
+            await addMessage({
+                role: 'ai',
+                content: fullText,
+                messageType: 'text'
+            });
+        } catch (err) {
+            console.error('[Chat] Failed to persist AI response:', err);
+        }
+    }, [addMessage]);
+
+    const { isStreaming, streamedContent, startStream } = useAIStream({
+        onStreamDone: handleStreamDone
+    });
     
     // AI context
     const { pmoContext, globalContext, screenContext } = useAIContext();
@@ -122,14 +103,73 @@ export const AIChatWelcomeView: React.FC = () => {
     // Text-to-Speech for AI responses
     const { speak, stop: stopSpeaking, isSpeaking, isSupported: ttsSupported } = useTextToSpeech();
 
+    // Voice conversation for continuous mode
+    const {
+        state: voiceState,
+        startContinuousMode,
+        stopContinuousMode,
+        speak: voiceSpeak,
+        stopSpeaking: voiceStopSpeaking,
+        isSupported: voiceSupported
+    } = useVoiceConversation({
+        onTranscript: (text, isFinal) => {
+            if (isFinal && text.trim()) {
+                // Handled by continuous mode auto-send
+            }
+        },
+        onSendMessage: async (message) => {
+            await handleSend(message);
+        },
+        settings: {
+            language: 'pl-PL',
+            continuousListening: true,
+            autoSpeak: true,
+            silenceTimeout: 2500
+        }
+    });
+
+    // Action handler for AI-initiated actions
+    const {
+        executeAction,
+        confirmAction,
+        pendingActions,
+        isExecuting: isActionExecuting
+    } = useActionHandler();
+
     // Local state
     const [citationsCollapsed, setCitationsCollapsed] = useState(false);
     const [voiceModeEnabled, setVoiceModeEnabled] = useState(false);
+    const [continuousVoiceMode, setContinuousVoiceMode] = useState(false);
+    const [showExportModal, setShowExportModal] = useState(false);
+    const [aiMemoryContext, setAiMemoryContext] = useState<string | null>(null);
+    const [coThinkerPhase, setCoThinkerPhase] = useState<string>('discovery');
     const lastSpokenContentRef = useRef<string>('');
 
     // Get time-aware context
     const timeContext = useMemo(() => getTimeContext(), []);
     const firstName = currentUser?.name?.split(' ')[0] || currentUser?.firstName || '';
+
+    // Fetch AI memory context on mount
+    useEffect(() => {
+        const fetchMemoryContext = async () => {
+            try {
+                const response = await fetch('/api/ai-memory/context', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.context) {
+                        setAiMemoryContext(data.context);
+                    }
+                }
+            } catch (err) {
+                console.error('[AIMemory] Failed to fetch context:', err);
+            }
+        };
+        fetchMemoryContext();
+    }, []);
 
     // Auto-scroll on new messages
     useEffect(() => {
@@ -158,8 +198,63 @@ export const AIChatWelcomeView: React.FC = () => {
         setVoiceModeEnabled(enabled);
         if (!enabled) {
             stopSpeaking();
+            if (continuousVoiceMode) {
+                stopContinuousMode();
+                setContinuousVoiceMode(false);
+            }
         }
-    }, [stopSpeaking]);
+    }, [stopSpeaking, continuousVoiceMode, stopContinuousMode]);
+
+    // Handle continuous voice mode toggle
+    const handleContinuousVoiceToggle = useCallback(() => {
+        if (continuousVoiceMode) {
+            stopContinuousMode();
+            setContinuousVoiceMode(false);
+        } else {
+            startContinuousMode();
+            setContinuousVoiceMode(true);
+            setVoiceModeEnabled(true);
+        }
+    }, [continuousVoiceMode, startContinuousMode, stopContinuousMode]);
+
+    // Handle AI action execution
+    const handleAIAction = useCallback(async (action: any) => {
+        const actionPayload: ActionPayload = {
+            type: action.type || ACTION_TYPES.NAVIGATE,
+            payload: action.payload || action,
+            requiresConfirmation: action.requiresConfirmation || false
+        };
+        
+        const result = await executeAction(actionPayload);
+        
+        if (result.status === 'success' && result.result?.message) {
+            // Add feedback message to chat
+            const feedbackMsg: ChatMessage = {
+                id: Date.now().toString(),
+                role: 'ai',
+                content: `✅ ${result.result.message}`,
+                timestamp: new Date()
+            };
+            addChatMessage(feedbackMsg);
+        }
+        
+        return result;
+    }, [executeAction, addChatMessage]);
+
+    // Handle pending action confirmation
+    const handleConfirmPendingAction = useCallback(async (actionId: string, confirmed: boolean) => {
+        const result = await confirmAction(actionId, confirmed);
+        
+        if (result.status === 'success') {
+            const feedbackMsg: ChatMessage = {
+                id: Date.now().toString(),
+                role: 'ai',
+                content: confirmed ? '✅ Akcja wykonana pomyślnie.' : '❌ Akcja anulowana.',
+                timestamp: new Date()
+            };
+            addChatMessage(feedbackMsg);
+        }
+    }, [confirmAction, addChatMessage]);
 
     // Handle sending a message
     const handleSend = useCallback(async (message: string) => {
@@ -186,6 +281,17 @@ export const AIChatWelcomeView: React.FC = () => {
         // Add to legacy store for backwards compatibility
         addChatMessage(userMsg);
 
+        // Also persist to conversation store (backend)
+        try {
+            await addMessage({
+                role: 'user',
+                content: message.trim(),
+                messageType: 'text'
+            });
+        } catch (err) {
+            console.error('[Chat] Failed to persist user message:', err);
+        }
+
         // Add placeholder AI message
         const aiMsg: ChatMessage = {
             id: (Date.now() + 1).toString(),
@@ -209,45 +315,133 @@ export const AIChatWelcomeView: React.FC = () => {
             conversationId
         };
 
-        // Enhanced system prompt with co-thinker persona
-        const systemPrompt = `You are a Senior Digital Transformation Consultant at DBR77.
-Your role is to be a strategic co-thinker, helping ${currentUser?.name || 'the user'} with digital transformation management.
+        // Harvard-Level Co-Thinker System Prompt
+        let systemPrompt = `You are an elite Digital Transformation Consultant with a Harvard MBA and PhD, 20+ years of experience with McKinsey, BCG, and Fortune 500 companies.
 
-PRINCIPLES:
-- Be concise, professional, and action-oriented
-- Reference specific data when available (assessment scores, initiatives, timelines)
-- Always end with a clear next step or question
-- Guide, don't dictate - offer options when decisions are needed
+YOUR PERSONA:
+- Name: Senior Partner at DBR77 Industrial Intelligence
+- Background: Harvard Business School MBA, MIT PhD in Digital Transformation
+- Experience: Led 100+ transformation programs globally, €500M+ in value delivered
+- Style: Socratic questioning, hypothesis-driven, executive-level communication
+
+YOUR ROLE WITH ${currentUser?.name || 'the user'}:
+You are their personal strategic co-thinker, not just an assistant. You:
+1. ASK before assuming - use Socratic questions to understand deeply
+2. GUIDE through methodology - Discovery → Assessment → Initiatives → Roadmap → Execution
+3. CHALLENGE assumptions - respectfully probe weak arguments
+4. EXECUTE on their behalf - create entities, fill forms, navigate when authorized
+5. REMEMBER everything - maintain context across all conversations
+
+CURRENT TRANSFORMATION PHASE: ${coThinkerPhase.toUpperCase()}
+${coThinkerPhase === 'discovery' ? '→ Focus: Understanding goals, constraints, stakeholders' : ''}
+${coThinkerPhase === 'assessment' ? '→ Focus: Evaluating digital maturity across axes' : ''}
+${coThinkerPhase === 'initiatives' ? '→ Focus: Generating and prioritizing transformation initiatives' : ''}
+${coThinkerPhase === 'roadmap' ? '→ Focus: Building timeline, dependencies, resource allocation' : ''}
+${coThinkerPhase === 'execution' ? '→ Focus: Tracking progress, course correction, benefits realization' : ''}
+
+COMMUNICATION RULES:
+- Speak at executive level - concise, impactful, no fluff
+- Use McKinsey SCQA structure for complex answers: Situation → Complication → Question → Answer
+- Always provide: (1) Your perspective, (2) Supporting data, (3) Clear next action
+- For Polish speakers: Respond in Polish unless asked otherwise
 
 CONTEXT:
 - User: ${currentUser?.name || 'User'} (${currentUser?.role || 'Stakeholder'})
 - Organization: ${currentUser?.organizationName || 'Unknown'}
 - Project: ${selectedProject?.name || 'General'}
 
-Focus on practical recommendations for transformation initiatives, roadmaps, and organizational change.`;
+ACTION CAPABILITIES:
+You can execute actions on the user's behalf. When appropriate, respond with:
+ACTION: {"type": "navigate|create_initiative|create_task|update_assessment", "payload": {...}}
+`;
+
+        // Append AI memory context if available
+        if (aiMemoryContext) {
+            systemPrompt += `\n${aiMemoryContext}\n`;
+        }
+
+        systemPrompt += `
+Focus on practical recommendations for transformation initiatives, roadmaps, and organizational change.
+
+MEMORY INSTRUCTIONS:
+If the user explicitly asks you to remember something, include a line in your response:
+REMEMBER: [key]: [value]
+For example: REMEMBER: preferred_language: Polish`;
 
         startStream(message.trim(), history, systemPrompt, fullContext);
-    }, [activeConversationId, activeChatMessages, selectedProject, currentUser, isStreaming]);
 
-    // Handle quick action click
-    const handleQuickAction = useCallback((actionId: string) => {
-        const action = QUICK_ACTIONS.find(a => a.id === actionId);
-        if (action) {
-            handleSend(action.prompt);
+        // Auto-speak in voice mode
+        if (voiceModeEnabled && ttsSupported) {
+            // Speech will be triggered when streaming completes
         }
-    }, [handleSend]);
+    }, [activeConversationId, activeChatMessages, selectedProject, currentUser, isStreaming, coThinkerPhase, voiceModeEnabled, ttsSupported]);
 
     // Handle suggestion click
-    const handleSuggestionClick = useCallback((suggestion: any) => {
+    const handleSuggestionClick = useCallback(async (suggestion: any) => {
         if (suggestion.action?.type === 'chat' && suggestion.action.prompt) {
-            handleSend(suggestion.action.prompt);
+            // Special handling for daily brief
+            if (suggestion.action.prompt === '__DAILY_BRIEF__') {
+                try {
+                    const response = await fetch(`/api/daily-brief${selectedProject?.id ? `?projectId=${selectedProject.id}` : ''}`, {
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        }
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        // Add the brief as an AI message directly
+                        const briefMsg: ChatMessage = {
+                            id: Date.now().toString(),
+                            role: 'ai',
+                            content: data.brief?.textVersion || 'Nie udało się wygenerować briefu.',
+                            timestamp: new Date()
+                        };
+                        addChatMessage(briefMsg);
+                    } else {
+                        handleSend('Pokaż mi dzienny brief - podsumowanie moich zadań, decyzji i inicjatyw');
+                    }
+                } catch (err) {
+                    console.error('[DailyBrief] Error:', err);
+                    handleSend('Pokaż mi dzienny brief - podsumowanie moich zadań, decyzji i inicjatyw');
+                }
+            } else {
+                handleSend(suggestion.action.prompt);
+            }
         }
-    }, [handleSend]);
+    }, [handleSend, selectedProject, addChatMessage]);
 
     // Handle new chat
     const handleNewChat = useCallback(() => {
         clearActiveChat();
     }, [clearActiveChat]);
+
+    // Handle export
+    const handleExport = useCallback(() => {
+        setShowExportModal(true);
+    }, []);
+
+    // Handle daily brief
+    const handleDailyBrief = useCallback(async () => {
+        try {
+            const response = await fetch(`/api/daily-brief${selectedProject?.id ? `?projectId=${selectedProject.id}` : ''}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                const briefMsg: ChatMessage = {
+                    id: Date.now().toString(),
+                    role: 'ai',
+                    content: data.brief?.textVersion || 'Nie udało się wygenerować briefu.',
+                    timestamp: new Date()
+                };
+                addChatMessage(briefMsg);
+            }
+        } catch (err) {
+            console.error('[DailyBrief] Error:', err);
+        }
+    }, [selectedProject, addChatMessage]);
 
     const hasMessages = activeChatMessages.length > 0;
 
@@ -255,7 +449,18 @@ Focus on practical recommendations for transformation initiatives, roadmaps, and
     if (hasMessages) {
         return (
             <div className="h-full w-full bg-slate-50 dark:bg-navy-950 overflow-hidden relative">
-                {/* History Sidebar - Floating Overlay */}
+                {/* Floating Menu Button - positioned inside the chat area */}
+                <div className="absolute top-4 left-4 z-50">
+                    <ChatMenu
+                        projectId={selectedProject?.id}
+                        onNewChat={handleNewChat}
+                        onExport={handleExport}
+                        onDailyBrief={handleDailyBrief}
+                        onPromptSelect={handleSend}
+                    />
+                </div>
+
+                {/* History Sidebar - Hidden by default, opened from menu */}
                 <ChatHistorySidebar
                     projectId={selectedProject?.id}
                     onNewChat={handleNewChat}
@@ -309,8 +514,20 @@ Focus on practical recommendations for transformation initiatives, roadmaps, and
                                                     actions={msg.actions}
                                                     onActionComplete={(action) => {
                                                         console.log('[Chat] Action completed:', action.id);
+                                                        handleAIAction(action);
                                                     }}
                                                 />
+                                            )}
+
+                                            {/* Voice Mode Indicator */}
+                                            {isAiMessage && !isStreamingThis && voiceModeEnabled && ttsSupported && (
+                                                <button
+                                                    onClick={() => speak(cleanTextForSpeech(displayContent))}
+                                                    className="mt-2 text-xs text-slate-400 hover:text-primary-500 flex items-center gap-1"
+                                                    title="Odtwórz głosowo"
+                                                >
+                                                    🔊 Odtwórz
+                                                </button>
                                             )}
                                         </div>
                                     </div>
@@ -321,19 +538,93 @@ Focus on practical recommendations for transformation initiatives, roadmaps, and
                         </div>
                     </div>
 
+                    {/* Pending Actions Banner */}
+                    {pendingActions.length > 0 && (
+                        <div className="shrink-0 p-3 bg-yellow-50 dark:bg-yellow-900/20 border-t border-yellow-200 dark:border-yellow-800">
+                            <div className="max-w-3xl mx-auto">
+                                {pendingActions.map(pa => (
+                                    <div key={pa.actionId} className="flex items-center justify-between text-sm">
+                                        <span className="text-yellow-800 dark:text-yellow-200">
+                                            🔔 {pa.confirmationMessage}
+                                        </span>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => handleConfirmPendingAction(pa.actionId, true)}
+                                                className="px-3 py-1 bg-green-500 text-white rounded-md text-xs hover:bg-green-600"
+                                            >
+                                                Potwierdź
+                                            </button>
+                                            <button
+                                                onClick={() => handleConfirmPendingAction(pa.actionId, false)}
+                                                className="px-3 py-1 bg-red-500 text-white rounded-md text-xs hover:bg-red-600"
+                                            >
+                                                Anuluj
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Continuous Voice Mode Indicator */}
+                    {continuousVoiceMode && (
+                        <div className="shrink-0 p-2 bg-primary-50 dark:bg-primary-900/20 border-t border-primary-200 dark:border-primary-800">
+                            <div className="max-w-3xl mx-auto flex items-center justify-center gap-3 text-sm">
+                                <span className={`w-3 h-3 rounded-full ${voiceState.isListening ? 'bg-red-500 animate-pulse' : 'bg-slate-400'}`} />
+                                <span className="text-primary-700 dark:text-primary-300">
+                                    {voiceState.isListening ? 'Słucham...' : voiceState.isSpeaking ? 'Mówię...' : 'Tryb głosowy aktywny'}
+                                </span>
+                                {voiceState.interimTranscript && (
+                                    <span className="text-slate-500 italic truncate max-w-xs">
+                                        "{voiceState.interimTranscript}"
+                                    </span>
+                                )}
+                                <button
+                                    onClick={handleContinuousVoiceToggle}
+                                    className="px-3 py-1 bg-red-500 text-white rounded-md text-xs hover:bg-red-600"
+                                >
+                                    Zatrzymaj
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Input at bottom */}
                     <div className="shrink-0 p-4 border-t border-slate-200 dark:border-white/5">
                         <div className="max-w-3xl mx-auto">
                             <EnhancedChatInput
                                 onSend={handleSend}
-                                disabled={isStreaming}
+                                disabled={isStreaming || isActionExecuting}
                                 placeholder={t('aiChat.placeholder', 'Ask anything...')}
                                 voiceModeEnabled={voiceModeEnabled}
                                 onVoiceModeChange={handleVoiceModeChange}
                             />
+                            
+                            {/* Continuous Voice Toggle */}
+                            {voiceSupported && (
+                                <div className="flex justify-center mt-2">
+                                    <button
+                                        onClick={handleContinuousVoiceToggle}
+                                        className={`text-xs px-3 py-1 rounded-full transition-colors ${
+                                            continuousVoiceMode
+                                                ? 'bg-primary-500 text-white'
+                                                : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'
+                                        }`}
+                                    >
+                                        {continuousVoiceMode ? '🎙️ Tryb rozmowy włączony' : '🎙️ Włącz rozmowę głosową'}
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
+
+                {/* Export Modal */}
+                <ChatExportModal
+                    isOpen={showExportModal}
+                    onClose={() => setShowExportModal(false)}
+                />
             </div>
         );
     }
@@ -341,7 +632,18 @@ Focus on practical recommendations for transformation initiatives, roadmaps, and
     // Welcome Screen
     return (
         <div className="h-full w-full bg-slate-50 dark:bg-navy-950 overflow-hidden relative">
-            {/* History Sidebar - Floating Overlay */}
+            {/* Floating Menu Button - positioned inside the chat area */}
+            <div className="absolute top-4 left-4 z-50">
+                <ChatMenu
+                    projectId={selectedProject?.id}
+                    onNewChat={handleNewChat}
+                    onExport={handleExport}
+                    onDailyBrief={handleDailyBrief}
+                    onPromptSelect={handleSend}
+                />
+            </div>
+
+            {/* History Sidebar - Hidden by default, opened from menu */}
             <ChatHistorySidebar
                 projectId={selectedProject?.id}
                 onNewChat={handleNewChat}
@@ -369,18 +671,34 @@ Focus on practical recommendations for transformation initiatives, roadmaps, and
                             onSend={handleSend}
                             disabled={isStreaming}
                             placeholder={t('aiChat.placeholder', 'Ask anything...')}
-                            showQuickActions
-                            onQuickAction={handleQuickAction}
                             voiceModeEnabled={voiceModeEnabled}
                             onVoiceModeChange={handleVoiceModeChange}
                         />
+                        
+                        {/* Continuous Voice Toggle */}
+                        {voiceSupported && (
+                            <div className="flex justify-center mt-3">
+                                <button
+                                    onClick={handleContinuousVoiceToggle}
+                                    className={`text-xs px-4 py-2 rounded-full transition-colors flex items-center gap-2 ${
+                                        continuousVoiceMode
+                                            ? 'bg-primary-500 text-white'
+                                            : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'
+                                    }`}
+                                >
+                                    <span className={`w-2 h-2 rounded-full ${continuousVoiceMode ? 'bg-white animate-pulse' : 'bg-slate-400'}`} />
+                                    {continuousVoiceMode ? 'Rozmowa głosowa aktywna' : 'Rozpocznij rozmowę głosową'}
+                                </button>
+                            </div>
+                        )}
                     </div>
 
-                    {/* Smart Suggestions */}
-                    <div className="w-full max-w-2xl mt-8">
+                    {/* Minimal Suggestions */}
+                    <div className="w-full max-w-2xl mt-6">
                         <SmartSuggestions
                             projectId={selectedProject?.id}
                             onSuggestionClick={handleSuggestionClick}
+                            variant="minimal"
                         />
                     </div>
                 </div>
@@ -392,6 +710,12 @@ Focus on practical recommendations for transformation initiatives, roadmaps, and
                     </p>
                 </div>
             </div>
+
+            {/* Export Modal */}
+            <ChatExportModal
+                isOpen={showExportModal}
+                onClose={() => setShowExportModal(false)}
+            />
         </div>
     );
 };

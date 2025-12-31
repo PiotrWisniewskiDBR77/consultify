@@ -238,7 +238,7 @@ export const SystemSettings: React.FC = () => {
                                 value={settings['app_name'] || ''}
                                 onChange={e => setSettings(prev => ({ ...prev, 'app_name': e.target.value }))}
                                 className="flex-1 px-4 py-2 bg-navy-950 border border-white/10 rounded-lg text-white focus:border-blue-500 outline-none"
-                                placeholder="Consultify"
+                                placeholder="TechnoLex"
                             />
                             <button
                                 onClick={() => handleSaveSetting('app_name', settings['app_name'])}
@@ -403,7 +403,7 @@ export const SystemSettings: React.FC = () => {
                                     value={settings['smtp_from'] || ''}
                                     onChange={e => setSettings(prev => ({ ...prev, 'smtp_from': e.target.value }))}
                                     className="flex-1 px-4 py-2 bg-navy-950 border border-white/10 rounded-lg text-white focus:border-blue-500 outline-none"
-                                    placeholder="noreply@consultify.com"
+                                    placeholder="noreply@technolex.com"
                                 />
                                 <button
                                     onClick={() => handleSaveSetting('smtp_from', settings['smtp_from'])}

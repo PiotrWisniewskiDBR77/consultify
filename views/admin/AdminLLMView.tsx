@@ -64,11 +64,7 @@ export const AdminLLMView: React.FC = () => {
     const [testingProvider, setTestingProvider] = useState<string | null>(null);
     const [refreshingHealth, setRefreshingHealth] = useState(false);
 
-    // Ollama Configuration State
-    const [ollamaEndpoint, setOllamaEndpoint] = useState('http://localhost:11434');
-    const [ollamaConnected, setOllamaConnected] = useState<boolean | null>(null);
-    const [ollamaModels, setOllamaModels] = useState<{ name: string; size?: number }[]>([]);
-    const [testingOllama, setTestingOllama] = useState(false);
+
 
     // Prompts State
     const [activeTab, setActiveTab] = useState<'providers' | 'prompts' | 'health'>('providers');
@@ -88,7 +84,7 @@ export const AdminLLMView: React.FC = () => {
 
     const loadProviders = async () => {
         try {
-            const data = await Api.getLLMProviders();
+            const data = await Api.getLLMProviders(true);
             setProviders(data);
             setLoading(false);
         } catch (err) {
@@ -180,7 +176,7 @@ export const AdminLLMView: React.FC = () => {
     useEffect(() => {
         const initLLMData = async () => {
             try {
-                const data = await Api.getLLMProviders();
+                const data = await Api.getLLMProviders(true);
                 setProviders(data);
                 setLoading(false);
             } catch (err) {
@@ -199,45 +195,7 @@ export const AdminLLMView: React.FC = () => {
         initLLMData();
     }, [loadLLMStatus]);
 
-    const testOllamaConnection = async () => {
-        setTestingOllama(true);
-        try {
-            const result = await Api.testOllamaConnection(ollamaEndpoint);
-            if (result.success) {
-                setOllamaConnected(true);
-                setOllamaModels(result.models || []);
-                toast.success(result.message || 'Connected to Ollama!');
-            } else {
-                setOllamaConnected(false);
-                setOllamaModels([]);
-                toast.error(result.error || 'Connection failed');
-            }
-        } catch (err) {
-            setOllamaConnected(false);
-            setOllamaModels([]);
-            toast.error('Failed to connect to Ollama');
-        }
-        setTestingOllama(false);
-    };
 
-    const addOllamaModel = async (modelName: string) => {
-        try {
-            await Api.addLLMProvider({
-                name: `Ollama - ${modelName}`,
-                provider: 'ollama',
-                api_key: '',
-                endpoint: ollamaEndpoint,
-                model_id: modelName,
-                is_active: true,
-                visibility: 'public',
-                cost_per_1k: 0
-            });
-            toast.success(`Added ${modelName}`);
-            loadProviders();
-        } catch (err) {
-            toast.error('Failed to add model');
-        }
-    };
 
     const [testingConnection, setTestingConnection] = useState(false);
 
@@ -328,9 +286,8 @@ export const AdminLLMView: React.FC = () => {
                     <Activity size={14} />
                     Health Dashboard
                     {llmStatus && (
-                        <span className={`ml-1 px-1.5 py-0.5 rounded-full text-xs ${
-                            llmStatus.summary.healthy > 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
-                        }`}>
+                        <span className={`ml-1 px-1.5 py-0.5 rounded-full text-xs ${llmStatus.summary.healthy > 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                            }`}>
                             {llmStatus.summary.healthy}/{llmStatus.summary.configured}
                         </span>
                     )}
@@ -438,7 +395,7 @@ export const AdminLLMView: React.FC = () => {
                                         <span className="text-xs capitalize">{p.healthStatus}</span>
                                     </div>
                                 </div>
-                                
+
                                 <div className="flex flex-wrap gap-1 mb-3">
                                     <span className={`px-2 py-0.5 rounded text-xs ${p.isDefault ? 'bg-purple-500/20 text-purple-300' : 'bg-slate-700/50 text-slate-400'}`}>
                                         {p.isDefault ? '★ Default' : p.tier}
@@ -472,8 +429,8 @@ export const AdminLLMView: React.FC = () => {
                                         <div className="flex items-center gap-2 text-xs">
                                             <Zap size={10} className={
                                                 llmStatus.circuitBreakers[p.provider].state === 'CLOSED' ? 'text-green-400' :
-                                                llmStatus.circuitBreakers[p.provider].state === 'OPEN' ? 'text-red-400' :
-                                                'text-yellow-400'
+                                                    llmStatus.circuitBreakers[p.provider].state === 'OPEN' ? 'text-red-400' :
+                                                        'text-yellow-400'
                                             } />
                                             <span className="text-slate-400">
                                                 Circuit: {llmStatus.circuitBreakers[p.provider].state}
@@ -505,11 +462,10 @@ export const AdminLLMView: React.FC = () => {
                                             {(chain as string[]).map((provider, idx) => (
                                                 <React.Fragment key={provider}>
                                                     {idx > 0 && <ArrowRight size={12} className="text-slate-600" />}
-                                                    <span className={`text-sm px-2 py-0.5 rounded ${
-                                                        llmStatus.providers.find(p => p.provider === provider)?.healthStatus === 'healthy'
-                                                            ? 'bg-green-500/20 text-green-300'
-                                                            : 'bg-slate-700/50 text-slate-400'
-                                                    }`}>
+                                                    <span className={`text-sm px-2 py-0.5 rounded ${llmStatus.providers.find(p => p.provider === provider)?.healthStatus === 'healthy'
+                                                        ? 'bg-green-500/20 text-green-300'
+                                                        : 'bg-slate-700/50 text-slate-400'
+                                                        }`}>
                                                         {provider}
                                                     </span>
                                                 </React.Fragment>
@@ -523,80 +479,15 @@ export const AdminLLMView: React.FC = () => {
                 </div>
             ) : activeTab === 'providers' ? (
                 <>
-                    {/* Ollama Local Model Configuration */}
-                    <div className="bg-gradient-to-br from-purple-900/30 to-navy-900 border border-purple-500/20 rounded-xl p-6">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="p-2 rounded-lg bg-purple-500/20">
-                                <Server size={20} className="text-purple-400" />
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-semibold text-white">Ollama Local Models</h3>
-                                <p className="text-sm text-slate-400">Connect to a local Ollama instance for privacy-focused AI</p>
-                            </div>
-                        </div>
-
-                        <div className="flex gap-3 mb-4">
-                            <input
-                                type="text"
-                                value={ollamaEndpoint}
-                                onChange={(e) => setOllamaEndpoint(e.target.value)}
-                                placeholder="http://localhost:11434"
-                                className="flex-1 bg-navy-950 border border-white/10 rounded-lg px-4 py-2 text-white text-sm"
-                            />
-                            <button
-                                onClick={testOllamaConnection}
-                                disabled={testingOllama}
-                                className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors"
-                            >
-                                {testingOllama ? (
-                                    <RefreshCw size={16} className="animate-spin" />
-                                ) : ollamaConnected ? (
-                                    <Wifi size={16} />
-                                ) : (
-                                    <WifiOff size={16} />
-                                )}
-                                {testingOllama ? 'Testing...' : 'Test Connection'}
-                            </button>
-                        </div>
-
-                        {ollamaConnected === true && ollamaModels.length > 0 && (
-                            <div className="bg-navy-950/50 rounded-lg p-4">
-                                <p className="text-xs text-slate-400 uppercase tracking-wider mb-3">Available Models (click to add)</p>
-                                <div className="flex flex-wrap gap-2">
-                                    {ollamaModels.map((model) => {
-                                        const alreadyAdded = providers.some(p => p.provider === 'ollama' && p.model_id === model.name);
-                                        return (
-                                            <button
-                                                key={model.name}
-                                                onClick={() => !alreadyAdded && addOllamaModel(model.name)}
-                                                disabled={alreadyAdded}
-                                                className={`px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 transition-colors ${alreadyAdded
-                                                    ? 'bg-green-500/20 text-green-400 cursor-default'
-                                                    : 'bg-purple-500/20 text-purple-300 hover:bg-purple-500/30'
-                                                    }`}
-                                            >
-                                                {alreadyAdded && <Check size={12} />}
-                                                {model.name}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        )}
-
-                        {ollamaConnected === false && (
-                            <p className="text-red-400 text-sm">Unable to connect. Make sure Ollama is running.</p>
-                        )}
-                    </div>
 
                     {/* Cloud Providers */}
                     <div className="flex justify-between items-center mb-6">
                         <div>
                             <h2 className="text-xl font-bold text-white flex items-center gap-2">
                                 <Shield className="text-purple-500" />
-                                LLM Gateway Management
+                                Organization Model Management
                             </h2>
-                            <p className="text-slate-400 text-sm mt-1">Configure AI models available to tenants.</p>
+                            <p className="text-slate-400 text-sm mt-1">Enable or disable specific AI models for your organization.</p>
                         </div>
                         <div className="flex gap-3">
                             <button
@@ -606,12 +497,7 @@ export const AdminLLMView: React.FC = () => {
                                 {showInactive ? <Eye size={16} /> : <EyeOff size={16} />}
                                 {showInactive ? 'Hide Inactive' : 'Show Inactive'}
                             </button>
-                            <button
-                                onClick={() => { setEditingId(null); setForm({ name: '', provider: 'openai', api_key: '', endpoint: '', is_active: true, visibility: 'admin' }); setShowModal(true); }}
-                                className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors text-sm font-medium"
-                            >
-                                <Plus size={16} /> Add Provider
-                            </button>
+                            {/* Global Add Provider is disabled for Tenant Admin */}
                         </div>
                     </div>
 
@@ -619,34 +505,46 @@ export const AdminLLMView: React.FC = () => {
                         <table className="w-full text-left text-sm text-slate-300">
                             <thead className="bg-navy-950 text-slate-400 uppercase text-xs font-semibold">
                                 <tr>
-                                    <th className="px-6 py-4">Name</th>
+                                    <th className="px-6 py-4">Name & Description</th>
                                     <th className="px-6 py-4">Provider</th>
                                     <th className="px-6 py-4">Model ID</th>
-                                    <th className="px-6 py-4">Pricing</th>
-                                    <th className="px-6 py-4">Visibility</th>
+                                    <th className="px-6 py-4">Org Access</th>
                                     <th className="px-6 py-4">Status</th>
-                                    <th className="px-6 py-4 text-right">Actions</th>
+                                    <th className="px-6 py-4 text-right">Verification</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
-                                {loading ? <tr><td colSpan={8} className="p-8 text-center">Loading...</td></tr> : providers
+                                {loading ? <tr><td colSpan={6} className="p-8 text-center">Loading...</td></tr> : providers
                                     .filter(p => showInactive || p.is_active)
                                     .map(p => (
                                         <tr key={p.id} className="hover:bg-white/5 transition-colors">
-                                            <td className="px-6 py-4 font-medium text-white">{p.name}</td>
+                                            <td className="px-6 py-4">
+                                                <div className="font-medium text-white">{p.name}</div>
+                                                {p.description && <div className="text-xs text-slate-500 mt-0.5">{p.description}</div>}
+                                            </td>
                                             <td className="px-6 py-4 capitalize">{p.provider}</td>
                                             <td className="px-6 py-4 font-mono text-xs">{p.model_id}</td>
-                                            <td className="px-6 py-4 font-mono text-xs text-slate-400">
-                                                I: ${p.input_cost_per_1k || 0}<br />
-                                                O: ${p.output_cost_per_1k || 0}
+                                            <td className="px-6 py-4">
+                                                <button
+                                                    onClick={async () => {
+                                                        const newStatus = !(p.is_enabled_for_org !== false); // Default is true if undefined
+                                                        try {
+                                                            await Api.toggleOrganizationLLM(p.id, newStatus);
+                                                            // Optimistic update
+                                                            setProviders(prev => prev.map(pro => pro.id === p.id ? { ...pro, is_enabled_for_org: newStatus } : pro));
+                                                            toast.success(newStatus ? 'Enabled for Organization' : 'Disabled for Organization');
+                                                        } catch (e) {
+                                                            toast.error('Failed to update status');
+                                                        }
+                                                    }}
+                                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${p.is_enabled_for_org !== false ? 'bg-purple-600' : 'bg-slate-700'}`}
+                                                >
+                                                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${p.is_enabled_for_org !== false ? 'translate-x-6' : 'translate-x-1'}`} />
+                                                </button>
+                                                <span className="ml-2 text-xs text-slate-400">{p.is_enabled_for_org !== false ? 'Enabled' : 'Disabled'}</span>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className={`px-2 py-1 rounded text-xs ${p.visibility === 'public' ? 'bg-green-500/20 text-green-400' : p.visibility === 'beta' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-slate-700 text-slate-300'}`}>
-                                                    {p.visibility}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                {p.is_active ? <span className="text-green-400 flex items-center gap-1"><Check size={14} /> Active</span> : <span className="text-slate-500">Inactive</span>}
+                                                {p.is_active ? <span className="text-green-400 flex items-center gap-1"><Check size={14} /> Global Active</span> : <span className="text-slate-500">Global Inactive</span>}
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex items-center justify-end gap-2">
@@ -658,8 +556,6 @@ export const AdminLLMView: React.FC = () => {
                                                     >
                                                         <Wifi size={16} />
                                                     </button>
-                                                    <button onClick={() => handleEdit(p)} className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white"><Edit size={16} /></button>
-                                                    <button onClick={() => handleDelete(p.id)} className="p-2 hover:bg-red-500/20 rounded-lg text-slate-400 hover:text-red-400"><Trash2 size={16} /></button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -695,7 +591,6 @@ export const AdminLLMView: React.FC = () => {
                                                     <option value="groq">Groq (Ultra Fast)</option>
                                                     <option value="together">Together AI</option>
                                                     <option value="nvidia">NVIDIA NIM</option>
-                                                    <option value="ollama">Ollama (Local)</option>
                                                 </optgroup>
                                                 <optgroup label="— Chinese Providers —">
                                                     <option value="deepseek">DeepSeek</option>

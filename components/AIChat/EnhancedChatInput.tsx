@@ -21,8 +21,6 @@ interface EnhancedChatInputProps {
     disabled?: boolean;
     placeholder?: string;
     className?: string;
-    showQuickActions?: boolean;
-    onQuickAction?: (action: string) => void;
     voiceModeEnabled?: boolean;
     onVoiceModeChange?: (enabled: boolean) => void;
 }
@@ -32,8 +30,6 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
     disabled = false,
     placeholder,
     className = '',
-    showQuickActions = false,
-    onQuickAction,
     voiceModeEnabled = false,
     onVoiceModeChange
 }) => {
@@ -47,9 +43,12 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
     const [ttsSupported, setTtsSupported] = useState(false);
     const [isVoiceMode, setIsVoiceMode] = useState(voiceModeEnabled);
     const [attachments, setAttachments] = useState<any[]>([]);
+    const [recordingDuration, setRecordingDuration] = useState(0);
     
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const recognitionRef = useRef<any>(null);
+    const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     const isDisabled = disabled || aiFreezeStatus.isFrozen;
     const canSend = value.trim().length > 0 && !isDisabled;
@@ -78,16 +77,37 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                     .join('');
                 setValue(transcript);
                 
-                // Auto-send in voice mode when speech ends with final result
+                // Clear any existing silence timer
+                if (silenceTimerRef.current) {
+                    clearTimeout(silenceTimerRef.current);
+                }
+                
                 const lastResult = event.results[event.results.length - 1];
-                if (isVoiceMode && lastResult.isFinal && transcript.trim()) {
-                    // Small delay to allow for natural pauses
-                    setTimeout(() => {
-                        if (transcript.trim()) {
-                            onSend(transcript.trim());
-                            setValue('');
-                        }
-                    }, 500);
+                
+                // Auto-send logic for both voice mode and push-to-talk
+                if (lastResult.isFinal && transcript.trim()) {
+                    if (isVoiceMode) {
+                        // Voice mode: send after short delay
+                        silenceTimerRef.current = setTimeout(() => {
+                            if (transcript.trim()) {
+                                onSend(transcript.trim());
+                                setValue('');
+                            }
+                        }, 500);
+                    } else {
+                        // Push-to-talk: set timer for auto-send after 2s silence
+                        silenceTimerRef.current = setTimeout(() => {
+                            if (transcript.trim() && isRecording) {
+                                onSend(transcript.trim());
+                                setValue('');
+                                // Stop recording after send
+                                if (recognitionRef.current) {
+                                    recognitionRef.current.stop();
+                                }
+                                setIsRecording(false);
+                            }
+                        }, 2000);
+                    }
                 }
             };
 
@@ -95,6 +115,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                 console.error('[Voice] Recognition error:', e.error);
                 if (e.error !== 'no-speech') {
                     setIsRecording(false);
+                    setRecordingDuration(0);
                 }
             };
             
@@ -105,9 +126,11 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                         recognition.start();
                     } catch (e) {
                         setIsRecording(false);
+                        setRecordingDuration(0);
                     }
                 } else {
                     setIsRecording(false);
+                    setRecordingDuration(0);
                 }
             };
 
@@ -123,12 +146,18 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
             if (recognitionRef.current) {
                 recognitionRef.current.abort();
             }
+            if (silenceTimerRef.current) {
+                clearTimeout(silenceTimerRef.current);
+            }
+            if (recordingTimerRef.current) {
+                clearInterval(recordingTimerRef.current);
+            }
             // Stop any ongoing speech
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
             }
         };
-    }, [isVoiceMode]);
+    }, [isVoiceMode, isRecording, onSend]);
 
     // Auto-resize textarea
     useEffect(() => {
@@ -159,13 +188,29 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
         if (!recognitionRef.current) return;
 
         if (isRecording) {
+            // Stop recording
             recognitionRef.current.stop();
             setIsRecording(false);
+            setRecordingDuration(0);
+            if (recordingTimerRef.current) {
+                clearInterval(recordingTimerRef.current);
+            }
+            // If there's text, send it
+            if (value.trim()) {
+                onSend(value.trim());
+                setValue('');
+            }
         } else {
+            // Start recording
             setValue('');
+            setRecordingDuration(0);
             try {
                 recognitionRef.current.start();
                 setIsRecording(true);
+                // Start duration timer
+                recordingTimerRef.current = setInterval(() => {
+                    setRecordingDuration(prev => prev + 1);
+                }, 1000);
             } catch (e) {
                 console.error('[Voice] Failed to start recognition:', e);
             }
@@ -309,22 +354,34 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                             </button>
                         )}
 
-                        {/* Voice Input (manual recording) */}
+                        {/* Voice Input (manual recording / push-to-talk) */}
                         {speechSupported && !isVoiceMode && (
                             <button
                                 onClick={toggleRecording}
                                 disabled={isDisabled}
                                 className={`
-                                    p-2 rounded-lg transition-all
+                                    flex items-center gap-1.5 px-2.5 py-2 rounded-lg transition-all
                                     ${isRecording
-                                        ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
+                                        ? 'bg-red-500 text-white shadow-lg shadow-red-500/30 animate-pulse'
                                         : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
                                     }
                                     ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}
                                 `}
-                                title={isRecording ? t('aiChat.stopRecording', 'Stop') : t('aiChat.startRecording', 'Voice input')}
+                                title={isRecording 
+                                    ? t('aiChat.stopAndSend', 'Stop and send') 
+                                    : t('aiChat.startRecording', 'Voice input (auto-sends after 2s silence)')
+                                }
                             >
-                                {isRecording ? <Square size={18} /> : <Mic size={18} />}
+                                {isRecording ? (
+                                    <>
+                                        <Square size={16} />
+                                        <span className="text-xs font-medium tabular-nums">
+                                            {Math.floor(recordingDuration / 60)}:{(recordingDuration % 60).toString().padStart(2, '0')}
+                                        </span>
+                                    </>
+                                ) : (
+                                    <Mic size={18} />
+                                )}
                             </button>
                         )}
 
@@ -346,33 +403,6 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                     </div>
                 </div>
             </div>
-
-            {/* Quick Actions */}
-            {showQuickActions && onQuickAction && (
-                <div className="flex items-center justify-center gap-3 mt-4">
-                    {['Assess', 'Generate', 'Plan', 'Report'].map(action => (
-                        <button
-                            key={action}
-                            onClick={() => onQuickAction(action)}
-                            disabled={isDisabled}
-                            className="
-                                flex items-center gap-2 px-4 py-2
-                                bg-white dark:bg-navy-900/50
-                                hover:bg-slate-100 dark:hover:bg-navy-800
-                                border border-slate-200 dark:border-white/10
-                                hover:border-primary-400 dark:hover:border-primary-500/40
-                                rounded-full text-sm font-medium
-                                text-slate-600 dark:text-slate-300
-                                hover:text-primary-600 dark:hover:text-primary-400
-                                transition-all duration-200
-                                disabled:opacity-50 disabled:cursor-not-allowed
-                            "
-                        >
-                            {t(`aiChat.actions.${action.toLowerCase()}`, action)}
-                        </button>
-                    ))}
-                </div>
-            )}
         </div>
     );
 };

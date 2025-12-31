@@ -42,12 +42,12 @@ router.get('/health-check-ai', async (req, res) => {
 router.post('/test', verifyToken, async (req, res) => {
     try {
         const { provider, api_key, model_id, endpoint } = req.body;
-        
+
         // Basic validation
         if (!provider) {
             return res.status(400).json({ success: false, message: 'Provider is required' });
         }
-        
+
         // Return mock success for now - actual test would call the provider
         return res.json({
             success: true,
@@ -164,11 +164,11 @@ router.get('/status', async (req, res) => {
 // POST /api/llm/status/test/:provider - Test a specific provider's connectivity
 router.post('/status/test/:provider', async (req, res) => {
     const { provider } = req.params;
-    
+
     try {
         const { testSingleProvider } = require('../services/ai/startupValidator');
         const result = await testSingleProvider(provider);
-        
+
         res.json({
             success: result.reachable || false,
             provider,
@@ -189,7 +189,7 @@ router.post('/status/test/:provider', async (req, res) => {
 router.post('/status/refresh', async (req, res) => {
     try {
         const { validateOnStartup } = require('../services/ai/startupValidator');
-        
+
         // Run full validation
         const healthReport = await validateOnStartup({
             testConnectivity: true,
@@ -659,7 +659,7 @@ router.get('/diagnose', async (req, res) => {
     try {
         // 1. Check if llm_providers table exists
         const isPg = process.env.DB_TYPE === 'postgres' || process.env.DATABASE_URL?.startsWith('postgres');
-        const tableCheckQuery = isPg 
+        const tableCheckQuery = isPg
             ? "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'llm_providers'"
             : "SELECT name FROM sqlite_master WHERE type='table' AND name='llm_providers'";
         const tableCheck = await new Promise((resolve) => {
@@ -864,10 +864,42 @@ router.use(verifyToken);
 // GET /api/llm/providers
 router.get('/providers', async (req, res) => {
     try {
-        const providers = await dbAll("SELECT * FROM llm_providers ORDER BY name ASC");
-        res.json(providers);
+        const { llmConfigService } = require('../services/ai/llmConfigService');
+
+        // If x-org-context header is present and user is admin of that org, return org-specific config
+        const orgContext = req.headers['x-org-context'];
+
+        if (orgContext && req.user.organization_id === orgContext) {
+            // Tenant Admin View
+            const providers = await llmConfigService.getOrganizationProviders(orgContext);
+            res.json(providers);
+        } else {
+            // SuperAdmin / Standard View
+            const providers = await dbAll("SELECT * FROM llm_providers ORDER BY name ASC");
+            res.json(providers);
+        }
     } catch (err) {
+        console.error('Failed to fetch providers:', err);
         res.status(500).json({ error: 'Failed to fetch providers' });
+    }
+});
+
+// POST /api/llm/providers/organization/toggle
+router.post('/providers/organization/toggle', verifyToken, async (req, res) => {
+    const { providerId, enabled } = req.body;
+    const orgId = req.user.organization_id;
+
+    if (!orgId) {
+        return res.status(400).json({ error: 'User must belong to an organization' });
+    }
+
+    try {
+        const { llmConfigService } = require('../services/ai/llmConfigService');
+        await llmConfigService.toggleOrganizationProvider(orgId, providerId, enabled);
+        res.json({ success: true, message: `Provider ${enabled ? 'enabled' : 'disabled'} for organization` });
+    } catch (err) {
+        console.error('Failed to toggle provider:', err);
+        res.status(500).json({ error: 'Failed to update provider status' });
     }
 });
 
@@ -955,8 +987,8 @@ router.post('/prompts', async (req, res) => {
         `, [id, key, description, content, JSON.stringify(context_config || {})]);
         res.json({ id, message: 'Prompt created' });
     } catch (err) {
-        if (err.message.includes('UNIQUE constraint failed') || 
-            err.message.includes('duplicate key') || 
+        if (err.message.includes('UNIQUE constraint failed') ||
+            err.message.includes('duplicate key') ||
             err.message.includes('violates unique constraint')) {
             return res.status(409).json({ error: 'Prompt key already exists' });
         }
@@ -1283,5 +1315,223 @@ router.get('/user/active-model', async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch active model' });
     }
 });
+
+// ==========================================
+// DETAILED HEALTH CHECK WITH ERROR DIAGNOSIS
+// ==========================================
+
+// Import health monitor
+const { llmHealthMonitor, HealthStatus, ErrorCategory, ErrorMessages } = require('../services/ai/llmHealthMonitor');
+
+/**
+ * GET /api/llm/health/detailed
+ * Performs live health check with detailed error diagnosis
+ */
+router.get('/health/detailed', verifyToken, async (req, res) => {
+    try {
+        // Get all active providers
+        const providers = await dbAll(`
+            SELECT id, name, provider, api_key, endpoint, model_id, is_active, is_default
+            FROM llm_providers 
+            WHERE is_active = 1
+        `);
+
+        if (providers.length === 0) {
+            return res.json({
+                success: true,
+                summary: { total: 0, healthy: 0, degraded: 0, unhealthy: 0 },
+                providers: [],
+                alerts: []
+            });
+        }
+
+        // Run health checks
+        const results = await llmHealthMonitor.checkAllProviders(providers);
+        const summary = llmHealthMonitor.getSummary();
+
+        // Format response with detailed error info
+        const formattedResults = results.map(r => ({
+            id: r.id,
+            name: r.provider,
+            providerId: r.providerId,
+            status: r.status,
+            statusLabel: getHealthStatusLabel(r.status),
+            isHealthy: r.status === HealthStatus.HEALTHY,
+            isDegraded: r.status === HealthStatus.DEGRADED,
+            isUnhealthy: r.status === HealthStatus.UNHEALTHY,
+            errorCategory: r.errorCategory,
+            error: r.error ? {
+                title: r.error.title,
+                description: r.error.description,
+                action: r.error.action,
+                code: r.errorCategory
+            } : null,
+            rawError: r.rawError,
+            statusCode: r.statusCode,
+            responseTime: r.responseTime,
+            lastCheck: r.lastCheck
+        }));
+
+        // Generate alerts for unhealthy providers
+        const alerts = formattedResults
+            .filter(r => r.isUnhealthy)
+            .map(r => ({
+                severity: 'error',
+                provider: r.name,
+                providerId: r.providerId,
+                title: r.error?.title || 'Provider niedostępny',
+                description: r.error?.description || r.rawError,
+                action: r.error?.action || 'Sprawdź konfigurację',
+                code: r.errorCategory,
+                timestamp: r.lastCheck
+            }));
+
+        // Add warnings for degraded providers
+        formattedResults
+            .filter(r => r.isDegraded)
+            .forEach(r => {
+                alerts.push({
+                    severity: 'warning',
+                    provider: r.name,
+                    providerId: r.providerId,
+                    title: 'Spowolniona odpowiedź',
+                    description: `Czas odpowiedzi: ${r.responseTime}ms`,
+                    action: 'Monitoruj wydajność',
+                    timestamp: r.lastCheck
+                });
+            });
+
+        res.json({
+            success: true,
+            summary: {
+                ...summary,
+                healthyCount: formattedResults.filter(r => r.isHealthy).length,
+                degradedCount: formattedResults.filter(r => r.isDegraded).length,
+                unhealthyCount: formattedResults.filter(r => r.isUnhealthy).length
+            },
+            providers: formattedResults,
+            alerts: alerts.sort((a, b) => {
+                const severityOrder = { error: 0, warning: 1, info: 2 };
+                return severityOrder[a.severity] - severityOrder[b.severity];
+            }),
+            errorCategories: ErrorMessages
+        });
+    } catch (error) {
+        console.error('[LLM Health Detailed] Error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * POST /api/llm/health/test-provider
+ * Test a specific provider with detailed diagnosis
+ */
+router.post('/health/test-provider', verifyToken, async (req, res) => {
+    try {
+        const { providerId } = req.body;
+
+        if (!providerId) {
+            return res.status(400).json({
+                success: false,
+                error: 'providerId is required'
+            });
+        }
+
+        // Get provider config
+        const provider = await dbGet(`
+            SELECT id, name, provider, api_key, endpoint, model_id
+            FROM llm_providers 
+            WHERE id = ?
+        `, [providerId]);
+
+        if (!provider) {
+            return res.status(404).json({
+                success: false,
+                error: 'Provider not found'
+            });
+        }
+
+        // Run health check
+        const result = await llmHealthMonitor.testProvider(provider);
+
+        res.json({
+            success: result.status === HealthStatus.HEALTHY || result.status === HealthStatus.DEGRADED,
+            provider: {
+                id: providerId,
+                name: result.provider,
+                providerId: result.providerId,
+                status: result.status,
+                statusLabel: getHealthStatusLabel(result.status),
+                error: result.error ? {
+                    title: result.error.title,
+                    description: result.error.description,
+                    action: result.error.action,
+                    code: result.errorCategory
+                } : null,
+                rawError: result.rawError,
+                statusCode: result.statusCode,
+                responseTime: result.responseTime,
+                lastCheck: result.lastCheck
+            }
+        });
+    } catch (error) {
+        console.error('[LLM Health Test] Error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * GET /api/llm/health/alerts
+ * Get current health alerts
+ */
+router.get('/health/alerts', verifyToken, async (req, res) => {
+    try {
+        const cachedStatuses = llmHealthMonitor.getAllCachedStatuses();
+
+        const alerts = cachedStatuses
+            .filter(s => s.status !== HealthStatus.HEALTHY)
+            .map(s => ({
+                severity: s.status === HealthStatus.UNHEALTHY ? 'error' : 'warning',
+                provider: s.provider,
+                title: s.error?.title || (s.status === HealthStatus.DEGRADED ? 'Spowolniona odpowiedź' : 'Nieznany problem'),
+                description: s.error?.description || s.rawError,
+                action: s.error?.action || 'Sprawdź konfigurację',
+                code: s.errorCategory,
+                responseTime: s.responseTime,
+                lastCheck: s.lastCheck
+            }));
+
+        res.json({
+            success: true,
+            count: alerts.length,
+            alerts
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Helper function for status labels
+function getHealthStatusLabel(status) {
+    switch (status) {
+        case HealthStatus.HEALTHY:
+            return { text: 'Zdrowy', textEn: 'Healthy', color: 'green', icon: 'check-circle' };
+        case HealthStatus.DEGRADED:
+            return { text: 'Spowolniony', textEn: 'Degraded', color: 'yellow', icon: 'alert-triangle' };
+        case HealthStatus.UNHEALTHY:
+            return { text: 'Niedostępny', textEn: 'Unhealthy', color: 'red', icon: 'x-circle' };
+        default:
+            return { text: 'Nieznany', textEn: 'Unknown', color: 'gray', icon: 'help-circle' };
+    }
+}
 
 module.exports = router;

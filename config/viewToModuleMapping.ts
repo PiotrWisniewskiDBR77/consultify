@@ -8,7 +8,7 @@
 import { AppView } from '../types';
 
 // Module identifiers for the help system
-export type HelpModuleId = 
+export type HelpModuleId =
     | 'dashboard'
     | 'assessment'
     | 'initiatives'
@@ -24,7 +24,8 @@ export type HelpModuleId =
     | 'knowledge'
     | 'onboarding'
     | 'consultant'
-    | 'ecosystem';
+    | 'ecosystem'
+    | 'playbook-templates';
 
 // Card ID mapping for contextual help within modules
 export interface ViewHelpMapping {
@@ -79,7 +80,7 @@ export const VIEW_TO_MODULE_MAP: Record<string, ViewHelpMapping> = {
     [AppView.ASSESSMENT_DASHBOARD]: { moduleId: 'assessment', cardId: 'assessment-dashboard' },
     [AppView.GAP_MAP]: { moduleId: 'assessment', cardId: 'gap-map' },
     [AppView.ASSESSMENT_REPORTS]: { moduleId: 'assessment', cardId: 'assessment-reports' },
-    
+
     // DRD Axis Views
     [AppView.FULL_STEP1_PROCESSES]: { moduleId: 'assessment', cardId: 'assessment-drd', subSection: 'processes' },
     [AppView.FULL_STEP1_DIGITAL]: { moduleId: 'assessment', cardId: 'assessment-drd', subSection: 'digital' },
@@ -199,7 +200,7 @@ export const VIEW_TO_MODULE_MAP: Record<string, ViewHelpMapping> = {
     [AppView.SUPERADMIN_ORGANIZATIONS]: { moduleId: 'superadmin', cardId: 'superadmin-organizations' },
     [AppView.SUPERADMIN_USERS]: { moduleId: 'superadmin', cardId: 'superadmin-users' },
     [AppView.SUPERADMIN_BILLING]: { moduleId: 'superadmin', cardId: 'superadmin-billing' },
-    [AppView.SUPERADMIN_AI_CONFIG]: { moduleId: 'superadmin', cardId: 'superadmin-ai' },
+    [AppView.SUPERADMIN_AI_CONFIG]: { moduleId: 'superadmin', cardId: 'superadmin-ai-config' },
     [AppView.SUPERADMIN_KNOWLEDGE]: { moduleId: 'superadmin', cardId: 'superadmin-knowledge' },
     [AppView.SUPERADMIN_SETTINGS]: { moduleId: 'superadmin', cardId: 'superadmin-settings' },
     [AppView.SUPERADMIN_SSO]: { moduleId: 'superadmin', cardId: 'superadmin-sso' },
@@ -209,8 +210,9 @@ export const VIEW_TO_MODULE_MAP: Record<string, ViewHelpMapping> = {
     [AppView.SUPERADMIN_COMPLIANCE]: { moduleId: 'superadmin', cardId: 'superadmin-compliance' },
     [AppView.SUPERADMIN_INVOICES]: { moduleId: 'superadmin', cardId: 'superadmin-invoices' },
     [AppView.SUPERADMIN_BULK_OPERATIONS]: { moduleId: 'superadmin', cardId: 'superadmin-bulk-ops' },
-    [AppView.SUPERADMIN_PLAYBOOK_TEMPLATES]: { moduleId: 'superadmin', cardId: 'superadmin-playbooks' },
-    [AppView.SUPERADMIN_PLAYBOOK_EDITOR]: { moduleId: 'superadmin', cardId: 'superadmin-playbook-editor' },
+    [AppView.SUPERADMIN_FEEDBACK]: { moduleId: 'superadmin', cardId: 'superadmin-feedback' },
+    [AppView.SUPERADMIN_PLAYBOOK_TEMPLATES]: { moduleId: 'playbook-templates', cardId: 'superadmin-playbooks' },
+    [AppView.SUPERADMIN_PLAYBOOK_EDITOR]: { moduleId: 'playbook-templates', cardId: 'superadmin-playbook-editor' },
 };
 
 /**

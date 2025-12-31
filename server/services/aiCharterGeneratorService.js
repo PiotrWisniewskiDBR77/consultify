@@ -15,8 +15,29 @@ const db = require('../database');
 const AIService = require('./aiService');
 const InitiativeTemplateService = require('./initiativeTemplateService');
 
+// Lazy-load enterprise services
+let IndustryIntelligenceService = null;
+let FrameworkEngine = null;
+let StrategicRecommendationService = null;
+
+function getEnterpriseServices() {
+    if (!IndustryIntelligenceService) {
+        try {
+            IndustryIntelligenceService = require('./ai/intelligence/industryIntelligenceService');
+            FrameworkEngine = require('./ai/frameworks/frameworkEngine');
+            StrategicRecommendationService = require('./ai/frameworks/strategicRecommendationService');
+        } catch (e) {
+            console.warn('[AICharterGenerator] Enterprise services not available:', e.message);
+        }
+    }
+    return { IndustryIntelligenceService, FrameworkEngine, StrategicRecommendationService };
+}
+
 // Task type mapping for generated tasks
 const TASK_TYPES = ['ANALYSIS', 'DESIGN', 'BUILD', 'PILOT', 'VALIDATION', 'DECISION', 'CHANGE_MGMT'];
+
+// RACI role types for governance
+const RACI_ROLES = ['RESPONSIBLE', 'ACCOUNTABLE', 'CONSULTED', 'INFORMED'];
 
 class AICharterGeneratorService {
     /**
@@ -123,6 +144,360 @@ class AICharterGeneratorService {
             console.error('[AICharterGenerator] Error generating charter:', error);
             throw error;
         }
+    }
+
+    /**
+     * Generate enterprise-grade charter with full strategic context
+     * Includes industry intelligence, framework analyses, and governance structure
+     * @param {Object} request - AICharterRequest
+     * @param {string} userId - User generating the charter
+     * @param {Object} orgProfile - Organization profile with strategic context
+     * @returns {Promise<Object>} EnterpriseAIGeneratedCharter
+     */
+    static async generateEnterpriseCharter(request, userId, orgProfile = null) {
+        const startTime = Date.now();
+        
+        try {
+            // 1. Get base charter
+            const baseCharter = await this.generateFullCharter(request, userId);
+            
+            // 2. Get enterprise services
+            const { IndustryIntelligenceService, FrameworkEngine, StrategicRecommendationService } = getEnterpriseServices();
+            
+            if (!IndustryIntelligenceService || !orgProfile) {
+                // Return base charter if enterprise services not available
+                return {
+                    ...baseCharter,
+                    enterpriseEnhanced: false
+                };
+            }
+
+            // 3. Gather enterprise context
+            const industry = orgProfile.industry || 'Technology';
+            const [industryContext, benchmarks] = await Promise.all([
+                IndustryIntelligenceService.getIndustryContext(industry, orgProfile.industry_subsector),
+                this.getBenchmarksForCharter(industry, orgProfile.company_size)
+            ]);
+
+            // 4. Generate strategic alignment section
+            const strategicAlignment = await this.generateStrategicAlignment(
+                baseCharter, orgProfile, industryContext
+            );
+
+            // 5. Generate financial model with enhanced metrics
+            const financialModel = await this.generateFinancialModel(
+                baseCharter, orgProfile, request.constraints
+            );
+
+            // 6. Generate governance structure with RACI
+            const governanceStructure = await this.generateGovernanceStructure(
+                baseCharter, request.constraints
+            );
+
+            // 7. Calculate AI confidence scores
+            const aiMetadata = this.calculateAIMetadata(
+                baseCharter, industryContext, orgProfile
+            );
+
+            // 8. Assemble enterprise charter
+            const enterpriseCharter = {
+                ...baseCharter,
+                
+                // Strategic Alignment Section
+                strategicAlignment: {
+                    alignmentScore: strategicAlignment.alignmentScore,
+                    strategicPrioritiesMatch: strategicAlignment.prioritiesMatch,
+                    competitivePositioning: strategicAlignment.competitivePositioning,
+                    transformationFit: strategicAlignment.transformationFit,
+                    industryBenchmark: benchmarks
+                },
+                
+                // Enhanced Financial Model
+                financialModel: {
+                    investmentSummary: financialModel.investmentSummary,
+                    npvAnalysis: financialModel.npv,
+                    irrEstimate: financialModel.irr,
+                    paybackPeriod: financialModel.paybackPeriod,
+                    sensitivityAnalysis: financialModel.sensitivity,
+                    riskAdjustedROI: financialModel.riskAdjustedROI
+                },
+                
+                // Governance Structure with RACI
+                governanceStructure: {
+                    raciMatrix: governanceStructure.raciMatrix,
+                    decisionRights: governanceStructure.decisionRights,
+                    escalationPath: governanceStructure.escalationPath,
+                    reviewCadence: governanceStructure.reviewCadence
+                },
+                
+                // AI Metadata with Confidence Scores
+                aiMetadata: {
+                    overallConfidence: aiMetadata.overallConfidence,
+                    dataQuality: aiMetadata.dataQuality,
+                    sectionConfidence: aiMetadata.sectionConfidence,
+                    modelVersion: '2.0-enterprise',
+                    industryContextUsed: !!industryContext,
+                    frameworksApplied: aiMetadata.frameworksApplied
+                },
+                
+                // Enterprise flags
+                enterpriseEnhanced: true,
+                enterpriseGenerationTime: Date.now() - startTime
+            };
+
+            // 9. Log enterprise generation
+            await this.logEnterpriseGeneration(enterpriseCharter, request, userId, orgProfile);
+
+            return enterpriseCharter;
+
+        } catch (error) {
+            console.error('[AICharterGenerator] Enterprise generation error:', error);
+            // Fallback to base charter
+            return await this.generateFullCharter(request, userId);
+        }
+    }
+
+    /**
+     * Generate strategic alignment section
+     */
+    static async generateStrategicAlignment(charter, orgProfile, industryContext) {
+        const priorities = orgProfile.strategic_priorities || [];
+        const position = orgProfile.competitive_position || 'CHALLENGER';
+        const stage = orgProfile.growth_stage || 'MATURE';
+
+        // Calculate alignment with strategic priorities
+        const charterText = `${charter.name} ${charter.description} ${charter.strategicIntent}`.toLowerCase();
+        const prioritiesMatch = priorities.filter(p => 
+            charterText.includes(p.toLowerCase())
+        );
+
+        // Competitive positioning assessment
+        const positioningMap = {
+            LEADER: { fit: 'DEFEND', focus: 'Innovation and efficiency' },
+            CHALLENGER: { fit: 'ATTACK', focus: 'Differentiation and growth' },
+            FOLLOWER: { fit: 'OPTIMIZE', focus: 'Efficiency and niche' },
+            NICHE: { fit: 'SPECIALIZE', focus: 'Deep expertise' }
+        };
+
+        // Transformation fit based on stage
+        const stageFitMap = {
+            STARTUP: { readiness: 'HIGH', note: 'High agility, limited resources' },
+            SCALE_UP: { readiness: 'HIGH', note: 'Growth focus, scaling capability' },
+            MATURE: { readiness: 'MEDIUM', note: 'Established processes, change management needed' },
+            TURNAROUND: { readiness: 'MEDIUM', note: 'Focused priorities, resource constraints' }
+        };
+
+        return {
+            alignmentScore: Math.min(100, 50 + (prioritiesMatch.length * 15) + (priorities.length > 0 ? 20 : 0)),
+            prioritiesMatch,
+            competitivePositioning: positioningMap[position] || positioningMap.CHALLENGER,
+            transformationFit: stageFitMap[stage] || stageFitMap.MATURE,
+            industryTrends: industryContext?.trends?.items?.slice(0, 3) || []
+        };
+    }
+
+    /**
+     * Generate enhanced financial model
+     */
+    static async generateFinancialModel(charter, orgProfile, constraints) {
+        const budget = charter.estimatedBudget || 500000;
+        const roi = charter.estimatedROI || 1.5;
+        const timelineMonths = parseInt(charter.timeline) || 12;
+        const riskLevel = charter.riskLevel || 'MEDIUM';
+
+        // Risk adjustment factors
+        const riskFactors = { LOW: 0.95, MEDIUM: 0.85, HIGH: 0.70 };
+        const riskFactor = riskFactors[riskLevel] || 0.85;
+
+        // NPV calculation (simplified, 10% discount rate)
+        const discountRate = 0.10;
+        const annualBenefit = charter.annualBenefit || budget * roi;
+        const npv = -budget + (annualBenefit / (1 + discountRate)) + (annualBenefit / Math.pow(1 + discountRate, 2));
+
+        // IRR estimate based on ROI and timeline
+        const irr = Math.round(((roi - 1) / (timelineMonths / 12)) * 100);
+
+        // Payback period
+        const monthlyBenefit = annualBenefit / 12;
+        const paybackMonths = Math.ceil(budget / monthlyBenefit);
+
+        return {
+            investmentSummary: {
+                totalInvestment: budget,
+                capex: charter.capex || budget * 0.7,
+                opex: charter.firstYearOpex || budget * 0.3,
+                contingency: Math.round(budget * 0.15)
+            },
+            npv: {
+                value: Math.round(npv),
+                discountRate: '10%',
+                horizon: '3 years'
+            },
+            irr: {
+                estimate: `${irr}%`,
+                confidence: riskLevel === 'LOW' ? 'HIGH' : 'MEDIUM'
+            },
+            paybackPeriod: {
+                months: paybackMonths,
+                confidence: riskLevel === 'LOW' ? 'HIGH' : 'MEDIUM'
+            },
+            sensitivity: {
+                bestCase: { roi: roi * 1.2, npv: Math.round(npv * 1.3) },
+                baseCase: { roi, npv: Math.round(npv) },
+                worstCase: { roi: roi * 0.6, npv: Math.round(npv * 0.5) }
+            },
+            riskAdjustedROI: Math.round(roi * riskFactor * 100) / 100
+        };
+    }
+
+    /**
+     * Generate governance structure with RACI matrix
+     */
+    static async generateGovernanceStructure(charter, constraints) {
+        const team = charter.suggestedTeam || [];
+        const tasks = charter.suggestedTasks || [];
+
+        // Generate RACI matrix
+        const keyActivities = [
+            'Initiative Approval',
+            'Budget Allocation',
+            'Design Decisions',
+            'Implementation',
+            'Quality Assurance',
+            'Change Management',
+            'Stakeholder Communication'
+        ];
+
+        const raciMatrix = keyActivities.map(activity => {
+            const raci = {};
+            team.forEach(member => {
+                if (member.role === 'STAKEHOLDER') {
+                    raci[member.title] = activity.includes('Approval') || activity.includes('Budget') ? 'A' : 'I';
+                } else if (member.role === 'CONTRIBUTOR') {
+                    raci[member.title] = activity.includes('Implementation') || activity.includes('Design') ? 'R' : 'C';
+                } else if (member.role === 'SME') {
+                    raci[member.title] = 'C';
+                } else if (member.role === 'REVIEWER') {
+                    raci[member.title] = activity.includes('Quality') ? 'R' : 'I';
+                } else {
+                    raci[member.title] = 'I';
+                }
+            });
+            return { activity, ...raci };
+        });
+
+        return {
+            raciMatrix,
+            decisionRights: {
+                strategic: 'Steering Committee',
+                tactical: 'Project Manager',
+                operational: 'Team Lead'
+            },
+            escalationPath: [
+                { level: 1, owner: 'Project Manager', scope: 'Day-to-day issues' },
+                { level: 2, owner: 'Project Sponsor', scope: 'Budget/scope changes' },
+                { level: 3, owner: 'Steering Committee', scope: 'Strategic decisions' }
+            ],
+            reviewCadence: {
+                daily: 'Stand-ups',
+                weekly: 'Progress reviews',
+                monthly: 'Steering committee',
+                quarterly: 'Business review'
+            }
+        };
+    }
+
+    /**
+     * Calculate AI metadata and confidence scores
+     */
+    static calculateAIMetadata(charter, industryContext, orgProfile) {
+        const sectionConfidence = {};
+        
+        // Calculate confidence for each section
+        sectionConfidence.basicInfo = charter.generationConfidence === 'HIGH' ? 0.9 : 0.7;
+        sectionConfidence.problem = charter.problemStructured ? 0.85 : 0.5;
+        sectionConfidence.targetState = charter.targetState ? 0.8 : 0.5;
+        sectionConfidence.financials = orgProfile ? 0.75 : 0.5;
+        sectionConfidence.team = charter.suggestedTeam?.length > 0 ? 0.8 : 0.5;
+        sectionConfidence.tasks = charter.suggestedTasks?.length > 0 ? 0.85 : 0.5;
+
+        const avgConfidence = Object.values(sectionConfidence).reduce((a, b) => a + b, 0) / 
+                            Object.keys(sectionConfidence).length;
+
+        // Data quality assessment
+        let dataQuality = 'MEDIUM';
+        if (orgProfile && industryContext && charter.suggestedTasks?.length > 5) {
+            dataQuality = 'HIGH';
+        } else if (!orgProfile && !industryContext) {
+            dataQuality = 'LOW';
+        }
+
+        return {
+            overallConfidence: avgConfidence >= 0.8 ? 'HIGH' : avgConfidence >= 0.6 ? 'MEDIUM' : 'LOW',
+            confidenceScore: Math.round(avgConfidence * 100),
+            dataQuality,
+            sectionConfidence,
+            frameworksApplied: industryContext ? ['Industry Benchmarks', 'Strategic Alignment'] : []
+        };
+    }
+
+    /**
+     * Get benchmarks for charter context
+     */
+    static async getBenchmarksForCharter(industry, companySize) {
+        try {
+            const BenchmarkService = require('./ai/intelligence/benchmarkDataService');
+            const benchmarks = await BenchmarkService.getBenchmarkData(industry, companySize);
+            return {
+                industry,
+                medianMaturity: benchmarks.overallBenchmark?.median || 4.0,
+                topQuartile: benchmarks.overallBenchmark?.p75 || 5.5,
+                source: 'DRD Industry Benchmarks'
+            };
+        } catch (e) {
+            return {
+                industry,
+                medianMaturity: 4.0,
+                topQuartile: 5.5,
+                source: 'Default Benchmarks'
+            };
+        }
+    }
+
+    /**
+     * Log enterprise generation for audit
+     */
+    static async logEnterpriseGeneration(charter, request, userId, orgProfile) {
+        return new Promise((resolve) => {
+            const sql = `
+                INSERT INTO ai_charter_generations 
+                (id, initiative_id, source_type, template_id, gaps_json, constraints_json, 
+                 generated_charter_json, confidence_score, generation_time_ms, created_by)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `;
+
+            const confidenceScore = charter.aiMetadata?.confidenceScore 
+                ? charter.aiMetadata.confidenceScore / 100 
+                : 0.7;
+
+            db.run(sql, [
+                uuidv4(),
+                charter.id,
+                'ENTERPRISE',
+                request.templateId || null,
+                JSON.stringify(request.gaps || []),
+                JSON.stringify({ ...request.constraints, orgProfile: orgProfile?.id }),
+                JSON.stringify(charter),
+                confidenceScore,
+                charter.enterpriseGenerationTime || 0,
+                userId
+            ], (err) => {
+                if (err) {
+                    console.warn('[AICharterGenerator] Failed to log enterprise generation:', err.message);
+                }
+                resolve();
+            });
+        });
     }
 
     /**

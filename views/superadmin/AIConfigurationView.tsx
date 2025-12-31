@@ -186,7 +186,7 @@ export const AIConfigurationView: React.FC = () => {
 
     const getDefaultPrompt = (capabilityId: string): string => {
         const defaults: Record<string, string> = {
-            chat: `You are a professional AI consultant for the Consultify platform.
+            chat: `You are a professional AI consultant for the TechnoLex platform.
 Your role: Help users manage digital transformation projects.
 
 RULES:
@@ -665,10 +665,10 @@ Help leaders develop change management competencies.`
 
                                 <div className="space-y-4">
                                     {[
-                                        { tier: 'BUDGET', label: 'Budget Tier', desc: 'Simple questions, fast responses', default: 'deepseek-chat' },
-                                        { tier: 'STANDARD', label: 'Standard Tier', desc: 'Most tasks (chat, magic wand)', default: 'gpt-4o-mini' },
+                                        { tier: 'BUDGET', label: 'Budget Tier', desc: 'Simple questions, fast responses', default: 'gpt-4o-mini' },
+                                        { tier: 'STANDARD', label: 'Standard Tier', desc: 'Most tasks (chat, magic wand)', default: 'gpt-4o' },
                                         { tier: 'PREMIUM', label: 'Premium Tier', desc: 'Complex analysis, reports', default: 'gpt-4o' },
-                                        { tier: 'REASONING', label: 'Reasoning Tier', desc: 'MAX Mode, deep thinking', default: 'o1-preview' },
+                                        { tier: 'REASONING', label: 'Reasoning Tier', desc: 'MAX Mode, deep thinking', default: 'gpt-4o' },
                                     ].map(item => (
                                         <div key={item.tier} className="flex items-center gap-4 p-4 bg-navy-950/50 rounded-lg border border-white/5">
                                             <div className="flex-1">

@@ -116,24 +116,37 @@ class InitiativeGeneratorService {
 
     /**
      * Consolidate gaps from all assessment sources
+     * REFACTORED: Only includes gaps where Target > Actual
      * @param {Object} assessmentData - All assessment data
      * @returns {Array} Prioritized gaps
      */
     static consolidateGaps(assessmentData) {
         const gaps = [];
 
-        // DRD gaps
+        // DRD gaps - ONLY where Target > Actual
         if (assessmentData.drd && assessmentData.drd.axis_scores) {
             assessmentData.drd.axis_scores.forEach(axisScore => {
-                if (axisScore.gap && axisScore.gap > 2) { // Only significant gaps
+                const actual = axisScore.asIs || axisScore.actual || 0;
+                const target = axisScore.toBe || axisScore.target || 0;
+                const gap = target - actual;
+                
+                // Only generate initiatives where Target > Actual (meaningful gap)
+                if (gap > 0) {
                     gaps.push({
                         source: 'DRD',
                         sourceId: assessmentData.drd.id,
                         dimension: axisScore.axis,
-                        asIs: axisScore.asIs,
-                        toBe: axisScore.toBe,
-                        gap: axisScore.gap,
-                        priority: this.calculateGapPriority(axisScore.gap, 'DRD')
+                        asIs: actual,
+                        toBe: target,
+                        gap: gap,
+                        maxLevel: this._getAxisMaxLevel(axisScore.axis),
+                        // Enhanced fields for initiative generation
+                        isQuickWin: gap <= 2 && actual >= 2,
+                        isStrategic: gap >= 3 || target >= this._getAxisMaxLevel(axisScore.axis) - 1,
+                        complexity: this._calculateComplexity(gap, actual, target),
+                        estimatedDuration: this._estimateDuration(gap),
+                        areaScores: axisScore.areaScores || {},
+                        priority: this.calculateGapPriority(gap, 'DRD')
                     });
                 }
             });
@@ -199,6 +212,50 @@ class InitiativeGeneratorService {
         if (source === 'LEAN') priority *= 1.1;
 
         return Math.min(Math.round(priority), 100);
+    }
+
+    /**
+     * Get max level for DRD axis
+     * @param {string} axis - Axis name
+     * @returns {number} Max level
+     */
+    static _getAxisMaxLevel(axis) {
+        const maxLevels = {
+            processes: 7,
+            dataManagement: 7,
+            digitalProducts: 5,
+            businessModels: 5,
+            culture: 5,
+            cybersecurity: 5,
+            aiMaturity: 5
+        };
+        return maxLevels[axis] || 5;
+    }
+
+    /**
+     * Calculate complexity based on gap characteristics
+     * @param {number} gap - Gap size
+     * @param {number} actual - Current level
+     * @param {number} target - Target level
+     * @returns {string} Complexity level
+     */
+    static _calculateComplexity(gap, actual, target) {
+        if (gap <= 1) return 'LOW';
+        if (gap <= 2 && actual >= 2) return 'MEDIUM';
+        if (gap >= 4 || actual <= 1) return 'HIGH';
+        return 'MEDIUM';
+    }
+
+    /**
+     * Estimate duration based on gap
+     * @param {number} gap - Gap size
+     * @returns {string} Estimated duration
+     */
+    static _estimateDuration(gap) {
+        if (gap <= 1) return '1-3 months';
+        if (gap <= 2) return '3-6 months';
+        if (gap <= 3) return '6-12 months';
+        return '12-18 months';
     }
 
     /**
@@ -269,6 +326,7 @@ class InitiativeGeneratorService {
 
     /**
      * Create initiative from gap group
+     * ENHANCED: Adds sourceGaps, axisMapping, estimatedDuration, complexity, quickWin
      * @param {string} theme - Theme name
      * @param {Array} gaps - Gaps in this theme
      * @param {Object} assessmentData - Assessment data
@@ -277,6 +335,17 @@ class InitiativeGeneratorService {
     static createInitiativeFromGaps(theme, gaps, assessmentData) {
         const avgGap = gaps.reduce((sum, g) => sum + g.gap, 0) / gaps.length;
         const avgPriority = gaps.reduce((sum, g) => sum + g.priority, 0) / gaps.length;
+        const hasQuickWins = gaps.some(g => g.isQuickWin);
+        const hasStrategic = gaps.some(g => g.isStrategic);
+        
+        // Determine complexity from gaps
+        const complexities = gaps.map(g => g.complexity || 'MEDIUM');
+        const complexity = complexities.includes('HIGH') ? 'HIGH' 
+            : complexities.includes('MEDIUM') ? 'MEDIUM' : 'LOW';
+        
+        // Estimate duration from worst case
+        const durations = gaps.map(g => g.estimatedDuration || '6-12 months');
+        const estimatedDuration = this._mergeEstimatedDurations(durations);
 
         // Generate initiative based on theme
         const initiative = {
@@ -293,6 +362,38 @@ class InitiativeGeneratorService {
 
             // Business value estimation
             business_value: avgGap > 4 ? 'High' : avgGap > 2.5 ? 'Medium' : 'Low',
+
+            // === NEW FIELDS from Digital Pathfinder ===
+            
+            // Source gaps that this initiative addresses
+            sourceGaps: gaps.map(g => ({
+                axis: g.dimension,
+                actual: g.asIs,
+                target: g.toBe,
+                gap: g.gap,
+                priority: g.priority,
+                isQuickWin: g.isQuickWin,
+                isStrategic: g.isStrategic
+            })),
+            
+            // DRD axis mapping
+            axisMapping: {
+                primaryAxis: this.mapThemeToDRDAxis(theme),
+                affectedAxes: [...new Set(gaps.map(g => g.dimension))],
+                totalGapPoints: gaps.reduce((sum, g) => sum + g.gap, 0)
+            },
+            
+            // Estimated duration based on gap analysis
+            estimatedDuration,
+            
+            // Complexity assessment
+            complexity,
+            
+            // Quick win flag (gap <= 2 but has impact)
+            quickWin: hasQuickWins && avgGap <= 2,
+            
+            // Strategic flag (large gap or high target)
+            strategic: hasStrategic,
 
             // Traceability
             derived_from_assessments: gaps.map(g => ({
@@ -319,6 +420,21 @@ class InitiativeGeneratorService {
         };
 
         return initiative;
+    }
+
+    /**
+     * Merge duration estimates (take longest)
+     * @param {Array} durations - Duration strings
+     * @returns {string} Merged duration
+     */
+    static _mergeEstimatedDurations(durations) {
+        const order = ['1-3 months', '3-6 months', '6-12 months', '12-18 months', '18+ months'];
+        let maxIndex = 0;
+        durations.forEach(d => {
+            const index = order.indexOf(d);
+            if (index > maxIndex) maxIndex = index;
+        });
+        return order[maxIndex] || '6-12 months';
     }
 
     /**

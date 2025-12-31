@@ -2340,6 +2340,26 @@
       "accuracyHint": "Dokładne notatki pomagają generować lepsze rekomendacje.",
       "save": "Zapisz",
       "ai": "AI"
+    },
+    "attachments": {
+      "title": "Załączniki",
+      "add": "Dodaj",
+      "noAttachments": "Brak załączników dla tego poziomu",
+      "addAttachment": "Dodaj załącznik",
+      "type": "Typ załącznika",
+      "description": "Opis (opcjonalnie)",
+      "descriptionPlaceholder": "Krótki opis załącznika...",
+      "selectFile": "Wybierz plik",
+      "uploading": "Przesyłanie...",
+      "allowedTypes": "Dozwolone: PDF, Word, Excel, PowerPoint, obrazy, CSV, TXT, JSON (max 25MB)",
+      "deleteConfirm": "Czy na pewno chcesz usunąć ten załącznik?",
+      "types": {
+        "EVIDENCE": "Dowód",
+        "SCREENSHOT": "Zrzut ekranu",
+        "DOCUMENT": "Dokument",
+        "REPORT": "Raport",
+        "OTHER": "Inne"
+      }
     }
   },
   "fullAssessment": {
@@ -2795,10 +2815,10 @@
           "cta": "Skontaktuj się"
         },
         "login": {
-          "title": "Zaloguj się",
-          "description": "Kontynuuj swoją podróż.",
-          "meta": "POWRACAJĄCY UŻYTKOWNICY",
-          "cta": "Zaloguj się"
+          "title": "Zapisz się",
+          "description": "Zacznij swoją podróż.",
+          "meta": "NOWI UŻYTKOWNICY",
+          "cta": "Zapisz się"
         }
       }
     },
@@ -3602,6 +3622,29 @@
             "Dokumentuj wszystkie zmiany konfiguracji",
             "Najpierw testuj zmiany SSO w sandboxie",
             "Monitoruj koszty AI w organizacjach"
+          ]
+        },
+        "playbookTemplates": {
+          "name": "Szablony Playbooków",
+          "description": "Twórz i zarządzaj szablonami AI Playbooków, które definiują standardowe przepływy pracy automatyzacji. Szablony te są dystrybuowane do organizacji najemców w celu lokalnego wykonania.",
+          "purpose": "Standaryzacja logiki automatyzacji AI w całej platformie, umożliwiająca uruchamianie deterministycznych procesów agentowych przez określone wyzwalacze (zmiany danych, czas, zdarzenia).",
+          "keyFeatures": [
+            "Wizualny kreator Playbooków",
+            "Wersjonowanie i zarządzanie cyklem życia",
+            "Konfiguracja wyzwalaczy",
+            "Silnik walidacji",
+            "Publikowanie jednym kliknięciem"
+          ],
+          "workflow": [
+            "Utwórz nowy szkic szablonu",
+            "Zdefiniuj wyzwalacze i logikę agenta",
+            "Zwaliduj strukturę szablonu",
+            "Opublikuj, aby udostępnić wszystkim organizacjom"
+          ],
+          "tips": [
+            "Zawsze waliduj szablony przed publikacją",
+            "Używaj opisowych kluczy dla łatwiejszego dostępu programistycznego",
+            "Deprecjonuj stare wersje zamiast usuwać, aby zachować historię"
           ]
         },
         "ai-tools": {

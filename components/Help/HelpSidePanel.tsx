@@ -82,6 +82,16 @@ const isVideoWatched = (videoId: string): boolean => {
     return getWatchedVideos().includes(videoId);
 };
 
+
+// Helper to safely get translated array (handles missing translations)
+const getTranslatedArray = (t: (key: string, options?: object) => unknown, key: string): string[] => {
+    const result = t(key, { returnObjects: true });
+    if (Array.isArray(result)) {
+        return result;
+    }
+    // If translation returns string (key not found), return empty array
+    return [];
+};
 // Search highlight helper
 const highlightText = (text: string, query: string): React.ReactNode => {
     if (!query.trim()) return text;
@@ -374,7 +384,7 @@ export const HelpSidePanel: React.FC = () => {
                                     {t('help.sidePanel.content.keyFeatures')}
                                 </h4>
                                 <ul className="space-y-2">
-                                    {(t(`${moduleHelp.translationKey}.keyFeatures`, { returnObjects: true }) as string[]).map((feature, idx) => (
+                                    {getTranslatedArray(t, `${moduleHelp.translationKey}.keyFeatures`).map((feature, idx) => (
                                         <li key={idx} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300">
                                             <CheckCircle2 size={14} className="text-green-500 flex-shrink-0 mt-0.5" />
                                             {feature}
@@ -390,7 +400,7 @@ export const HelpSidePanel: React.FC = () => {
                                     {t('help.sidePanel.content.workflow')}
                                 </h4>
                                 <ol className="space-y-2">
-                                    {(t(`${moduleHelp.translationKey}.workflow`, { returnObjects: true }) as string[]).map((step, idx) => (
+                                    {getTranslatedArray(t, `${moduleHelp.translationKey}.workflow`).map((step, idx) => (
                                         <li key={idx} className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-300">
                                             <span className="flex-shrink-0 w-5 h-5 rounded-full bg-slate-200 dark:bg-navy-700 flex items-center justify-center text-xs font-medium text-slate-600 dark:text-slate-300">
                                                 {idx + 1}
@@ -408,7 +418,7 @@ export const HelpSidePanel: React.FC = () => {
                                     {t('help.sidePanel.content.tips')}
                                 </h4>
                                 <ul className="space-y-2">
-                                    {(t(`${moduleHelp.translationKey}.tips`, { returnObjects: true }) as string[]).map((tip, idx) => (
+                                    {getTranslatedArray(t, `${moduleHelp.translationKey}.tips`).map((tip, idx) => (
                                         <li key={idx} className="text-sm text-amber-800 dark:text-amber-200/80 flex items-start gap-2">
                                             <span className="text-amber-500">•</span>
                                             {tip}

@@ -794,6 +794,11 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                             onNotesChange={(text: string) => onChange({ ...data, justification: text })}
                             onAiAssist={handleAiSuggestJustification}
                             isAiLoading={ai.isLoading}
+                            // Attachments support
+                            assessmentId={assessmentId}
+                            axisId={axis}
+                            areaId={currentAreaKey}
+                            readOnly={readOnly}
                         />
 
                         {/* AI Suggestion Panel */}

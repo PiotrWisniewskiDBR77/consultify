@@ -33,6 +33,8 @@ server/.env
 *.db
 *.db-journal
 *.db.bak
+*.db-wal
+*.db-shm
 # data/
 
 # Test artifacts
@@ -106,3 +108,4 @@ read_*.js
 parse_*.py
 test-*.js
 test-*.cjs
+secure_backups/

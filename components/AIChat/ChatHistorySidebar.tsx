@@ -84,25 +84,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
 
     return (
         <>
-            {/* Floating Toggle Button - Always visible when sidebar closed */}
-            {!isSidebarOpen && (
-                <div className="fixed top-20 left-4 z-40 flex flex-col gap-2">
-                    <button
-                        onClick={toggleSidebar}
-                        className="p-2.5 bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:text-primary-600 dark:hover:text-primary-400 rounded-xl shadow-lg border border-slate-200 dark:border-navy-700 hover:shadow-xl transition-all"
-                        title={t('aiChat.showHistory', 'Show history')}
-                    >
-                        <PanelLeft size={20} />
-                    </button>
-                    <button
-                        onClick={handleNewChat}
-                        className="p-2.5 bg-primary-600 hover:bg-primary-500 text-white rounded-xl shadow-lg hover:shadow-xl transition-all"
-                        title={t('aiChat.newSession', 'New Strategy Session')}
-                    >
-                        <Plus size={20} />
-                    </button>
-                </div>
-            )}
+            {/* NOTE: Floating buttons removed - ChatMenu now provides these functions */}
 
             {/* Overlay Background */}
             {isSidebarOpen && (

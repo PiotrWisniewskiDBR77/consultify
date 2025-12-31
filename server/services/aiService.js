@@ -465,7 +465,9 @@ const AiService = {
                 if (!providerConfig) {
                     // Fallback: Check OpenAI Env First
                     const openAIKey = process.env.OPENAI_API_KEY;
-                    const geminiKey = process.env.GEMINI_API_KEY;
+                    const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+                    const zaiKey = process.env.ZAI_API_KEY;
+                    const deepseekKey = process.env.DEEPSEEK_API_KEY;
 
                     if (openAIKey) {
                         // Fallback: OpenAI Env Streaming
@@ -511,9 +513,9 @@ const AiService = {
                         // Fallback: GeminiEnv
                         // const fallbackKey = process.env.GEMINI_API_KEY; // Already defined
                         // if (!fallbackKey) throw new Error("AI Provider not configured."); // Handled in else
-                        modelUsed = 'gemini-1.5-flash (fallback)';
+                        modelUsed = 'gemini-1.5-pro-latest (fallback)';
                         const genAI = new deps.GoogleGenerativeAI(geminiKey);
-                        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+                        const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro-latest" });
 
                         const chatSession = model.startChat({
                             history: history.map(h => ({
@@ -576,7 +578,7 @@ const AiService = {
                             }
                         }
                     }
-                    else if (['openai', 'qwen', 'deepseek', 'mistral', 'groq', 'together', 'nvidia_nim', 'z_ai', 'siliconflow'].includes(provider)) {
+                    else if (['openai', 'qwen', 'deepseek', 'mistral', 'groq', 'together', 'nvidia', 'nvidia_nim', 'z_ai', 'zai', 'siliconflow', 'cohere'].includes(provider)) {
                         const messages = history.map(h => ({
                             role: h.role === 'user' ? 'user' : 'assistant',
                             content: h.text || h.content || ''

@@ -3,10 +3,12 @@
  * 
  * Modal for creating a new report from an approved assessment.
  * Fetches list of approved assessments and allows selecting one to create a report.
+ * Includes context readiness validation before allowing report creation.
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { FileText, X, Loader2, CheckCircle2, AlertCircle, FileOutput, Plus, Search } from 'lucide-react';
+import { FileText, X, Loader2, CheckCircle2, AlertCircle, FileOutput, Plus, Search, Building2 } from 'lucide-react';
+import { ContextReadinessGate } from '../ContextReadinessGate';
 
 interface ApprovedAssessment {
     id: string;
@@ -38,6 +40,21 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
     const [creating, setCreating] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
+    
+    // Context readiness state
+    const [canGenerateReport, setCanGenerateReport] = useState(false);
+    const [contextScore, setContextScore] = useState(0);
+    const [showContextGate, setShowContextGate] = useState(false);
+    
+    // Handle context readiness change
+    const handleReadinessChange = useCallback((canFinalize: boolean, score: number) => {
+        setCanGenerateReport(canFinalize);
+        setContextScore(score);
+        // Show gate if score is below threshold
+        if (!canFinalize) {
+            setShowContextGate(true);
+        }
+    }, []);
 
     // Fetch approved assessments
     useEffect(() => {
@@ -189,6 +206,32 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
 
                 {/* Content */}
                 <div className="px-6 py-4 max-h-[500px] overflow-y-auto">
+                    {/* Context Readiness Gate - shown if context insufficient */}
+                    {showContextGate && !canGenerateReport && projectId && (
+                        <div className="mb-4">
+                            <ContextReadinessGate
+                                projectId={projectId}
+                                onReadinessChange={handleReadinessChange}
+                                onNavigateToContext={() => {
+                                    onClose();
+                                    // Navigate to organization profile - parent should handle this
+                                }}
+                                showRecommendations={true}
+                            />
+                        </div>
+                    )}
+                    
+                    {/* Context check for projectId */}
+                    {projectId && !showContextGate && !canGenerateReport && (
+                        <div className="hidden">
+                            <ContextReadinessGate
+                                projectId={projectId}
+                                onReadinessChange={handleReadinessChange}
+                                compact={true}
+                            />
+                        </div>
+                    )}
+                    
                     {success ? (
                         <div className="flex flex-col items-center justify-center py-8">
                             <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-500/20 flex items-center justify-center mb-4">
@@ -324,19 +367,25 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
                             </button>
                             <button
                                 onClick={handleCreate}
-                                disabled={!selectedAssessmentId || !reportName.trim() || creating}
+                                disabled={!selectedAssessmentId || !reportName.trim() || creating || (projectId && !canGenerateReport)}
                                 className={`
                                     flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all
-                                    ${selectedAssessmentId && reportName.trim() && !creating
+                                    ${selectedAssessmentId && reportName.trim() && !creating && (!projectId || canGenerateReport)
                                         ? 'bg-purple-600 hover:bg-purple-500 text-white'
                                         : 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
                                     }
                                 `}
+                                title={projectId && !canGenerateReport ? `Context score (${contextScore}%) is below required threshold` : undefined}
                             >
                                 {creating ? (
                                     <>
                                         <Loader2 size={16} className="animate-spin" />
                                         Tworzę...
+                                    </>
+                                ) : projectId && !canGenerateReport ? (
+                                    <>
+                                        <Building2 size={16} />
+                                        Uzupełnij kontekst ({contextScore}%)
                                     </>
                                 ) : (
                                     <>

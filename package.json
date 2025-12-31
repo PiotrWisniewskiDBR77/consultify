@@ -102,6 +102,7 @@
     "remark-gfm": "^4.0.1",
     "speakeasy": "^2.0.0",
     "sqlite3": "^5.1.7",
+    "twilio": "^5.11.1",
     "uuid": "^13.0.0",
     "winston": "^3.19.0",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz",

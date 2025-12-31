@@ -183,3 +183,46 @@ CREATE TABLE IF NOT EXISTS enterprise_report_generations (
 CREATE INDEX IF NOT EXISTS idx_enterprise_reports_status ON enterprise_report_generations(pipeline_status);
 CREATE INDEX IF NOT EXISTS idx_enterprise_reports_report ON enterprise_report_generations(report_id);
 
+-- ============================================
+-- ASSESSMENT LEVEL ATTACHMENTS TABLE
+-- For attaching evidence files to specific maturity levels
+-- ============================================
+CREATE TABLE IF NOT EXISTS assessment_level_attachments (
+    id TEXT PRIMARY KEY,
+    assessment_id TEXT NOT NULL,
+    
+    -- Level identification
+    axis_id TEXT NOT NULL,                      -- e.g., 'processes', 'digitalProducts', 'culture'
+    area_id TEXT,                               -- e.g., 'sales', 'marketing' (functional area)
+    level_number INTEGER NOT NULL,              -- 1-7
+    attachment_type TEXT DEFAULT 'EVIDENCE' CHECK(attachment_type IN ('EVIDENCE', 'SCREENSHOT', 'DOCUMENT', 'REPORT', 'OTHER')),
+    
+    -- File info
+    file_name TEXT NOT NULL,
+    file_path TEXT NOT NULL,
+    file_size INTEGER,
+    mime_type TEXT,
+    
+    -- Metadata
+    description TEXT,
+    uploaded_by TEXT NOT NULL,
+    organization_id TEXT NOT NULL,
+    
+    -- AI Analysis (optional)
+    ai_analysis TEXT,                           -- JSON: AI's analysis of the document
+    ai_suggested_score INTEGER,                 -- AI's suggested score based on evidence
+    ai_confidence REAL,                         -- 0-1 confidence score
+    
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY(assessment_id) REFERENCES maturity_assessments(id) ON DELETE CASCADE,
+    FOREIGN KEY(uploaded_by) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_level_attachments_assessment ON assessment_level_attachments(assessment_id);
+CREATE INDEX IF NOT EXISTS idx_level_attachments_axis ON assessment_level_attachments(axis_id);
+CREATE INDEX IF NOT EXISTS idx_level_attachments_level ON assessment_level_attachments(level_number);
+CREATE INDEX IF NOT EXISTS idx_level_attachments_org ON assessment_level_attachments(organization_id);
+

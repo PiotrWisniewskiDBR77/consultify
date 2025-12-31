@@ -27,11 +27,13 @@ import {
     Trash2,
     AlertCircle,
     User,
-    ArrowRight
+    ArrowRight,
+    Upload
 } from 'lucide-react';
 import { NewReportModal } from './modals/NewReportModal';
 import { ReportEditor } from './ReportEditor';
 import { StageGateModal } from './modals/StageGateModal';
+import { ImportReportModal } from '../reports/ImportReportModal';
 
 interface Report {
     id: string;
@@ -93,6 +95,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
     const [isCreatingReport, setIsCreatingReport] = useState(false);
     const [editingReportId, setEditingReportId] = useState<string | null>(null);
     const [showStageGate, setShowStageGate] = useState(false);
+    const [showImportModal, setShowImportModal] = useState(false);
 
     // Fetch reports
     const fetchReports = useCallback(async () => {
@@ -285,17 +288,27 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                             Assessment reports created from approved assessments
                         </p>
                     </div>
-                    <button
-                        onClick={() => setShowStageGate(true)}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg transition-colors group relative"
-                        title="Approved Assessment → Draft Report → Final Report → Generate Initiatives"
-                    >
-                        <Plus size={18} />
-                        New Report
-                        <span className="hidden group-hover:block absolute top-full right-0 mt-2 px-3 py-2 bg-navy-900 dark:bg-navy-800 text-white text-xs rounded-lg shadow-lg whitespace-nowrap z-50">
-                            Workflow: Assessment → Report → Initiatives
-                        </span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setShowImportModal(true)}
+                            className="flex items-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                            title="Import an external assessment report (PDF/Excel)"
+                        >
+                            <Upload size={18} />
+                            Import
+                        </button>
+                        <button
+                            onClick={() => setShowStageGate(true)}
+                            className="flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg transition-colors group relative"
+                            title="Approved Assessment → Draft Report → Final Report → Generate Initiatives"
+                        >
+                            <Plus size={18} />
+                            New Report
+                            <span className="hidden group-hover:block absolute top-full right-0 mt-2 px-3 py-2 bg-navy-900 dark:bg-navy-800 text-white text-xs rounded-lg shadow-lg whitespace-nowrap z-50">
+                                Workflow: Assessment → Report → Initiatives
+                            </span>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Stats */}
@@ -630,6 +643,19 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                     onCreated={(reportId) => {
                         fetchReports();
                         setShowNewReportModal(false);
+                    }}
+                />
+            )}
+
+            {/* Import Report Modal */}
+            {showImportModal && (
+                <ImportReportModal
+                    projectId={projectId}
+                    onClose={() => setShowImportModal(false)}
+                    onImported={(reportId) => {
+                        fetchReports();
+                        setShowImportModal(false);
+                        toast.success('Report imported successfully');
                     }}
                 />
             )}

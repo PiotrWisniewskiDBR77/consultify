@@ -4,8 +4,10 @@
  * Centralized exports for AI Chat system components.
  */
 
-// Sidebar components
+// Menu and sidebar components
+export { ChatMenu } from './ChatMenu';
 export { ChatHistorySidebar } from './ChatHistorySidebar';
+export { ChatExportModal } from './ChatExportModal';
 export { ConversationList } from './ConversationList';
 export { ConversationItem } from './ConversationItem';
 export { ConversationActions } from './ConversationActions';

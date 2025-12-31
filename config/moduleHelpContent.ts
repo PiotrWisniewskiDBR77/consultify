@@ -191,6 +191,16 @@ export const MODULE_HELP_CONTENT: Record<HelpModuleId, ModuleHelp> = {
         targetAudience: ['admin'],
         relatedModules: ['consultant'],
         translationKey: 'help.sidePanel.modules.ecosystem'
+    },
+    // ==========================================
+    // PLAYBOOK TEMPLATES MODULE (New)
+    // ==========================================
+    'playbook-templates': {
+        id: 'playbook-templates',
+        icon: 'Layers',
+        targetAudience: ['superadmin'],
+        relatedModules: ['superadmin'],
+        translationKey: 'help.sidePanel.modules.playbookTemplates'
     }
 };
 

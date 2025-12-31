@@ -19,10 +19,41 @@
 
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 const verifyToken = require('../middleware/authMiddleware');
 const AssessmentOverviewService = require('../services/assessmentOverviewService');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../database');
+
+// Multer configuration for report imports
+const importStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const uploadDir = path.join(__dirname, '../../uploads/imports');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        cb(null, `import_${uuidv4()}${path.extname(file.originalname)}`);
+    }
+});
+
+const importUpload = multer({
+    storage: importStorage,
+    limits: { fileSize: 20 * 1024 * 1024 }, // 20MB
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = /pdf|xlsx|xls|txt/;
+        const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+        if (extname) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only PDF, Excel, and TXT files are allowed'));
+        }
+    }
+});
 
 // DRD Axis Configuration
 const DRD_AXES = {
@@ -126,6 +157,78 @@ router.post('/', verifyToken, async (req, res) => {
     } catch (error) {
         console.error('[Assessment Reports API] Create error:', error);
         res.status(500).json({ error: 'Failed to create report' });
+    }
+});
+
+/**
+ * POST /api/assessment-reports/import
+ * Import an external report (PDF/Excel) and extract assessment data
+ */
+router.post('/import', verifyToken, importUpload.single('reportFile'), async (req, res) => {
+    try {
+        const { projectId, reportName } = req.body;
+        const organizationId = req.user.organizationId;
+        const userId = req.user.id;
+
+        if (!req.file) {
+            return res.status(400).json({ error: 'Report file is required' });
+        }
+
+        // Dynamically import ReportParserService to avoid circular dependency
+        const ReportParserService = require('../services/ai/reportParserService');
+
+        // Parse the uploaded file
+        const parsedData = await ReportParserService.parseReport({
+            filePath: req.file.path,
+            mimeType: req.file.mimetype,
+            organizationId,
+            userId
+        });
+
+        // Create report from imported data
+        const report = await ReportParserService.createReportFromImport({
+            parsedData,
+            projectId,
+            organizationId,
+            userId,
+            reportName: reportName || `Imported: ${req.file.originalname}`
+        });
+
+        // Clean up uploaded file after processing (optional)
+        // fs.unlinkSync(req.file.path);
+
+        res.status(201).json({
+            id: report.id,
+            status: 'IMPORTED',
+            createdAt: report.createdAt,
+            extractedData: {
+                reportType: parsedData.extractedData.reportType,
+                dimensionCount: parsedData.extractedData.dimensions?.length || 0,
+                confidence: parsedData.metadata.confidence
+            },
+            drdMapping: Object.entries(parsedData.drdMapping).reduce((acc, [axis, data]) => {
+                if (data.estimatedActual) {
+                    acc[axis] = {
+                        actual: data.estimatedActual,
+                        confidence: data.confidence
+                    };
+                }
+                return acc;
+            }, {}),
+            message: 'Report imported successfully. Review and adjust mapped scores as needed.'
+        });
+    } catch (error) {
+        console.error('[Assessment Reports API] Import error:', error);
+        
+        // Clean up file on error
+        if (req.file && fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+        }
+        
+        res.status(500).json({ 
+            error: 'Failed to import report',
+            details: error.message 
+        });
     }
 });
 
@@ -2223,5 +2326,354 @@ async function processAIEditRequest(message, context, userId) {
         suggestedPayload: targetSection ? { action, customPrompt: message } : null
     };
 }
+
+// ============================================================================
+// ENTERPRISE AI CONSULTING ENDPOINTS
+// ============================================================================
+
+// Lazy-load enterprise services
+let ReportPipeline = null;
+let IndustryIntelligenceService = null;
+let StrategicRecommendationService = null;
+
+function getEnterpriseServices() {
+    if (!ReportPipeline) {
+        try {
+            ReportPipeline = require('../services/ai/pipeline/reportPipeline');
+            IndustryIntelligenceService = require('../services/ai/intelligence/industryIntelligenceService');
+            StrategicRecommendationService = require('../services/ai/frameworks/strategicRecommendationService');
+        } catch (e) {
+            console.warn('[Enterprise] Services not available:', e.message);
+        }
+    }
+    return { ReportPipeline, IndustryIntelligenceService, StrategicRecommendationService };
+}
+
+/**
+ * POST /api/assessment-reports/:id/generate-enterprise
+ * Generate enterprise-grade report using multi-agent pipeline
+ */
+router.post('/:id/generate-enterprise', verifyToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.id;
+        const organizationId = req.user.organizationId;
+        const { options = {} } = req.body;
+
+        // Get report and assessment data
+        const report = await new Promise((resolve, reject) => {
+            db.get(
+                'SELECT * FROM assessment_reports WHERE id = ? AND organization_id = ?',
+                [id, organizationId],
+                (err, row) => err ? reject(err) : resolve(row)
+            );
+        });
+
+        if (!report) {
+            return res.status(404).json({ error: 'Report not found' });
+        }
+
+        // Get assessment data
+        const assessment = await new Promise((resolve, reject) => {
+            db.get(
+                'SELECT * FROM maturity_assessments WHERE id = ?',
+                [report.assessment_id],
+                (err, row) => err ? reject(err) : resolve(row)
+            );
+        });
+
+        if (!assessment) {
+            return res.status(404).json({ error: 'Assessment not found' });
+        }
+
+        // Parse assessment scores
+        let scores = {};
+        let gaps = [];
+        try {
+            scores = JSON.parse(assessment.scores_json || '{}');
+            gaps = JSON.parse(assessment.gaps_json || '[]');
+        } catch (e) {
+            console.warn('[Enterprise] Parse error:', e.message);
+        }
+
+        // Get organization profile
+        const orgProfile = await new Promise((resolve, reject) => {
+            db.get(
+                'SELECT * FROM organization_profiles WHERE organization_id = ?',
+                [organizationId],
+                (err, row) => err ? reject(err) : resolve(row)
+            );
+        });
+
+        // Parse organization profile JSON fields
+        let parsedProfile = orgProfile;
+        if (orgProfile) {
+            try {
+                const jsonFields = ['strategic_priorities', 'technology_stack', 'primary_markets', 'customer_segments', 'key_competitors', 'regulatory_environment'];
+                parsedProfile = { ...orgProfile };
+                jsonFields.forEach(field => {
+                    if (parsedProfile[field]) {
+                        parsedProfile[field] = typeof parsedProfile[field] === 'string' 
+                            ? JSON.parse(parsedProfile[field]) 
+                            : parsedProfile[field];
+                    }
+                });
+            } catch (e) {
+                console.warn('[Enterprise] Profile parse error:', e.message);
+            }
+        }
+
+        // Get enterprise services
+        const { ReportPipeline: Pipeline } = getEnterpriseServices();
+        if (!Pipeline) {
+            return res.status(503).json({ error: 'Enterprise report generation not available' });
+        }
+
+        // Start generation (streaming would be better but keeping simple for now)
+        const assessmentData = {
+            id: assessment.id,
+            report_id: id,
+            organization_id: organizationId,
+            overall_score: assessment.overall_score,
+            scores,
+            gaps,
+            type: assessment.type || 'MATURITY'
+        };
+
+        // Run pipeline
+        const generator = Pipeline.generateReport(assessmentData, parsedProfile, options);
+        let lastResult = null;
+        
+        for await (const progress of generator) {
+            lastResult = progress;
+            // Could emit via WebSocket here for real-time updates
+            console.log(`[Enterprise] Progress: ${progress.phase} - ${progress.progress}%`);
+        }
+
+        // Return final result
+        if (lastResult && lastResult.phase === 'COMPLETED') {
+            return res.json({
+                success: true,
+                generationId: lastResult.generationId || uuidv4(),
+                report: lastResult.report,
+                metadata: lastResult.pipelineMetadata
+            });
+        } else {
+            return res.status(500).json({ 
+                error: 'Generation incomplete',
+                lastPhase: lastResult?.phase 
+            });
+        }
+
+    } catch (error) {
+        console.error('[Enterprise Report] Generation error:', error);
+        res.status(500).json({ error: 'Enterprise report generation failed', details: error.message });
+    }
+});
+
+/**
+ * GET /api/assessment-reports/:id/generation-status
+ * Get status of enterprise report generation
+ */
+router.get('/:id/generation-status', verifyToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { generationId } = req.query;
+        const organizationId = req.user.organizationId;
+
+        // Query for generation status
+        const generation = await new Promise((resolve, reject) => {
+            const sql = generationId
+                ? 'SELECT * FROM enterprise_report_generations WHERE id = ? AND organization_id = ?'
+                : 'SELECT * FROM enterprise_report_generations WHERE report_id = ? AND organization_id = ? ORDER BY started_at DESC LIMIT 1';
+            
+            db.get(sql, [generationId || id, organizationId], (err, row) => {
+                err ? reject(err) : resolve(row);
+            });
+        });
+
+        if (!generation) {
+            return res.status(404).json({ error: 'Generation not found' });
+        }
+
+        res.json({
+            generationId: generation.id,
+            reportId: generation.report_id,
+            status: generation.pipeline_status,
+            progress: generation.progress_percent,
+            currentAgent: generation.current_agent,
+            startedAt: generation.started_at,
+            completedAt: generation.completed_at,
+            duration: generation.duration_ms,
+            confidence: generation.overall_confidence,
+            error: generation.error_message
+        });
+
+    } catch (error) {
+        console.error('[Enterprise Report] Status error:', error);
+        res.status(500).json({ error: 'Failed to get generation status' });
+    }
+});
+
+/**
+ * POST /api/assessment-reports/:reportId/generate-initiatives
+ * Generate initiatives from enterprise report
+ */
+router.post('/:reportId/generate-initiatives', verifyToken, async (req, res) => {
+    try {
+        const { reportId } = req.params;
+        const userId = req.user.id;
+        const organizationId = req.user.organizationId;
+        const { maxInitiatives = 5, priorityThreshold = 'MEDIUM' } = req.body;
+
+        // Get report
+        const report = await new Promise((resolve, reject) => {
+            db.get(
+                'SELECT * FROM assessment_reports WHERE id = ? AND organization_id = ?',
+                [reportId, organizationId],
+                (err, row) => err ? reject(err) : resolve(row)
+            );
+        });
+
+        if (!report) {
+            return res.status(404).json({ error: 'Report not found' });
+        }
+
+        // Get latest enterprise generation for this report
+        const generation = await new Promise((resolve, reject) => {
+            db.get(
+                `SELECT * FROM enterprise_report_generations 
+                 WHERE report_id = ? AND pipeline_status = 'COMPLETED'
+                 ORDER BY completed_at DESC LIMIT 1`,
+                [reportId],
+                (err, row) => err ? reject(err) : resolve(row)
+            );
+        });
+
+        if (!generation) {
+            return res.status(400).json({ 
+                error: 'No completed enterprise report found. Generate enterprise report first.' 
+            });
+        }
+
+        // Parse strategist output for recommendations
+        let recommendations = [];
+        try {
+            const strategistOutput = JSON.parse(generation.strategist_output || '{}');
+            recommendations = strategistOutput.recommendations || [];
+        } catch (e) {
+            console.warn('[Enterprise] Parse strategist output error:', e.message);
+        }
+
+        if (recommendations.length === 0) {
+            return res.json({
+                success: true,
+                initiativesCreated: 0,
+                message: 'No recommendations found in enterprise report'
+            });
+        }
+
+        // Filter by priority threshold
+        const priorityOrder = { HIGH: 3, MEDIUM: 2, LOW: 1 };
+        const thresholdScore = priorityOrder[priorityThreshold] || 2;
+        
+        const filteredRecs = recommendations
+            .filter(r => (priorityOrder[r.impact] || 2) >= thresholdScore)
+            .slice(0, maxInitiatives);
+
+        // Create initiatives
+        const createdInitiatives = [];
+        for (const rec of filteredRecs) {
+            const initiativeId = uuidv4();
+            const now = new Date().toISOString();
+
+            await new Promise((resolve, reject) => {
+                db.run(`
+                    INSERT INTO initiatives 
+                    (id, organization_id, project_id, name, description, status, priority,
+                     estimated_budget, strategic_intent, source_report_id, ai_generated,
+                     created_by, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, 'DRAFT', ?, ?, ?, ?, 1, ?, ?, ?)
+                `, [
+                    initiativeId,
+                    organizationId,
+                    report.project_id,
+                    rec.title,
+                    rec.description || rec.rationale,
+                    rec.impact === 'HIGH' ? 1 : rec.impact === 'MEDIUM' ? 2 : 3,
+                    rec.estimatedBudget || null,
+                    rec.investmentThesis || null,
+                    reportId,
+                    userId,
+                    now, now
+                ], (err) => err ? reject(err) : resolve());
+            });
+
+            createdInitiatives.push({
+                id: initiativeId,
+                name: rec.title,
+                impact: rec.impact,
+                budget: rec.estimatedBudget
+            });
+        }
+
+        res.json({
+            success: true,
+            initiativesCreated: createdInitiatives.length,
+            initiatives: createdInitiatives,
+            sourceReportId: reportId,
+            sourceGenerationId: generation.id
+        });
+
+    } catch (error) {
+        console.error('[Enterprise Report] Generate initiatives error:', error);
+        res.status(500).json({ error: 'Failed to generate initiatives' });
+    }
+});
+
+/**
+ * GET /api/assessment-reports/:id/industry-context
+ * Get industry intelligence for a report
+ */
+router.get('/:id/industry-context', verifyToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const organizationId = req.user.organizationId;
+
+        // Get organization profile
+        const orgProfile = await new Promise((resolve, reject) => {
+            db.get(
+                'SELECT * FROM organization_profiles WHERE organization_id = ?',
+                [organizationId],
+                (err, row) => err ? reject(err) : resolve(row)
+            );
+        });
+
+        const industry = orgProfile?.industry || req.query.industry || 'Technology';
+        const subSector = orgProfile?.industry_subsector || req.query.subSector || null;
+
+        const { IndustryIntelligenceService: IntelService } = getEnterpriseServices();
+        if (!IntelService) {
+            return res.status(503).json({ error: 'Industry intelligence service not available' });
+        }
+
+        const context = await IntelService.getIndustryContext(industry, subSector);
+
+        res.json({
+            reportId: id,
+            industryContext: context,
+            organizationProfile: orgProfile ? {
+                industry: orgProfile.industry,
+                subSector: orgProfile.industry_subsector,
+                competitivePosition: orgProfile.competitive_position,
+                companySize: orgProfile.company_size
+            } : null
+        });
+
+    } catch (error) {
+        console.error('[Enterprise Report] Industry context error:', error);
+        res.status(500).json({ error: 'Failed to get industry context' });
+    }
+});
 
 module.exports = router;
