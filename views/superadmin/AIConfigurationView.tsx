@@ -377,7 +377,7 @@ Help leaders develop change management competencies.`
                             <Brain className="text-white" size={24} />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-white">AI Configuration</h1>
+                            <h1 className="text-2xl font-bold text-white">LLM Management</h1>
                             <p className="text-sm text-slate-400">Manage AI behavior, providers, and system health</p>
                         </div>
                     </div>

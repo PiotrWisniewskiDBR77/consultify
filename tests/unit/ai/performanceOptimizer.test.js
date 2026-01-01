@@ -4,7 +4,7 @@
  * Tests for AI performance monitoring and optimization service.
  */
 
-const { performanceOptimizer, PerformanceOptimizerService } = require('../../../server/services/ai/performanceOptimizer');
+const { performanceOptimizer, PerformanceOptimizer } = require('../../../server/services/ai/performanceOptimizer');
 
 describe('PerformanceOptimizer', () => {
     describe('recordMetrics()', () => {
@@ -45,7 +45,7 @@ describe('PerformanceOptimizer', () => {
 
     describe('getStats()', () => {
         it('should return statistics object', () => {
-            const service = new PerformanceOptimizerService();
+            const service = new PerformanceOptimizer();
             
             // Record some metrics first
             service.recordMetrics('stat-test-1', { responseTime: 1000, tokensUsed: 500 });
@@ -61,7 +61,7 @@ describe('PerformanceOptimizer', () => {
         });
 
         it('should calculate percentiles', () => {
-            const service = new PerformanceOptimizerService();
+            const service = new PerformanceOptimizer();
             
             // Record metrics with varying response times
             for (let i = 0; i < 100; i++) {
@@ -82,7 +82,7 @@ describe('PerformanceOptimizer', () => {
 
     describe('getRecommendations()', () => {
         it('should generate recommendations for slow responses', () => {
-            const service = new PerformanceOptimizerService();
+            const service = new PerformanceOptimizer();
             
             // Record slow metrics
             for (let i = 0; i < 10; i++) {
@@ -100,7 +100,7 @@ describe('PerformanceOptimizer', () => {
         });
 
         it('should recommend caching for repeated requests', () => {
-            const service = new PerformanceOptimizerService();
+            const service = new PerformanceOptimizer();
             
             // Record non-cached requests
             for (let i = 0; i < 20; i++) {
@@ -118,7 +118,7 @@ describe('PerformanceOptimizer', () => {
         });
 
         it('should return empty array for optimal performance', () => {
-            const service = new PerformanceOptimizerService();
+            const service = new PerformanceOptimizer();
             
             // Record fast, cached responses
             for (let i = 0; i < 10; i++) {
@@ -138,7 +138,7 @@ describe('PerformanceOptimizer', () => {
 
     describe('reset()', () => {
         it('should clear all recorded metrics', () => {
-            const service = new PerformanceOptimizerService();
+            const service = new PerformanceOptimizer();
             
             // Record some metrics
             service.recordMetrics('reset-test-1', { responseTime: 1000 });
@@ -154,7 +154,7 @@ describe('PerformanceOptimizer', () => {
 
     describe('getCacheHitRate()', () => {
         it('should calculate cache hit rate correctly', () => {
-            const service = new PerformanceOptimizerService();
+            const service = new PerformanceOptimizer();
             
             // 3 cached, 7 non-cached = 30% hit rate
             for (let i = 0; i < 3; i++) {
@@ -170,7 +170,7 @@ describe('PerformanceOptimizer', () => {
         });
 
         it('should return 0 for no requests', () => {
-            const service = new PerformanceOptimizerService();
+            const service = new PerformanceOptimizer();
             
             const hitRate = service.getCacheHitRate();
             
@@ -180,7 +180,7 @@ describe('PerformanceOptimizer', () => {
 
     describe('getErrorRate()', () => {
         it('should calculate error rate correctly', () => {
-            const service = new PerformanceOptimizerService();
+            const service = new PerformanceOptimizer();
             
             // 2 errors, 8 successes = 20% error rate
             for (let i = 0; i < 2; i++) {

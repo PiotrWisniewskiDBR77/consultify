@@ -10,24 +10,24 @@ describe('AIRecommendationEngine', () => {
 
     beforeEach(() => {
         mockDb = {
-            all: jest.fn(),
-            get: jest.fn(),
-            run: jest.fn()
+            all: vi.fn(),
+            get: vi.fn(),
+            run: vi.fn()
         };
 
         mockAIService = {
-            generateRecommendations: jest.fn(),
-            analyzeContext: jest.fn()
+            generateRecommendations: vi.fn(),
+            analyzeContext: vi.fn()
         };
 
-        jest.mock('../../../server/database', () => mockDb);
-        jest.mock('../../../server/services/aiService', () => mockAIService);
+        vi.mock('../../../server/database', () => mockDb);
+        vi.mock('../../../server/services/aiService', () => mockAIService);
 
         engine = new AIRecommendationEngine();
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     describe('generateRecommendations', () => {

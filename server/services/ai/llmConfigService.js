@@ -179,6 +179,9 @@ class LLMConfigService {
 
         aiLogger.info('LLMConfigService', 'Initializing...');
 
+        // Assign DB instance
+        this.db = db;
+
         try {
             // Ensure database table exists
             await this.ensureTableExists();
@@ -186,12 +189,61 @@ class LLMConfigService {
             // Sync environment variables with database
             await this.syncDatabaseWithEnv();
 
+            // Create LLM logs table for analytics
+            await this.runAsync(`
+                CREATE TABLE IF NOT EXISTS llm_logs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    trace_id TEXT,
+                    provider TEXT,
+                    model TEXT,
+                    status TEXT, -- 'success', 'error'
+                    latency_ms INTEGER,
+                    tokens_in INTEGER,
+                    tokens_out INTEGER,
+                    cost REAL,
+                    error_message TEXT,
+                    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            `);
+
+            // Index for faster analytics
+            await this.runAsync(`CREATE INDEX IF NOT EXISTS idx_llm_logs_timestamp ON llm_logs(timestamp)`);
+            await this.runAsync(`CREATE INDEX IF NOT EXISTS idx_llm_logs_status ON llm_logs(status)`);
+
             this.initialized = true;
-            aiLogger.info('LLMConfigService', 'Initialization complete');
+            aiLogger.info('LLMConfigService', 'LLM Config Service initialized with analytics storage');
         } catch (error) {
-            aiLogger.error('LLMConfigService', `Initialization failed: ${error.message}`);
+            aiLogger.error('LLMConfigService', 'Failed to initialize service', error);
             throw error;
         }
+    }
+
+    // Database Promise Wrappers
+    runAsync(sql, params = []) {
+        return new Promise((resolve, reject) => {
+            this.db.run(sql, params, function (err) {
+                if (err) reject(err);
+                else resolve(this);
+            });
+        });
+    }
+
+    getAsync(sql, params = []) {
+        return new Promise((resolve, reject) => {
+            this.db.get(sql, params, (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
+            });
+        });
+    }
+
+    allAsync(sql, params = []) {
+        return new Promise((resolve, reject) => {
+            this.db.all(sql, params, (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows);
+            });
+        });
     }
 
     /**
@@ -259,13 +311,16 @@ class LLMConfigService {
             'ALTER TABLE llm_providers ADD COLUMN priority INTEGER DEFAULT 0',
             'ALTER TABLE llm_providers ADD COLUMN last_health_check TEXT',
             'ALTER TABLE llm_providers ADD COLUMN health_status TEXT DEFAULT \'unknown\'',
-            'ALTER TABLE llm_providers ADD COLUMN updated_at TEXT DEFAULT CURRENT_TIMESTAMP',
+            'ALTER TABLE llm_providers ADD COLUMN updated_at TEXT',
             'ALTER TABLE llm_providers ADD COLUMN description TEXT'
         ];
 
         for (const sql of migrations) {
             await new Promise((resolve) => {
-                db.run(sql, () => resolve()); // Ignore errors (column may already exist)
+                db.run(sql, (err) => {
+                    if (err) aiLogger.warn('LLMConfigService', `Migration warning (might be expected): ${err.message}`);
+                    resolve();
+                });
             });
         }
     }
@@ -706,6 +761,143 @@ class LLMConfigService {
     // ========================================================================
 
     /**
+     * Log an LLM event for analytics
+     */
+    async logEvent(data) {
+        if (!this.initialized) await this.initialize();
+
+        try {
+            const {
+                traceId,
+                provider,
+                model,
+                status,
+                latencyMs,
+                tokensIn,
+                tokensOut,
+                cost,
+                errorMessage
+            } = data;
+
+            await this.runAsync(`
+                INSERT INTO llm_logs (
+                    trace_id, provider, model, status, latency_ms, 
+                    tokens_in, tokens_out, cost, error_message
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `, [
+                traceId || `trace_${Date.now()}`,
+                provider || 'unknown',
+                model || 'unknown',
+                status,
+                latencyMs || 0,
+                tokensIn || 0,
+                tokensOut || 0,
+                cost || 0,
+                errorMessage || null
+            ]);
+
+            // Keep log size manageable (retention policy: ~10k logs)
+            // Cleanup every 100th insert roughly
+            if (Math.random() < 0.01) {
+                this.cleanupOldLogs();
+            }
+
+        } catch (error) {
+            // Don't crash app if logging fails
+            aiLogger.error('LLMConfigService', 'Failed to save log event', error);
+        }
+    }
+
+    /**
+     * Cleanup old logs to prevent DB bloat
+     */
+    async cleanupOldLogs() {
+        try {
+            // Keep last 30 days
+            await this.runAsync(`
+                DELETE FROM llm_logs 
+                WHERE timestamp < datetime('now', '-30 days')
+            `);
+        } catch (e) {
+            aiLogger.error('LLMConfigService', 'Cleanup failed', e);
+        }
+    }
+
+    /**
+     * Get aggregated analytics stats
+     */
+    async getAnalyticsParams(days = 7) {
+        if (!this.initialized) await this.initialize();
+
+        try {
+            const timeFilter = `datetime('now', '-${days} days')`;
+
+            // Total Requests
+            const total = await this.getAsync(`
+                SELECT COUNT(*) as count FROM llm_logs 
+                WHERE timestamp > ${timeFilter}
+            `);
+
+            // Error Rate
+            const errors = await this.getAsync(`
+                SELECT COUNT(*) as count FROM llm_logs 
+                WHERE status = 'error' AND timestamp > ${timeFilter}
+            `);
+
+            // Avg Latency
+            const latency = await this.getAsync(`
+                SELECT AVG(latency_ms) as avg_ms FROM llm_logs 
+                WHERE status = 'success' AND timestamp > ${timeFilter}
+            `);
+
+            // Total Cost
+            const cost = await this.getAsync(`
+                SELECT SUM(cost) as total_cost FROM llm_logs 
+                WHERE timestamp > ${timeFilter}
+            `);
+
+            // Provider Breakdown
+            const providers = await this.allAsync(`
+                SELECT provider, COUNT(*) as count, SUM(cost) as total_cost
+                FROM llm_logs 
+                WHERE timestamp > ${timeFilter}
+                GROUP BY provider
+            `);
+
+            return {
+                total_requests: total?.count || 0,
+                error_count: errors?.count || 0,
+                error_rate: total?.count ? (errors.count / total.count) : 0,
+                avg_latency: Math.round(latency?.avg_ms || 0),
+                total_cost: cost?.total_cost || 0,
+                providers
+            };
+        } catch (error) {
+            aiLogger.error('LLMConfigService', 'Analytics fetch failed', error);
+            return null;
+        }
+    }
+
+    /**
+     * Get recent logs (paginated)
+     */
+    async getRecentLogs(limit = 50, offset = 0, onlyErrors = false) {
+        if (!this.initialized) await this.initialize();
+
+        try {
+            let query = `SELECT * FROM llm_logs`;
+            if (onlyErrors) {
+                query += ` WHERE status = 'error'`;
+            }
+            query += ` ORDER BY timestamp DESC LIMIT ? OFFSET ?`;
+
+            return await this.allAsync(query, [limit, offset]);
+        } catch (error) {
+            aiLogger.error('LLMConfigService', 'Logs fetch failed', error);
+            return [];
+        }
+    }
+    /**
      * Update health status for a provider
      * @param {string} providerId - Provider identifier
      * @param {string} status - Health status ('healthy', 'degraded', 'unhealthy')
@@ -715,13 +907,10 @@ class LLMConfigService {
         this.healthStatus.set(providerId, status);
 
         // Update database
-        await new Promise((resolve) => {
-            db.run(
-                'UPDATE llm_providers SET health_status = ?, last_health_check = ? WHERE provider = ?',
-                [status, new Date().toISOString(), providerId],
-                () => resolve()
-            );
-        });
+        await this.runAsync(
+            'UPDATE llm_providers SET health_status = ?, last_health_check = ? WHERE provider = ?',
+            [status, new Date().toISOString(), providerId]
+        );
 
         aiLogger.info('LLMConfigService', `Health status updated: ${providerId} = ${status}`, details);
     }

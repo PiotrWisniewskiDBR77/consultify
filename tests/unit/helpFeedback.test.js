@@ -2,15 +2,32 @@
  * Help Feedback API Unit Tests
  */
 
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 const request = require('supertest');
 const express = require('express');
 const helpFeedbackRoutes = require('../../server/routes/helpFeedback');
 
 // Mock database
-jest.mock('../../server/database', () => ({
-    run: jest.fn().mockResolvedValue({ changes: 1 }),
-    get: jest.fn().mockResolvedValue(null),
-    all: jest.fn().mockResolvedValue([])
+vi.mock('../../server/database', () => ({
+    default: {
+        run: vi.fn((sql, params, callback) => {
+            if (typeof callback === 'function') {
+                callback(null, { changes: 1, lastID: 1 });
+            }
+        }),
+        get: vi.fn((sql, params, callback) => {
+            if (typeof callback === 'function') {
+                callback(null, null);
+            }
+        }),
+        all: vi.fn((sql, params, callback) => {
+            if (typeof callback === 'function') {
+                callback(null, []);
+            }
+        })
+    }
 }));
 
 describe('Help Feedback API', () => {

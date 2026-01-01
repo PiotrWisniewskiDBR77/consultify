@@ -6,7 +6,8 @@ import { Link } from 'react-router-dom';
 import {
     Bot, MessageSquare, Zap, Brain, Save, Check, FileText, ExternalLink, Shield,
     Server, Key, Plus, Trash2, Wifi, Cpu, Globe, Lock, Sparkles, AlertCircle, ChevronRight,
-    Settings, LayoutGrid, Terminal, User as UserIcon, Activity, Fingerprint, Eye, MoreHorizontal
+    Settings, LayoutGrid, Terminal, User as UserIcon, Activity, Fingerprint, Eye, MoreHorizontal,
+    Sliders, Gauge, HardDrive, Network
 } from 'lucide-react';
 import { Api } from '../../services/api';
 import { toast } from 'react-hot-toast';
@@ -26,10 +27,22 @@ const defaultPreferences: AIPreferences = {
     showSources: true,
     userRole: 'analyst',
     supportLevel: 'standard',
-    autonomyLevel: 'human_loop'
+    autonomyLevel: 'human_loop',
+
+    // New Defaults
+    modelTemperature: 0.7,
+    maxTokens: 4096,
+    topP: 1.0,
+    frequencyPenalty: 0.0,
+    presencePenalty: 0.0,
+    systemInstructions: '',
+    enableWebSearch: true,
+    enablePiiRedaction: false,
+    dataRetentionPolicy: 'standard',
+    contextWindowStrategy: 'auto'
 };
 
-type SettingsTab = 'org' | 'api' | 'local' | 'behavior' | 'governance';
+type SettingsTab = 'org' | 'api' | 'local' | 'behavior' | 'privacy';
 
 export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUser }) => {
     const { t } = useTranslation();
@@ -57,6 +70,9 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
         setShowAddProvider(false);
         setNewProvider({ provider: 'openai', isEnabled: true, isLocal: false });
     }, [activeTab]);
+
+    // Health Check State
+    const [providerHealth, setProviderHealth] = useState<any>(null);
 
     useEffect(() => {
         const initData = async () => {
@@ -86,6 +102,15 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 if (stored) {
                     setLocalProviders(JSON.parse(stored));
                 }
+
+                // 5. Fetch Real-time Health
+                try {
+                    const health = await Api.checkLLMProvidersHealth();
+                    setProviderHealth(health);
+                } catch (e) {
+                    console.error('Failed to fetch provider health', e);
+                }
+
             } catch (e) {
                 console.error('Failed to load AI settings', e);
                 toast.error('Failed to load settings');
@@ -175,7 +200,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                         <Brain className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                        <h2 className="text-xl font-bold text-white tracking-tight">AI Settings</h2>
+                        <h2 className="text-xl font-bold text-white tracking-tight">LLM Management</h2>
                         <p className="text-xs text-slate-500 uppercase tracking-widest font-medium mt-0.5">Enterprise Control Plane</p>
                     </div>
                 </div>
@@ -205,22 +230,23 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
             </div>
 
             {/* Navigation Tabs - High Tech Button Style */}
-            <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-2">
-                <NavTab id="org" label="LLM Providers" icon={<Shield size={16} />} active={activeTab === 'org'} onClick={() => setActiveTab('org')} />
-                <NavTab id="api" label="API Keys" icon={<Key size={16} />} active={activeTab === 'api'} onClick={() => setActiveTab('api')} />
+            <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-2 scrollbar-none">
+                <NavTab id="org" label="Model Registry" icon={<Shield size={16} />} active={activeTab === 'org'} onClick={() => setActiveTab('org')} />
+                <NavTab id="api" label="BYOK Keys" icon={<Key size={16} />} active={activeTab === 'api'} onClick={() => setActiveTab('api')} />
                 <NavTab id="local" label="Local Inference" icon={<Terminal size={16} />} active={activeTab === 'local'} onClick={() => setActiveTab('local')} />
                 <div className="w-px h-6 bg-white/10 mx-2" />
-                <NavTab id="behavior" label="Persona & Context" icon={<UserIcon size={16} />} active={activeTab === 'behavior'} onClick={() => setActiveTab('behavior')} />
-                <NavTab id="governance" label="Governance" icon={<Eye size={16} />} active={activeTab === 'governance'} onClick={() => setActiveTab('governance')} />
+                <NavTab id="behavior" label="Behavior & Context" icon={<Sliders size={16} />} active={activeTab === 'behavior'} onClick={() => setActiveTab('behavior')} />
+                <NavTab id="privacy" label="Privacy & Controls" icon={<Lock size={16} />} active={activeTab === 'privacy'} onClick={() => setActiveTab('privacy')} />
             </div>
 
             {/* Content Area */}
             <div className="min-h-[400px]">
 
                 {/* 1. Organization Models - TABLE VIEW */}
+                {/* 1. Organization Models (Model Registry) */}
                 {activeTab === 'org' && (
                     <div className="animate-in fade-in duration-300">
-                        <SectionHeader title="Organization Models" subtitle="Select approved models for your workspace." />
+                        <SectionHeader title="Model Registry" subtitle="Manage available models and their visibility to users." />
 
                         <div className="border border-white/10 rounded-xl overflow-hidden bg-black/20">
                             <table className="w-full text-left border-collapse">
@@ -229,18 +255,21 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                         <th className="px-6 py-4">Name & Description</th>
                                         <th className="px-6 py-4">Provider</th>
                                         <th className="px-6 py-4">Model ID</th>
-                                        <th className="px-6 py-4">Verification</th>
-                                        <th className="px-6 py-4 text-right">Status</th>
+                                        <th className="px-6 py-4">System Status</th>
+                                        <th className="px-6 py-4 text-right">User Access</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-white/5">
                                     {orgProviders.map(p => {
                                         const isSelected = selectedOrgModels.includes(p.id);
+                                        const health = providerHealth?.providers?.[p.provider];
+                                        const isOnline = health?.available ?? true; // Default to true if check pending
+                                        const latency = health?.latency;
+
                                         return (
                                             <tr
                                                 key={p.id}
-                                                onClick={() => handleOrgModelToggle(p.id)}
-                                                className={`cursor-pointer transition-colors hover:bg-white/5 ${isSelected ? 'bg-blue-500/5' : ''}`}
+                                                className="hover:bg-white/5 transition-colors"
                                             >
                                                 <td className="px-6 py-4">
                                                     <div className="font-medium text-white">{p.name}</div>
@@ -251,21 +280,29 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                                         {p.provider}
                                                     </span>
                                                 </td>
-                                                <td className="px-6 py-4 text-xs font-mono text-slate-500">
-                                                    {p.model_id}
+                                                <td className="px-6 py-4 font-mono text-xs text-slate-500">
+                                                    {p.id}
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <div className="flex items-center gap-2 text-xs text-green-400">
-                                                        <Shield size={12} />
-                                                        Verified
+                                                    {/* Health Status Indicator */}
+                                                    <div className="flex items-center gap-2">
+                                                        <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
+                                                        <div className="flex flex-col">
+                                                            <span className={`text-xs font-medium ${isOnline ? 'text-emerald-400' : 'text-red-400'}`}>
+                                                                {isOnline ? 'Operational' : 'Offline'}
+                                                            </span>
+                                                            {isOnline && latency && (
+                                                                <span className="text-[10px] text-slate-500">{latency}ms latency</span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 text-right">
-                                                    <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold transition-all ${isSelected
-                                                        ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20'
-                                                        : 'bg-white/5 text-slate-500 border border-white/10'
-                                                        }`}>
-                                                        {isSelected ? 'Active' : 'Disabled'}
+                                                    <div className="flex justify-end">
+                                                        <Toggle
+                                                            enabled={isSelected}
+                                                            onChange={() => handleOrgModelToggle(p.id)}
+                                                        />
                                                     </div>
                                                 </td>
                                             </tr>
@@ -273,26 +310,24 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                     })}
                                 </tbody>
                             </table>
-                            {orgProviders.length === 0 && (
-                                <div className="p-12 text-center text-slate-500">No organization models available.</div>
-                            )}
                         </div>
                     </div>
                 )}
 
-                {/* 2. API Keys (BYOK) - TABLE VIEW */}
+                {/* 4. BYOK Keys (API Tab) */}
                 {activeTab === 'api' && (
                     <div className="animate-in fade-in duration-300">
                         <div className="flex justify-between items-end mb-6">
-                            <SectionHeader title="Bring Your Own Keys (BYOK)" subtitle="Securely store personal API keys in local storage." />
-                            {!showAddProvider && (
-                                <button onClick={() => setShowAddProvider(true)} className="text-xs uppercase tracking-wider font-bold text-blue-400 hover:text-blue-300 border border-blue-500/30 px-4 py-2 rounded hover:bg-blue-500/10 transition-colors flex items-center gap-2">
-                                    <Plus size={14} /> Add Key
-                                </button>
-                            )}
+                            <SectionHeader title="Bring Your Own Keys" subtitle="Connect external providers securely." />
+                            <button onClick={() => {
+                                setNewProvider({ provider: 'openai', isEnabled: true, isLocal: false });
+                                setShowAddProvider(true);
+                            }} className="text-xs uppercase tracking-wider font-bold text-blue-400 hover:text-blue-300 border border-blue-500/30 px-4 py-2 rounded hover:bg-blue-500/10 transition-colors flex items-center gap-2">
+                                <Plus size={14} /> Add Key
+                            </button>
                         </div>
 
-                        {/* Premium Add Form */}
+                        {/* Add Form */}
                         {showAddProvider && (
                             <div className="mb-8 p-6 bg-gradient-to-br from-navy-900 to-black border border-white/10 rounded-xl shadow-2xl relative overflow-hidden group">
                                 <div className="absolute top-0 left-0 w-1 h-full bg-blue-500" />
@@ -510,130 +545,210 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                     </div>
                 )}
 
-                {/* 4. Persona & Context (SAME AS BEFORE) */}
+                {/* 2. Behavior & Context Settings */}
                 {activeTab === 'behavior' && (
                     <div className="animate-in fade-in duration-300 max-w-4xl">
-                        <SectionHeader title="User Persona" subtitle="Define your role to tailor AI responses." />
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="space-y-3">
-                                {[
-                                    { id: 'executive', label: 'Executive / Strategy', desc: 'High-level summaries, strategic insights, no jargon.' },
-                                    { id: 'manager', label: 'Project Manager', desc: 'Action-oriented, timeline-focused, risk-aware.' },
-                                    { id: 'analyst', label: 'Business Analyst', desc: 'Data-driven, detailed, structured output.' },
-                                    { id: 'developer', label: 'Developer / Technical', desc: 'Code-centric, technical depth, system architecture.' }
-                                ].map(role => (
-                                    <button
-                                        key={role.id}
-                                        onClick={() => setPreferences(p => ({ ...p, userRole: role.id }))}
-                                        className={`w-full text-left p-4 rounded-lg border transition-all ${preferences.userRole === role.id
-                                            ? 'bg-blue-500/10 border-blue-500/50'
-                                            : 'bg-white/5 border-white/5 hover:border-white/20'
-                                            }`}
-                                    >
-                                        <div className={`font-semibold text-sm mb-1 ${preferences.userRole === role.id ? 'text-blue-400' : 'text-white'}`}>
-                                            {role.label}
-                                        </div>
-                                        <div className="text-xs text-slate-500">{role.desc}</div>
-                                    </button>
-                                ))}
+                        <SectionHeader title="Model Behavior" subtitle="Configure granular generation parameters and persona." />
+
+                        {/* System Instructions */}
+                        <div className="mb-8">
+                            <label className="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">
+                                <span className="flex items-center gap-2">
+                                    <Terminal size={14} />
+                                    Global System Instructions
+                                </span>
+                                <span className="text-slate-600 font-normal normal-case">Applied to all chat sessions</span>
+                            </label>
+                            <textarea
+                                className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-sm font-mono text-slate-300 focus:border-white/20 focus:ring-0 transition-colors h-32 resize-y"
+                                placeholder="e.g. You are a senior solutions architect. Always prioritize security and scalability in your responses..."
+                                value={preferences.systemInstructions || ''}
+                                onChange={(e) => setPreferences({ ...preferences, systemInstructions: e.target.value })}
+                            />
+                        </div>
+
+                        {/* Sliders Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 p-6 bg-white/5 rounded-xl border border-white/5">
+                            <div>
+                                <div className="flex justify-between items-center mb-4">
+                                    <label className="text-sm font-medium text-white flex items-center gap-2">
+                                        <Gauge size={16} className="text-blue-400" />
+                                        Temperature
+                                    </label>
+                                    <span className="text-xs font-mono bg-black/50 px-2 py-1 rounded text-blue-400">{preferences.modelTemperature ?? 0.7}</span>
+                                </div>
+                                <input
+                                    type="range"
+                                    min="0" max="2" step="0.1"
+                                    value={preferences.modelTemperature ?? 0.7}
+                                    onChange={(e) => setPreferences({ ...preferences, modelTemperature: parseFloat(e.target.value) })}
+                                    className="w-full accent-blue-500 bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
+                                />
+                                <div className="flex justify-between text-[10px] text-slate-500 mt-2 font-medium uppercase tracking-wider">
+                                    <span>Precise</span>
+                                    <span>Creative</span>
+                                </div>
                             </div>
 
                             <div>
-                                <SectionHeader title="Interaction Style" subtitle="How should the AI communicate?" />
-                                <div className="space-y-6">
-                                    <div>
-                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 block">Tone</label>
-                                        <div className="flex gap-2">
-                                            {['Professional', 'Casual', 'Technical'].map(tone => (
-                                                <button
-                                                    key={tone}
-                                                    onClick={() => setPreferences(p => ({ ...p, writingTone: tone.toLowerCase() as any }))}
-                                                    className={`flex-1 py-2 text-xs font-medium rounded border ${preferences.writingTone === tone.toLowerCase()
-                                                        ? 'bg-white text-black border-white'
-                                                        : 'bg-transparent text-slate-500 border-white/10 hover:border-white/30'
-                                                        }`}
-                                                >
-                                                    {tone}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 block">Verbosity</label>
-                                        <div className="flex gap-2">
-                                            {['Concise', 'Balanced', 'Detailed'].map(style => (
-                                                <button
-                                                    key={style}
-                                                    onClick={() => setPreferences(p => ({ ...p, responseStyle: style.toLowerCase() as any }))}
-                                                    className={`flex-1 py-2 text-xs font-medium rounded border ${preferences.responseStyle === style.toLowerCase()
-                                                        ? 'bg-white text-black border-white'
-                                                        : 'bg-transparent text-slate-500 border-white/10 hover:border-white/30'
-                                                        }`}
-                                                >
-                                                    {style}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
+                                <div className="flex justify-between items-center mb-4">
+                                    <label className="text-sm font-medium text-white flex items-center gap-2">
+                                        <HardDrive size={16} className="text-purple-400" />
+                                        Max Output Tokens
+                                    </label>
+                                    <span className="text-xs font-mono bg-black/50 px-2 py-1 rounded text-purple-400">{preferences.maxTokens ?? 4096}</span>
                                 </div>
+                                <input
+                                    type="number"
+                                    value={preferences.maxTokens ?? 4096}
+                                    onChange={(e) => setPreferences({ ...preferences, maxTokens: parseInt(e.target.value) })}
+                                    className="w-full bg-black/50 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-purple-500/50 outline-none transition-all font-mono"
+                                />
+                                <p className="text-[10px] text-slate-500 mt-2">Maximum length of generated response.</p>
                             </div>
+
+                            <div>
+                                <div className="flex justify-between items-center mb-4">
+                                    <label className="text-sm font-medium text-white flex items-center gap-2">
+                                        <Sparkles size={16} className="text-amber-400" />
+                                        Top P (Nucleus)
+                                    </label>
+                                    <span className="text-xs font-mono bg-black/50 px-2 py-1 rounded text-amber-400">{preferences.topP ?? 1.0}</span>
+                                </div>
+                                <input
+                                    type="range"
+                                    min="0" max="1" step="0.05"
+                                    value={preferences.topP ?? 1.0}
+                                    onChange={(e) => setPreferences({ ...preferences, topP: parseFloat(e.target.value) })}
+                                    className="w-full accent-amber-500 bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
+                                />
+                            </div>
+
+                            <div>
+                                <div className="flex justify-between items-center mb-4">
+                                    <label className="text-sm font-medium text-white flex items-center gap-2">
+                                        <Activity size={16} className="text-emerald-400" />
+                                        Context Window
+                                    </label>
+                                </div>
+                                <select
+                                    value={preferences.contextWindowStrategy || 'auto'}
+                                    onChange={(e) => setPreferences({ ...preferences, contextWindowStrategy: e.target.value as any })}
+                                    className="w-full bg-black/50 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-emerald-500/50 outline-none transition-all"
+                                >
+                                    <option value="auto">Auto (Recommended)</option>
+                                    <option value="limit_8k">Limit to 8k (Cost Saving)</option>
+                                    <option value="limit_16k">Limit to 16k</option>
+                                    <option value="full">Full Context</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <SectionHeader title="Persona Definition" subtitle="Define your role to tailor AI responses." />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {[
+                                { id: 'executive', label: 'Executive / Strategy', desc: 'Strategic insights, no jargon.' },
+                                { id: 'manager', label: 'Project Manager', desc: 'Timeline-focused, risk-aware.' },
+                                { id: 'analyst', label: 'Business Analyst', desc: 'Data-driven, detailed output.' },
+                                { id: 'developer', label: 'Developer / Technical', desc: 'Code-centric, architecture focus.' }
+                            ].map(role => (
+                                <button
+                                    key={role.id}
+                                    onClick={() => setPreferences(p => ({ ...p, userRole: role.id }))}
+                                    className={`text-left p-4 rounded-lg border transition-all ${preferences.userRole === role.id
+                                        ? 'bg-blue-500/10 border-blue-500/50'
+                                        : 'bg-white/5 border-white/5 hover:border-white/20'
+                                        }`}
+                                >
+                                    <div className={`font-semibold text-sm mb-1 ${preferences.userRole === role.id ? 'text-blue-400' : 'text-white'}`}>
+                                        {role.label}
+                                    </div>
+                                    <div className="text-xs text-slate-500">{role.desc}</div>
+                                </button>
+                            ))}
                         </div>
                     </div>
                 )}
 
-                {/* 5. Governance (SAME AS BEFORE) */}
-                {activeTab === 'governance' && (
+                {/* 3. Privacy & Controls */}
+                {activeTab === 'privacy' && (
                     <div className="animate-in fade-in duration-300 max-w-4xl">
-                        <SectionHeader title="Human-in-the-Loop Governance" subtitle="Set autonomy levels and supervision rules." />
+                        <SectionHeader title="Data Privacy & Governance" subtitle="Manage how your data is handled and retained." />
 
-                        <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-4 mb-8 flex items-start gap-3">
-                            <AlertCircle className="text-red-400 shrink-0 mt-0.5" size={18} />
-                            <div>
-                                <h4 className="text-sm font-semibold text-red-200">Critical Safety Protocol</h4>
-                                <p className="text-xs text-red-400/80 mt-1 leading-relaxed">
-                                    Consultify AI operates under strict Human-in-the-Loop (HITL) protocols.
-                                    All strategic decisions, budget approvals, and external communications must be verified by a human operator.
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            {/* PII Redaction */}
+                            <div className="p-6 rounded-xl border border-white/5 bg-white/5 hover:border-white/10 transition-colors">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 rounded-lg bg-red-500/20 text-red-400">
+                                            <Fingerprint size={20} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-sm font-semibold text-white">PII Redaction</h3>
+                                            <p className="text-xs text-slate-500">Auto-remove sensitive data</p>
+                                        </div>
+                                    </div>
+                                    <Toggle
+                                        enabled={preferences.enablePiiRedaction || false}
+                                        onChange={() => setPreferences(p => ({ ...p, enablePiiRedaction: !p.enablePiiRedaction }))}
+                                    />
+                                </div>
+                                <p className="text-xs text-slate-400 leading-relaxed border-t border-white/5 pt-4">
+                                    Automatically detects and redacts emails, phone numbers, and credit card patterns before sending to the model.
+                                </p>
+                            </div>
+
+                            {/* Web Search */}
+                            <div className="p-6 rounded-xl border border-white/5 bg-white/5 hover:border-white/10 transition-colors">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 rounded-lg bg-blue-500/20 text-blue-400">
+                                            <Globe size={20} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-sm font-semibold text-white">Web Connectivity</h3>
+                                            <p className="text-xs text-slate-500">Allow external searches</p>
+                                        </div>
+                                    </div>
+                                    <Toggle
+                                        enabled={preferences.enableWebSearch || false}
+                                        onChange={() => setPreferences(p => ({ ...p, enableWebSearch: !p.enableWebSearch }))}
+                                    />
+                                </div>
+                                <p className="text-xs text-slate-400 leading-relaxed border-t border-white/5 pt-4">
+                                    Enables the model to search the web for real-time information. May increase latency.
                                 </p>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                            {[
-                                { id: 'strict', icon: <Lock size={18} />, label: 'Strict Supervision', desc: 'AI requires approval for every action. No autonomous changes.' },
-                                { id: 'human_loop', icon: <UserIcon size={18} />, label: 'Human-in-the-Loop', desc: 'AI drafts content; Human reviews and approves execution.' },
-                                { id: 'autonomous', icon: <Zap size={18} />, label: 'Semi-Autonomous', desc: 'AI handles low-risk tasks (e.g. scheduling) automatically.' }
-                            ].map(level => (
-                                <button
-                                    key={level.id}
-                                    onClick={() => setPreferences(p => ({ ...p, autonomyLevel: level.id }))}
-                                    className={`p-6 rounded-xl border text-left transition-all ${preferences.autonomyLevel === level.id
-                                        ? 'bg-white/10 border-white shadow-xl'
-                                        : 'bg-black/20 border-white/5 opacity-60 hover:opacity-100 hover:border-white/20'
-                                        }`}
-                                >
-                                    <div className={`mb-4 ${preferences.autonomyLevel === level.id ? 'text-white' : 'text-slate-500'}`}>{level.icon}</div>
-                                    <div className="font-bold text-sm text-white mb-2">{level.label}</div>
-                                    <p className="text-xs text-slate-400 leading-relaxed">{level.desc}</p>
-                                </button>
-                            ))}
-                        </div>
+                        {/* Retention Policy */}
+                        <div className="p-6 rounded-xl border border-white/5 bg-white/5">
+                            <h3 className="text-sm font-semibold text-white mb-6 flex items-center gap-2">
+                                <Activity size={16} className="text-emerald-400" />
+                                Data Retention Policy
+                            </h3>
 
-                        <div className="border-t border-white/5 pt-8">
-                            <SectionHeader title="Support & Escalation Plan" subtitle="Define how the AI should handle uncertainty." />
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 block">Escalation Threshold</label>
-                                    <select
-                                        value={preferences.supportLevel}
-                                        onChange={e => setPreferences(p => ({ ...p, supportLevel: e.target.value }))}
-                                        className="w-full bg-black border border-white/10 rounded-lg px-4 py-3 text-sm text-white outline-none focus:border-white/30"
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                {[
+                                    { id: 'none', label: 'Ephemeral', desc: 'No data saved', icon: <Trash2 size={16} /> },
+                                    { id: '30days', label: '30 Days', desc: 'Standard rotation', icon: <Activity size={16} /> },
+                                    { id: 'standard', label: 'Indefinite', desc: 'Full history', icon: <HardDrive size={16} /> }
+                                ].map((policy) => (
+                                    <button
+                                        key={policy.id}
+                                        onClick={() => setPreferences(p => ({ ...p, dataRetentionPolicy: policy.id as any }))}
+                                        className={`flex flex-col items-center justify-center p-4 rounded-lg border transition-all gap-3 ${preferences.dataRetentionPolicy === policy.id
+                                            ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
+                                            : 'bg-black/20 border-white/5 text-slate-400 hover:border-white/20'
+                                            }`}
                                     >
-                                        <option value="high">High - Ask whenever confidence &lt; 90%</option>
-                                        <option value="standard">Standard - Ask whenever confidence &lt; 70%</option>
-                                        <option value="low">Low - Attempt resolutions before asking</option>
-                                    </select>
-                                </div>
+                                        {policy.icon}
+                                        <div className="text-center">
+                                            <div className="font-semibold text-xs">{policy.label}</div>
+                                            <div className="text-[10px] opacity-70">{policy.desc}</div>
+                                        </div>
+                                    </button>
+                                ))}
                             </div>
                         </div>
                     </div>
@@ -668,4 +783,17 @@ const SectionHeader = ({ title, subtitle }: { title: string, subtitle: string })
         <h3 className="text-lg font-medium text-white">{title}</h3>
         <p className="text-sm text-slate-500 mt-1">{subtitle}</p>
     </div>
+);
+
+const Toggle = ({ enabled, onChange }: { enabled: boolean; onChange: () => void }) => (
+    <button
+        onClick={onChange}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-black ${enabled ? 'bg-blue-600' : 'bg-slate-700'
+            }`}
+    >
+        <span
+            className={`${enabled ? 'translate-x-6' : 'translate-x-1'
+                } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+        />
+    </button>
 );

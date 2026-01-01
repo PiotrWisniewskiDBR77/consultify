@@ -284,6 +284,9 @@ const aiFeedbackRoutes = require('./routes/ai-feedback');
 app.use('/api/ai-feedback', aiFeedbackRoutes);
 const aiPromptsRoutes = require('./routes/ai-prompts');
 app.use('/api/ai-prompts', aiPromptsRoutes);
+// Prompt Assistant (Language-Independent Prompt Engineering)
+const promptAssistantRoutes = require('./routes/prompt-assistant');
+app.use('/api/prompt-assistant', promptAssistantRoutes);
 const aiAbTestingRoutes = require('./routes/ai-ab-testing');
 app.use('/api/ai-ab-testing', aiAbTestingRoutes);
 const aiSecurityRoutes = require('./routes/ai-security');

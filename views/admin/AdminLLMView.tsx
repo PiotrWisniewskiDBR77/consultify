@@ -2,7 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Api } from '../../services/api';
 import { LLMProvider } from '../../types';
 import { toast } from 'react-hot-toast';
-import { Shield, Plus, Trash2, Edit, Save, X, Check, Eye, EyeOff, Server, RefreshCw, Wifi, WifiOff, Activity, AlertTriangle, CheckCircle, XCircle, Zap, Clock, ArrowRight } from 'lucide-react';
+import {
+    Shield, Server, Activity, AlertTriangle, Check, RefreshCw,
+    Plus, Settings, Save, Brain, Zap, Trash2, Edit2, Play, Box,
+    Terminal, Coins, Globe, CheckCircle, XCircle, Info, X, Edit, Eye, EyeOff,
+    Clock, Wifi, ArrowRight
+} from 'lucide-react';
 import { InfoButton } from '../../components/shared/InfoButton';
 
 // Health Status Types
@@ -81,6 +86,50 @@ export const AdminLLMView: React.FC = () => {
         visibility: 'admin',
         cost_per_1k: 0
     });
+    const [logs, setLogs] = useState<any[]>([]);
+    const [analytics, setAnalytics] = useState<any>(null);
+
+    useEffect(() => {
+        const initLLMData = async () => {
+            try {
+                const data = await Api.getLLMProviders(true);
+                setProviders(data);
+                setLoading(false);
+            } catch (err) {
+                toast.error('Failed to load providers');
+                setLoading(false);
+            }
+            try {
+                const promptsData = await Api.aiGetSystemPrompts();
+                setPrompts(promptsData);
+            } catch (e) {
+                console.error(e);
+            }
+            // Load LLM status
+            loadLLMStatus();
+        };
+        initLLMData();
+    }, []);
+
+    useEffect(() => {
+        if (activeTab === 'health') {
+            loadAnalytics();
+        }
+    }, [activeTab]);
+
+    const loadAnalytics = async () => {
+        try {
+            const [stats, recentLogs] = await Promise.all([
+                Api.getLLMAnalytics(7),
+                Api.getLLMLogs(50)
+            ]);
+            setAnalytics(stats);
+            setLogs(recentLogs.logs || []);
+        } catch (error) {
+            console.error('Failed to load analytics', error);
+            toast.error('Failed to load analytics data');
+        }
+    };
 
     const loadProviders = async () => {
         try {
@@ -139,12 +188,12 @@ export const AdminLLMView: React.FC = () => {
     const testSingleProvider = async (provider: string) => {
         setTestingProvider(provider);
         try {
-            const response = await fetch(`/api/llm/status/test/${provider}`, { method: 'POST' });
+            const response = await fetch(`/ api / llm / status / test / ${provider} `, { method: 'POST' });
             const data = await response.json();
             if (data.success && data.reachable) {
-                toast.success(`${provider} is healthy (${data.latency}ms)`);
+                toast.success(`${provider} is healthy(${data.latency}ms)`);
             } else {
-                toast.error(`${provider}: ${data.error || 'Connection failed'}`);
+                toast.error(`${provider}: ${data.error || 'Connection failed'} `);
             }
             await loadLLMStatus();
         } catch (e) {
@@ -206,7 +255,7 @@ export const AdminLLMView: React.FC = () => {
             if (result.success) {
                 toast.success(result.message);
             } else {
-                toast.error(`Connection Failed: ${result.message}`);
+                toast.error(`Connection Failed: ${result.message} `);
             }
         } catch (err) {
             toast.error('Test failed to execute');
@@ -258,7 +307,7 @@ export const AdminLLMView: React.FC = () => {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Are you sure?')) return;
+        // if (!confirm('Are you sure?')) return; // Native alerts are not premium
         try {
             await Api.deleteLLMProvider(id);
             toast.success('Provider deleted');
@@ -275,493 +324,623 @@ export const AdminLLMView: React.FC = () => {
             <div className="flex gap-4 border-b border-white/5 pb-1">
                 <button
                     onClick={() => setActiveTab('providers')}
-                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'providers' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-white'}`}
+                    className={`px - 4 py - 2 text - sm font - medium border - b - 2 transition - colors ${activeTab === 'providers' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-white'} `}
                 >
                     LLM Providers
                 </button>
                 <button
                     onClick={() => setActiveTab('health')}
-                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'health' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-white'}`}
+                    className={`px - 4 py - 2 text - sm font - medium border - b - 2 transition - colors flex items - center gap - 2 ${activeTab === 'health' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-white'} `}
                 >
                     <Activity size={14} />
                     Health Dashboard
                     {llmStatus && (
-                        <span className={`ml-1 px-1.5 py-0.5 rounded-full text-xs ${llmStatus.summary.healthy > 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
-                            }`}>
+                        <span className={`ml - 1 px - 1.5 py - 0.5 rounded - full text - xs ${llmStatus.summary.healthy > 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                            } `}>
                             {llmStatus.summary.healthy}/{llmStatus.summary.configured}
                         </span>
                     )}
                 </button>
                 <button
                     onClick={() => setActiveTab('prompts')}
-                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'prompts' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-white'}`}
+                    className={`px - 4 py - 2 text - sm font - medium border - b - 2 transition - colors ${activeTab === 'prompts' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-white'} `}
                 >
                     System Personas (Prompts)
                 </button>
             </div>
 
-            {activeTab === 'health' ? (
-                /* HEALTH DASHBOARD TAB */
-                <div className="space-y-6">
-                    {/* Health Summary Cards */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="bg-gradient-to-br from-green-900/30 to-navy-900 border border-green-500/20 rounded-xl p-4">
-                            <div className="flex items-center gap-2 mb-2">
-                                <CheckCircle size={18} className="text-green-400" />
-                                <span className="text-xs uppercase tracking-wider text-green-400">Healthy</span>
+            {/* TAB 2: HEALTH DASHBOARD */}
+            {activeTab === 'health' && (
+                <div className="animate-in fade-in duration-300 space-y-6">
+                    {/* KPI Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="p-4 bg-navy-900/50 border border-white/10 rounded-xl">
+                            <div className="flex justify-between items-start mb-2">
+                                <div className="p-2 bg-blue-500/20 rounded-lg">
+                                    <Activity size={20} className="text-blue-400" />
+                                </div>
+                                <span className="text-xs font-mono text-slate-500">LAST 7 DAYS</span>
                             </div>
-                            <p className="text-3xl font-bold text-white">{llmStatus?.summary.healthy || 0}</p>
+                            <div className="text-2xl font-bold text-white mb-1">
+                                {analytics?.total_requests?.toLocaleString() || 0}
+                            </div>
+                            <div className="text-xs text-slate-400">Total Requests</div>
                         </div>
-                        <div className="bg-gradient-to-br from-yellow-900/30 to-navy-900 border border-yellow-500/20 rounded-xl p-4">
-                            <div className="flex items-center gap-2 mb-2">
-                                <AlertTriangle size={18} className="text-yellow-400" />
-                                <span className="text-xs uppercase tracking-wider text-yellow-400">Degraded</span>
+
+                        <div className="p-4 bg-navy-900/50 border border-white/10 rounded-xl">
+                            <div className="flex justify-between items-start mb-2">
+                                <div className="p-2 bg-emerald-500/20 rounded-lg">
+                                    <Zap size={20} className="text-emerald-400" />
+                                </div>
+                                <span className="text-xs font-mono text-slate-500">AVG LATENCY</span>
                             </div>
-                            <p className="text-3xl font-bold text-white">{llmStatus?.summary.degraded || 0}</p>
+                            <div className="text-2xl font-bold text-white mb-1">
+                                {analytics?.avg_latency || 0}ms
+                            </div>
+                            <div className="text-xs text-slate-400">Response Time</div>
                         </div>
-                        <div className="bg-gradient-to-br from-red-900/30 to-navy-900 border border-red-500/20 rounded-xl p-4">
-                            <div className="flex items-center gap-2 mb-2">
-                                <XCircle size={18} className="text-red-400" />
-                                <span className="text-xs uppercase tracking-wider text-red-400">Unhealthy</span>
+
+                        <div className="p-4 bg-navy-900/50 border border-white/10 rounded-xl">
+                            <div className="flex justify-between items-start mb-2">
+                                <div className="p-2 bg-amber-500/20 rounded-lg">
+                                    <Coins size={20} className="text-amber-400" />
+                                </div>
+                                <span className="text-xs font-mono text-slate-500">EST. COST</span>
                             </div>
-                            <p className="text-3xl font-bold text-white">{llmStatus?.summary.unhealthy || 0}</p>
+                            <div className="text-2xl font-bold text-white mb-1">
+                                ${(analytics?.total_cost || 0).toFixed(4)}
+                            </div>
+                            <div className="text-xs text-slate-400">Total Spend</div>
                         </div>
-                        <div className="bg-gradient-to-br from-slate-800/50 to-navy-900 border border-white/10 rounded-xl p-4">
-                            <div className="flex items-center gap-2 mb-2">
-                                <Server size={18} className="text-slate-400" />
-                                <span className="text-xs uppercase tracking-wider text-slate-400">Total</span>
+
+                        <div className="p-4 bg-navy-900/50 border border-white/10 rounded-xl">
+                            <div className="flex justify-between items-start mb-2">
+                                <div className={`p - 2 rounded - lg ${analytics?.error_rate > 0.05 ? 'bg-red-500/20' : 'bg-purple-500/20'} `}>
+                                    <AlertTriangle size={20} className={analytics?.error_rate > 0.05 ? 'text-red-400' : 'text-purple-400'} />
+                                </div>
+                                <span className="text-xs font-mono text-slate-500">ERROR RATE</span>
                             </div>
-                            <p className="text-3xl font-bold text-white">{llmStatus?.summary.configured || 0}<span className="text-sm text-slate-500">/{llmStatus?.summary.total || 0}</span></p>
+                            <div className="text-2xl font-bold text-white mb-1">
+                                {(analytics?.error_rate * 100).toFixed(1)}%
+                            </div>
+                            <div className="text-xs text-slate-400">
+                                {analytics?.error_count} Failed Requests
+                            </div>
                         </div>
                     </div>
 
-                    {/* Actions Bar */}
-                    <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-4">
-                            {llmStatus?.defaultProvider && (
-                                <div className="flex items-center gap-2 text-sm">
-                                    <span className="text-slate-400">Default:</span>
-                                    <span className="text-white font-medium">{llmStatus.defaultProvider.name}</span>
-                                    <span className="text-slate-500">({llmStatus.defaultProvider.model})</span>
-                                </div>
-                            )}
-                            {llmStatus?.startupValidation && (
-                                <div className="flex items-center gap-2 text-xs text-slate-400">
-                                    <Clock size={12} />
-                                    Last check: {new Date(llmStatus.startupValidation.timestamp).toLocaleTimeString()}
-                                    ({llmStatus.startupValidation.duration}ms)
-                                </div>
-                            )}
-                        </div>
-                        <button
-                            onClick={refreshAllHealth}
-                            disabled={refreshingHealth}
-                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors"
-                        >
-                            <RefreshCw size={16} className={refreshingHealth ? 'animate-spin' : ''} />
-                            {refreshingHealth ? 'Refreshing...' : 'Refresh All'}
-                        </button>
-                    </div>
-
-                    {/* Critical Errors */}
-                    {llmStatus?.startupValidation?.criticalErrors && llmStatus.startupValidation.criticalErrors.length > 0 && (
-                        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
-                            <h3 className="text-red-400 font-semibold flex items-center gap-2 mb-2">
-                                <AlertTriangle size={16} />
-                                Critical Errors
+                    {/* Logs Table */}
+                    <div className="bg-navy-900/50 border border-white/10 rounded-xl overflow-hidden">
+                        <div className="p-4 border-b border-white/10 flex justify-between items-center">
+                            <h3 className="font-semibold text-white flex items-center gap-2">
+                                <Terminal size={18} className="text-slate-400" />
+                                Recent Interactions
                             </h3>
-                            <ul className="space-y-1">
-                                {llmStatus.startupValidation.criticalErrors.map((err, i) => (
-                                    <li key={i} className="text-red-300 text-sm">• {err}</li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-
-                    {/* Provider Health Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {llmStatus?.providers.map((p) => (
-                            <div
-                                key={p.id || p.provider}
-                                className={`border rounded-xl p-4 transition-all ${getStatusClass(p.healthStatus)}`}
-                            >
-                                <div className="flex justify-between items-start mb-3">
-                                    <div>
-                                        <h4 className="font-semibold text-white">{p.name || p.provider}</h4>
-                                        <p className="text-xs text-slate-400 font-mono">{p.model}</p>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        {getStatusIcon(p.healthStatus)}
-                                        <span className="text-xs capitalize">{p.healthStatus}</span>
-                                    </div>
-                                </div>
-
-                                <div className="flex flex-wrap gap-1 mb-3">
-                                    <span className={`px-2 py-0.5 rounded text-xs ${p.isDefault ? 'bg-purple-500/20 text-purple-300' : 'bg-slate-700/50 text-slate-400'}`}>
-                                        {p.isDefault ? '★ Default' : p.tier}
-                                    </span>
-                                    {p.supportsVision && <span className="px-2 py-0.5 rounded text-xs bg-blue-500/20 text-blue-300">Vision</span>}
-                                    {p.supportsTools && <span className="px-2 py-0.5 rounded text-xs bg-cyan-500/20 text-cyan-300">Tools</span>}
-                                    {!p.isConfigured && <span className="px-2 py-0.5 rounded text-xs bg-orange-500/20 text-orange-300">No API Key</span>}
-                                </div>
-
-                                <div className="flex justify-between items-center">
-                                    <span className="text-xs text-slate-500">
-                                        Priority: {p.priority} | ${p.costPer1k}/1k
-                                    </span>
-                                    <button
-                                        onClick={() => testSingleProvider(p.provider)}
-                                        disabled={testingProvider === p.provider || !p.isConfigured}
-                                        className="text-xs px-2 py-1 bg-white/5 hover:bg-white/10 disabled:opacity-50 rounded flex items-center gap-1 transition-colors"
-                                    >
-                                        {testingProvider === p.provider ? (
-                                            <RefreshCw size={12} className="animate-spin" />
-                                        ) : (
-                                            <Wifi size={12} />
-                                        )}
-                                        Test
-                                    </button>
-                                </div>
-
-                                {/* Circuit Breaker Status */}
-                                {llmStatus.circuitBreakers[p.provider] && (
-                                    <div className="mt-2 pt-2 border-t border-white/5">
-                                        <div className="flex items-center gap-2 text-xs">
-                                            <Zap size={10} className={
-                                                llmStatus.circuitBreakers[p.provider].state === 'CLOSED' ? 'text-green-400' :
-                                                    llmStatus.circuitBreakers[p.provider].state === 'OPEN' ? 'text-red-400' :
-                                                        'text-yellow-400'
-                                            } />
-                                            <span className="text-slate-400">
-                                                Circuit: {llmStatus.circuitBreakers[p.provider].state}
-                                            </span>
-                                            {llmStatus.circuitBreakers[p.provider].failures > 0 && (
-                                                <span className="text-red-400">
-                                                    ({llmStatus.circuitBreakers[p.provider].failures} failures)
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Fallback Chains */}
-                    {llmStatus?.fallbackChains && (
-                        <div className="bg-navy-900 border border-white/5 rounded-xl p-6">
-                            <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                                <ArrowRight size={18} className="text-purple-400" />
-                                Fallback Chains
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {Object.entries(llmStatus.fallbackChains).map(([tier, chain]) => (
-                                    <div key={tier} className="bg-navy-950/50 rounded-lg p-3">
-                                        <span className="text-xs uppercase tracking-wider text-purple-400 mb-2 block">{tier}</span>
-                                        <div className="flex flex-wrap items-center gap-2">
-                                            {(chain as string[]).map((provider, idx) => (
-                                                <React.Fragment key={provider}>
-                                                    {idx > 0 && <ArrowRight size={12} className="text-slate-600" />}
-                                                    <span className={`text-sm px-2 py-0.5 rounded ${llmStatus.providers.find(p => p.provider === provider)?.healthStatus === 'healthy'
-                                                        ? 'bg-green-500/20 text-green-300'
-                                                        : 'bg-slate-700/50 text-slate-400'
-                                                        }`}>
-                                                        {provider}
-                                                    </span>
-                                                </React.Fragment>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
-            ) : activeTab === 'providers' ? (
-                <>
-
-                    {/* Cloud Providers */}
-                    <div className="flex justify-between items-center mb-6">
-                        <div>
-                            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                                <Shield className="text-purple-500" />
-                                Organization Model Management
-                            </h2>
-                            <p className="text-slate-400 text-sm mt-1">Enable or disable specific AI models for your organization.</p>
-                        </div>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setShowInactive(!showInactive)}
-                                className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors text-sm font-medium ${showInactive ? 'bg-white/10 border-white/20 text-white' : 'border-white/10 text-slate-400 hover:text-white'}`}
-                            >
-                                {showInactive ? <Eye size={16} /> : <EyeOff size={16} />}
-                                {showInactive ? 'Hide Inactive' : 'Show Inactive'}
+                            <button className="text-xs text-blue-400 hover:text-blue-300 font-medium">
+                                View All Logs
                             </button>
-                            {/* Global Add Provider is disabled for Tenant Admin */}
                         </div>
-                    </div>
-
-                    <div className="bg-navy-900 border border-white/5 rounded-xl overflow-auto custom-scrollbar">
-                        <table className="w-full text-left text-sm text-slate-300">
-                            <thead className="bg-navy-950 text-slate-400 uppercase text-xs font-semibold">
-                                <tr>
-                                    <th className="px-6 py-4">Name & Description</th>
-                                    <th className="px-6 py-4">Provider</th>
-                                    <th className="px-6 py-4">Model ID</th>
-                                    <th className="px-6 py-4">Org Access</th>
-                                    <th className="px-6 py-4">Status</th>
-                                    <th className="px-6 py-4 text-right">Verification</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-white/5">
-                                {loading ? <tr><td colSpan={6} className="p-8 text-center">Loading...</td></tr> : providers
-                                    .filter(p => showInactive || p.is_active)
-                                    .map(p => (
-                                        <tr key={p.id} className="hover:bg-white/5 transition-colors">
-                                            <td className="px-6 py-4">
-                                                <div className="font-medium text-white">{p.name}</div>
-                                                {p.description && <div className="text-xs text-slate-500 mt-0.5">{p.description}</div>}
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-black/20 text-xs uppercase tracking-wider text-slate-500">
+                                        <th className="px-4 py-3">Status</th>
+                                        <th className="px-4 py-3">Time</th>
+                                        <th className="px-4 py-3">Provider / Model</th>
+                                        <th className="px-4 py-3">Latency</th>
+                                        <th className="px-4 py-3">Cost</th>
+                                        <th className="px-4 py-3">Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-white/5">
+                                    {logs.map((log: any) => (
+                                        <tr key={log.id} className="hover:bg-white/5 transition-colors text-sm">
+                                            <td className="px-4 py-3">
+                                                <span className={`inline - flex items - center px - 2 py - 0.5 rounded text - [10px] font - bold uppercase tracking - wide border ${log.status === 'success'
+                                                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                                    : 'bg-red-500/10 text-red-400 border-red-500/20'
+                                                    } `}>
+                                                    {log.status}
+                                                </span>
                                             </td>
-                                            <td className="px-6 py-4 capitalize">{p.provider}</td>
-                                            <td className="px-6 py-4 font-mono text-xs">{p.model_id}</td>
-                                            <td className="px-6 py-4">
-                                                <button
-                                                    onClick={async () => {
-                                                        const newStatus = !(p.is_enabled_for_org !== false); // Default is true if undefined
-                                                        try {
-                                                            await Api.toggleOrganizationLLM(p.id, newStatus);
-                                                            // Optimistic update
-                                                            setProviders(prev => prev.map(pro => pro.id === p.id ? { ...pro, is_enabled_for_org: newStatus } : pro));
-                                                            toast.success(newStatus ? 'Enabled for Organization' : 'Disabled for Organization');
-                                                        } catch (e) {
-                                                            toast.error('Failed to update status');
-                                                        }
-                                                    }}
-                                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${p.is_enabled_for_org !== false ? 'bg-purple-600' : 'bg-slate-700'}`}
-                                                >
-                                                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${p.is_enabled_for_org !== false ? 'translate-x-6' : 'translate-x-1'}`} />
-                                                </button>
-                                                <span className="ml-2 text-xs text-slate-400">{p.is_enabled_for_org !== false ? 'Enabled' : 'Disabled'}</span>
+                                            <td className="px-4 py-3 text-slate-400 font-mono text-xs">
+                                                {new Date(log.timestamp).toLocaleTimeString()}
                                             </td>
-                                            <td className="px-6 py-4">
-                                                {p.is_active ? <span className="text-green-400 flex items-center gap-1"><Check size={14} /> Global Active</span> : <span className="text-slate-500">Global Inactive</span>}
-                                            </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <button
-                                                        onClick={() => handleTestConnection(p)}
-                                                        title="Test Connection"
-                                                        disabled={testingConnection}
-                                                        className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-green-400 transition-colors"
-                                                    >
-                                                        <Wifi size={16} />
-                                                    </button>
+                                            <td className="px-4 py-3">
+                                                <div className="flex flex-col">
+                                                    <span className="text-white font-medium">{log.provider}</span>
+                                                    <span className="text-xs text-slate-500">{log.model}</span>
                                                 </div>
+                                            </td>
+                                            <td className="px-4 py-3 text-slate-300 font-mono text-xs">
+                                                {log.latency_ms}ms
+                                            </td>
+                                            <td className="px-4 py-3 text-slate-300 font-mono text-xs">
+                                                ${(log.cost || 0).toFixed(6)}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                {log.error_message ? (
+                                                    <span className="text-red-400 text-xs truncate max-w-[200px] block" title={log.error_message}>
+                                                        {log.error_message}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-slate-600 text-xs italic">Success</span>
+                                                )}
                                             </td>
                                         </tr>
                                     ))}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {/* Modal */}
-                    {showModal && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                            <div className="bg-navy-900 border border-white/10 rounded-xl p-8 w-full max-w-lg shadow-2xl overflow-y-auto max-h-[90vh]">
-                                <div className="flex justify-between items-center mb-6">
-                                    <h2 className="text-xl font-bold text-white">{editingId ? 'Edit Provider' : 'Add Provider'}</h2>
-                                    <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-white"><X size={20} /></button>
-                                </div>
-                                <form onSubmit={handleSubmit} className="space-y-4">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-xs text-slate-400 mb-1">Display Name</label>
-                                            <input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs text-slate-400 mb-1">Provider Type</label>
-                                            <select value={form.provider} onChange={e => setForm({ ...form, provider: e.target.value as any })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white">
-                                                <optgroup label="— Major Providers —">
-                                                    <option value="openai">OpenAI (GPT-4)</option>
-                                                    <option value="anthropic">Anthropic (Claude)</option>
-                                                    <option value="google">Google Gemini</option>
-                                                </optgroup>
-                                                <optgroup label="— Open Source / Fast —">
-                                                    <option value="mistral">Mistral AI</option>
-                                                    <option value="groq">Groq (Ultra Fast)</option>
-                                                    <option value="together">Together AI</option>
-                                                    <option value="nvidia">NVIDIA NIM</option>
-                                                </optgroup>
-                                                <optgroup label="— Chinese Providers —">
-                                                    <option value="deepseek">DeepSeek</option>
-                                                    <option value="qwen">Alibaba Qwen</option>
-                                                    <option value="ernie">Baidu ERNIE</option>
-                                                    <option value="z_ai">Zhipu AI (GLM)</option>
-                                                </optgroup>
-                                                <optgroup label="— Search / Tools —">
-                                                    <option value="tavily">Tavily Search</option>
-                                                    <option value="google_search">Google Search</option>
-                                                </optgroup>
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-xs text-slate-400 mb-1">API Key</label>
-                                        <div className="relative">
-                                            <input type="password" value={form.api_key} onChange={e => setForm({ ...form, api_key: e.target.value })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" placeholder="sk-..." />
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-xs text-slate-400 mb-1">Model ID (e.g. gpt-4)</label>
-                                            <input required value={form.model_id} onChange={e => setForm({ ...form, model_id: e.target.value })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs text-slate-400 mb-1">Endpoint (Optional)</label>
-                                            <input value={form.endpoint} onChange={e => setForm({ ...form, endpoint: e.target.value })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" placeholder="https://api..." />
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-xs text-slate-400 mb-1">Input Pricing ($/1k)</label>
-                                            <input type="number" step="0.000001" value={form.input_cost_per_1k || 0} onChange={e => setForm({ ...form, input_cost_per_1k: parseFloat(e.target.value) })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs text-slate-400 mb-1">Output Pricing ($/1k)</label>
-                                            <input type="number" step="0.000001" value={form.output_cost_per_1k || 0} onChange={e => setForm({ ...form, output_cost_per_1k: parseFloat(e.target.value) })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" />
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-xs text-slate-400 mb-1">Visibility</label>
-                                            <select value={form.visibility} onChange={e => setForm({ ...form, visibility: e.target.value as any })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white">
-                                                <option value="admin">Admin Only</option>
-                                                <option value="beta">Beta Users</option>
-                                                <option value="public">Public</option>
-                                            </select>
-                                        </div>
-                                        <div className="flex items-center pt-6">
-                                            <label className="flex items-center gap-2 cursor-pointer">
-                                                <input type="checkbox" checked={form.is_active} onChange={e => setForm({ ...form, is_active: e.target.checked })} className="w-4 h-4 rounded bg-navy-950 border-white/10" />
-                                                <span className="text-sm text-slate-300">Active</span>
-                                            </label>
-                                        </div>
-                                    </div>
-
-                                    <div className="pt-4 flex gap-3">
-                                        <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 bg-transparent border border-white/10 hover:bg-white/5 text-slate-300 rounded">Cancel</button>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleTestConnection(form)}
-                                            disabled={!form.provider || !form.api_key || testingConnection}
-                                            className="px-4 py-2 bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 border border-blue-500/50 rounded flex items-center gap-2"
-                                        >
-                                            <Wifi size={16} /> Test
-                                        </button>
-                                        <button type="submit" className="flex-1 py-2 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded">Save Provider</button>
-                                    </div>
-                                </form>
-                            </div>
+                                    {logs.length === 0 && (
+                                        <tr>
+                                            <td colSpan={6} className="px-4 py-8 text-center text-slate-500 italic">
+                                                No logs found in the last 7 days.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
                         </div>
-                    )}
-                </>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                        {prompts.map(p => (
-                            <div
-                                key={p.key}
-                                onClick={() => setEditingPrompt(p)}
-                                className={`p-4 rounded-xl border cursor-pointer transition-all ${editingPrompt?.key === p.key ? 'bg-purple-500/20 border-purple-500' : 'bg-navy-900 border-white/5 hover:border-white/20'}`}
-                            >
-                                <div className="flex justify-between items-center mb-2">
-                                    <h3 className="font-bold text-white">{p.key}</h3>
-                                    <span className="text-xs text-slate-400">{new Date(p.updated_at).toLocaleDateString()}</span>
-                                </div>
-                                <p className="text-xs text-slate-400 line-clamp-2">{p.description}</p>
-                            </div>
-                        ))}
-                    </div>
-
-                    <div className="bg-navy-900 border border-white/10 rounded-xl p-6 h-fit">
-                        {editingPrompt ? (
-                            <form onSubmit={handleUpdatePrompt}>
-                                <h3 className="text-lg font-bold mb-4">Edit Persona: {editingPrompt.key}</h3>
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-400 mb-1">Description</label>
-                                        <input
-                                            value={editingPrompt.description}
-                                            onChange={e => setEditingPrompt({ ...editingPrompt, description: e.target.value })}
-                                            className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white text-sm"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-400 mb-1">System Prompt</label>
-                                        <textarea
-                                            value={editingPrompt.content}
-                                            onChange={e => setEditingPrompt({ ...editingPrompt, content: e.target.value })}
-                                            className="w-full h-96 bg-navy-950 border border-white/10 rounded p-4 text-white font-mono text-sm leading-relaxed focus:border-purple-500 outline-none resize-none"
-                                        />
-                                    </div>
-
-                                    {/* Context Injection Controls */}
-                                    <div className="bg-navy-950 border border-white/5 rounded-lg p-4">
-                                        <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-                                            <Shield size={14} className="text-purple-400" />
-                                            Context Injection Governance
-                                        </h4>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            {[
-                                                { id: 'include_project_context', label: 'Project Context (Goals, Risks)' },
-                                                { id: 'include_user_profile', label: 'User Profile (Role, Bio)' },
-                                                { id: 'include_assessment_data', label: 'Live Assessment Data' },
-                                                { id: 'include_kb_articles', label: 'Knowledge Base (RAG)' },
-                                                { id: 'include_task_history', label: 'Task History & Comments' }
-                                            ].map(opt => {
-                                                const config = typeof editingPrompt.context_config === 'string'
-                                                    ? JSON.parse(editingPrompt.context_config || '{}')
-                                                    : (editingPrompt.context_config || {});
-
-                                                return (
-                                                    <label key={opt.id} className="flex items-center gap-2 cursor-pointer group">
-                                                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${config[opt.id] ? 'bg-purple-600 border-purple-600' : 'border-white/20 group-hover:border-white/40'}`}>
-                                                            {config[opt.id] && <Check size={10} className="text-white" />}
-                                                        </div>
-                                                        <input
-                                                            type="checkbox"
-                                                            className="hidden"
-                                                            checked={!!config[opt.id]}
-                                                            onChange={e => {
-                                                                const newConfig = { ...config, [opt.id]: e.target.checked };
-                                                                setEditingPrompt({ ...editingPrompt, context_config: newConfig });
-                                                            }}
-                                                        />
-                                                        <span className="text-xs text-slate-300 group-hover:text-white transition-colors">{opt.label}</span>
-                                                    </label>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                    <div className="flex justify-end gap-2">
-                                        <button type="submit" className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-medium flex items-center gap-2">
-                                            <Save size={16} /> Save Persona
-                                        </button>
-                                    </div>
-                                </div>
-                            </form>
-                        ) : (
-                            <div className="h-96 flex items-center justify-center text-slate-500">
-                                Select a persona to edit
-                            </div>
-                        )}
                     </div>
                 </div>
             )}
+            <div className="space-y-6">
+                {/* Health Summary Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-gradient-to-br from-green-900/30 to-navy-900 border border-green-500/20 rounded-xl p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                            <CheckCircle size={18} className="text-green-400" />
+                            <span className="text-xs uppercase tracking-wider text-green-400">Healthy</span>
+                        </div>
+                        <p className="text-3xl font-bold text-white">{llmStatus?.summary.healthy || 0}</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-yellow-900/30 to-navy-900 border border-yellow-500/20 rounded-xl p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                            <AlertTriangle size={18} className="text-yellow-400" />
+                            <span className="text-xs uppercase tracking-wider text-yellow-400">Degraded</span>
+                        </div>
+                        <p className="text-3xl font-bold text-white">{llmStatus?.summary.degraded || 0}</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-red-900/30 to-navy-900 border border-red-500/20 rounded-xl p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                            <XCircle size={18} className="text-red-400" />
+                            <span className="text-xs uppercase tracking-wider text-red-400">Unhealthy</span>
+                        </div>
+                        <p className="text-3xl font-bold text-white">{llmStatus?.summary.unhealthy || 0}</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-slate-800/50 to-navy-900 border border-white/10 rounded-xl p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                            <Server size={18} className="text-slate-400" />
+                            <span className="text-xs uppercase tracking-wider text-slate-400">Total</span>
+                        </div>
+                        <p className="text-3xl font-bold text-white">{llmStatus?.summary.configured || 0}<span className="text-sm text-slate-500">/{llmStatus?.summary.total || 0}</span></p>
+                    </div>
+                </div>
+
+                {/* Actions Bar */}
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-4">
+                        {llmStatus?.defaultProvider && (
+                            <div className="flex items-center gap-2 text-sm">
+                                <span className="text-slate-400">Default:</span>
+                                <span className="text-white font-medium">{llmStatus.defaultProvider.name}</span>
+                                <span className="text-slate-500">({llmStatus.defaultProvider.model})</span>
+                            </div>
+                        )}
+                        {llmStatus?.startupValidation && (
+                            <div className="flex items-center gap-2 text-xs text-slate-400">
+                                <Clock size={12} />
+                                Last check: {new Date(llmStatus.startupValidation.timestamp).toLocaleTimeString()}
+                                ({llmStatus.startupValidation.duration}ms)
+                            </div>
+                        )}
+                    </div>
+                    <button
+                        onClick={refreshAllHealth}
+                        disabled={refreshingHealth}
+                        className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors"
+                    >
+                        <RefreshCw size={16} className={refreshingHealth ? 'animate-spin' : ''} />
+                        {refreshingHealth ? 'Refreshing...' : 'Refresh All'}
+                    </button>
+                </div>
+
+                {/* Critical Errors */}
+                {llmStatus?.startupValidation?.criticalErrors && llmStatus.startupValidation.criticalErrors.length > 0 && (
+                    <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
+                        <h3 className="text-red-400 font-semibold flex items-center gap-2 mb-2">
+                            <AlertTriangle size={16} />
+                            Critical Errors
+                        </h3>
+                        <ul className="space-y-1">
+                            {llmStatus.startupValidation.criticalErrors.map((err, i) => (
+                                <li key={i} className="text-red-300 text-sm">• {err}</li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+
+                {/* Provider Health Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {llmStatus?.providers.map((p) => (
+                        <div
+                            key={p.id || p.provider}
+                            className={`border rounded - xl p - 4 transition - all ${getStatusClass(p.healthStatus)} `}
+                        >
+                            <div className="flex justify-between items-start mb-3">
+                                <div>
+                                    <h4 className="font-semibold text-white">{p.name || p.provider}</h4>
+                                    <p className="text-xs text-slate-400 font-mono">{p.model}</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    {getStatusIcon(p.healthStatus)}
+                                    <span className="text-xs capitalize">{p.healthStatus}</span>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-wrap gap-1 mb-3">
+                                <span className={`px - 2 py - 0.5 rounded text - xs ${p.isDefault ? 'bg-purple-500/20 text-purple-300' : 'bg-slate-700/50 text-slate-400'} `}>
+                                    {p.isDefault ? '★ Default' : p.tier}
+                                </span>
+                                {p.supportsVision && <span className="px-2 py-0.5 rounded text-xs bg-blue-500/20 text-blue-300">Vision</span>}
+                                {p.supportsTools && <span className="px-2 py-0.5 rounded text-xs bg-cyan-500/20 text-cyan-300">Tools</span>}
+                                {!p.isConfigured && <span className="px-2 py-0.5 rounded text-xs bg-orange-500/20 text-orange-300">No API Key</span>}
+                            </div>
+
+                            <div className="flex justify-between items-center">
+                                <span className="text-xs text-slate-500">
+                                    Priority: {p.priority} | ${p.costPer1k}/1k
+                                </span>
+                                <button
+                                    onClick={() => testSingleProvider(p.provider)}
+                                    disabled={testingProvider === p.provider || !p.isConfigured}
+                                    className="text-xs px-2 py-1 bg-white/5 hover:bg-white/10 disabled:opacity-50 rounded flex items-center gap-1 transition-colors"
+                                >
+                                    {testingProvider === p.provider ? (
+                                        <RefreshCw size={12} className="animate-spin" />
+                                    ) : (
+                                        <Wifi size={12} />
+                                    )}
+                                    Test
+                                </button>
+                            </div>
+
+                            {/* Circuit Breaker Status */}
+                            {llmStatus.circuitBreakers[p.provider] && (
+                                <div className="mt-2 pt-2 border-t border-white/5">
+                                    <div className="flex items-center gap-2 text-xs">
+                                        <Zap size={10} className={
+                                            llmStatus.circuitBreakers[p.provider].state === 'CLOSED' ? 'text-green-400' :
+                                                llmStatus.circuitBreakers[p.provider].state === 'OPEN' ? 'text-red-400' :
+                                                    'text-yellow-400'
+                                        } />
+                                        <span className="text-slate-400">
+                                            Circuit: {llmStatus.circuitBreakers[p.provider].state}
+                                        </span>
+                                        {llmStatus.circuitBreakers[p.provider].failures > 0 && (
+                                            <span className="text-red-400">
+                                                ({llmStatus.circuitBreakers[p.provider].failures} failures)
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+
+                {/* Fallback Chains */}
+                {llmStatus?.fallbackChains && (
+                    <div className="bg-navy-900 border border-white/5 rounded-xl p-6">
+                        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                            <ArrowRight size={18} className="text-purple-400" />
+                            Fallback Chains
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {Object.entries(llmStatus.fallbackChains).map(([tier, chain]) => (
+                                <div key={tier} className="bg-navy-950/50 rounded-lg p-3">
+                                    <span className="text-xs uppercase tracking-wider text-purple-400 mb-2 block">{tier}</span>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        {(chain as string[]).map((provider, idx) => (
+                                            <React.Fragment key={provider}>
+                                                {idx > 0 && <ArrowRight size={12} className="text-slate-600" />}
+                                                <span className={`text - sm px - 2 py - 0.5 rounded ${llmStatus.providers.find(p => p.provider === provider)?.healthStatus === 'healthy'
+                                                    ? 'bg-green-500/20 text-green-300'
+                                                    : 'bg-slate-700/50 text-slate-400'
+                                                    } `}>
+                                                    {provider}
+                                                </span>
+                                            </React.Fragment>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+            ) : activeTab === 'providers' ? (
+            <>
+
+                {/* Cloud Providers */}
+                <div className="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                            <Shield className="text-purple-500" />
+                            Organization Model Management
+                        </h2>
+                        <p className="text-slate-400 text-sm mt-1">Enable or disable specific AI models for your organization.</p>
+                    </div>
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => setShowInactive(!showInactive)}
+                            className={`flex items - center gap - 2 px - 3 py - 2 rounded - lg border transition - colors text - sm font - medium ${showInactive ? 'bg-white/10 border-white/20 text-white' : 'border-white/10 text-slate-400 hover:text-white'} `}
+                        >
+                            {showInactive ? <Eye size={16} /> : <EyeOff size={16} />}
+                            {showInactive ? 'Hide Inactive' : 'Show Inactive'}
+                        </button>
+                        {/* Global Add Provider is disabled for Tenant Admin */}
+                    </div>
+                </div>
+
+                <div className="bg-navy-900 border border-white/5 rounded-xl overflow-auto custom-scrollbar">
+                    <table className="w-full text-left text-sm text-slate-300">
+                        <thead className="bg-navy-950 text-slate-400 uppercase text-xs font-semibold">
+                            <tr>
+                                <th className="px-6 py-4">Name & Description</th>
+                                <th className="px-6 py-4">Provider</th>
+                                <th className="px-6 py-4">Model ID</th>
+                                <th className="px-6 py-4">Org Access</th>
+                                <th className="px-6 py-4">Status</th>
+                                <th className="px-6 py-4 text-right">Verification</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                            {loading ? <tr><td colSpan={6} className="p-8 text-center">Loading...</td></tr> : providers
+                                .filter(p => showInactive || p.is_active)
+                                .map(p => (
+                                    <tr key={p.id} className="hover:bg-white/5 transition-colors">
+                                        <td className="px-6 py-4">
+                                            <div className="font-medium text-white">{p.name}</div>
+                                            {p.description && <div className="text-xs text-slate-500 mt-0.5">{p.description}</div>}
+                                        </td>
+                                        <td className="px-6 py-4 capitalize">{p.provider}</td>
+                                        <td className="px-6 py-4 font-mono text-xs">{p.model_id}</td>
+                                        <td className="px-6 py-4">
+                                            <button
+                                                onClick={async () => {
+                                                    const newStatus = !(p.is_enabled_for_org !== false); // Default is true if undefined
+                                                    try {
+                                                        await Api.toggleOrganizationLLM(p.id, newStatus);
+                                                        // Optimistic update
+                                                        setProviders(prev => prev.map(pro => pro.id === p.id ? { ...pro, is_enabled_for_org: newStatus } : pro));
+                                                        toast.success(newStatus ? 'Enabled for Organization' : 'Disabled for Organization');
+                                                    } catch (e) {
+                                                        toast.error('Failed to update status');
+                                                    }
+                                                }}
+                                                className={`relative inline - flex h - 6 w - 11 items - center rounded - full transition - colors focus: outline - none ${p.is_enabled_for_org !== false ? 'bg-purple-600' : 'bg-slate-700'} `}
+                                            >
+                                                <span className={`inline - block h - 4 w - 4 transform rounded - full bg - white transition - transform ${p.is_enabled_for_org !== false ? 'translate-x-6' : 'translate-x-1'} `} />
+                                            </button>
+                                            <span className="ml-2 text-xs text-slate-400">{p.is_enabled_for_org !== false ? 'Enabled' : 'Disabled'}</span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            {p.is_active ? <span className="text-green-400 flex items-center gap-1"><Check size={14} /> Global Active</span> : <span className="text-slate-500">Global Inactive</span>}
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                <button
+                                                    onClick={() => handleTestConnection(p)}
+                                                    title="Test Connection"
+                                                    disabled={testingConnection}
+                                                    className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-green-400 transition-colors"
+                                                >
+                                                    <Wifi size={16} />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                        </tbody>
+                    </table>
+                </div>
+
+                {/* Modal */}
+                {showModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                        <div className="bg-navy-900 border border-white/10 rounded-xl p-8 w-full max-w-lg shadow-2xl overflow-y-auto max-h-[90vh]">
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-xl font-bold text-white">{editingId ? 'Edit Provider' : 'Add Provider'}</h2>
+                                <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-white"><X size={20} /></button>
+                            </div>
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs text-slate-400 mb-1">Display Name</label>
+                                        <input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-slate-400 mb-1">Provider Type</label>
+                                        <select value={form.provider} onChange={e => setForm({ ...form, provider: e.target.value as any })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white">
+                                            <optgroup label="— Major Providers —">
+                                                <option value="openai">OpenAI (GPT-4)</option>
+                                                <option value="anthropic">Anthropic (Claude)</option>
+                                                <option value="google">Google Gemini</option>
+                                            </optgroup>
+                                            <optgroup label="— Open Source / Fast —">
+                                                <option value="mistral">Mistral AI</option>
+                                                <option value="groq">Groq (Ultra Fast)</option>
+                                                <option value="together">Together AI</option>
+                                                <option value="nvidia">NVIDIA NIM</option>
+                                            </optgroup>
+                                            <optgroup label="— Chinese Providers —">
+                                                <option value="deepseek">DeepSeek</option>
+                                                <option value="qwen">Alibaba Qwen</option>
+                                                <option value="ernie">Baidu ERNIE</option>
+                                                <option value="z_ai">Zhipu AI (GLM)</option>
+                                            </optgroup>
+                                            <optgroup label="— Search / Tools —">
+                                                <option value="tavily">Tavily Search</option>
+                                                <option value="google_search">Google Search</option>
+                                            </optgroup>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs text-slate-400 mb-1">API Key</label>
+                                    <div className="relative">
+                                        <input type="password" value={form.api_key} onChange={e => setForm({ ...form, api_key: e.target.value })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" placeholder="sk-..." />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs text-slate-400 mb-1">Model ID (e.g. gpt-4)</label>
+                                        <input required value={form.model_id} onChange={e => setForm({ ...form, model_id: e.target.value })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-slate-400 mb-1">Endpoint (Optional)</label>
+                                        <input value={form.endpoint} onChange={e => setForm({ ...form, endpoint: e.target.value })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" placeholder="https://api..." />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs text-slate-400 mb-1">Input Pricing ($/1k)</label>
+                                        <input type="number" step="0.000001" value={form.input_cost_per_1k || 0} onChange={e => setForm({ ...form, input_cost_per_1k: parseFloat(e.target.value) })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-slate-400 mb-1">Output Pricing ($/1k)</label>
+                                        <input type="number" step="0.000001" value={form.output_cost_per_1k || 0} onChange={e => setForm({ ...form, output_cost_per_1k: parseFloat(e.target.value) })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs text-slate-400 mb-1">Visibility</label>
+                                        <select value={form.visibility} onChange={e => setForm({ ...form, visibility: e.target.value as any })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white">
+                                            <option value="admin">Admin Only</option>
+                                            <option value="beta">Beta Users</option>
+                                            <option value="public">Public</option>
+                                        </select>
+                                    </div>
+                                    <div className="flex items-center pt-6">
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input type="checkbox" checked={form.is_active} onChange={e => setForm({ ...form, is_active: e.target.checked })} className="w-4 h-4 rounded bg-navy-950 border-white/10" />
+                                            <span className="text-sm text-slate-300">Active</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div className="pt-4 flex gap-3">
+                                    <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 bg-transparent border border-white/10 hover:bg-white/5 text-slate-300 rounded">Cancel</button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleTestConnection(form)}
+                                        disabled={!form.provider || !form.api_key || testingConnection}
+                                        className="px-4 py-2 bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 border border-blue-500/50 rounded flex items-center gap-2"
+                                    >
+                                        <Wifi size={16} /> Test
+                                    </button>
+                                    <button type="submit" className="flex-1 py-2 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded">Save Provider</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+            </>
+            ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                    {prompts.map(p => (
+                        <div
+                            key={p.key}
+                            onClick={() => setEditingPrompt(p)}
+                            className={`p - 4 rounded - xl border cursor - pointer transition - all ${editingPrompt?.key === p.key ? 'bg-purple-500/20 border-purple-500' : 'bg-navy-900 border-white/5 hover:border-white/20'} `}
+                        >
+                            <div className="flex justify-between items-center mb-2">
+                                <h3 className="font-bold text-white">{p.key}</h3>
+                                <span className="text-xs text-slate-400">{new Date(p.updated_at).toLocaleDateString()}</span>
+                            </div>
+                            <p className="text-xs text-slate-400 line-clamp-2">{p.description}</p>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="bg-navy-900 border border-white/10 rounded-xl p-6 h-fit">
+                    {editingPrompt ? (
+                        <form onSubmit={handleUpdatePrompt}>
+                            <h3 className="text-lg font-bold mb-4">Edit Persona: {editingPrompt.key}</h3>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-400 mb-1">Description</label>
+                                    <input
+                                        value={editingPrompt.description}
+                                        onChange={e => setEditingPrompt({ ...editingPrompt, description: e.target.value })}
+                                        className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-400 mb-1">System Prompt</label>
+                                    <textarea
+                                        value={editingPrompt.content}
+                                        onChange={e => setEditingPrompt({ ...editingPrompt, content: e.target.value })}
+                                        className="w-full h-96 bg-navy-950 border border-white/10 rounded p-4 text-white font-mono text-sm leading-relaxed focus:border-purple-500 outline-none resize-none"
+                                    />
+                                </div>
+
+                                {/* Context Injection Controls */}
+                                <div className="bg-navy-950 border border-white/5 rounded-lg p-4">
+                                    <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                                        <Shield size={14} className="text-purple-400" />
+                                        Context Injection Governance
+                                    </h4>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {[
+                                            { id: 'include_project_context', label: 'Project Context (Goals, Risks)' },
+                                            { id: 'include_user_profile', label: 'User Profile (Role, Bio)' },
+                                            { id: 'include_assessment_data', label: 'Live Assessment Data' },
+                                            { id: 'include_kb_articles', label: 'Knowledge Base (RAG)' },
+                                            { id: 'include_task_history', label: 'Task History & Comments' }
+                                        ].map(opt => {
+                                            const config = typeof editingPrompt.context_config === 'string'
+                                                ? JSON.parse(editingPrompt.context_config || '{}')
+                                                : (editingPrompt.context_config || {});
+
+                                            return (
+                                                <label key={opt.id} className="flex items-center gap-2 cursor-pointer group">
+                                                    <div className={`w - 4 h - 4 rounded border flex items - center justify - center transition - colors ${config[opt.id] ? 'bg-purple-600 border-purple-600' : 'border-white/20 group-hover:border-white/40'} `}>
+                                                        {config[opt.id] && <Check size={10} className="text-white" />}
+                                                    </div>
+                                                    <input
+                                                        type="checkbox"
+                                                        className="hidden"
+                                                        checked={!!config[opt.id]}
+                                                        onChange={e => {
+                                                            const newConfig = { ...config, [opt.id]: e.target.checked };
+                                                            setEditingPrompt({ ...editingPrompt, context_config: newConfig });
+                                                        }}
+                                                    />
+                                                    <span className="text-xs text-slate-300 group-hover:text-white transition-colors">{opt.label}</span>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                                <div className="flex justify-end gap-2">
+                                    <button type="submit" className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-medium flex items-center gap-2">
+                                        <Save size={16} /> Save Persona
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    ) : (
+                        <div className="h-96 flex items-center justify-center text-slate-500">
+                            Select a persona to edit
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
     );
 };

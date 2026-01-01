@@ -30,7 +30,7 @@ const fs = require('fs');
 const path = require('path');
 const jwt = require('jsonwebtoken');
 const PromptService = require('./promptService');
-const ModelRouter = require('./modelRouter');
+const ModelRouter = require('./ai/modelRouter');
 // Step B: Import post-processor for deterministic labeling
 const { aiResponsePostProcessor } = require('./aiResponsePostProcessor');
 const AccessPolicyService = require('./accessPolicyService');

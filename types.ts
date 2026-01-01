@@ -131,6 +131,8 @@ export enum AppView {
   SUPERADMIN_USERS = 'SUPERADMIN_USERS',
   SUPERADMIN_BILLING = 'SUPERADMIN_BILLING',
   SUPERADMIN_AI_CONFIG = 'SUPERADMIN_AI_CONFIG',
+  SUPERADMIN_LLM_MANAGEMENT = 'SUPERADMIN_LLM_MANAGEMENT',
+  SUPERADMIN_AI_INTELLIGENCE = 'SUPERADMIN_AI_INTELLIGENCE',
   SUPERADMIN_KNOWLEDGE = 'SUPERADMIN_KNOWLEDGE',
   SUPERADMIN_SETTINGS = 'SUPERADMIN_SETTINGS',
 
@@ -3372,6 +3374,22 @@ export interface AIPreferences {
   userRole?: string;
   supportLevel?: string;
   autonomyLevel?: string;
+
+  // Granular Model Controls
+  modelTemperature?: number;
+  maxTokens?: number;
+  topP?: number;
+  frequencyPenalty?: number;
+  presencePenalty?: number;
+  systemInstructions?: string;
+
+  // Feature Toggles
+  enableWebSearch?: boolean;
+  enablePiiRedaction?: boolean;
+
+  // Governance
+  dataRetentionPolicy?: 'none' | '30days' | 'standard';
+  contextWindowStrategy?: 'auto' | 'limit_8k' | 'limit_16k' | 'full';
 }
 
 export interface UserAIProvider {

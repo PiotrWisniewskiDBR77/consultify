@@ -28,6 +28,8 @@ import { SystemSettings } from './SystemSettings';
 import { BillingCenterView } from './BillingCenterView';
 import { OrganizationsView } from './OrganizationsView';
 import { AIConfigurationView } from './AIConfigurationView';
+import { LLMManagementView } from './LLMManagementView';
+import { AIIntelligenceView } from './AIIntelligenceView';
 import { SuperAdminDashboard } from './SuperAdminDashboard';
 import { SuperAdminUserManagement } from './SuperAdminUserManagement';
 // Enterprise Views
@@ -251,6 +253,10 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                 return <BillingCenterView />;
             case AppView.SUPERADMIN_AI_CONFIG:
                 return <AIConfigurationView />;
+            case AppView.SUPERADMIN_LLM_MANAGEMENT:
+                return <LLMManagementView />;
+            case AppView.SUPERADMIN_AI_INTELLIGENCE:
+                return <AIIntelligenceView />;
             case AppView.SUPERADMIN_PLAYBOOK_TEMPLATES:
                 return <PlaybookTemplatesListView />;
             case AppView.SUPERADMIN_KNOWLEDGE:

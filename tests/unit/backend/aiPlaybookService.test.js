@@ -1,28 +1,33 @@
 // AI Playbook Service Unit Tests
 // Tests the AI playbook service for automated workflow execution
 
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+
+const mockDb = {
+    all: vi.fn(),
+    get: vi.fn(),
+    run: vi.fn(),
+    close: vi.fn()
+};
+
+vi.mock('../../../server/database', () => ({
+    default: mockDb
+}));
+
 const AIPlaybookService = require('../../../server/ai/aiPlaybookService');
 
 describe('AIPlaybookService', () => {
-    let mockDb;
     let service;
 
     beforeEach(() => {
-        mockDb = {
-            all: jest.fn(),
-            get: jest.fn(),
-            run: jest.fn(),
-            close: jest.fn()
-        };
-
-        // Mock the database
-        jest.mock('../../../server/database', () => mockDb);
-
-        service = new AIPlaybookService();
+        vi.clearAllMocks();
+        service = AIPlaybookService;
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     describe('createPlaybook', () => {

@@ -10,24 +10,24 @@ describe('AISignalEngine', () => {
 
     beforeEach(() => {
         mockDb = {
-            all: jest.fn(),
-            get: jest.fn(),
-            run: jest.fn()
+            all: vi.fn(),
+            get: vi.fn(),
+            run: vi.fn()
         };
 
         mockAnalyticsService = {
-            getMetrics: jest.fn(),
-            detectAnomalies: jest.fn()
+            getMetrics: vi.fn(),
+            detectAnomalies: vi.fn()
         };
 
-        jest.mock('../../../server/database', () => mockDb);
-        jest.mock('../../../server/services/analyticsService', () => mockAnalyticsService);
+        vi.mock('../../../server/database', () => mockDb);
+        vi.mock('../../../server/services/analyticsService', () => mockAnalyticsService);
 
         engine = new AISignalEngine();
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     describe('detectSignals', () => {

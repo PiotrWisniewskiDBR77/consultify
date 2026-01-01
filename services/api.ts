@@ -725,6 +725,23 @@ export const Api = {
         return res.json();
     },
 
+    // Analytics & Logs
+    getLLMAnalytics: async (days: number = 7): Promise<any> => {
+        const res = await fetch(`${API_URL}/llm/analytics?days=${days}`, {
+            headers: getHeaders()
+        });
+        if (!res.ok) throw new Error('Failed to fetch analytics');
+        return res.json();
+    },
+
+    getLLMLogs: async (limit: number = 50, offset: number = 0, onlyErrors: boolean = false): Promise<any> => {
+        const res = await fetch(`${API_URL}/llm/logs?limit=${limit}&offset=${offset}&errors=${onlyErrors}`, {
+            headers: getHeaders()
+        });
+        if (!res.ok) throw new Error('Failed to fetch logs');
+        return res.json();
+    },
+
     toggleOrganizationLLM: async (providerId: string, enabled: boolean): Promise<any> => {
         const res = await fetch(`${API_URL}/llm/providers/organization/toggle`, {
             method: 'POST',

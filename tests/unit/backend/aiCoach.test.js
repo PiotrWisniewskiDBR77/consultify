@@ -12,30 +12,30 @@ describe('AICoach', () => {
     beforeEach(() => {
         // Mock dependencies
         mockAIContextBuilder = {
-            buildContext: jest.fn()
+            buildContext: vi.fn()
         };
 
         mockSignalEngine = {
-            detectSignals: jest.fn()
+            detectSignals: vi.fn()
         };
 
         mockRecommendationEngine = {
-            generateRecommendations: jest.fn()
+            generateRecommendations: vi.fn()
         };
 
         mockSimulationEngine = {
-            simulateImpacts: jest.fn()
+            simulateImpacts: vi.fn()
         };
 
         // Mock modules
-        jest.mock('../../../server/ai/aiContextBuilder', () => mockAIContextBuilder);
-        jest.mock('../../../server/ai/signalEngine', () => mockSignalEngine);
-        jest.mock('../../../server/ai/recommendationEngine', () => mockRecommendationEngine);
-        jest.mock('../../../server/ai/simulationEngine', () => mockSimulationEngine);
+        vi.mock('../../../server/ai/aiContextBuilder', () => mockAIContextBuilder);
+        vi.mock('../../../server/ai/signalEngine', () => mockSignalEngine);
+        vi.mock('../../../server/ai/recommendationEngine', () => mockRecommendationEngine);
+        vi.mock('../../../server/ai/simulationEngine', () => mockSimulationEngine);
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     describe('getAdvisoryReport', () => {

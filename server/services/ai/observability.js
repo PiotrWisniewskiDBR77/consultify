@@ -21,21 +21,21 @@ const MODEL_PRICING = {
     'gpt-3.5-turbo': { input: 0.50, output: 1.50 },
     'o1-preview': { input: 15.00, output: 60.00 },
     'o1-mini': { input: 3.00, output: 12.00 },
-    
+
     // Anthropic
     'claude-3-5-sonnet-20241022': { input: 3.00, output: 15.00 },
     'claude-3-opus': { input: 15.00, output: 75.00 },
     'claude-3-haiku': { input: 0.25, output: 1.25 },
-    
+
     // Google
     'gemini-1.5-pro': { input: 1.25, output: 5.00 },
     'gemini-1.5-flash': { input: 0.075, output: 0.30 },
     'gemini-2.0-flash': { input: 0.10, output: 0.40 },
-    
+
     // DeepSeek
     'deepseek-chat': { input: 0.14, output: 0.28 },
     'deepseek-coder': { input: 0.14, output: 0.28 },
-    
+
     // Default fallback
     'default': { input: 1.00, output: 3.00 }
 };
@@ -66,7 +66,7 @@ async function initLangfuse() {
             flushAt: 10,        // Flush after 10 events
             flushInterval: 5000 // Or every 5 seconds
         });
-        
+
         langfuseEnabled = true;
         aiLogger.info('Observability', 'Langfuse initialized successfully');
         return true;
@@ -103,12 +103,12 @@ function calculateCost(modelId, usage) {
  * Create a trace for an AI request
  */
 function createTrace(params) {
-    const { 
-        name, 
-        userId, 
-        organizationId, 
+    const {
+        name,
+        userId,
+        organizationId,
         sessionId,
-        metadata = {} 
+        metadata = {}
     } = params;
 
     const traceId = `trace_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -242,7 +242,34 @@ class TracingContext {
             cost: costInfo.totalCost
         });
 
+        // Persist to DB for Analytics
+        try {
+            const { llmConfigService } = require('./llmConfigService');
+            llmConfigService.logEvent({
+                traceId: this.traceId,
+                provider: this.getProviderFromModel(model),
+                model,
+                status: 'success',
+                latencyMs: metadata.latency || (Date.now() - this.startTime),
+                tokensIn: costInfo.inputTokens,
+                tokensOut: costInfo.outputTokens,
+                cost: costInfo.totalCost,
+                errorMessage: null
+            });
+        } catch (e) {
+            aiLogger.warn('Observability', 'Failed to persist analytics log', e);
+        }
+
         return costInfo;
+    }
+
+    getProviderFromModel(model) {
+        if (model.startsWith('gpt') || model.startsWith('o1')) return 'openai';
+        if (model.includes('claude')) return 'anthropic';
+        if (model.includes('gemini')) return 'google';
+        if (model.includes('deepseek')) return 'deepseek';
+        if (model.includes('llama')) return 'ollama';
+        return 'unknown';
     }
 
     /**
@@ -271,6 +298,24 @@ class TracingContext {
             error: error.message,
             ...metadata
         });
+
+        // Persist Error to DB
+        try {
+            const { llmConfigService } = require('./llmConfigService');
+            llmConfigService.logEvent({
+                traceId: this.traceId,
+                provider: 'unknown', // Can't easily determine provider on generic error unless metadata has it
+                model: metadata.model || 'unknown',
+                status: 'error',
+                latencyMs: Date.now() - this.startTime,
+                tokensIn: 0,
+                tokensOut: 0,
+                cost: 0,
+                errorMessage: error.message
+            });
+        } catch (e) {
+            aiLogger.warn('Observability', 'Failed to persist error log', e);
+        }
     }
 
     /**

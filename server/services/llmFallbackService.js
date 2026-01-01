@@ -35,9 +35,9 @@ const PROVIDER_ENDPOINTS = {
     groq: 'https://api.groq.com/openai/v1/chat/completions',
     together: 'https://api.together.xyz/v1/chat/completions',
     mistral: 'https://api.mistral.ai/v1/chat/completions',
-    nvidia: 'https://integrate.api.nvidia.com/v1/chat/completions',
-    cohere: 'https://api.cohere.ai/v1/chat',
-    zai: 'https://api.z.ai/api/paas/v4/chat/completions',
+    nvidia: 'https://integrate.api.nvidia.com/v1/models',
+    cohere: 'https://api.cohere.com/v1/check-api-key',
+    zai: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
     ollama: 'http://localhost:11434/api'
 };
 

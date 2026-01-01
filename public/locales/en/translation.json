@@ -1827,7 +1827,7 @@
       "header": "Settings",
       "myProfile": "My Profile",
       "billing": "Billing & Plans",
-      "aiConfig": "AI Configuration",
+      "aiConfig": "LLM Management",
       "notifications": "Notifications",
       "integrations": "Integrations",
       "regionalization": "Regionalization",

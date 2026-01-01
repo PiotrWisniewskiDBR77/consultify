@@ -21,7 +21,9 @@ import {
     Lock,
     Upload,
     Layers,
-    MessageSquareWarning
+    MessageSquareWarning,
+    Cpu,
+    Sparkles
 } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { Api } from '../services/api';
@@ -34,6 +36,8 @@ export type SuperAdminSection =
     | 'users'
     | 'billing'
     | 'ai-config'
+    | 'llm-management'
+    | 'ai-intelligence'
     | 'knowledge'
     | 'settings'
     // Enterprise sections
@@ -54,6 +58,8 @@ export const sectionToAppView: Record<SuperAdminSection, AppView> = {
     'users': AppView.SUPERADMIN_USERS,
     'billing': AppView.SUPERADMIN_BILLING,
     'ai-config': AppView.SUPERADMIN_AI_CONFIG,
+    'llm-management': AppView.SUPERADMIN_LLM_MANAGEMENT,
+    'ai-intelligence': AppView.SUPERADMIN_AI_INTELLIGENCE,
     'knowledge': AppView.SUPERADMIN_KNOWLEDGE,
     'settings': AppView.SUPERADMIN_SETTINGS,
     // Enterprise mappings
@@ -74,6 +80,8 @@ export const appViewToSection: Record<string, SuperAdminSection> = {
     [AppView.SUPERADMIN_USERS]: 'users',
     [AppView.SUPERADMIN_BILLING]: 'billing',
     [AppView.SUPERADMIN_AI_CONFIG]: 'ai-config',
+    [AppView.SUPERADMIN_LLM_MANAGEMENT]: 'llm-management',
+    [AppView.SUPERADMIN_AI_INTELLIGENCE]: 'ai-intelligence',
     [AppView.SUPERADMIN_KNOWLEDGE]: 'knowledge',
     [AppView.SUPERADMIN_SETTINGS]: 'settings',
     // Enterprise mappings
@@ -156,6 +164,7 @@ const menuItems: MenuItem[] = [
     { id: 'playbooks', viewId: AppView.SUPERADMIN_PLAYBOOK_TEMPLATES, label: 'Playbook Templates', icon: <Layers size={20} />, category: 'core' },
 
     // Security & Access
+
     { id: 'sso', viewId: AppView.SUPERADMIN_SSO, label: 'SSO Configuration', icon: <Key size={20} />, category: 'security' },
     { id: 'security-policies', viewId: AppView.SUPERADMIN_SECURITY_POLICIES, label: 'Security Policies', icon: <ShieldCheck size={20} />, category: 'security' },
     { id: 'api-management', viewId: AppView.SUPERADMIN_API_MANAGEMENT, label: 'API Management', icon: <KeyRound size={20} />, category: 'security' },
@@ -168,8 +177,9 @@ const menuItems: MenuItem[] = [
     { id: 'feedback', viewId: AppView.SUPERADMIN_FEEDBACK, label: 'User Feedback', icon: <MessageSquareWarning size={20} />, category: 'core' },
     { id: 'bulk-operations', viewId: AppView.SUPERADMIN_BULK_OPERATIONS, label: 'Bulk Operations', icon: <Upload size={20} />, category: 'enterprise' },
 
-    // System
-    { id: 'ai-config', viewId: AppView.SUPERADMIN_AI_CONFIG, label: 'AI Configuration', icon: <Brain size={20} />, category: 'system' },
+    // System - AI & LLM (Two distinct modules)
+    { id: 'llm-management', viewId: AppView.SUPERADMIN_LLM_MANAGEMENT, label: 'LLM Management', icon: <Cpu size={20} />, category: 'system' },
+    { id: 'ai-intelligence', viewId: AppView.SUPERADMIN_AI_INTELLIGENCE, label: 'AI Intelligence', icon: <Sparkles size={20} />, highlight: true, category: 'system' },
     { id: 'knowledge', viewId: AppView.SUPERADMIN_KNOWLEDGE, label: 'Knowledge Base', icon: <BookOpen size={20} />, category: 'system' },
     { id: 'settings', viewId: AppView.SUPERADMIN_SETTINGS, label: 'Settings', icon: <Settings size={20} />, category: 'system' },
 ];

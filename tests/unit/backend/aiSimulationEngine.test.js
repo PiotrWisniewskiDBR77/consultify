@@ -1,34 +1,38 @@
 // AI Simulation Engine Unit Tests
 // Tests the AI simulation engine for scenario planning and what-if analysis
 
-const AISimulationEngine = require('../../../server/ai/aiSimulationEngine');
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+
+const mockDb = {
+    all: vi.fn(),
+    get: vi.fn(),
+    run: vi.fn()
+};
+
+const mockSimulationService = {
+    runSimulation: vi.fn(),
+    validateScenario: vi.fn(),
+    calculateProbabilities: vi.fn()
+};
+
+vi.mock('../../../server/database', () => ({ default: mockDb }));
+vi.mock('../../../server/services/simulationService', () => ({ default: mockSimulationService }));
 
 describe('AISimulationEngine', () => {
     let engine;
-    let mockDb;
-    let mockSimulationService;
+    let AISimulationEngine;
 
     beforeEach(() => {
-        mockDb = {
-            all: jest.fn(),
-            get: jest.fn(),
-            run: jest.fn()
-        };
-
-        mockSimulationService = {
-            runSimulation: jest.fn(),
-            validateScenario: jest.fn(),
-            calculateProbabilities: jest.fn()
-        };
-
-        jest.mock('../../../server/database', () => mockDb);
-        jest.mock('../../../server/services/simulationService', () => mockSimulationService);
-
+        vi.clearAllMocks();
+        vi.resetModules();
+        AISimulationEngine = require('../../../server/ai/aiSimulationEngine');
         engine = new AISimulationEngine();
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     describe('runScenarioSimulation', () => {

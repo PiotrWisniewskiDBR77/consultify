@@ -1534,4 +1534,49 @@ function getHealthStatusLabel(status) {
     }
 }
 
+// Analytics Endpoints
+
+/**
+ * GET /api/llm/analytics
+ * Get aggregated LLM usage stats
+ */
+router.get('/analytics', verifyToken, async (req, res) => {
+    // Only admins can see analytics
+    if (!req.user.is_super_admin && req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    try {
+        const days = parseInt(req.query.days) || 7;
+        const stats = await llmConfigService.getAnalyticsParams(days);
+        res.json(stats);
+    } catch (error) {
+        aiLogger.error('API', 'Failed to fetch analytics', error);
+        res.status(500).json({ error: 'Failed to fetch analytics' });
+    }
+});
+
+/**
+ * GET /api/llm/logs
+ * Get detailed request logs
+ */
+router.get('/logs', verifyToken, async (req, res) => {
+    // Only admins can see logs
+    if (!req.user.is_super_admin && req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    try {
+        const limit = parseInt(req.query.limit) || 50;
+        const offset = parseInt(req.query.offset) || 0;
+        const onlyErrors = req.query.errors === 'true';
+
+        const logs = await llmConfigService.getRecentLogs(limit, offset, onlyErrors);
+        res.json({ logs });
+    } catch (error) {
+        aiLogger.error('API', 'Failed to fetch logs', error);
+        res.status(500).json({ error: 'Failed to fetch logs' });
+    }
+});
+
 module.exports = router;

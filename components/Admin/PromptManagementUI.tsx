@@ -30,11 +30,20 @@ import {
     Tag,
     Wand2,
     RefreshCw,
-    Eye
+    Eye,
+    Sparkles,
+    Blocks,
+    TestTube,
+    Languages,
+    PanelRightOpen,
+    PanelRightClose
 } from 'lucide-react';
 import api from '../../services/api';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import { PromptAssistantPanel } from './PromptAssistantPanel';
+import { PromptBlockBuilder } from './PromptBlockBuilder';
+import { PromptTestBench } from './PromptTestBench';
 
 interface PromptTemplate {
     id: string;
@@ -89,6 +98,11 @@ export function PromptManagementUI() {
     const [isSaving, setIsSaving] = useState(false);
     const [editForm, setEditForm] = useState<Partial<PromptTemplate>>({});
     const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(['chat', 'analysis']));
+    
+    // New states for enhanced features
+    const [showAssistant, setShowAssistant] = useState(true);
+    const [activeTab, setActiveTab] = useState<'editor' | 'blocks' | 'test'>('editor');
+    const [selectedBlocks, setSelectedBlocks] = useState<string[]>([]);
 
     const fetchPrompts = useCallback(async () => {
         setLoading(true);
@@ -376,8 +390,10 @@ export function PromptManagementUI() {
                 </div>
             </div>
 
-            {/* Main Content */}
-            <div className="flex-1 flex flex-col">
+            {/* Main Content Area */}
+            <div className={`flex-1 flex ${showAssistant ? '' : ''}`}>
+                {/* Editor/Blocks/Test Area */}
+                <div className={`flex-1 flex flex-col ${showAssistant ? 'lg:w-3/5' : 'w-full'}`}>
                 {!selectedPrompt && !isEditing ? (
                     <div className="flex-1 flex items-center justify-center text-slate-500">
                         <div className="text-center">
@@ -395,7 +411,8 @@ export function PromptManagementUI() {
                 ) : (
                     <>
                         {/* Toolbar */}
-                        <div className="px-6 py-4 border-b border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 flex items-center justify-between">
+                        <div className="px-6 py-4 border-b border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800">
+                            <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-3">
                                 <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                                     {isEditing ? (editForm.id ? 'Edit Prompt' : 'New Prompt') : selectedPrompt?.name}
@@ -407,6 +424,18 @@ export function PromptManagementUI() {
                                 )}
                             </div>
                             <div className="flex items-center gap-2">
+                                {/* Assistant Toggle */}
+                                <button
+                                    onClick={() => setShowAssistant(!showAssistant)}
+                                    className={`p-2 rounded-lg transition-colors ${
+                                        showAssistant
+                                            ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30'
+                                            : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10'
+                                    }`}
+                                    title={showAssistant ? 'Hide AI Assistant' : 'Show AI Assistant'}
+                                >
+                                    {showAssistant ? <PanelRightClose size={18} /> : <PanelRightOpen size={18} />}
+                                </button>
                                 {isEditing ? (
                                     <>
                                         <button
@@ -471,11 +500,67 @@ export function PromptManagementUI() {
                                     </>
                                 )}
                             </div>
+                            </div>
+                            
+                            {/* Tab Navigation */}
+                            <div className="flex items-center gap-1 border-t border-slate-200 dark:border-white/10 pt-3 -mb-4 -mx-6 px-6">
+                                <button
+                                    onClick={() => setActiveTab('editor')}
+                                    className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+                                        activeTab === 'editor'
+                                            ? 'bg-slate-50 dark:bg-navy-900 text-purple-600 dark:text-purple-400 border-b-2 border-purple-600'
+                                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                    }`}
+                                >
+                                    <Edit size={16} />
+                                    Editor
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('blocks')}
+                                    className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+                                        activeTab === 'blocks'
+                                            ? 'bg-slate-50 dark:bg-navy-900 text-purple-600 dark:text-purple-400 border-b-2 border-purple-600'
+                                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                    }`}
+                                >
+                                    <Blocks size={16} />
+                                    Block Builder
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('test')}
+                                    className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+                                        activeTab === 'test'
+                                            ? 'bg-slate-50 dark:bg-navy-900 text-purple-600 dark:text-purple-400 border-b-2 border-purple-600'
+                                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                    }`}
+                                >
+                                    <TestTube size={16} />
+                                    Test Bench
+                                </button>
+                            </div>
                         </div>
 
                         {/* Content */}
                         <div className="flex-1 overflow-y-auto p-6">
-                            {isEditing ? (
+                            {/* Block Builder Tab */}
+                            {activeTab === 'blocks' && (
+                                <PromptBlockBuilder
+                                    selectedBlocks={selectedBlocks}
+                                    onBlocksChange={setSelectedBlocks}
+                                    onPreview={(preview) => console.log('Preview:', preview)}
+                                />
+                            )}
+
+                            {/* Test Bench Tab */}
+                            {activeTab === 'test' && (
+                                <PromptTestBench
+                                    templateCode={selectedPrompt?.name || editForm.name}
+                                    onTestComplete={(results) => console.log('Test results:', results)}
+                                />
+                            )}
+
+                            {/* Editor Tab */}
+                            {activeTab === 'editor' && isEditing ? (
                                 <div className="max-w-4xl space-y-6">
                                     {/* Name & Category */}
                                     <div className="grid grid-cols-2 gap-4">
@@ -567,7 +652,7 @@ export function PromptManagementUI() {
                                         </span>
                                     </div>
                                 </div>
-                            ) : selectedPrompt && (
+                            ) : activeTab === 'editor' && selectedPrompt && (
                                 <div className="max-w-4xl space-y-6">
                                     {/* Metadata */}
                                     <div className="grid grid-cols-3 gap-4 text-sm">
@@ -714,6 +799,25 @@ export function PromptManagementUI() {
                             )}
                         </div>
                     </>
+                )}
+                </div>
+
+                {/* AI Assistant Panel */}
+                {showAssistant && (
+                    <div className="hidden lg:block w-2/5 border-l border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-navy-800">
+                        <PromptAssistantPanel
+                            promptId={selectedPrompt?.id}
+                            promptContent={isEditing ? editForm.system_prompt : selectedPrompt?.system_prompt}
+                            templateCode={selectedPrompt?.name}
+                            onSuggestionApply={(improved) => {
+                                if (isEditing) {
+                                    setEditForm({ ...editForm, system_prompt: improved });
+                                }
+                                toast.success('Suggestion applied to editor');
+                            }}
+                            className="h-full"
+                        />
+                    </div>
                 )}
             </div>
         </div>

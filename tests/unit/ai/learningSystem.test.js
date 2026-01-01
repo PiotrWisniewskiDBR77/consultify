@@ -4,7 +4,7 @@
  * Tests for AI pattern extraction and learning service.
  */
 
-const { learningSystem, LearningSystemService } = require('../../../server/services/ai/learningSystem');
+const { learningSystem, LearningSystem } = require('../../../server/services/ai/learningSystem');
 
 describe('LearningSystem', () => {
     describe('recordInteraction()', () => {
@@ -37,7 +37,7 @@ describe('LearningSystem', () => {
 
     describe('extractPatterns()', () => {
         it('should extract patterns from interactions', async () => {
-            const service = new LearningSystemService();
+            const service = new LearningSystem();
             
             // Record multiple similar interactions
             const interactions = [
@@ -57,7 +57,7 @@ describe('LearningSystem', () => {
         });
 
         it('should identify common request types', async () => {
-            const service = new LearningSystemService();
+            const service = new LearningSystem();
             
             // Record interactions with different types
             await service.recordInteraction({ requestType: 'chat', prompt: 'test 1' });
@@ -72,7 +72,7 @@ describe('LearningSystem', () => {
 
     describe('getPromptSuggestions()', () => {
         it('should return prompt suggestions based on context', async () => {
-            const service = new LearningSystemService();
+            const service = new LearningSystem();
             
             const suggestions = await service.getPromptSuggestions({
                 capability: 'recommendation',
@@ -86,7 +86,7 @@ describe('LearningSystem', () => {
         });
 
         it('should return empty array for unknown context', async () => {
-            const service = new LearningSystemService();
+            const service = new LearningSystem();
             
             const suggestions = await service.getPromptSuggestions({
                 capability: 'unknown_capability',
@@ -99,7 +99,7 @@ describe('LearningSystem', () => {
 
     describe('getInsights()', () => {
         it('should generate insights from user data', async () => {
-            const service = new LearningSystemService();
+            const service = new LearningSystem();
             
             // Record some interactions first
             await service.recordInteraction({
@@ -117,7 +117,7 @@ describe('LearningSystem', () => {
         });
 
         it('should return default insights for new users', async () => {
-            const service = new LearningSystemService();
+            const service = new LearningSystem();
             
             const insights = await service.getInsights('brand-new-user-' + Date.now());
             
@@ -128,7 +128,7 @@ describe('LearningSystem', () => {
 
     describe('learn()', () => {
         it('should process feedback and update models', async () => {
-            const service = new LearningSystemService();
+            const service = new LearningSystem();
             
             await expect(
                 service.learn({
@@ -141,7 +141,7 @@ describe('LearningSystem', () => {
         });
 
         it('should handle negative feedback', async () => {
-            const service = new LearningSystemService();
+            const service = new LearningSystem();
             
             await expect(
                 service.learn({
@@ -156,7 +156,7 @@ describe('LearningSystem', () => {
 
     describe('getOrganizationLearnings()', () => {
         it('should aggregate learnings for organization', async () => {
-            const service = new LearningSystemService();
+            const service = new LearningSystem();
             const orgId = 'test-org-' + Date.now();
             
             // Record some interactions for the org
