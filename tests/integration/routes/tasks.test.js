@@ -12,17 +12,6 @@ const require = createRequire(import.meta.url);
 import db from '../../../server/database';
 
 // Mock other dependencies globally (ESM mocks)
-vi.mock('../../../server/middleware/authMiddleware', () => ({
-    default: (req, res, next) => {
-        req.user = {
-            id: 'user-1',
-            organizationId: 'org-1',
-            role: 'ADMIN'
-        };
-        next();
-    }
-}));
-
 vi.mock('../../../server/routes/notifications', () => ({
     default: {
         createNotification: vi.fn()
@@ -58,6 +47,10 @@ describe('Tasks Routes', () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
+
+        // Enable Auth Bypass for this test suite
+        process.env.ENABLE_TEST_AUTH_BYPASS = 'true';
+        process.env.NODE_ENV = 'test';
 
         // Spy on the real DB instance methods
         // We need to restore mocks first to avoid stacking spies

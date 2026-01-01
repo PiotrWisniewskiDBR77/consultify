@@ -1,21 +1,666 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="1" failures="1" errors="0" time="0">
-    <testsuite name="tests/backend/ai/aiPipeline.integration.test.js" timestamp="2026-01-01T15:04:05.576Z" hostname="MacBook-Pro-Piotr.local" tests="1" failures="1" errors="0" skipped="0" time="0">
-        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="tests/backend/ai/aiPipeline.integration.test.js" time="0">
-            <failure message="Failed to parse source for import analysis because the content contains invalid JS syntax. If you are using JSX, make sure to name the file with the .jsx or .tsx extension." type="Error">
-Error: Failed to parse source for import analysis because the content contains invalid JS syntax. If you are using JSX, make sure to name the file with the .jsx or .tsx extension.
-  Plugin: vite:import-analysis
-  File: /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/backend/ai/aiPipeline.integration.test.js:1:1
-  1  |  /**
-     |  ^
-  2  |   * AI Pipeline Integration Tests
-  3  |   * Tests the unified AI pipeline with capability-based routing
- ❯ TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42528:41
- ❯ TransformPluginContext.error node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42525:16
- ❯ TransformPluginContext.transform node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40455:14
- ❯ EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42323:18
- ❯ loadAndTransform node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:35739:27
-            </failure>
+<testsuites name="vitest tests" tests="47" failures="0" errors="0" time="0.91181825">
+    <testsuite name="tests/backend/ai/aiPipeline.integration.test.js" timestamp="2026-01-01T15:06:22.629Z" hostname="MacBook-Pro-Piotr.local" tests="33" failures="0" errors="0" skipped="0" time="0.4034685">
+        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="AI Pipeline Integration Tests &gt; CAPABILITY_REGISTRY &gt; should have all 48 capabilities registered" time="0.176771791">
+            <system-out>
+[WebResearch] Initialized with backend: mock
+
+            </system-out>
+            <system-err>
+Warning: Cannot access the `require` function: &quot;TypeError [ERR_INVALID_ARG_VALUE]: The argument &apos;filename&apos; must be a file URL object, file URL string, or absolute path string. Received &apos;http://localhost:3000/index.cjs&apos;&quot;.
+Warning: Cannot polyfill `ImageData`, rendering may be broken.
+Warning: Cannot polyfill `Path2D`, rendering may be broken.
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="AI Pipeline Integration Tests &gt; CAPABILITY_REGISTRY &gt; should have valid role for each capability" time="0.002086">
+        </testcase>
+        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="AI Pipeline Integration Tests &gt; CAPABILITY_REGISTRY &gt; should have maxTokens defined for each capability" time="0.001533708">
+        </testcase>
+        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="AI Pipeline Integration Tests &gt; CAPABILITY_REGISTRY &gt; should have outputFormat for each capability" time="0.001347458">
+        </testcase>
+        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="AI Pipeline Integration Tests &gt; getCapabilityConfig &gt; should return correct config for known capability" time="0.0009805">
+        </testcase>
+        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="AI Pipeline Integration Tests &gt; getCapabilityConfig &gt; should return default config for unknown capability" time="0.000676084">
+        </testcase>
+        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="AI Pipeline Integration Tests &gt; Domain Methods &gt; suggestTasks &gt; should generate tasks from initiative context" time="0.015388">
+            <system-out>
+[2026-01-01T15:06:21.516Z] [INFO] [AI:Pipeline] Starting process {&quot;capability&quot;:&quot;suggestTasks&quot;,&quot;traceId&quot;:&quot;trace_1767279981516_br98t88fw&quot;}
+
+[2026-01-01T15:06:21.517Z] [INFO] [AI:Pipeline] Effective settings loaded {&quot;proactivityMode&quot;:&quot;BALANCED&quot;,&quot;maxTokens&quot;:4096}
+
+[2026-01-01T15:06:21.518Z] [DEBUG] [AI:Cache] get: MISS
+
+[2026-01-01T15:06:21.518Z] [DEBUG] [AI:MemoryManager] Retrieving from layers: session, project, organization, knowledge
+
+[2026-01-01T15:06:21.519Z] [DEBUG] [AI:MemoryManager] Retrieved 0 chunks in 1ms
+
+[2026-01-01T15:06:21.519Z] [INFO] [AI:EnhancedContextBuilder] Building context for phase: discovery
+
+[2026-01-01T15:06:21.523Z] [INFO] [AI:Pipeline] Response mode: quick (auto-detected)
+
+[2026-01-01T15:06:21.525Z] [INFO] [AI:Pipeline] Calling LLM Service {&quot;model&quot;:&quot;gpt-4o-mini&quot;,&quot;toolsEnabled&quot;:false,&quot;streaming&quot;:false}
+[2026-01-01T15:06:21.525Z] [INFO] [AI:Pipeline] LLM attempt 1/3 {&quot;model&quot;:&quot;gpt-4o-mini&quot;}
+
+[2026-01-01T15:06:21.525Z] [INFO] [AI:Observability] Generation recorded {&quot;traceId&quot;:&quot;trace_1767279981516_br98t88fw&quot;,&quot;model&quot;:&quot;gpt-4o-mini&quot;,&quot;tokens&quot;:150,&quot;cost&quot;:0.000045}
+[2026-01-01T15:06:21.525Z] [INFO] [AI:LLMConfigService] Initializing...
+
+[2026-01-01T15:06:21.526Z] [DEBUG] [AI:Cache] set: HIT
+
+[2026-01-01T15:06:21.526Z] [INFO] [AI:Observability] Trace completed {&quot;traceId&quot;:&quot;trace_1767279981516_br98t88fw&quot;,&quot;duration&quot;:10,&quot;status&quot;:&quot;success&quot;}
+[2026-01-01T15:06:21.526Z] [INFO] [AI:Pipeline] Process complete {&quot;latency&quot;:9,&quot;tokensUsed&quot;:150,&quot;costUsd&quot;:0.000045,&quot;qualityScore&quot;:0.92,&quot;traceId&quot;:&quot;trace_1767279981516_br98t88fw&quot;}
+
+            </system-out>
+            <system-err>
+[RagService] searchRelevantChunks error: OpenAI API key not configured
+
+[2026-01-01T15:06:21.519Z] [ERROR] [AI:OrgMemoryStore] Search error: OpenAI API key not configured
+
+[2026-01-01T15:06:21.519Z] [WARN] [AI:MemoryManager] Layer knowledge retrieval failed: OpenAI API key not configured
+
+[RagService] searchRelevantChunks error: OpenAI API key not configured
+
+[2026-01-01T15:06:21.522Z] [ERROR] [AI:KnowledgeIndexer] Keyword search error: SQLITE_ERROR: no such column: c.metadata
+
+[AIPipeline] Audit log failed: SQLITE_ERROR: table ai_audit_logs has no column named timestamp
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="AI Pipeline Integration Tests &gt; Domain Methods &gt; validateInitiative &gt; should validate initiative structure" time="0.003653708">
+            <system-out>
+[2026-01-01T15:06:21.528Z] [INFO] [AI:Pipeline] Starting process {&quot;capability&quot;:&quot;validateInitiative&quot;,&quot;traceId&quot;:&quot;trace_1767279981528_2oywfjxhm&quot;}
+
+[2026-01-01T15:06:21.528Z] [INFO] [AI:Pipeline] Effective settings loaded {&quot;proactivityMode&quot;:&quot;BALANCED&quot;,&quot;maxTokens&quot;:4096}
+
+[2026-01-01T15:06:21.528Z] [DEBUG] [AI:Cache] get: MISS
+
+[2026-01-01T15:06:21.529Z] [INFO] [AI:LLMConfigService] Syncing database with environment definitions...
+
+[2026-01-01T15:06:21.529Z] [DEBUG] [AI:MemoryManager] Retrieving from layers: session, project, organization, knowledge
+
+[2026-01-01T15:06:21.529Z] [DEBUG] [AI:MemoryManager] Retrieved 2 chunks in 0ms
+
+[2026-01-01T15:06:21.529Z] [DEBUG] [AI:Pipeline] Memory retrieved: 2 chunks, 110 tokens
+[2026-01-01T15:06:21.529Z] [INFO] [AI:EnhancedContextBuilder] Building context for phase: discovery
+[2026-01-01T15:06:21.529Z] [DEBUG] [AI:EnhancedContextBuilder] Using cached context
+
+[2026-01-01T15:06:21.529Z] [INFO] [AI:Pipeline] Response mode: quick (auto-detected)
+
+[2026-01-01T15:06:21.529Z] [INFO] [AI:LLMConfigService] Created provider openai (Active: false)
+
+[2026-01-01T15:06:21.530Z] [INFO] [AI:LLMConfigService] Created provider google (Active: false)
+
+[2026-01-01T15:06:21.530Z] [INFO] [AI:Pipeline] Calling LLM Service {&quot;model&quot;:&quot;gpt-4o&quot;,&quot;toolsEnabled&quot;:false,&quot;streaming&quot;:false}
+[2026-01-01T15:06:21.530Z] [INFO] [AI:Pipeline] LLM attempt 1/3 {&quot;model&quot;:&quot;gpt-4o&quot;}
+
+[2026-01-01T15:06:21.530Z] [INFO] [AI:Observability] Generation recorded {&quot;traceId&quot;:&quot;trace_1767279981528_2oywfjxhm&quot;,&quot;model&quot;:&quot;gpt-4o&quot;,&quot;tokens&quot;:150,&quot;cost&quot;:0.00075}
+[2026-01-01T15:06:21.530Z] [INFO] [AI:LLMConfigService] Initializing...
+
+[2026-01-01T15:06:21.530Z] [DEBUG] [AI:Cache] set: HIT
+
+[2026-01-01T15:06:21.530Z] [INFO] [AI:LLMConfigService] Created provider deepseek (Active: false)
+
+[2026-01-01T15:06:21.530Z] [INFO] [AI:Observability] Trace completed {&quot;traceId&quot;:&quot;trace_1767279981528_2oywfjxhm&quot;,&quot;duration&quot;:2,&quot;status&quot;:&quot;success&quot;}
+[2026-01-01T15:06:21.530Z] [INFO] [AI:Pipeline] Process complete {&quot;latency&quot;:2,&quot;tokensUsed&quot;:150,&quot;costUsd&quot;:0.00075,&quot;qualityScore&quot;:0.92,&quot;traceId&quot;:&quot;trace_1767279981528_2oywfjxhm&quot;}
+
+            </system-out>
+            <system-err>
+[2026-01-01T15:06:21.528Z] [WARN] [AI:LLMConfigService] Migration warning (might be expected): SQLITE_ERROR: duplicate column name: priority
+
+[2026-01-01T15:06:21.528Z] [WARN] [AI:LLMConfigService] Migration warning (might be expected): SQLITE_ERROR: duplicate column name: last_health_check
+
+[2026-01-01T15:06:21.528Z] [WARN] [AI:LLMConfigService] Migration warning (might be expected): SQLITE_ERROR: duplicate column name: health_status
+
+[2026-01-01T15:06:21.528Z] [WARN] [AI:LLMConfigService] Migration warning (might be expected): SQLITE_ERROR: duplicate column name: updated_at
+
+[RagService] searchRelevantChunks error: OpenAI API key not configured
+
+[2026-01-01T15:06:21.529Z] [WARN] [AI:LLMConfigService] Migration warning (might be expected): SQLITE_ERROR: duplicate column name: description
+
+[2026-01-01T15:06:21.529Z] [ERROR] [AI:OrgMemoryStore] Search error: OpenAI API key not configured
+
+[2026-01-01T15:06:21.529Z] [WARN] [AI:MemoryManager] Layer knowledge retrieval failed: OpenAI API key not configured
+
+[AIPipeline] Audit log failed: SQLITE_ERROR: table ai_audit_logs has no column named timestamp
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="AI Pipeline Integration Tests &gt; Domain Methods &gt; enrichInitiative &gt; should enrich with market context" time="0.003247208">
+            <system-out>
+[2026-01-01T15:06:21.531Z] [INFO] [AI:Pipeline] Starting process {&quot;capability&quot;:&quot;enrichInitiative&quot;,&quot;traceId&quot;:&quot;trace_1767279981531_hgc1v94se&quot;}
+
+[2026-01-01T15:06:21.531Z] [INFO] [AI:LLMConfigService] Created provider anthropic (Active: false)
+
+[2026-01-01T15:06:21.531Z] [INFO] [AI:Pipeline] Effective settings loaded {&quot;proactivityMode&quot;:&quot;BALANCED&quot;,&quot;maxTokens&quot;:4096}
+
+[2026-01-01T15:06:21.532Z] [DEBUG] [AI:Cache] get: MISS
+
+[2026-01-01T15:06:21.532Z] [INFO] [AI:LLMConfigService] Syncing database with environment definitions...
+
+[2026-01-01T15:06:21.532Z] [INFO] [AI:LLMConfigService] Created provider nvidia (Active: false)
+
+[2026-01-01T15:06:21.532Z] [DEBUG] [AI:MemoryManager] Retrieving from layers: session, project, organization, knowledge, external
+
+[2026-01-01T15:06:21.532Z] [DEBUG] [AI:MemoryManager] Retrieved 4 chunks in 0ms
+
+[2026-01-01T15:06:21.532Z] [DEBUG] [AI:Pipeline] Memory retrieved: 4 chunks, 223 tokens
+[2026-01-01T15:06:21.532Z] [INFO] [AI:EnhancedContextBuilder] Building context for phase: discovery
+[2026-01-01T15:06:21.532Z] [DEBUG] [AI:EnhancedContextBuilder] Using cached context
+
+[2026-01-01T15:06:21.532Z] [INFO] [AI:Pipeline] Response mode: quick (auto-detected)
+
+[2026-01-01T15:06:21.532Z] [INFO] [AI:LLMConfigService] Updated provider openai (Active: false)
+
+[2026-01-01T15:06:21.533Z] [INFO] [AI:LLMConfigService] Created provider cohere (Active: false)
+
+[2026-01-01T15:06:21.533Z] [INFO] [AI:LLMConfigService] Updated provider google (Active: false)
+
+[2026-01-01T15:06:21.533Z] [INFO] [AI:LLMConfigService] Created provider qwen (Active: false)
+
+[2026-01-01T15:06:21.533Z] [INFO] [AI:Pipeline] Calling LLM Service {&quot;model&quot;:&quot;gpt-4o&quot;,&quot;toolsEnabled&quot;:false,&quot;streaming&quot;:false}
+[2026-01-01T15:06:21.533Z] [INFO] [AI:Pipeline] LLM attempt 1/3 {&quot;model&quot;:&quot;gpt-4o&quot;}
+
+[2026-01-01T15:06:21.533Z] [INFO] [AI:Observability] Generation recorded {&quot;traceId&quot;:&quot;trace_1767279981531_hgc1v94se&quot;,&quot;model&quot;:&quot;gpt-4o&quot;,&quot;tokens&quot;:150,&quot;cost&quot;:0.00075}
+[2026-01-01T15:06:21.533Z] [INFO] [AI:LLMConfigService] Initializing...
+
+[2026-01-01T15:06:21.533Z] [DEBUG] [AI:Cache] set: HIT
+
+[2026-01-01T15:06:21.533Z] [INFO] [AI:LLMConfigService] Created provider zai (Active: false)
+
+[2026-01-01T15:06:21.533Z] [INFO] [AI:LLMConfigService] Updated provider deepseek (Active: false)
+
+[2026-01-01T15:06:21.534Z] [INFO] [AI:Observability] Trace completed {&quot;traceId&quot;:&quot;trace_1767279981531_hgc1v94se&quot;,&quot;duration&quot;:3,&quot;status&quot;:&quot;success&quot;}
+[2026-01-01T15:06:21.534Z] [INFO] [AI:Pipeline] Process complete {&quot;latency&quot;:2,&quot;tokensUsed&quot;:150,&quot;costUsd&quot;:0.00075,&quot;qualityScore&quot;:0.92,&quot;traceId&quot;:&quot;trace_1767279981531_hgc1v94se&quot;}
+
+            </system-out>
+            <system-err>
+[2026-01-01T15:06:21.531Z] [WARN] [AI:LLMConfigService] Migration warning (might be expected): SQLITE_ERROR: duplicate column name: priority
+
+[2026-01-01T15:06:21.531Z] [WARN] [AI:LLMConfigService] Migration warning (might be expected): SQLITE_ERROR: duplicate column name: last_health_check
+
+[2026-01-01T15:06:21.532Z] [WARN] [AI:LLMConfigService] Migration warning (might be expected): SQLITE_ERROR: duplicate column name: health_status
+
+[2026-01-01T15:06:21.532Z] [WARN] [AI:LLMConfigService] Migration warning (might be expected): SQLITE_ERROR: duplicate column name: updated_at
+
+[RagService] searchRelevantChunks error: OpenAI API key not configured
+
+[2026-01-01T15:06:21.532Z] [WARN] [AI:LLMConfigService] Migration warning (might be expected): SQLITE_ERROR: duplicate column name: description
+
+[2026-01-01T15:06:21.532Z] [ERROR] [AI:OrgMemoryStore] Search error: OpenAI API key not configured
+
+[2026-01-01T15:06:21.532Z] [WARN] [AI:MemoryManager] Layer knowledge retrieval failed: OpenAI API key not configured
+
+[AIPipeline] Audit log failed: SQLITE_ERROR: table ai_audit_logs has no column named timestamp
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="AI Pipeline Integration Tests &gt; Domain Methods &gt; generateObservations &gt; should analyze assessment data" time="0.005104209">
+            <system-out>
+[2026-01-01T15:06:21.535Z] [INFO] [AI:Pipeline] Starting process {&quot;capability&quot;:&quot;generateObservations&quot;,&quot;traceId&quot;:&quot;trace_1767279981535_daejo6q4b&quot;}
+
+[2026-01-01T15:06:21.535Z] [INFO] [AI:LLMConfigService] Created provider ollama (Active: false)
+
+[2026-01-01T15:06:21.535Z] [INFO] [AI:LLMConfigService] Updated provider anthropic (Active: false)
+
+[2026-01-01T15:06:21.535Z] [INFO] [AI:Pipeline] Effective settings loaded {&quot;proactivityMode&quot;:&quot;BALANCED&quot;,&quot;maxTokens&quot;:4096}
+
+[2026-01-01T15:06:21.535Z] [INFO] [AI:LLMConfigService] Syncing database with environment definitions...
+
+[2026-01-01T15:06:21.536Z] [DEBUG] [AI:Cache] get: MISS
+
+[2026-01-01T15:06:21.536Z] [INFO] [AI:LLMConfigService] Updated provider nvidia (Active: false)
+
+[2026-01-01T15:06:21.536Z] [DEBUG] [AI:MemoryManager] Retrieving from layers: session, project, organization, knowledge
+
+[2026-01-01T15:06:21.536Z] [INFO] [AI:LLMConfigService] Updated provider openai (Active: false)
+
+[2026-01-01T15:06:21.537Z] [DEBUG] [AI:MemoryManager] Retrieved 6 chunks in 1ms
+
+[2026-01-01T15:06:21.537Z] [DEBUG] [AI:Pipeline] Memory retrieved: 6 chunks, 345 tokens
+[2026-01-01T15:06:21.537Z] [INFO] [AI:EnhancedContextBuilder] Building context for phase: discovery
+[2026-01-01T15:06:21.537Z] [DEBUG] [AI:EnhancedContextBuilder] Using cached context
+
+[2026-01-01T15:06:21.537Z] [INFO] [AI:LLMConfigService] LLM Config Service initialized with analytics storage
+
+[2026-01-01T15:06:21.537Z] [INFO] [AI:LLMConfigService] Updated provider cohere (Active: false)
+
+[2026-01-01T15:06:21.537Z] [INFO] [AI:Pipeline] Response mode: standard (default)
+
+[2026-01-01T15:06:21.537Z] [INFO] [AI:LLMConfigService] Updated provider google (Active: false)
+
+[2026-01-01T15:06:21.537Z] [INFO] [AI:LLMConfigService] Updated provider qwen (Active: false)
+
+[2026-01-01T15:06:21.538Z] [INFO] [AI:LLMConfigService] Updated provider deepseek (Active: false)
+
+[2026-01-01T15:06:21.538Z] [INFO] [AI:LLMConfigService] Updated provider zai (Active: false)
+
+[2026-01-01T15:06:21.538Z] [INFO] [AI:Pipeline] Calling LLM Service {&quot;model&quot;:&quot;gpt-4o&quot;,&quot;toolsEnabled&quot;:false,&quot;streaming&quot;:false}
+[2026-01-01T15:06:21.538Z] [INFO] [AI:Pipeline] LLM attempt 1/3 {&quot;model&quot;:&quot;gpt-4o&quot;}
+
+[2026-01-01T15:06:21.538Z] [INFO] [AI:Observability] Generation recorded {&quot;traceId&quot;:&quot;trace_1767279981535_daejo6q4b&quot;,&quot;model&quot;:&quot;gpt-4o&quot;,&quot;tokens&quot;:150,&quot;cost&quot;:0.00075}
+
+[2026-01-01T15:06:21.538Z] [DEBUG] [AI:Cache] set: HIT
+
+[2026-01-01T15:06:21.538Z] [INFO] [AI:LLMConfigService] Updated provider anthropic (Active: false)
+
+[2026-01-01T15:06:21.538Z] [INFO] [AI:LLMConfigService] Updated provider ollama (Active: false)
+
+[2026-01-01T15:06:21.539Z] [INFO] [AI:Observability] Trace completed {&quot;traceId&quot;:&quot;trace_1767279981535_daejo6q4b&quot;,&quot;duration&quot;:4,&quot;status&quot;:&quot;success&quot;}
+[2026-01-01T15:06:21.539Z] [INFO] [AI:Pipeline] Process complete {&quot;latency&quot;:3,&quot;tokensUsed&quot;:150,&quot;costUsd&quot;:0.00075,&quot;qualityScore&quot;:0.92,&quot;traceId&quot;:&quot;trace_1767279981535_daejo6q4b&quot;}
+
+            </system-out>
+            <system-err>
+[2026-01-01T15:06:21.534Z] [WARN] [AI:LLMConfigService] Migration warning (might be expected): SQLITE_ERROR: duplicate column name: priority
+
+[2026-01-01T15:06:21.535Z] [WARN] [AI:LLMConfigService] Migration warning (might be expected): SQLITE_ERROR: duplicate column name: last_health_check
+
+[2026-01-01T15:06:21.535Z] [WARN] [AI:LLMConfigService] Migration warning (might be expected): SQLITE_ERROR: duplicate column name: health_status
+
+[2026-01-01T15:06:21.535Z] [WARN] [AI:LLMConfigService] Migration warning (might be expected): SQLITE_ERROR: duplicate column name: updated_at
+
+[2026-01-01T15:06:21.535Z] [WARN] [AI:LLMConfigService] Migration warning (might be expected): SQLITE_ERROR: duplicate column name: description
+
+[RagService] searchRelevantChunks error: OpenAI API key not configured
+
+[2026-01-01T15:06:21.536Z] [ERROR] [AI:OrgMemoryStore] Search error: OpenAI API key not configured
+
+[2026-01-01T15:06:21.536Z] [WARN] [AI:MemoryManager] Layer knowledge retrieval failed: OpenAI API key not configured
+
+[AIPipeline] Audit log failed: SQLITE_ERROR: table ai_audit_logs has no column named timestamp
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="AI Pipeline Integration Tests &gt; parseJsonResponse &gt; should parse valid JSON" time="0.001107625">
+        </testcase>
+        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="AI Pipeline Integration Tests &gt; parseJsonResponse &gt; should handle JSON wrapped in code blocks" time="0.000902208">
+            <system-out>
+[2026-01-01T15:06:21.540Z] [INFO] [AI:LLMConfigService] Updated provider nvidia (Active: false)
+
+[2026-01-01T15:06:21.540Z] [INFO] [AI:LLMConfigService] Updated provider cohere (Active: false)
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="AI Pipeline Integration Tests &gt; parseJsonResponse &gt; should extract JSON from mixed text" time="0.000677542">
+            <system-out>
+[2026-01-01T15:06:21.541Z] [INFO] [AI:LLMConfigService] LLM Config Service initialized with analytics storage
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="AI Pipeline Integration Tests &gt; parseJsonResponse &gt; should return error object for invalid JSON" time="0.000840375">
+            <system-out>
+[2026-01-01T15:06:21.542Z] [INFO] [AI:LLMConfigService] Updated provider qwen (Active: false)
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="AI Pipeline Integration Tests &gt; parseJsonResponse &gt; should handle empty input" time="0.000722416">
+            <system-out>
+[2026-01-01T15:06:21.543Z] [INFO] [AI:LLMConfigService] Updated provider zai (Active: false)
+
+[2026-01-01T15:06:21.543Z] [INFO] [AI:LLMConfigService] Updated provider ollama (Active: false)
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="AI Pipeline Integration Tests &gt; parseJsonResponse &gt; should handle null input" time="0.000542542">
+        </testcase>
+        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="AI Pipeline Integration Tests &gt; Pipeline Process &gt; should handle basic chat request" time="0.005247083">
+            <system-out>
+[2026-01-01T15:06:21.544Z] [INFO] [AI:LLMConfigService] LLM Config Service initialized with analytics storage
+
+[2026-01-01T15:06:21.544Z] [INFO] [AI:Pipeline] Starting process {&quot;capability&quot;:&quot;chat&quot;,&quot;traceId&quot;:&quot;trace_1767279981544_2tepo4x58&quot;}
+
+[2026-01-01T15:06:21.545Z] [INFO] [AI:Pipeline] Effective settings loaded {&quot;proactivityMode&quot;:&quot;BALANCED&quot;,&quot;maxTokens&quot;:4096}
+
+[2026-01-01T15:06:21.545Z] [DEBUG] [AI:Cache] get: MISS
+
+[2026-01-01T15:06:21.545Z] [DEBUG] [AI:MemoryManager] Retrieving from layers: session, project, organization, knowledge
+
+[2026-01-01T15:06:21.545Z] [DEBUG] [AI:MemoryManager] Retrieved 8 chunks in 0ms
+
+[2026-01-01T15:06:21.545Z] [DEBUG] [AI:Pipeline] Memory retrieved: 8 chunks, 442 tokens
+[2026-01-01T15:06:21.545Z] [INFO] [AI:EnhancedContextBuilder] Building context for phase: discovery
+[2026-01-01T15:06:21.545Z] [DEBUG] [AI:EnhancedContextBuilder] Using cached context
+
+[2026-01-01T15:06:21.545Z] [INFO] [AI:Pipeline] Response mode: standard (default)
+
+[2026-01-01T15:06:21.548Z] [DEBUG] [AI:MCP] Handler registered for: get_project_details
+[2026-01-01T15:06:21.548Z] [DEBUG] [AI:MCP] Handler registered for: search_knowledge_base
+[2026-01-01T15:06:21.548Z] [DEBUG] [AI:MCP] Handler registered for: calculate_roi_draft
+[2026-01-01T15:06:21.548Z] [DEBUG] [AI:MCP] Handler registered for: create_initiative
+[2026-01-01T15:06:21.548Z] [DEBUG] [AI:MCP] Handler registered for: update_assessment_score
+[MCP] Registered tools: get_project_details, search_knowledge_base, calculate_roi_draft, create_initiative, update_assessment_score
+[2026-01-01T15:06:21.548Z] [INFO] [AI:Pipeline] Calling LLM Service {&quot;model&quot;:&quot;gpt-4o-mini&quot;,&quot;toolsEnabled&quot;:true,&quot;streaming&quot;:false}
+[2026-01-01T15:06:21.548Z] [INFO] [AI:Pipeline] LLM attempt 1/3 {&quot;model&quot;:&quot;gpt-4o-mini&quot;}
+
+[2026-01-01T15:06:21.548Z] [INFO] [AI:Observability] Generation recorded {&quot;traceId&quot;:&quot;trace_1767279981544_2tepo4x58&quot;,&quot;model&quot;:&quot;gpt-4o-mini&quot;,&quot;tokens&quot;:150,&quot;cost&quot;:0.000045}
+
+[2026-01-01T15:06:21.549Z] [DEBUG] [AI:Cache] set: HIT
+
+[2026-01-01T15:06:21.549Z] [INFO] [AI:Observability] Trace completed {&quot;traceId&quot;:&quot;trace_1767279981544_2tepo4x58&quot;,&quot;duration&quot;:5,&quot;status&quot;:&quot;success&quot;}
+[2026-01-01T15:06:21.549Z] [INFO] [AI:Pipeline] Process complete {&quot;latency&quot;:4,&quot;tokensUsed&quot;:150,&quot;costUsd&quot;:0.000045,&quot;qualityScore&quot;:0.92,&quot;traceId&quot;:&quot;trace_1767279981544_2tepo4x58&quot;}
+
+            </system-out>
+            <system-err>
+[RagService] searchRelevantChunks error: OpenAI API key not configured
+
+[2026-01-01T15:06:21.545Z] [ERROR] [AI:OrgMemoryStore] Search error: OpenAI API key not configured
+
+[2026-01-01T15:06:21.545Z] [WARN] [AI:MemoryManager] Layer knowledge retrieval failed: OpenAI API key not configured
+
+[AIPipeline] Audit log failed: SQLITE_ERROR: table ai_audit_logs has no column named timestamp
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="AI Pipeline Integration Tests &gt; Pipeline Process &gt; should check rate limits" time="0.002869125">
+            <system-out>
+[2026-01-01T15:06:21.550Z] [INFO] [AI:Pipeline] Starting process {&quot;capability&quot;:&quot;chat&quot;,&quot;traceId&quot;:&quot;trace_1767279981550_j94rgy2f6&quot;}
+
+[2026-01-01T15:06:21.550Z] [INFO] [AI:Pipeline] Effective settings loaded {&quot;proactivityMode&quot;:&quot;BALANCED&quot;,&quot;maxTokens&quot;:4096}
+
+[2026-01-01T15:06:21.550Z] [DEBUG] [AI:Cache] get: MISS
+
+[2026-01-01T15:06:21.550Z] [DEBUG] [AI:MemoryManager] Retrieving from layers: session, project, organization, knowledge
+
+[2026-01-01T15:06:21.550Z] [DEBUG] [AI:MemoryManager] Retrieved 10 chunks in 0ms
+
+[2026-01-01T15:06:21.550Z] [DEBUG] [AI:Pipeline] Memory retrieved: 10 chunks, 464 tokens
+[2026-01-01T15:06:21.550Z] [INFO] [AI:EnhancedContextBuilder] Building context for phase: discovery
+[2026-01-01T15:06:21.550Z] [DEBUG] [AI:EnhancedContextBuilder] Using cached context
+
+[2026-01-01T15:06:21.551Z] [INFO] [AI:Pipeline] Response mode: standard (default)
+
+[2026-01-01T15:06:21.551Z] [INFO] [AI:Pipeline] Calling LLM Service {&quot;model&quot;:&quot;gpt-4o-mini&quot;,&quot;toolsEnabled&quot;:true,&quot;streaming&quot;:false}
+[2026-01-01T15:06:21.551Z] [INFO] [AI:Pipeline] LLM attempt 1/3 {&quot;model&quot;:&quot;gpt-4o-mini&quot;}
+
+[2026-01-01T15:06:21.551Z] [INFO] [AI:Observability] Generation recorded {&quot;traceId&quot;:&quot;trace_1767279981550_j94rgy2f6&quot;,&quot;model&quot;:&quot;gpt-4o-mini&quot;,&quot;tokens&quot;:150,&quot;cost&quot;:0.000045}
+
+[2026-01-01T15:06:21.551Z] [DEBUG] [AI:Cache] set: HIT
+
+[2026-01-01T15:06:21.552Z] [INFO] [AI:Observability] Trace completed {&quot;traceId&quot;:&quot;trace_1767279981550_j94rgy2f6&quot;,&quot;duration&quot;:2,&quot;status&quot;:&quot;success&quot;}
+[2026-01-01T15:06:21.552Z] [INFO] [AI:Pipeline] Process complete {&quot;latency&quot;:1,&quot;tokensUsed&quot;:150,&quot;costUsd&quot;:0.000045,&quot;qualityScore&quot;:0.92,&quot;traceId&quot;:&quot;trace_1767279981550_j94rgy2f6&quot;}
+
+            </system-out>
+            <system-err>
+[RagService] searchRelevantChunks error: OpenAI API key not configured
+
+[2026-01-01T15:06:21.550Z] [ERROR] [AI:OrgMemoryStore] Search error: OpenAI API key not configured
+
+[2026-01-01T15:06:21.550Z] [WARN] [AI:MemoryManager] Layer knowledge retrieval failed: OpenAI API key not configured
+
+[AIPipeline] Audit log failed: SQLITE_ERROR: table ai_audit_logs has no column named timestamp
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="AI Pipeline Integration Tests &gt; Pipeline Process &gt; should check quota" time="0.002503334">
+            <system-out>
+[2026-01-01T15:06:21.553Z] [INFO] [AI:Pipeline] Starting process {&quot;capability&quot;:&quot;chat&quot;,&quot;traceId&quot;:&quot;trace_1767279981552_7d2a1l9nk&quot;}
+
+[2026-01-01T15:06:21.553Z] [INFO] [AI:Pipeline] Effective settings loaded {&quot;proactivityMode&quot;:&quot;BALANCED&quot;,&quot;maxTokens&quot;:4096}
+
+[2026-01-01T15:06:21.553Z] [DEBUG] [AI:Cache] get: MISS
+
+[2026-01-01T15:06:21.553Z] [DEBUG] [AI:MemoryManager] Retrieving from layers: session, project, organization, knowledge
+
+[2026-01-01T15:06:21.553Z] [DEBUG] [AI:MemoryManager] Retrieved 10 chunks in 0ms
+
+[2026-01-01T15:06:21.553Z] [DEBUG] [AI:Pipeline] Memory retrieved: 10 chunks, 464 tokens
+[2026-01-01T15:06:21.553Z] [INFO] [AI:EnhancedContextBuilder] Building context for phase: discovery
+[2026-01-01T15:06:21.553Z] [DEBUG] [AI:EnhancedContextBuilder] Using cached context
+
+[2026-01-01T15:06:21.553Z] [INFO] [AI:Pipeline] Response mode: standard (default)
+
+[2026-01-01T15:06:21.554Z] [INFO] [AI:Pipeline] Calling LLM Service {&quot;model&quot;:&quot;gpt-4o-mini&quot;,&quot;toolsEnabled&quot;:true,&quot;streaming&quot;:false}
+[2026-01-01T15:06:21.554Z] [INFO] [AI:Pipeline] LLM attempt 1/3 {&quot;model&quot;:&quot;gpt-4o-mini&quot;}
+
+[2026-01-01T15:06:21.554Z] [INFO] [AI:Observability] Generation recorded {&quot;traceId&quot;:&quot;trace_1767279981552_7d2a1l9nk&quot;,&quot;model&quot;:&quot;gpt-4o-mini&quot;,&quot;tokens&quot;:150,&quot;cost&quot;:0.000045}
+
+[2026-01-01T15:06:21.554Z] [DEBUG] [AI:Cache] set: HIT
+
+[2026-01-01T15:06:21.554Z] [INFO] [AI:Observability] Trace completed {&quot;traceId&quot;:&quot;trace_1767279981552_7d2a1l9nk&quot;,&quot;duration&quot;:1,&quot;status&quot;:&quot;success&quot;}
+[2026-01-01T15:06:21.554Z] [INFO] [AI:Pipeline] Process complete {&quot;latency&quot;:2,&quot;tokensUsed&quot;:150,&quot;costUsd&quot;:0.000045,&quot;qualityScore&quot;:0.92,&quot;traceId&quot;:&quot;trace_1767279981552_7d2a1l9nk&quot;}
+
+            </system-out>
+            <system-err>
+[RagService] searchRelevantChunks error: OpenAI API key not configured
+
+[2026-01-01T15:06:21.553Z] [ERROR] [AI:OrgMemoryStore] Search error: OpenAI API key not configured
+
+[2026-01-01T15:06:21.553Z] [WARN] [AI:MemoryManager] Layer knowledge retrieval failed: OpenAI API key not configured
+
+[AIPipeline] Audit log failed: SQLITE_ERROR: table ai_audit_logs has no column named timestamp
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="AI Pipeline Integration Tests &gt; Pipeline Process &gt; should perform quality check on response" time="0.00228625">
+            <system-out>
+[2026-01-01T15:06:21.555Z] [INFO] [AI:Pipeline] Starting process {&quot;capability&quot;:&quot;chat&quot;,&quot;traceId&quot;:&quot;trace_1767279981555_9l8phj1o4&quot;}
+
+[2026-01-01T15:06:21.555Z] [INFO] [AI:Pipeline] Effective settings loaded {&quot;proactivityMode&quot;:&quot;BALANCED&quot;,&quot;maxTokens&quot;:4096}
+
+[2026-01-01T15:06:21.555Z] [DEBUG] [AI:Cache] get: MISS
+
+[2026-01-01T15:06:21.555Z] [DEBUG] [AI:MemoryManager] Retrieving from layers: session, project, organization, knowledge
+
+[2026-01-01T15:06:21.556Z] [DEBUG] [AI:MemoryManager] Retrieved 10 chunks in 1ms
+
+[2026-01-01T15:06:21.556Z] [DEBUG] [AI:Pipeline] Memory retrieved: 10 chunks, 464 tokens
+[2026-01-01T15:06:21.556Z] [INFO] [AI:EnhancedContextBuilder] Building context for phase: discovery
+[2026-01-01T15:06:21.556Z] [DEBUG] [AI:EnhancedContextBuilder] Using cached context
+
+[2026-01-01T15:06:21.556Z] [INFO] [AI:Pipeline] Response mode: standard (default)
+
+[2026-01-01T15:06:21.556Z] [INFO] [AI:Pipeline] Calling LLM Service {&quot;model&quot;:&quot;gpt-4o-mini&quot;,&quot;toolsEnabled&quot;:true,&quot;streaming&quot;:false}
+[2026-01-01T15:06:21.556Z] [INFO] [AI:Pipeline] LLM attempt 1/3 {&quot;model&quot;:&quot;gpt-4o-mini&quot;}
+
+[2026-01-01T15:06:21.556Z] [INFO] [AI:Observability] Generation recorded {&quot;traceId&quot;:&quot;trace_1767279981555_9l8phj1o4&quot;,&quot;model&quot;:&quot;gpt-4o-mini&quot;,&quot;tokens&quot;:150,&quot;cost&quot;:0.000045}
+
+[2026-01-01T15:06:21.556Z] [DEBUG] [AI:Cache] set: HIT
+
+[2026-01-01T15:06:21.557Z] [INFO] [AI:Observability] Trace completed {&quot;traceId&quot;:&quot;trace_1767279981555_9l8phj1o4&quot;,&quot;duration&quot;:2,&quot;status&quot;:&quot;success&quot;}
+[2026-01-01T15:06:21.557Z] [INFO] [AI:Pipeline] Process complete {&quot;latency&quot;:1,&quot;tokensUsed&quot;:150,&quot;costUsd&quot;:0.000045,&quot;qualityScore&quot;:0.92,&quot;traceId&quot;:&quot;trace_1767279981555_9l8phj1o4&quot;}
+
+            </system-out>
+            <system-err>
+[RagService] searchRelevantChunks error: OpenAI API key not configured
+
+[2026-01-01T15:06:21.555Z] [ERROR] [AI:OrgMemoryStore] Search error: OpenAI API key not configured
+
+[2026-01-01T15:06:21.555Z] [WARN] [AI:MemoryManager] Layer knowledge retrieval failed: OpenAI API key not configured
+
+[AIPipeline] Audit log failed: SQLITE_ERROR: table ai_audit_logs has no column named timestamp
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="AI Pipeline Integration Tests &gt; Pipeline Process &gt; should log to audit" time="0.002387292">
+            <system-out>
+[2026-01-01T15:06:21.557Z] [INFO] [AI:Pipeline] Starting process {&quot;capability&quot;:&quot;chat&quot;,&quot;traceId&quot;:&quot;trace_1767279981557_ipu2ektg4&quot;}
+
+[2026-01-01T15:06:21.557Z] [INFO] [AI:Pipeline] Effective settings loaded {&quot;proactivityMode&quot;:&quot;BALANCED&quot;,&quot;maxTokens&quot;:4096}
+
+[2026-01-01T15:06:21.558Z] [DEBUG] [AI:Cache] get: MISS
+
+[2026-01-01T15:06:21.558Z] [DEBUG] [AI:MemoryManager] Retrieving from layers: session, project, organization, knowledge
+
+[2026-01-01T15:06:21.558Z] [DEBUG] [AI:MemoryManager] Retrieved 10 chunks in 0ms
+
+[2026-01-01T15:06:21.558Z] [DEBUG] [AI:Pipeline] Memory retrieved: 10 chunks, 464 tokens
+[2026-01-01T15:06:21.558Z] [INFO] [AI:EnhancedContextBuilder] Building context for phase: discovery
+[2026-01-01T15:06:21.558Z] [DEBUG] [AI:EnhancedContextBuilder] Using cached context
+
+[2026-01-01T15:06:21.558Z] [INFO] [AI:Pipeline] Response mode: standard (default)
+
+[2026-01-01T15:06:21.559Z] [INFO] [AI:Pipeline] Calling LLM Service {&quot;model&quot;:&quot;gpt-4o-mini&quot;,&quot;toolsEnabled&quot;:true,&quot;streaming&quot;:false}
+[2026-01-01T15:06:21.559Z] [INFO] [AI:Pipeline] LLM attempt 1/3 {&quot;model&quot;:&quot;gpt-4o-mini&quot;}
+
+[2026-01-01T15:06:21.559Z] [INFO] [AI:Observability] Generation recorded {&quot;traceId&quot;:&quot;trace_1767279981557_ipu2ektg4&quot;,&quot;model&quot;:&quot;gpt-4o-mini&quot;,&quot;tokens&quot;:150,&quot;cost&quot;:0.000045}
+
+[2026-01-01T15:06:21.559Z] [DEBUG] [AI:Cache] set: HIT
+
+[2026-01-01T15:06:21.559Z] [INFO] [AI:Observability] Trace completed {&quot;traceId&quot;:&quot;trace_1767279981557_ipu2ektg4&quot;,&quot;duration&quot;:2,&quot;status&quot;:&quot;success&quot;}
+[2026-01-01T15:06:21.559Z] [INFO] [AI:Pipeline] Process complete {&quot;latency&quot;:2,&quot;tokensUsed&quot;:150,&quot;costUsd&quot;:0.000045,&quot;qualityScore&quot;:0.92,&quot;traceId&quot;:&quot;trace_1767279981557_ipu2ektg4&quot;}
+
+            </system-out>
+            <system-err>
+[RagService] searchRelevantChunks error: OpenAI API key not configured
+
+[2026-01-01T15:06:21.558Z] [ERROR] [AI:OrgMemoryStore] Search error: OpenAI API key not configured
+
+[2026-01-01T15:06:21.558Z] [WARN] [AI:MemoryManager] Layer knowledge retrieval failed: OpenAI API key not configured
+
+[AIPipeline] Audit log failed: SQLITE_ERROR: table ai_audit_logs has no column named timestamp
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="AI Pipeline Integration Tests &gt; Pipeline Process &gt; should record to learning system" time="0.002305792">
+            <system-out>
+[2026-01-01T15:06:21.560Z] [INFO] [AI:Pipeline] Starting process {&quot;capability&quot;:&quot;chat&quot;,&quot;traceId&quot;:&quot;trace_1767279981560_z6y3xoi3e&quot;}
+
+[2026-01-01T15:06:21.560Z] [INFO] [AI:Pipeline] Effective settings loaded {&quot;proactivityMode&quot;:&quot;BALANCED&quot;,&quot;maxTokens&quot;:4096}
+
+[2026-01-01T15:06:21.560Z] [DEBUG] [AI:Cache] get: MISS
+
+[2026-01-01T15:06:21.560Z] [DEBUG] [AI:MemoryManager] Retrieving from layers: session, project, organization, knowledge
+
+[2026-01-01T15:06:21.560Z] [DEBUG] [AI:MemoryManager] Retrieved 10 chunks in 0ms
+
+[2026-01-01T15:06:21.560Z] [DEBUG] [AI:Pipeline] Memory retrieved: 10 chunks, 464 tokens
+[2026-01-01T15:06:21.560Z] [INFO] [AI:EnhancedContextBuilder] Building context for phase: discovery
+[2026-01-01T15:06:21.560Z] [DEBUG] [AI:EnhancedContextBuilder] Using cached context
+
+[2026-01-01T15:06:21.560Z] [INFO] [AI:Pipeline] Response mode: standard (default)
+
+[2026-01-01T15:06:21.561Z] [INFO] [AI:Pipeline] Calling LLM Service {&quot;model&quot;:&quot;gpt-4o-mini&quot;,&quot;toolsEnabled&quot;:true,&quot;streaming&quot;:false}
+[2026-01-01T15:06:21.561Z] [INFO] [AI:Pipeline] LLM attempt 1/3 {&quot;model&quot;:&quot;gpt-4o-mini&quot;}
+
+[2026-01-01T15:06:21.561Z] [INFO] [AI:Observability] Generation recorded {&quot;traceId&quot;:&quot;trace_1767279981560_z6y3xoi3e&quot;,&quot;model&quot;:&quot;gpt-4o-mini&quot;,&quot;tokens&quot;:150,&quot;cost&quot;:0.000045}
+
+[2026-01-01T15:06:21.561Z] [DEBUG] [AI:Cache] set: HIT
+
+[2026-01-01T15:06:21.561Z] [INFO] [AI:Observability] Trace completed {&quot;traceId&quot;:&quot;trace_1767279981560_z6y3xoi3e&quot;,&quot;duration&quot;:1,&quot;status&quot;:&quot;success&quot;}
+[2026-01-01T15:06:21.561Z] [INFO] [AI:Pipeline] Process complete {&quot;latency&quot;:1,&quot;tokensUsed&quot;:150,&quot;costUsd&quot;:0.000045,&quot;qualityScore&quot;:0.92,&quot;traceId&quot;:&quot;trace_1767279981560_z6y3xoi3e&quot;}
+
+            </system-out>
+            <system-err>
+[RagService] searchRelevantChunks error: OpenAI API key not configured
+
+[2026-01-01T15:06:21.560Z] [ERROR] [AI:OrgMemoryStore] Search error: OpenAI API key not configured
+
+[2026-01-01T15:06:21.560Z] [WARN] [AI:MemoryManager] Layer knowledge retrieval failed: OpenAI API key not configured
+
+[AIPipeline] Audit log failed: SQLITE_ERROR: table ai_audit_logs has no column named timestamp
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="AI Pipeline Integration Tests &gt; Pipeline Process &gt; Error Handling &gt; should handle rate limit exceeded" time="0.001431292">
+            <system-out>
+[2026-01-01T15:06:21.562Z] [INFO] [AI:Pipeline] Starting process {&quot;capability&quot;:&quot;chat&quot;,&quot;traceId&quot;:&quot;trace_1767279981562_s5xqeqc7i&quot;}
+
+[2026-01-01T15:06:21.562Z] [INFO] [AI:Observability] Trace completed {&quot;traceId&quot;:&quot;trace_1767279981562_s5xqeqc7i&quot;,&quot;duration&quot;:0,&quot;status&quot;:&quot;error&quot;}
+
+            </system-out>
+            <system-err>
+[2026-01-01T15:06:21.562Z] [WARN] [AI:Pipeline] Rate limit exceeded: undefined
+[2026-01-01T15:06:21.562Z] [ERROR] [AI:Observability] Error recorded {&quot;traceId&quot;:&quot;trace_1767279981562_s5xqeqc7i&quot;,&quot;error&quot;:&quot;Rate limit exceeded. Reset at: 2026-01-01T15:06:21.562Z&quot;,&quot;capability&quot;:&quot;chat&quot;}
+
+[AIPipeline] Audit log failed: SQLITE_ERROR: table ai_audit_logs has no column named timestamp
+
+[2026-01-01T15:06:21.562Z] [ERROR] [AI:Pipeline] Process failed {&quot;error&quot;:&quot;Rate limit exceeded. Reset at: 2026-01-01T15:06:21.562Z&quot;,&quot;traceId&quot;:&quot;trace_1767279981562_s5xqeqc7i&quot;}
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="AI Pipeline Integration Tests &gt; Pipeline Process &gt; Error Handling &gt; should handle quota exceeded" time="0.001908875">
+            <system-out>
+[2026-01-01T15:06:21.564Z] [INFO] [AI:Pipeline] Starting process {&quot;capability&quot;:&quot;chat&quot;,&quot;traceId&quot;:&quot;trace_1767279981564_t8jtfm7am&quot;}
+
+[2026-01-01T15:06:21.564Z] [INFO] [AI:Pipeline] Effective settings loaded {&quot;proactivityMode&quot;:&quot;BALANCED&quot;,&quot;maxTokens&quot;:4096}
+
+[2026-01-01T15:06:21.564Z] [INFO] [AI:Observability] Trace completed {&quot;traceId&quot;:&quot;trace_1767279981564_t8jtfm7am&quot;,&quot;duration&quot;:0,&quot;status&quot;:&quot;error&quot;}
+
+            </system-out>
+            <system-err>
+[2026-01-01T15:06:21.564Z] [WARN] [AI:Pipeline] Quota exceeded: Monthly quota exhausted
+[2026-01-01T15:06:21.564Z] [ERROR] [AI:Observability] Error recorded {&quot;traceId&quot;:&quot;trace_1767279981564_t8jtfm7am&quot;,&quot;error&quot;:&quot;Quota exceeded: Monthly quota exhausted&quot;,&quot;capability&quot;:&quot;chat&quot;}
+
+[AIPipeline] Audit log failed: SQLITE_ERROR: table ai_audit_logs has no column named timestamp
+
+[2026-01-01T15:06:21.565Z] [ERROR] [AI:Pipeline] Process failed {&quot;error&quot;:&quot;Quota exceeded: Monthly quota exhausted&quot;,&quot;traceId&quot;:&quot;trace_1767279981564_t8jtfm7am&quot;}
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="AI Pipeline Integration Tests &gt; Pipeline Process &gt; Capability Mapping &gt; should map diagnose to ANALYST role" time="0.000559708">
+        </testcase>
+        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="AI Pipeline Integration Tests &gt; Pipeline Process &gt; Capability Mapping &gt; should map generateInitiatives to CONSULTANT role" time="0.000506917">
+        </testcase>
+        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="AI Pipeline Integration Tests &gt; Pipeline Process &gt; Capability Mapping &gt; should map suggestTasks to IMPLEMENTER role" time="0.000441375">
+        </testcase>
+        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="AI Pipeline Integration Tests &gt; Pipeline Process &gt; Capability Mapping &gt; should map validateInitiative to GATEKEEPER role" time="0.000542209">
+        </testcase>
+        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="AI Pipeline Integration Tests &gt; Pipeline Process &gt; Capability Mapping &gt; should map buildRoadmap to STRATEGIST role" time="0.000519375">
+        </testcase>
+        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="AI Pipeline Integration Tests &gt; Pipeline Process &gt; Capability Mapping &gt; should map simulateEconomics to FINANCE role" time="0.00058">
+        </testcase>
+        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="AI Pipeline Integration Tests &gt; Pipeline Process &gt; Capability Mapping &gt; should map chat to CONSULTANT role" time="0.000539542">
+        </testcase>
+        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="AI Pipeline Integration Tests &gt; Backward Compatibility &gt; should export all required functions for route compatibility" time="0.001157958">
+        </testcase>
+        <testcase classname="tests/backend/ai/aiPipeline.integration.test.js" name="AI Pipeline Integration Tests &gt; Backward Compatibility &gt; should export CAPABILITY_REGISTRY for inspection" time="0.000535208">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/integration/routes/documents.test.js" timestamp="2026-01-01T15:06:22.635Z" hostname="MacBook-Pro-Piotr.local" tests="3" failures="0" errors="0" skipped="0" time="0.197306167">
+        <testcase classname="tests/integration/routes/documents.test.js" name="Integration Test: Documents Routes &gt; GET /api/documents &gt; should return list of documents" time="0.0031505">
+            <system-out>
+2026-01-01T15:06:22.614Z [34mdebug[39m: Incoming GET /api/documents 
+
+2026-01-01T15:06:22.615Z [32minfo[39m: HTTP GET /api/documents - 200 {&quot;method&quot;:&quot;GET&quot;,&quot;url&quot;:&quot;/api/documents&quot;,&quot;status&quot;:200,&quot;duration&quot;:&quot;1ms&quot;,&quot;ip&quot;:&quot;::ffff:127.0.0.1&quot;}
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/integration/routes/documents.test.js" name="Integration Test: Documents Routes &gt; GET /api/documents &gt; should require authentication" time="0.001836875">
+            <system-out>
+2026-01-01T15:06:22.616Z [34mdebug[39m: Incoming GET /api/documents 
+
+2026-01-01T15:06:22.617Z [33mwarn[39m: Performance metric {&quot;method&quot;:&quot;GET&quot;,&quot;path&quot;:&quot;/api/documents&quot;,&quot;statusCode&quot;:403,&quot;responseTime&quot;:1,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:115256,&quot;external&quot;:201,&quot;rss&quot;:131072},&quot;userId&quot;:null,&quot;organizationId&quot;:null,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
+2026-01-01T15:06:22.617Z [33mwarn[39m: HTTP GET /api/documents - 403 {&quot;method&quot;:&quot;GET&quot;,&quot;url&quot;:&quot;/api/documents&quot;,&quot;status&quot;:403,&quot;duration&quot;:&quot;1ms&quot;,&quot;ip&quot;:&quot;::ffff:127.0.0.1&quot;}
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/integration/routes/documents.test.js" name="Integration Test: Documents Routes &gt; POST /api/documents/upload &gt; should require file upload" time="0.001498667">
+            <system-out>
+2026-01-01T15:06:22.618Z [34mdebug[39m: Incoming POST /api/documents/upload 
+
+2026-01-01T15:06:22.619Z [33mwarn[39m: Performance metric {&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;/api/documents/upload&quot;,&quot;statusCode&quot;:400,&quot;responseTime&quot;:1,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:96384,&quot;external&quot;:209,&quot;rss&quot;:147456},&quot;userId&quot;:&quot;docs-user-1767279982421&quot;,&quot;organizationId&quot;:&quot;docs-org-1767279982421&quot;,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
+2026-01-01T15:06:22.619Z [33mwarn[39m: HTTP POST /api/documents/upload - 400 {&quot;method&quot;:&quot;POST&quot;,&quot;url&quot;:&quot;/api/documents/upload&quot;,&quot;status&quot;:400,&quot;duration&quot;:&quot;1ms&quot;,&quot;ip&quot;:&quot;::ffff:127.0.0.1&quot;}
+
+            </system-out>
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/integration/routes/tasks.test.js" timestamp="2026-01-01T15:06:22.635Z" hostname="MacBook-Pro-Piotr.local" tests="11" failures="0" errors="0" skipped="0" time="0.311043583">
+        <testcase classname="tests/integration/routes/tasks.test.js" name="Tasks Routes &gt; GET /api/tasks &gt; returns list of tasks" time="0.164223334">
+            <system-out>
+[Redis] Module loaded successfully
+[Redis] Initializing client...
+[Redis] Using Mock Client
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/integration/routes/tasks.test.js" name="Tasks Routes &gt; GET /api/tasks &gt; filters by projectId" time="0.001794291">
+        </testcase>
+        <testcase classname="tests/integration/routes/tasks.test.js" name="Tasks Routes &gt; GET /api/tasks &gt; filters by status" time="0.001690792">
+        </testcase>
+        <testcase classname="tests/integration/routes/tasks.test.js" name="Tasks Routes &gt; GET /api/tasks &gt; filters by assigneeId" time="0.003423917">
+        </testcase>
+        <testcase classname="tests/integration/routes/tasks.test.js" name="Tasks Routes &gt; GET /api/tasks &gt; filters by priority" time="0.002289625">
+        </testcase>
+        <testcase classname="tests/integration/routes/tasks.test.js" name="Tasks Routes &gt; GET /api/tasks &gt; filters by initiativeId" time="0.001707917">
+        </testcase>
+        <testcase classname="tests/integration/routes/tasks.test.js" name="Tasks Routes &gt; GET /api/tasks &gt; parses JSON fields correctly" time="0.001734958">
+        </testcase>
+        <testcase classname="tests/integration/routes/tasks.test.js" name="Tasks Routes &gt; GET /api/tasks &gt; orders by priority and due date" time="0.005335208">
+        </testcase>
+        <testcase classname="tests/integration/routes/tasks.test.js" name="Tasks Routes &gt; GET /api/tasks &gt; handles database errors" time="0.001497458">
+        </testcase>
+        <testcase classname="tests/integration/routes/tasks.test.js" name="Tasks Routes &gt; GET /api/tasks/:id &gt; returns single task" time="0.001553125">
+        </testcase>
+        <testcase classname="tests/integration/routes/tasks.test.js" name="Tasks Routes &gt; GET /api/tasks/:id &gt; returns 404 for non-existent task" time="0.001101958">
         </testcase>
     </testsuite>
 </testsuites>

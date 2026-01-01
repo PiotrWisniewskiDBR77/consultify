@@ -323,76 +323,74 @@ describe('AI Pipeline Integration Tests', () => {
         it('should record to learning system', async () => {
             await pipeline.process(request);
 
-            it('should record to learning system', async () => {
-                await pipeline.process(request);
+            expect(mockLearning.recordWithAutoFeedback).toHaveBeenCalled();
+        });
 
-                expect(mockLearning.recordWithAutoFeedback).toHaveBeenCalled();
-                describe('Error Handling', () => {
-                    const request = {
-                        capability: 'chat',
-                        prompt: 'Test',
-                        userId: 'user-1',
-                        organizationId: 'org-1'
-                    };
+        describe('Error Handling', () => {
+            const request = {
+                capability: 'chat',
+                prompt: 'Test',
+                userId: 'user-1',
+                organizationId: 'org-1'
+            };
 
-                    it('should handle rate limit exceeded', async () => {
-                        mockSecurity.checkRateLimit.mockResolvedValueOnce({
-                            allowed: false,
-                            resetAt: new Date()
-                        });
-
-                        await expect(pipeline.process(request)).rejects.toThrow('Rate limit exceeded');
-                    });
-
-                    it('should handle quota exceeded', async () => {
-                        mockQuotaService.checkQuota.mockResolvedValueOnce({
-                            allowed: false,
-                            reason: 'Monthly quota exhausted'
-                        });
-
-                        await expect(pipeline.process(request)).rejects.toThrow('Quota exceeded');
-                    });
+            it('should handle rate limit exceeded', async () => {
+                mockSecurity.checkRateLimit.mockResolvedValueOnce({
+                    allowed: false,
+                    resetAt: new Date()
                 });
 
-                describe('Capability Mapping', () => {
-                    const capabilityTests = [
-                        { capability: 'diagnose', expectedRole: 'ANALYST' },
-                        { capability: 'generateInitiatives', expectedRole: 'CONSULTANT' },
-                        { capability: 'suggestTasks', expectedRole: 'IMPLEMENTER' },
-                        { capability: 'validateInitiative', expectedRole: 'GATEKEEPER' },
-                        { capability: 'buildRoadmap', expectedRole: 'STRATEGIST' },
-                        { capability: 'simulateEconomics', expectedRole: 'FINANCE' },
-                        { capability: 'chat', expectedRole: 'CONSULTANT' }
-                    ];
-
-                    capabilityTests.forEach(({ capability, expectedRole }) => {
-                        it(`should map ${capability} to ${expectedRole} role`, () => {
-                            const config = getCapabilityConfig(capability);
-                            expect(config.role).toBe(expectedRole);
-                        });
-                    });
-                });
+                await expect(pipeline.process(request)).rejects.toThrow('Rate limit exceeded');
             });
 
-            describe('Backward Compatibility', () => {
-                it('should export all required functions for route compatibility', () => {
-                    const exports = require('../../../server/services/ai/aiPipeline');
-
-                    expect(exports.suggestTasks).toBeDefined();
-                    expect(exports.validateInitiative).toBeDefined();
-                    expect(exports.enrichInitiative).toBeDefined();
-                    expect(exports.generateObservations).toBeDefined();
-                    expect(exports.chat).toBeDefined();
-                    expect(exports.streamChat).toBeDefined();
+            it('should handle quota exceeded', async () => {
+                mockQuotaService.checkQuota.mockResolvedValueOnce({
+                    allowed: false,
+                    reason: 'Monthly quota exhausted'
                 });
 
-                it('should export CAPABILITY_REGISTRY for inspection', () => {
-                    const { CAPABILITY_REGISTRY } = require('../../../server/services/ai/aiPipeline');
-                    expect(CAPABILITY_REGISTRY).toBeDefined();
-                    expect(typeof CAPABILITY_REGISTRY).toBe('object');
-                });
+                await expect(pipeline.process(request)).rejects.toThrow('Quota exceeded');
+            });
+        });
 
+        describe('Capability Mapping', () => {
+            const capabilityTests = [
+                { capability: 'diagnose', expectedRole: 'ANALYST' },
+                { capability: 'generateInitiatives', expectedRole: 'CONSULTANT' },
+                { capability: 'suggestTasks', expectedRole: 'IMPLEMENTER' },
+                { capability: 'validateInitiative', expectedRole: 'GATEKEEPER' },
+                { capability: 'buildRoadmap', expectedRole: 'STRATEGIST' },
+                { capability: 'simulateEconomics', expectedRole: 'FINANCE' },
+                { capability: 'chat', expectedRole: 'CONSULTANT' }
+            ];
+
+            capabilityTests.forEach(({ capability, expectedRole }) => {
+                it(`should map ${capability} to ${expectedRole} role`, () => {
+                    const config = getCapabilityConfig(capability);
+                    expect(config.role).toBe(expectedRole);
+                });
             });
         });
     });
+
+    describe('Backward Compatibility', () => {
+        it('should export all required functions for route compatibility', () => {
+            const exports = require('../../../server/services/ai/aiPipeline');
+
+            expect(exports.suggestTasks).toBeDefined();
+            expect(exports.validateInitiative).toBeDefined();
+            expect(exports.enrichInitiative).toBeDefined();
+            expect(exports.generateObservations).toBeDefined();
+            expect(exports.chat).toBeDefined();
+            expect(exports.streamChat).toBeDefined();
+        });
+
+        it('should export CAPABILITY_REGISTRY for inspection', () => {
+            const { CAPABILITY_REGISTRY } = require('../../../server/services/ai/aiPipeline');
+            expect(CAPABILITY_REGISTRY).toBeDefined();
+            expect(typeof CAPABILITY_REGISTRY).toBe('object');
+        });
+
+    });
+});
 
