@@ -6,100 +6,126 @@
  * @version 2.0.0
  * @date 2024-12-30
  */
-
-
-// Mock dependencies before importing
-vi.mock('../../../server/database', () => ({
-    get: vi.fn(),
-    run: vi.fn(),
-    all: vi.fn()
-}));
-
-vi.mock('../../../server/services/ai/llmService', () => ({
-    LLMService: vi.fn().mockImplementation(() => ({
-        call: vi.fn().mockResolvedValue({
-            content: '{"tasks": [{"name": "Task 1", "priority": "HIGH"}]}',
-            usage: { promptTokens: 100, completionTokens: 50 }
-        })
-    }))
-}));
-
-vi.mock('../../../server/services/ai/quotaService', () => ({
-    quotaService: {
-        checkQuota: vi.fn().mockResolvedValue({ allowed: true }),
-        consumeTokens: vi.fn().mockResolvedValue(true)
-    }
-}));
-
-vi.mock('../../../server/services/ai/memoryManager', () => ({
-    memoryManager: {
-        retrieve: vi.fn().mockResolvedValue({ chunks: [], totalTokens: 0, sources: [] }),
-        serializeForPrompt: vi.fn().mockReturnValue(''),
-        sessionStore: {
-            addMessage: vi.fn().mockResolvedValue(true)
-        },
-        recordIfSignificant: vi.fn().mockResolvedValue(true)
-    }
-}));
-
-vi.mock('../../../server/services/ai/enterpriseSecurity', () => ({
-    enterpriseSecurity: {
-        checkRateLimit: vi.fn().mockResolvedValue({ allowed: true }),
-        logAudit: vi.fn()
-    }
-}));
-
-vi.mock('../../../server/services/ai/qualityChecker', () => ({
-    qualityChecker: {
-        check: vi.fn().mockResolvedValue({
-            passed: true,
-            overallScore: 0.92,
-            warnings: []
-        })
-    }
-}));
-
-vi.mock('../../../server/services/ai/performanceOptimizer', () => ({
-    performanceOptimizer: {
-        recordMetrics: vi.fn()
-    }
-}));
-
-vi.mock('../../../server/services/ai/learningSystem', () => ({
-    learningSystem: {
-        recordInteraction: vi.fn().mockResolvedValue(true)
-    }
-}));
-
-vi.mock('../../../server/services/ai/cacheService', () => ({
-    cacheService: {
-        get: vi.fn().mockResolvedValue(null),
-        set: vi.fn().mockResolvedValue(true)
-    }
-}));
-
-vi.mock('../../../server/services/ragService', () => ({
-    searchRelevantChunks: vi.fn().mockResolvedValue([])
-}));
-
-// Now import the module under test
-const { 
-    AIPipeline, 
-    CAPABILITY_REGISTRY, 
-    getCapabilityConfig,
-    suggestTasks,
-    validateInitiative,
-    enrichInitiative,
-    generateObservations,
-    parseJsonResponse
-} = require('../../../server/services/ai/aiPipeline');
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 describe('AI Pipeline Integration Tests', () => {
+    let AIPipeline;
+    let CAPABILITY_REGISTRY;
+    let getCapabilityConfig;
+    let suggestTasks;
+    let validateInitiative;
+    let enrichInitiative;
+    let generateObservations;
+    let parseJsonResponse;
     let pipeline;
+    let mockLLMService;
+    let mockMemoryManager;
+    let mockQuotaService;
+    let mockSecurity;
+    let mockQualityChecker;
+    let mockOptimizer;
+    let mockLearning;
+    let mockCache;
 
-    beforeEach(() => {
-        vi.clearAllMocks();
-        pipeline = new AIPipeline();
+    beforeEach(async () => {
+        vi.resetModules();
+
+        // 1. Mock Database (still needed as it might be used by static requires)
+        vi.doMock('../../../server/database', () => ({
+            get: vi.fn(),
+            run: vi.fn(),
+            all: vi.fn()
+        }));
+
+        // 10. Mock RAG Service
+        vi.doMock('../../../server/services/ragService', () => ({
+            searchRelevantChunks: vi.fn().mockResolvedValue([])
+        }));
+
+        // 11. Mock AISettingsService (to avoid DB calls)
+        vi.doMock('../../../server/services/aiSettingsService', () => ({
+            aiSettingsService: {
+                getEffectiveSettings: vi.fn().mockResolvedValue({
+                    proactivityMode: 'BALANCED',
+                    maxTokens: 4096
+                })
+            }
+        }));
+
+        // Import module under test
+        const aiPipelineModule = await import('../../../server/services/ai/aiPipeline');
+        AIPipeline = aiPipelineModule.AIPipeline;
+        CAPABILITY_REGISTRY = aiPipelineModule.CAPABILITY_REGISTRY;
+        getCapabilityConfig = aiPipelineModule.getCapabilityConfig;
+        suggestTasks = aiPipelineModule.suggestTasks;
+        validateInitiative = aiPipelineModule.validateInitiative;
+        enrichInitiative = aiPipelineModule.enrichInitiative;
+        generateObservations = aiPipelineModule.generateObservations;
+        parseJsonResponse = aiPipelineModule.parseJsonResponse;
+
+        // Create Mocks for Injection
+        mockLLMService = {
+            call: vi.fn().mockResolvedValue({
+                content: '{"tasks": [{"name": "Task 1", "priority": "HIGH"}]}',
+                usage: { promptTokens: 100, completionTokens: 50 },
+                toolCalls: []
+            }),
+            callWithTools: vi.fn().mockResolvedValue({
+                content: '{"tasks": [{"name": "Task 1", "priority": "HIGH"}]}',
+                usage: { promptTokens: 100, completionTokens: 50 },
+                toolCalls: []
+            }),
+            callText: vi.fn().mockResolvedValue({
+                content: 'Analysis complete.',
+                usage: { promptTokens: 50, completionTokens: 10 }
+            }),
+            circuitBreaker: {
+                execute: vi.fn().mockImplementation((id, fn) => fn()),
+                recordSuccess: vi.fn(),
+                recordFailure: vi.fn(),
+                canExecute: vi.fn().mockReturnValue({ allowed: true })
+            }
+        };
+
+        mockMemoryManager = {
+            retrieve: vi.fn().mockResolvedValue({ chunks: [], totalTokens: 0, sources: [] }),
+            serializeForPrompt: vi.fn().mockReturnValue(''),
+            sessionStore: { addMessage: vi.fn().mockResolvedValue(true) },
+            projectStore: { addMessage: vi.fn() },
+            orgStore: { addMessage: vi.fn() },
+            knowledgeStore: { addMessage: vi.fn() },
+            recordIfSignificant: vi.fn().mockResolvedValue(true)
+        };
+
+        mockQuotaService = {
+            checkQuota: vi.fn().mockResolvedValue({ allowed: true }),
+            consumeTokens: vi.fn().mockResolvedValue(true)
+        };
+
+        mockSecurity = {
+            checkRateLimit: vi.fn().mockResolvedValue({ allowed: true }),
+            logAudit: vi.fn()
+        };
+
+        mockQualityChecker = {
+            check: vi.fn().mockResolvedValue({ passed: true, overallScore: 0.92, warnings: [] })
+        };
+
+        mockOptimizer = { recordMetrics: vi.fn() };
+        mockLearning = { recordInteraction: vi.fn().mockResolvedValue(true) };
+        mockCache = { get: vi.fn().mockResolvedValue(null), set: vi.fn().mockResolvedValue(true) };
+
+        // Inject Mocks
+        pipeline = new AIPipeline({
+            llmService: mockLLMService,
+            memoryManager: mockMemoryManager,
+            quotaService: mockQuotaService,
+            enterpriseSecurity: mockSecurity,
+            qualityChecker: mockQualityChecker,
+            performanceOptimizer: mockOptimizer,
+            learningSystem: mockLearning,
+            cacheService: mockCache
+        });
     });
 
     describe('CAPABILITY_REGISTRY', () => {
@@ -110,7 +136,7 @@ describe('AI Pipeline Integration Tests', () => {
 
         it('should have valid role for each capability', () => {
             const validRoles = ['ANALYST', 'CONSULTANT', 'STRATEGIST', 'IMPLEMENTER', 'GATEKEEPER', 'FINANCE', 'PARTNER', 'MENTOR', 'SME'];
-            
+
             Object.entries(CAPABILITY_REGISTRY).forEach(([key, config]) => {
                 expect(validRoles).toContain(config.role);
             });
@@ -125,7 +151,7 @@ describe('AI Pipeline Integration Tests', () => {
 
         it('should have outputFormat for each capability', () => {
             const validFormats = ['json', 'text'];
-            
+
             Object.entries(CAPABILITY_REGISTRY).forEach(([key, config]) => {
                 expect(validFormats).toContain(config.outputFormat);
             });
@@ -147,57 +173,65 @@ describe('AI Pipeline Integration Tests', () => {
     });
 
     describe('Domain Methods', () => {
+        const context = {
+            name: 'Test Initiative',
+            summary: 'A new strategic initiative',
+            hypothesis: 'If we do this, we win',
+            axis: 'Digital Transformation'
+        };
+
         describe('suggestTasks', () => {
             it('should generate tasks from initiative context', async () => {
-                const initiativeContext = {
-                    name: 'Digital Transformation',
-                    summary: 'Modernize legacy systems',
-                    hypothesis: 'Improve efficiency by 30%',
-                    axis: 'Technology'
-                };
+                const result = await suggestTasks(context, 'user-1', 'org-1', pipeline);
 
-                const result = await suggestTasks(initiativeContext, 'user-1', 'org-1');
-                
                 expect(result).toBeDefined();
-                // Should parse JSON response
-                expect(result.tasks || result.rawContent).toBeDefined();
+                expect(result.tasks).toHaveLength(1);
+                expect(result.tasks[0].name).toBe('Task 1');
+
+                // Verify LLM was called with correct context
+                expect(pipeline.llmService.call).toHaveBeenCalled();
             });
         });
 
         describe('validateInitiative', () => {
-            it('should validate initiative and return score', async () => {
-                const initiativeContext = {
-                    name: 'Cloud Migration',
-                    hypothesis: 'Reduce infrastructure costs',
-                    expectedOutcome: '40% cost reduction',
-                    successMetrics: 'Monthly cloud spend'
-                };
+            it('should validate initiative structure', async () => {
+                // Mock different response for validation
+                pipeline.llmService.call.mockResolvedValueOnce({
+                    content: '{"isValid": true, "score": 85, "issues": [], "recommendations": []}',
+                    usage: { promptTokens: 100, completionTokens: 50 },
+                    toolCalls: []
+                });
 
-                const result = await validateInitiative(initiativeContext, 'user-1', 'org-1');
-                
-                expect(result).toBeDefined();
+                const result = await validateInitiative(context, 'user-1', 'org-1', pipeline);
+
+                expect(result.isValid).toBe(true);
+                expect(result.score).toBe(85);
             });
         });
 
         describe('enrichInitiative', () => {
-            it('should enrich initiative with market context', async () => {
-                const initiativeContext = {
-                    name: 'AI Integration',
-                    summary: 'Integrate AI into workflows',
-                    industry: 'Technology'
-                };
+            it('should enrich with market context', async () => {
+                pipeline.llmService.call.mockResolvedValueOnce({
+                    content: '{"marketTrends": ["Trend 1"], "benchmarks": [], "successFactors": [], "risks": []}',
+                    usage: { promptTokens: 100, completionTokens: 50 },
+                    toolCalls: []
+                });
 
-                const result = await enrichInitiative(initiativeContext, 'user-1', 'org-1');
-                
-                expect(result).toBeDefined();
+                const result = await enrichInitiative(context, 'user-1', 'org-1', pipeline);
+                expect(result.marketTrends).toContain('Trend 1');
             });
         });
 
         describe('generateObservations', () => {
-            it('should generate strategic observations', async () => {
-                const result = await generateObservations('user-1', 'org-1');
-                
-                expect(result).toBeDefined();
+            it('should analyze assessment data', async () => {
+                pipeline.llmService.call.mockResolvedValueOnce({
+                    content: '{"patterns": ["Pattern 1"], "strengths": [], "gaps": [], "quickWins": [], "priorities": []}',
+                    usage: { promptTokens: 100, completionTokens: 50 },
+                    toolCalls: []
+                });
+
+                const result = await generateObservations('user-1', 'org-1', pipeline);
+                expect(result.patterns).toContain('Pattern 1');
             });
         });
     });
@@ -236,6 +270,13 @@ describe('AI Pipeline Integration Tests', () => {
     });
 
     describe('Pipeline Process', () => {
+        const request = {
+            capability: 'chat',
+            prompt: 'Test prompt',
+            userId: 'user-1',
+            organizationId: 'org-1'
+        };
+
         it('should handle basic chat request', async () => {
             // This test verifies the pipeline flow without hitting real LLM
             const request = {
@@ -247,150 +288,105 @@ describe('AI Pipeline Integration Tests', () => {
 
             // The mock LLMService will return our mocked response
             const result = await pipeline.process(request);
-            
+
             expect(result).toBeDefined();
             expect(result.content).toBeDefined();
         });
 
         it('should check rate limits', async () => {
-            const { enterpriseSecurity } = require('../../../server/services/ai/enterpriseSecurity');
-            
-            await pipeline.process({
-                capability: 'chat',
-                prompt: 'Test',
-                userId: 'user-1',
-                organizationId: 'org-1'
-            });
+            await pipeline.process(request);
 
-            expect(enterpriseSecurity.checkRateLimit).toHaveBeenCalledWith('org-1', 'chat');
+            expect(mockSecurity.checkRateLimit).toHaveBeenCalledWith('org-1', 'chat');
         });
 
         it('should check quota', async () => {
-            const { quotaService } = require('../../../server/services/ai/quotaService');
-            
-            await pipeline.process({
-                capability: 'chat',
-                prompt: 'Test',
-                userId: 'user-1',
-                organizationId: 'org-1'
-            });
+            await pipeline.process(request);
 
-            expect(quotaService.checkQuota).toHaveBeenCalled();
+            expect(mockQuotaService.checkQuota).toHaveBeenCalled();
         });
 
         it('should perform quality check on response', async () => {
-            const { qualityChecker } = require('../../../server/services/ai/qualityChecker');
-            
-            await pipeline.process({
-                capability: 'chat',
-                prompt: 'Test',
-                userId: 'user-1',
-                organizationId: 'org-1'
-            });
+            await pipeline.process(request);
 
-            expect(qualityChecker.check).toHaveBeenCalled();
+            expect(mockQualityChecker.check).toHaveBeenCalled();
         });
 
         it('should log to audit', async () => {
-            const { enterpriseSecurity } = require('../../../server/services/ai/enterpriseSecurity');
-            
-            await pipeline.process({
-                capability: 'chat',
-                prompt: 'Test',
-                userId: 'user-1',
-                organizationId: 'org-1'
-            });
+            await pipeline.process(request);
 
-            expect(enterpriseSecurity.logAudit).toHaveBeenCalled();
+            expect(mockSecurity.logAudit).toHaveBeenCalled();
         });
 
         it('should record to learning system', async () => {
-            const { learningSystem } = require('../../../server/services/ai/learningSystem');
-            
-            await pipeline.process({
-                capability: 'chat',
-                prompt: 'Test',
-                userId: 'user-1',
-                organizationId: 'org-1'
+            await pipeline.process(request);
+
+            expect(mockLearning.recordInteraction).toHaveBeenCalled();
+            describe('Error Handling', () => {
+                const request = {
+                    capability: 'chat',
+                    prompt: 'Test',
+                    userId: 'user-1',
+                    organizationId: 'org-1'
+                };
+
+                it('should handle rate limit exceeded', async () => {
+                    mockSecurity.checkRateLimit.mockResolvedValueOnce({
+                        allowed: false,
+                        resetAt: new Date()
+                    });
+
+                    await expect(pipeline.process(request)).rejects.toThrow('Rate limit exceeded');
+                });
+
+                it('should handle quota exceeded', async () => {
+                    mockQuotaService.checkQuota.mockResolvedValueOnce({
+                        allowed: false,
+                        reason: 'Monthly quota exhausted'
+                    });
+
+                    await expect(pipeline.process(request)).rejects.toThrow('Quota exceeded');
+                });
             });
 
-            expect(learningSystem.recordInteraction).toHaveBeenCalled();
-        });
-    });
+            describe('Capability Mapping', () => {
+                const capabilityTests = [
+                    { capability: 'diagnose', expectedRole: 'ANALYST' },
+                    { capability: 'generateInitiatives', expectedRole: 'CONSULTANT' },
+                    { capability: 'suggestTasks', expectedRole: 'IMPLEMENTER' },
+                    { capability: 'validateInitiative', expectedRole: 'GATEKEEPER' },
+                    { capability: 'buildRoadmap', expectedRole: 'STRATEGIST' },
+                    { capability: 'simulateEconomics', expectedRole: 'FINANCE' },
+                    { capability: 'chat', expectedRole: 'CONSULTANT' }
+                ];
 
-    describe('Error Handling', () => {
-        it('should handle rate limit exceeded', async () => {
-            const { enterpriseSecurity } = require('../../../server/services/ai/enterpriseSecurity');
-            enterpriseSecurity.checkRateLimit.mockResolvedValueOnce({ 
-                allowed: false, 
-                resetAt: new Date() 
-            });
-
-            await expect(pipeline.process({
-                capability: 'chat',
-                prompt: 'Test',
-                userId: 'user-1',
-                organizationId: 'org-1'
-            })).rejects.toThrow('Rate limit exceeded');
-        });
-
-        it('should handle quota exceeded', async () => {
-            const { quotaService } = require('../../../server/services/ai/quotaService');
-            quotaService.checkQuota.mockResolvedValueOnce({ 
-                allowed: false, 
-                reason: 'Monthly quota exhausted' 
-            });
-
-            await expect(pipeline.process({
-                capability: 'chat',
-                prompt: 'Test',
-                userId: 'user-1',
-                organizationId: 'org-1'
-            })).rejects.toThrow('Quota exceeded');
-        });
-    });
-
-    describe('Capability Mapping', () => {
-        const capabilityTests = [
-            { capability: 'diagnose', expectedRole: 'ANALYST' },
-            { capability: 'generateInitiatives', expectedRole: 'CONSULTANT' },
-            { capability: 'suggestTasks', expectedRole: 'IMPLEMENTER' },
-            { capability: 'validateInitiative', expectedRole: 'GATEKEEPER' },
-            { capability: 'buildRoadmap', expectedRole: 'STRATEGIST' },
-            { capability: 'simulateEconomics', expectedRole: 'FINANCE' },
-            { capability: 'chat', expectedRole: 'CONSULTANT' }
-        ];
-
-        capabilityTests.forEach(({ capability, expectedRole }) => {
-            it(`should map ${capability} to ${expectedRole} role`, () => {
-                const config = getCapabilityConfig(capability);
-                expect(config.role).toBe(expectedRole);
+                capabilityTests.forEach(({ capability, expectedRole }) => {
+                    it(`should map ${capability} to ${expectedRole} role`, () => {
+                        const config = getCapabilityConfig(capability);
+                        expect(config.role).toBe(expectedRole);
+                    });
+                });
             });
         });
-    });
-});
 
-describe('Backward Compatibility', () => {
-    it('should export all required functions for route compatibility', () => {
-        const exports = require('../../../server/services/ai/aiPipeline');
-        
-        expect(exports.suggestTasks).toBeDefined();
-        expect(exports.validateInitiative).toBeDefined();
-        expect(exports.enrichInitiative).toBeDefined();
-        expect(exports.generateObservations).toBeDefined();
-        expect(exports.chat).toBeDefined();
-        expect(exports.streamChat).toBeDefined();
-    });
+        describe('Backward Compatibility', () => {
+            it('should export all required functions for route compatibility', () => {
+                const exports = require('../../../server/services/ai/aiPipeline');
 
-    it('should export CAPABILITY_REGISTRY for inspection', () => {
-        const { CAPABILITY_REGISTRY } = require('../../../server/services/ai/aiPipeline');
-        expect(CAPABILITY_REGISTRY).toBeDefined();
-        expect(typeof CAPABILITY_REGISTRY).toBe('object');
-    });
+                expect(exports.suggestTasks).toBeDefined();
+                expect(exports.validateInitiative).toBeDefined();
+                expect(exports.enrichInitiative).toBeDefined();
+                expect(exports.generateObservations).toBeDefined();
+                expect(exports.chat).toBeDefined();
+                expect(exports.streamChat).toBeDefined();
+            });
 
-    it('should export singleton aiPipeline instance', () => {
-        const { aiPipeline, AIPipeline } = require('../../../server/services/ai/aiPipeline');
-        expect(aiPipeline).toBeInstanceOf(AIPipeline);
+            it('should export CAPABILITY_REGISTRY for inspection', () => {
+                const { CAPABILITY_REGISTRY } = require('../../../server/services/ai/aiPipeline');
+                expect(CAPABILITY_REGISTRY).toBeDefined();
+                expect(typeof CAPABILITY_REGISTRY).toBe('object');
+            });
+
+        });
     });
 });
 

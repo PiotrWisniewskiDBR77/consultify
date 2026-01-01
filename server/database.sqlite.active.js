@@ -799,6 +799,151 @@ function initDb() {
             FOREIGN KEY(custom_status_id) REFERENCES custom_statuses(id) ON DELETE SET NULL
         )`);
 
+        // PMO Role Schema (Role definitions & Capabilities)
+        db.run(`CREATE TABLE IF NOT EXISTS capabilities (
+            id TEXT PRIMARY KEY,
+            code TEXT UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            name_pl TEXT,
+            category TEXT,
+            description TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS pmo_role_definitions (
+            id TEXT PRIMARY KEY,
+            code TEXT UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            name_pl TEXT,
+            level INTEGER DEFAULT 0,
+            description TEXT,
+            description_pl TEXT,
+            reports_to_code TEXT,
+            is_system INTEGER DEFAULT 1,
+            is_required INTEGER DEFAULT 0,
+            prince2_role TEXT,
+            pmbok_role TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS pmo_role_capabilities (
+            id TEXT PRIMARY KEY,
+            pmo_role_id TEXT NOT NULL,
+            capability_id TEXT NOT NULL,
+            scope TEXT DEFAULT 'own',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(pmo_role_id) REFERENCES pmo_role_definitions(id) ON DELETE CASCADE,
+            FOREIGN KEY(capability_id) REFERENCES capabilities(id) ON DELETE CASCADE,
+            UNIQUE(pmo_role_id, capability_id)
+        )`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS project_members (
+            id TEXT PRIMARY KEY,
+            project_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            pmo_role_id TEXT,
+            project_role TEXT, -- Legacy
+            allocation_percent INTEGER DEFAULT 100,
+            start_date DATE,
+            end_date DATE,
+            responsibilities TEXT, -- JSON
+            notes TEXT,
+            added_by_id TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY(pmo_role_id) REFERENCES pmo_role_definitions(id) ON DELETE SET NULL,
+            UNIQUE(project_id, user_id)
+        )`);
+
+        // AI Settings 3-Tier System
+        db.run(`CREATE TABLE IF NOT EXISTS superadmin_ai_settings (
+            id TEXT PRIMARY KEY DEFAULT 'global',
+            default_provider TEXT,
+            fallback_chain TEXT DEFAULT '[]',
+            circuit_breaker_config TEXT DEFAULT '{"failureThreshold": 5, "cooldownSeconds": 60}',
+            global_token_limit INTEGER DEFAULT 10000000,
+            global_rate_limit TEXT DEFAULT '{"requestsPerMinute": 60, "requestsPerHour": 1000}',
+            max_context_window_size INTEGER DEFAULT 128000,
+            max_tokens_per_request INTEGER DEFAULT 8192,
+            pii_detection_sensitivity TEXT DEFAULT 'medium',
+            require_encryption INTEGER DEFAULT 1,
+            data_residency TEXT DEFAULT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_by TEXT
+        )`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS organization_ai_settings (
+            organization_id TEXT PRIMARY KEY,
+            policy_level TEXT DEFAULT 'ADVISORY',
+            max_policy_level TEXT DEFAULT 'ASSISTED',
+            default_proactivity_mode TEXT DEFAULT 'BALANCED',
+            active_roles TEXT DEFAULT '["ADVISOR"]',
+            default_role TEXT DEFAULT 'ADVISOR',
+            enabled_model_ids TEXT DEFAULT '[]',
+            max_ai_calls_per_day INTEGER DEFAULT 100,
+            max_tokens_per_month INTEGER DEFAULT 500000,
+            monthly_budget_usd REAL DEFAULT 0,
+            hard_limit_usd REAL DEFAULT 0,
+            freeze_on_limit INTEGER DEFAULT 0,
+            web_search_enabled INTEGER DEFAULT 1,
+            artifacts_enabled INTEGER DEFAULT 1,
+            thinking_steps_enabled INTEGER DEFAULT 1,
+            focus_modes_enabled INTEGER DEFAULT 1,
+            voice_enabled INTEGER DEFAULT 0,
+            audit_all_requests INTEGER DEFAULT 0,
+            audit_policy_changes INTEGER DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_by TEXT,
+            FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS user_ai_settings (
+            user_id TEXT PRIMARY KEY,
+            response_style TEXT DEFAULT 'balanced',
+            writing_tone TEXT DEFAULT 'professional',
+            preferred_language TEXT DEFAULT 'auto',
+            code_explanations INTEGER DEFAULT 1,
+            show_sources INTEGER DEFAULT 1,
+            proactivity_mode TEXT DEFAULT 'BALANCED',
+            model_temperature REAL DEFAULT 0.7,
+            max_tokens INTEGER DEFAULT 4096,
+            top_p REAL DEFAULT 1.0,
+            frequency_penalty REAL DEFAULT 0.0,
+            presence_penalty REAL DEFAULT 0.0,
+            system_instructions TEXT DEFAULT '',
+            visible_model_ids TEXT DEFAULT '[]',
+            preferred_model_id TEXT DEFAULT NULL,
+            enable_pii_redaction INTEGER DEFAULT 0,
+            data_retention_policy TEXT DEFAULT 'standard',
+            share_usage_analytics INTEGER DEFAULT 1,
+            context_retention TEXT DEFAULT 'session',
+            auto_suggestions INTEGER DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS ai_settings_audit (
+            id TEXT PRIMARY KEY,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            level TEXT NOT NULL,
+            actor_id TEXT NOT NULL,
+            actor_role TEXT NOT NULL,
+            target_id TEXT NOT NULL,
+            setting_key TEXT NOT NULL,
+            old_value TEXT,
+            new_value TEXT,
+            ip_address TEXT,
+            user_agent TEXT
+        )`);
+
+        // Insert default SuperAdmin settings
+        db.run("INSERT OR IGNORE INTO superadmin_ai_settings (id) VALUES ('global')");
+
         // Migration Check: Add new columns if missing (Safe Migration)
         const migrationColumns = [
             'expected_outcome', 'decision_impact', 'evidence_required',

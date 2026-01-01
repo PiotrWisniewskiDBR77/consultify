@@ -17,7 +17,8 @@ const verifyToken = (req, res, next) => {
     const token = (authHeader && authHeader.split(' ')[1]) || (req.body && req.body.token) || (req.query && req.query.token);
 
     if (!token) {
-        if (process.env.NODE_ENV === 'test') {
+        // Only bypass if explicitly requested (legacy test support)
+        if (process.env.NODE_ENV === 'test' && process.env.ENABLE_TEST_AUTH_BYPASS === 'true') {
             // console.log('[DEBUG] Bypassing token check in test mode');
             req.user = { id: 'test-user-id', organizationId: 'test-org-id', role: 'client' };
             req.userId = 'test-user-id';

@@ -307,12 +307,35 @@ function getCapabilityConfig(capability) {
 }
 
 class AIPipeline {
-    constructor() {
+    constructor(dependencies = {}) {
         this.gateway = new AIGateway();
         this.contextBuilder = enhancedContextBuilder;
         this.promptAssembler = new PromptAssembler();
         this.modelRouter = new ModelRouter();
-        this.llmService = new LLMService();
+
+        const {
+            llmService,
+            memoryManager: injectedMemoryManager,
+            quotaService: injectedQuotaService,
+            enterpriseSecurity: injectedSecurity,
+            qualityChecker: injectedQualityChecker,
+            performanceOptimizer: injectedOptimizer,
+            learningSystem: injectedLearningSystem,
+            cacheService: injectedCacheService
+        } = dependencies;
+
+        this.llmService = llmService || new LLMService();
+        this.memoryManager = injectedMemoryManager || memoryManager;
+        this.quotaService = injectedQuotaService || quotaService;
+        this.enterpriseSecurity = injectedSecurity || enterpriseSecurity;
+        this.qualityChecker = injectedQualityChecker || qualityChecker;
+        this.performanceOptimizer = injectedOptimizer || performanceOptimizer;
+        this.learningSystem = injectedLearningSystem || learningSystem;
+        this.cacheService = injectedCacheService || require('./cacheService').cacheService;
+
+        // Initialize other services
+        this.ragService = require('../ragService');
+        this.settingsService = require('../aiSettingsService').aiSettingsService;
     }
 
     // =========================================================================
@@ -324,7 +347,7 @@ class AIPipeline {
      */
     async safeCheckRateLimit(organizationId, capability) {
         try {
-            const result = await enterpriseSecurity.checkRateLimit(organizationId, capability);
+            const result = await this.enterpriseSecurity.checkRateLimit(organizationId, capability);
             return result;
         } catch (error) {
             aiLogger.error('Pipeline', `Rate limit check failed, allowing request: ${error.message}`);
@@ -337,7 +360,7 @@ class AIPipeline {
      */
     async safeCheckQuota(userId, organizationId, projectId) {
         try {
-            const result = await quotaService.checkQuota(userId, organizationId, projectId);
+            const result = await this.quotaService.checkQuota(userId, organizationId, projectId);
             return result;
         } catch (error) {
             aiLogger.error('Pipeline', `Quota check failed, allowing request: ${error.message}`);
@@ -350,7 +373,7 @@ class AIPipeline {
      */
     async safeQualityCheck(response, context, options) {
         try {
-            const result = await qualityChecker.check(response, context, options);
+            const result = await this.qualityChecker.check(response, context, options);
             return result;
         } catch (error) {
             aiLogger.warn('Pipeline', `Quality check failed, skipping: ${error.message}`);
@@ -381,7 +404,7 @@ class AIPipeline {
     safeLogAudit(auditData) {
         // Don't await - fire and forget
         try {
-            const promise = enterpriseSecurity.logAudit(auditData);
+            const promise = this.enterpriseSecurity.logAudit(auditData);
             if (promise && typeof promise.catch === 'function') {
                 promise.catch(err => {
                     aiLogger.warn('Pipeline', `Audit log failed (non-blocking): ${err.message}`);
@@ -398,7 +421,7 @@ class AIPipeline {
      */
     safeRecordLearning(data) {
         try {
-            const promise = learningSystem.recordInteraction(data);
+            const promise = this.learningSystem.recordInteraction(data);
             if (promise && typeof promise.catch === 'function') {
                 promise.catch(err => {
                     aiLogger.warn('Pipeline', `Learning record failed (non-blocking): ${err.message}`);
@@ -415,7 +438,7 @@ class AIPipeline {
      */
     safeRecordLearningEnhanced(data) {
         try {
-            const promise = learningSystem.recordWithAutoFeedback(data);
+            const promise = this.learningSystem.recordWithAutoFeedback(data);
             if (promise && typeof promise.catch === 'function') {
                 promise.catch(err => {
                     aiLogger.warn('Pipeline', `Enhanced learning record failed (non-blocking): ${err.message}`);
@@ -431,7 +454,7 @@ class AIPipeline {
      */
     safeRecordPerformance(traceId, metrics) {
         try {
-            performanceOptimizer.recordMetrics(traceId, metrics);
+            this.performanceOptimizer.recordMetrics(traceId, metrics);
         } catch (error) {
             aiLogger.debug('Pipeline', `Performance metrics failed: ${error.message}`);
         }
@@ -493,10 +516,10 @@ class AIPipeline {
             try {
                 if (request.userId && request.organizationId) {
                     effectiveSettings = await AISettingsService.getEffectiveSettings(
-                        request.userId, 
+                        request.userId,
                         request.organizationId
                     );
-                    
+
                     // Apply proactivity mode to prompt modifier
                     if (effectiveSettings.proactivityMode) {
                         const proactivityPrompt = AIProactivityEngine.getProactivityPromptModifier(
@@ -505,10 +528,10 @@ class AIPipeline {
                         request._proactivityPrompt = proactivityPrompt;
                         request._effectiveSettings = effectiveSettings;
                     }
-                    
-                    aiLogger.pipeline('Effective settings loaded', { 
+
+                    aiLogger.pipeline('Effective settings loaded', {
                         proactivityMode: effectiveSettings.proactivityMode,
-                        maxTokens: effectiveSettings.maxTokens 
+                        maxTokens: effectiveSettings.maxTokens
                     });
                 }
             } catch (settingsErr) {
@@ -538,7 +561,7 @@ class AIPipeline {
 
             // 3. Cache Check - Return immediately if cached
             reportProgress('cache', 'Checking semantic cache...');
-            const { cacheService } = require('./cacheService');
+            const cacheService = this.cacheService;
             const cacheQuery = request.prompt || request.messages?.[request.messages.length - 1]?.content;
             const cacheContext = {
                 organizationId: request.organizationId,
@@ -581,7 +604,7 @@ class AIPipeline {
             let knowledgeContext = null;
             if (cacheQuery) {
                 try {
-                    const RagService = require('../ragService');
+                    const RagService = this.ragService;
                     const ragResults = await RagService.searchRelevantChunks(cacheQuery, {
                         limit: 5,
                         organizationId: request.organizationId,
@@ -1205,8 +1228,10 @@ class AIPipeline {
  * @param {string} organizationId - Organization ID
  * @returns {Promise<Object>} Suggested tasks
  */
-async function suggestTasks(initiativeContext, userId, organizationId) {
-    const pipeline = new AIPipeline();
+async function suggestTasks(initiativeContext, userId, organizationId, pipelineInstance = null) {
+    // DEBUG: Verify injection
+    // console.log('DEBUG: suggestTasks pipeline injection:', !!pipelineInstance, pipelineInstance?.llmService?.call ? 'HasMockCall' : 'NoMockCall');
+    const pipeline = pipelineInstance || new AIPipeline();
     const config = getCapabilityConfig('suggestTasks');
 
     const prompt = `Given this initiative context, suggest implementation tasks:
@@ -1242,8 +1267,8 @@ Output as JSON array.`;
  * @param {string} organizationId - Organization ID
  * @returns {Promise<Object>} Validation result
  */
-async function validateInitiative(initiativeContext, userId, organizationId) {
-    const pipeline = new AIPipeline();
+async function validateInitiative(initiativeContext, userId, organizationId, pipelineInstance = null) {
+    const pipeline = pipelineInstance || new AIPipeline();
     const config = getCapabilityConfig('validateInitiative');
 
     const prompt = `Validate this initiative as a strict gatekeeper:
@@ -1280,8 +1305,8 @@ Output as JSON.`;
  * @param {string} organizationId - Organization ID
  * @returns {Promise<Object>} Enriched context
  */
-async function enrichInitiative(initiativeContext, userId, organizationId) {
-    const pipeline = new AIPipeline();
+async function enrichInitiative(initiativeContext, userId, organizationId, pipelineInstance = null) {
+    const pipeline = pipelineInstance || new AIPipeline();
     const config = getCapabilityConfig('enrichInitiative');
 
     const prompt = `Enrich this initiative with market context and best practices:
@@ -1316,8 +1341,8 @@ Output as JSON with keys: marketTrends, benchmarks, successFactors, risks.`;
  * @param {string} organizationId - Organization ID
  * @returns {Promise<Object>} Generated observations
  */
-async function generateObservations(userId, organizationId) {
-    const pipeline = new AIPipeline();
+async function generateObservations(userId, organizationId, pipelineInstance = null) {
+    const pipeline = pipelineInstance || new AIPipeline();
     const config = getCapabilityConfig('generateObservations');
 
     const prompt = `Analyze the organization's digital maturity data and generate strategic observations.
@@ -1350,8 +1375,8 @@ Output as JSON with keys: patterns, strengths, gaps, quickWins, priorities.`;
  * @param {string} organizationId - Organization ID
  * @returns {Promise<Object>} Generated content
  */
-async function generateStructuredContent(prompt, contentType, userId, organizationId) {
-    const pipeline = new AIPipeline();
+async function generateStructuredContent(prompt, contentType, userId, organizationId, pipelineInstance = null) {
+    const pipeline = pipelineInstance || new AIPipeline();
     const config = getCapabilityConfig('generateStructuredContent');
 
     const result = await pipeline.process({
@@ -1374,8 +1399,8 @@ async function generateStructuredContent(prompt, contentType, userId, organizati
  * @param {string} organizationId - Organization ID
  * @returns {Promise<string>} AI response
  */
-async function chat(message, history = [], roleName = 'CONSULTANT', userId, organizationId) {
-    const pipeline = new AIPipeline();
+async function chat(message, history = [], roleName = 'CONSULTANT', userId, organizationId, pipelineInstance = null) {
+    const pipeline = pipelineInstance || new AIPipeline();
 
     const result = await pipeline.process({
         capability: 'chat',

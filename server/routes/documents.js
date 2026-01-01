@@ -86,6 +86,19 @@ router.get('/all', authenticateToken, async (req, res) => {
     }
 });
 
+// GET /documents - Alias for /documents/all
+router.get('/', authenticateToken, async (req, res) => {
+    try {
+        const { id: userId, organization_id: organizationId } = req.user;
+        const { projectId } = req.query;
+        const documents = await DocumentService.getAccessibleDocuments(userId, organizationId, projectId);
+        res.json(documents);
+    } catch (error) {
+        console.error('[Documents] Error fetching documents:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // GET /documents/:id - Get single document
 router.get('/:id', authenticateToken, async (req, res) => {
     try {

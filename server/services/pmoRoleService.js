@@ -62,7 +62,7 @@ const PMORoleService = {
 
     query += ' ORDER BY level, name';
 
-    const rows = await db.allAsync(query, params);
+    const rows = await db.all(query, params);
     return rows.map(row => this._formatRole(row));
   },
 
@@ -73,7 +73,7 @@ const PMORoleService = {
    * @returns {Promise<Object|null>} Role definition
    */
   async getRole(identifier) {
-    const row = await db.getAsync(
+    const row = await db.get(
       'SELECT * FROM pmo_role_definitions WHERE id = ? OR code = ?',
       [identifier, identifier]
     );
@@ -81,7 +81,7 @@ const PMORoleService = {
     if (!row) return null;
 
     // Get capabilities for this role
-    const capabilities = await db.allAsync(
+    const capabilities = await db.all(
       `SELECT c.*, prc.scope
        FROM pmo_role_capabilities prc
        JOIN capabilities c ON c.id = prc.capability_id
@@ -145,25 +145,25 @@ const PMORoleService = {
     } = options;
 
     // Validate project exists
-    const project = await db.getAsync('SELECT id, name, organization_id FROM projects WHERE id = ?', [projectId]);
+    const project = await db.get('SELECT id, name, organization_id FROM projects WHERE id = ?', [projectId]);
     if (!project) {
       throw new Error('Project not found');
     }
 
     // Validate user exists
-    const user = await db.getAsync('SELECT id, first_name, last_name, organization_id FROM users WHERE id = ?', [userId]);
+    const user = await db.get('SELECT id, first_name, last_name, organization_id FROM users WHERE id = ?', [userId]);
     if (!user) {
       throw new Error('User not found');
     }
 
     // Validate PMO role exists
-    const pmoRole = await db.getAsync('SELECT * FROM pmo_role_definitions WHERE id = ?', [pmoRoleId]);
+    const pmoRole = await db.get('SELECT * FROM pmo_role_definitions WHERE id = ?', [pmoRoleId]);
     if (!pmoRole) {
       throw new Error('PMO role not found');
     }
 
     // Check if assignment exists
-    const existing = await db.getAsync(
+    const existing = await db.get(
       'SELECT * FROM project_members WHERE project_id = ? AND user_id = ?',
       [projectId, userId]
     );
@@ -173,7 +173,7 @@ const PMORoleService = {
 
     if (existing) {
       // Update existing assignment
-      await db.runAsync(
+      await db.run(
         `UPDATE project_members SET
           pmo_role_id = ?,
           allocation_percent = ?,
@@ -197,7 +197,7 @@ const PMORoleService = {
       );
     } else {
       // Create new assignment
-      await db.runAsync(
+      await db.run(
         `INSERT INTO project_members
          (id, project_id, user_id, pmo_role_id, project_role, allocation_percent,
           start_date, end_date, responsibilities, notes, created_at, updated_at, added_by_id)
@@ -244,12 +244,12 @@ const PMORoleService = {
    * @returns {Promise<boolean>} Success
    */
   async removeFromProject(userId, projectId, removedBy = null) {
-    const project = await db.getAsync('SELECT organization_id, name FROM projects WHERE id = ?', [projectId]);
+    const project = await db.get('SELECT organization_id, name FROM projects WHERE id = ?', [projectId]);
     if (!project) {
       throw new Error('Project not found');
     }
 
-    const member = await db.getAsync(
+    const member = await db.get(
       `SELECT pm.*, u.first_name, u.last_name, prd.name as role_name
        FROM project_members pm
        JOIN users u ON u.id = pm.user_id
@@ -262,7 +262,7 @@ const PMORoleService = {
       throw new Error('User is not a member of this project');
     }
 
-    await db.runAsync(
+    await db.run(
       'DELETE FROM project_members WHERE project_id = ? AND user_id = ?',
       [projectId, userId]
     );
@@ -288,7 +288,7 @@ const PMORoleService = {
    * @returns {Promise<Object|null>} Member details
    */
   async getProjectMember(projectId, userId) {
-    const row = await db.getAsync(
+    const row = await db.get(
       `SELECT pm.*, 
               u.first_name, u.last_name, u.email, u.avatar, u.role as user_role,
               p.name as project_name,
@@ -339,7 +339,7 @@ const PMORoleService = {
 
     query += ' ORDER BY prd.level, u.last_name, u.first_name';
 
-    const rows = await db.allAsync(query, params);
+    const rows = await db.all(query, params);
     return rows.map(row => this._formatProjectMember(row));
   },
 
@@ -369,7 +369,7 @@ const PMORoleService = {
    * @returns {Promise<Array>} Project assignments
    */
   async getUserProjectRoles(userId) {
-    const rows = await db.allAsync(
+    const rows = await db.all(
       `SELECT pm.*, 
               p.id as project_id, p.name as project_name, p.status as project_status,
               prd.code as pmo_role_code, prd.name as pmo_role_name, 
@@ -406,7 +406,7 @@ const PMORoleService = {
    * @returns {Promise<Array>} Capabilities
    */
   async getRoleCapabilities(roleId) {
-    const caps = await db.allAsync(
+    const caps = await db.all(
       `SELECT c.*, prc.scope
        FROM pmo_role_capabilities prc
        JOIN capabilities c ON c.id = prc.capability_id
@@ -448,7 +448,7 @@ const PMORoleService = {
     }
 
     // Check for duplicate code
-    const existing = await db.getAsync(
+    const existing = await db.get(
       'SELECT id FROM pmo_role_definitions WHERE code = ?',
       [code]
     );
@@ -459,7 +459,7 @@ const PMORoleService = {
     const id = `pmo-role-custom-${uuid()}`;
     const now = new Date().toISOString();
 
-    await db.runAsync(
+    await db.run(
       `INSERT INTO pmo_role_definitions
        (id, code, name, name_pl, level, description, description_pl, 
         reports_to_code, is_system, created_at)
@@ -483,7 +483,7 @@ const PMORoleService = {
       throw new Error('Allocation must be between 0 and 100');
     }
 
-    await db.runAsync(
+    await db.run(
       `UPDATE project_members SET allocation_percent = ?, updated_at = ?
        WHERE project_id = ? AND user_id = ?`,
       [allocationPercent, new Date().toISOString(), projectId, userId]
@@ -499,7 +499,7 @@ const PMORoleService = {
    * @returns {Promise<Object>} Team statistics
    */
   async getProjectTeamStats(projectId) {
-    const stats = await db.getAsync(
+    const stats = await db.get(
       `SELECT 
          COUNT(DISTINCT pm.user_id) as total_members,
          SUM(pm.allocation_percent) as total_allocation,
@@ -509,6 +509,7 @@ const PMORoleService = {
          COUNT(CASE WHEN prd.level = 2 THEN 1 END) as lead_count,
          COUNT(CASE WHEN prd.level = 3 THEN 1 END) as member_count,
          COUNT(CASE WHEN prd.level = 4 THEN 1 END) as stakeholder_count,
+         COUNT(CASE WHEN prd.level = 4 THEN 1 END) as stakeholder_count,
          COUNT(CASE WHEN prd.is_required = 1 AND pm.user_id IS NOT NULL THEN 1 END) as filled_required_roles
        FROM project_members pm
        LEFT JOIN pmo_role_definitions prd ON prd.id = pm.pmo_role_id
@@ -517,12 +518,12 @@ const PMORoleService = {
     );
 
     // Get required roles
-    const requiredRoles = await db.allAsync(
+    const requiredRoles = await db.all(
       `SELECT * FROM pmo_role_definitions WHERE is_required = 1`,
       []
     );
 
-    const filledRoles = await db.allAsync(
+    const filledRoles = await db.all(
       `SELECT DISTINCT prd.code
        FROM project_members pm
        JOIN pmo_role_definitions prd ON prd.id = pm.pmo_role_id
@@ -637,7 +638,7 @@ const PMORoleService = {
    */
   async _logAssignment(orgId, eventType, metadata) {
     try {
-      await db.runAsync(
+      await db.run(
         `INSERT INTO audit_events 
          (id, organization_id, event_type, entity_type, entity_id, action, metadata, created_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
