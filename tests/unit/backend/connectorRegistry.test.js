@@ -4,7 +4,6 @@
  * Tests for connector catalog and registry service.
  */
 
-const { describe, it, expect } = require('vitest');
 const ConnectorRegistry = require('../../../server/services/connectorRegistry');
 
 describe('ConnectorRegistry', () => {

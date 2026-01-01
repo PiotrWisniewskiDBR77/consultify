@@ -129,6 +129,14 @@ const TEST_SUITES = [
         critical: false,
         repairModule: null,
         timeout: 120000
+    },
+    {
+        id: 'voice-system',
+        name: 'Voice System',
+        file: 'test_voice_system.cjs',
+        critical: false,
+        repairModule: 'repair_voice.cjs',
+        timeout: 30000
     }
 ];
 

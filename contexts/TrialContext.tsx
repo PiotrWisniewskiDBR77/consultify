@@ -94,7 +94,7 @@ export const TrialProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (user) {
             refreshTrialStatus();
         } else {
-            setState(defaultState);
+            setState({ ...defaultState, loading: false });
         }
     }, [user]);
 

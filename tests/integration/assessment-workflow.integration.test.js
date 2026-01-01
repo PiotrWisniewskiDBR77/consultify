@@ -28,41 +28,87 @@ const mockDb = {
         return Promise.resolve([]);
     })
 };
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 
 // Mock dependencies
-vi.mock('../../server/database', () => ({ default: mockDb }));
+const mockAuditLogger = {
+    log: vi.fn().mockResolvedValue('audit-id'),
+    logCreation: vi.fn().mockResolvedValue('audit-id'),
+    logFileUpload: vi.fn().mockResolvedValue('audit-id'),
+    logDeletion: vi.fn().mockResolvedValue('audit-id')
+};
+// Add default export for ESM compatibility
+mockAuditLogger.default = mockAuditLogger;
 
-vi.mock('../../server/middleware/auth', () => ({
-    authMiddleware: (req, res, next) => {
-        req.user = {
-            id: 'test-user-123',
-            organizationId: 'org-123',
-            role: 'PROJECT_MANAGER',
-            email: 'test@example.com'
-        };
-        next();
-    }
-}));
-
-vi.mock('../../server/middleware/assessmentRBAC', () => ({
-    assessmentRBAC: () => (req, res, next) => next()
-}));
-
-vi.mock('../../server/utils/assessmentAuditLogger', () => ({
-    default: { log: vi.fn() }
-}));
+vi.mock('../../server/utils/assessmentAuditLogger', () => mockAuditLogger);
 
 describe('Assessment Workflow Integration Tests', () => {
     let app;
     let assessmentWorkflowRouter;
+    let authMiddleware;
+    let mockJwt;
 
     beforeAll(async () => {
-        // Import router
-        assessmentWorkflowRouter = (await import('../../server/routes/assessment-workflow.js')).default;
+        // Reset ALL mocks to ensure clean state
+        vi.clearAllMocks();
 
-        // Create express app
+        // 1. Define mock JWT
+        mockJwt = {
+            verify: vi.fn((token, secret, cb) => {
+                cb(null, {
+                    id: 'test-user-123',
+                    userRole: 'PROJECT_MANAGER',
+                    role: 'PROJECT_MANAGER',
+                    organizationId: 'org-123',
+                    email: 'test@example.com'
+                });
+            }),
+            sign: vi.fn(() => 'test-token'),
+            decode: vi.fn(() => ({ id: 'test-user-123' }))
+        };
+
+        // 2. Load Auth Middleware via REQUIRE (CJS Cache)
+        authMiddleware = require('../../server/middleware/authMiddleware.js');
+
+        if (typeof authMiddleware.setDependencies === 'function') {
+            authMiddleware.setDependencies({ jwt: mockJwt });
+        }
+
+        // 3. Load Router via REQUIRE (matched CJS cache)
+        assessmentWorkflowRouter = require('../../server/routes/assessment-workflow.js');
+
+
+        // 4. Mock dependencies for Service
+        // Note: Service might be ESM or CJS. 
+        // AssessmentWorkflowService.js uses module.exports? Let's check imports.
+        // It's likely CJS as well.
+        const serviceModule = require('../../server/services/assessmentWorkflowService.js');
+        const AssessmentWorkflowService = serviceModule.AssessmentWorkflowService || serviceModule;
+
+        // Mock DB for Service
+        mockDb.get = vi.fn();
+        mockDb.run = vi.fn();
+        mockDb.all = vi.fn();
+        mockDb.exec = vi.fn();
+
+        if (AssessmentWorkflowService.setDependencies) {
+            AssessmentWorkflowService.setDependencies({
+                db: mockDb,
+                auditLogger: mockAuditLogger
+            });
+        }
+
+        // 5. Create express app
         app = express();
         app.use(express.json());
+
+        // Inject Auth Header Middleware
+        app.use((req, res, next) => {
+            req.headers['authorization'] = 'Bearer test-token';
+            next();
+        });
+
         app.use('/api/assessment-workflow', assessmentWorkflowRouter);
     });
 
@@ -156,7 +202,7 @@ describe('Assessment Workflow Integration Tests', () => {
                 .post('/api/assessment-workflow/assessment-123/initialize')
                 .send({ projectId: 'project-456' });
 
-            expect(AuditLogger.log).toHaveBeenCalledWith(
+            expect(mockAuditLogger.log).toHaveBeenCalledWith(
                 expect.objectContaining({
                     action: 'WORKFLOW_INITIALIZED'
                 })
@@ -373,7 +419,7 @@ describe('Assessment Workflow Integration Tests', () => {
                 });
 
             expect(response.status).toBe(200);
-            expect(response.body.status).toBe('COMPLETED');
+            expect(response.body.status).toBe('DONE');
         });
     });
 

@@ -77,77 +77,77 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
         switch (currentView) {
             case AppView.SUPERADMIN_OVERVIEW:
                 return <OverviewModule onNavigateToSection={handleNavigateToSection} />;
-            
+
             case AppView.SUPERADMIN_CUSTOMERS:
                 return <CustomersModule />;
-            
+
             case AppView.SUPERADMIN_AI_PLATFORM:
                 return <AIPlatformModule />;
-            
+
             case AppView.SUPERADMIN_SYSTEM:
                 return <SystemModule />;
-            
+
             case AppView.SUPERADMIN_CONTENT:
                 return <ContentModule />;
-            
+
             case AppView.SUPERADMIN_REVENUE:
                 return <RevenueModule />;
-            
+
             case AppView.SUPERADMIN_SECURITY:
                 return <SecurityModule />;
-            
+
             case AppView.SUPERADMIN_CONFIGURATION:
                 return <ConfigurationModule />;
 
             // Legacy view redirects - redirect to appropriate module with initial tab
             case AppView.SUPERADMIN_DASHBOARD:
                 return <OverviewModule onNavigateToSection={handleNavigateToSection} />;
-            
+
             case AppView.SUPERADMIN_ORGANIZATIONS:
             case AppView.SUPERADMIN_USERS:
             case AppView.SUPERADMIN_FEEDBACK:
             case AppView.SUPERADMIN_BULK_OPERATIONS:
                 return <CustomersModule initialTab={
                     currentView === AppView.SUPERADMIN_ORGANIZATIONS ? 'organizations' :
-                    currentView === AppView.SUPERADMIN_USERS ? 'users' :
-                    currentView === AppView.SUPERADMIN_FEEDBACK ? 'feedback' :
-                    'bulk-ops'
+                        currentView === AppView.SUPERADMIN_USERS ? 'users' :
+                            currentView === AppView.SUPERADMIN_FEEDBACK ? 'feedback' :
+                                'bulk-ops'
                 } />;
-            
+
             case AppView.SUPERADMIN_LLM_MANAGEMENT:
             case AppView.SUPERADMIN_AI_INTELLIGENCE:
             case AppView.SUPERADMIN_KNOWLEDGE:
             case AppView.SUPERADMIN_AI_CONFIG:
                 return <AIPlatformModule initialTab={
                     currentView === AppView.SUPERADMIN_LLM_MANAGEMENT ? 'llm-config' :
-                    currentView === AppView.SUPERADMIN_AI_INTELLIGENCE ? 'intelligence' :
-                    currentView === AppView.SUPERADMIN_KNOWLEDGE ? 'knowledge' :
-                    'llm-config'
+                        currentView === AppView.SUPERADMIN_AI_INTELLIGENCE ? 'intelligence' :
+                            currentView === AppView.SUPERADMIN_KNOWLEDGE ? 'knowledge' :
+                                'llm-config'
                 } />;
-            
+
             case AppView.SUPERADMIN_BILLING:
             case AppView.SUPERADMIN_INVOICES:
                 return <RevenueModule initialTab={
                     currentView === AppView.SUPERADMIN_INVOICES ? 'invoices' : 'billing'
                 } />;
-            
+
             case AppView.SUPERADMIN_SSO:
             case AppView.SUPERADMIN_SECURITY_POLICIES:
             case AppView.SUPERADMIN_API_MANAGEMENT:
             case AppView.SUPERADMIN_COMPLIANCE:
                 return <SecurityModule initialTab={
                     currentView === AppView.SUPERADMIN_SSO ? 'sso' :
-                    currentView === AppView.SUPERADMIN_SECURITY_POLICIES ? 'policies' :
-                    currentView === AppView.SUPERADMIN_API_MANAGEMENT ? 'api-keys' :
-                    'compliance'
+                        currentView === AppView.SUPERADMIN_SECURITY_POLICIES ? 'policies' :
+                            currentView === AppView.SUPERADMIN_API_MANAGEMENT ? 'api-keys' :
+                                'compliance'
                 } />;
-            
+
             case AppView.SUPERADMIN_SETTINGS:
             case AppView.SUPERADMIN_WHITELABEL:
                 return <ConfigurationModule initialTab={
                     currentView === AppView.SUPERADMIN_WHITELABEL ? 'whitelabel' : 'settings'
                 } />;
-            
+
             case AppView.SUPERADMIN_PLAYBOOK_TEMPLATES:
                 return <ContentModule initialTab="playbooks" />;
 
@@ -158,7 +158,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
     };
 
     return (
-        <div className="flex h-full bg-navy-950 text-white overflow-hidden">
+        <div className="flex h-full bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-white overflow-hidden">
             {/* Sidebar (Fixed Position) */}
             <SuperAdminSidebar
                 activeSection={activeSection}

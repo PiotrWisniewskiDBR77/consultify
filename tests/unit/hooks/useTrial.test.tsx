@@ -52,10 +52,15 @@ describe('useTrial Hook', () => {
             currentUser: mockUser
         });
 
-        vi.mocked(global.fetch).mockResolvedValue({
-            ok: true,
-            json: vi.fn().mockResolvedValue(mockPolicyResponse)
-        } as any);
+        vi.mocked(global.fetch).mockImplementation((url: any) => {
+            if (url.includes('/api/organization/policy-snapshot')) {
+                return Promise.resolve({
+                    ok: true,
+                    json: async () => mockPolicyResponse
+                } as Response);
+            }
+            return Promise.resolve({ ok: false } as Response);
+        });
     });
 
     const createWrapper = () => {
@@ -83,7 +88,7 @@ describe('useTrial Hook', () => {
         const { result } = renderHook(() => useTrial(), { wrapper });
 
         await waitFor(() => {
-            expect(result.current.limits).toBeDefined();
+            expect(result.current.limits).not.toBeNull();
         });
 
         expect(result.current.limits?.maxProjects).toBe(3);
@@ -96,7 +101,7 @@ describe('useTrial Hook', () => {
         const { result } = renderHook(() => useTrial(), { wrapper });
 
         await waitFor(() => {
-            expect(result.current.usage).toBeDefined();
+            expect(result.current.usage.aiCalls).toBe(10);
         });
 
         expect(result.current.usage.aiCalls).toBe(10);
@@ -119,14 +124,19 @@ describe('useTrial Hook', () => {
 
     it('should handle expired trial', async () => {
         localStorage.setItem('token', 'test-token');
-        vi.mocked(global.fetch).mockResolvedValue({
-            ok: true,
-            json: vi.fn().mockResolvedValue({
-                ...mockPolicyResponse,
-                isTrialExpired: true,
-                trialDaysLeft: 0
-            })
-        } as any);
+        vi.mocked(global.fetch).mockImplementation((url: any) => {
+            if (url.includes('/api/organization/policy-snapshot')) {
+                return Promise.resolve({
+                    ok: true,
+                    json: async () => ({
+                        ...mockPolicyResponse,
+                        isTrialExpired: true,
+                        trialDaysLeft: 0
+                    })
+                } as Response);
+            }
+            return Promise.resolve({ ok: false } as Response);
+        });
 
         const wrapper = createWrapper();
         const { result } = renderHook(() => useTrial(), { wrapper });
@@ -138,19 +148,24 @@ describe('useTrial Hook', () => {
 
     it('should handle blocked actions', async () => {
         localStorage.setItem('token', 'test-token');
-        vi.mocked(global.fetch).mockResolvedValue({
-            ok: true,
-            json: vi.fn().mockResolvedValue({
-                ...mockPolicyResponse,
-                blockedActions: ['create_project', 'invite_user']
-            })
-        } as any);
+        vi.mocked(global.fetch).mockImplementation((url: any) => {
+            if (url.includes('/api/organization/policy-snapshot')) {
+                return Promise.resolve({
+                    ok: true,
+                    json: async () => ({
+                        ...mockPolicyResponse,
+                        blockedActions: ['create_project', 'invite_user']
+                    })
+                } as Response);
+            }
+            return Promise.resolve({ ok: false } as Response);
+        });
 
         const wrapper = createWrapper();
         const { result } = renderHook(() => useTrial(), { wrapper });
 
         await waitFor(() => {
-            expect(result.current.blockedActions).toBeDefined();
+            expect(result.current.blockedActions.length).toBeGreaterThan(0);
         });
 
         expect(result.current.blockedActions).toContain('create_project');

@@ -4,7 +4,6 @@
  * Tests for report template management service.
  */
 
-const { describe, it, expect, beforeEach, afterEach, beforeAll } = require('vitest');
 const { initTestDb, cleanTables, dbAll, dbRun } = require('../../helpers/dbHelper.cjs');
 const ReportTemplateService = require('../../../server/services/reportTemplateService');
 const { v4: uuidv4 } = require('uuid');

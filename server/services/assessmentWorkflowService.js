@@ -78,6 +78,17 @@ class AssessmentWorkflowService {
                 WORKFLOW_STATES.DRAFT, createdBy
             ], (err) => {
                 if (err) return reject(err);
+
+                // Log audit event
+                this.auditLogger.log({
+                    userId: createdBy,
+                    organizationId: organizationId,
+                    action: 'WORKFLOW_INITIALIZED',
+                    resourceType: 'ASSESSMENT_WORKFLOW',
+                    resourceId: workflowId,
+                    details: { assessmentId, projectId }
+                }).catch(console.error); // Non-blocking log
+
                 resolve({
                     workflowId,
                     assessmentId,

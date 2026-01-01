@@ -4,7 +4,6 @@
  * Tests for demo organization creation and management.
  */
 
-const { describe, it, expect, beforeEach, afterEach, beforeAll } = require('vitest');
 const { initTestDb, cleanTables, dbAll, dbRun } = require('../../helpers/dbHelper.cjs');
 const DemoService = require('../../../server/services/demoService');
 const { v4: uuidv4 } = require('uuid');
@@ -37,7 +36,7 @@ describe('DemoService', () => {
             const result = await DemoService.createDemoOrganization(null, email);
 
             expect(result.userId).toBeDefined();
-            
+
             // Verify user was created with email
             const users = await dbAll(
                 'SELECT * FROM users WHERE id = ?',
@@ -50,7 +49,7 @@ describe('DemoService', () => {
             // Create a template first
             const templateId = uuidv4();
             await dbRun(
-                `INSERT INTO demo_templates (id, name, data, created_at)
+                `INSERT INTO demo_templates (id, name, seed_data_json, created_at)
                  VALUES (?, ?, ?, datetime('now'))`,
                 [templateId, 'Test Template', JSON.stringify({ test: 'data' })]
             );

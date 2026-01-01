@@ -6,22 +6,29 @@ describe('AI Workload Intelligence Service', () => {
     let mockUuid;
 
     beforeEach(async () => {
+        // Reset not strictly needed if we use DI, but good for hygiene
         vi.resetModules();
 
         mockDb = {
             all: vi.fn(),
             get: vi.fn(),
-            run: vi.fn()
+            // Mock run for snapshot taking
+            run: vi.fn((sql, params, cb) => cb && cb(null))
         };
 
         mockUuid = {
             v4: vi.fn(() => 'mock-snapshot-id')
         };
 
-        vi.doMock('../../../server/database', () => ({ default: mockDb }));
-        vi.doMock('uuid', () => ({ v4: mockUuid.v4 }));
+        // Static import is fine because we modify the instance via DI
+        const module = await import('../../../server/services/aiWorkloadIntelligence.js');
+        AIWorkloadIntelligence = module.default || module;
 
-        AIWorkloadIntelligence = (await import('../../../server/services/aiWorkloadIntelligence.js')).default;
+        // Use the built-in DI method
+        AIWorkloadIntelligence.setDependencies({
+            db: mockDb,
+            uuidv4: mockUuid.v4
+        });
     });
 
     afterEach(() => {

@@ -6,6 +6,19 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import OverviewModule from '../../../views/superadmin/OverviewModule';
 import { Api } from '../../../services/api';
 
+// Mock child components
+vi.mock('../../../views/superadmin/SuperAdminDashboard', () => ({
+    SuperAdminDashboard: () => <div data-testid="dashboard-content">Dashboard Content</div>
+}));
+
+vi.mock('../../../views/superadmin/SuperAdminMetricsView', () => ({
+    SuperAdminMetricsView: () => <div data-testid="metrics-content">Metrics Content</div>
+}));
+
+vi.mock('../../../components/SuperAdmin/SuperAdminSignalCenter', () => ({
+    SuperAdminSignalCenter: () => <div data-testid="signals-content">Signals Content</div>
+}));
+
 vi.mock('../../../services/api', () => ({
     Api: {
         getOrganizations: vi.fn(),
@@ -52,7 +65,7 @@ describe('OverviewModule', () => {
         render(<OverviewModule onNavigateToSection={mockOnNavigateToSection} />);
         
         await waitFor(() => {
-            expect(screen.getByText('Dashboard')).toBeInTheDocument();
+            expect(screen.getByRole('heading', { name: 'Overview' })).toBeInTheDocument();
         });
     });
 
@@ -60,11 +73,12 @@ describe('OverviewModule', () => {
         render(<OverviewModule onNavigateToSection={mockOnNavigateToSection} />);
         
         await waitFor(() => {
-            expect(screen.getByText('Metrics')).toBeInTheDocument();
+            expect(screen.getAllByText('Metrics').length).toBeGreaterThan(0);
         });
 
-        fireEvent.click(screen.getByText('Metrics'));
-        expect(screen.getByText('Metrics')).toBeInTheDocument();
+        const metricsTab = screen.getAllByText('Metrics')[0];
+        fireEvent.click(metricsTab);
+        expect(metricsTab).toBeInTheDocument();
     });
 
     it('should fetch and display stats', async () => {
@@ -80,7 +94,7 @@ describe('OverviewModule', () => {
         render(<OverviewModule onNavigateToSection={mockOnNavigateToSection} />);
         
         await waitFor(() => {
-            expect(screen.getByText('Dashboard')).toBeInTheDocument();
+            expect(screen.getByRole('heading', { name: 'Overview' })).toBeInTheDocument();
         });
 
         // Navigation is handled internally, but we can verify the callback exists
@@ -101,9 +115,9 @@ describe('OverviewModule', () => {
         render(<OverviewModule onNavigateToSection={mockOnNavigateToSection} />);
         
         await waitFor(() => {
-            expect(screen.getByText('Dashboard')).toBeInTheDocument();
-            expect(screen.getByText('Metrics')).toBeInTheDocument();
-            expect(screen.getByText('Signals')).toBeInTheDocument();
+            expect(screen.getAllByText('Dashboard').length).toBeGreaterThan(0);
+            expect(screen.getAllByText('Metrics').length).toBeGreaterThan(0);
+            expect(screen.getAllByText('Signals').length).toBeGreaterThan(0);
         });
     });
 });

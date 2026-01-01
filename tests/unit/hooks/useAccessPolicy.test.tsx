@@ -71,10 +71,15 @@ describe('useAccessPolicy Hooks', () => {
             currentUser: mockUser
         });
 
-        vi.mocked(global.fetch).mockResolvedValue({
-            ok: true,
-            json: vi.fn().mockResolvedValue(mockPolicySnapshot)
-        } as any);
+        vi.mocked(global.fetch).mockImplementation((url: any) => {
+            if (url.includes('/api/organization/policy-snapshot')) {
+                return Promise.resolve({
+                    ok: true,
+                    json: async () => mockPolicySnapshot
+                } as Response);
+            }
+            return Promise.resolve({ ok: false } as Response);
+        });
     });
 
     const createWrapper = () => {
@@ -105,22 +110,24 @@ describe('useAccessPolicy Hooks', () => {
                 state: { currentUser: { token: 'test-token' } }
             }));
 
-            vi.mocked(global.fetch).mockResolvedValueOnce({
-                ok: true,
-                json: vi.fn().mockResolvedValue({
-                    ...mockPolicySnapshot,
-                    blockedActions: ['create_project']
-                })
-            } as any);
+            vi.mocked(global.fetch).mockImplementation((url: any) => {
+                return Promise.resolve({
+                    ok: true,
+                    json: async () => ({
+                        ...mockPolicySnapshot,
+                        blockedActions: ['create_project']
+                    })
+                } as Response);
+            });
 
             const wrapper = createWrapper();
             const { result } = renderHook(() => usePolicySnapshot(), { wrapper });
 
             await waitFor(() => {
-                expect(result.current.isActionBlocked).toBeDefined();
+                expect(result.current.snapshot).toBeDefined();
+                expect(result.current.isActionBlocked('create_project')).toBe(true);
             });
 
-            expect(result.current.isActionBlocked('create_project')).toBe(true);
             expect(result.current.isActionBlocked('view_dashboard')).toBe(false);
         });
 
@@ -129,22 +136,24 @@ describe('useAccessPolicy Hooks', () => {
                 state: { currentUser: { token: 'test-token' } }
             }));
 
-            vi.mocked(global.fetch).mockResolvedValueOnce({
-                ok: true,
-                json: vi.fn().mockResolvedValue({
-                    ...mockPolicySnapshot,
-                    blockedFeatures: ['advanced-analytics']
-                })
-            } as any);
+            vi.mocked(global.fetch).mockImplementation((url: any) => {
+                return Promise.resolve({
+                    ok: true,
+                    json: async () => ({
+                        ...mockPolicySnapshot,
+                        blockedFeatures: ['advanced-analytics']
+                    })
+                } as Response);
+            });
 
             const wrapper = createWrapper();
             const { result } = renderHook(() => usePolicySnapshot(), { wrapper });
 
             await waitFor(() => {
-                expect(result.current.isFeatureBlocked).toBeDefined();
+                expect(result.current.snapshot).toBeDefined();
+                expect(result.current.isFeatureBlocked('advanced-analytics')).toBe(true);
             });
 
-            expect(result.current.isFeatureBlocked('advanced-analytics')).toBe(true);
             expect(result.current.isFeatureBlocked('basic-dashboard')).toBe(false);
         });
 
@@ -178,14 +187,19 @@ describe('useAccessPolicy Hooks', () => {
                 state: { currentUser: { token: 'test-token' } }
             }));
 
-            vi.mocked(global.fetch).mockResolvedValueOnce({
-                ok: true,
-                json: vi.fn().mockResolvedValue({
-                    ...mockPolicySnapshot,
-                    orgType: 'DEMO',
-                    isDemo: true
-                })
-            } as any);
+            vi.mocked(global.fetch).mockImplementation((url: any) => {
+                if (url.includes('/api/organization/policy-snapshot')) {
+                    return Promise.resolve({
+                        ok: true,
+                        json: async () => ({
+                            ...mockPolicySnapshot,
+                            orgType: 'DEMO',
+                            isDemo: true
+                        })
+                    } as Response);
+                }
+                return Promise.resolve({ ok: false } as Response);
+            });
 
             const wrapper = createWrapper();
             const { result } = renderHook(() => useIsDemo(), { wrapper });
@@ -228,14 +242,19 @@ describe('useAccessPolicy Hooks', () => {
                 state: { currentUser: { token: 'test-token' } }
             }));
 
-            vi.mocked(global.fetch).mockResolvedValueOnce({
-                ok: true,
-                json: vi.fn().mockResolvedValue({
-                    ...mockPolicySnapshot,
-                    orgType: 'PAID',
-                    isTrial: false
-                })
-            } as any);
+            vi.mocked(global.fetch).mockImplementation((url: any) => {
+                if (url.includes('/api/organization/policy-snapshot')) {
+                    return Promise.resolve({
+                        ok: true,
+                        json: async () => ({
+                            ...mockPolicySnapshot,
+                            orgType: 'PAID',
+                            isTrial: false
+                        })
+                    } as Response);
+                }
+                return Promise.resolve({ ok: false } as Response);
+            });
 
             const wrapper = createWrapper();
             const { result } = renderHook(() => useIsTrial(), { wrapper });
@@ -252,14 +271,19 @@ describe('useAccessPolicy Hooks', () => {
                 state: { currentUser: { token: 'test-token' } }
             }));
 
-            vi.mocked(global.fetch).mockResolvedValueOnce({
-                ok: true,
-                json: vi.fn().mockResolvedValue({
-                    ...mockPolicySnapshot,
-                    orgType: 'PAID',
-                    isPaid: true
-                })
-            } as any);
+            vi.mocked(global.fetch).mockImplementation((url: any) => {
+                if (url.includes('/api/organization/policy-snapshot')) {
+                    return Promise.resolve({
+                        ok: true,
+                        json: async () => ({
+                            ...mockPolicySnapshot,
+                            orgType: 'PAID',
+                            isPaid: true
+                        })
+                    } as Response);
+                }
+                return Promise.resolve({ ok: false } as Response);
+            });
 
             const wrapper = createWrapper();
             const { result } = renderHook(() => useIsPaid(), { wrapper });
@@ -291,14 +315,19 @@ describe('useAccessPolicy Hooks', () => {
                 state: { currentUser: { token: 'test-token' } }
             }));
 
-            vi.mocked(global.fetch).mockResolvedValueOnce({
-                ok: true,
-                json: vi.fn().mockResolvedValue({
-                    ...mockPolicySnapshot,
-                    isTrialExpired: true,
-                    trialDaysLeft: 0
-                })
-            } as any);
+            vi.mocked(global.fetch).mockImplementation((url: any) => {
+                if (url.includes('/api/organization/policy-snapshot')) {
+                    return Promise.resolve({
+                        ok: true,
+                        json: async () => ({
+                            ...mockPolicySnapshot,
+                            isTrialExpired: true,
+                            trialDaysLeft: 0
+                        })
+                    } as Response);
+                }
+                return Promise.resolve({ ok: false } as Response);
+            });
 
             const wrapper = createWrapper();
             const { result } = renderHook(() => useIsTrialExpired(), { wrapper });

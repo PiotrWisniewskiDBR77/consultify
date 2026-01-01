@@ -4,7 +4,6 @@
  * Tests for connector configuration CRUD operations.
  */
 
-const { describe, it, expect, beforeEach, afterEach, beforeAll } = require('vitest');
 const { initTestDb, cleanTables, dbAll, dbRun } = require('../../helpers/dbHelper.cjs');
 const ConnectorService = require('../../../server/services/connectorService');
 const { v4: uuidv4 } = require('uuid');

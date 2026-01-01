@@ -32,55 +32,53 @@ const isExemptRoute = (path) => {
 /**
  * Legal Compliance Middleware Factory
  * Returns middleware that checks user's legal acceptance status
+ * @param {Object} service - LegalService dependency
  */
-const legalComplianceMiddleware = async (req, res, next) => {
-    try {
-        // Skip if not authenticated (auth routes handle their own flow)
-        if (!req.user) {
-            return next();
-        }
-
-        // Skip exempt routes
-        if (isExemptRoute(req.originalUrl)) {
-            return next();
-        }
-
-        // Check pending acceptances
-        const pending = await LegalService.checkPendingAcceptances(
-            req.user.id,
-            req.user.organizationId,
-            req.user.role
-        );
-
-        // If no pending acceptances, continue
-        if (!pending.hasAnyPending) {
-            return next();
-        }
-
-        // User has pending acceptances - block with 451
-        return res.status(451).json({
-            error: 'Legal acceptance required',
-            code: 'LEGAL_ACCEPTANCE_REQUIRED',
-            pending: {
-                requiredDocs: pending.required.map(doc => ({
-                    docType: doc.doc_type,
-                    version: doc.version,
-                    title: doc.title
-                })),
-                dpaPending: pending.dpaPending,
-                isOrgAdmin: pending.isOrgAdmin,
-                message: pending.dpaPending && pending.isOrgAdmin
-                    ? 'Organization DPA acceptance required'
-                    : 'Please accept the updated legal documents to continue'
-            }
-        });
-
-    } catch (err) {
-        console.error('[LegalCompliance] Error:', err);
-        // On error, allow request to proceed but log the issue
-        // We don't want legal check failures to completely block the app
-        next();
+const createMiddleware = (service) => async (req, res, next) => {
+    // Skip exempt routes
+    if (isExemptRoute(req.originalUrl)) {
+        return next();
     }
+
+    // Check pending acceptances
+    const pending = await service.checkPendingAcceptances(
+        req.user.id,
+        req.user.organizationId,
+        req.user.role
+    );
+
+    // If no pending acceptances, continue
+    if (!pending.hasAnyPending) {
+        return next();
+    }
+
+    // User has pending acceptances - block with 451
+    return res.status(451).json({
+        error: 'Legal acceptance required',
+        code: 'LEGAL_ACCEPTANCE_REQUIRED',
+        pending: {
+            requiredDocs: pending.required.map(doc => ({
+                docType: doc.doc_type,
+                version: doc.version,
+                title: doc.title
+            })),
+            dpaPending: pending.dpaPending,
+            isOrgAdmin: pending.isOrgAdmin,
+            message: pending.dpaPending && pending.isOrgAdmin
+                ? 'Organization DPA acceptance required'
+                : 'Please accept the updated legal documents to continue'
+        }
+    });
+
+} catch (err) {
+    console.error('[LegalCompliance] Error:', err);
+    // On error, allow request to proceed but log the issue
+    // We don't want legal check failures to completely block the app
+    next();
+}
 };
 
-module.exports = legalComplianceMiddleware;
+const defaultMiddleware = createMiddleware(LegalService);
+defaultMiddleware.factory = createMiddleware;
+
+module.exports = defaultMiddleware;

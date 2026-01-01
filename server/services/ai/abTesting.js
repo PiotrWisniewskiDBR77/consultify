@@ -8,7 +8,7 @@
  * - Gradual rollout
  */
 
-const db = require('../../database');
+const { queryRun, queryOne, queryAll } = require('../../utils/queryHelpers');
 const { aiLogger } = require('./logger');
 
 class ABTestingService {
@@ -40,7 +40,7 @@ class ABTestingService {
 
         const id = require('crypto').randomUUID();
 
-        await db.run(`
+        await queryRun(`
             INSERT INTO ai_ab_experiments 
             (id, name, description, prompt_id, variants, traffic_split, 
              min_sample_size, confidence_level, primary_metric, 
@@ -71,7 +71,7 @@ class ABTestingService {
             throw new Error(`Cannot start experiment with status: ${experiment.status}`);
         }
 
-        await db.run(`
+        await queryRun(`
             UPDATE ai_ab_experiments 
             SET status = 'running', started_at = datetime('now')
             WHERE id = ?
@@ -90,7 +90,7 @@ class ABTestingService {
      * Stop an experiment
      */
     async stopExperiment(experimentId, reason = 'manual') {
-        await db.run(`
+        await queryRun(`
             UPDATE ai_ab_experiments 
             SET status = 'stopped', ended_at = datetime('now'), stop_reason = ?
             WHERE id = ?
@@ -171,7 +171,7 @@ class ABTestingService {
      */
     async recordAssignment(experimentId, userId, variantIndex) {
         try {
-            await db.run(`
+            await queryRun(`
                 INSERT OR IGNORE INTO ai_ab_assignments 
                 (id, experiment_id, user_id, variant_index, assigned_at)
                 VALUES (?, ?, ?, ?, datetime('now'))
@@ -188,7 +188,7 @@ class ABTestingService {
     async recordOutcome(experimentId, userId, metric, value) {
         try {
             // Get user's variant
-            const assignment = await db.get(`
+            const assignment = await queryOne(`
                 SELECT variant_index FROM ai_ab_assignments
                 WHERE experiment_id = ? AND user_id = ?
             `, [experimentId, userId]);
@@ -198,7 +198,7 @@ class ABTestingService {
                 return;
             }
 
-            await db.run(`
+            await queryRun(`
                 INSERT INTO ai_ab_outcomes 
                 (id, experiment_id, user_id, variant_index, metric, value, recorded_at)
                 VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
@@ -229,7 +229,7 @@ class ABTestingService {
         const variants = JSON.parse(experiment.variants);
 
         // Get sample sizes
-        const sampleSizes = await db.all(`
+        const sampleSizes = await queryAll(`
             SELECT variant_index, COUNT(*) as count
             FROM ai_ab_assignments
             WHERE experiment_id = ?
@@ -237,7 +237,7 @@ class ABTestingService {
         `, [experimentId]);
 
         // Get outcome stats for primary metric
-        const outcomes = await db.all(`
+        const outcomes = await queryAll(`
             SELECT variant_index, 
                    AVG(value) as mean, 
                    COUNT(*) as count,
@@ -365,7 +365,7 @@ class ABTestingService {
      * Get single experiment
      */
     async getExperiment(experimentId) {
-        return await db.get(`SELECT * FROM ai_ab_experiments WHERE id = ?`, [experimentId]);
+        return await queryOne(`SELECT * FROM ai_ab_experiments WHERE id = ?`, [experimentId]);
     }
 
     /**
@@ -387,7 +387,7 @@ class ABTestingService {
 
         query += ` ORDER BY created_at DESC`;
 
-        return await db.all(query, params);
+        return await queryAll(query, params);
     }
 
     /**
@@ -398,7 +398,7 @@ class ABTestingService {
             return;
         }
 
-        const experiments = await db.all(`
+        const experiments = await queryAll(`
             SELECT * FROM ai_ab_experiments WHERE status = 'running'
         `);
 
@@ -419,4 +419,3 @@ module.exports = {
     abTestingService,
     abTesting: abTestingService // Alias for API routes
 };
-

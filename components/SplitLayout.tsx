@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { ChatPanel } from './ChatPanel';
 import { useAppStore } from '../store/useAppStore';
 import { usePMOContextAutoFetch } from '../store/usePMOStore';
-import { ChatMessage, ChatOption } from '../types';
+import { useArtifactsStore } from '../store/useArtifactsStore';
+import { ChatMessage, ChatOption, Artifact, FocusMode } from '../types';
 import { useAIStream } from '../hooks/useAIStream';
 import { useAIContext } from '../contexts/AIContext';
 import { useDeviceType } from '../hooks/useDeviceType';
-import { X, Sparkles, MessageSquare } from 'lucide-react';
+import { X, Sparkles, MessageSquare, FileCode, ChevronRight, ChevronLeft } from 'lucide-react';
+import { ArtifactsPanel } from './AIChat/Artifacts/ArtifactsPanel';
+import { FocusModeSelector } from './AIChat/Input/FocusModeSelector';
 
 interface SplitLayoutProps {
     children: React.ReactNode;
@@ -39,11 +42,27 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
         setChatPanelWidth
     } = useAppStore();
 
+    // Artifacts store for World-Class Chat 2025
+    const {
+        artifacts,
+        activeArtifactId,
+        isPanelOpen: isArtifactsPanelOpen,
+        isFullscreen: isArtifactsFullscreen,
+        setActiveArtifact,
+        updateArtifact,
+        togglePanel: toggleArtifactsPanel,
+        toggleFullscreen: toggleArtifactsFullscreen,
+        exportArtifact
+    } = useArtifactsStore();
+
+    // Focus mode state
+    const [focusMode, setFocusMode] = useState<FocusMode>('all');
+
     // CRIT-03: Auto-fetch PMO context when project changes
     usePMOContextAutoFetch(currentProjectId);
 
     const { screenContext } = useAIContext();
-    const { isStreaming, streamedContent, startStream } = useAIStream();
+    const { isStreaming, streamedContent, thinkingSteps, startStream } = useAIStream();
 
     // Device detection
     const { isTablet, isMobile, isTouchDevice } = useDeviceType();
@@ -132,8 +151,14 @@ Your role is to guide the user through strategic discovery and provide actionabl
 Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
 
         // Import API dynamically to avoid circular deps and call stream
-        startStream(text, history, systemPrompt, screenContext || undefined);
+        // Pass focusMode for context filtering
+        startStream(text, history, systemPrompt, { ...screenContext, focusMode });
     };
+
+    // Handle artifact export
+    const handleExportArtifact = useCallback(async (artifact: Artifact, format: string) => {
+        await exportArtifact(artifact.id, format);
+    }, [exportArtifact]);
 
     const handleOptionSelect = (option: ChatOption) => {
         handleSendMessage(option.label);
@@ -268,8 +293,36 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
                 </div>
             )}
 
-            {/* Right Panel: Workspace */}
+            {/* Center Panel: Workspace */}
             <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden relative">
+
+                {/* Focus Mode Selector - World-Class Chat 2025 */}
+                {!hideSidebar && !isChatCollapsed && (
+                    <div className="hidden lg:flex items-center justify-between px-4 py-2 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950">
+                        <FocusModeSelector 
+                            value={focusMode} 
+                            onChange={setFocusMode}
+                        />
+                        
+                        {/* Artifacts toggle button */}
+                        {artifacts.length > 0 && (
+                            <button
+                                onClick={() => toggleArtifactsPanel()}
+                                className={`
+                                    flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
+                                    ${isArtifactsPanelOpen 
+                                        ? 'bg-brand text-white' 
+                                        : 'bg-brand/10 text-brand hover:bg-brand/20'
+                                    }
+                                `}
+                            >
+                                <FileCode size={16} />
+                                <span>{artifacts.length} Artifacts</span>
+                                {isArtifactsPanelOpen ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+                            </button>
+                        )}
+                    </div>
+                )}
 
                 {/* Mobile/Tablet Chat FAB - Different position for tablet */}
                 {!hideSidebar && (
@@ -301,7 +354,54 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
                 </div>
             </div>
 
-            {/* Add CSS for slide animation */}
+            {/* Right Panel: Artifacts - World-Class Chat 2025 */}
+            {isArtifactsPanelOpen && artifacts.length > 0 && (
+                <div 
+                    className={`
+                        hidden lg:block shrink-0 border-l border-slate-200 dark:border-navy-700
+                        ${isArtifactsFullscreen ? 'fixed inset-0 z-50' : 'w-[400px] max-w-[40vw]'}
+                    `}
+                >
+                    <ArtifactsPanel
+                        artifacts={artifacts}
+                        activeArtifactId={activeArtifactId}
+                        onSelectArtifact={setActiveArtifact}
+                        onUpdateArtifact={updateArtifact}
+                        onClose={() => toggleArtifactsPanel(false)}
+                        onExport={handleExportArtifact}
+                        isFullscreen={isArtifactsFullscreen}
+                        onToggleFullscreen={() => toggleArtifactsFullscreen()}
+                    />
+                </div>
+            )}
+
+            {/* Mobile Artifacts Drawer */}
+            {isArtifactsPanelOpen && artifacts.length > 0 && (
+                <div className="lg:hidden fixed inset-0 z-50">
+                    {/* Backdrop */}
+                    <div 
+                        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                        onClick={() => toggleArtifactsPanel(false)}
+                    />
+                    
+                    {/* Drawer from bottom */}
+                    <div 
+                        className="absolute bottom-0 left-0 right-0 bg-white dark:bg-navy-900 rounded-t-2xl max-h-[80vh] overflow-hidden"
+                        style={{ animation: 'slideInFromBottom 0.3s ease-out forwards' }}
+                    >
+                        <ArtifactsPanel
+                            artifacts={artifacts}
+                            activeArtifactId={activeArtifactId}
+                            onSelectArtifact={setActiveArtifact}
+                            onUpdateArtifact={updateArtifact}
+                            onClose={() => toggleArtifactsPanel(false)}
+                            onExport={handleExportArtifact}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* Add CSS for slide animations */}
             <style>{`
                 @keyframes slideInFromRight {
                     from {
@@ -309,6 +409,14 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
                     }
                     to {
                         transform: translateX(0);
+                    }
+                }
+                @keyframes slideInFromBottom {
+                    from {
+                        transform: translateY(100%);
+                    }
+                    to {
+                        transform: translateY(0);
                     }
                 }
             `}</style>

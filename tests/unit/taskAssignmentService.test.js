@@ -9,7 +9,6 @@
  * - PRINCE2 - Progress Theme, Exception Handling
  */
 
-const { describe, it, expect, beforeEach, vi } = require('vitest');
 
 // Mock database
 const mockDb = {

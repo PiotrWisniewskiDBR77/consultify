@@ -52,6 +52,7 @@ import {
   EyeOff, // Privacy settings
   ClipboardList, // Work preferences
   Calculator, // Economics module
+  Palette, // Studio
 } from 'lucide-react';
 import { PhaseIndicator } from './PMO/PhaseIndicator';
 
@@ -309,7 +310,7 @@ export const Sidebar: React.FC = () => {
       viewId: AppView.FULL_STEP6_REPORTS,
       requiresView: AppView.FULL_STEP5_EXECUTION
     },
-    // Tools Section with AI Advisor and Automation Scheme
+    // Tools Section with AI Advisor, Automation Scheme and Studio
     {
       id: 'MODULE_TOOLS',
       label: t('sidebar.tools'),
@@ -317,6 +318,7 @@ export const Sidebar: React.FC = () => {
       subItems: [
         { id: 'TOOLS_AI_ADVISOR', label: t('sidebar.aiAdvisor', 'AI Advisor'), viewId: AppView.AI_ACTION_PROPOSALS, requiresView: AppView.MY_WORK, icon: <Sparkles size={16} /> },
         { id: 'TOOLS_AUTOMATION', label: t('sidebar.automationScheme', 'Schemat automatyzacji'), viewId: AppView.KPI_OKR_DASHBOARD, requiresView: AppView.MY_WORK, icon: <Workflow size={16} /> },
+        { id: 'TOOLS_STUDIO', label: t('sidebar.studio', 'Studio'), viewId: AppView.STUDIO, requiresView: AppView.MY_WORK, icon: <Palette size={16} /> },
       ]
     }
   ];

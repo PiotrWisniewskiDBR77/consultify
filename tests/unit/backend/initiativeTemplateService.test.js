@@ -4,7 +4,6 @@
  * Tests for initiative template CRUD operations.
  */
 
-const { describe, it, expect, beforeEach, afterEach, beforeAll } = require('vitest');
 const { initTestDb, cleanTables, dbAll, dbRun } = require('../../helpers/dbHelper.cjs');
 const InitiativeTemplateService = require('../../../server/services/initiativeTemplateService');
 const { v4: uuidv4 } = require('uuid');
@@ -167,11 +166,9 @@ describe('InitiativeTemplateService', () => {
             const templateData = {
                 name: 'Data Template',
                 category: 'test',
-                templateData: {
-                    problemStructured: 'Problem',
-                    suggestedTasks: ['Task 1', 'Task 2'],
-                    suggestedRoles: ['Role 1']
-                }
+                problemStructured: 'Problem',
+                suggestedTasks: ['Task 1', 'Task 2'],
+                suggestedRoles: ['Role 1']
             };
 
             const template = await InitiativeTemplateService.createTemplate(
@@ -179,8 +176,7 @@ describe('InitiativeTemplateService', () => {
                 testUserId
             );
 
-            expect(template.templateData).toBeDefined();
-            expect(template.templateData.suggestedTasks).toEqual(['Task 1', 'Task 2']);
+            expect(template.suggestedTasks).toEqual(['Task 1', 'Task 2']);
         });
     });
 
@@ -214,16 +210,16 @@ describe('InitiativeTemplateService', () => {
 
     describe('deleteTemplate', () => {
         it('should delete template', async () => {
-            await InitiativeTemplateService.deleteTemplate(testTemplateId, testUserId);
+            const result = await InitiativeTemplateService.deleteTemplate(testTemplateId, testUserId);
+            expect(result).toBe(true);
 
             const template = await InitiativeTemplateService.getTemplateById(testTemplateId);
             expect(template).toBeNull();
         });
 
-        it('should reject delete for non-existent template', async () => {
-            await expect(
-                InitiativeTemplateService.deleteTemplate(uuidv4(), testUserId)
-            ).rejects.toThrow();
+        it('should return false for delete of non-existent template', async () => {
+            const result = await InitiativeTemplateService.deleteTemplate(uuidv4(), testUserId);
+            expect(result).toBe(false);
         });
     });
 });

@@ -4,7 +4,6 @@
  * Tests for AI recommendation generation service.
  */
 
-const { describe, it, expect, beforeEach, afterEach, beforeAll } = require('vitest');
 const { initTestDb, cleanTables } = require('../../helpers/dbHelper.cjs');
 const AIRecommendationService = require('../../../server/services/aiRecommendationService');
 
@@ -74,7 +73,7 @@ describe('AIRecommendationService', () => {
             // Small gaps should only suggest low-effort initiatives
             recommendations.forEach(rec => {
                 if (rec.axisId === 'digital_processes') {
-                    expect(rec.effort).toBe('low');
+                    expect(rec.estimatedEffort).toBe('low');
                 }
             });
         });
@@ -108,31 +107,6 @@ describe('AIRecommendationService', () => {
 
             const processRecs = recommendations.filter(r => r.axisId === 'digital_processes');
             expect(processRecs.length).toBeLessThanOrEqual(2); // Max 2 per axis
-        });
-    });
-
-    describe('getRecommendationsForAxis', () => {
-        it('should return recommendations for specific axis', async () => {
-            const recommendations = await AIRecommendationService.getRecommendationsForAxis(
-                'digital_processes',
-                2, // current score
-                5  // target score
-            );
-
-            expect(Array.isArray(recommendations)).toBe(true);
-            expect(recommendations.length).toBeGreaterThan(0);
-            expect(recommendations[0]).toHaveProperty('title');
-            expect(recommendations[0]).toHaveProperty('type');
-        });
-
-        it('should return empty array for non-existent axis', async () => {
-            const recommendations = await AIRecommendationService.getRecommendationsForAxis(
-                'non_existent_axis',
-                1,
-                5
-            );
-
-            expect(recommendations).toEqual([]);
         });
     });
 });

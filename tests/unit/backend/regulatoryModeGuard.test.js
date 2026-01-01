@@ -4,7 +4,6 @@
  * Tests for regulatory mode enforcement service.
  */
 
-const { describe, it, expect, beforeEach, afterEach, beforeAll } = require('vitest');
 const { initTestDb, cleanTables, dbAll, dbRun } = require('../../helpers/dbHelper.cjs');
 const RegulatoryModeGuard = require('../../../server/services/regulatoryModeGuard');
 const { v4: uuidv4 } = require('uuid');

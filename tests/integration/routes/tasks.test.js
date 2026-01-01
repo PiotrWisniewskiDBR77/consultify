@@ -4,18 +4,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import request from 'supertest';
 import express from 'express';
+import { createRequire } from 'module';
 
-// Mock database
-const mockDb = {
-    all: vi.fn((sql, params, callback) => callback(null, [])),
-    get: vi.fn((sql, params, callback) => callback(null, null)),
-    run: vi.fn((sql, params, callback) => callback.call({ changes: 1, lastID: 1 }, null))
-};
+const require = createRequire(import.meta.url);
 
-vi.mock('../../../server/database', () => ({
-    default: mockDb
-}));
+// Import REAL database module (CJS interop)
+import db from '../../../server/database';
 
+// Mock other dependencies globally (ESM mocks)
 vi.mock('../../../server/middleware/authMiddleware', () => ({
     default: (req, res, next) => {
         req.user = {
@@ -28,19 +24,25 @@ vi.mock('../../../server/middleware/authMiddleware', () => ({
 }));
 
 vi.mock('../../../server/routes/notifications', () => ({
-    default: express.Router()
+    default: {
+        createNotification: vi.fn()
+    }
 }));
 
 vi.mock('../../../server/services/activityService', () => ({
-    default: { logActivity: vi.fn() }
+    default: { log: vi.fn() }
 }));
 
 vi.mock('../../../server/services/initiativeService', () => ({
-    default: { updateProgress: vi.fn() }
+    default: { recalculateProgress: vi.fn().mockResolvedValue() }
 }));
 
 vi.mock('../../../server/utils/cacheHelper', () => ({
-    default: { invalidate: vi.fn() }
+    default: {
+        invalidate: vi.fn(),
+        invalidateProjectCache: vi.fn(),
+        invalidateUserCache: vi.fn()
+    }
 }));
 
 vi.mock('../../../server/services/taskAssignmentService', () => ({
@@ -56,11 +58,47 @@ describe('Tasks Routes', () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        
+
+        // Spy on the real DB instance methods
+        // We need to restore mocks first to avoid stacking spies
+        vi.restoreAllMocks();
+
+        // Default implementations
+        vi.spyOn(db, 'all').mockImplementation((sql, params, callback) => callback(null, []));
+        vi.spyOn(db, 'get').mockImplementation((sql, params, callback) => callback(null, null));
+        vi.spyOn(db, 'run').mockImplementation(function (sql, params, callback) {
+            const cb = typeof params === 'function' ? params : callback;
+            if (cb) cb.call({ changes: 1, lastID: 1 }, null);
+        });
+        // POST uses db.prepare
+        if (!db.prepare) {
+            db.prepare = vi.fn(() => ({
+                run: vi.fn((...args) => {
+                    const cb = args.pop();
+                    if (typeof cb === 'function') cb.call({ changes: 1, lastID: 1 }, null);
+                }),
+                finalize: vi.fn()
+            }));
+        } else {
+            vi.spyOn(db, 'prepare').mockImplementation(() => ({
+                run: vi.fn((...args) => {
+                    const cb = args.pop();
+                    if (typeof cb === 'function') cb.call({ changes: 1, lastID: 1 }, null);
+                }),
+                finalize: vi.fn()
+            }));
+        }
+
         app = express();
         app.use(express.json());
-        
-        const tasksRouter = (await import('../../../server/routes/tasks.js')).default;
+
+        // Use require to load the CJS router
+        // Since we are modifing the db OBJECT, we don't need to reload the router if it holds the same object ref
+        // But cleaning router cache is good practice
+        const routerPath = require.resolve('../../../server/routes/tasks.js');
+        delete require.cache[routerPath];
+        const tasksRouter = require('../../../server/routes/tasks.js');
+
         app.use('/api/tasks', tasksRouter);
     });
 
@@ -90,7 +128,7 @@ describe('Tasks Routes', () => {
                 }
             ];
 
-            mockDb.all.mockImplementation((sql, params, callback) => {
+            db.all.mockImplementation((sql, params, callback) => {
                 callback(null, mockTasks);
             });
 
@@ -104,7 +142,7 @@ describe('Tasks Routes', () => {
         });
 
         it('filters by projectId', async () => {
-            mockDb.all.mockImplementation((sql, params, callback) => {
+            db.all.mockImplementation((sql, params, callback) => {
                 expect(sql).toContain('t.project_id = ?');
                 expect(params).toContain('proj-1');
                 callback(null, []);
@@ -116,7 +154,7 @@ describe('Tasks Routes', () => {
         });
 
         it('filters by status', async () => {
-            mockDb.all.mockImplementation((sql, params, callback) => {
+            db.all.mockImplementation((sql, params, callback) => {
                 expect(sql).toContain('t.status = ?');
                 expect(params).toContain('completed');
                 callback(null, []);
@@ -128,7 +166,7 @@ describe('Tasks Routes', () => {
         });
 
         it('filters by assigneeId', async () => {
-            mockDb.all.mockImplementation((sql, params, callback) => {
+            db.all.mockImplementation((sql, params, callback) => {
                 expect(sql).toContain('t.assignee_id = ?');
                 expect(params).toContain('user-2');
                 callback(null, []);
@@ -140,7 +178,7 @@ describe('Tasks Routes', () => {
         });
 
         it('filters by priority', async () => {
-            mockDb.all.mockImplementation((sql, params, callback) => {
+            db.all.mockImplementation((sql, params, callback) => {
                 expect(sql).toContain('t.priority = ?');
                 expect(params).toContain('urgent');
                 callback(null, []);
@@ -152,7 +190,7 @@ describe('Tasks Routes', () => {
         });
 
         it('filters by initiativeId', async () => {
-            mockDb.all.mockImplementation((sql, params, callback) => {
+            db.all.mockImplementation((sql, params, callback) => {
                 expect(sql).toContain('t.initiative_id = ?');
                 expect(params).toContain('init-1');
                 callback(null, []);
@@ -173,7 +211,7 @@ describe('Tasks Routes', () => {
                 assignees: JSON.stringify(['user-1', 'user-2'])
             };
 
-            mockDb.all.mockImplementation((sql, params, callback) => {
+            db.all.mockImplementation((sql, params, callback) => {
                 callback(null, [mockTask]);
             });
 
@@ -188,7 +226,7 @@ describe('Tasks Routes', () => {
         });
 
         it('orders by priority and due date', async () => {
-            mockDb.all.mockImplementation((sql, params, callback) => {
+            db.all.mockImplementation((sql, params, callback) => {
                 expect(sql).toContain('ORDER BY');
                 expect(sql).toContain('CASE t.priority');
                 expect(sql).toContain('t.due_date ASC');
@@ -201,7 +239,7 @@ describe('Tasks Routes', () => {
         });
 
         it('handles database errors', async () => {
-            mockDb.all.mockImplementation((sql, params, callback) => {
+            db.all.mockImplementation((sql, params, callback) => {
                 callback(new Error('Database error'), null);
             });
 
@@ -223,7 +261,7 @@ describe('Tasks Routes', () => {
                 priority: 'high'
             };
 
-            mockDb.get.mockImplementation((sql, params, callback) => {
+            db.get.mockImplementation((sql, params, callback) => {
                 callback(null, mockTask);
             });
 
@@ -236,7 +274,7 @@ describe('Tasks Routes', () => {
         });
 
         it('returns 404 for non-existent task', async () => {
-            mockDb.get.mockImplementation((sql, params, callback) => {
+            db.get.mockImplementation((sql, params, callback) => {
                 callback(null, null);
             });
 

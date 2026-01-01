@@ -110,6 +110,9 @@ export enum AppView {
   // AI Action Proposals Review
   AI_ACTION_PROPOSALS = 'AI_ACTION_PROPOSALS',
 
+  // Consultify Studio - Visual AI Workspace
+  STUDIO = 'STUDIO',
+
   // Consultant Views
   CONSULTANT_PANEL = 'CONSULTANT_PANEL',
   CONSULTANT_INVITES = 'CONSULTANT_INVITES',
@@ -1797,6 +1800,200 @@ export interface AIAuditEntry {
 }
 
 // ==========================================
+// AI SETTINGS 3-TIER SYSTEM
+// SuperAdmin → Admin/Org → User hierarchy
+// ==========================================
+
+/** AI Proactivity Mode - How proactive the AI should be */
+export type AIProactivityMode = 'REACTIVE' | 'BALANCED' | 'PROACTIVE';
+
+/** Proactivity behavior flags for runtime */
+export interface ProactivityBehavior {
+  autoSuggest: boolean;
+  nudges: boolean;
+  contextualHints: boolean;
+  initiateConversation: boolean;
+}
+
+/** SuperAdmin AI Settings - Platform-wide configuration */
+export interface SuperAdminAISettings {
+  id: string; // 'global'
+  
+  // Provider Management
+  defaultProvider: string | null;
+  fallbackChain: string[];
+  circuitBreakerConfig: {
+    failureThreshold: number;
+    cooldownSeconds: number;
+  };
+  
+  // Global Limits
+  globalTokenLimit: number;
+  globalRateLimit: {
+    requestsPerMinute: number;
+    requestsPerHour: number;
+  };
+  maxContextWindowSize: number;
+  maxTokensPerRequest: number;
+  
+  // Security & PII
+  piiDetectionSensitivity: 'low' | 'medium' | 'high';
+  requireEncryption: boolean;
+  dataResidency: string | null;
+  
+  // Timestamps
+  createdAt: string;
+  updatedAt: string;
+  updatedBy: string | null;
+}
+
+/** Organization AI Settings - Per-org configuration */
+export interface OrgAISettings {
+  organizationId: string;
+  
+  // Policy Configuration
+  policyLevel: AIPolicyLevel;
+  maxPolicyLevel: AIPolicyLevel;
+  defaultProactivityMode: AIProactivityMode;
+  
+  // AI Roles Configuration
+  activeRoles: AIRole[];
+  defaultRole: AIRole;
+  
+  // Model Selection (subset of SuperAdmin providers)
+  enabledModelIds: string[];
+  
+  // Limits & Budget
+  maxAICallsPerDay: number;
+  maxTokensPerMonth: number;
+  monthlyBudgetUSD: number;
+  hardLimitUSD: number;
+  freezeOnLimit: boolean;
+  
+  // Feature Toggles
+  webSearchEnabled: boolean;
+  artifactsEnabled: boolean;
+  thinkingStepsEnabled: boolean;
+  focusModesEnabled: boolean;
+  voiceEnabled: boolean;
+  
+  // Audit Configuration
+  auditAllRequests: boolean;
+  auditPolicyChanges: boolean;
+  
+  // Timestamps
+  createdAt: string;
+  updatedAt: string;
+  updatedBy: string | null;
+}
+
+/** User AI Settings - Per-user preferences */
+export interface UserAISettings {
+  userId: string;
+  
+  // Response Behavior
+  responseStyle: 'concise' | 'balanced' | 'detailed';
+  writingTone: 'professional' | 'casual' | 'technical' | 'friendly';
+  preferredLanguage: string;
+  codeExplanations: boolean;
+  showSources: boolean;
+  
+  // Proactivity Mode
+  proactivityMode: AIProactivityMode;
+  
+  // Model Parameters
+  modelTemperature: number;
+  maxTokens: number;
+  topP: number;
+  frequencyPenalty: number;
+  presencePenalty: number;
+  systemInstructions: string;
+  
+  // Model Selection (from org-enabled models)
+  visibleModelIds: string[];
+  preferredModelId: string | null;
+  
+  // Privacy Settings
+  enablePiiRedaction: boolean;
+  dataRetentionPolicy: 'minimal' | 'standard' | 'extended';
+  shareUsageAnalytics: boolean;
+  
+  // Context Settings
+  contextRetention: 'session' | 'day' | 'week' | 'month' | 'permanent';
+  autoSuggestions: boolean;
+  
+  // Timestamps
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** AI Settings Audit Entry - Tracks all setting changes */
+export interface AISettingsAuditEntry {
+  id: string;
+  timestamp: string;
+  
+  // Level & Actor
+  level: 'superadmin' | 'admin' | 'user';
+  actorId: string;
+  actorRole: string;
+  
+  // Target & Change
+  targetId: string; // orgId or userId or 'global'
+  settingKey: string;
+  oldValue: unknown;
+  newValue: unknown;
+  
+  // Request Metadata
+  ipAddress: string | null;
+  userAgent: string | null;
+}
+
+/** Effective AI Settings - Merged settings for runtime */
+export interface EffectiveAISettings {
+  // Merged from all levels
+  policyLevel: AIPolicyLevel;
+  proactivityMode: AIProactivityMode;
+  proactivityBehavior: ProactivityBehavior;
+  
+  // Response settings
+  responseStyle: 'concise' | 'balanced' | 'detailed';
+  writingTone: 'professional' | 'casual' | 'technical' | 'friendly';
+  preferredLanguage: string;
+  
+  // Model settings
+  modelTemperature: number;
+  maxTokens: number;
+  topP: number;
+  frequencyPenalty: number;
+  presencePenalty: number;
+  systemInstructions: string;
+  preferredModelId: string | null;
+  availableModelIds: string[];
+  
+  // Feature flags (from org)
+  webSearchEnabled: boolean;
+  artifactsEnabled: boolean;
+  thinkingStepsEnabled: boolean;
+  focusModesEnabled: boolean;
+  voiceEnabled: boolean;
+  
+  // Privacy
+  enablePiiRedaction: boolean;
+  dataRetentionPolicy: 'minimal' | 'standard' | 'extended';
+  
+  // Limits (from org)
+  maxAICallsPerDay: number;
+  maxTokensPerMonth: number;
+  
+  // Sources (for debugging)
+  _sources: {
+    superadmin: Partial<SuperAdminAISettings>;
+    org: Partial<OrgAISettings>;
+    user: Partial<UserAISettings>;
+  };
+}
+
+// ==========================================
 // SCMS PHASE 1: CONTEXT (Why Change?)
 // ==========================================
 
@@ -1981,6 +2178,58 @@ export interface ChatResponseAction {
   };
 }
 
+// ==================== WORLD-CLASS CHAT 2025 TYPES ====================
+
+/**
+ * Focus Mode for AI context filtering
+ * Determines which sources the AI should prioritize in its response
+ */
+export type FocusMode = 'all' | 'pmo-docs' | 'project-data' | 'research' | 'web';
+
+/**
+ * Artifact - Generated structured content from AI (like Claude's Artifacts)
+ * Can be code, documents, diagrams, or PMO-specific content
+ */
+export interface Artifact {
+  id: string;
+  type: 'markdown' | 'code' | 'html' | 'diagram' | 'table' | 'pmo-document';
+  title: string;
+  content: string;
+  language?: string;  // For code artifacts (e.g., 'typescript', 'python', 'sql')
+  editable: boolean;
+  version: number;
+  createdAt: Date;
+  updatedAt?: Date;
+  metadata?: {
+    framework?: string;     // For PMO docs: ISO/PMBOK/PRINCE2
+    templateType?: string;  // RACI, Risk Register, Status Report
+    exportFormats?: string[]; // ['pdf', 'docx', 'xlsx']
+  };
+}
+
+/**
+ * ThinkingStep - Chain of Thought reasoning step
+ * Shows AI's reasoning process for transparency
+ */
+export interface ThinkingStep {
+  id: string;
+  label: string;
+  content: string;
+  status: 'pending' | 'in_progress' | 'done';
+  timestamp: Date;
+  durationMs?: number;
+  category?: 'analysis' | 'research' | 'synthesis' | 'validation';
+}
+
+/**
+ * Message feedback for learning system
+ */
+export interface MessageFeedback {
+  rating: 'positive' | 'negative';
+  reason?: string;
+  timestamp: Date;
+}
+
 export interface ChatMessage {
   id: string;
   role: 'ai' | 'user';
@@ -1993,6 +2242,17 @@ export interface ChatMessage {
   isThinking?: boolean; // For MAX Mode deep reasoning indicator
   citations?: ChatCitation[]; // Citations from PMO data
   actions?: ChatResponseAction[]; // Action buttons in response
+  
+  // World-Class Chat 2025 Extensions
+  artifacts?: Artifact[];           // Generated structured content
+  thinkingSteps?: ThinkingStep[];   // Chain of Thought reasoning
+  canEdit?: boolean;                // Allow user to edit this message
+  regenerateCount?: number;         // How many times regenerated
+  focusMode?: FocusMode;            // Which focus was used for context
+  feedback?: MessageFeedback;       // User feedback on this message
+  parentMessageId?: string;         // For branching conversations (edit history)
+  isStreaming?: boolean;            // Currently being streamed
+  streamProgress?: number;          // 0-100 for progress indicator
 }
 
 export interface AIMessageHistory {
@@ -3404,6 +3664,60 @@ export interface AIPreferences {
   // Governance
   dataRetentionPolicy?: 'none' | '30days' | 'standard';
   contextWindowStrategy?: 'auto' | 'limit_8k' | 'limit_16k' | 'full';
+
+  // Response Length Settings (NEW)
+  responseLength?: ResponseLengthSettings;
+  
+  // Contextual Behavior (NEW)
+  contextualBehavior?: ContextualBehaviorSettings;
+  
+  // Formatting Preferences (NEW)
+  formatting?: FormattingPreferences;
+  
+  // Feedback Settings (NEW)
+  feedbackSettings?: FeedbackSettings;
+}
+
+// Response length configuration per mode
+export interface ResponseLengthSettings {
+  quick: 'ultra_short' | 'short' | 'medium';        // 50-150 | 150-300 | 300-500 tokens
+  standard: 'short' | 'medium' | 'long';             // 200-400 | 400-800 | 800-1500 tokens
+  deepStudy: 'medium' | 'long' | 'comprehensive';   // 500-1000 | 1000-2000 | 2000-4000 tokens
+}
+
+// Contextual behavior settings
+export interface ContextualBehaviorSettings {
+  chatMode: 'quick' | 'standard' | 'deepStudy';     // Default response mode
+  autoDetectIntent: boolean;                         // Auto-detect user intent for mode
+  confirmLongResponses: boolean;                     // Ask before long responses
+  rememberModePerTopic: boolean;                     // Remember mode per topic
+}
+
+// Formatting preferences
+export interface FormattingPreferences {
+  preferBulletPoints: boolean;
+  preferTables: boolean;
+  preferCodeBlocks: boolean;
+  includeExamples: 'none' | 'minimal' | 'detailed';
+  includeSources: boolean;
+  includeActionItems: boolean;
+}
+
+// Feedback collection settings
+export interface FeedbackSettings {
+  autoPromptAfterResponse: boolean;                 // Prompt for feedback after responses
+  feedbackFrequency: 'always' | 'sometimes' | 'rarely';
+  trackSatisfaction: boolean;
+}
+
+// Response feedback from user
+export interface ResponseFeedback {
+  rating: 'positive' | 'negative' | 'neutral';
+  lengthFeedback?: 'too_short' | 'just_right' | 'too_long';
+  detailFeedback?: 'needs_more_detail' | 'good_detail' | 'too_detailed';
+  formatFeedback?: 'needs_structure' | 'good_format' | 'too_complex';
+  customFeedback?: string;
+  wantedMode?: 'quick' | 'standard' | 'deepStudy';
 }
 
 export interface UserAIProvider {

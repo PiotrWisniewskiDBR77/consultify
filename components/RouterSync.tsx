@@ -92,6 +92,17 @@ export const RouterSync: React.FC = () => {
                 setAuthInitialStep(AuthStep.LOGIN);
                 setCurrentView(AppView.AUTH);
             }
+        } else if (path === '/studio') {
+            // Consultify Studio - Visual AI Workspace
+            if (!currentUser?.isAuthenticated) {
+                console.log('[RouterSync] Not authenticated, redirecting to login');
+                navigate('/login', { replace: true });
+                return;
+            }
+            if (currentView !== AppView.STUDIO) {
+                console.log('[RouterSync] Navigating to Studio');
+                setCurrentView(AppView.STUDIO);
+            }
         } else if (path === '/chat') {
             // AI Chat - primary entry point for authenticated users
             if (!currentUser?.isAuthenticated) {
@@ -103,7 +114,7 @@ export const RouterSync: React.FC = () => {
             const preservedViews = [
                 'ADMIN_', 'SUPERADMIN_', 'SETTINGS_', 'CONTEXT_BUILDER_',
                 'MY_WORK', 'PORTFOLIO_', 'IMPLEMENTATION', 'BENEFITS_', 
-                'ECONOMICS', 'ASSESSMENT_', 'AI_ACTION_', 'KPI_OKR_'
+                'ECONOMICS', 'ASSESSMENT_', 'AI_ACTION_', 'KPI_OKR_', 'STUDIO'
             ];
             const shouldPreserve = preservedViews.some(prefix => currentView.startsWith(prefix));
             if (!shouldPreserve && currentView !== AppView.AI_CHAT) {

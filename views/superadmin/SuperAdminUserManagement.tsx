@@ -11,7 +11,7 @@ interface SuperAdminUserManagementProps {
 export const SuperAdminUserManagement: React.FC<SuperAdminUserManagementProps> = ({ organizations = [] }) => {
     return (
         <div className="p-8 overflow-y-auto relative">
-            <InfoButton cardId="superadmin-users" position="top-right" />
+
             <div className="flex items-center justify-between mb-6">
                 <div>
                     <h1 className="text-2xl font-bold text-white">User Management</h1>
@@ -19,7 +19,7 @@ export const SuperAdminUserManagement: React.FC<SuperAdminUserManagementProps> =
                 </div>
                 <InfoButton cardId="superadmin-users" position="header-inline" size="md" showLabel label="Help" />
             </div>
-            
+
             <UserManagementCore
                 mode="platform"
                 organizations={organizations}

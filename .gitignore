@@ -36,6 +36,7 @@ server/.env
 *.db-wal
 *.db-shm
 # data/
+uploads/
 
 # Test artifacts
 coverage
@@ -61,6 +62,7 @@ verify_all_apis.cjs
 *.cjs
 !scripts/**/*.cjs
 !server/scripts/**/*.cjs
+!tests/**/*.cjs
 
 # Backup and converted files
 *.bak

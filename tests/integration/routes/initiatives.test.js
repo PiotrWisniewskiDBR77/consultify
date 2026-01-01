@@ -4,54 +4,29 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import request from 'supertest';
 import express from 'express';
+import { createRequire } from 'module';
 
-// Mock dependencies
-vi.mock('../../../server/database', () => ({
-    default: {
-        all: vi.fn(),
-        get: vi.fn(),
-        run: vi.fn()
-    }
-}));
-
-vi.mock('../../../server/utils/queryHelpers', () => ({
-    default: {
-        queryAll: vi.fn(),
-        queryOne: vi.fn()
-    },
-    queryAll: vi.fn(),
-    queryOne: vi.fn()
-}));
-
-vi.mock('../../../server/middleware/authMiddleware', () => ({
-    default: (req, res, next) => {
-        req.user = {
-            id: 'user-1',
-            organizationId: 'org-1',
-            role: 'ADMIN'
-        };
-        next();
-    }
-}));
-
-const queryHelpers = await import('../../../server/utils/queryHelpers');
+const require = createRequire(import.meta.url);
+const queryHelpers = require('../../../server/utils/queryHelpers');
+// initiatives.js exports router directly usually
+const initiativesRouter = require('../../../server/routes/initiatives');
 
 describe('Initiatives Routes', () => {
     let app;
 
-    beforeEach(async () => {
-        vi.clearAllMocks();
-        
+    beforeEach(() => {
+        // Spy on methods on the CJS object
+        vi.spyOn(queryHelpers, 'queryAll');
+        vi.spyOn(queryHelpers, 'queryOne');
+        vi.spyOn(queryHelpers, 'queryRun');
+
         app = express();
         app.use(express.json());
-        
-        // Dynamic import of router
-        const initiativesRouter = (await import('../../../server/routes/initiatives.js')).default;
         app.use('/api/initiatives', initiativesRouter);
     });
 
     afterEach(() => {
-        vi.resetAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('GET /api/initiatives', () => {
@@ -198,7 +173,7 @@ describe('Initiatives Routes', () => {
 
         it('includes task count', async () => {
             const mockInitiative = { id: 'init-1', name: 'Test' };
-            
+
             queryHelpers.queryOne
                 .mockResolvedValueOnce(mockInitiative)
                 .mockResolvedValueOnce({ count: 5 });

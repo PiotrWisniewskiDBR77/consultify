@@ -9,7 +9,7 @@
  * - PRINCE2 - Organization Theme (Project Roles)
  */
 
-const { describe, it, expect, beforeAll, afterAll, beforeEach } = require('vitest');
+
 const request = require('supertest');
 const app = require('../../server/index');
 

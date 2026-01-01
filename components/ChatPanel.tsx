@@ -1,10 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Bot, User, HelpCircle, Check, Send, ThumbsUp, ThumbsDown, Mic, MicOff, Square, Volume2, VolumeX, Square as StopIcon, Wrench, CheckCircle, XCircle, Clock, ChevronDown, ChevronUp } from 'lucide-react';
-import { ChatMessage, ChatOption, ToolCallInfo } from '../types';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Bot, User, HelpCircle, Check, Send, ThumbsUp, ThumbsDown, Mic, MicOff, Square, Volume2, VolumeX, Square as StopIcon, Wrench, CheckCircle, XCircle, Clock, ChevronDown, ChevronUp, FileCode, Sparkles, RefreshCw, Copy, Pencil, Trash2 } from 'lucide-react';
+import { ChatMessage, ChatOption, ToolCallInfo, Artifact, MessageFeedback, ResponseFeedback } from '../types';
 import { AIFeedbackButton } from './AIFeedbackButton';
 import { useAppStore } from '../store/useAppStore';
 import { useTranslation } from 'react-i18next';
 import { useVoiceChat } from '../hooks/useVoiceChat';
+import { useArtifactsStore } from '../store/useArtifactsStore';
+import { ThinkingBlock } from './AIChat/Messages/ThinkingBlock';
+import { CitationList } from './AIChat/CitationList';
+import { InlineResponseFeedback } from './AIChat/InlineResponseFeedback';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 // Tool Call Card Component for displaying MCP tool executions
 const ToolCallCard: React.FC<{ tool: ToolCallInfo }> = ({ tool }) => {
@@ -88,6 +94,16 @@ interface ChatPanelProps {
   enableVoice?: boolean;
   /** Callback when voice readback should trigger (AI response complete) */
   onVoiceRead?: (text: string) => void;
+  /** Callback when user wants to edit a message */
+  onEditMessage?: (messageId: string, newContent: string) => void;
+  /** Callback when user wants to delete a message */
+  onDeleteMessage?: (messageId: string) => void;
+  /** Callback when user wants to regenerate AI response */
+  onRegenerateMessage?: (messageId: string) => void;
+  /** Callback for message feedback */
+  onMessageFeedback?: (messageId: string, feedback: MessageFeedback) => void;
+  /** Enable enhanced message rendering with artifacts and thinking */
+  enableEnhancedMessages?: boolean;
 }
 
 export const ChatPanel: React.FC<ChatPanelProps> = ({
@@ -99,10 +115,18 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   title,
   subtitle,
   enableVoice: externalVoiceEnabled,
-  onVoiceRead
+  onVoiceRead,
+  onEditMessage,
+  onDeleteMessage,
+  onRegenerateMessage,
+  onMessageFeedback,
+  enableEnhancedMessages = true
 }) => {
   const { t } = useTranslation();
-  const { aiFreezeStatus } = useAppStore();
+  const { aiFreezeStatus, editChatMessage, deleteChatMessage, setMessageFeedback } = useAppStore();
+  const { addArtifact, togglePanel } = useArtifactsStore();
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
   const displayTitle = title || t('chat.header');
   const displaySubtitle = subtitle || t('chat.subHeader');
   const [inputValue, setInputValue] = useState('');
@@ -237,6 +261,83 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     }
   };
 
+  // World-Class Chat 2025: Message action handlers
+  const handleCopyMessage = useCallback(async (content: string, messageId: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedMessageId(messageId);
+      setTimeout(() => setCopiedMessageId(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy message:', err);
+    }
+  }, []);
+
+  const handleEditMessage = useCallback((messageId: string, newContent: string) => {
+    if (onEditMessage) {
+      onEditMessage(messageId, newContent);
+    } else {
+      editChatMessage(messageId, newContent);
+    }
+  }, [onEditMessage, editChatMessage]);
+
+  const handleDeleteMessage = useCallback((messageId: string) => {
+    if (onDeleteMessage) {
+      onDeleteMessage(messageId);
+    } else {
+      deleteChatMessage(messageId);
+    }
+  }, [onDeleteMessage, deleteChatMessage]);
+
+  const handleRegenerateMessage = useCallback((messageId: string) => {
+    if (onRegenerateMessage) {
+      onRegenerateMessage(messageId);
+    }
+  }, [onRegenerateMessage]);
+
+  const handleMessageFeedback = useCallback((messageId: string, rating: 'positive' | 'negative') => {
+    const feedback: MessageFeedback = { rating, timestamp: new Date() };
+    if (onMessageFeedback) {
+      onMessageFeedback(messageId, feedback);
+    } else {
+      setMessageFeedback(messageId, feedback);
+    }
+  }, [onMessageFeedback, setMessageFeedback]);
+
+  // Handle detailed response feedback (Adaptive Response System)
+  const handleResponseFeedback = useCallback(async (messageId: string, feedback: ResponseFeedback) => {
+    try {
+      const response = await fetch('/api/ai-feedback/response', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messageId,
+          conversationId,
+          ...feedback
+        })
+      });
+      
+      if (response.ok) {
+        // Also update local message feedback state for quick visual indicator
+        const simpleFeedback: MessageFeedback = { 
+          rating: feedback.rating === 'positive' ? 'positive' : feedback.rating === 'negative' ? 'negative' : 'positive',
+          timestamp: new Date() 
+        };
+        if (onMessageFeedback) {
+          onMessageFeedback(messageId, simpleFeedback);
+        } else {
+          setMessageFeedback(messageId, simpleFeedback);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to submit response feedback:', error);
+    }
+  }, [conversationId, onMessageFeedback, setMessageFeedback]);
+
+  const handleViewArtifacts = useCallback((artifacts: Artifact[]) => {
+    artifacts.forEach(artifact => addArtifact(artifact));
+    togglePanel(true);
+  }, [addArtifact, togglePanel]);
+
   return (
     <div className="flex flex-col h-full bg-white dark:bg-navy-950 border-r border-slate-200 dark:border-navy-800 relative">
       {/* Chat Header */}
@@ -265,9 +366,29 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((msg, index) => {
           const isLastMessage = index === messages.length - 1;
+          const isHovered = hoveredMessageId === msg.id;
+          const hasArtifacts = msg.artifacts && msg.artifacts.length > 0;
+          const hasThinkingSteps = msg.thinkingSteps && msg.thinkingSteps.length > 0;
+          const hasCitations = msg.citations && msg.citations.length > 0;
+          const isCopied = copiedMessageId === msg.id;
 
           return (
-            <div key={msg.id} className={`flex flex-col space-y-1.5 group ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+            <div 
+              key={msg.id} 
+              className={`flex flex-col space-y-1.5 group ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
+              onMouseEnter={() => setHoveredMessageId(msg.id)}
+              onMouseLeave={() => setHoveredMessageId(null)}
+            >
+              {/* Thinking Steps (for AI messages) */}
+              {enableEnhancedMessages && msg.role === 'ai' && hasThinkingSteps && (
+                <div className="w-full max-w-[85%] ml-9">
+                  <ThinkingBlock 
+                    steps={msg.thinkingSteps!} 
+                    isStreaming={msg.isStreaming || msg.isThinking}
+                  />
+                </div>
+              )}
+
               <div className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
 
                 {/* Avatar */}
@@ -279,11 +400,151 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                 </div>
 
                 {/* Bubble */}
-                <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm ${msg.role === 'user'
+                <div className={`relative max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm ${msg.role === 'user'
                   ? 'bg-primary-600 text-white rounded-tr-none'
                   : 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-navy-700 rounded-tl-none'
                   }`}>
-                  {msg.content}
+                  
+                  {/* AI Message Header */}
+                  {enableEnhancedMessages && msg.role === 'ai' && (
+                    <div className="flex items-center gap-2 mb-2 text-xs text-slate-500 dark:text-slate-400">
+                      <span className="font-medium text-primary-600 dark:text-primary-400 flex items-center gap-1">
+                        <Sparkles size={12} />
+                        {t('chat.aiAssistant', 'AI Assistant')}
+                      </span>
+                      {msg.focusMode && (
+                        <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-navy-700 rounded text-[10px]">
+                          {msg.focusMode}
+                        </span>
+                      )}
+                      {msg.regenerateCount && msg.regenerateCount > 0 && (
+                        <span className="px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded text-[10px]">
+                          {t('chat.regenerated', 'Regenerated')} {msg.regenerateCount}x
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Message Content - Enhanced for AI */}
+                  {enableEnhancedMessages && msg.role === 'ai' ? (
+                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                      <ReactMarkdown 
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          code: ({ inline, className: codeClassName, children }: any) => {
+                            if (inline) {
+                              return (
+                                <code className="px-1 py-0.5 bg-slate-200 dark:bg-navy-700 rounded text-primary-600 dark:text-primary-400 text-xs font-mono">
+                                  {children}
+                                </code>
+                              );
+                            }
+                            return (
+                              <pre className="bg-slate-900 dark:bg-navy-950 text-slate-100 p-3 rounded-lg overflow-x-auto text-xs my-2">
+                                <code className={codeClassName}>{children}</code>
+                              </pre>
+                            );
+                          },
+                          a: ({ href, children }: any) => (
+                            <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:text-primary-700 underline">
+                              {children}
+                            </a>
+                          ),
+                        }}
+                      >
+                        {msg.content}
+                      </ReactMarkdown>
+                    </div>
+                  ) : (
+                    <span>{msg.content}</span>
+                  )}
+
+                  {/* Streaming indicator */}
+                  {msg.isStreaming && (
+                    <span className="inline-flex items-center gap-1 ml-2">
+                      <span className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <span className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <span className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    </span>
+                  )}
+
+                  {/* Hover Actions - World-Class Chat 2025 */}
+                  {enableEnhancedMessages && isHovered && !msg.isStreaming && (
+                    <div className={`absolute ${msg.role === 'user' ? '-left-2 -translate-x-full' : '-right-2 translate-x-full'} top-0 flex items-center gap-0.5 bg-white dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 p-1`}>
+                      {/* Copy */}
+                      <button
+                        onClick={() => handleCopyMessage(msg.content, msg.id)}
+                        className="p-1.5 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700"
+                        title={t('chat.actions.copy', 'Copy')}
+                      >
+                        {isCopied ? <CheckCircle size={14} className="text-green-500" /> : <Copy size={14} />}
+                      </button>
+
+                      {/* Regenerate (AI only) */}
+                      {msg.role === 'ai' && onRegenerateMessage && (
+                        <button
+                          onClick={() => handleRegenerateMessage(msg.id)}
+                          className="p-1.5 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700"
+                          title={t('chat.actions.regenerate', 'Regenerate')}
+                        >
+                          <RefreshCw size={14} />
+                        </button>
+                      )}
+
+                      {/* Quick Feedback Buttons (AI only, compact mode in toolbar) */}
+                      {msg.role === 'ai' && !msg.feedback && (
+                        <>
+                          <button
+                            onClick={() => handleMessageFeedback(msg.id, 'positive')}
+                            className="p-1.5 rounded-md text-slate-500 hover:text-green-600 dark:text-slate-400 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
+                            title={t('chat.actions.helpful', 'Helpful')}
+                          >
+                            <ThumbsUp size={14} />
+                          </button>
+                          <button
+                            onClick={() => handleMessageFeedback(msg.id, 'negative')}
+                            className="p-1.5 rounded-md text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                            title={t('chat.actions.notHelpful', 'Not helpful')}
+                          >
+                            <ThumbsDown size={14} />
+                          </button>
+                        </>
+                      )}
+
+                      {/* View Artifacts (AI only) */}
+                      {msg.role === 'ai' && hasArtifacts && (
+                        <button
+                          onClick={() => handleViewArtifacts(msg.artifacts!)}
+                          className="p-1.5 rounded-md text-primary-500 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/20"
+                          title={t('chat.actions.viewArtifacts', 'View Artifacts')}
+                        >
+                          <FileCode size={14} />
+                        </button>
+                      )}
+
+                      {/* Delete (user messages) */}
+                      {msg.role === 'user' && (
+                        <button
+                          onClick={() => handleDeleteMessage(msg.id)}
+                          className="p-1.5 rounded-md text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          title={t('chat.actions.delete', 'Delete')}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+
+                      {/* Speak */}
+                      {ttsSupported && msg.role === 'ai' && (
+                        <button
+                          onClick={() => isSpeaking ? stopSpeaking() : speak(msg.content)}
+                          className={`p-1.5 rounded-md ${isSpeaking ? 'text-red-500 hover:text-red-600' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'} hover:bg-slate-100 dark:hover:bg-navy-700`}
+                          title={isSpeaking ? t('chat.actions.stop', 'Stop') : t('chat.actions.speak', 'Speak')}
+                        >
+                          {isSpeaking ? <Square size={14} /> : <Volume2 size={14} />}
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -304,8 +565,56 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                 </div>
               )}
 
-              {/* Message Actions (Feedback + Voice) */}
-              {msg.role === 'ai' && msg.id !== 'stream' && (
+              {/* Artifacts Badge */}
+              {enableEnhancedMessages && msg.role === 'ai' && hasArtifacts && (
+                <button
+                  onClick={() => handleViewArtifacts(msg.artifacts!)}
+                  className="ml-9 flex items-center gap-1.5 px-3 py-1.5 bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-lg text-xs font-medium transition-colors"
+                >
+                  <FileCode size={14} />
+                  {msg.artifacts!.length} {msg.artifacts!.length === 1 
+                    ? t('chat.artifact', 'artifact') 
+                    : t('chat.artifacts', 'artifacts')
+                  }
+                </button>
+              )}
+
+              {/* Citations */}
+              {enableEnhancedMessages && msg.role === 'ai' && hasCitations && (
+                <div className="ml-9 mt-2">
+                  <CitationList citations={msg.citations!} />
+                </div>
+              )}
+
+              {/* Feedback indicator if already given */}
+              {enableEnhancedMessages && msg.feedback && (
+                <div className="ml-9 mt-1">
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${
+                    msg.feedback.rating === 'positive' 
+                      ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400' 
+                      : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                  }`}>
+                    {msg.feedback.rating === 'positive' ? <ThumbsUp size={12} /> : <ThumbsDown size={12} />}
+                    {msg.feedback.rating === 'positive' ? t('chat.markedHelpful', 'Marked as helpful') : t('chat.markedNotHelpful', 'Marked as not helpful')}
+                  </span>
+                </div>
+              )}
+
+              {/* Inline Response Feedback (AI messages without existing feedback) */}
+              {enableEnhancedMessages && msg.role === 'ai' && !msg.feedback && !msg.isStreaming && msg.id !== 'stream' && (
+                <div className="ml-9 mt-1">
+                  <InlineResponseFeedback
+                    messageId={msg.id}
+                    conversationId={conversationId}
+                    responseMode={msg.metadata?.responseMode}
+                    responseLength={msg.content?.length}
+                    onFeedback={(feedback) => handleResponseFeedback(msg.id, feedback)}
+                  />
+                </div>
+              )}
+
+              {/* Legacy Message Actions (kept for backward compatibility) */}
+              {!enableEnhancedMessages && msg.role === 'ai' && msg.id !== 'stream' && (
                 <div className="ml-9 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <AIFeedbackButton context="chat" data={msg.content} />
                   {/* Read aloud button */}

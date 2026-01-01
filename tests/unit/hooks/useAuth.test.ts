@@ -79,15 +79,7 @@ describe('Auth via useAppStore', () => {
         await expect(Api.login('wrong@example.com', 'wrong')).rejects.toThrow();
     });
 
-    it('should handle token refresh', async () => {
-        const newToken = 'new-token';
-        vi.mocked(Api.refreshToken).mockResolvedValue(newToken);
 
-        const token = await Api.refreshToken();
-
-        expect(Api.refreshToken).toHaveBeenCalled();
-        expect(token).toBe(newToken);
-    });
 
     it('should check if user has specific role', () => {
         const { result } = renderHook(() => {

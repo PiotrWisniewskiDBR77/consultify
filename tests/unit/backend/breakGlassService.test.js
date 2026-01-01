@@ -4,7 +4,6 @@
  * Tests for emergency override management service.
  */
 
-const { describe, it, expect, beforeEach, afterEach, beforeAll } = require('vitest');
 const { initTestDb, cleanTables, dbAll, dbRun } = require('../../helpers/dbHelper.cjs');
 const BreakGlassService = require('../../../server/services/breakGlassService');
 const { v4: uuidv4 } = require('uuid');

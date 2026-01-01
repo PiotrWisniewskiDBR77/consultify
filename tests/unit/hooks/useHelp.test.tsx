@@ -46,10 +46,15 @@ describe('useHelp Hook', () => {
             currentView: 'dashboard'
         });
 
-        vi.mocked(global.fetch).mockResolvedValue({
-            ok: true,
-            json: vi.fn().mockResolvedValue(mockPlaybooks)
-        } as any);
+        vi.mocked(global.fetch).mockImplementation((url: any) => {
+            if (url.includes('/api/help/playbooks')) {
+                return Promise.resolve({
+                    ok: true,
+                    json: async () => ({ playbooks: mockPlaybooks })
+                } as Response);
+            }
+            return Promise.resolve({ ok: false } as Response);
+        });
     });
 
     const createWrapper = () => {
@@ -139,10 +144,22 @@ describe('useHelp Hook', () => {
             state: { currentUser: { token: 'test-token' } }
         }));
 
-        vi.mocked(global.fetch).mockResolvedValueOnce({
-            ok: true,
-            json: vi.fn().mockResolvedValue(mockPlaybooks[0])
-        } as any);
+        vi.mocked(global.fetch).mockImplementation((url: any) => {
+            if (url.includes('/api/help/playbooks/getting-started')) {
+                return Promise.resolve({
+                    ok: true,
+                    json: async () => mockPlaybooks[0]
+                } as Response);
+            }
+            // Fallback for the initial fetch in useEffect
+            if (url.includes('/api/help/playbooks')) {
+                return Promise.resolve({
+                    ok: true,
+                    json: async () => ({ playbooks: mockPlaybooks })
+                } as Response);
+            }
+            return Promise.resolve({ ok: false } as Response);
+        });
 
         const wrapper = createWrapper();
         const { result } = renderHook(() => useHelp(), { wrapper });
@@ -175,10 +192,22 @@ describe('useHelp Hook', () => {
             suggestedAction: 'upgrade' as const
         };
 
-        vi.mocked(global.fetch).mockResolvedValueOnce({
-            ok: true,
-            json: vi.fn().mockResolvedValue(mockHint)
-        } as any);
+        vi.mocked(global.fetch).mockImplementation((url: any) => {
+            if (url.includes('/api/help/hint/advanced-analytics')) {
+                return Promise.resolve({
+                    ok: true,
+                    json: async () => ({ hint: mockHint })
+                } as Response);
+            }
+            // Fallback for the initial fetch via useEffect
+            if (url.includes('/api/help/playbooks')) {
+                return Promise.resolve({
+                    ok: true,
+                    json: async () => ({ playbooks: mockPlaybooks })
+                } as Response);
+            }
+            return Promise.resolve({ ok: false } as Response);
+        });
 
         const wrapper = createWrapper();
         const { result } = renderHook(() => useHelp(), { wrapper });

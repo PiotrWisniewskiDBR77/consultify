@@ -77,7 +77,7 @@ BEFORE providing your final answer, you MUST:
 class PromptAssembler {
 
     async build(params) {
-        const { request, context, knowledgeContext, memoryContext } = params;
+        const { request, context, knowledgeContext, memoryContext, responseModePrompt } = params;
 
         // 1. Get Base/Global System Prompt from DB
         let promptKey = request.promptKey;
@@ -136,6 +136,38 @@ ${memoryContext}
 
 ---
 Use this contextual memory to provide personalized, consistent responses that align with past decisions and learnings.`;
+        }
+
+        // 5.55 Inject Response Mode Instructions (Adaptive Response System) - if available
+        if (responseModePrompt && responseModePrompt.trim().length > 0) {
+            systemContent += `\n\n# RESPONSE STYLE INSTRUCTIONS
+${responseModePrompt}
+
+IMPORTANT: Follow these response style guidelines carefully. They reflect the user's preferences for response length and format.`;
+        }
+
+        // 5.6 Inject Learning Context (Self-Learning System) - if available
+        if (context.organizationId && request.capability) {
+            try {
+                const { learningSystem } = require('./learningSystem');
+                const learningContext = await learningSystem.getLearningContextForPrompt(
+                    context.organizationId,
+                    request.capability
+                );
+                
+                if (learningContext && learningContext.content) {
+                    systemContent += `\n\n# LEARNED PATTERNS
+Based on ${learningContext.sampleCount} previous interactions (confidence: ${Math.round(learningContext.confidence * 100)}%):
+
+${learningContext.content}
+
+---
+Apply these learned patterns to improve response quality.`;
+                }
+            } catch (learningError) {
+                // Non-blocking - don't fail if learning context fails
+                console.warn('[PromptAssembler] Learning context injection failed:', learningError.message);
+            }
         }
 
         // 6. Construct Messages

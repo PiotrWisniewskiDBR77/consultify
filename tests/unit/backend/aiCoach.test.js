@@ -1,41 +1,24 @@
 // AI Coach Unit Tests
 // Tests the AI Coach service for advisory reports and health scoring
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const AICoach = require('../../../server/ai/aiCoach');
+const AIContextBuilder = require('../../../server/ai/aiContextBuilder');
+const SignalEngine = require('../../../server/ai/signalEngine');
+const RecommendationEngine = require('../../../server/ai/recommendationEngine');
+const SimulationEngine = require('../../../server/ai/simulationEngine');
 
 describe('AICoach', () => {
-    let mockAIContextBuilder;
-    let mockSignalEngine;
-    let mockRecommendationEngine;
-    let mockSimulationEngine;
-
     beforeEach(() => {
-        // Mock dependencies
-        mockAIContextBuilder = {
-            buildContext: vi.fn()
-        };
-
-        mockSignalEngine = {
-            detectSignals: vi.fn()
-        };
-
-        mockRecommendationEngine = {
-            generateRecommendations: vi.fn()
-        };
-
-        mockSimulationEngine = {
-            simulateImpacts: vi.fn()
-        };
-
-        // Mock modules
-        vi.mock('../../../server/ai/aiContextBuilder', () => mockAIContextBuilder);
-        vi.mock('../../../server/ai/signalEngine', () => mockSignalEngine);
-        vi.mock('../../../server/ai/recommendationEngine', () => mockRecommendationEngine);
-        vi.mock('../../../server/ai/simulationEngine', () => mockSimulationEngine);
+        // Spy on real dependencies
+        vi.spyOn(AIContextBuilder, 'buildContext');
+        vi.spyOn(SignalEngine, 'detectSignals');
+        vi.spyOn(RecommendationEngine, 'generateRecommendations');
+        vi.spyOn(SimulationEngine, 'simulateImpacts');
     });
 
     afterEach(() => {
-        vi.clearAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('getAdvisoryReport', () => {
@@ -66,10 +49,10 @@ describe('AICoach', () => {
                 { recommendationId: 'rec-1', expectedImpact: 0.15, confidence: 0.85 }
             ];
 
-            mockAIContextBuilder.buildContext.mockResolvedValue(mockContext);
-            mockSignalEngine.detectSignals.mockReturnValue(mockSignals);
-            mockRecommendationEngine.generateRecommendations.mockReturnValue(mockRecommendations);
-            mockSimulationEngine.simulateImpacts.mockReturnValue(mockSimulations);
+            AIContextBuilder.buildContext.mockResolvedValue(mockContext);
+            SignalEngine.detectSignals.mockReturnValue(mockSignals);
+            RecommendationEngine.generateRecommendations.mockReturnValue(mockRecommendations);
+            SimulationEngine.simulateImpacts.mockReturnValue(mockSimulations);
 
             const result = await AICoach.getAdvisoryReport('org-123');
 
@@ -105,10 +88,10 @@ describe('AICoach', () => {
                 { type: 'risk', severity: 'HIGH' }
             ];
 
-            mockAIContextBuilder.buildContext.mockResolvedValue(mockContext);
-            mockSignalEngine.detectSignals.mockReturnValue(mockSignals);
-            mockRecommendationEngine.generateRecommendations.mockReturnValue([]);
-            mockSimulationEngine.simulateImpacts.mockReturnValue([]);
+            AIContextBuilder.buildContext.mockResolvedValue(mockContext);
+            SignalEngine.detectSignals.mockReturnValue(mockSignals);
+            RecommendationEngine.generateRecommendations.mockReturnValue([]);
+            SimulationEngine.simulateImpacts.mockReturnValue([]);
 
             const result = await AICoach.getAdvisoryReport('org-123');
 
@@ -127,10 +110,10 @@ describe('AICoach', () => {
                 }
             };
 
-            mockAIContextBuilder.buildContext.mockResolvedValue(mockContext);
-            mockSignalEngine.detectSignals.mockReturnValue([]);
-            mockRecommendationEngine.generateRecommendations.mockReturnValue([]);
-            mockSimulationEngine.simulateImpacts.mockReturnValue([]);
+            AIContextBuilder.buildContext.mockResolvedValue(mockContext);
+            SignalEngine.detectSignals.mockReturnValue([]);
+            RecommendationEngine.generateRecommendations.mockReturnValue([]);
+            SimulationEngine.simulateImpacts.mockReturnValue([]);
 
             const result = await AICoach.getAdvisoryReport('org-123');
 
@@ -148,10 +131,10 @@ describe('AICoach', () => {
                 data: { task_distribution: { total: 10 }, initiative_status: [] }
             };
 
-            mockAIContextBuilder.buildContext.mockResolvedValue(mockContext);
-            mockSignalEngine.detectSignals.mockReturnValue([]);
-            mockRecommendationEngine.generateRecommendations.mockReturnValue([]);
-            mockSimulationEngine.simulateImpacts.mockReturnValue([]);
+            AIContextBuilder.buildContext.mockResolvedValue(mockContext);
+            SignalEngine.detectSignals.mockReturnValue([]);
+            RecommendationEngine.generateRecommendations.mockReturnValue([]);
+            SimulationEngine.simulateImpacts.mockReturnValue([]);
 
             const result = await AICoach.getAdvisoryReport('org-123');
 
@@ -162,7 +145,7 @@ describe('AICoach', () => {
         });
 
         it('should handle errors gracefully', async () => {
-            mockAIContextBuilder.buildContext.mockRejectedValue(new Error('Context build failed'));
+            AIContextBuilder.buildContext.mockRejectedValue(new Error('Context build failed'));
 
             await expect(AICoach.getAdvisoryReport('org-123')).rejects.toThrow('Context build failed');
         });

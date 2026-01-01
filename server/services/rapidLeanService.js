@@ -117,7 +117,7 @@ class RapidLeanService {
                     console.log(`[RapidLean] Assessment created: ${assessmentId}`);
                     resolve({
                         id: assessmentId,
-                        scores,
+                        ...scores,
                         benchmark,
                         recommendations,
                         topGaps
@@ -419,6 +419,8 @@ class RapidLeanService {
                 // Parse JSON fields
                 const parsed = (rows || []).map(row => ({
                     ...row,
+                    templateId: row.template_id,
+                    projectId: row.project_id,
                     answers: JSON.parse(row.answers || '{}'),
                     photos: JSON.parse(row.photos || '[]')
                 }));

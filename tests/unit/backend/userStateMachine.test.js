@@ -4,7 +4,6 @@
  * Tests for user state machine transitions and permissions.
  */
 
-const { describe, it, expect } = require('vitest');
 const UserStateMachine = require('../../../server/services/userStateMachine');
 
 describe('UserStateMachine', () => {

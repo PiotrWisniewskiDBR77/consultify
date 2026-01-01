@@ -1,20 +1,26 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import legalComplianceMiddleware from '../../../../server/middleware/legalComplianceMiddleware';
-import LegalService from '../../../../server/services/legalService';
-
-// Mock LegalService
-vi.mock('../../../../server/services/legalService', () => ({
-    default: {
-        checkPendingAcceptances: vi.fn()
-    }
-}));
+import legalComplianceMiddlewareMod from '../../../../server/middleware/legalComplianceMiddleware';
 
 describe('Legal Compliance Middleware', () => {
     let req;
     let res;
     let next;
+    let legalComplianceMiddleware;
+    let checkPendingAcceptancesMock;
 
     beforeEach(() => {
+        checkPendingAcceptancesMock = vi.fn();
+        checkPendingAcceptancesMock.mockName('test-mock-fn');
+
+        console.log('[TEST] Init mock:', checkPendingAcceptancesMock.getMockName());
+
+        // Use the factory to create an instance with the mock service
+        // Inject identity to verify correct object usage
+        legalComplianceMiddleware = legalComplianceMiddlewareMod.factory({
+            checkPendingAcceptances: checkPendingAcceptancesMock,
+            identity: 'TEST_MOCK_SERVICE'
+        });
+
         req = {
             user: { id: 'u1', organizationId: 'o1', role: 'user' },
             originalUrl: '/api/some/protected/route',
@@ -28,34 +34,35 @@ describe('Legal Compliance Middleware', () => {
     });
 
     afterEach(() => {
-        vi.restoreAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should skip if user is not authenticated', async () => {
         req.user = undefined;
         await legalComplianceMiddleware(req, res, next);
         expect(next).toHaveBeenCalled();
-        expect(LegalService.checkPendingAcceptances).not.toHaveBeenCalled();
+        expect(checkPendingAcceptancesMock).not.toHaveBeenCalled();
     });
 
     it('should skip exempt routes', async () => {
         req.originalUrl = '/api/legal/documents';
         await legalComplianceMiddleware(req, res, next);
         expect(next).toHaveBeenCalled();
-        expect(LegalService.checkPendingAcceptances).not.toHaveBeenCalled();
+        expect(checkPendingAcceptancesMock).not.toHaveBeenCalled();
     });
 
     it('should call next if no pending acceptances', async () => {
-        LegalService.checkPendingAcceptances.mockResolvedValue({ hasAnyPending: false });
+        checkPendingAcceptancesMock.mockResolvedValue({ hasAnyPending: false });
 
+        console.log('[TEST] Expecting call to mock:', checkPendingAcceptancesMock.getMockName());
         await legalComplianceMiddleware(req, res, next);
 
-        expect(LegalService.checkPendingAcceptances).toHaveBeenCalledWith('u1', 'o1', 'user');
+        expect(checkPendingAcceptancesMock).toHaveBeenCalledWith('u1', 'o1', 'user');
         expect(next).toHaveBeenCalled();
     });
 
     it('should return 451 if there are pending acceptances', async () => {
-        LegalService.checkPendingAcceptances.mockResolvedValue({
+        checkPendingAcceptancesMock.mockResolvedValue({
             hasAnyPending: true,
             required: [{ doc_type: 'terms', version: '2.0', title: 'Terms' }],
             dpaPending: false,
@@ -73,7 +80,7 @@ describe('Legal Compliance Middleware', () => {
     });
 
     it('should return 451 with specific DPA message', async () => {
-        LegalService.checkPendingAcceptances.mockResolvedValue({
+        checkPendingAcceptancesMock.mockResolvedValue({
             hasAnyPending: true,
             required: [],
             dpaPending: true,
@@ -91,7 +98,7 @@ describe('Legal Compliance Middleware', () => {
     });
 
     it('should call next on error (fail open)', async () => {
-        LegalService.checkPendingAcceptances.mockRejectedValue(new Error('DB Error'));
+        checkPendingAcceptancesMock.mockRejectedValue(new Error('DB Error'));
         const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
 
         await legalComplianceMiddleware(req, res, next);

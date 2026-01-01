@@ -4,7 +4,6 @@
  * Tests for demo session state management.
  */
 
-const { describe, it, expect, beforeEach } = require('vitest');
 const DemoSessionService = require('../../../server/services/demoSessionService');
 
 describe('DemoSessionService', () => {

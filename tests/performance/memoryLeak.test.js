@@ -8,7 +8,6 @@
  * - API requests
  */
 
-const { describe, it, expect, beforeAll, afterAll } = require('vitest');
 const db = require('../../server/database');
 
 describe('Memory Leak Tests', () => {

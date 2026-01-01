@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, LLMProvider, AIPreferences, UserAIProvider } from '../../types';
+import { User, LLMProvider, AIPreferences, UserAIProvider, UserAISettings, AIProactivityMode, OrgAISettings } from '../../types';
 import { InfoButton } from '../shared/InfoButton';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
@@ -7,10 +7,11 @@ import {
     Bot, MessageSquare, Zap, Brain, Save, Check, FileText, ExternalLink, Shield,
     Server, Key, Plus, Trash2, Wifi, Cpu, Globe, Lock, Sparkles, AlertCircle, ChevronRight,
     Settings, LayoutGrid, Terminal, User as UserIcon, Activity, Fingerprint, Eye, MoreHorizontal,
-    Sliders, Gauge, HardDrive, Network
+    Sliders, Gauge, HardDrive, Network, Scale, Pause
 } from 'lucide-react';
 import { Api } from '../../services/api';
 import { toast } from 'react-hot-toast';
+import { ProactivitySelector } from '../AISettings';
 
 interface AISettingsProps {
     currentUser: User;
@@ -42,7 +43,7 @@ const defaultPreferences: AIPreferences = {
     contextWindowStrategy: 'auto'
 };
 
-type SettingsTab = 'org' | 'api' | 'local' | 'behavior' | 'privacy';
+type SettingsTab = 'org' | 'api' | 'local' | 'behavior' | 'proactivity' | 'privacy';
 
 export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUser }) => {
     const { t } = useTranslation();
@@ -73,6 +74,10 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
 
     // Health Check State
     const [providerHealth, setProviderHealth] = useState<any>(null);
+
+    // Proactivity Mode State
+    const [proactivityMode, setProactivityMode] = useState<AIProactivityMode>('BALANCED');
+    const [maxProactivity, setMaxProactivity] = useState<AIProactivityMode>('PROACTIVE');
 
     useEffect(() => {
         const initData = async () => {
@@ -111,6 +116,30 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                     console.error('Failed to fetch provider health', e);
                 }
 
+                // 6. Load User AI Settings (proactivity)
+                try {
+                    const userSettings = await fetch('/api/ai-settings/user', {
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    }).then(r => r.json());
+                    if (userSettings.proactivityMode) {
+                        setProactivityMode(userSettings.proactivityMode);
+                    }
+                } catch (e) {
+                    console.error('Failed to load user AI settings', e);
+                }
+
+                // 7. Load Org Settings (for max proactivity)
+                try {
+                    const orgSettings = await fetch('/api/ai-settings/org/' + currentUser.organizationId, {
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    }).then(r => r.json());
+                    if (orgSettings.defaultProactivityMode) {
+                        setMaxProactivity(orgSettings.defaultProactivityMode);
+                    }
+                } catch (e) {
+                    console.error('Failed to load org settings', e);
+                }
+
             } catch (e) {
                 console.error('Failed to load AI settings', e);
                 toast.error('Failed to load settings');
@@ -125,6 +154,16 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
         setSaving(true);
         try {
             await Api.put('/settings/preferences/ai', preferences);
+
+            // Save user AI settings (proactivity)
+            await fetch('/api/ai-settings/user', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ proactivityMode })
+            });
 
             const updatedAiConfig = {
                 ...currentUser.aiConfig,
@@ -235,6 +274,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 <NavTab id="api" label="BYOK Keys" icon={<Key size={16} />} active={activeTab === 'api'} onClick={() => setActiveTab('api')} />
                 <NavTab id="local" label="Local Inference" icon={<Terminal size={16} />} active={activeTab === 'local'} onClick={() => setActiveTab('local')} />
                 <div className="w-px h-6 bg-white/10 mx-2" />
+                <NavTab id="proactivity" label="AI Proactivity" icon={<Scale size={16} />} active={activeTab === 'proactivity'} onClick={() => setActiveTab('proactivity')} />
                 <NavTab id="behavior" label="Behavior & Context" icon={<Sliders size={16} />} active={activeTab === 'behavior'} onClick={() => setActiveTab('behavior')} />
                 <NavTab id="privacy" label="Privacy & Controls" icon={<Lock size={16} />} active={activeTab === 'privacy'} onClick={() => setActiveTab('privacy')} />
             </div>
@@ -644,6 +684,233 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                             </div>
                         </div>
 
+                        {/* Response Mode Settings - NEW */}
+                        <SectionHeader title="Response Mode" subtitle="Configure default response length and style preferences." />
+                        
+                        {/* Mode Selection Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            {[
+                                { 
+                                    id: 'quick', 
+                                    label: 'Quick', 
+                                    desc: 'Szybkie, zwięzłe odpowiedzi', 
+                                    tokens: '50-300',
+                                    icon: <Zap size={24} className="text-amber-400" />,
+                                    color: 'amber'
+                                },
+                                { 
+                                    id: 'standard', 
+                                    label: 'Standard', 
+                                    desc: 'Zbalansowane z wyjaśnieniami', 
+                                    tokens: '300-800',
+                                    icon: <MessageSquare size={24} className="text-blue-400" />,
+                                    color: 'blue'
+                                },
+                                { 
+                                    id: 'deepStudy', 
+                                    label: 'Deep Study', 
+                                    desc: 'Kompleksowa analiza', 
+                                    tokens: '1000-4000',
+                                    icon: <Brain size={24} className="text-purple-400" />,
+                                    color: 'purple'
+                                }
+                            ].map(mode => (
+                                <button
+                                    key={mode.id}
+                                    onClick={() => setPreferences(p => ({ 
+                                        ...p, 
+                                        contextualBehavior: { 
+                                            ...p.contextualBehavior, 
+                                            chatMode: mode.id as any 
+                                        } 
+                                    }))}
+                                    className={`p-5 rounded-xl border transition-all text-center ${
+                                        preferences.contextualBehavior?.chatMode === mode.id
+                                            ? `bg-${mode.color}-500/10 border-${mode.color}-500/50`
+                                            : 'bg-white/5 border-white/10 hover:border-white/30'
+                                    }`}
+                                >
+                                    <div className="mx-auto mb-3">{mode.icon}</div>
+                                    <div className={`font-bold text-sm mb-1 ${
+                                        preferences.contextualBehavior?.chatMode === mode.id 
+                                            ? `text-${mode.color}-400` 
+                                            : 'text-white'
+                                    }`}>
+                                        {mode.label}
+                                    </div>
+                                    <div className="text-xs text-slate-500 mb-2">{mode.desc}</div>
+                                    <div className="text-xs font-mono text-slate-600">{mode.tokens} tokens</div>
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Fine-tune Length Sliders */}
+                        <div className="p-6 bg-white/5 rounded-xl border border-white/5 mb-6">
+                            <h4 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                                <Settings size={16} className="text-slate-400" />
+                                Fine-tune Response Length
+                            </h4>
+                            
+                            <div className="space-y-6">
+                                {/* Quick Mode Length */}
+                                <div>
+                                    <div className="flex justify-between mb-2">
+                                        <span className="text-xs text-slate-400">Quick Mode</span>
+                                        <span className="text-xs font-mono text-amber-400">
+                                            {preferences.responseLength?.quick || 'short'}
+                                        </span>
+                                    </div>
+                                    <input 
+                                        type="range" 
+                                        min="0" max="2" 
+                                        className="w-full accent-amber-500 bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
+                                        value={['ultra_short', 'short', 'medium'].indexOf(preferences.responseLength?.quick || 'short')}
+                                        onChange={(e) => {
+                                            const values = ['ultra_short', 'short', 'medium'] as const;
+                                            setPreferences(p => ({
+                                                ...p,
+                                                responseLength: { ...p.responseLength, quick: values[parseInt(e.target.value)] }
+                                            }));
+                                        }}
+                                    />
+                                    <div className="flex justify-between text-[10px] text-slate-500 mt-1">
+                                        <span>Ultra Short (50)</span>
+                                        <span>Short (150)</span>
+                                        <span>Medium (300)</span>
+                                    </div>
+                                </div>
+
+                                {/* Standard Mode Length */}
+                                <div>
+                                    <div className="flex justify-between mb-2">
+                                        <span className="text-xs text-slate-400">Standard Mode</span>
+                                        <span className="text-xs font-mono text-blue-400">
+                                            {preferences.responseLength?.standard || 'medium'}
+                                        </span>
+                                    </div>
+                                    <input 
+                                        type="range" 
+                                        min="0" max="2" 
+                                        className="w-full accent-blue-500 bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
+                                        value={['short', 'medium', 'long'].indexOf(preferences.responseLength?.standard || 'medium')}
+                                        onChange={(e) => {
+                                            const values = ['short', 'medium', 'long'] as const;
+                                            setPreferences(p => ({
+                                                ...p,
+                                                responseLength: { ...p.responseLength, standard: values[parseInt(e.target.value)] }
+                                            }));
+                                        }}
+                                    />
+                                    <div className="flex justify-between text-[10px] text-slate-500 mt-1">
+                                        <span>Short (250)</span>
+                                        <span>Medium (500)</span>
+                                        <span>Long (900)</span>
+                                    </div>
+                                </div>
+
+                                {/* Deep Study Length */}
+                                <div>
+                                    <div className="flex justify-between mb-2">
+                                        <span className="text-xs text-slate-400">Deep Study Mode</span>
+                                        <span className="text-xs font-mono text-purple-400">
+                                            {preferences.responseLength?.deepStudy || 'long'}
+                                        </span>
+                                    </div>
+                                    <input 
+                                        type="range" 
+                                        min="0" max="2" 
+                                        className="w-full accent-purple-500 bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
+                                        value={['medium', 'long', 'comprehensive'].indexOf(preferences.responseLength?.deepStudy || 'long')}
+                                        onChange={(e) => {
+                                            const values = ['medium', 'long', 'comprehensive'] as const;
+                                            setPreferences(p => ({
+                                                ...p,
+                                                responseLength: { ...p.responseLength, deepStudy: values[parseInt(e.target.value)] }
+                                            }));
+                                        }}
+                                    />
+                                    <div className="flex justify-between text-[10px] text-slate-500 mt-1">
+                                        <span>Medium (800)</span>
+                                        <span>Long (1800)</span>
+                                        <span>Comprehensive (3500)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Auto-detect Intent Toggle */}
+                        <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 mb-8">
+                            <div>
+                                <div className="text-white font-medium text-sm">Auto-detect Intent</div>
+                                <div className="text-xs text-slate-500">
+                                    AI automatycznie wykryje czy potrzebujesz krótkiej czy szczegółowej odpowiedzi
+                                </div>
+                            </div>
+                            <Toggle 
+                                enabled={preferences.contextualBehavior?.autoDetectIntent ?? true}
+                                onChange={(val) => setPreferences(p => ({
+                                    ...p, 
+                                    contextualBehavior: { ...p.contextualBehavior, autoDetectIntent: val }
+                                }))}
+                            />
+                        </div>
+
+                        {/* Formatting Preferences */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+                            <button
+                                onClick={() => setPreferences(p => ({
+                                    ...p,
+                                    formatting: { ...p.formatting, preferBulletPoints: !p.formatting?.preferBulletPoints }
+                                }))}
+                                className={`p-3 rounded-lg border text-center text-xs transition-all ${
+                                    preferences.formatting?.preferBulletPoints
+                                        ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
+                                        : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/30'
+                                }`}
+                            >
+                                • Bullet Points
+                            </button>
+                            <button
+                                onClick={() => setPreferences(p => ({
+                                    ...p,
+                                    formatting: { ...p.formatting, preferTables: !p.formatting?.preferTables }
+                                }))}
+                                className={`p-3 rounded-lg border text-center text-xs transition-all ${
+                                    preferences.formatting?.preferTables
+                                        ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
+                                        : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/30'
+                                }`}
+                            >
+                                ⊞ Tables
+                            </button>
+                            <button
+                                onClick={() => setPreferences(p => ({
+                                    ...p,
+                                    formatting: { ...p.formatting, includeActionItems: !p.formatting?.includeActionItems }
+                                }))}
+                                className={`p-3 rounded-lg border text-center text-xs transition-all ${
+                                    preferences.formatting?.includeActionItems
+                                        ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
+                                        : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/30'
+                                }`}
+                            >
+                                ✓ Action Items
+                            </button>
+                            <button
+                                onClick={() => setPreferences(p => ({
+                                    ...p,
+                                    formatting: { ...p.formatting, includeSources: !p.formatting?.includeSources }
+                                }))}
+                                className={`p-3 rounded-lg border text-center text-xs transition-all ${
+                                    preferences.formatting?.includeSources
+                                        ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
+                                        : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/30'
+                                }`}
+                            >
+                                📚 Sources
+                            </button>
+                        </div>
+
                         <SectionHeader title="Persona Definition" subtitle="Define your role to tailor AI responses." />
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {[
@@ -667,6 +934,115 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                 </button>
                             ))}
                         </div>
+                    </div>
+                )}
+
+                {/* AI Proactivity Tab */}
+                {activeTab === 'proactivity' && (
+                    <div className="animate-in fade-in duration-300 max-w-4xl">
+                        <SectionHeader title="AI Proactivity Level" subtitle="Control how actively the AI assists you." />
+                        
+                        {/* Proactivity Selector */}
+                        <div className="mb-8 p-6 rounded-xl border border-white/10 bg-white/5">
+                            <ProactivitySelector
+                                value={proactivityMode}
+                                onChange={setProactivityMode}
+                                maxAllowed={maxProactivity}
+                                showBehaviors={true}
+                            />
+                        </div>
+
+                        {/* Proactivity Explanation */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                            <div className={`p-4 rounded-xl border transition-all ${
+                                proactivityMode === 'REACTIVE' 
+                                    ? 'bg-slate-600/20 border-slate-500/50' 
+                                    : 'bg-white/5 border-white/5'
+                            }`}>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Pause size={18} className="text-slate-400" />
+                                    <h4 className="font-semibold text-white text-sm">Reactive Mode</h4>
+                                </div>
+                                <p className="text-xs text-slate-400 leading-relaxed">
+                                    AI remains silent until you explicitly ask. Perfect for experienced users who prefer full control and only want help when requested.
+                                </p>
+                                <div className="mt-3 pt-3 border-t border-white/10 space-y-1">
+                                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                                        <span>✗</span> No auto-suggestions
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                                        <span>✗</span> No proactive nudges
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                                        <span>✗</span> No conversation initiation
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className={`p-4 rounded-xl border transition-all ${
+                                proactivityMode === 'BALANCED' 
+                                    ? 'bg-violet-600/20 border-violet-500/50' 
+                                    : 'bg-white/5 border-white/5'
+                            }`}>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Scale size={18} className="text-violet-400" />
+                                    <h4 className="font-semibold text-white text-sm">Balanced Mode</h4>
+                                </div>
+                                <p className="text-xs text-slate-400 leading-relaxed">
+                                    AI provides helpful suggestions when relevant, but waits for you to drive major interactions. Recommended for most users.
+                                </p>
+                                <div className="mt-3 pt-3 border-t border-white/10 space-y-1">
+                                    <div className="flex items-center gap-2 text-xs text-emerald-400">
+                                        <span>✓</span> Contextual suggestions
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs text-emerald-400">
+                                        <span>✓</span> Helpful nudges
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                                        <span>✗</span> No conversation initiation
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className={`p-4 rounded-xl border transition-all ${
+                                proactivityMode === 'PROACTIVE' 
+                                    ? 'bg-emerald-600/20 border-emerald-500/50' 
+                                    : 'bg-white/5 border-white/5'
+                            }`}>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Zap size={18} className="text-emerald-400" />
+                                    <h4 className="font-semibold text-white text-sm">Proactive Mode</h4>
+                                </div>
+                                <p className="text-xs text-slate-400 leading-relaxed">
+                                    AI actively monitors your work and proactively offers assistance, even starting conversations about potential issues.
+                                </p>
+                                <div className="mt-3 pt-3 border-t border-white/10 space-y-1">
+                                    <div className="flex items-center gap-2 text-xs text-emerald-400">
+                                        <span>✓</span> Active suggestions
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs text-emerald-400">
+                                        <span>✓</span> Continuous monitoring
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs text-emerald-400">
+                                        <span>✓</span> Proactive conversations
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Organization Limit Notice */}
+                        {maxProactivity !== 'PROACTIVE' && (
+                            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3">
+                                <AlertCircle size={20} className="text-amber-400 flex-shrink-0 mt-0.5" />
+                                <div>
+                                    <h4 className="font-medium text-amber-400 text-sm">Organization Limit</h4>
+                                    <p className="text-xs text-amber-400/80 mt-1">
+                                        Your organization has set the maximum proactivity level to <strong>{maxProactivity}</strong>. 
+                                        Contact your administrator if you need a higher level.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 

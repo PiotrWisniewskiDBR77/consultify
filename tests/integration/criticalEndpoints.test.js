@@ -3,7 +3,6 @@
  * Tests for the most important API endpoints that must work reliably
  */
 
-const { describe, it, expect, beforeEach, afterEach } = require('vitest');
 const request = require('supertest');
 const app = require('../../server/index.js');
 const { initTestDb, cleanTables, dbRun, dbAll } = require('../helpers/dbHelper.cjs');

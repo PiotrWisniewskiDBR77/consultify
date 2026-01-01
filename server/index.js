@@ -293,9 +293,15 @@ const aiSecurityRoutes = require('./routes/ai-security');
 app.use('/api/ai-security', aiSecurityRoutes);
 const aiNudgesRoutes = require('./routes/ai-nudges');
 app.use('/api/ai/nudges', aiNudgesRoutes);
+// AI Settings (3-Tier Settings System)
+const aiSettingsRoutes = require('./routes/ai-settings');
+app.use('/api/ai-settings', aiSettingsRoutes);
 // AI Actions (Co-Thinker Action Executor)
 const aiActionsRoutes = require('./routes/aiActions');
 app.use('/api/ai/actions', aiActionsRoutes);
+// AI Learning System (Self-Learning AI)
+const aiLearningRoutes = require('./routes/aiLearning');
+app.use('/api/ai/learning', aiLearningRoutes);
 // Voice API (Universal Voice Conversation System)
 const voiceRoutes = require('./routes/voice');
 app.use('/api/voice', voiceRoutes);
@@ -304,6 +310,9 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/superadmin', superAdminRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/knowledge', knowledgeRoutes);
+// Media Ingestion (Multimodal Content Processing)
+const mediaIngestionRoutes = require('./routes/media-ingestion');
+app.use('/api/media-ingestion', mediaIngestionRoutes);
 app.use('/api/llm', llmRoutes);
 // Phase 1: Teamwork & Collaboration
 app.use('/api/tasks', taskRoutes);
@@ -670,6 +679,10 @@ app.use('/api/gdpr', gdprRoutes);
 
 const systemHealthRoutes = require('./routes/systemHealth');
 app.use('/api/system/health', systemHealthRoutes);
+
+// Consultify Studio - Visual AI Workspace
+const studioRoutes = require('./routes/studio');
+app.use('/api/studio', studioRoutes);
 
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, '../dist')));

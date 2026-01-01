@@ -1,11 +1,13 @@
 // AI Action Executor - Handles AI actions with approval workflow
 // AI Core Layer — Enterprise PMO Brain
+// Enhanced with HITL Learning System - learns from user approval/rejection patterns
 
 const db = require('../database');
 const { v4: uuidv4 } = require('uuid');
 const AIPolicyEngine = require('./aiPolicyEngine');
 const AIRoleGuard = require('./aiRoleGuard');
 const RegulatoryModeGuard = require('./regulatoryModeGuard');
+const ApprovalPatternService = require('./approvalPatternService');
 
 // Dependency injection container (for deterministic unit tests)
 const deps = {
@@ -13,7 +15,8 @@ const deps = {
     uuidv4,
     AIPolicyEngine,
     AIRoleGuard,
-    RegulatoryModeGuard
+    RegulatoryModeGuard,
+    ApprovalPatternService
 };
 
 const ACTION_TYPES = {
@@ -98,9 +101,49 @@ const AIActionExecutor = {
 
         // AI Roles Model: MANAGER role always requires approval for draft actions
         // Normalize to boolean (avoid `false || undefined` => undefined)
-        const requiresApproval = Boolean(permission.requiresApproval || payload._forceApproval);
+        let requiresApproval = Boolean(permission.requiresApproval || payload._forceApproval);
+
+        // HITL Learning System: Check if we can auto-decide based on learned patterns
+        let autoDecided = false;
+        let autoDecision = null;
+        let patternInfo = null;
+        
+        if (requiresApproval) {
+            const riskLevel = payload.riskLevel || 'LOW';
+            const autoDecideCheck = await deps.ApprovalPatternService.canAutoDecide(
+                userId, actionType, payload, riskLevel
+            );
+            
+            if (autoDecideCheck.canAutoDecide) {
+                autoDecided = true;
+                autoDecision = autoDecideCheck.decision;
+                patternInfo = {
+                    patternId: autoDecideCheck.pattern?.id,
+                    confidence: autoDecideCheck.confidence,
+                    decisionCount: autoDecideCheck.pattern?.decision_count,
+                    reason: autoDecideCheck.reason
+                };
+                
+                console.log(`[AIActionExecutor] Auto-decided ${actionType}: ${autoDecision} (confidence: ${Math.round(autoDecideCheck.confidence * 100)}%)`);
+                
+                // If auto-rejected, don't create the action
+                if (autoDecision === 'REJECTED') {
+                    return {
+                        success: false,
+                        autoRejected: true,
+                        blocked: true,
+                        reason: `Auto-rejected based on learned pattern (${patternInfo.decisionCount} previous rejections)`,
+                        patternInfo
+                    };
+                }
+                
+                // If auto-approved, skip the pending state
+                requiresApproval = false;
+            }
+        }
 
         const id = deps.uuidv4();
+        const finalStatus = requiresApproval ? ACTION_STATUS.PENDING : ACTION_STATUS.APPROVED;
 
         return new Promise((resolve, reject) => {
             deps.db.run(`INSERT INTO ai_actions 
@@ -112,16 +155,24 @@ const AIActionExecutor = {
                     JSON.stringify(payload),
                     permission.requiredLevel, permission.currentLevel,
                     requiresApproval ? 1 : 0,
-                    requiresApproval ? ACTION_STATUS.PENDING : ACTION_STATUS.APPROVED
+                    finalStatus
                 ], function (err) {
                     if (err) return reject(err);
 
-                    resolve({
+                    const result = {
                         success: true,
                         actionId: id,
                         requiresApproval: requiresApproval,
-                        status: requiresApproval ? ACTION_STATUS.PENDING : ACTION_STATUS.APPROVED
-                    });
+                        status: finalStatus
+                    };
+                    
+                    // Include auto-decision info in response
+                    if (autoDecided) {
+                        result.autoApproved = true;
+                        result.patternInfo = patternInfo;
+                    }
+
+                    resolve(result);
                 });
         });
     },
@@ -156,33 +207,84 @@ const AIActionExecutor = {
 
     /**
      * Approve an action
+     * @param {string} actionId - Action ID to approve
+     * @param {string} userId - User ID approving the action
+     * @param {object} options - Options: { alwaysApprove: boolean } - Enable auto-apply for similar actions
      */
-    approveAction: async (actionId, userId) => {
+    approveAction: async (actionId, userId, options = {}) => {
+        // First, get the action details for pattern learning
+        const action = await AIActionExecutor.getAction(actionId);
+        if (!action) {
+            return { success: false, error: 'Action not found' };
+        }
+        if (action.status !== ACTION_STATUS.PENDING) {
+            return { success: false, error: 'Action already processed' };
+        }
+
         return new Promise((resolve, reject) => {
             deps.db.run(`UPDATE ai_actions 
                     SET status = 'APPROVED', approved_at = CURRENT_TIMESTAMP, approved_by = ?
                     WHERE id = ? AND status = 'PENDING'`,
-                [userId, actionId], function (err) {
+                [userId, actionId], async function (err) {
                     if (err) return reject(err);
 
                     if (this.changes === 0) {
                         return resolve({ success: false, error: 'Action not found or already processed' });
                     }
 
-                    resolve({ success: true, actionId, status: ACTION_STATUS.APPROVED });
+                    // HITL Learning: Record the approval decision for pattern learning
+                    try {
+                        const patternResult = await deps.ApprovalPatternService.recordDecision(
+                            userId,
+                            action.organization_id,
+                            action.action_type,
+                            action.payload,
+                            'APPROVED',
+                            action.payload?.riskLevel || 'LOW',
+                            options.alwaysApprove || false
+                        );
+                        
+                        console.log(`[AIActionExecutor] Pattern learned for ${action.action_type}: APPROVED`, 
+                            patternResult.created ? '(new pattern)' : `(${patternResult.decision_count} decisions)`);
+                        
+                        resolve({ 
+                            success: true, 
+                            actionId, 
+                            status: ACTION_STATUS.APPROVED,
+                            patternLearned: true,
+                            patternInfo: patternResult
+                        });
+                    } catch (patternError) {
+                        console.error('[AIActionExecutor] Pattern learning error:', patternError);
+                        // Still resolve successfully - pattern learning is non-blocking
+                        resolve({ success: true, actionId, status: ACTION_STATUS.APPROVED });
+                    }
                 });
         });
     },
 
     /**
      * Reject an action
+     * @param {string} actionId - Action ID to reject
+     * @param {string} userId - User ID rejecting the action
+     * @param {string} reason - Optional reason for rejection
+     * @param {object} options - Options: { alwaysReject: boolean } - Enable auto-reject for similar actions
      */
-    rejectAction: async (actionId, userId, reason = null) => {
+    rejectAction: async (actionId, userId, reason = null, options = {}) => {
+        // First, get the action details for pattern learning
+        const action = await AIActionExecutor.getAction(actionId);
+        if (!action) {
+            return { success: false, error: 'Action not found' };
+        }
+        if (action.status !== ACTION_STATUS.PENDING) {
+            return { success: false, error: 'Action already processed' };
+        }
+
         return new Promise((resolve, reject) => {
             deps.db.run(`UPDATE ai_actions 
                     SET status = 'REJECTED', approved_at = CURRENT_TIMESTAMP, approved_by = ?
                     WHERE id = ? AND status = 'PENDING'`,
-                [userId, actionId], function (err) {
+                [userId, actionId], async function (err) {
                     if (err) return reject(err);
 
                     if (this.changes === 0) {
@@ -192,7 +294,33 @@ const AIActionExecutor = {
                     // Log audit
                     AIActionExecutor._logAudit(actionId, userId, 'REJECTED', reason);
 
-                    resolve({ success: true, actionId, status: ACTION_STATUS.REJECTED });
+                    // HITL Learning: Record the rejection decision for pattern learning
+                    try {
+                        const patternResult = await deps.ApprovalPatternService.recordDecision(
+                            userId,
+                            action.organization_id,
+                            action.action_type,
+                            action.payload,
+                            'REJECTED',
+                            action.payload?.riskLevel || 'LOW',
+                            options.alwaysReject || false
+                        );
+                        
+                        console.log(`[AIActionExecutor] Pattern learned for ${action.action_type}: REJECTED`, 
+                            patternResult.created ? '(new pattern)' : `(${patternResult.decision_count} decisions)`);
+                        
+                        resolve({ 
+                            success: true, 
+                            actionId, 
+                            status: ACTION_STATUS.REJECTED,
+                            patternLearned: true,
+                            patternInfo: patternResult
+                        });
+                    } catch (patternError) {
+                        console.error('[AIActionExecutor] Pattern learning error:', patternError);
+                        // Still resolve successfully - pattern learning is non-blocking
+                        resolve({ success: true, actionId, status: ACTION_STATUS.REJECTED });
+                    }
                 });
         });
     },
@@ -342,6 +470,62 @@ const AIActionExecutor = {
                 resolve(result);
             });
         });
+    },
+
+    /**
+     * Get pattern info for an action - shows if similar actions have been approved/rejected
+     * @param {string} userId - User ID
+     * @param {string} actionType - Action type
+     * @param {object} payload - Action payload
+     * @returns {Promise<object>} - Pattern info or null
+     */
+    getPatternInfo: async (userId, actionType, payload) => {
+        try {
+            const pattern = await deps.ApprovalPatternService.findMatchingPattern(userId, actionType, payload);
+            if (!pattern) return null;
+            
+            const confidence = deps.ApprovalPatternService.calculateConfidence(pattern, payload);
+            return {
+                patternId: pattern.id,
+                decision: pattern.decision,
+                decisionCount: pattern.decision_count,
+                autoApply: pattern.auto_apply === 1,
+                confidence: Math.round(confidence * 100),
+                lastDecisionAt: pattern.last_decision_at,
+                message: `Similar to ${pattern.decision_count} previous ${pattern.decision.toLowerCase()} decisions`
+            };
+        } catch (error) {
+            console.error('[AIActionExecutor] getPatternInfo error:', error);
+            return null;
+        }
+    },
+
+    /**
+     * Get user's approval patterns statistics
+     */
+    getUserPatternStats: async (userId) => {
+        return deps.ApprovalPatternService.getPatternStats(userId);
+    },
+
+    /**
+     * Get user's approval patterns list
+     */
+    getUserPatterns: async (userId, actionType = null) => {
+        return deps.ApprovalPatternService.getUserPatterns(userId, actionType);
+    },
+
+    /**
+     * Toggle auto-apply for a pattern
+     */
+    setPatternAutoApply: async (patternId, enabled, userId) => {
+        return deps.ApprovalPatternService.setAutoApply(patternId, enabled, userId);
+    },
+
+    /**
+     * Delete a learned pattern
+     */
+    deletePattern: async (patternId, userId) => {
+        return deps.ApprovalPatternService.deletePattern(patternId, userId);
     },
 
     // ==================== INTERNAL EXECUTORS ====================

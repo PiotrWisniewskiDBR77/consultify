@@ -81,7 +81,47 @@ const Scheduler = {
             });
         });
 
-        console.log('[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min)');
+        // ============================================================
+        // AI SELF-LEARNING SYSTEM JOBS
+        // ============================================================
+
+        // 11. AI Pattern Extraction - Run every 6 hours
+        cron.schedule('0 */6 * * *', async () => {
+            console.log('[Scheduler] Running AI Pattern Extraction');
+            try {
+                const { learningSystem } = require('../services/ai/learningSystem');
+                const result = await learningSystem.extractAllPatterns();
+                console.log(`[Scheduler] AI Pattern Extraction completed: ${result.patternsExtracted} patterns from ${result.recordsProcessed} records`);
+            } catch (err) {
+                console.error('[Scheduler] AI Pattern Extraction failed:', err.message);
+            }
+        });
+
+        // 12. AI Learning Consolidation - Run daily at 4:30 AM
+        cron.schedule('30 4 * * *', async () => {
+            console.log('[Scheduler] Running AI Learning Consolidation');
+            try {
+                const { learningSystem } = require('../services/ai/learningSystem');
+                const result = await learningSystem.consolidateLearnings();
+                console.log(`[Scheduler] AI Learning Consolidation completed: ${result.strategiesCreated} strategies created`);
+            } catch (err) {
+                console.error('[Scheduler] AI Learning Consolidation failed:', err.message);
+            }
+        });
+
+        // 13. AI Learning Data Cleanup - Run weekly on Monday at 5:00 AM
+        cron.schedule('0 5 * * 1', async () => {
+            console.log('[Scheduler] Running AI Learning Data Cleanup');
+            try {
+                const { learningSystem } = require('../services/ai/learningSystem');
+                const result = await learningSystem.cleanupOldData();
+                console.log(`[Scheduler] AI Learning Cleanup completed: ${result.deleted} old records deleted`);
+            } catch (err) {
+                console.error('[Scheduler] AI Learning Cleanup failed:', err.message);
+            }
+        });
+
+        console.log('[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM)');
 
     }
 };

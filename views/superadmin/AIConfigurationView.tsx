@@ -28,12 +28,17 @@ import {
     EyeOff,
     Wifi,
     WifiOff,
-    Database
+    Database,
+    Shield,
+    Lock,
+    Globe,
+    History
 } from 'lucide-react';
 import { Api } from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { InfoButton } from '../../components/shared/InfoButton';
-import { LLMProvider } from '../../types';
+import { LLMProvider, SuperAdminAISettings } from '../../types';
+import { SettingsCard, SettingsToggle, SettingsSlider, AuditLogViewer } from '../../components/AISettings';
 
 // AI Capability definitions with their prompt keys
 const AI_CAPABILITIES = [
@@ -88,7 +93,7 @@ const AI_CAPABILITIES = [
 ];
 
 // Tabs for AI Configuration
-type AIConfigTab = 'functions' | 'providers' | 'routing' | 'usage' | 'health';
+type AIConfigTab = 'functions' | 'providers' | 'routing' | 'usage' | 'health' | 'settings';
 
 export const AIConfigurationView: React.FC = () => {
     const [activeTab, setActiveTab] = useState<AIConfigTab>('functions');
@@ -104,6 +109,10 @@ export const AIConfigurationView: React.FC = () => {
 
     // Health status
     const [healthStatus, setHealthStatus] = useState<any>(null);
+
+    // SuperAdmin Global Settings
+    const [globalSettings, setGlobalSettings] = useState<SuperAdminAISettings | null>(null);
+    const [savingSettings, setSavingSettings] = useState(false);
 
     // Providers
     const [providers, setProviders] = useState<LLMProvider[]>([]);
@@ -169,11 +178,47 @@ export const AIConfigurationView: React.FC = () => {
                 setHealthStatus(health);
             } catch (e) { console.error('Health load failed:', e); }
 
+            // Load global AI settings
+            try {
+                const settings = await fetch('/api/ai-settings/superadmin', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                }).then(r => r.json());
+                setGlobalSettings(settings);
+            } catch (e) { console.error('Global settings load failed:', e); }
+
         } catch (err) {
             console.error('Failed to load AI config data:', err);
             toast.error('Failed to load AI configuration');
         }
         setLoading(false);
+    };
+
+    // Save global settings
+    const saveGlobalSettings = async () => {
+        if (!globalSettings) return;
+        setSavingSettings(true);
+        try {
+            const updated = await fetch('/api/ai-settings/superadmin', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(globalSettings)
+            }).then(r => r.json());
+            setGlobalSettings(updated);
+            toast.success('Global settings saved');
+        } catch (e) {
+            toast.error('Failed to save settings');
+        }
+        setSavingSettings(false);
+    };
+
+    const updateGlobalSetting = <K extends keyof SuperAdminAISettings>(
+        key: K, 
+        value: SuperAdminAISettings[K]
+    ) => {
+        setGlobalSettings(prev => prev ? { ...prev, [key]: value } : null);
     };
 
     const selectCapability = (capabilityId: string) => {
@@ -364,6 +409,7 @@ Help leaders develop change management competencies.`
         { id: 'routing' as AIConfigTab, label: 'Model Routing', icon: Settings },
         { id: 'usage' as AIConfigTab, label: 'Usage & Costs', icon: BarChart3 },
         { id: 'health' as AIConfigTab, label: 'System Health', icon: Activity },
+        { id: 'settings' as AIConfigTab, label: 'Global Settings', icon: Shield },
     ];
 
     return (
@@ -791,6 +837,243 @@ Help leaders develop change management competencies.`
                                     ))}
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Global Settings Tab */}
+                {activeTab === 'settings' && (
+                    <div className="p-8 overflow-y-auto h-full">
+                        <div className="max-w-4xl mx-auto space-y-6">
+                            {/* Header with Save Button */}
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-xl font-bold text-white">Global AI Settings</h2>
+                                    <p className="text-sm text-slate-400 mt-1">
+                                        Platform-wide AI configuration. These settings apply to all organizations.
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={saveGlobalSettings}
+                                    disabled={savingSettings || !globalSettings}
+                                    className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white rounded-lg transition-colors"
+                                >
+                                    {savingSettings ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                    Save Changes
+                                </button>
+                            </div>
+
+                            {globalSettings ? (
+                                <>
+                                    {/* Infrastructure Settings */}
+                                    <SettingsCard
+                                        title="Infrastructure"
+                                        description="Provider failover and circuit breaker configuration"
+                                        icon={Server}
+                                        iconColor="text-blue-400"
+                                    >
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-sm text-slate-400 mb-2">Default Provider</label>
+                                                <select
+                                                    value={globalSettings.defaultProvider || ''}
+                                                    onChange={(e) => updateGlobalSetting('defaultProvider', e.target.value || null)}
+                                                    className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2.5 text-white focus:border-violet-500 outline-none"
+                                                >
+                                                    <option value="">Auto (First Available)</option>
+                                                    {providers.filter(p => p.is_active).map(p => (
+                                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-sm text-slate-400 mb-2">Failure Threshold</label>
+                                                    <input
+                                                        type="number"
+                                                        value={globalSettings.circuitBreakerConfig.failureThreshold}
+                                                        onChange={(e) => updateGlobalSetting('circuitBreakerConfig', {
+                                                            ...globalSettings.circuitBreakerConfig,
+                                                            failureThreshold: parseInt(e.target.value) || 5
+                                                        })}
+                                                        className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2.5 text-white focus:border-violet-500 outline-none"
+                                                    />
+                                                    <p className="text-xs text-slate-500 mt-1">Failures before circuit opens</p>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm text-slate-400 mb-2">Cooldown (seconds)</label>
+                                                    <input
+                                                        type="number"
+                                                        value={globalSettings.circuitBreakerConfig.cooldownSeconds}
+                                                        onChange={(e) => updateGlobalSetting('circuitBreakerConfig', {
+                                                            ...globalSettings.circuitBreakerConfig,
+                                                            cooldownSeconds: parseInt(e.target.value) || 60
+                                                        })}
+                                                        className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2.5 text-white focus:border-violet-500 outline-none"
+                                                    />
+                                                    <p className="text-xs text-slate-500 mt-1">Wait before retry</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </SettingsCard>
+
+                                    {/* Global Limits */}
+                                    <SettingsCard
+                                        title="Global Limits"
+                                        description="Token and rate limits for the entire platform"
+                                        icon={Globe}
+                                        iconColor="text-emerald-400"
+                                    >
+                                        <div className="space-y-6">
+                                            <SettingsSlider
+                                                label="Global Token Limit"
+                                                description="Maximum tokens across all organizations per month"
+                                                value={globalSettings.globalTokenLimit}
+                                                onChange={(v) => updateGlobalSetting('globalTokenLimit', v)}
+                                                min={1000000}
+                                                max={100000000}
+                                                step={1000000}
+                                                formatValue={(v) => `${(v / 1000000).toFixed(0)}M`}
+                                                defaultValue={10000000}
+                                            />
+
+                                            <SettingsSlider
+                                                label="Max Context Window"
+                                                description="Maximum context size in tokens"
+                                                value={globalSettings.maxContextWindowSize}
+                                                onChange={(v) => updateGlobalSetting('maxContextWindowSize', v)}
+                                                min={4096}
+                                                max={200000}
+                                                step={4096}
+                                                formatValue={(v) => `${(v / 1000).toFixed(0)}k`}
+                                                defaultValue={128000}
+                                            />
+
+                                            <SettingsSlider
+                                                label="Max Tokens Per Request"
+                                                description="Maximum output tokens per single request"
+                                                value={globalSettings.maxTokensPerRequest}
+                                                onChange={(v) => updateGlobalSetting('maxTokensPerRequest', v)}
+                                                min={1024}
+                                                max={16384}
+                                                step={512}
+                                                defaultValue={8192}
+                                            />
+
+                                            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-700/50">
+                                                <div>
+                                                    <label className="block text-sm text-slate-400 mb-2">Requests per Minute</label>
+                                                    <input
+                                                        type="number"
+                                                        value={globalSettings.globalRateLimit.requestsPerMinute}
+                                                        onChange={(e) => updateGlobalSetting('globalRateLimit', {
+                                                            ...globalSettings.globalRateLimit,
+                                                            requestsPerMinute: parseInt(e.target.value) || 60
+                                                        })}
+                                                        className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2.5 text-white focus:border-violet-500 outline-none"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm text-slate-400 mb-2">Requests per Hour</label>
+                                                    <input
+                                                        type="number"
+                                                        value={globalSettings.globalRateLimit.requestsPerHour}
+                                                        onChange={(e) => updateGlobalSetting('globalRateLimit', {
+                                                            ...globalSettings.globalRateLimit,
+                                                            requestsPerHour: parseInt(e.target.value) || 1000
+                                                        })}
+                                                        className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2.5 text-white focus:border-violet-500 outline-none"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </SettingsCard>
+
+                                    {/* Security & PII */}
+                                    <SettingsCard
+                                        title="Security & Privacy"
+                                        description="PII detection, encryption, and data residency"
+                                        icon={Lock}
+                                        iconColor="text-rose-400"
+                                    >
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-sm text-slate-400 mb-2">PII Detection Sensitivity</label>
+                                                <div className="flex gap-2">
+                                                    {(['low', 'medium', 'high'] as const).map((level) => (
+                                                        <button
+                                                            key={level}
+                                                            onClick={() => updateGlobalSetting('piiDetectionSensitivity', level)}
+                                                            className={`
+                                                                flex-1 py-2 px-4 rounded-lg border transition-all capitalize
+                                                                ${globalSettings.piiDetectionSensitivity === level
+                                                                    ? 'bg-violet-500/20 border-violet-500 text-violet-300'
+                                                                    : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-600'
+                                                                }
+                                                            `}
+                                                        >
+                                                            {level}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                                <p className="text-xs text-slate-500 mt-2">
+                                                    Higher sensitivity may increase false positives but better protects user data
+                                                </p>
+                                            </div>
+
+                                            <SettingsToggle
+                                                label="Require Encryption"
+                                                description="Enforce encryption for all AI communications"
+                                                checked={globalSettings.requireEncryption}
+                                                onChange={(v) => updateGlobalSetting('requireEncryption', v)}
+                                                icon={Shield}
+                                                iconColor="text-emerald-400"
+                                            />
+
+                                            <div>
+                                                <label className="block text-sm text-slate-400 mb-2">Data Residency</label>
+                                                <select
+                                                    value={globalSettings.dataResidency || ''}
+                                                    onChange={(e) => updateGlobalSetting('dataResidency', e.target.value || null)}
+                                                    className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2.5 text-white focus:border-violet-500 outline-none"
+                                                >
+                                                    <option value="">No Restriction</option>
+                                                    <option value="eu">European Union</option>
+                                                    <option value="us">United States</option>
+                                                    <option value="uk">United Kingdom</option>
+                                                    <option value="apac">Asia Pacific</option>
+                                                </select>
+                                                <p className="text-xs text-slate-500 mt-1">
+                                                    Restrict AI data processing to specific regions
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </SettingsCard>
+
+                                    {/* Audit Log */}
+                                    <SettingsCard
+                                        title="Settings Audit Log"
+                                        description="Track all changes to AI settings across the platform"
+                                        icon={History}
+                                        iconColor="text-amber-400"
+                                        collapsible
+                                        defaultExpanded={false}
+                                    >
+                                        <AuditLogViewer 
+                                            level="superadmin" 
+                                            showFilters={true}
+                                            showExport={true}
+                                            limit={50}
+                                        />
+                                    </SettingsCard>
+                                </>
+                            ) : (
+                                <div className="text-center py-12">
+                                    <RefreshCw className="w-8 h-8 text-slate-600 mx-auto mb-3 animate-spin" />
+                                    <p className="text-slate-400">Loading global settings...</p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}

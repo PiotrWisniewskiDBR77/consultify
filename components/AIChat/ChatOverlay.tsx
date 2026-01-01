@@ -25,6 +25,8 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({ hideTrigger = false })
     const { isStreaming, streamedContent, startStream } = useAIStream();
     const scrollRef = useRef<HTMLDivElement>(null);
     const [regulatoryModeEnabled, setRegulatoryModeEnabled] = useState(false);
+    // New: Toggle for Thinking Process visualization
+    const [showThinking, setShowThinking] = useState(true);
 
     // Fetch regulatory mode status when project changes
     useEffect(() => {
@@ -150,8 +152,22 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({ hideTrigger = false })
                     <div className="flex items-center gap-2">
                         {/* LLM Model Selector */}
                         <LLMSelector />
+
+                        {/* Thinking Process Info Button */}
+                        <button
+                            onClick={() => setShowThinking(!showThinking)}
+                            className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors ${showThinking
+                                    ? 'bg-purple-500/20 text-purple-300 ring-1 ring-purple-500/50'
+                                    : 'text-slate-400 hover:bg-white/10 hover:text-white'
+                                }`}
+                            title={showThinking ? "Hide Thinking Process" : "Show Thinking Process"}
+                        >
+                            <Cpu size={14} className={showThinking ? "animate-pulse" : ""} />
+                        </button>
+
                         {/* AI Usage Indicator */}
                         <AIUsageIndicator compact />
+
                         {/* Expand to fullscreen button */}
                         <button
                             onClick={() => {
@@ -199,6 +215,7 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({ hideTrigger = false })
                     isTyping={isBotTyping}
                     onSendMessage={handleSendMessage}
                     onOptionSelect={handleOptionSelect}
+                    showThinking={showThinking}
                 />
             </div>
         </div>

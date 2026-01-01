@@ -15,7 +15,7 @@ const { memoryManager } = require('./memoryManager');
 const { intelligentResearch } = require('./intelligentResearch');
 const { knowledgeIndexer } = require('./knowledgeIndexer');
 const { projectMemoryStore } = require('./projectMemoryStore');
-const { ragService } = require('../../ragService');
+const ragService = require('../ragService');
 const { aiLogger } = require('./logger');
 
 // Context priorities by conversation phase
@@ -67,9 +67,16 @@ const MAX_TOKENS_PER_LAYER = {
 };
 
 class EnhancedContextBuilder {
-    constructor() {
+    constructor(dependencies = {}) {
         this.contextCache = new Map();
         this.cacheMaxAge = 5 * 60 * 1000; // 5 minutes
+
+        // Dependency Injection with defaults
+        this.memoryManager = dependencies.memoryManager || memoryManager;
+        this.intelligentResearch = dependencies.intelligentResearch || intelligentResearch;
+        this.projectMemoryStore = dependencies.projectMemoryStore || projectMemoryStore;
+        this.ragService = dependencies.ragService || ragService;
+        this.knowledgeIndexer = dependencies.knowledgeIndexer || knowledgeIndexer;
     }
 
     /**
@@ -87,6 +94,7 @@ class EnhancedContextBuilder {
             phase = 'discovery',
             intent,
             topic,
+            knowledgeGaps = [],
             includeResearch = true,
             maxTokens = 12000
         } = params;
@@ -117,10 +125,11 @@ class EnhancedContextBuilder {
             this.getProjectContext(projectId),
             this.getOrganizationContext(organizationId),
             this.getKnowledgeContext(currentMessage, topic, organizationId),
-            includeResearch ? this.getExternalContext(currentMessage, { 
-                intent, 
-                phase, 
+            includeResearch ? this.getExternalContext(currentMessage, {
+                intent,
+                phase,
                 topic,
+                knowledgeGaps,
                 industry: null // Will be filled from org context
             }) : Promise.resolve({ content: '', sources: [] })
         ]);
@@ -138,7 +147,7 @@ class EnhancedContextBuilder {
         const finalContext = {
             // Merged narrative context
             narrative: mergedContext.narrative,
-            
+
             // Structured data
             structured: {
                 project: mergedContext.projectData,
@@ -146,16 +155,16 @@ class EnhancedContextBuilder {
                 assessment: mergedContext.assessmentData,
                 initiatives: mergedContext.initiativesData
             },
-            
+
             // Conversation history
             recentMessages: mergedContext.sessionHistory,
-            
+
             // Knowledge base matches
             knowledgeMatches: mergedContext.knowledgeMatches,
-            
+
             // External research
             research: mergedContext.externalResearch,
-            
+
             // Metadata
             metadata: {
                 phase,
@@ -179,14 +188,14 @@ class EnhancedContextBuilder {
      */
     async getSessionContext(conversationId, userId) {
         try {
-            const sessionMemory = memoryManager.stores?.session;
+            const sessionMemory = this.memoryManager.stores?.session;
             if (!sessionMemory) {
                 return { history: [], currentTopics: [], preferences: {} };
             }
 
             const history = await sessionMemory.getRecent(conversationId, 10);
             const topics = await sessionMemory.getTopics?.(conversationId) || [];
-            
+
             return {
                 history: history || [],
                 currentTopics: topics,
@@ -205,17 +214,17 @@ class EnhancedContextBuilder {
         if (!projectId) return null;
 
         try {
-            const memories = await projectMemoryStore.getMemories(projectId, {
+            const memories = await this.projectMemoryStore.getProjectMemory(projectId, {
                 types: ['decision', 'learning', 'milestone', 'risk'],
                 limit: 20
             });
 
             // Get assessment data
             const assessment = await this.getProjectAssessment(projectId);
-            
+
             // Get initiatives
             const initiatives = await this.getProjectInitiatives(projectId);
-            
+
             // Get roadmap status
             const roadmap = await this.getProjectRoadmap(projectId);
 
@@ -239,11 +248,11 @@ class EnhancedContextBuilder {
         if (!organizationId) return null;
 
         try {
-            const orgMemory = memoryManager.stores?.organization;
+            const orgMemory = this.memoryManager.stores?.organization;
             if (!orgMemory) return null;
 
             const context = await orgMemory.retrieve(organizationId);
-            
+
             return {
                 profile: context.profile || {},
                 preferences: context.preferences || {},
@@ -264,7 +273,7 @@ class EnhancedContextBuilder {
     async getKnowledgeContext(query, topic, organizationId) {
         try {
             // RAG search for relevant documents
-            const ragResults = await ragService.searchRelevantChunks(
+            const ragResults = await this.ragService.searchRelevantChunks(
                 query || topic || 'digital transformation',
                 {
                     topK: 5,
@@ -276,7 +285,7 @@ class EnhancedContextBuilder {
             // Get indexed knowledge if available
             let indexedKnowledge = [];
             try {
-                indexedKnowledge = await knowledgeIndexer.search(query || topic, {
+                indexedKnowledge = await this.knowledgeIndexer.search(query || topic, {
                     topK: 3,
                     threshold: 0.5
                 });
@@ -301,11 +310,12 @@ class EnhancedContextBuilder {
     async getExternalContext(query, options = {}) {
         try {
             // Use intelligent research for context-aware queries
-            const research = await intelligentResearch.supportConversation(
+            const research = await this.intelligentResearch.supportConversation(
                 { content: query },
                 {
                     currentIntent: options.intent,
                     currentPhase: options.phase,
+                    knowledgeGaps: options.knowledgeGaps,
                     organization: { industry: options.industry },
                     language: options.language || 'en'
                 }
@@ -349,7 +359,7 @@ class EnhancedContextBuilder {
         if (contexts.session?.history?.length > 0) {
             const sessionText = this.formatSessionContext(contexts.session);
             const sessionTokens = this.estimateTokens(sessionText);
-            
+
             if (totalTokens + sessionTokens <= maxTokens) {
                 narrativeParts.push({
                     layer: 'session',
@@ -366,7 +376,7 @@ class EnhancedContextBuilder {
             const projectText = this.formatProjectContext(contexts.project);
             const projectTokens = this.estimateTokens(projectText);
             const budgetedTokens = Math.min(projectTokens, tokenBudgets.project);
-            
+
             if (totalTokens + budgetedTokens <= maxTokens) {
                 narrativeParts.push({
                     layer: 'project',
@@ -383,7 +393,7 @@ class EnhancedContextBuilder {
             const orgText = this.formatOrganizationContext(contexts.organization);
             const orgTokens = this.estimateTokens(orgText);
             const budgetedTokens = Math.min(orgTokens, tokenBudgets.organization);
-            
+
             if (totalTokens + budgetedTokens <= maxTokens) {
                 narrativeParts.push({
                     layer: 'organization',
@@ -400,7 +410,7 @@ class EnhancedContextBuilder {
             const knowledgeText = this.formatKnowledgeContext(contexts.knowledge);
             const knowledgeTokens = this.estimateTokens(knowledgeText);
             const budgetedTokens = Math.min(knowledgeTokens, tokenBudgets.knowledge);
-            
+
             if (totalTokens + budgetedTokens <= maxTokens) {
                 narrativeParts.push({
                     layer: 'knowledge',
@@ -417,7 +427,7 @@ class EnhancedContextBuilder {
             const externalText = this.formatExternalContext(contexts.external);
             const externalTokens = this.estimateTokens(externalText);
             const budgetedTokens = Math.min(externalTokens, tokenBudgets.external);
-            
+
             if (totalTokens + budgetedTokens <= maxTokens) {
                 narrativeParts.push({
                     layer: 'external',
@@ -455,7 +465,7 @@ class EnhancedContextBuilder {
 
     formatSessionContext(session) {
         const parts = ['## Recent Conversation'];
-        
+
         if (session.history?.length > 0) {
             const recentMessages = session.history.slice(-5);
             for (const msg of recentMessages) {
@@ -632,12 +642,12 @@ class EnhancedContextBuilder {
     getCached(key) {
         const cached = this.contextCache.get(key);
         if (!cached) return null;
-        
+
         if (Date.now() - cached.timestamp > this.cacheMaxAge) {
             this.contextCache.delete(key);
             return null;
         }
-        
+
         return cached.data;
     }
 
@@ -672,4 +682,3 @@ module.exports = {
     PHASE_CONTEXT_PRIORITIES,
     MAX_TOKENS_PER_LAYER
 };
-

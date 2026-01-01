@@ -161,13 +161,13 @@ describe('Trial Mode Limits Verification', () => {
                 let row = null;
                 if (sql.includes('FROM organizations WHERE id')) {
                     if (sql.includes('trial_tokens_used')) {
-                        row = { trial_tokens_used: 10001 };
+                        row = { trial_tokens_used: 100001 };
                     } else {
                         row = {
                             id: mockOrgId,
                             organization_type: 'TRIAL',
                             is_active: 1,
-                            trial_tokens_used: 10001,
+                            trial_tokens_used: 100001,
                             trial_expires_at: new Date(Date.now() + 86400000).toISOString()
                         };
                     }

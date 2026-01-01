@@ -4,7 +4,7 @@
  * Verifies that created_from_plan_id is properly set when accepting an onboarding plan.
  */
 
-const { describe, it, expect, beforeAll, afterAll, vi } = require('vitest');
+
 
 // Mock database
 const mockDb = {

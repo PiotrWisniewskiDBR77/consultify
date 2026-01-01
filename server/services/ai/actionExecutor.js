@@ -7,11 +7,10 @@
  * Part of the Harvard-Level Co-Thinker AI System
  */
 
-const db = require('../../database');
-const { v4: uuidv4 } = require('uuid');
-const { aiLogger } = require('./logger');
+// Action types supported by the executor
 
 // Action types supported by the executor
+const { v4: uuidv4 } = require('uuid');
 const ACTION_TYPES = {
     NAVIGATE: 'navigate',
     CREATE_PROJECT: 'create_project',
@@ -23,7 +22,8 @@ const ACTION_TYPES = {
     SHOW_DATA: 'show_data',
     HIGHLIGHT_ELEMENT: 'highlight',
     OPEN_MODAL: 'open_modal',
-    TRIGGER_WORKFLOW: 'trigger_workflow'
+    TRIGGER_WORKFLOW: 'trigger_workflow',
+    TRIGGER_RESEARCH: 'trigger_research'
 };
 
 // View mappings for navigation
@@ -41,9 +41,15 @@ const VIEW_MAPPINGS = {
 };
 
 class ActionExecutor {
-    constructor() {
+    constructor(dependencies = {}) {
         this.pendingActions = new Map();
         this.actionHistory = [];
+
+        // Dependency Injection
+        this.db = dependencies.db || require('../../database');
+        this.intelligentResearch = dependencies.intelligentResearch || require('./intelligentResearch').intelligentResearch;
+        this.aiPipeline = dependencies.aiPipeline; // Lazy load if not provided
+        this.aiLogger = dependencies.aiLogger || require('./logger').aiLogger;
     }
 
     /**
@@ -57,9 +63,11 @@ class ActionExecutor {
         const { userId, organizationId, projectId } = context;
 
         const actionId = uuidv4();
+
+
         const timestamp = new Date().toISOString();
 
-        aiLogger.info('ActionExecutor', `Executing action: ${type}`, { actionId, payload });
+        if (this.aiLogger) this.aiLogger.info('ActionExecutor', `Executing action: ${type}`, { actionId, payload });
 
         try {
             // If confirmation required, store pending and return prompt
@@ -126,6 +134,10 @@ class ActionExecutor {
                     result = await this.executeTriggerWorkflow(payload, context);
                     break;
 
+                case ACTION_TYPES.TRIGGER_RESEARCH:
+                    result = await this.executeTriggerResearch(payload, context);
+                    break;
+
                 default:
                     throw new Error(`Unknown action type: ${type}`);
             }
@@ -154,8 +166,8 @@ class ActionExecutor {
             };
 
         } catch (error) {
-            aiLogger.error('ActionExecutor', `Action failed: ${error.message}`, { actionId, type });
-            
+            if (this.aiLogger) this.aiLogger.error('ActionExecutor', `Action failed: ${error.message}`, { actionId, type });
+
             return {
                 status: 'error',
                 actionId,
@@ -220,7 +232,7 @@ class ActionExecutor {
             db.run(`
                 INSERT INTO projects (id, name, description, industry, organization_id, created_by, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            `, [projectId, name, description || '', industry || '', organizationId, userId, now, now], function(err) {
+            `, [projectId, name, description || '', industry || '', organizationId, userId, now, now], function (err) {
                 if (err) {
                     reject(err);
                     return;
@@ -253,10 +265,10 @@ class ActionExecutor {
      * Create a new initiative
      */
     async executeCreateInitiative(payload, context) {
-        const { 
-            name, 
-            summary, 
-            hypothesis, 
+        const {
+            name,
+            summary,
+            hypothesis,
             expectedOutcome,
             axisId,
             priority = 'medium',
@@ -281,7 +293,7 @@ class ActionExecutor {
                 expectedOutcome || '', axisId || '', priority,
                 estimatedEffort || '', estimatedBenefit || '',
                 userId, now, now
-            ], function(err) {
+            ], function (err) {
                 if (err) {
                     reject(err);
                     return;
@@ -337,7 +349,7 @@ class ActionExecutor {
                 taskId, projectId, initiativeId || null, title, description || '',
                 assigneeId || null, dueDate || null, priority, estimatedHours || null,
                 userId, now, now
-            ], function(err) {
+            ], function (err) {
                 if (err) {
                     reject(err);
                     return;
@@ -369,7 +381,7 @@ class ActionExecutor {
 
         return new Promise((resolve, reject) => {
             // First, check if assessment entry exists
-            db.get(
+            this.db.get(
                 'SELECT id FROM assessment_scores WHERE project_id = ? AND axis_id = ?',
                 [projectId, axisId],
                 (err, existing) => {
@@ -386,7 +398,7 @@ class ActionExecutor {
                         ? [level, evidence || '', notes || '', now, userId, projectId, axisId]
                         : [uuidv4(), projectId, axisId, level, evidence || '', notes || '', now, now, userId, userId];
 
-                    db.run(query, params, function(err2) {
+                    db.run(query, params, function (err2) {
                         if (err2) {
                             reject(err2);
                             return;
@@ -431,7 +443,7 @@ class ActionExecutor {
         // Use the AI pipeline to generate content
         try {
             const { aiPipeline } = require('./aiPipeline');
-            
+
             const result = await aiPipeline.process({
                 capability: `generate_${contentType}`,
                 prompt,
@@ -449,7 +461,7 @@ class ActionExecutor {
             };
 
         } catch (error) {
-            aiLogger.error('ActionExecutor', `Content generation failed: ${error.message}`);
+            if (this.aiLogger) this.aiLogger.error('ActionExecutor', `Content generation failed: ${error.message}`);
             throw error;
         }
     }
@@ -462,7 +474,7 @@ class ActionExecutor {
         const { projectId, organizationId } = context;
 
         let data;
-        
+
         switch (dataType) {
             case 'assessment_scores':
                 data = await this.getAssessmentScores(projectId);
@@ -518,7 +530,7 @@ class ActionExecutor {
         const { workflowId, params = {} } = payload;
         const { userId, organizationId, projectId } = context;
 
-        aiLogger.info('ActionExecutor', `Triggering workflow: ${workflowId}`);
+        if (this.aiLogger) this.aiLogger.info('ActionExecutor', `Triggering workflow: ${workflowId}`);
 
         // Workflow execution would depend on specific workflows defined
         return {
@@ -527,6 +539,41 @@ class ActionExecutor {
             status: 'initiated',
             message: `Started workflow: ${workflowId}`
         };
+    }
+
+    /**
+     * Trigger proactive research
+     */
+    async executeTriggerResearch(payload, context) {
+        const { topic, depth = 'standard', question } = payload;
+        const { userId, organizationId, projectId } = context;
+
+        if (this.aiLogger) this.aiLogger.info('ActionExecutor', `Triggering research: ${topic}`);
+
+        try {
+            // Trigger deep research
+            const researchResult = await this.intelligentResearch.deepResearch(
+                question || topic,
+                {
+                    organizationId,
+                    projectId,
+                    depth,
+                    format: 'markdown'
+                }
+            );
+
+            return {
+                type: 'research_completed',
+                topic,
+                summary: researchResult.summary,
+                keyInsights: researchResult.keyInsights,
+                sources: researchResult.sources,
+                reportPath: researchResult.reportPath // If generated
+            };
+        } catch (error) {
+            if (this.aiLogger) this.aiLogger.error('ActionExecutor', `Research failed: ${error.message}`);
+            throw error;
+        }
     }
 
     // =========================================================================
@@ -554,13 +601,13 @@ class ActionExecutor {
      */
     sanitizePayload(payload) {
         if (!payload) return null;
-        
+
         const sanitized = { ...payload };
         // Remove any sensitive fields
         delete sanitized.password;
         delete sanitized.apiKey;
         delete sanitized.token;
-        
+
         return sanitized;
     }
 
@@ -569,14 +616,14 @@ class ActionExecutor {
      */
     sanitizeResult(result) {
         if (!result) return null;
-        
+
         const sanitized = { ...result };
-        
+
         // Truncate large content
         if (sanitized.content && sanitized.content.length > 500) {
             sanitized.content = sanitized.content.substring(0, 500) + '...';
         }
-        
+
         return sanitized;
     }
 
@@ -585,7 +632,7 @@ class ActionExecutor {
      */
     async getAssessmentScores(projectId) {
         return new Promise((resolve, reject) => {
-            db.all(
+            this.db.all(
                 'SELECT * FROM assessment_scores WHERE project_id = ?',
                 [projectId],
                 (err, rows) => {
@@ -601,7 +648,7 @@ class ActionExecutor {
      */
     async getInitiatives(projectId) {
         return new Promise((resolve, reject) => {
-            db.all(
+            this.db.all(
                 'SELECT * FROM initiatives WHERE project_id = ? ORDER BY priority DESC, created_at DESC',
                 [projectId],
                 (err, rows) => {
@@ -617,7 +664,7 @@ class ActionExecutor {
      */
     async getRoadmap(projectId) {
         return new Promise((resolve, reject) => {
-            db.all(
+            this.db.all(
                 'SELECT * FROM roadmap_items WHERE project_id = ? ORDER BY quarter, sequence',
                 [projectId],
                 (err, rows) => {
@@ -640,11 +687,11 @@ class ActionExecutor {
      */
     cleanupPendingActions(maxAgeMinutes = 30) {
         const cutoff = new Date(Date.now() - maxAgeMinutes * 60 * 1000).toISOString();
-        
+
         for (const [actionId, pending] of this.pendingActions) {
             if (pending.createdAt < cutoff) {
                 this.pendingActions.delete(actionId);
-                aiLogger.debug('ActionExecutor', `Cleaned up expired action: ${actionId}`);
+                if (this.aiLogger) this.aiLogger.debug('ActionExecutor', `Cleaned up expired action: ${actionId}`);
             }
         }
     }

@@ -16,7 +16,7 @@
 // ============================================================================
 
 const { AIGateway } = require('./aiGateway');
-const { ContextBuilder } = require('./aiContext');
+const { enhancedContextBuilder } = require('./enhancedContextBuilder');
 const { PromptAssembler, FALLBACK_ROLES } = require('./promptAssembler');
 const { ModelRouter } = require('./modelRouter');
 const { LLMService } = require('./llmService');
@@ -33,6 +33,10 @@ const { qualityChecker } = require('./qualityChecker');
 const { enterpriseSecurity } = require('./enterpriseSecurity');
 const { performanceOptimizer } = require('./performanceOptimizer');
 const { learningSystem } = require('./learningSystem');
+
+// AI Settings Integration
+const AISettingsService = require('../aiSettingsService');
+const AIProactivityEngine = require('../aiProactivityEngine');
 
 // ============================================================================
 // CAPABILITY REGISTRY
@@ -55,7 +59,7 @@ const CAPABILITY_REGISTRY = {
         description: 'Deep chain-of-thought diagnosis with multiple reasoning steps',
         outputFormat: 'json'
     },
-    
+
     // === GENERATION CAPABILITIES ===
     'generateList': {
         role: 'ANALYST',
@@ -87,7 +91,7 @@ const CAPABILITY_REGISTRY = {
         description: 'Generate first value delivery plan',
         outputFormat: 'json'
     },
-    
+
     // === TASK CAPABILITIES ===
     'suggestTasks': {
         role: 'IMPLEMENTER',
@@ -107,7 +111,7 @@ const CAPABILITY_REGISTRY = {
         description: 'Generate execution strategy for initiative',
         outputFormat: 'json'
     },
-    
+
     // === INITIATIVE CAPABILITIES ===
     'validateInitiative': {
         role: 'GATEKEEPER',
@@ -133,7 +137,7 @@ const CAPABILITY_REGISTRY = {
         description: 'Analyze strategic fit of initiative',
         outputFormat: 'json'
     },
-    
+
     // === ROADMAP CAPABILITIES ===
     'buildRoadmap': {
         role: 'STRATEGIST',
@@ -195,7 +199,7 @@ const CAPABILITY_REGISTRY = {
         description: 'Analyze quarterly workload distribution',
         outputFormat: 'json'
     },
-    
+
     // === ECONOMICS CAPABILITIES ===
     'simulateEconomics': {
         role: 'FINANCE',
@@ -203,7 +207,7 @@ const CAPABILITY_REGISTRY = {
         description: 'Simulate economic impact of initiatives',
         outputFormat: 'json'
     },
-    
+
     // === CHAT CAPABILITIES ===
     'chat': {
         role: 'CONSULTANT',
@@ -219,7 +223,7 @@ const CAPABILITY_REGISTRY = {
         outputFormat: 'text',
         supportsStreaming: true
     },
-    
+
     // === REPORT CAPABILITIES ===
     'generateReportSectionContent': {
         role: 'STRATEGIST',
@@ -239,7 +243,7 @@ const CAPABILITY_REGISTRY = {
         description: 'Build AI context for report generation',
         outputFormat: 'json'
     },
-    
+
     // === CHAIN OF THOUGHT ===
     'runChainOfThought': {
         role: 'ANALYST',
@@ -247,7 +251,7 @@ const CAPABILITY_REGISTRY = {
         description: 'Run multi-step chain of thought reasoning',
         outputFormat: 'json'
     },
-    
+
     // === KNOWLEDGE CAPABILITIES ===
     'extractInsights': {
         role: 'ANALYST',
@@ -261,7 +265,7 @@ const CAPABILITY_REGISTRY = {
         description: 'Verify information with web research',
         outputFormat: 'text'
     },
-    
+
     // === STRATEGIC CAPABILITIES ===
     'getStrategicIdeas': {
         role: 'STRATEGIST',
@@ -269,7 +273,7 @@ const CAPABILITY_REGISTRY = {
         description: 'Get strategic ideas for transformation',
         outputFormat: 'json'
     },
-    
+
     // === CHARTER GENERATION ===
     'generateStructuredContent': {
         role: 'CONSULTANT',
@@ -277,7 +281,7 @@ const CAPABILITY_REGISTRY = {
         description: 'Generate structured content for initiative charters',
         outputFormat: 'json'
     },
-    
+
     // === QUEUE CAPABILITIES ===
     'queueTask': {
         role: 'IMPLEMENTER',
@@ -305,7 +309,7 @@ function getCapabilityConfig(capability) {
 class AIPipeline {
     constructor() {
         this.gateway = new AIGateway();
-        this.contextBuilder = new ContextBuilder();
+        this.contextBuilder = enhancedContextBuilder;
         this.promptAssembler = new PromptAssembler();
         this.modelRouter = new ModelRouter();
         this.llmService = new LLMService();
@@ -390,6 +394,7 @@ class AIPipeline {
 
     /**
      * Safe wrapper for learning system - non-blocking
+     * @deprecated Use safeRecordLearningEnhanced instead
      */
     safeRecordLearning(data) {
         try {
@@ -401,6 +406,23 @@ class AIPipeline {
             }
         } catch (err) {
             aiLogger.warn('Pipeline', `Learning record sync error (non-blocking): ${err.message}`);
+        }
+    }
+
+    /**
+     * Enhanced learning system wrapper with quality-based auto-feedback
+     * Records interaction with quality scores for pattern extraction
+     */
+    safeRecordLearningEnhanced(data) {
+        try {
+            const promise = learningSystem.recordWithAutoFeedback(data);
+            if (promise && typeof promise.catch === 'function') {
+                promise.catch(err => {
+                    aiLogger.warn('Pipeline', `Enhanced learning record failed (non-blocking): ${err.message}`);
+                });
+            }
+        } catch (err) {
+            aiLogger.warn('Pipeline', `Enhanced learning record sync error (non-blocking): ${err.message}`);
         }
     }
 
@@ -419,7 +441,16 @@ class AIPipeline {
     // MAIN PROCESS METHOD
     // =========================================================================
 
-    async process(request) {
+    async process(request, onProgress = null) {
+        const reportProgress = (stage, detail) => {
+            if (onProgress && typeof onProgress === 'function') {
+                onProgress({
+                    stage,
+                    detail,
+                    timestamp: new Date()
+                });
+            }
+        };
         const startTime = Date.now();
         let modelConfig = null;
         let error = null;
@@ -440,8 +471,10 @@ class AIPipeline {
 
         try {
             aiLogger.pipeline('Starting process', { capability: request.capability, traceId: trace.traceId });
+            reportProgress('init', 'Initializing AI pipeline...');
 
             // 0. Enterprise Security - Rate Limit Check (RESILIENT)
+            reportProgress('security', 'Checking security & rate limits...');
             const rateLimitCheck = await this.safeCheckRateLimit(
                 request.organizationId,
                 request.capability || 'all'
@@ -454,7 +487,37 @@ class AIPipeline {
                 aiLogger.info('Pipeline', 'Rate limit check bypassed due to error');
             }
 
+            // 0.5. Load Effective AI Settings
+            reportProgress('settings', 'Loading AI settings...');
+            let effectiveSettings = null;
+            try {
+                if (request.userId && request.organizationId) {
+                    effectiveSettings = await AISettingsService.getEffectiveSettings(
+                        request.userId, 
+                        request.organizationId
+                    );
+                    
+                    // Apply proactivity mode to prompt modifier
+                    if (effectiveSettings.proactivityMode) {
+                        const proactivityPrompt = AIProactivityEngine.getProactivityPromptModifier(
+                            effectiveSettings.proactivityMode
+                        );
+                        request._proactivityPrompt = proactivityPrompt;
+                        request._effectiveSettings = effectiveSettings;
+                    }
+                    
+                    aiLogger.pipeline('Effective settings loaded', { 
+                        proactivityMode: effectiveSettings.proactivityMode,
+                        maxTokens: effectiveSettings.maxTokens 
+                    });
+                }
+            } catch (settingsErr) {
+                aiLogger.warn('Pipeline', `Failed to load effective settings: ${settingsErr.message}`);
+                // Continue without settings - fail-open pattern
+            }
+
             // 1. Gateway Security Check (RESILIENT - only blocks on critical)
+            reportProgress('security', 'Verifying request integrity...');
             const gatewaySpan = trace.startSpan('gateway');
             await this.safeGatewayProcess(request);
             trace.endSpan(gatewaySpan, { status: 'passed' });
@@ -474,6 +537,7 @@ class AIPipeline {
             }
 
             // 3. Cache Check - Return immediately if cached
+            reportProgress('cache', 'Checking semantic cache...');
             const { cacheService } = require('./cacheService');
             const cacheQuery = request.prompt || request.messages?.[request.messages.length - 1]?.content;
             const cacheContext = {
@@ -488,7 +552,7 @@ class AIPipeline {
                     cacheHit = true;
                     const cacheLatency = Date.now() - startTime;
                     aiLogger.cache('get', true);
-                    
+
                     // Record cache hit metrics
                     metrics.recordRequest({
                         capability: request.capability,
@@ -497,9 +561,9 @@ class AIPipeline {
                         durationSeconds: cacheLatency / 1000,
                         cached: true
                     });
-                    
+
                     trace.complete({ status: 'cache_hit' });
-                    
+
                     return {
                         ...cached,
                         metadata: {
@@ -513,6 +577,7 @@ class AIPipeline {
             }
 
             // 4. RAG Query - Fetch relevant knowledge chunks
+            reportProgress('rag', 'Searching knowledge base...');
             let knowledgeContext = null;
             if (cacheQuery) {
                 try {
@@ -535,6 +600,7 @@ class AIPipeline {
             }
 
             // 4.5 Memory System - Retrieve from 5-layer memory
+            reportProgress('memory', 'Retrieving context from memory...');
             let memoryContext = null;
             try {
                 const memorySpan = trace.startSpan('memory_retrieval');
@@ -552,34 +618,66 @@ class AIPipeline {
                     memoryContext = memoryManager.serializeForPrompt(memoryResult);
                     aiLogger.debug('Pipeline', `Memory retrieved: ${memoryResult.chunks.length} chunks, ${memoryResult.totalTokens} tokens`);
                 }
-                trace.endSpan(memorySpan, { 
+                trace.endSpan(memorySpan, {
                     chunkCount: memoryResult.chunks?.length || 0,
-                    sources: memoryResult.sources 
+                    sources: memoryResult.sources
                 });
             } catch (memoryError) {
                 aiLogger.warn('Pipeline', `Memory retrieval failed: ${memoryError.message}`);
             }
 
             // 5. Build Context
+            reportProgress('context', 'Building conversation context...');
             const context = await this.contextBuilder.build({
                 userId: request.userId,
                 organizationId: request.organizationId,
                 projectId: request.projectId,
+                conversationId: request.conversationId, // Pass conversation ID
+                currentMessage: request.prompt || request.messages?.[request.messages.length - 1]?.content,
+                intent: request.intent || request.capability, // Use capability as default intent
+                topic: request.topic, // Optional topic override
                 screenContext: request.screenContext,
-                capability: request.capability,
-                knowledgeContext, // Pass RAG results to context
-                memoryContext // Pass 5-layer memory context
+                // Enhanced context params
+                includeResearch: request.includeWebResearch !== false, // Default to true unless explicitly disabled
+                knowledgeGaps: request.knowledgeGaps || [],
+                maxTokens: request.maxContextTokens || 12000
             });
 
+            // 5.5. Determine Response Mode (Adaptive Response System)
+            let responseModeConfig = null;
+            let responseModePrompt = '';
+            try {
+                const { adaptiveResponseService } = require('./adaptiveResponseService');
+                const userPreferences = request.aiPreferences || {};
+
+                responseModeConfig = await adaptiveResponseService.determineResponseMode(
+                    request.userId,
+                    request.prompt || request.messages?.[request.messages.length - 1]?.content,
+                    userPreferences
+                );
+
+                responseModePrompt = adaptiveResponseService.buildResponseModePrompt(
+                    responseModeConfig,
+                    userPreferences
+                );
+
+                aiLogger.info('Pipeline', `Response mode: ${responseModeConfig.mode} (${responseModeConfig.wasAutoDetected ? 'auto-detected' : 'default'})`);
+            } catch (adaptiveError) {
+                aiLogger.warn('Pipeline', `Adaptive response error (non-blocking): ${adaptiveError.message}`);
+            }
+
             // 6. Assemble Prompt (includes visual context + knowledge + memory injection)
+            reportProgress('prompt', 'Assembling optimized prompt...');
             const { systemPrompt, messages } = await this.promptAssembler.build({
                 request,
                 context,
                 knowledgeContext, // Pass to assembler for injection
-                memoryContext // Pass memory context for enhanced responses
+                memoryContext, // Pass memory context for enhanced responses
+                responseModePrompt // Pass response mode instructions
             });
 
             // 6. Route Model (with org overrides)
+            reportProgress('routing', 'Routing to optimal model...');
             modelConfig = await this.modelRouter.select({
                 capability: request.capability,
                 organizationId: request.organizationId,
@@ -587,6 +685,7 @@ class AIPipeline {
             });
 
             // 7. Call LLM Service (with fallback support)
+            reportProgress('generation', 'Streaming response from model...');
             // Note: Tools temporarily disabled for streaming due to OpenAI Responses API schema issue
             // TODO: Fix tool schema compatibility with OpenAI /v1/responses endpoint
             const enableTools = !request.stream && (request.enableTools || request.capability === 'chat');
@@ -635,15 +734,16 @@ class AIPipeline {
             const latency = Date.now() - startTime;
 
             // 7.5. Quality Check - Validate AI response before returning
+            reportProgress('quality', 'Verifying response quality...');
             const qualitySpan = trace.startSpan('quality_check');
             try {
                 // RESILIENT: Use safe wrapper for quality check
                 qualityResult = await this.safeQualityCheck(response, {
                     query: request.prompt || messages?.[messages.length - 1]?.content,
                     capability: request.capability
-                }, { 
+                }, {
                     strictMode: request.strictQuality,
-                    capability: request.capability 
+                    capability: request.capability
                 });
 
                 if (!qualityResult.passed && qualityResult.overallScore < 0.5) {
@@ -653,9 +753,9 @@ class AIPipeline {
                     // For very low quality, we could retry with different model
                     // For now, we flag it in metadata
                 }
-                trace.endSpan(qualitySpan, { 
-                    score: qualityResult.overallScore, 
-                    passed: qualityResult.passed 
+                trace.endSpan(qualitySpan, {
+                    score: qualityResult.overallScore,
+                    passed: qualityResult.passed
                 });
             } catch (qualityError) {
                 aiLogger.warn('Pipeline', `Quality check error: ${qualityError.message}`);
@@ -727,21 +827,24 @@ class AIPipeline {
                 error: false
             });
 
-            // 11.7 Learning System - Record interaction (RESILIENT - non-blocking)
-            this.safeRecordLearning({
+            // 11.7 Learning System - Enhanced record with auto-feedback (RESILIENT - non-blocking)
+            this.safeRecordLearningEnhanced({
                 userId: request.userId,
                 organizationId: request.organizationId,
                 requestType: request.capability,
                 prompt: (request.prompt || cacheQuery)?.substring(0, 500),
                 response: response.content?.substring(0, 1000),
+                qualityResult: qualityResult, // Pass full quality result for auto-feedback
+                model: modelConfig?.id,
+                latency,
+                tokenCount: tokenCount,
                 metadata: {
-                    qualityScore: qualityResult?.overallScore,
-                    model: modelConfig?.id,
-                    latency,
-                    cached: cacheHit
+                    cached: cacheHit,
+                    traceId: trace.traceId,
+                    usedFallback: attempts > 1
                 }
             });
-            // Note: safeRecordLearning is fire-and-forget with internal error handling
+            // Note: safeRecordLearningEnhanced is fire-and-forget with internal error handling
 
             // Record metrics
             metrics.recordRequest({
@@ -768,12 +871,12 @@ class AIPipeline {
                 tokenCount
             });
 
-            aiLogger.pipeline('Process complete', { 
-                latency, 
-                tokensUsed: tokenCount, 
+            aiLogger.pipeline('Process complete', {
+                latency,
+                tokensUsed: tokenCount,
                 costUsd: costInfo.totalCost,
                 qualityScore: qualityResult?.overallScore,
-                traceId: trace.traceId 
+                traceId: trace.traceId
             });
 
             return {
@@ -856,17 +959,17 @@ class AIPipeline {
     getFallbackModel(modelId, excludeModels = [], tier = 'STANDARD') {
         const { TIER_FALLBACK_CHAINS } = require('./modelRouter');
         const chain = TIER_FALLBACK_CHAINS[tier] || TIER_FALLBACK_CHAINS['STANDARD'];
-        
+
         // Add current model to exclude list
         const excluded = new Set([...excludeModels, modelId]);
-        
+
         // Find next available model in chain
         for (const fallbackModel of chain) {
             if (!excluded.has(fallbackModel)) {
                 return fallbackModel;
             }
         }
-        
+
         // Ultimate fallback
         return 'gpt-4o-mini';
     }
@@ -885,38 +988,38 @@ class AIPipeline {
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
                 aiLogger.info('Pipeline', `LLM attempt ${attempt}/${maxRetries}`, { model: currentConfig.id });
-                
+
                 const response = await this.llmService.call({
                     ...params,
                     modelConfig: currentConfig
                 });
-                
+
                 return { response, modelConfig: currentConfig, attempts: attempt };
             } catch (error) {
                 lastError = error;
                 excludeModels.push(currentConfig.id);
-                
-                aiLogger.warn('Pipeline', `Attempt ${attempt} failed: ${error.message}`, { 
+
+                aiLogger.warn('Pipeline', `Attempt ${attempt} failed: ${error.message}`, {
                     model: currentConfig.id,
-                    excludeModels 
+                    excludeModels
                 });
-                
+
                 // Don't retry on auth/budget errors
                 if (this.isNonRetryableError(error)) {
                     throw error;
                 }
-                
+
                 if (attempt < maxRetries) {
                     // Get next fallback
                     const fallbackModelId = this.getFallbackModel(
-                        currentConfig.id, 
-                        excludeModels, 
+                        currentConfig.id,
+                        excludeModels,
                         currentConfig.tier
                     );
-                    
+
                     if (fallbackModelId && !excludeModels.includes(fallbackModelId)) {
                         currentConfig = await this.modelRouter.getProviderConfig(
-                            fallbackModelId, 
+                            fallbackModelId,
                             currentConfig.tier
                         );
                         aiLogger.info('Pipeline', `Switching to fallback: ${fallbackModelId}`);
@@ -926,7 +1029,7 @@ class AIPipeline {
                 }
             }
         }
-        
+
         throw lastError;
     }
 
@@ -1105,7 +1208,7 @@ class AIPipeline {
 async function suggestTasks(initiativeContext, userId, organizationId) {
     const pipeline = new AIPipeline();
     const config = getCapabilityConfig('suggestTasks');
-    
+
     const prompt = `Given this initiative context, suggest implementation tasks:
     
 Initiative: ${initiativeContext.name || 'Unknown'}
@@ -1128,7 +1231,7 @@ Output as JSON array.`;
         organizationId,
         role: config.role
     });
-    
+
     return parseJsonResponse(result.content);
 }
 
@@ -1142,7 +1245,7 @@ Output as JSON array.`;
 async function validateInitiative(initiativeContext, userId, organizationId) {
     const pipeline = new AIPipeline();
     const config = getCapabilityConfig('validateInitiative');
-    
+
     const prompt = `Validate this initiative as a strict gatekeeper:
     
 Name: ${initiativeContext.name || 'Unknown'}
@@ -1166,7 +1269,7 @@ Output as JSON.`;
         organizationId,
         role: config.role
     });
-    
+
     return parseJsonResponse(result.content);
 }
 
@@ -1180,7 +1283,7 @@ Output as JSON.`;
 async function enrichInitiative(initiativeContext, userId, organizationId) {
     const pipeline = new AIPipeline();
     const config = getCapabilityConfig('enrichInitiative');
-    
+
     const prompt = `Enrich this initiative with market context and best practices:
     
 Name: ${initiativeContext.name || 'Unknown'}
@@ -1203,7 +1306,7 @@ Output as JSON with keys: marketTrends, benchmarks, successFactors, risks.`;
         role: config.role,
         includeWebResearch: true
     });
-    
+
     return parseJsonResponse(result.content);
 }
 
@@ -1216,7 +1319,7 @@ Output as JSON with keys: marketTrends, benchmarks, successFactors, risks.`;
 async function generateObservations(userId, organizationId) {
     const pipeline = new AIPipeline();
     const config = getCapabilityConfig('generateObservations');
-    
+
     const prompt = `Analyze the organization's digital maturity data and generate strategic observations.
 
 Focus on:
@@ -1235,7 +1338,7 @@ Output as JSON with keys: patterns, strengths, gaps, quickWins, priorities.`;
         organizationId,
         role: config.role
     });
-    
+
     return parseJsonResponse(result.content);
 }
 
@@ -1250,7 +1353,7 @@ Output as JSON with keys: patterns, strengths, gaps, quickWins, priorities.`;
 async function generateStructuredContent(prompt, contentType, userId, organizationId) {
     const pipeline = new AIPipeline();
     const config = getCapabilityConfig('generateStructuredContent');
-    
+
     const result = await pipeline.process({
         capability: 'generateStructuredContent',
         prompt,
@@ -1258,7 +1361,7 @@ async function generateStructuredContent(prompt, contentType, userId, organizati
         organizationId,
         role: config.role
     });
-    
+
     return parseJsonResponse(result.content);
 }
 
@@ -1273,7 +1376,7 @@ async function generateStructuredContent(prompt, contentType, userId, organizati
  */
 async function chat(message, history = [], roleName = 'CONSULTANT', userId, organizationId) {
     const pipeline = new AIPipeline();
-    
+
     const result = await pipeline.process({
         capability: 'chat',
         prompt: message,
@@ -1282,7 +1385,7 @@ async function chat(message, history = [], roleName = 'CONSULTANT', userId, orga
         organizationId,
         role: roleName
     });
-    
+
     return result.content;
 }
 
@@ -1297,7 +1400,7 @@ async function chat(message, history = [], roleName = 'CONSULTANT', userId, orga
  */
 async function* streamChat(message, history = [], roleName = 'CONSULTANT', userId, organizationId) {
     const pipeline = new AIPipeline();
-    
+
     const result = await pipeline.process({
         capability: 'chat',
         prompt: message,
@@ -1307,7 +1410,7 @@ async function* streamChat(message, history = [], roleName = 'CONSULTANT', userI
         role: roleName,
         stream: true
     });
-    
+
     // If streaming is supported, yield chunks
     if (result && typeof result[Symbol.asyncIterator] === 'function') {
         for await (const chunk of result) {
@@ -1325,7 +1428,7 @@ async function* streamChat(message, history = [], roleName = 'CONSULTANT', userI
  */
 function parseJsonResponse(content) {
     if (!content) return { error: 'Empty response' };
-    
+
     try {
         // Clean markdown code blocks if present
         const cleaned = content
@@ -1348,11 +1451,254 @@ function parseJsonResponse(content) {
 }
 
 // ============================================================================
+// WORLD-CLASS CHAT 2025: THINKING & ARTIFACTS EXTRACTION
+// ============================================================================
+
+/**
+ * Extract thinking steps from AI response
+ * Parses <thinking>...</thinking> blocks and returns structured steps
+ * @param {string} content - Raw AI response content
+ * @returns {{ cleanContent: string, thinkingSteps: Array }} Parsed content and thinking steps
+ */
+function extractThinkingSteps(content) {
+    if (!content) return { cleanContent: '', thinkingSteps: [] };
+
+    const thinkingSteps = [];
+    let stepId = 1;
+
+    // Pattern for <thinking>...</thinking> blocks
+    const thinkingPattern = /<thinking>([\s\S]*?)<\/thinking>/gi;
+
+    // Extract thinking blocks
+    let match;
+    while ((match = thinkingPattern.exec(content)) !== null) {
+        const thinkingContent = match[1].trim();
+
+        // Try to split by numbered list (1. 2. 3.) or bullets (- * •)
+        // Use a more robust pattern that captures the delimiter
+        const numberedPattern = /(\d+\.\s*[^\n]+(?:\n(?!\d+\.)[^\n]+)*)/g;
+        const bulletPattern = /([-*•]\s*[^\n]+(?:\n(?![-*•])[^\n]+)*)/g;
+
+        let foundSteps = false;
+
+        // Try numbered list first
+        let stepMatch;
+        while ((stepMatch = numberedPattern.exec(thinkingContent)) !== null) {
+            foundSteps = true;
+            const stepText = stepMatch[1].replace(/^\d+\.\s*/, '').trim();
+            if (stepText) {
+                thinkingSteps.push({
+                    id: `think-${stepId++}`,
+                    label: `Step ${thinkingSteps.length + 1}`,
+                    content: stepText,
+                    status: 'done',
+                    timestamp: new Date(),
+                    category: categorizeThinkingStep(stepText)
+                });
+            }
+        }
+
+        // If no numbered steps found, try bullets
+        if (!foundSteps) {
+            while ((stepMatch = bulletPattern.exec(thinkingContent)) !== null) {
+                foundSteps = true;
+                const stepText = stepMatch[1].replace(/^[-*•]\s*/, '').trim();
+                if (stepText) {
+                    thinkingSteps.push({
+                        id: `think-${stepId++}`,
+                        label: `Step ${thinkingSteps.length + 1}`,
+                        content: stepText,
+                        status: 'done',
+                        timestamp: new Date(),
+                        category: categorizeThinkingStep(stepText)
+                    });
+                }
+            }
+        }
+
+        // If still no steps found, treat entire content as one step
+        if (!foundSteps && thinkingContent.length > 0) {
+            thinkingSteps.push({
+                id: `think-${stepId++}`,
+                label: 'Step 1',
+                content: thinkingContent,
+                status: 'done',
+                timestamp: new Date(),
+                category: categorizeThinkingStep(thinkingContent)
+            });
+        }
+    }
+
+    // Remove thinking blocks from content
+    const cleanContent = content.replace(thinkingPattern, '').trim();
+
+    return { cleanContent, thinkingSteps };
+}
+
+/**
+ * Categorize a thinking step based on its content
+ * @param {string} stepContent - Content of the thinking step
+ * @returns {string} Category: 'analysis' | 'research' | 'synthesis' | 'validation'
+ */
+function categorizeThinkingStep(stepContent) {
+    const lower = stepContent.toLowerCase();
+
+    if (lower.includes('analyz') || lower.includes('examin') || lower.includes('assess')) {
+        return 'analysis';
+    }
+    if (lower.includes('search') || lower.includes('look') || lower.includes('find') || lower.includes('research')) {
+        return 'research';
+    }
+    if (lower.includes('combin') || lower.includes('integrat') || lower.includes('synthesiz') || lower.includes('creat')) {
+        return 'synthesis';
+    }
+    if (lower.includes('verify') || lower.includes('check') || lower.includes('valid') || lower.includes('confirm')) {
+        return 'validation';
+    }
+
+    return 'analysis'; // Default
+}
+
+/**
+ * Extract artifacts from AI response
+ * Parses ```artifact:type:title...``` blocks and returns structured artifacts
+ * @param {string} content - Raw AI response content
+ * @returns {{ cleanContent: string, artifacts: Array }} Parsed content and artifacts
+ */
+function extractArtifacts(content) {
+    if (!content) return { cleanContent: '', artifacts: [] };
+
+    const artifacts = [];
+    let artifactId = 1;
+    const processedPositions = new Set();
+
+    // Pattern for ```artifact:type:language:title\ncontent\n``` (for code artifacts with language)
+    const artifactPatternWithLang = /```artifact:(\w+):(\w+):([^\n]+)\n([\s\S]*?)```/g;
+    let match;
+
+    while ((match = artifactPatternWithLang.exec(content)) !== null) {
+        const [, type, language, title, artifactContent] = match;
+        processedPositions.add(match.index);
+
+        artifacts.push({
+            id: `artifact-${Date.now()}-${artifactId++}`,
+            type: type.toLowerCase(),
+            title: title.trim(),
+            content: artifactContent.trim(),
+            language: language,
+            editable: true,
+            version: 1,
+            createdAt: new Date()
+        });
+    }
+
+    // Pattern for ```artifact:type:title\ncontent\n``` (without language)
+    const artifactPattern = /```artifact:(\w+):([^\n]+)\n([\s\S]*?)```/g;
+
+    while ((match = artifactPattern.exec(content)) !== null) {
+        // Skip if already processed by language pattern
+        if (processedPositions.has(match.index)) continue;
+
+        const [, type, title, artifactContent] = match;
+        processedPositions.add(match.index);
+
+        artifacts.push({
+            id: `artifact-${Date.now()}-${artifactId++}`,
+            type: type.toLowerCase(),
+            title: title.trim(),
+            content: artifactContent.trim(),
+            editable: true,
+            version: 1,
+            createdAt: new Date()
+        });
+    }
+
+    // Also check for JSON artifact definitions
+    const jsonArtifactPattern = /```json:artifact\n([\s\S]*?)```/g;
+    while ((match = jsonArtifactPattern.exec(content)) !== null) {
+        try {
+            const artifactDef = JSON.parse(match[1]);
+            if (artifactDef.type && artifactDef.content) {
+                artifacts.push({
+                    id: `artifact-${Date.now()}-${artifactId++}`,
+                    type: artifactDef.type,
+                    title: artifactDef.title || 'Untitled',
+                    content: artifactDef.content,
+                    language: artifactDef.language,
+                    editable: artifactDef.editable !== false,
+                    version: 1,
+                    createdAt: new Date(),
+                    metadata: artifactDef.metadata
+                });
+            }
+        } catch (e) {
+            // Invalid JSON, skip
+        }
+    }
+
+    // Also extract standard code blocks as potential artifacts
+    const codeBlockPattern = /```(\w+)?\n([\s\S]*?)```/g;
+    let codeMatch;
+    while ((codeMatch = codeBlockPattern.exec(content)) !== null) {
+        const [fullMatch, language, codeContent] = codeMatch;
+
+        // Skip artifact blocks we already processed
+        if (fullMatch.includes('artifact:') || fullMatch.includes('json:artifact')) {
+            continue;
+        }
+
+        // Only create artifacts for substantial code blocks (>100 chars)
+        if (codeContent.trim().length > 100) {
+            artifacts.push({
+                id: `artifact-${Date.now()}-${artifactId++}`,
+                type: 'code',
+                title: `Code (${language || 'plaintext'})`,
+                content: codeContent.trim(),
+                language: language || 'plaintext',
+                editable: true,
+                version: 1,
+                createdAt: new Date()
+            });
+        }
+    }
+
+    // Don't remove code blocks from content (they should still be visible)
+    // Only remove explicit artifact blocks
+    const cleanContent = content
+        .replace(artifactPatternWithLang, '')
+        .replace(artifactPattern, '')
+        .replace(jsonArtifactPattern, '')
+        .trim();
+
+    return { cleanContent, artifacts };
+}
+
+/**
+ * Process AI response for World-Class Chat 2025 features
+ * Extracts thinking steps, artifacts, and cleans up content
+ * @param {Object} response - Raw AI response
+ * @returns {Object} Enhanced response with thinking and artifacts
+ */
+function enhanceResponse(response) {
+    if (!response || !response.content) return response;
+
+    const { cleanContent: contentAfterThinking, thinkingSteps } = extractThinkingSteps(response.content);
+    const { cleanContent, artifacts } = extractArtifacts(contentAfterThinking);
+
+    return {
+        ...response,
+        content: cleanContent,
+        thinkingSteps: thinkingSteps.length > 0 ? thinkingSteps : undefined,
+        artifacts: artifacts.length > 0 ? artifacts : undefined
+    };
+}
+
+// ============================================================================
 // SINGLETON INSTANCE
 // ============================================================================
 const aiPipeline = new AIPipeline();
 
-module.exports = { 
+module.exports = {
     AIPipeline,
     aiPipeline,
     CAPABILITY_REGISTRY,
@@ -1366,5 +1712,9 @@ module.exports = {
     generateStructuredContent,
     chat,
     streamChat,
-    parseJsonResponse
+    parseJsonResponse,
+    // World-Class Chat 2025: Thinking & Artifacts
+    extractThinkingSteps,
+    extractArtifacts,
+    enhanceResponse
 };

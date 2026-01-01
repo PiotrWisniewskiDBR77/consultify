@@ -4,7 +4,6 @@
  * Tests for approval assignment management service.
  */
 
-const { describe, it, expect, beforeEach, afterEach, beforeAll } = require('vitest');
 const { initTestDb, cleanTables, dbAll, dbRun } = require('../../helpers/dbHelper.cjs');
 const WorkqueueService = require('../../../server/services/workqueueService');
 const { v4: uuidv4 } = require('uuid');

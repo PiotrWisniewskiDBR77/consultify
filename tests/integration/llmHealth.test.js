@@ -20,6 +20,9 @@ describe('Integration Test: LLM Health', () => {
     beforeAll(() => {
         // Mock testProviderConnection
         AiService.testProviderConnection = vi.fn().mockImplementation(async (config) => {
+            if (config.provider === 'invalid-provider') {
+                return { success: false, message: 'Invalid provider' };
+            }
             if (config.api_key === 'invalid-key' || config.api_key === 'invalid-key-12345') {
                 return { success: false, message: 'Incorrect API key provided' };
             }

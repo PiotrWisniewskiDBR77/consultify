@@ -7,7 +7,6 @@
  * @date 2024-12-30
  */
 
-const { describe, it, expect, beforeEach, vi } = require('vitest');
 
 // Mock dependencies before importing
 vi.mock('../../../server/database', () => ({

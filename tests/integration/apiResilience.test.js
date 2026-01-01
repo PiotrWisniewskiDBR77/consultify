@@ -3,7 +3,6 @@
  * Tests that the API handles edge cases, failures, and recovers gracefully
  */
 
-const { describe, it, expect, beforeEach, afterEach } = require('vitest');
 const request = require('supertest');
 const app = require('../../server/index.js');
 const { initTestDb, cleanTables, dbRun, dbAll } = require('../helpers/dbHelper.cjs');

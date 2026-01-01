@@ -1,7 +1,8 @@
 # Consultify AI - Przewodnik Użytkownika
 
-**Ostatnia aktualizacja:** 30 grudnia 2025  
-**Wersja AI Pipeline:** 2.0
+**Ostatnia aktualizacja:** 1 stycznia 2026  
+**Wersja AI Pipeline:** 2.0  
+**World-Class Chat:** 2025 Edition ✅
 
 ## Wprowadzenie
 
@@ -15,15 +16,92 @@ Consultify AI to Twój wirtualny konsultant transformacji cyfrowej. System AI ws
 - **Ochrona PII** - Automatyczne wykrywanie i redakcja danych osobowych
 - **5-warstwowa pamięć** - AI pamięta kontekst projektu, organizacji i rozmów
 
+### 🆕 World-Class Chat 2025 - Nowe funkcje
+
+- **Artifacts Panel** - Strukturyzowane treści (kody, dokumenty, diagramy) w osobnym panelu
+- **Chain of Thought** - Przejrzysty proces myślowy AI krok po kroku
+- **Focus Modes** - Filtrowanie źródeł kontekstu (PMO Docs, Project, Research, Web)
+- **Message Actions** - Edycja, regeneracja, feedback, udostępnianie wiadomości
+- **Enhanced Streaming** - Real-time aktualizacje z wskaźnikiem postępu
+
 ---
 
-## 1. AI Chat (Asystent)
+## 1. AI Chat (Asystent) - World-Class Edition
 
 ### Jak używać
 
-1. Kliknij ikonę czatu w prawym dolnym rogu ekranu
-2. Wpisz pytanie lub prośbę
-3. AI odpowie w kontekście Twojego aktualnego widoku i projektu
+1. Kliknij ikonę czatu w lewym panelu (desktop) lub prawym dolnym rogu (mobile)
+2. Wybierz tryb fokusu (opcjonalnie) - domyślnie "All"
+3. Wpisz pytanie lub prośbę
+4. AI odpowie w kontekście Twojego aktualnego widoku i projektu
+
+### 🆕 Focus Modes (Tryby fokusu)
+
+Wybierz źródła kontekstu dla AI:
+
+- **All** 🌐 - Wszystkie dostępne źródła (domyślne)
+- **PMO Docs** 📚 - Tylko standardy PMO (ISO, PMBOK, PRINCE2)
+- **Project** 📁 - Tylko dane z bieżącego projektu
+- **Research** 🔍 - Głęboka analiza (tylko źródła wewnętrzne)
+- **Web** 🌍 - Priorytet wyszukiwania w internecie
+
+**Jak używać:**
+- Kliknij przycisk trybu fokusu nad oknem czatu
+- Wybierz odpowiedni tryb
+- AI automatycznie przefiltruje kontekst
+
+### 🆕 Artifacts Panel (Panel artefaktów)
+
+Gdy AI generuje strukturyzowane treści (kody, dokumenty, diagramy):
+
+1. **Automatyczne wykrywanie** - Artifacts pojawiają się automatycznie
+2. **Ikona "View Artifacts"** - Kliknij przy wiadomości AI
+3. **Panel po prawej** - Otwiera się panel z artefaktami
+4. **Zakładki** - Jeśli jest wiele artefaktów, przełączaj się między nimi
+5. **Akcje**:
+   - ✏️ **Edit** - Edytuj treść
+   - 📋 **Copy** - Skopiuj do schowka
+   - 💾 **Download** - Pobierz jako plik
+   - 🔍 **Fullscreen** - Pełny ekran
+
+**Typy artefaktów:**
+- 📄 **Markdown** - Dokumenty z formatowaniem
+- 💻 **Code** - Kod z podświetlaniem składni
+- 🌐 **HTML** - Podgląd HTML
+- 📊 **Diagram** - Diagramy Mermaid
+- 📋 **Table** - Tabele z sortowaniem
+- 📑 **PMO Document** - Szablony PMO (RACI, Risk Register, Status Report)
+
+### 🆕 Chain of Thought (Proces myślowy)
+
+AI pokazuje jak myśli:
+
+1. **Automatycznie** - Gdy AI używa głębokiego rozumowania
+2. **Collapsible Block** - Kliknij aby rozwinąć/zwijać
+3. **Kroki** - Widzisz każdy krok analizy:
+   - 🔍 **Analysis** - Analiza
+   - 🔎 **Research** - Badanie
+   - 🧩 **Synthesis** - Synteza
+   - ✅ **Validation** - Walidacja
+4. **Progress** - Wskaźnik postępu podczas streamingu
+
+### 🆕 Message Actions (Akcje na wiadomościach)
+
+Najedź myszką na wiadomość aby zobaczyć akcje:
+
+**Dla wiadomości użytkownika:**
+- ✏️ **Edit** - Edytuj wiadomość
+- 🗑️ **Delete** - Usuń wiadomość
+
+**Dla wiadomości AI:**
+- 📋 **Copy** - Skopiuj treść
+- 🔄 **Regenerate** - Wygeneruj ponownie
+- 👍 **Helpful** - Oznacz jako pomocne
+- 👎 **Not Helpful** - Oznacz jako niepomocne
+- 📄 **View Artifacts** - Zobacz artefakty (jeśli są)
+- 🔊 **Speak** - Przeczytaj na głos (TTS)
+- 📤 **Share** - Udostępnij
+- 🔖 **Bookmark** - Dodaj do zakładek
 
 ### Przykładowe pytania
 
@@ -31,6 +109,8 @@ Consultify AI to Twój wirtualny konsultant transformacji cyfrowej. System AI ws
 - "Jak mogę poprawić wynik w zarządzaniu danymi?"
 - "Porównaj mój projekt z benchmarkami branżowymi"
 - "Jakie są następne kroki po zakończeniu diagnozy?"
+- 🆕 "Stwórz RACI matrix dla procesu zarządzania zmianami" (generuje artifact)
+- 🆕 "Narysuj diagram zależności między inicjatywami" (generuje diagram)
 
 ### Context Awareness
 
@@ -44,6 +124,7 @@ Dla głębokiej analizy strategicznej włącz tryb MAX:
 1. Kliknij ikonę rozszerzenia obok okna czatu
 2. Wybierz "Deep Analysis Mode"
 3. AI użyje zaawansowanego modelu do rozwiązania złożonych problemów
+4. 🆕 Zobacz Chain of Thought - pełny proces myślowy AI
 
 ---
 
@@ -156,9 +237,14 @@ Gdy masz przypisane zadanie i nie wiesz jak je wykonać:
 - Nie podejmuje decyzji - tylko sugeruje
 - Nie ma dostępu do poufnych danych zewnętrznych
 
-### Feedback
+### 🆕 Feedback i uczenie się
 
 Każda odpowiedź AI ma przyciski 👍/👎. Twój feedback pomaga nam ulepszać system.
+
+**Nowe możliwości:**
+- **Feedback podczas hover** - Najedź myszką na wiadomość AI
+- **Automatyczne uczenie** - System zapamiętuje Twoje preferencje
+- **Regeneracja** - Jeśli odpowiedź nie jest idealna, kliknij 🔄 aby wygenerować ponownie
 
 ---
 
@@ -187,5 +273,55 @@ Jeśli masz pytania dotyczące funkcji AI:
 
 ---
 
-*Ostatnia aktualizacja: Grudzień 2024*
+---
+
+## 9. 🆕 World-Class Chat 2025 - Szczegóły
+
+### Artifacts - Przykłady użycia
+
+**Generowanie kodu:**
+```
+Użytkownik: "Stwórz funkcję JavaScript do walidacji email"
+AI: Generuje kod w panelu Artifacts z podświetlaniem składni
+```
+
+**Generowanie dokumentów PMO:**
+```
+Użytkownik: "Stwórz RACI matrix dla procesu zarządzania zmianami"
+AI: Generuje szablon RACI w panelu Artifacts z możliwością edycji
+```
+
+**Generowanie diagramów:**
+```
+Użytkownik: "Narysuj diagram zależności między inicjatywami"
+AI: Generuje diagram Mermaid w panelu Artifacts z zoom i eksportem
+```
+
+### Focus Modes - Kiedy używać
+
+- **PMO Docs** - Gdy potrzebujesz odpowiedzi zgodnej ze standardami
+- **Project** - Gdy chcesz tylko kontekst bieżącego projektu
+- **Research** - Gdy potrzebujesz głębokiej analizy bez zewnętrznych źródeł
+- **Web** - Gdy potrzebujesz najnowszych informacji z internetu
+
+### Chain of Thought - Zrozumienie AI
+
+Chain of Thought pomaga zrozumieć:
+- Jak AI doszedł do odpowiedzi
+- Jakie kroki analizy wykonał
+- Czy proces był logiczny i kompletny
+
+**Przykład:**
+```
+<thinking>
+1. Analiza: Sprawdzam wymagania dla poziomu 3 w Procesach Cyfrowych
+2. Badanie: Porównuję z benchmarkami branżowymi
+3. Synteza: Łączę dane z kontekstem projektu
+4. Walidacja: Weryfikuję zgodność z ISO 21500
+</thinking>
+```
+
+---
+
+*Ostatnia aktualizacja: Styczeń 2026*
 

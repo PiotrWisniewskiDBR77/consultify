@@ -5,10 +5,82 @@
  * Provides full-text search across modules, cards, FAQs, and videos.
  */
 
-import { MODULE_HELP_CONTENT, ModuleHelpContent, HelpModuleId } from '../config/moduleHelpContent';
+import { MODULE_HELP_CONTENT, ModuleHelp, HelpModuleId } from '../config/moduleHelpContent';
 import { CARD_DOCS, CardDocumentation } from '../config/cardDocumentation';
 import { FAQ_CONTENT, FAQItem } from '../config/faqContent';
 import { VIDEO_TUTORIALS, VideoTutorial } from '../config/videoTutorialsContent';
+
+// Static module names for search indexing (fallback when translations not available)
+const MODULE_NAMES: Record<string, { en: string; pl: string }> = {
+    dashboard: { en: 'Dashboard', pl: 'Panel główny' },
+    assessment: { en: 'Assessment', pl: 'Ocena' },
+    initiatives: { en: 'Initiatives', pl: 'Inicjatywy' },
+    roadmap: { en: 'Roadmap', pl: 'Mapa drogowa' },
+    implementation: { en: 'Implementation', pl: 'Wdrożenie' },
+    reports: { en: 'Reports', pl: 'Raporty' },
+    mywork: { en: 'My Work', pl: 'Moja praca' },
+    organization: { en: 'Organization', pl: 'Organizacja' },
+    'admin-users': { en: 'User Management', pl: 'Zarządzanie użytkownikami' },
+    'admin-settings': { en: 'Settings', pl: 'Ustawienia' },
+    billing: { en: 'Billing', pl: 'Płatności' },
+    profile: { en: 'Profile', pl: 'Profil' },
+    superadmin: { en: 'Super Admin', pl: 'Super Admin' },
+};
+
+const MODULE_DESCRIPTIONS: Record<string, { en: string; pl: string }> = {
+    dashboard: { 
+        en: 'Overview of your digital transformation journey with key metrics and quick actions',
+        pl: 'Przegląd podróży transformacji cyfrowej z kluczowymi metrykami i szybkimi akcjami'
+    },
+    assessment: {
+        en: 'Assess your organization digital maturity across 7 key dimensions',
+        pl: 'Oceń dojrzałość cyfrową organizacji w 7 kluczowych wymiarach'
+    },
+    initiatives: {
+        en: 'AI-powered initiative recommendations and management',
+        pl: 'Rekomendacje inicjatyw i zarządzanie wspierane przez AI'
+    },
+    roadmap: {
+        en: 'Plan and visualize your transformation roadmap',
+        pl: 'Planuj i wizualizuj mapę drogową transformacji'
+    },
+    implementation: {
+        en: 'Track implementation progress and manage execution',
+        pl: 'Śledź postęp wdrożenia i zarządzaj realizacją'
+    },
+    reports: {
+        en: 'Generate comprehensive reports and analytics',
+        pl: 'Generuj kompleksowe raporty i analizy'
+    },
+    mywork: {
+        en: 'Personal workspace for tasks and focus mode',
+        pl: 'Osobista przestrzeń robocza dla zadań i trybu skupienia'
+    },
+    organization: {
+        en: 'Manage organization settings and team members',
+        pl: 'Zarządzaj ustawieniami organizacji i członkami zespołu'
+    },
+    'admin-users': {
+        en: 'Manage users, roles and permissions',
+        pl: 'Zarządzaj użytkownikami, rolami i uprawnieniami'
+    },
+    'admin-settings': {
+        en: 'Configure system settings and preferences',
+        pl: 'Konfiguruj ustawienia i preferencje systemu'
+    },
+    billing: {
+        en: 'Manage billing, subscriptions and invoices',
+        pl: 'Zarządzaj płatnościami, subskrypcjami i fakturami'
+    },
+    profile: {
+        en: 'Manage your personal profile and preferences',
+        pl: 'Zarządzaj swoim profilem i preferencjami'
+    },
+    superadmin: {
+        en: 'Platform administration and monitoring',
+        pl: 'Administracja i monitoring platformy'
+    },
+};
 
 // Search result types
 export type SearchResultType = 'module' | 'card' | 'faq' | 'video';
@@ -147,21 +219,22 @@ export function buildSearchIndex(): SearchIndex {
     
     // Index modules
     Object.entries(MODULE_HELP_CONTENT).forEach(([moduleId, module]) => {
+        const names = MODULE_NAMES[moduleId] || { en: moduleId, pl: moduleId };
+        const descriptions = MODULE_DESCRIPTIONS[moduleId] || { en: '', pl: '' };
+        
         const searchableText = [
-            module.name.en,
-            module.description.en,
-            module.purpose.en,
-            ...module.keyFeatures.map(f => `${f.title.en} ${f.description.en}`),
-            ...module.tips.en
-        ].join(' ');
+            names.en,
+            descriptions.en,
+            moduleId,
+            ...(module.relatedModules || [])
+        ].filter(Boolean).join(' ');
         
         const searchableTextPl = [
-            module.name.pl,
-            module.description.pl,
-            module.purpose.pl,
-            ...module.keyFeatures.map(f => `${f.title.pl} ${f.description.pl}`),
-            ...module.tips.pl
-        ].join(' ');
+            names.pl,
+            descriptions.pl,
+            moduleId,
+            ...(module.relatedModules || [])
+        ].filter(Boolean).join(' ');
         
         index.modules.push({
             id: moduleId,
@@ -169,12 +242,12 @@ export function buildSearchIndex(): SearchIndex {
             moduleId: moduleId as HelpModuleId,
             searchableText,
             searchableTextPl,
-            title: module.name.en,
-            titlePl: module.name.pl,
-            excerpt: module.description.en.slice(0, 150) + '...',
-            excerptPl: module.description.pl.slice(0, 150) + '...',
+            title: names.en,
+            titlePl: names.pl,
+            excerpt: descriptions.en.slice(0, 150) + (descriptions.en.length > 150 ? '...' : ''),
+            excerptPl: descriptions.pl.slice(0, 150) + (descriptions.pl.length > 150 ? '...' : ''),
             icon: module.icon,
-            tags: module.keyFeatures.map(f => f.title.en),
+            tags: module.relatedModules || [],
             weight: 10
         });
     });
@@ -225,12 +298,12 @@ export function buildSearchIndex(): SearchIndex {
             id: video.id,
             type: 'video',
             moduleId: video.moduleId,
-            searchableText: `${video.title.en} ${video.description.en}`,
-            searchableTextPl: `${video.title.pl} ${video.description.pl}`,
-            title: video.title.en,
-            titlePl: video.title.pl,
-            excerpt: video.description.en.slice(0, 150) + '...',
-            excerptPl: video.description.pl.slice(0, 150) + '...',
+            searchableText: `${video.title} ${video.description}`,
+            searchableTextPl: `${video.titlePl} ${video.descriptionPl}`,
+            title: video.title,
+            titlePl: video.titlePl,
+            excerpt: video.description.slice(0, 150) + '...',
+            excerptPl: video.descriptionPl.slice(0, 150) + '...',
             url: video.url,
             tags: video.tags || [],
             weight: 8

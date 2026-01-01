@@ -6,7 +6,7 @@
 
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
-import { useOrgContext, useCurrentOrg } from '../../../contexts/OrgContext';
+import { useOrgContext, useCurrentOrg, OrgProvider } from '../../../contexts/OrgContext';
 import { useAppStore } from '../../../store/useAppStore';
 import { Api } from '../../../services/api';
 
@@ -17,8 +17,7 @@ vi.mock('../../../services/api');
 // Mock OrgProvider wrapper
 const createWrapper = (mockStore: any) => {
     return ({ children }: { children: React.ReactNode }) => {
-        const { OrgProvider } = require('../../../contexts/OrgContext');
-        return <OrgProvider>{children}</OrgProvider>;
+        return <OrgProvider userId="user-1">{children}</OrgProvider>;
     };
 };
 
@@ -43,6 +42,22 @@ describe('useOrgContext Hook', () => {
         });
 
         vi.mocked(Api.get).mockResolvedValue(mockOrganizations);
+
+        global.fetch = vi.fn().mockImplementation((url: any) => {
+            if (url.includes('/api/users/me/organizations')) {
+                return Promise.resolve({
+                    ok: true,
+                    json: async () => ({ organizations: mockOrganizations })
+                } as Response);
+            }
+            if (url.includes('/api/users/me/current-org')) {
+                return Promise.resolve({
+                    ok: true,
+                    json: async () => ({ success: true })
+                } as Response);
+            }
+            return Promise.resolve({ ok: false } as Response);
+        });
     });
 
     it('should return organization context', () => {
@@ -50,7 +65,7 @@ describe('useOrgContext Hook', () => {
         const { result } = renderHook(() => useOrgContext(), { wrapper });
 
         expect(result.current).toBeDefined();
-        expect(result.current.organizations).toBeDefined();
+        expect(result.current.availableOrgs).toBeDefined();
         expect(result.current.currentOrg).toBeDefined();
     });
 
@@ -76,6 +91,11 @@ describe('useOrgContext Hook', () => {
         const { result } = renderHook(() => useOrgContext(), { wrapper });
 
         if (result.current.switchOrg) {
+            await waitFor(() => {
+                expect(result.current.availableOrgs.length).toBeGreaterThan(0);
+                expect(result.current.isLoading).toBe(false);
+            });
+
             await result.current.switchOrg('org-2');
 
             await waitFor(() => {

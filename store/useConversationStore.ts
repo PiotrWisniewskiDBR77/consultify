@@ -38,11 +38,17 @@ export interface ConversationMessage {
     conversationId: string;
     role: 'user' | 'ai';
     content: string;
-    messageType: 'text' | 'action_request' | 'summary' | 'file' | 'tool_call';
+    messageType: 'text' | 'action_request' | 'summary' | 'file' | 'tool_call' | 'voice';
     metadata?: {
         citations?: Citation[];
         actions?: ResponseAction[];
         toolCalls?: any[];
+        // Voice-specific metadata
+        audioUrl?: string;
+        audioDuration?: number;
+        voiceProvider?: string;
+        voiceId?: string;
+        transcribedFrom?: 'whisper' | 'web';
     };
     tokenCount?: number;
     modelUsed?: string;

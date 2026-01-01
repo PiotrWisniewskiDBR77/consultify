@@ -590,6 +590,23 @@ function initDb() {
             // Ignore if exists
         });
 
+        // Initiative Templates
+        db.run(`CREATE TABLE IF NOT EXISTS initiative_templates (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            category TEXT,
+            description TEXT,
+            applicable_axes TEXT, -- JSON array
+            template_data TEXT, -- JSON structure
+            is_public INTEGER DEFAULT 0,
+            organization_id TEXT,
+            created_by TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
         // Knowledge Base: Documents
         db.run(`CREATE TABLE IF NOT EXISTS knowledge_docs(
             id TEXT PRIMARY KEY,
@@ -670,6 +687,21 @@ function initDb() {
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(updated_by) REFERENCES users(id) ON DELETE SET NULL
         )`);
+
+        // AI Conversation History (Persistent Session Layer 1)
+        db.run(`CREATE TABLE IF NOT EXISTS conversation_history (
+            id TEXT PRIMARY KEY,
+            conversation_id TEXT NOT NULL,
+            user_id TEXT,
+            role TEXT NOT NULL CHECK (role IN ('user', 'assistant', 'system')),
+            content TEXT NOT NULL,
+            tokens INTEGER,
+            metadata TEXT, -- JSON for extra data (timestamps, citations, relevance scores)
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_conv_hist_user_created ON conversation_history(user_id, created_at DESC)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_conv_hist_id_created ON conversation_history(conversation_id, created_at)`);
 
         // ==========================================
         // PHASE 1: CORE INFRASTRUCTURE TABLES
@@ -3611,9 +3643,33 @@ function initDb() {
             id TEXT PRIMARY KEY,
             user_id TEXT NOT NULL,
             organization_id TEXT NOT NULL,
-            playbook_key TEXT NOT NULL,
-            event_type TEXT NOT NULL, --VIEWED | STARTED | COMPLETED | DISMISSED
-            context TEXT DEFAULT '{}', --JSON context(route, feature, blocked_action, etc.)
+            playbook_key TEXT,
+            event_type TEXT NOT NULL, --VIEWED | STARTED | COMPLETED | DISMISSED | SEARCH
+            content_type TEXT, 
+            content_id TEXT,
+            metadata TEXT, -- JSON
+            step_id TEXT, 
+            action TEXT,
+            context TEXT DEFAULT '{}', --JSON context
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+
+        /**
+         * Help Feedback Table
+         * Specific feedback on help content (was/was not helpful)
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS help_feedback(
+            id TEXT PRIMARY KEY,
+            user_id TEXT,
+            organization_id TEXT,
+            content_type TEXT,
+            content_id TEXT,
+            is_helpful BOOLEAN,
+            rating INTEGER,
+            comment TEXT,
+            metadata TEXT, -- JSON
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
             FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
@@ -3631,6 +3687,26 @@ function initDb() {
         // STEP 7: METRICS & CONVERSION INTELLIGENCE
         // Enterprise+ Decision Layer
         // ==========================================
+
+
+        /**
+         * Help Analytics Table
+         * General usage tracking (Views, Searches, Video Progress)
+         */
+        db.run(`CREATE TABLE IF NOT EXISTS help_analytics(
+            id TEXT PRIMARY KEY,
+            user_id TEXT,
+            organization_id TEXT,
+            session_id TEXT,
+            event_type TEXT NOT NULL, --view, search, click, complete, video_progress
+            content_type TEXT,
+            content_id TEXT,
+            metadata TEXT, --JSON
+            duration_ms INTEGER,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
 
         /**
          * Metrics Events Table (APPEND-ONLY - Single Source of Truth)
@@ -3712,11 +3788,12 @@ function initDb() {
             proposal_id TEXT NOT NULL,
             organization_id TEXT, --Added for RBAC hardening
             correlation_id TEXT, --Step 9.5: For tracing proposal→decision→execution
-            decision TEXT NOT NULL, --APPROVED | REJECTED | MODIFIED
-            decided_by_user_id TEXT NOT NULL,
-        decision_reason TEXT,
-            action_type TEXT NOT NULL, --Denormalized for filtering
+            decision TEXT, --APPROVED | REJECTED | MODIFIED(Nullable for pending)
+            decided_by_user_id TEXT, --Nullable for pending
+            decision_reason TEXT,
+        action_type TEXT NOT NULL, --Denormalized for filtering
             scope TEXT NOT NULL, --Denormalized for filtering
+            status TEXT DEFAULT 'PENDING', --PENDING | DECIDED
             proposal_snapshot TEXT, --Full JSON of AI proposal(Step 9.2 alignment)
             original_payload TEXT, --JSON(deprecated, use snapshot)
             modified_payload TEXT, --JSON(only if MODIFIED)
@@ -4354,21 +4431,21 @@ function initDb() {
          */
         db.run(`CREATE TABLE IF NOT EXISTS governance_audit_log(
                     id TEXT PRIMARY KEY,
-                    event_type TEXT DEFAULT 'audit', -- KEEPING for compatibility, though action is used
-                    action TEXT, -- ADDED to match service
+                    event_type TEXT DEFAULT 'audit', --KEEPING for compatibility, though action is used
+                    action TEXT, --ADDED to match service
                     actor_id TEXT NOT NULL,
-                    actor_role TEXT, -- ADDED
+        actor_role TEXT, --ADDED
                     organization_id TEXT,
-                    project_id TEXT,
-                    resource_type TEXT NOT NULL,
-                    resource_id TEXT NOT NULL,
-                    before_json TEXT, -- Renamed from previous_state
-                    after_json TEXT, -- Renamed from new_state
+        project_id TEXT,
+            resource_type TEXT NOT NULL,
+                resource_id TEXT NOT NULL,
+                    before_json TEXT, --Renamed from previous_state
+                    after_json TEXT, --Renamed from new_state
                     metadata TEXT,
-                    correlation_id TEXT, -- ADDED
-                    record_hash TEXT, -- Renamed from hash
+        correlation_id TEXT, --ADDED
+                    record_hash TEXT, --Renamed from hash
                     prev_hash TEXT,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 )`);
 
         db.run(`CREATE INDEX IF NOT EXISTS idx_gov_audit_org ON governance_audit_log(organization_id)`);
@@ -4383,51 +4460,51 @@ function initDb() {
         // Align schema with Step 14 governance controls (see migrations/014_governance_enterprise.sql)
         // NOTE: Keep fields compatible with BreakGlassService expectations.
         db.run(`CREATE TABLE IF NOT EXISTS break_glass_sessions(
-                    id TEXT PRIMARY KEY,
-                    organization_id TEXT NOT NULL,
-                    actor_id TEXT NOT NULL,
-                    reason TEXT NOT NULL,
-                    scope TEXT NOT NULL,
-                    expires_at DATETIME NOT NULL,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    closed_at DATETIME,
-                    --Legacy / compat fields(safe to keep, optional)
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            actor_id TEXT NOT NULL,
+            reason TEXT NOT NULL,
+            scope TEXT NOT NULL,
+            expires_at DATETIME NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            closed_at DATETIME,
+            --Legacy / compat fields(safe to keep, optional)
             ticket_ref TEXT,
-                    permissions_granted TEXT,
-                    started_at DATETIME,
-                    ended_at DATETIME,
-                    is_active INTEGER DEFAULT 1,
-                    FOREIGN KEY(actor_id) REFERENCES users(id),
-                    FOREIGN KEY(organization_id) REFERENCES organizations(id)
-                )`);
+            permissions_granted TEXT,
+            started_at DATETIME,
+            ended_at DATETIME,
+            is_active INTEGER DEFAULT 1,
+            FOREIGN KEY(actor_id) REFERENCES users(id),
+            FOREIGN KEY(organization_id) REFERENCES organizations(id)
+        )`);
 
         // ==========================================
         // ASSESSMENT LEVEL ATTACHMENTS
         // For attaching evidence files to specific maturity levels
         // ==========================================
         db.run(`CREATE TABLE IF NOT EXISTS assessment_level_attachments(
-                    id TEXT PRIMARY KEY,
-                    assessment_id TEXT NOT NULL,
-                    axis_id TEXT NOT NULL,
-                    area_id TEXT,
-                    level_number INTEGER NOT NULL,
-                    attachment_type TEXT DEFAULT 'EVIDENCE',
-                    file_name TEXT NOT NULL,
-                    file_path TEXT NOT NULL,
-                    file_size INTEGER,
-                    mime_type TEXT,
-                    description TEXT,
-                    uploaded_by TEXT NOT NULL,
-                    organization_id TEXT NOT NULL,
-                    ai_analysis TEXT,
-                    ai_suggested_score INTEGER,
-                    ai_confidence REAL,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY(assessment_id) REFERENCES maturity_assessments(id) ON DELETE CASCADE,
-                    FOREIGN KEY(uploaded_by) REFERENCES users(id) ON DELETE SET NULL,
-                    FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
-                )`);
+            id TEXT PRIMARY KEY,
+            assessment_id TEXT NOT NULL,
+            axis_id TEXT NOT NULL,
+            area_id TEXT,
+            level_number INTEGER NOT NULL,
+            attachment_type TEXT DEFAULT 'EVIDENCE',
+            file_name TEXT NOT NULL,
+            file_path TEXT NOT NULL,
+            file_size INTEGER,
+            mime_type TEXT,
+            description TEXT,
+            uploaded_by TEXT NOT NULL,
+            organization_id TEXT NOT NULL,
+            ai_analysis TEXT,
+            ai_suggested_score INTEGER,
+            ai_confidence REAL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(assessment_id) REFERENCES maturity_assessments(id) ON DELETE CASCADE,
+            FOREIGN KEY(uploaded_by) REFERENCES users(id) ON DELETE SET NULL,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_level_attachments_assessment ON assessment_level_attachments(assessment_id)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_level_attachments_axis ON assessment_level_attachments(axis_id)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_level_attachments_level ON assessment_level_attachments(level_number)`);
@@ -4436,44 +4513,44 @@ function initDb() {
         // ORGANIZATION PROFILES (Enterprise AI)
         // ==========================================
         db.run(`CREATE TABLE IF NOT EXISTS organization_profiles(
-                    id TEXT PRIMARY KEY,
-                    organization_id TEXT NOT NULL UNIQUE,
-                    industry TEXT,
-                    industry_code TEXT,
-                    industry_subsector TEXT,
-                    company_size TEXT,
-                    employee_count INTEGER,
-                    annual_revenue REAL,
-                    founding_year INTEGER,
-                    headquarters_country TEXT,
-                    strategic_priorities TEXT DEFAULT '[]',
-                    competitive_position TEXT,
-                    growth_stage TEXT,
-                    mission_statement TEXT,
-                    vision_statement TEXT,
-                    digital_maturity_overall REAL,
-                    technology_stack TEXT DEFAULT '[]',
-                    digital_budget_percent REAL,
-                    cloud_adoption_level TEXT,
-                    primary_markets TEXT DEFAULT '[]',
-                    customer_segments TEXT DEFAULT '[]',
-                    key_competitors TEXT DEFAULT '[]',
-                    market_share_estimate REAL,
-                    regulatory_environment TEXT DEFAULT '[]',
-                    risk_appetite TEXT DEFAULT 'MODERATE',
-                    budget_constraints TEXT,
-                    timeline_constraints TEXT,
-                    preferred_language TEXT DEFAULT 'pl',
-                    communication_style TEXT DEFAULT 'PROFESSIONAL',
-                    industry_jargon_level TEXT DEFAULT 'MEDIUM',
-                    last_assessment_date DATETIME,
-                    profile_completeness REAL DEFAULT 0,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    created_by TEXT,
-                    updated_by TEXT,
-                    FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
-                )`);
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL UNIQUE,
+            industry TEXT,
+            industry_code TEXT,
+            industry_subsector TEXT,
+            company_size TEXT,
+            employee_count INTEGER,
+            annual_revenue REAL,
+            founding_year INTEGER,
+            headquarters_country TEXT,
+            strategic_priorities TEXT DEFAULT '[]',
+            competitive_position TEXT,
+            growth_stage TEXT,
+            mission_statement TEXT,
+            vision_statement TEXT,
+            digital_maturity_overall REAL,
+            technology_stack TEXT DEFAULT '[]',
+            digital_budget_percent REAL,
+            cloud_adoption_level TEXT,
+            primary_markets TEXT DEFAULT '[]',
+            customer_segments TEXT DEFAULT '[]',
+            key_competitors TEXT DEFAULT '[]',
+            market_share_estimate REAL,
+            regulatory_environment TEXT DEFAULT '[]',
+            risk_appetite TEXT DEFAULT 'MODERATE',
+            budget_constraints TEXT,
+            timeline_constraints TEXT,
+            preferred_language TEXT DEFAULT 'pl',
+            communication_style TEXT DEFAULT 'PROFESSIONAL',
+            industry_jargon_level TEXT DEFAULT 'MEDIUM',
+            last_assessment_date DATETIME,
+            profile_completeness REAL DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            created_by TEXT,
+            updated_by TEXT,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_org_profiles_org_id ON organization_profiles(organization_id)`);
 
         // ==========================================
@@ -4481,18 +4558,18 @@ function initDb() {
         // User's frequently used AI prompts
         // ==========================================
         db.run(`CREATE TABLE IF NOT EXISTS pinned_prompts(
-                    id TEXT PRIMARY KEY,
-                    user_id TEXT NOT NULL,
-                    organization_id TEXT,
-                    prompt TEXT NOT NULL,
-                    label TEXT,
-                    category TEXT DEFAULT 'general',
-                    usage_count INTEGER DEFAULT 0,
-                    last_used_at DATETIME,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-                )`);
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            organization_id TEXT,
+            prompt TEXT NOT NULL,
+            label TEXT,
+            category TEXT DEFAULT 'general',
+            usage_count INTEGER DEFAULT 0,
+            last_used_at DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_pinned_prompts_user ON pinned_prompts(user_id)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_pinned_prompts_org ON pinned_prompts(organization_id)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_pinned_prompts_usage ON pinned_prompts(user_id, usage_count DESC)`);
@@ -4502,45 +4579,72 @@ function initDb() {
         // Stores user preferences and context learned by AI
         // ==========================================
         db.run(`CREATE TABLE IF NOT EXISTS ai_user_memory(
-                    id TEXT PRIMARY KEY,
-                    user_id TEXT NOT NULL,
-                    organization_id TEXT,
-                    key TEXT NOT NULL,
-                    value TEXT,
-                    source TEXT DEFAULT 'explicit' CHECK(source IN ('explicit', 'inferred')),
-                    confidence REAL DEFAULT 1.0,
-                    context TEXT,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    UNIQUE(user_id, key)
-                )`);
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            organization_id TEXT,
+            key TEXT NOT NULL,
+            value TEXT,
+            source TEXT DEFAULT 'explicit' CHECK(source IN('explicit', 'inferred')),
+            confidence REAL DEFAULT 1.0,
+            context TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(user_id, key)
+        )`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_ai_memory_user ON ai_user_memory(user_id)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_ai_memory_user_key ON ai_user_memory(user_id, key)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_ai_memory_org ON ai_user_memory(organization_id)`);
+
+        // ==========================================
+        // AI APPROVAL PATTERNS (HITL Learning System)
+        // Stores learned approval/rejection patterns for auto-decision
+        // ==========================================
+        db.run(`CREATE TABLE IF NOT EXISTS ai_approval_patterns(
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            organization_id TEXT NOT NULL,
+            action_type TEXT NOT NULL,
+            action_signature TEXT NOT NULL,
+            payload_template TEXT,
+            decision TEXT NOT NULL CHECK(decision IN('APPROVED', 'REJECTED')),
+            decision_count INTEGER DEFAULT 1,
+            last_decision_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            auto_apply INTEGER DEFAULT 0,
+            confidence_threshold REAL DEFAULT 0.9,
+            risk_level TEXT DEFAULT 'LOW' CHECK(risk_level IN('LOW', 'MEDIUM', 'HIGH')),
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            UNIQUE(user_id, action_type, action_signature)
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_approval_patterns_lookup ON ai_approval_patterns(user_id, action_type, action_signature)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_approval_patterns_org ON ai_approval_patterns(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_approval_patterns_auto ON ai_approval_patterns(user_id, auto_apply, action_type)`);
 
         // ==========================================
         // CONVERSATIONS (AI Chat)
         // Stores AI chat conversation metadata
         // ==========================================
         db.run(`CREATE TABLE IF NOT EXISTS conversations(
-                    id TEXT PRIMARY KEY,
-                    user_id TEXT NOT NULL,
-                    organization_id TEXT,
-                    project_id TEXT,
-                    title TEXT NOT NULL DEFAULT 'Nowa rozmowa',
-                    title_source TEXT DEFAULT 'auto' CHECK (title_source IN ('auto', 'user')),
-                    starred INTEGER DEFAULT 0,
-                    archived INTEGER DEFAULT 0,
-                    tags TEXT DEFAULT '[]',
-                    pmo_context TEXT DEFAULT '{}',
-                    message_count INTEGER DEFAULT 0,
-                    last_message_preview TEXT,
-                    last_message_at DATETIME,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
-                    FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE SET NULL
-                )`);
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            organization_id TEXT,
+            project_id TEXT,
+            title TEXT NOT NULL DEFAULT 'Nowa rozmowa',
+            title_source TEXT DEFAULT 'auto' CHECK(title_source IN('auto', 'user')),
+            starred INTEGER DEFAULT 0,
+            archived INTEGER DEFAULT 0,
+            tags TEXT DEFAULT '[]',
+            pmo_context TEXT DEFAULT '{}',
+            message_count INTEGER DEFAULT 0,
+            last_message_preview TEXT,
+            last_message_at DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE SET NULL
+        )`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_conversations_user_list ON conversations(user_id, archived, updated_at DESC)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_conversations_project ON conversations(project_id)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_conversations_starred ON conversations(user_id, starred)`);
@@ -4550,17 +4654,17 @@ function initDb() {
         // Stores individual messages within conversations
         // ==========================================
         db.run(`CREATE TABLE IF NOT EXISTS conversation_messages(
-                    id TEXT PRIMARY KEY,
-                    conversation_id TEXT NOT NULL,
-                    role TEXT NOT NULL CHECK (role IN ('user', 'ai')),
-                    content TEXT NOT NULL,
-                    message_type TEXT DEFAULT 'text' CHECK (message_type IN ('text', 'action_request', 'summary', 'file', 'tool_call')),
-                    metadata TEXT DEFAULT '{}',
-                    token_count INTEGER,
-                    model_used TEXT,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY(conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
-                )`);
+            id TEXT PRIMARY KEY,
+            conversation_id TEXT NOT NULL,
+            role TEXT NOT NULL CHECK(role IN('user', 'ai')),
+            content TEXT NOT NULL,
+            message_type TEXT DEFAULT 'text' CHECK(message_type IN('text', 'action_request', 'summary', 'file', 'tool_call')),
+            metadata TEXT DEFAULT '{}',
+            token_count INTEGER,
+            model_used TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
+        )`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_messages_conversation ON conversation_messages(conversation_id, created_at ASC)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_messages_recent ON conversation_messages(conversation_id, created_at DESC)`);
 
@@ -4569,30 +4673,30 @@ function initDb() {
         // Collaborative feedback on report sections
         // ==========================================
         db.run(`CREATE TABLE IF NOT EXISTS report_comments(
-                    id TEXT PRIMARY KEY,
-                    report_id TEXT NOT NULL,
-                    section_id TEXT,
-                    section_type TEXT,
-                    user_id TEXT NOT NULL,
-                    user_name TEXT,
-                    comment_type TEXT DEFAULT 'FEEDBACK',
-                    content TEXT NOT NULL,
-                    ai_response TEXT,
-                    ai_suggested_edits TEXT,
-                    ai_processed_at TEXT,
-                    status TEXT DEFAULT 'OPEN',
-                    resolved_by TEXT,
-                    resolved_at TEXT,
-                    resolution_notes TEXT,
-                    parent_comment_id TEXT,
-                    thread_position INTEGER DEFAULT 0,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY(report_id) REFERENCES assessment_reports(id) ON DELETE CASCADE,
-                    FOREIGN KEY(user_id) REFERENCES users(id),
-                    FOREIGN KEY(resolved_by) REFERENCES users(id),
-                    FOREIGN KEY(parent_comment_id) REFERENCES report_comments(id) ON DELETE CASCADE
-                )`);
+            id TEXT PRIMARY KEY,
+            report_id TEXT NOT NULL,
+            section_id TEXT,
+            section_type TEXT,
+            user_id TEXT NOT NULL,
+            user_name TEXT,
+            comment_type TEXT DEFAULT 'FEEDBACK',
+            content TEXT NOT NULL,
+            ai_response TEXT,
+            ai_suggested_edits TEXT,
+            ai_processed_at TEXT,
+            status TEXT DEFAULT 'OPEN',
+            resolved_by TEXT,
+            resolved_at TEXT,
+            resolution_notes TEXT,
+            parent_comment_id TEXT,
+            thread_position INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(report_id) REFERENCES assessment_reports(id) ON DELETE CASCADE,
+            FOREIGN KEY(user_id) REFERENCES users(id),
+            FOREIGN KEY(resolved_by) REFERENCES users(id),
+            FOREIGN KEY(parent_comment_id) REFERENCES report_comments(id) ON DELETE CASCADE
+        )`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_report_comments_report ON report_comments(report_id)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_report_comments_section ON report_comments(report_id, section_id)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_report_comments_status ON report_comments(status)`);
@@ -4602,28 +4706,28 @@ function initDb() {
         // Track all changes to report sections
         // ==========================================
         db.run(`CREATE TABLE IF NOT EXISTS report_edit_history(
-                    id TEXT PRIMARY KEY,
-                    report_id TEXT NOT NULL,
-                    section_id TEXT NOT NULL,
-                    edit_type TEXT DEFAULT 'MANUAL',
-                    editor_id TEXT NOT NULL,
-                    editor_name TEXT,
-                    previous_content TEXT,
-                    new_content TEXT,
-                    change_summary TEXT,
-                    related_comment_id TEXT,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY(report_id) REFERENCES assessment_reports(id) ON DELETE CASCADE,
-                    FOREIGN KEY(editor_id) REFERENCES users(id),
-                    FOREIGN KEY(related_comment_id) REFERENCES report_comments(id) ON DELETE SET NULL
-                )`);
+            id TEXT PRIMARY KEY,
+            report_id TEXT NOT NULL,
+            section_id TEXT NOT NULL,
+            edit_type TEXT DEFAULT 'MANUAL',
+            editor_id TEXT NOT NULL,
+            editor_name TEXT,
+            previous_content TEXT,
+            new_content TEXT,
+            change_summary TEXT,
+            related_comment_id TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(report_id) REFERENCES assessment_reports(id) ON DELETE CASCADE,
+            FOREIGN KEY(editor_id) REFERENCES users(id),
+            FOREIGN KEY(related_comment_id) REFERENCES report_comments(id) ON DELETE SET NULL
+        )`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_report_edit_history_report ON report_edit_history(report_id)`);
 
         // ==========================================
         // SYSTEM FEEDBACK
         // General bugs and ideas from users
         // ==========================================
-        db.run(`CREATE TABLE IF NOT EXISTS system_feedback (
+        db.run(`CREATE TABLE IF NOT EXISTS system_feedback(
             id TEXT PRIMARY KEY,
             user_id TEXT,
             user_email TEXT,
@@ -4633,6 +4737,114 @@ function initDb() {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_feedback_created ON system_feedback(created_at DESC)`);
+
+        // ==========================================
+        // CONSULTIFY STUDIO - Visual AI Workspace
+        // ==========================================
+
+        // Studio Documents
+        db.run(`CREATE TABLE IF NOT EXISTS studio_documents(
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT,
+            type TEXT DEFAULT 'process_flow',
+            nodes_json TEXT DEFAULT '[]',
+            edges_json TEXT DEFAULT '[]',
+            viewport_json TEXT DEFAULT '{"x": 0, "y": 0, "zoom": 1}',
+            conversation_id TEXT,
+            ai_context_json TEXT DEFAULT '{}',
+            linked_task_id TEXT,
+            linked_project_id TEXT,
+            linked_initiative_id TEXT,
+            is_public INTEGER DEFAULT 0,
+            share_token TEXT UNIQUE,
+            thumbnail_url TEXT,
+            tags_json TEXT DEFAULT '[]',
+            created_by TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_studio_documents_org ON studio_documents(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_studio_documents_type ON studio_documents(type)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_studio_documents_created_by ON studio_documents(created_by)`);
+
+        // Studio Snapshots (Version History)
+        db.run(`CREATE TABLE IF NOT EXISTS studio_snapshots(
+            id TEXT PRIMARY KEY,
+            document_id TEXT NOT NULL,
+            version INTEGER NOT NULL,
+            name TEXT,
+            nodes_json TEXT NOT NULL,
+            edges_json TEXT NOT NULL,
+            viewport_json TEXT,
+            snapshot_reason TEXT,
+            created_by TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(document_id) REFERENCES studio_documents(id) ON DELETE CASCADE,
+            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_studio_snapshots_document ON studio_snapshots(document_id)`);
+
+        // Studio Comments
+        db.run(`CREATE TABLE IF NOT EXISTS studio_comments(
+            id TEXT PRIMARY KEY,
+            document_id TEXT NOT NULL,
+            node_id TEXT NOT NULL,
+            text TEXT NOT NULL,
+            ai_response TEXT,
+            ai_action_taken TEXT,
+            resolved INTEGER DEFAULT 0,
+            resolved_at DATETIME,
+            resolved_by TEXT,
+            author_id TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(document_id) REFERENCES studio_documents(id) ON DELETE CASCADE,
+            FOREIGN KEY(author_id) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_studio_comments_document ON studio_comments(document_id)`);
+
+        // Studio Templates
+        db.run(`CREATE TABLE IF NOT EXISTS studio_templates(
+            id TEXT PRIMARY KEY,
+            organization_id TEXT,
+            name TEXT NOT NULL,
+            description TEXT,
+            category TEXT NOT NULL,
+            icon TEXT DEFAULT 'file-diagram',
+            nodes_json TEXT NOT NULL DEFAULT '[]',
+            edges_json TEXT NOT NULL DEFAULT '[]',
+            default_viewport_json TEXT DEFAULT '{"x": 0, "y": 0, "zoom": 1}',
+            thumbnail_url TEXT,
+            tags_json TEXT DEFAULT '[]',
+            is_public INTEGER DEFAULT 0,
+            is_featured INTEGER DEFAULT 0,
+            usage_count INTEGER DEFAULT 0,
+            created_by TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_studio_templates_org ON studio_templates(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_studio_templates_category ON studio_templates(category)`);
+
+        // Studio AI Sessions
+        db.run(`CREATE TABLE IF NOT EXISTS studio_ai_sessions(
+            id TEXT PRIMARY KEY,
+            document_id TEXT NOT NULL,
+            messages_json TEXT DEFAULT '[]',
+            intent_history_json TEXT DEFAULT '[]',
+            entities_json TEXT DEFAULT '{}',
+            total_generations INTEGER DEFAULT 0,
+            total_modifications INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(document_id) REFERENCES studio_documents(id) ON DELETE CASCADE
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_studio_ai_sessions_document ON studio_ai_sessions(document_id)`);
 
         // Seed Super Admin & Default Organization
         const superAdminOrgId = 'org-dbr77-system';
@@ -4681,5 +4893,89 @@ function initDb() {
         });
     });
 }
+
+// ==========================================
+// PROMISIFY ACTIONS FOR ASYNC/AWAIT SUPPORT
+// ==========================================
+const originalRun = db.run.bind(db);
+const originalGet = db.get.bind(db);
+const originalAll = db.all.bind(db);
+
+db.run = function (sql, params, callback) {
+    if (typeof params === 'function') {
+        callback = params;
+        params = [];
+    }
+    if (!params) params = [];
+
+    if (callback) {
+        return originalRun.call(this, sql, params, callback);
+    }
+
+    return new Promise((resolve, reject) => {
+        originalRun.call(this, sql, params, function (err) {
+            if (err) {
+                // Log only if it's not a known safe error? 
+                // Getting many "duplicate column" errors during init is "safe" but annoying.
+                // We'll log them for now.
+                // console.error('SQL Error (RUN):', err.message, 'Query:', sql);
+                reject(err);
+            } else {
+                resolve(this);
+            }
+        });
+    });
+};
+
+db.get = function (sql, params, callback) {
+    if (typeof params === 'function') {
+        callback = params;
+        params = [];
+    }
+    if (!params) params = [];
+
+    if (callback) {
+        return originalGet.call(this, sql, params, callback);
+    }
+
+    return new Promise((resolve, reject) => {
+        originalGet.call(this, sql, params, (err, row) => {
+            if (err) {
+                console.error('SQL Error (GET):', err.message, 'Query:', sql);
+                reject(err);
+            } else {
+                resolve(row);
+            }
+        });
+    });
+};
+
+db.all = function (sql, params, callback) {
+    if (typeof params === 'function') {
+        callback = params;
+        params = [];
+    }
+    if (!params) params = [];
+
+    if (callback) {
+        return originalAll.call(this, sql, params, callback);
+    }
+
+    return new Promise((resolve, reject) => {
+        originalAll.call(this, sql, params, (err, rows) => {
+            if (err) {
+                console.error('SQL Error (ALL):', err.message, 'Query:', sql);
+                reject(err);
+            } else {
+                resolve(rows || []);
+            }
+        });
+    });
+};
+
+// Add Async aliases for services that expect them
+db.runAsync = db.run;
+db.getAsync = db.get;
+db.allAsync = db.all;
 
 module.exports = db;

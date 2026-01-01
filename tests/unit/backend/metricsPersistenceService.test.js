@@ -1,5 +1,4 @@
 // Mock dependencies (using globals)
-// const { expect, vi, describe, it, beforeEach, afterEach } = require('vitest');
 
 // Load real middleware
 const performanceMetrics = require('../../../server/middleware/performanceMetrics');

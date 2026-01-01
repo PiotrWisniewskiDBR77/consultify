@@ -20,6 +20,8 @@ const verifyToken = (req, res, next) => {
         if (process.env.NODE_ENV === 'test') {
             // console.log('[DEBUG] Bypassing token check in test mode');
             req.user = { id: 'test-user-id', organizationId: 'test-org-id', role: 'client' };
+            req.userId = 'test-user-id';
+            req.organizationId = 'test-org-id';
             return next();
         }
         return res.status(403).json({ error: 'No token provided' });

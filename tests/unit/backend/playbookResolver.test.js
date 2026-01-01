@@ -4,7 +4,6 @@
  * Tests for playbook priority, conflict resolution, and recommendation logic.
  */
 
-const { describe, it, expect, vi, beforeEach } = require('vitest');
 const PlaybookResolver = require('../../../server/services/playbookResolver');
 
 // Mock HelpService

@@ -226,7 +226,7 @@ export const OrganizationsView: React.FC = () => {
 
     return (
         <div className="p-8 overflow-y-auto h-full relative">
-            <InfoButton cardId="superadmin-organizations" position="top-right" />
+
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
                 <div>

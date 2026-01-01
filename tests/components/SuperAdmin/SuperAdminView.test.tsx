@@ -1,6 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
+import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { SuperAdminView } from '../../../views/superadmin/SuperAdminView';
@@ -15,6 +16,46 @@ vi.mock('react-hot-toast', () => ({
     toast: {
         error: vi.fn(),
         success: vi.fn()
+    }
+}));
+
+// Mock all floating widgets and side panels to avoid context issues
+vi.mock('../../../components/Help/HelpSidePanel', () => ({
+    HelpSidePanel: () => null
+}));
+
+vi.mock('../../../components/DocumentSidePanel', () => ({
+    DocumentSidePanel: () => null,
+    default: () => null
+}));
+
+vi.mock('../../../components/Feedback/FeedbackSidePanel', () => ({
+    FeedbackSidePanel: () => null
+}));
+
+vi.mock('../../../components/UserProfileMenu', () => ({
+    UserProfileMenu: () => null
+}));
+
+// Mock OverviewModule to avoid its API calls
+vi.mock('../../../views/superadmin/OverviewModule', () => ({
+    OverviewModule: () => <div data-testid="overview-module">Overview Module Content</div>,
+    default: () => <div data-testid="overview-module">Overview Module Content</div>
+}));
+
+// Mock services/api
+vi.mock('../../../services/api', () => ({
+    Api: {
+        getAccessRequests: vi.fn().mockResolvedValue([]),
+        getOrganizations: vi.fn().mockResolvedValue([]),
+        getSuperAdminDashboard: vi.fn().mockResolvedValue({
+            counts: { total_orgs: 0, total_users: 0 },
+            ai: { total_ai_calls: 0 },
+            live: { total_active_connections: 0 },
+            activities: []
+        }),
+        getTasks: vi.fn().mockResolvedValue([]),
+        get: vi.fn().mockResolvedValue({})
     }
 }));
 
@@ -46,7 +87,7 @@ describe('SuperAdminView', () => {
         render(<SuperAdminView currentUser={mockCurrentUser} onNavigate={mockOnNavigate} />);
         
         await waitFor(() => {
-            expect(screen.getByText('Overview')).toBeInTheDocument();
+            expect(screen.getAllByText('Overview').length).toBeGreaterThan(0);
         });
     });
 

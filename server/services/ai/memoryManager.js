@@ -12,6 +12,7 @@
 const { projectMemoryStore } = require('./projectMemoryStore');
 const { organizationMemoryStore } = require('./organizationMemoryStore');
 const { embeddingService } = require('./embeddingService');
+const { PersistentSessionStore } = require('./persistentSessionStore');
 const { aiLogger } = require('./logger');
 
 // Memory layer configuration
@@ -49,7 +50,7 @@ const DEFAULT_MAX_TOKENS = 3000;
 
 class MemoryManager {
     constructor() {
-        this.sessionStore = new SessionMemoryStore();
+        this.sessionStore = new PersistentSessionStore();
         this.projectStore = projectMemoryStore;
         this.orgStore = organizationMemoryStore;
         this.knowledgeStore = embeddingService;
@@ -74,11 +75,11 @@ class MemoryManager {
 
         const startTime = Date.now();
         const enabledLayers = includeExternal ? [...layers, 'external'] : layers;
-        
+
         aiLogger.debug('MemoryManager', `Retrieving from layers: ${enabledLayers.join(', ')}`);
 
         // Parallel retrieval from all layers
-        const retrievalPromises = enabledLayers.map(layer => 
+        const retrievalPromises = enabledLayers.map(layer =>
             this._retrieveFromLayer(layer, {
                 userId,
                 organizationId,
@@ -142,7 +143,7 @@ class MemoryManager {
             case 'organization':
                 if (!organizationId) return { layer, chunks: [] };
                 const patterns = await this.orgStore.searchPatterns(
-                    organizationId, 
+                    organizationId,
                     queryText,
                     { limit: config.maxChunks }
                 );
@@ -236,7 +237,7 @@ class MemoryManager {
 
         for (const result of results) {
             const layerWeight = LAYER_CONFIG[result.layer]?.weight || 1.0;
-            
+
             for (const chunk of (result.chunks || [])) {
                 allChunks.push({
                     ...chunk,
@@ -257,7 +258,7 @@ class MemoryManager {
         for (const chunk of allChunks) {
             const chunkTokens = this._estimateTokens([chunk]);
             if (currentTokens + chunkTokens > tokenBudget) break;
-            
+
             selectedChunks.push(chunk);
             currentTokens += chunkTokens;
         }
@@ -286,7 +287,7 @@ class MemoryManager {
      */
     _estimateTokens(chunks) {
         // Rough estimation: 1 token ≈ 4 characters
-        const totalChars = chunks.reduce((sum, chunk) => 
+        const totalChars = chunks.reduce((sum, chunk) =>
             sum + (chunk.content?.length || 0), 0
         );
         return Math.ceil(totalChars / 4);
@@ -363,7 +364,7 @@ class MemoryManager {
     async extractPatterns(organizationId, projectData) {
         // Get all project memories
         const memories = await this.projectStore.getApplicableLearnings(projectData.id);
-        
+
         // Use org store to extract patterns via AI
         const enrichedProjectData = {
             ...projectData,
@@ -446,72 +447,6 @@ class MemoryManager {
     }
 }
 
-/**
- * Session Memory Store (Layer 1)
- * Simple in-memory store with Redis-like interface
- * TODO: Replace with actual Redis in production
- */
-class SessionMemoryStore {
-    constructor() {
-        this.sessions = new Map();
-        this.ttlMs = LAYER_CONFIG.session.ttlMinutes * 60 * 1000;
-    }
-
-    async getRecentContext(userId, limit = 10) {
-        const session = this.sessions.get(userId);
-        if (!session) return [];
-
-        // Check expiry
-        if (Date.now() > session.expiresAt) {
-            this.sessions.delete(userId);
-            return [];
-        }
-
-        // Return recent messages as chunks
-        const messages = session.messages.slice(-limit);
-        return messages.map(m => ({
-            content: `[${m.role}] ${m.content}`,
-            source: 'session',
-            relevance: 0.9,
-            metadata: { timestamp: m.timestamp }
-        }));
-    }
-
-    async addMessage(userId, message) {
-        let session = this.sessions.get(userId);
-        
-        if (!session) {
-            session = {
-                messages: [],
-                expiresAt: Date.now() + this.ttlMs
-            };
-            this.sessions.set(userId, session);
-        }
-
-        session.messages.push(message);
-        session.expiresAt = Date.now() + this.ttlMs;
-
-        // Limit messages
-        if (session.messages.length > 50) {
-            session.messages = session.messages.slice(-50);
-        }
-    }
-
-    async clearSession(userId) {
-        this.sessions.delete(userId);
-    }
-
-    // Cleanup expired sessions periodically
-    cleanup() {
-        const now = Date.now();
-        for (const [userId, session] of this.sessions) {
-            if (now > session.expiresAt) {
-                this.sessions.delete(userId);
-            }
-        }
-    }
-}
-
 // Singleton instance
 const memoryManager = new MemoryManager();
 
@@ -523,7 +458,6 @@ setInterval(() => {
 module.exports = {
     MemoryManager,
     memoryManager,
-    SessionMemoryStore,
     LAYER_CONFIG
 };
 

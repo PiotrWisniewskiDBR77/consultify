@@ -31,6 +31,7 @@ const Module1ContextView = React.lazy(() => import('./views/Module1ContextView')
 const ContextBuilderView = React.lazy(() => import('./views/ContextBuilder/ContextBuilderView').then(m => ({ default: m.ContextBuilderView })));
 const MyWorkView = React.lazy(() => import('./views/MyWorkView').then(m => ({ default: m.MyWorkView })));
 const ActionProposalView = React.lazy(() => import('./views/ActionProposalView').then(m => ({ default: m.ActionProposalView })));
+const StudioView = React.lazy(() => import('./views/StudioView').then(m => ({ default: m.StudioView })));
 const InitiativeManagementView = React.lazy(() => import('./views/InitiativeManagementView').then(m => ({ default: m.InitiativeManagementView })));
 const BenefitsRealizationView = React.lazy(() => import('./views/BenefitsRealizationView').then(m => ({ default: m.BenefitsRealizationView })));
 const PortfolioView = React.lazy(() => import('./views/PortfolioView'));
@@ -478,6 +479,9 @@ const AppContent: React.FC = () => {
         } else if (currentView === AppView.KPI_OKR_DASHBOARD) {
             section = t('sidebar.fullProject');
             sub = t('sidebar.kpiOkr');
+        } else if (currentView === AppView.STUDIO) {
+            section = t('sidebar.tools');
+            sub = t('sidebar.studio', 'Studio');
         }
         // Quick Assessment Views
         else if (viewParts.includes('QUICK')) {
@@ -801,6 +805,15 @@ const AppContent: React.FC = () => {
             return (
                 <React.Suspense fallback={<LoadingScreen />}>
                     <ActionProposalView />
+                </React.Suspense>
+            );
+        }
+
+        // Consultify Studio - Visual AI Workspace
+        if (currentView === AppView.STUDIO) {
+            return (
+                <React.Suspense fallback={<LoadingScreen />}>
+                    <StudioView />
                 </React.Suspense>
             );
         }

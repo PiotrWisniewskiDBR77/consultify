@@ -8,7 +8,6 @@
  * - High load scenarios
  */
 
-const { describe, it, expect, beforeAll } = require('vitest');
 const db = require('../../server/database');
 
 describe('Scalability Tests', () => {

@@ -187,6 +187,121 @@ describe('AIContextBuilder', () => {
             expect(context.selectedObjectId).toBe('obj-123');
             expect(context.selectedObjectType).toBe('initiative');
         });
+
+        it('should filter context for PMO Docs focus mode', async () => {
+            const userId = testUsers.user.id;
+            const orgId = testOrganizations.org1.id;
+            const projectId = testProjects.project1.id;
+            const options = { focusMode: 'pmo-docs' };
+
+            mockDb.get.mockImplementation((query, params, callback) => {
+                callback(null, {});
+            });
+
+            mockDb.all.mockImplementation((query, params, callback) => {
+                callback(null, []);
+            });
+
+            const context = await AIContextBuilder.buildContext(userId, orgId, projectId, options);
+
+            expect(context.focusMode).toBe('pmo-docs');
+            // PMO docs mode should filter out project and execution data
+            expect(context.project).toBeNull();
+            expect(context.execution).toBeNull();
+            expect(context.external).toBeNull();
+        });
+
+        it('should filter context for Project Data focus mode', async () => {
+            const userId = testUsers.user.id;
+            const orgId = testOrganizations.org1.id;
+            const projectId = testProjects.project1.id;
+            const options = { focusMode: 'project-data' };
+
+            mockDb.get.mockImplementation((query, params, callback) => {
+                callback(null, {});
+            });
+
+            mockDb.all.mockImplementation((query, params, callback) => {
+                callback(null, []);
+            });
+
+            const context = await AIContextBuilder.buildContext(userId, orgId, projectId, options);
+
+            expect(context.focusMode).toBe('project-data');
+            // Project data mode should keep project but filter knowledge and external
+            expect(context.project).toBeDefined();
+            expect(context.external).toBeNull();
+        });
+
+        it('should filter context for Research focus mode', async () => {
+            const userId = testUsers.user.id;
+            const orgId = testOrganizations.org1.id;
+            const projectId = testProjects.project1.id;
+            const options = { focusMode: 'research' };
+
+            mockDb.get.mockImplementation((query, params, callback) => {
+                callback(null, {});
+            });
+
+            mockDb.all.mockImplementation((query, params, callback) => {
+                callback(null, []);
+            });
+
+            const context = await AIContextBuilder.buildContext(userId, orgId, projectId, options);
+
+            expect(context.focusMode).toBe('research');
+            // Research mode should filter out external sources
+            expect(context.external).toBeNull();
+        });
+
+        it('should filter context for Web focus mode', async () => {
+            const userId = testUsers.user.id;
+            const orgId = testOrganizations.org1.id;
+            const projectId = testProjects.project1.id;
+            const options = { focusMode: 'web' };
+
+            mockDb.get.mockImplementation((query, params, callback) => {
+                callback(null, {});
+            });
+
+            mockDb.all.mockImplementation((query, params, callback) => {
+                callback(null, []);
+            });
+
+            const context = await AIContextBuilder.buildContext(userId, orgId, projectId, options);
+
+            expect(context.focusMode).toBe('web');
+            // Web mode should filter out knowledge and execution
+            expect(context.knowledge).toBeNull();
+            expect(context.execution).toBeNull();
+            expect(context.external).toBeDefined();
+        });
+
+        it('should not filter context for All focus mode', async () => {
+            const userId = testUsers.user.id;
+            const orgId = testOrganizations.org1.id;
+            const projectId = testProjects.project1.id;
+            const options = { focusMode: 'all' };
+
+            mockDb.get.mockImplementation((query, params, callback) => {
+                callback(null, {});
+            });
+
+            mockDb.all.mockImplementation((query, params, callback) => {
+                callback(null, []);
+            });
+
+            const context = await AIContextBuilder.buildContext(userId, orgId, projectId, options);
+
+            expect(context.focusMode).toBe('all');
+            // All mode should include all context layers
+            expect(context.platform).toBeDefined();
+            expect(context.organization).toBeDefined();
+            expect(context.project).toBeDefined();
+            expect(context.execution).toBeDefined();
+            expect(context.knowledge).toBeDefined();
+            expect(context.external).toBeDefined();
+        });
     });
 
     describe('_buildPlatformContext()', () => {

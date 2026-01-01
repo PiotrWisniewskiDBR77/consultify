@@ -89,7 +89,7 @@ const CONTEXT_RESEARCH_MAP = {
     initiatives: ['bestPractice', 'caseStudy', 'roi', 'risk'],
     roadmap: ['roi', 'risk', 'bestPractice'],
     execution: ['bestPractice', 'caseStudy', 'trend'],
-    
+
     // User intents
     compare: ['benchmark', 'competitive'],
     understand: ['bestPractice', 'trend', 'caseStudy'],
@@ -135,7 +135,7 @@ class IntelligentResearch {
 
             // Select best template
             const template = this.selectTemplate(typeConfig.templates, context);
-            
+
             // Fill template variables
             const baseQuery = this.fillTemplate(template, {
                 industry: industry || 'enterprise',
@@ -154,7 +154,7 @@ class IntelligentResearch {
 
             // Add enhancers for better results
             const enhancedQuery = this.enhanceQuery(baseQuery, typeConfig.enhancers, context);
-            
+
             queries.push({
                 query: enhancedQuery,
                 type: researchType,
@@ -186,12 +186,12 @@ class IntelligentResearch {
      */
     async research(context) {
         const queries = this.generateQueries(context);
-        
+
         if (queries.length === 0) {
-            return { 
-                success: false, 
+            return {
+                success: false,
                 message: 'No research queries generated',
-                context 
+                context
             };
         }
 
@@ -200,13 +200,13 @@ class IntelligentResearch {
         // Execute queries in parallel (with limit)
         const maxParallel = 3;
         const results = [];
-        
+
         for (let i = 0; i < queries.length; i += maxParallel) {
             const batch = queries.slice(i, i + maxParallel);
             const batchResults = await Promise.allSettled(
                 batch.map(q => this.executeQuery(q))
             );
-            
+
             results.push(...batchResults
                 .filter(r => r.status === 'fulfilled')
                 .map(r => r.value)
@@ -288,25 +288,26 @@ class IntelligentResearch {
     async supportConversation(message, conversationState) {
         // Detect if research would be helpful
         const needsResearch = this.detectResearchNeed(message, conversationState);
-        
+
         if (!needsResearch) {
             return { needed: false };
         }
 
         // Quick research with tight timeout
         const timeout = 5000; // 5 seconds max for real-time support
-        
+
         try {
             const researchPromise = this.research({
                 userMessage: message.content,
                 intent: conversationState.currentIntent,
                 phase: conversationState.currentPhase,
+                knowledgeGaps: conversationState.knowledgeGaps,
                 industry: conversationState.organization?.industry,
                 axisId: conversationState.currentAxis,
                 language: conversationState.language
             });
 
-            const timeoutPromise = new Promise((_, reject) => 
+            const timeoutPromise = new Promise((_, reject) =>
                 setTimeout(() => reject(new Error('Research timeout')), timeout)
             );
 
@@ -319,10 +320,10 @@ class IntelligentResearch {
             };
         } catch (error) {
             aiLogger.warn('IntelligentResearch', `Real-time research failed: ${error.message}`);
-            return { 
-                needed: true, 
-                available: false, 
-                reason: error.message 
+            return {
+                needed: true,
+                available: false,
+                reason: error.message
             };
         }
     }
@@ -372,7 +373,7 @@ class IntelligentResearch {
 
         // Add year for freshness
         const year = new Date().getFullYear();
-        
+
         return `${query} ${selectedEnhancers.join(' ')} ${year}`.trim();
     }
 
@@ -409,7 +410,7 @@ class IntelligentResearch {
             'AI', 'RPA', 'IoT', 'cloud', 'blockchain', 'analytics',
             'automation', 'machine learning', 'data platform', 'ERP', 'CRM'
         ];
-        
+
         const lower = message?.toLowerCase() || '';
         return techKeywords.find(t => lower.includes(t.toLowerCase())) || 'technology';
     }
@@ -528,7 +529,7 @@ class IntelligentResearch {
 
     async synthesizeForConsulting(results, context) {
         const validResults = results.filter(r => r.content && !r.error);
-        
+
         if (validResults.length === 0) {
             return {
                 summary: 'No relevant research findings available.',
@@ -561,7 +562,7 @@ class IntelligentResearch {
 
     extractKeyInsights(results) {
         const insights = [];
-        
+
         for (const result of results) {
             // Extract statistics
             const stats = (result.content || '').match(/\d+(?:\.\d+)?%/g) || [];
@@ -590,11 +591,11 @@ class IntelligentResearch {
     generateRecommendations(results, context) {
         // Basic recommendation generation
         const recommendations = [];
-        
+
         if (context.phase === 'assessment') {
             recommendations.push('Consider benchmarking against industry leaders identified in research');
         }
-        
+
         if (context.phase === 'initiatives') {
             recommendations.push('Review case studies for implementation lessons');
             recommendations.push('Validate business case with industry ROI data');
@@ -606,7 +607,7 @@ class IntelligentResearch {
     assessSourceQuality(results) {
         const sources = results.map(r => r.source);
         const hasCredible = sources.some(s => ['perplexity', 'tavily', 'google'].includes(s));
-        
+
         return {
             totalSources: results.length,
             hasCredibleSources: hasCredible,
@@ -616,7 +617,7 @@ class IntelligentResearch {
 
     collectCitations(results) {
         const allCitations = [];
-        
+
         for (const result of results) {
             if (result.citations) {
                 allCitations.push(...result.citations);
@@ -640,7 +641,7 @@ class IntelligentResearch {
     decomposeQuestion(question) {
         // Simple decomposition - in production would use NLP
         const subQuestions = [];
-        
+
         // Extract "what", "how", "why" components
         if (question.toLowerCase().includes('how')) {
             subQuestions.push({
@@ -682,7 +683,7 @@ class IntelligentResearch {
     async crossReference(subResults, context) {
         // Find common themes across results
         const themes = new Map();
-        
+
         for (const result of subResults) {
             if (result.synthesis?.keyInsights) {
                 for (const insight of result.synthesis.keyInsights) {
@@ -722,10 +723,10 @@ class IntelligentResearch {
 
     generateStrategicRecommendations(results, context) {
         const recommendations = [];
-        
+
         // Based on findings
         const hasGoodData = results.some(r => r.success && r.resultCount > 0);
-        
+
         if (hasGoodData) {
             recommendations.push('Leverage identified benchmarks for goal-setting');
             recommendations.push('Study highlighted case studies for implementation approach');
@@ -750,7 +751,7 @@ class IntelligentResearch {
 
     detectResearchNeed(message, state) {
         const text = message.content?.toLowerCase() || '';
-        
+
         // Keywords that trigger research
         const researchTriggers = [
             'benchmark', 'compare', 'industry average', 'best practice',

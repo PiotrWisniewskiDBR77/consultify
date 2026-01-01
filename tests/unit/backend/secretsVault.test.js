@@ -4,7 +4,6 @@
  * Tests for secrets encryption and decryption service.
  */
 
-const { describe, it, expect, beforeEach, afterEach } = require('vitest');
 const SecretsVault = require('../../../server/services/secretsVault');
 
 describe('SecretsVault', () => {

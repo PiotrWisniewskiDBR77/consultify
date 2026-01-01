@@ -295,5 +295,145 @@ function generateSuggestion(area) {
     return suggestions;
 }
 
+// =====================================================
+// Response Feedback Endpoints (AI Response Personalization)
+// =====================================================
+
+const { adaptiveResponseService } = require('../services/ai/adaptiveResponseService');
+
+/**
+ * POST /api/ai-feedback/response
+ * Submit detailed feedback on AI response length/style
+ */
+router.post('/response', async (req, res) => {
+    try {
+        const {
+            messageId,
+            conversationId,
+            rating,
+            lengthFeedback,
+            detailFeedback,
+            formatFeedback,
+            wantedMode,
+            customFeedback,
+            responseMode,
+            responseLength,
+            capability
+        } = req.body;
+
+        if (!messageId) {
+            return res.status(400).json({ error: 'messageId is required' });
+        }
+
+        if (!rating || !['positive', 'negative', 'neutral'].includes(rating)) {
+            return res.status(400).json({ error: 'Valid rating is required (positive, negative, neutral)' });
+        }
+
+        const feedback = {
+            rating,
+            lengthFeedback,
+            detailFeedback,
+            formatFeedback,
+            wantedMode,
+            customFeedback
+        };
+
+        const context = {
+            responseMode,
+            responseLength,
+            capability
+        };
+
+        const result = await adaptiveResponseService.processFeedback(
+            req.user.id,
+            messageId,
+            conversationId,
+            feedback,
+            context
+        );
+
+        aiLogger.info('AIFeedback', `Response feedback: ${rating} from user ${req.user.id}, wanted: ${wantedMode || 'N/A'}`);
+
+        res.status(201).json({
+            success: true,
+            feedbackId: result.feedbackId,
+            message: 'Feedback recorded successfully'
+        });
+
+    } catch (error) {
+        aiLogger.error('AIFeedback', `Response feedback error: ${error.message}`);
+        res.status(500).json({ error: 'Failed to submit response feedback' });
+    }
+});
+
+/**
+ * GET /api/ai-feedback/response/stats
+ * Get user's response feedback statistics
+ */
+router.get('/response/stats', async (req, res) => {
+    try {
+        const stats = await adaptiveResponseService.getUserFeedbackStats(req.user.id);
+        const recommendedMode = await adaptiveResponseService.getRecommendedMode(req.user.id);
+
+        res.json({
+            success: true,
+            stats: stats || {
+                total_feedback: 0,
+                positive_count: 0,
+                negative_count: 0,
+                satisfaction_rate: null
+            },
+            recommendedMode
+        });
+
+    } catch (error) {
+        aiLogger.error('AIFeedback', `Response stats error: ${error.message}`);
+        res.status(500).json({ error: 'Failed to get response stats' });
+    }
+});
+
+/**
+ * GET /api/ai-feedback/response/preferences
+ * Get user's learned response preferences
+ */
+router.get('/response/preferences', async (req, res) => {
+    try {
+        const prefs = await new Promise((resolve) => {
+            db.get(`
+                SELECT 
+                    response_mode_preference,
+                    quick_length_preference,
+                    standard_length_preference,
+                    deep_study_length_preference,
+                    auto_detect_intent,
+                    prefer_bullet_points,
+                    prefer_tables,
+                    prefer_action_items,
+                    include_examples,
+                    satisfaction_score
+                FROM user_ai_profiles
+                WHERE user_id = ?
+            `, [req.user.id], (err, row) => {
+                resolve(err ? null : row);
+            });
+        });
+
+        res.json({
+            success: true,
+            preferences: prefs || {
+                response_mode_preference: 'standard',
+                quick_length_preference: 'short',
+                standard_length_preference: 'medium',
+                deep_study_length_preference: 'long',
+                auto_detect_intent: true
+            }
+        });
+
+    } catch (error) {
+        aiLogger.error('AIFeedback', `Preferences error: ${error.message}`);
+        res.status(500).json({ error: 'Failed to get preferences' });
+    }
+});
+
 module.exports = router;
 

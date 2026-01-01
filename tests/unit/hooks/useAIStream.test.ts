@@ -46,7 +46,10 @@ describe('Hook Test: useAIStream', () => {
             expect.any(Function),
             expect.any(Function),
             'System prompt',
-            undefined
+            { focusMode: undefined },
+            undefined,
+            'pl',
+            expect.any(Function)
         );
     });
 

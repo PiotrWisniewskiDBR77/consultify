@@ -89,6 +89,10 @@ interface AppState {
     // MED-01: Per-project chat actions
     loadProjectChat: () => void;
     saveProjectChat: () => void;
+    // World-Class Chat 2025: Edit and regenerate actions
+    editChatMessage: (messageId: string, newContent: string) => void;
+    deleteChatMessage: (messageId: string) => void;
+    setMessageFeedback: (messageId: string, feedback: { rating: 'positive' | 'negative'; reason?: string }) => void;
 
     setFreeSessionData: (data: Partial<FreeSession> | ((prev: Partial<FreeSession>) => Partial<FreeSession>)) => void;
     setFullSessionData: (data: Partial<FullSession> | ((prev: FullSession) => FullSession)) => void;
@@ -270,6 +274,58 @@ export const useAppStore = create<AppState>()(
                     projectChatMessages: {
                         ...state.projectChatMessages,
                         [projectKey]: trimmedMessages
+                    }
+                };
+            }),
+
+            // World-Class Chat 2025: Edit, delete, and feedback actions
+            editChatMessage: (messageId, newContent) => set((state) => {
+                const projectKey = state.currentProjectId || 'global';
+                const messages = state.activeChatMessages.map(msg => 
+                    msg.id === messageId 
+                        ? { ...msg, content: newContent, canEdit: true } 
+                        : msg
+                );
+                return {
+                    activeChatMessages: messages,
+                    projectChatMessages: {
+                        ...state.projectChatMessages,
+                        [projectKey]: messages
+                    }
+                };
+            }),
+
+            deleteChatMessage: (messageId) => set((state) => {
+                const projectKey = state.currentProjectId || 'global';
+                const messages = state.activeChatMessages.filter(msg => msg.id !== messageId);
+                return {
+                    activeChatMessages: messages,
+                    projectChatMessages: {
+                        ...state.projectChatMessages,
+                        [projectKey]: messages
+                    }
+                };
+            }),
+
+            setMessageFeedback: (messageId, feedback) => set((state) => {
+                const projectKey = state.currentProjectId || 'global';
+                const messages = state.activeChatMessages.map(msg => 
+                    msg.id === messageId 
+                        ? { 
+                            ...msg, 
+                            feedback: { 
+                                rating: feedback.rating, 
+                                reason: feedback.reason,
+                                timestamp: new Date()
+                            } 
+                        } 
+                        : msg
+                );
+                return {
+                    activeChatMessages: messages,
+                    projectChatMessages: {
+                        ...state.projectChatMessages,
+                        [projectKey]: messages
                     }
                 };
             }),

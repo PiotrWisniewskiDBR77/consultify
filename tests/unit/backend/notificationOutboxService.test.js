@@ -4,7 +4,6 @@
  * Tests for async notification delivery service using outbox pattern.
  */
 
-const { describe, it, expect, beforeEach, afterEach, beforeAll } = require('vitest');
 const { initTestDb, cleanTables, dbAll, dbRun } = require('../../helpers/dbHelper.cjs');
 const NotificationOutboxService = require('../../../server/services/notificationOutboxService');
 const { v4: uuidv4 } = require('uuid');

@@ -3,7 +3,6 @@
  * Tests error handling, resilience, and recovery mechanisms
  */
 
-const { describe, it, expect, beforeEach, afterEach } = require('vitest');
 const request = require('supertest');
 const app = require('../../server/index.js');
 const { initTestDb, cleanTables } = require('../helpers/dbHelper.cjs');

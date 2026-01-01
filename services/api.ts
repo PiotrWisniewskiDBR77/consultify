@@ -420,13 +420,15 @@ export const Api = {
         onDone: () => void,
         systemInstruction?: string,
         context?: any,
-        roleName?: string
+        roleName?: string,
+        language?: string,
+        onThinking?: (thought: any) => void
     ) => {
         try {
             const response = await fetch(`${API_URL}/ai/chat/stream`, {
                 method: 'POST',
                 headers: getHeaders(),
-                body: JSON.stringify({ message, history, systemInstruction, context, roleName })
+                body: JSON.stringify({ message, history, systemInstruction, context, roleName, language })
             });
 
             if (!response.body) throw new Error('ReadableStream not supported');
@@ -443,7 +445,6 @@ export const Api = {
                 const parts = buffer.split('\n\n');
 
                 // Keep the last part in the buffer as it might be incomplete
-                // If the buffer ended with \n\n, the last part will be empty string, which is fine to keep and append to
                 buffer = parts.pop() || '';
 
                 for (const part of parts) {
@@ -455,6 +456,13 @@ export const Api = {
                         }
                         try {
                             const data = JSON.parse(dataStr);
+
+                            // Handle Thought/Thinking Events
+                            if (data.type === 'thought' && onThinking) {
+                                onThinking(data);
+                                continue;
+                            }
+
                             if (data.text) onChunk(data.text);
                             if (data.error) {
                                 console.error('Stream error from server:', data.error);
@@ -1628,46 +1636,8 @@ export const Api = {
     // ==========================================
 
     // Generic HTTP methods for billing routes
-    get: async (path: string): Promise<any> => {
-        const res = await fetch(`${API_URL}${path}`, {
-            headers: getHeaders()
-        });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error || 'Request failed');
-        return json;
-    },
-
-    post: async (path: string, data: any): Promise<any> => {
-        const res = await fetch(`${API_URL}${path}`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify(data)
-        });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error || 'Request failed');
-        return json;
-    },
-
-    put: async (path: string, data: any): Promise<any> => {
-        const res = await fetch(`${API_URL}${path}`, {
-            method: 'PUT',
-            headers: getHeaders(),
-            body: JSON.stringify(data)
-        });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error || 'Request failed');
-        return json;
-    },
-
-    delete: async (path: string): Promise<any> => {
-        const res = await fetch(`${API_URL}${path}`, {
-            method: 'DELETE',
-            headers: getHeaders()
-        });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error || 'Request failed');
-        return json;
-    },
+    // Generic versions moved to end of file to support full URLs and retries
+    // get, post, put, delete are defined at the end of the object
 
     // Get subscription plans
     getSubscriptionPlans: async (): Promise<any[]> => {
@@ -3049,8 +3019,316 @@ export const Api = {
             body: JSON.stringify({ conversations })
         });
         return handleResponse(res, 'Failed to migrate conversations');
+    },
+
+    // ==================== STUDIO ====================
+
+    /**
+     * Get studio documents
+     */
+    getStudioDocuments: async (options?: {
+        type?: string;
+        linkedTaskId?: string;
+        linkedProjectId?: string;
+        linkedInitiativeId?: string;
+        limit?: number;
+        offset?: number;
+    }): Promise<any[]> => {
+        const params = new URLSearchParams();
+        if (options?.type) params.append('type', options.type);
+        if (options?.linkedTaskId) params.append('linkedTaskId', options.linkedTaskId);
+        if (options?.linkedProjectId) params.append('linkedProjectId', options.linkedProjectId);
+        if (options?.linkedInitiativeId) params.append('linkedInitiativeId', options.linkedInitiativeId);
+        if (options?.limit) params.append('limit', String(options.limit));
+        if (options?.offset) params.append('offset', String(options.offset));
+
+        const res = await fetchWithRetry(`${API_URL}/studio/documents?${params.toString()}`, {
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to fetch studio documents');
+    },
+
+    /**
+     * Create studio document
+     */
+    createStudioDocument: async (data: {
+        name: string;
+        description?: string;
+        type?: string;
+        nodes?: any[];
+        edges?: any[];
+        linkedTaskId?: string;
+        linkedProjectId?: string;
+        linkedInitiativeId?: string;
+        templateId?: string;
+    }): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/studio/documents`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        return handleResponse(res, 'Failed to create studio document');
+    },
+
+    /**
+     * Get studio document by ID
+     */
+    getStudioDocument: async (id: string): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/studio/documents/${id}`, {
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to fetch studio document');
+    },
+
+    /**
+     * Update studio document
+     */
+    updateStudioDocument: async (id: string, data: {
+        name?: string;
+        description?: string;
+        type?: string;
+        nodes?: any[];
+        edges?: any[];
+        viewport?: any;
+        tags?: string[];
+        linkedTaskId?: string;
+        linkedProjectId?: string;
+        linkedInitiativeId?: string;
+        createSnapshot?: boolean;
+        snapshotReason?: string;
+    }): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/studio/documents/${id}`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        return handleResponse(res, 'Failed to update studio document');
+    },
+
+    /**
+     * Delete studio document
+     */
+    deleteStudioDocument: async (id: string): Promise<{ success: boolean }> => {
+        const res = await fetchWithRetry(`${API_URL}/studio/documents/${id}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to delete studio document');
+    },
+
+    /**
+     * Create studio document snapshot
+     */
+    createStudioSnapshot: async (documentId: string, data?: { name?: string; reason?: string }): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/studio/documents/${documentId}/snapshot`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(data || {})
+        });
+        return handleResponse(res, 'Failed to create snapshot');
+    },
+
+    /**
+     * Restore studio document from snapshot
+     */
+    restoreStudioSnapshot: async (documentId: string, snapshotId: string): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/studio/documents/${documentId}/restore/${snapshotId}`, {
+            method: 'POST',
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to restore snapshot');
+    },
+
+    /**
+     * Get studio templates
+     */
+    getStudioTemplates: async (category?: string): Promise<any[]> => {
+        const params = category ? `?category=${category}` : '';
+        const res = await fetchWithRetry(`${API_URL}/studio/templates${params}`, {
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to fetch studio templates');
+    },
+
+    /**
+     * Create studio template from document
+     */
+    createStudioTemplate: async (data: {
+        name: string;
+        description?: string;
+        category: string;
+        nodes?: any[];
+        edges?: any[];
+        tags?: string[];
+        isPublic?: boolean;
+        fromDocumentId?: string;
+    }): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/studio/templates`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        return handleResponse(res, 'Failed to create template');
+    },
+
+    /**
+     * Share studio document
+     */
+    shareStudioDocument: async (documentId: string): Promise<{ shareToken: string; shareUrl: string }> => {
+        const res = await fetchWithRetry(`${API_URL}/studio/documents/${documentId}/share`, {
+            method: 'POST',
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to share document');
+    },
+
+    /**
+     * Get shared studio document (public)
+     */
+    getSharedStudioDocument: async (token: string): Promise<any> => {
+        const res = await fetch(`${API_URL}/studio/shared/${token}`);
+        return handleResponse(res, 'Failed to fetch shared document');
+    },
+
+    /**
+     * Link studio document to PMO entity
+     */
+    linkStudioDocument: async (documentId: string, links: {
+        taskId?: string;
+        projectId?: string;
+        initiativeId?: string;
+    }): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/studio/documents/${documentId}/link`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(links)
+        });
+        return handleResponse(res, 'Failed to link document');
+    },
+
+    // ==================== STUDIO AI ====================
+
+    /**
+     * Generate diagram from text
+     */
+    generateStudioDiagram: async (prompt: string, diagramType?: string): Promise<{
+        nodes: any[];
+        edges: any[];
+        diagramType: string;
+        suggestedTitle?: string;
+        tokensUsed?: number;
+    }> => {
+        const res = await fetchWithRetry(`${API_URL}/studio/ai/generate`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ prompt, diagramType })
+        });
+        return handleResponse(res, 'Failed to generate diagram');
+    },
+
+    /**
+     * Modify existing diagram
+     */
+    modifyStudioDiagram: async (prompt: string, nodes: any[], edges: any[]): Promise<{
+        nodes: any[];
+        edges: any[];
+        changes?: { added?: string[]; modified?: string[]; removed?: string[] };
+        tokensUsed?: number;
+    }> => {
+        const res = await fetchWithRetry(`${API_URL}/studio/ai/modify`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ prompt, nodes, edges })
+        });
+        return handleResponse(res, 'Failed to modify diagram');
+    },
+
+    /**
+     * Studio AI chat
+     */
+    studioAIChat: async (message: string, documentId?: string, context?: { nodes: any[]; edges: any[] }): Promise<{
+        text: string;
+        intent: string;
+        confidence: number;
+        diagramUpdate?: {
+            action: 'replace' | 'update';
+            nodes: any[];
+            edges: any[];
+            changes?: { added?: string[]; modified?: string[]; removed?: string[] };
+        };
+    }> => {
+        const res = await fetchWithRetry(`${API_URL}/studio/ai/chat`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ message, documentId, context })
+        });
+        return handleResponse(res, 'Failed to process chat message');
+    },
+
+    /**
+     * Get diagram optimization suggestions
+     */
+    getStudioSuggestions: async (nodes: any[], edges: any[], diagramType?: string): Promise<{
+        suggestions: Array<{
+            type: string;
+            message: string;
+            nodeIds?: string[];
+        }>;
+    }> => {
+        const res = await fetchWithRetry(`${API_URL}/studio/ai/suggest`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ nodes, edges, diagramType })
+        });
+        return handleResponse(res, 'Failed to get suggestions');
+    },
+
+    /**
+     * Classify intent of message
+     */
+    classifyStudioIntent: async (message: string): Promise<{ intent: string; confidence: number }> => {
+        const res = await fetchWithRetry(`${API_URL}/studio/ai/classify`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ message })
+        });
+        return handleResponse(res, 'Failed to classify intent');
+    },
+
+    // Generic helper methods for Studio hooks
+    get: async (url: string) => {
+        const res = await fetchWithRetry(`${url}`, { headers: getHeaders() });
+        return handleResponse(res, 'Request failed');
+    },
+
+    post: async (url: string, data: any) => {
+        const res = await fetchWithRetry(`${url}`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        return handleResponse(res, 'Request failed');
+    },
+
+    put: async (url: string, data: any) => {
+        const res = await fetchWithRetry(`${url}`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        return handleResponse(res, 'Request failed');
+    },
+
+    delete: async (url: string) => {
+        const res = await fetchWithRetry(`${url}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Request failed');
     }
 };
 
 // Export as 'api' for backwards compatibility with lowercase import
 export const api = Api;
+
+export default Api;

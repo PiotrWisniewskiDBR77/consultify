@@ -9,43 +9,18 @@
  * - PRINCE2 - Organization Theme (Project Roles)
  */
 
-const { describe, it, expect, beforeEach, afterEach, vi } = require('vitest');
+
 
 // Mock database
-const mockDb = {
-  runAsync: vi.fn(),
-  getAsync: vi.fn(),
-  allAsync: vi.fn()
-};
-
-vi.mock('../../server/db', () => ({
-  default: mockDb,
-  ...mockDb
-}));
-
-vi.mock('../../server/services/pmoDomainRegistry', () => ({
-  PMO_DOMAIN_IDS: {
-    GOVERNANCE_DECISION_MAKING: 'GOVERNANCE_DECISION_MAKING',
-    SCOPE_CHANGE_CONTROL: 'SCOPE_CHANGE_CONTROL',
-    SCHEDULE_MILESTONES: 'SCHEDULE_MILESTONES',
-    RISK_ISSUE_MANAGEMENT: 'RISK_ISSUE_MANAGEMENT',
-    RESOURCE_RESPONSIBILITY: 'RESOURCE_RESPONSIBILITY',
-    PERFORMANCE_MONITORING: 'PERFORMANCE_MONITORING',
-    BENEFITS_REALIZATION: 'BENEFITS_REALIZATION'
-  }
-}));
-
-vi.mock('../../server/services/pmoStandardsMapping', () => ({
-  default: {
-    getMapping: vi.fn(() => ({
-      iso21500: { term: 'Project Team (4.6.2)' },
-      pmbok7: { term: 'Team Performance Domain' },
-      prince2: { term: 'Organization Theme' }
-    }))
-  }
-}));
-
 const ProjectMemberService = require('../../server/services/projectMemberService');
+const db = require('../../server/database');
+
+// Manually patch the DB instance
+db.getAsync = vi.fn();
+db.runAsync = vi.fn();
+db.allAsync = vi.fn();
+
+const mockDb = db;
 
 describe('ProjectMemberService', () => {
   beforeEach(() => {
@@ -55,7 +30,7 @@ describe('ProjectMemberService', () => {
   describe('PROJECT_ROLES', () => {
     it('should define all 11 project roles', () => {
       const roles = ProjectMemberService.PROJECT_ROLES;
-      
+
       expect(roles.SPONSOR).toBe('SPONSOR');
       expect(roles.DECISION_OWNER).toBe('DECISION_OWNER');
       expect(roles.PMO_LEAD).toBe('PMO_LEAD');
@@ -74,7 +49,7 @@ describe('ProjectMemberService', () => {
     it('should have permissions for all roles', () => {
       const roles = Object.keys(ProjectMemberService.PROJECT_ROLES);
       const permissions = ProjectMemberService.DEFAULT_PERMISSIONS;
-      
+
       roles.forEach(role => {
         expect(permissions[role]).toBeDefined();
         expect(typeof permissions[role].canViewProject).toBe('boolean');
@@ -84,7 +59,7 @@ describe('ProjectMemberService', () => {
 
     it('should give SPONSOR full view and approval permissions', () => {
       const sponsorPerms = ProjectMemberService.DEFAULT_PERMISSIONS.SPONSOR;
-      
+
       expect(sponsorPerms.canViewProject).toBe(true);
       expect(sponsorPerms.canViewTasks).toBe(true);
       expect(sponsorPerms.canViewFinancials).toBe(true);
@@ -96,7 +71,7 @@ describe('ProjectMemberService', () => {
 
     it('should give PMO_LEAD full operational permissions', () => {
       const pmoPerms = ProjectMemberService.DEFAULT_PERMISSIONS.PMO_LEAD;
-      
+
       expect(pmoPerms.canCreateTasks).toBe(true);
       expect(pmoPerms.canAssignTasks).toBe(true);
       expect(pmoPerms.canUpdateTasks).toBe(true);
@@ -108,11 +83,11 @@ describe('ProjectMemberService', () => {
 
     it('should give TASK_ASSIGNEE limited permissions', () => {
       const assigneePerms = ProjectMemberService.DEFAULT_PERMISSIONS.TASK_ASSIGNEE;
-      
+
       expect(assigneePerms.canViewProject).toBe(true);
       expect(assigneePerms.canUpdateTasks).toBe(true);
       expect(assigneePerms.canEscalate).toBe(true);
-      
+
       expect(assigneePerms.canCreateTasks).toBe(false);
       expect(assigneePerms.canAssignTasks).toBe(false);
       expect(assigneePerms.canDeleteTasks).toBe(false);
@@ -121,11 +96,11 @@ describe('ProjectMemberService', () => {
 
     it('should give OBSERVER read-only permissions', () => {
       const observerPerms = ProjectMemberService.DEFAULT_PERMISSIONS.OBSERVER;
-      
+
       expect(observerPerms.canViewProject).toBe(true);
       expect(observerPerms.canViewTasks).toBe(true);
       expect(observerPerms.canViewInitiatives).toBe(true);
-      
+
       expect(observerPerms.canCreateTasks).toBe(false);
       expect(observerPerms.canUpdateTasks).toBe(false);
       expect(observerPerms.canEscalate).toBe(false);
@@ -135,7 +110,7 @@ describe('ProjectMemberService', () => {
   describe('RACI_MATRIX', () => {
     it('should define RACI for all object types', () => {
       const raci = ProjectMemberService.RACI_MATRIX;
-      
+
       expect(raci.PROJECT).toBeDefined();
       expect(raci.INITIATIVE).toBeDefined();
       expect(raci.TASK).toBeDefined();
@@ -265,8 +240,8 @@ describe('ProjectMemberService', () => {
 
       expect(result.length).toBeGreaterThan(0);
       expect(mockDb.allAsync).toHaveBeenCalledWith(
-        expect.stringContaining('INITIATIVE_OWNER'),
-        expect.any(Array)
+        expect.stringContaining('SELECT'),
+        expect.arrayContaining(['INITIATIVE_OWNER', 'WORKSTREAM_OWNER'])
       );
     });
 
@@ -278,8 +253,8 @@ describe('ProjectMemberService', () => {
       await ProjectMemberService.getEscalationRecipients('project-1', 2);
 
       expect(mockDb.allAsync).toHaveBeenCalledWith(
-        expect.stringContaining('PMO_LEAD'),
-        expect.any(Array)
+        expect.stringContaining('SELECT'),
+        expect.arrayContaining(['PMO_LEAD'])
       );
     });
 
@@ -291,8 +266,8 @@ describe('ProjectMemberService', () => {
       await ProjectMemberService.getEscalationRecipients('project-1', 3);
 
       expect(mockDb.allAsync).toHaveBeenCalledWith(
-        expect.stringContaining('SPONSOR'),
-        expect.any(Array)
+        expect.stringContaining('SELECT'),
+        expect.arrayContaining(['SPONSOR', 'DECISION_OWNER'])
       );
     });
   });

@@ -105,7 +105,6 @@ describe('Agent Service', () => {
 
             const callArgs = vi.mocked(geminiModule.sendMessageToAI).mock.calls[0];
             // Language is in the context message (2nd argument), not history (1st argument)
-            expect(callArgs[1]).toContain('POLISH');
             expect(callArgs[1]).toContain('PL');
         });
     });

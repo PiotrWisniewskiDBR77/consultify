@@ -91,7 +91,13 @@ router.post('/chat/stream', verifyToken, async (req, res) => {
             }
         };
 
-        const response = await aiPipeline.process(pipelineRequest);
+        const response = await aiPipeline.process(pipelineRequest, (progress) => {
+            // Stream thinking steps to client
+            res.write(`data: ${JSON.stringify({
+                type: 'thought',
+                ...progress
+            })}\n\n`);
+        });
 
         // Set headers for SSE
         res.setHeader('Content-Type', 'text/event-stream');
@@ -465,7 +471,7 @@ Return as a JSON array of initiatives.`;
         res.json(initiatives);
     } catch (err) {
         console.error('[AI Recommend] Error:', err);
-        
+
         // Return fallback initiatives instead of error
         const fallbackInitiatives = generateFallbackInitiatives(
             diagnosisReport.assessment || {},
@@ -480,7 +486,7 @@ Return as a JSON array of initiatives.`;
 function generateFallbackInitiatives(assessment, goals, industry) {
     const { v4: uuidv4 } = require('uuid');
     const axes = ['processes', 'digitalProducts', 'businessModels', 'dataManagement', 'culture', 'cybersecurity', 'aiMaturity'];
-    
+
     const templates = {
         processes: { name: 'Process Automation Initiative', priority: 'HIGH', roi: 2.0, budget: 200000 },
         digitalProducts: { name: 'Digital Product Development', priority: 'MEDIUM', roi: 2.5, budget: 300000 },
@@ -492,7 +498,7 @@ function generateFallbackInitiatives(assessment, goals, industry) {
     };
 
     // Generate initiatives for axes with gaps (or all if no assessment)
-    const initiativesToGenerate = Object.keys(assessment).length > 0 
+    const initiativesToGenerate = Object.keys(assessment).length > 0
         ? axes.filter(axis => assessment[axis]?.current < assessment[axis]?.target)
         : axes.slice(0, 5);
 
@@ -530,7 +536,7 @@ router.post('/roadmap', verifyToken, async (req, res) => {
         const aiPipeline = new AIPipeline();
 
         // Format initiatives for the prompt
-        const initiativesSummary = initiatives.map((init, idx) => 
+        const initiativesSummary = initiatives.map((init, idx) =>
             `${idx + 1}. "${init.name}" - Priority: ${init.priority || 'Medium'}, Complexity: ${init.complexity || 'Medium'}, ROI: ${init.expectedRoi || init.roi || 'Unknown'}`
         ).join('\n');
 
@@ -561,7 +567,7 @@ Return a structured roadmap assigning each initiative to a specific quarter.`;
 
         // Ensure we have a valid response structure
         const roadmapData = response.object || response;
-        
+
         // Validate response has required structure
         if (!roadmapData.year1) {
             console.warn('[AI Roadmap] Invalid response structure, using fallback');
@@ -571,35 +577,35 @@ Return a structured roadmap assigning each initiative to a specific quarter.`;
                 year2: { q1: [], q2: [], q3: [], q4: [] },
                 reasoning: 'Fallback distribution due to AI response error'
             };
-            
+
             initiatives.forEach((init, idx) => {
                 const quarter = idx % 4;
                 const year = idx < 8 ? 'year1' : 'year2';
                 const qKey = `q${quarter + 1}`;
                 fallback[year][qKey].push(init.name);
             });
-            
+
             return res.json(fallback);
         }
 
         res.json(roadmapData);
     } catch (err) {
         console.error('[AI Roadmap] Error:', err);
-        
+
         // Return fallback roadmap instead of error
         const fallback = {
             year1: { q1: [], q2: [], q3: [], q4: [] },
             year2: { q1: [], q2: [], q3: [], q4: [] },
             reasoning: 'Fallback distribution due to error: ' + err.message
         };
-        
+
         initiatives.forEach((init, idx) => {
             const quarter = idx % 4;
             const year = idx < 8 ? 'year1' : 'year2';
             const qKey = `q${quarter + 1}`;
             fallback[year][qKey].push(init.name);
         });
-        
+
         res.json(fallback);
     }
 });
@@ -749,7 +755,7 @@ router.get('/health', async (req, res) => {
     try {
         const { healthMonitor } = require('../services/ai/healthMonitor');
         const status = healthMonitor.getStatus();
-        
+
         res.json({
             status: status.lastCheck?.overall || 'unknown',
             isRunning: status.isRunning,
@@ -759,9 +765,9 @@ router.get('/health', async (req, res) => {
             checks: status.lastCheck?.checks || []
         });
     } catch (err) {
-        res.status(500).json({ 
-            status: 'error', 
-            error: err.message 
+        res.status(500).json({
+            status: 'error',
+            error: err.message
         });
     }
 });
@@ -771,12 +777,12 @@ router.post('/health/diagnose', verifyToken, async (req, res) => {
     try {
         const { healthMonitor } = require('../services/ai/healthMonitor');
         const results = await healthMonitor.runDiagnostics();
-        
+
         res.json(results);
     } catch (err) {
-        res.status(500).json({ 
-            status: 'error', 
-            error: err.message 
+        res.status(500).json({
+            status: 'error',
+            error: err.message
         });
     }
 });
@@ -788,19 +794,19 @@ router.get('/suggestions', verifyToken, async (req, res) => {
     try {
         const { projectId } = req.query;
         const smartSuggestions = require('../services/ai/smartSuggestions');
-        
+
         const suggestions = await smartSuggestions.getCachedSuggestions(
             req.userId,
             projectId,
             {} // No conversation context for standalone call
         );
-        
+
         res.json({ suggestions });
     } catch (err) {
         console.error('[AI] Suggestions error:', err);
-        res.status(500).json({ 
+        res.status(500).json({
             error: err.message,
-            suggestions: [] 
+            suggestions: []
         });
     }
 });
@@ -810,20 +816,139 @@ router.post('/suggestions', verifyToken, async (req, res) => {
     try {
         const { projectId, conversationContext } = req.body;
         const smartSuggestions = require('../services/ai/smartSuggestions');
-        
+
         const suggestions = await smartSuggestions.getSuggestions(
             req.userId,
             projectId,
             conversationContext || {}
         );
-        
+
         res.json({ suggestions });
     } catch (err) {
         console.error('[AI] Suggestions error:', err);
-        res.status(500).json({ 
+        res.status(500).json({
             error: err.message,
-            suggestions: [] 
+            suggestions: []
         });
+    }
+});
+
+// ==================== APPROVAL PATTERNS (HITL Learning) ====================
+
+const ApprovalPatternService = require('../services/approvalPatternService');
+
+// GET /api/ai/patterns - Get user's approval patterns
+router.get('/patterns', verifyToken, async (req, res) => {
+    try {
+        const { actionType } = req.query;
+        const patterns = await ApprovalPatternService.getUserPatterns(req.userId, actionType);
+        res.json({ success: true, patterns });
+    } catch (err) {
+        console.error('[AI] Get patterns error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// GET /api/ai/patterns/stats - Get pattern statistics
+router.get('/patterns/stats', verifyToken, async (req, res) => {
+    try {
+        const stats = await ApprovalPatternService.getPatternStats(req.userId);
+        res.json(stats);
+    } catch (err) {
+        console.error('[AI] Pattern stats error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// PATCH /api/ai/patterns/:patternId/auto-apply - Toggle auto-apply
+router.patch('/patterns/:patternId/auto-apply', verifyToken, async (req, res) => {
+    try {
+        const { enabled } = req.body;
+        const result = await ApprovalPatternService.setAutoApply(
+            req.params.patternId,
+            enabled,
+            req.userId
+        );
+        res.json(result);
+    } catch (err) {
+        console.error('[AI] Toggle auto-apply error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// DELETE /api/ai/patterns/:patternId - Delete a pattern
+router.delete('/patterns/:patternId', verifyToken, async (req, res) => {
+    try {
+        const result = await ApprovalPatternService.deletePattern(
+            req.params.patternId,
+            req.userId
+        );
+        res.json(result);
+    } catch (err) {
+        console.error('[AI] Delete pattern error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// POST /api/ai/actions/:actionId/approve - Approve action with pattern learning
+router.post('/actions/:actionId/approve', verifyToken, async (req, res) => {
+    try {
+        const { alwaysApprove } = req.body;
+        const result = await AIActionExecutor.approveAction(
+            req.params.actionId,
+            req.userId,
+            { alwaysApprove }
+        );
+        res.json(result);
+    } catch (err) {
+        console.error('[AI] Approve action error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// POST /api/ai/actions/:actionId/reject - Reject action with pattern learning
+router.post('/actions/:actionId/reject', verifyToken, async (req, res) => {
+    try {
+        const { reason, alwaysReject } = req.body;
+        const result = await AIActionExecutor.rejectAction(
+            req.params.actionId,
+            req.userId,
+            reason,
+            { alwaysReject }
+        );
+        res.json(result);
+    } catch (err) {
+        console.error('[AI] Reject action error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// GET /api/ai/actions/pending - Get pending actions with pattern info
+router.get('/actions/pending', verifyToken, async (req, res) => {
+    try {
+        const { projectId } = req.query;
+        const actions = await AIActionExecutor.getPendingActions(
+            req.userId,
+            projectId,
+            req.organizationId
+        );
+
+        // Enrich with pattern info
+        const actionsWithPatterns = await Promise.all(
+            actions.map(async (action) => {
+                const patternInfo = await AIActionExecutor.getPatternInfo(
+                    req.userId,
+                    action.action_type,
+                    action.payload || {}
+                );
+                return { ...action, patternInfo };
+            })
+        );
+
+        res.json({ success: true, actions: actionsWithPatterns });
+    } catch (err) {
+        console.error('[AI] Get pending actions error:', err);
+        res.status(500).json({ success: false, error: err.message, actions: [] });
     }
 });
 
