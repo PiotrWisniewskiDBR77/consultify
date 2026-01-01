@@ -279,3 +279,4 @@ describe('CharterBuilder Component', () => {
         });
     });
 });
+

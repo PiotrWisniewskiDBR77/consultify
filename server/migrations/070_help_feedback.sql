@@ -161,3 +161,4 @@ END;
 -- 5. help_tour_progress: Tour completion tracking
 -- 6. help_content_ratings: Aggregated ratings summary
 
+

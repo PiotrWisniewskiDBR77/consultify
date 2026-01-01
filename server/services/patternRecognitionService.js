@@ -519,3 +519,4 @@ const PatternRecognitionService = {
 
 module.exports = PatternRecognitionService;
 
+

@@ -131,3 +131,4 @@ CREATE INDEX IF NOT EXISTS idx_status_reports_status ON status_reports(status);
 CREATE INDEX IF NOT EXISTS idx_report_distributions_report ON report_distributions(report_id);
 CREATE INDEX IF NOT EXISTS idx_report_section_history_report ON report_section_history(report_id);
 
+

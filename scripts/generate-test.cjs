@@ -154,3 +154,4 @@ Examples:
 const [type, name, sourcePath] = args;
 generateTest(type, name, sourcePath);
 
+

@@ -592,3 +592,4 @@ describe('MultiFrameworkStageGateModal Component', () => {
         });
     });
 });
+

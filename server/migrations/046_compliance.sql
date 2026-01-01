@@ -263,3 +263,4 @@ CREATE INDEX IF NOT EXISTS idx_compliance_findings_audit ON compliance_findings(
 CREATE INDEX IF NOT EXISTS idx_compliance_findings_status ON compliance_findings(status);
 CREATE INDEX IF NOT EXISTS idx_compliance_findings_severity ON compliance_findings(severity);
 
+

@@ -8,3 +8,4 @@ export { InsightDetectionCard } from './InsightDetectionCard';
 export { InterviewProgress } from './InterviewProgress';
 export { CategoryIcon, getCategoryConfig, INSIGHT_CATEGORIES } from './CategoryIcon';
 
+

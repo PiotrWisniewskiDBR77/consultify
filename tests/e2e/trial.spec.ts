@@ -42,3 +42,4 @@ test.describe('Trial Management Flow', () => {
         await expect(page.locator('button:has-text("Upgrade to Continue")')).toBeVisible();
     });
 });
+

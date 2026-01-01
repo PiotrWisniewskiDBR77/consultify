@@ -29,3 +29,4 @@ CREATE INDEX IF NOT EXISTS idx_raid_type_status ON raid_items(type, status);
 CREATE INDEX IF NOT EXISTS idx_raid_owner ON raid_items(owner_id);
 CREATE INDEX IF NOT EXISTS idx_raid_due_date ON raid_items(due_date);
 
+

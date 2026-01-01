@@ -249,3 +249,4 @@ export const TrendAreaChart: React.FC<TrendAreaChartProps> = ({
 
 export default TrendAreaChart;
 
+

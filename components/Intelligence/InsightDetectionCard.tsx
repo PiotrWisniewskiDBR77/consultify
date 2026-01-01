@@ -199,3 +199,4 @@ export const InsightDetectionCard: React.FC<InsightDetectionCardProps> = ({
 
 export default InsightDetectionCard;
 
+

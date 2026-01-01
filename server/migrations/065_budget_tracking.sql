@@ -118,3 +118,4 @@ CREATE INDEX IF NOT EXISTS idx_budget_transactions_date ON budget_transactions(t
 CREATE INDEX IF NOT EXISTS idx_budget_snapshots_budget ON budget_snapshots(budget_id);
 CREATE INDEX IF NOT EXISTS idx_budget_alerts_budget ON budget_alerts(budget_id);
 
+

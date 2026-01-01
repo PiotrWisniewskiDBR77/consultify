@@ -63,3 +63,4 @@ We have architected every interface to be deterministic and self-explanatory, ye
 - **Environment:** Clean, architectural office or abstract professional background.
 - **Movement:** Subtle, natural professional gestures. No excessive or "expressive" hand waving.
 - **Icons/Visuals:** Use clean, professional typography and geometric shapes. Avoid bright, saturated primary colors or cartoonish graphics. Use the "CEO-grade" palette: Deep blues, slate, and metallic accents.
+

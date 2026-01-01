@@ -46,3 +46,4 @@ test.describe('Analytics Dashboard Flow', () => {
         await expect(page.locator('text=Report generated')).toBeVisible();
     });
 });
+

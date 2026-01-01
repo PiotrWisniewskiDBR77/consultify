@@ -295,3 +295,4 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
 
 export default ChangelogView;
 
+

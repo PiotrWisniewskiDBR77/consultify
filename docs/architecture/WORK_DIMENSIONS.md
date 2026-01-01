@@ -423,3 +423,4 @@ GET  /api/projects/:id/team/stats      - Get team statistics
 2. Change work_mode to FULL
 3. Review task visibility rules
 
+

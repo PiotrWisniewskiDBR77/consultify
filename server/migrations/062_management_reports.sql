@@ -148,3 +148,4 @@ CREATE TRIGGER IF NOT EXISTS trg_management_report_schedules_updated
         UPDATE management_report_schedules SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
     END;
 
+

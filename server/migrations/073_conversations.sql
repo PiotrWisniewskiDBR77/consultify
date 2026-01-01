@@ -147,3 +147,4 @@ COMMENT ON COLUMN conversations.pmo_context IS 'Links to PMO entities (assessmen
 COMMENT ON COLUMN conversations.tags IS 'Auto-generated tags based on conversation content';
 COMMENT ON COLUMN conversation_messages.metadata IS 'Rich data: citations, actions, tool calls, etc.';
 
+

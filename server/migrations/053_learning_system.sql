@@ -143,3 +143,4 @@ CREATE TABLE IF NOT EXISTS ai_user_preferences (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+

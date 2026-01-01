@@ -264,3 +264,4 @@ export const RiskRadar: React.FC<RiskRadarProps> = ({
 
 export default RiskRadar;
 
+

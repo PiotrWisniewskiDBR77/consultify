@@ -286,3 +286,4 @@ COMMENT ON TABLE multi_framework_audit_actions IS 'Definitions of auditable acti
 COMMENT ON TABLE multi_framework_audit_retention IS 'Retention policies for different audit categories';
 COMMENT ON FUNCTION log_mf_audit IS 'Helper function to log audit entries with automatic diff calculation';
 
+

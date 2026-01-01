@@ -75,3 +75,4 @@ These buttons adapt based on your transformation stage. If you haven't completed
 - 5:30 - Outro with Dashboard overview
 - 6:00 - End card with "Next: Customizing Your Dashboard"
 
+

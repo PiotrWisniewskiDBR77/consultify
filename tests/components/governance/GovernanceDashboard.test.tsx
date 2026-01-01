@@ -44,3 +44,4 @@ describe('GovernanceDashboard Component', () => {
         expect(screen.getByText('No critical alerts detected')).toBeInTheDocument();
     });
 });
+

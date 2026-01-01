@@ -615,3 +615,4 @@ class IndustryIntelligenceService {
 
 module.exports = IndustryIntelligenceService;
 
+

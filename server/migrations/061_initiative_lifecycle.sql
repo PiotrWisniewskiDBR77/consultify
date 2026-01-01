@@ -150,3 +150,4 @@ CREATE INDEX IF NOT EXISTS idx_initiatives_location
 CREATE INDEX IF NOT EXISTS idx_initiatives_charter_completeness 
     ON initiatives(charter_completeness);
 
+

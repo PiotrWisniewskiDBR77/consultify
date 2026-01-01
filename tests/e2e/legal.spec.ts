@@ -48,3 +48,4 @@ test.describe('Legal Compliance Flow', () => {
         await expect(page.locator('text=Preferences saved')).toBeVisible();
     });
 });
+

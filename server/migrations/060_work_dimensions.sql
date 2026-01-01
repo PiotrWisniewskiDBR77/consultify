@@ -490,3 +490,4 @@ INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) 
 -- - 27 capabilities across 7 categories
 -- - Role-capability mappings for key roles
 
+

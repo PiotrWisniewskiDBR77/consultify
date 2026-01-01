@@ -138,3 +138,4 @@ Next, we'll explore the Stage-Gate process that governs how initiatives move thr
 - 9:35 - Return to avatar for outro
 - 10:00 - End card
 
+

@@ -82,7 +82,6 @@ const isVideoWatched = (videoId: string): boolean => {
     return getWatchedVideos().includes(videoId);
 };
 
-
 // Helper to safely get translated array (handles missing translations)
 const getTranslatedArray = (t: (key: string, options?: object) => unknown, key: string): string[] => {
     const result = t(key, { returnObjects: true });
@@ -92,6 +91,7 @@ const getTranslatedArray = (t: (key: string, options?: object) => unknown, key: 
     // If translation returns string (key not found), return empty array
     return [];
 };
+
 // Search highlight helper
 const highlightText = (text: string, query: string): React.ReactNode => {
     if (!query.trim()) return text;

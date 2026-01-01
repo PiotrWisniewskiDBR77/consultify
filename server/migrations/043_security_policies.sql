@@ -179,3 +179,4 @@ CREATE INDEX IF NOT EXISTS idx_trusted_devices_fingerprint ON trusted_devices(de
 INSERT OR IGNORE INTO security_policies (id, organization_id, compliance_preset)
 VALUES ('default-global', NULL, 'none');
 
+

@@ -179,3 +179,4 @@
 | Ethical concerns | Establish AI governance framework |
 | Integration complexity | API-first design, start with pilot scope |
 
+

@@ -226,3 +226,4 @@ DRD provides industry-specific benchmarks for comparison:
 - Healthcare: Focus on data privacy, patient experience, telemedicine
 - Technology: Advanced in all areas, emphasis on innovation velocity
 
+

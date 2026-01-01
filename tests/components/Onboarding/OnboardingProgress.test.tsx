@@ -19,3 +19,4 @@ describe('OnboardingProgress Component', () => {
     });
 });
 
+

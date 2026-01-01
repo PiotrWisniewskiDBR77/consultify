@@ -120,3 +120,4 @@ Next, we'll explore how to manage the human side of transformation through the A
 - 6:05 - Return to avatar for outro
 - 6:30 - End card with "Next: Change Management"
 
+

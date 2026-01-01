@@ -129,3 +129,4 @@ BEGIN
     UPDATE project_budgets SET last_updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
 END;
 
+

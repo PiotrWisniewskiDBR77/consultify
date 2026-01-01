@@ -281,3 +281,4 @@ export const StudioChat: React.FC<StudioChatProps> = ({
 
 export default StudioChat;
 
+

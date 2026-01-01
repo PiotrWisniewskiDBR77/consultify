@@ -522,3 +522,4 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
 
 export default DecisionDetailModal;
 
+

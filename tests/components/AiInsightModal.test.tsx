@@ -47,3 +47,4 @@ describe('AiInsightModal Component', () => {
     });
 });
 
+

@@ -167,3 +167,4 @@ VALUES
      '<h1>Join {{org_name}}</h1><p>{{inviter_name}} has invited you to join their team.</p><a href="{{invite_url}}">Accept Invitation</a>',
      '["first_name", "inviter_name", "org_name", "invite_url"]');
 
+

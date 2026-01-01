@@ -113,3 +113,4 @@ Your transformation journey is underway. Consultify is here to support you every
 - 5:00 - Show all video thumbnails briefly
 - 5:15 - End card with "Thank you for learning with Consultify!"
 
+

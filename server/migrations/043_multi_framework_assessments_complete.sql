@@ -297,3 +297,4 @@ COMMENT ON TABLE multi_framework_assessment_comments IS 'Comments and feedback o
 COMMENT ON TABLE multi_framework_reports IS 'Generated reports from framework assessments';
 COMMENT ON TABLE multi_framework_initiatives IS 'Initiatives generated from assessment gaps';
 
+

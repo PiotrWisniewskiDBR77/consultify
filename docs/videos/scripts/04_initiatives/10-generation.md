@@ -96,3 +96,4 @@ Next, we'll learn how to prioritize these initiatives using the Impact-Effort Ma
 - 6:25 - Return to avatar for outro
 - 6:45 - End card with "Next: Prioritizing Initiatives"
 
+

@@ -94,3 +94,4 @@ test.describe('Load Testing', () => {
         expect(avgPageLoad).toBeLessThan(2000);
     });
 });
+

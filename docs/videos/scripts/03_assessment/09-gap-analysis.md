@@ -98,3 +98,4 @@ This is powerful for stakeholder reporting – instead of abstract metrics, you 
 - 7:00 - Return to avatar for outro
 - 7:15 - End card with "Next: Generating Initiatives"
 
+

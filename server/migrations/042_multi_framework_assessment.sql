@@ -309,3 +309,4 @@ COMMENT ON TABLE dbr77_workstations IS 'DBR77 Lean 4.0 workstation/role assessme
 COMMENT ON TABLE framework_score_history IS 'Audit trail for assessment score changes';
 COMMENT ON TABLE framework_import_logs IS 'Log of PDF imports and AI extraction results';
 
+

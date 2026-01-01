@@ -413,3 +413,4 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
 
 export default KnowledgeBaseView;
 
+

@@ -409,3 +409,4 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
 
 export default AccessibilitySettings;
 
+
