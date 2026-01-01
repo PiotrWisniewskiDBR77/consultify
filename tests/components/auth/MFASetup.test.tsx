@@ -9,11 +9,6 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 // Mock i18next
-vi.mock('react-i18next', () => ({
-    useTranslation: () => ({
-        t: (key: string, fallback: string) => fallback || key,
-    }),
-}));
 
 // Mock fetch
 const mockFetch = vi.fn();

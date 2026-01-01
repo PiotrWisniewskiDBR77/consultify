@@ -8,11 +8,6 @@ import { TodayDashboard } from '../../../components/MyWork/TodayDashboard';
 import { Api } from '../../../services/api';
 
 // Mock dependencies
-vi.mock('react-i18next', () => ({
-    useTranslation: () => ({
-        t: (key: string, fallback?: string) => fallback || key
-    })
-}));
 
 vi.mock('../../../services/api', () => ({
     Api: {

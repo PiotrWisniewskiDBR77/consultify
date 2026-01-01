@@ -4,11 +4,11 @@ const { v4: uuidv4 } = require('uuid');
 const db = require('../database');
 
 const whatsappService = require('../services/whatsappService');
-const slackService = require('../services/slackService');
+const notificationService = require('../services/notificationService');
 
 // POST /api/feedback - Submit new feedback
 router.post('/', (req, res) => {
-    const { userId, userEmail, type, message } = req.body;
+    const { userId, userEmail, type, message, severity } = req.body;
 
     if (!message || !type) {
         return res.status(400).json({ error: 'Message and type are required' });
@@ -17,15 +17,37 @@ router.post('/', (req, res) => {
     const id = uuidv4();
     const sql = `INSERT INTO system_feedback (id, user_id, user_email, type, message, status, created_at) VALUES (?, ?, ?, ?, ?, 'NEW', CURRENT_TIMESTAMP)`;
 
-    db.run(sql, [id, userId, userEmail, type, message], function (err) {
+    db.run(sql, [id, userId, userEmail, type, message], async function (err) {
         if (err) {
             console.error('Error saving feedback:', err);
             return res.status(500).json({ error: 'Failed to save feedback' });
         }
 
-        // Send Notifications (Async - fire and forget)
+        // Send Notifications (Async)
         whatsappService.sendNewFeedbackAlert({ userId, userEmail, type, message });
-        slackService.sendNewFeedbackAlert({ userId, userEmail, type, message });
+
+        // Create Internal Notification (Triggers Slack via NotificationService)
+        try {
+            const isCritical = severity === 'CRITICAL';
+            const notificationType = isCritical ? 'CLIENT_TICKET' : 'USER_FEEDBACK';
+            const notificationSeverity = isCritical ? 'WARNING' : 'INFO'; // 'WARNING' maps to amber light usually, 'CRITICAL' to red
+
+            await notificationService.create({
+                userId: userId,
+                organizationId: 'system', // System-wide
+                projectId: null,
+                type: notificationType,
+                severity: notificationSeverity,
+                title: isCritical ? `Critical Feedback: ${type}` : `New Feedback: ${type}`,
+                message: message.substring(0, 200) + (message.length > 200 ? '...' : ''),
+                relatedObjectType: 'FEEDBACK',
+                relatedObjectId: id,
+                isActionable: true,
+                actionUrl: '/superadmin/feedback'
+            });
+        } catch (noteErr) {
+            console.error('Failed to create notification for feedback:', noteErr);
+        }
 
         res.json({ success: true, id });
     });

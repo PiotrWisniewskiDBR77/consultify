@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
     LayoutDashboard,
-    Building2,
     Users,
     Brain,
-    BookOpen,
     Settings,
     Shield,
     LogOut,
@@ -12,88 +10,63 @@ import {
     CreditCard,
     Pin,
     PanelLeftClose,
-    Key,
-    KeyRound,
-    Palette,
-    ShieldCheck,
-    FileCheck,
-    Receipt,
-    Lock,
-    Upload,
+    Activity,
     Layers,
-    MessageSquareWarning,
-    Cpu,
-    Sparkles
 } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { Api } from '../services/api';
 import { AppView } from '../types';
 
-// Legacy type for backward compatibility - maps to AppView
+// New 8-module structure
 export type SuperAdminSection =
-    | 'dashboard'
-    | 'organizations'
-    | 'users'
-    | 'billing'
-    | 'ai-config'
-    | 'llm-management'
-    | 'ai-intelligence'
-    | 'knowledge'
-    | 'settings'
-    // Enterprise sections
-    | 'sso'
-    | 'security-policies'
-    | 'api-management'
-    | 'whitelabel'
-    | 'compliance'
-    | 'invoices'
-    | 'feedback'
-    | 'playbooks'
-    | 'bulk-operations';
+    | 'overview'
+    | 'customers'
+    | 'ai-platform'
+    | 'system'
+    | 'content'
+    | 'revenue'
+    | 'security'
+    | 'configuration';
 
-// Mapping between legacy sections and AppView
+// Mapping between sections and AppView
 export const sectionToAppView: Record<SuperAdminSection, AppView> = {
-    'dashboard': AppView.SUPERADMIN_DASHBOARD,
-    'organizations': AppView.SUPERADMIN_ORGANIZATIONS,
-    'users': AppView.SUPERADMIN_USERS,
-    'billing': AppView.SUPERADMIN_BILLING,
-    'ai-config': AppView.SUPERADMIN_AI_CONFIG,
-    'llm-management': AppView.SUPERADMIN_LLM_MANAGEMENT,
-    'ai-intelligence': AppView.SUPERADMIN_AI_INTELLIGENCE,
-    'knowledge': AppView.SUPERADMIN_KNOWLEDGE,
-    'settings': AppView.SUPERADMIN_SETTINGS,
-    // Enterprise mappings
-    'sso': AppView.SUPERADMIN_SSO,
-    'security-policies': AppView.SUPERADMIN_SECURITY_POLICIES,
-    'api-management': AppView.SUPERADMIN_API_MANAGEMENT,
-    'whitelabel': AppView.SUPERADMIN_WHITELABEL,
-    'compliance': AppView.SUPERADMIN_COMPLIANCE,
-    'invoices': AppView.SUPERADMIN_INVOICES,
-    'feedback': AppView.SUPERADMIN_FEEDBACK,
-    'playbooks': AppView.SUPERADMIN_PLAYBOOK_TEMPLATES,
-    'bulk-operations': AppView.SUPERADMIN_BULK_OPERATIONS,
+    'overview': AppView.SUPERADMIN_OVERVIEW,
+    'customers': AppView.SUPERADMIN_CUSTOMERS,
+    'ai-platform': AppView.SUPERADMIN_AI_PLATFORM,
+    'system': AppView.SUPERADMIN_SYSTEM,
+    'content': AppView.SUPERADMIN_CONTENT,
+    'revenue': AppView.SUPERADMIN_REVENUE,
+    'security': AppView.SUPERADMIN_SECURITY,
+    'configuration': AppView.SUPERADMIN_CONFIGURATION,
 };
 
 export const appViewToSection: Record<string, SuperAdminSection> = {
-    [AppView.SUPERADMIN_DASHBOARD]: 'dashboard',
-    [AppView.SUPERADMIN_ORGANIZATIONS]: 'organizations',
-    [AppView.SUPERADMIN_USERS]: 'users',
-    [AppView.SUPERADMIN_BILLING]: 'billing',
-    [AppView.SUPERADMIN_AI_CONFIG]: 'ai-config',
-    [AppView.SUPERADMIN_LLM_MANAGEMENT]: 'llm-management',
-    [AppView.SUPERADMIN_AI_INTELLIGENCE]: 'ai-intelligence',
-    [AppView.SUPERADMIN_KNOWLEDGE]: 'knowledge',
-    [AppView.SUPERADMIN_SETTINGS]: 'settings',
-    // Enterprise mappings
-    [AppView.SUPERADMIN_SSO]: 'sso',
-    [AppView.SUPERADMIN_SECURITY_POLICIES]: 'security-policies',
-    [AppView.SUPERADMIN_API_MANAGEMENT]: 'api-management',
-    [AppView.SUPERADMIN_WHITELABEL]: 'whitelabel',
-    [AppView.SUPERADMIN_COMPLIANCE]: 'compliance',
-    [AppView.SUPERADMIN_INVOICES]: 'invoices',
-    [AppView.SUPERADMIN_FEEDBACK]: 'feedback',
-    [AppView.SUPERADMIN_PLAYBOOK_TEMPLATES]: 'playbooks',
-    [AppView.SUPERADMIN_BULK_OPERATIONS]: 'bulk-operations',
+    [AppView.SUPERADMIN_OVERVIEW]: 'overview',
+    [AppView.SUPERADMIN_CUSTOMERS]: 'customers',
+    [AppView.SUPERADMIN_AI_PLATFORM]: 'ai-platform',
+    [AppView.SUPERADMIN_SYSTEM]: 'system',
+    [AppView.SUPERADMIN_CONTENT]: 'content',
+    [AppView.SUPERADMIN_REVENUE]: 'revenue',
+    [AppView.SUPERADMIN_SECURITY]: 'security',
+    [AppView.SUPERADMIN_CONFIGURATION]: 'configuration',
+    // Legacy view mappings - redirect to new modules
+    [AppView.SUPERADMIN_DASHBOARD]: 'overview',
+    [AppView.SUPERADMIN_ORGANIZATIONS]: 'customers',
+    [AppView.SUPERADMIN_USERS]: 'customers',
+    [AppView.SUPERADMIN_FEEDBACK]: 'customers',
+    [AppView.SUPERADMIN_BULK_OPERATIONS]: 'customers',
+    [AppView.SUPERADMIN_LLM_MANAGEMENT]: 'ai-platform',
+    [AppView.SUPERADMIN_AI_INTELLIGENCE]: 'ai-platform',
+    [AppView.SUPERADMIN_KNOWLEDGE]: 'ai-platform',
+    [AppView.SUPERADMIN_BILLING]: 'revenue',
+    [AppView.SUPERADMIN_INVOICES]: 'revenue',
+    [AppView.SUPERADMIN_SSO]: 'security',
+    [AppView.SUPERADMIN_SECURITY_POLICIES]: 'security',
+    [AppView.SUPERADMIN_API_MANAGEMENT]: 'security',
+    [AppView.SUPERADMIN_COMPLIANCE]: 'security',
+    [AppView.SUPERADMIN_SETTINGS]: 'configuration',
+    [AppView.SUPERADMIN_WHITELABEL]: 'configuration',
+    [AppView.SUPERADMIN_PLAYBOOK_TEMPLATES]: 'content',
 };
 
 interface SuperAdminSidebarProps {
@@ -103,14 +76,37 @@ interface SuperAdminSidebarProps {
     currentUserEmail: string;
 }
 
+interface MenuItem {
+    id: SuperAdminSection;
+    label: string;
+    icon: React.ReactNode;
+    separator?: 'before';
+}
+
+// 8-module menu structure with minimal separators
+const menuItems: MenuItem[] = [
+    { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={20} /> },
+    // --- separator ---
+    { id: 'customers', label: 'Customers', icon: <Users size={20} />, separator: 'before' },
+    { id: 'ai-platform', label: 'AI Platform', icon: <Brain size={20} /> },
+    // --- separator ---
+    { id: 'system', label: 'System', icon: <Activity size={20} />, separator: 'before' },
+    { id: 'content', label: 'Content', icon: <Layers size={20} /> },
+    // --- separator ---
+    { id: 'revenue', label: 'Revenue', icon: <CreditCard size={20} />, separator: 'before' },
+    { id: 'security', label: 'Security', icon: <Shield size={20} /> },
+    // --- separator ---
+    { id: 'configuration', label: 'Configuration', icon: <Settings size={20} />, separator: 'before' },
+];
+
 // Reusable menu button component
 const MenuButton: React.FC<{
     item: MenuItem;
     activeSection: SuperAdminSection;
     showFull: boolean;
     onSectionChange: (section: SuperAdminSection) => void;
-    pendingRequestsCount: number;
-}> = ({ item, activeSection, showFull, onSectionChange, pendingRequestsCount }) => (
+    badge?: number;
+}> = ({ item, activeSection, showFull, onSectionChange, badge }) => (
     <button
         onClick={() => onSectionChange(item.id)}
         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative ${activeSection === item.id
@@ -121,10 +117,10 @@ const MenuButton: React.FC<{
     >
         <span className={`shrink-0 relative ${activeSection === item.id ? 'text-red-400' : 'text-slate-500 group-hover:text-slate-300'}`}>
             {item.icon}
-            {/* Pending requests badge for Organizations */}
-            {item.id === 'organizations' && pendingRequestsCount > 0 && !showFull && (
+            {/* Badge for collapsed state */}
+            {badge && badge > 0 && !showFull && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 text-black text-[10px] font-bold rounded-full flex items-center justify-center">
-                    {pendingRequestsCount > 9 ? '9+' : pendingRequestsCount}
+                    {badge > 9 ? '9+' : badge}
                 </span>
             )}
         </span>
@@ -134,10 +130,10 @@ const MenuButton: React.FC<{
             {item.label}
         </span>
 
-        {/* Pending requests badge (expanded) */}
-        {showFull && item.id === 'organizations' && pendingRequestsCount > 0 && (
+        {/* Badge for expanded state */}
+        {showFull && badge && badge > 0 && (
             <span className="bg-yellow-500 text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                {pendingRequestsCount}
+                {badge}
             </span>
         )}
 
@@ -146,43 +142,6 @@ const MenuButton: React.FC<{
         )}
     </button>
 );
-
-interface MenuItem {
-    id: SuperAdminSection;
-    viewId: AppView;
-    label: string;
-    icon: React.ReactNode;
-    highlight?: boolean;
-    category?: 'core' | 'security' | 'enterprise' | 'system';
-}
-
-const menuItems: MenuItem[] = [
-    // Core Management
-    { id: 'dashboard', viewId: AppView.SUPERADMIN_DASHBOARD, label: 'Dashboard', icon: <LayoutDashboard size={20} />, category: 'core' },
-    { id: 'organizations', viewId: AppView.SUPERADMIN_ORGANIZATIONS, label: 'Organizations', icon: <Building2 size={20} />, category: 'core' },
-    { id: 'users', viewId: AppView.SUPERADMIN_USERS, label: 'Users', icon: <Users size={20} />, category: 'core' },
-    { id: 'playbooks', viewId: AppView.SUPERADMIN_PLAYBOOK_TEMPLATES, label: 'Playbook Templates', icon: <Layers size={20} />, category: 'core' },
-
-    // Security & Access
-
-    { id: 'sso', viewId: AppView.SUPERADMIN_SSO, label: 'SSO Configuration', icon: <Key size={20} />, category: 'security' },
-    { id: 'security-policies', viewId: AppView.SUPERADMIN_SECURITY_POLICIES, label: 'Security Policies', icon: <ShieldCheck size={20} />, category: 'security' },
-    { id: 'api-management', viewId: AppView.SUPERADMIN_API_MANAGEMENT, label: 'API Management', icon: <KeyRound size={20} />, category: 'security' },
-
-    // Enterprise Features
-    { id: 'billing', viewId: AppView.SUPERADMIN_BILLING, label: 'Billing Center', icon: <CreditCard size={20} />, highlight: true, category: 'enterprise' },
-    { id: 'invoices', viewId: AppView.SUPERADMIN_INVOICES, label: 'Invoices', icon: <Receipt size={20} />, category: 'enterprise' },
-    { id: 'whitelabel', viewId: AppView.SUPERADMIN_WHITELABEL, label: 'White-label Studio', icon: <Palette size={20} />, category: 'enterprise' },
-    { id: 'compliance', viewId: AppView.SUPERADMIN_COMPLIANCE, label: 'Compliance Center', icon: <FileCheck size={20} />, category: 'enterprise' },
-    { id: 'feedback', viewId: AppView.SUPERADMIN_FEEDBACK, label: 'User Feedback', icon: <MessageSquareWarning size={20} />, category: 'core' },
-    { id: 'bulk-operations', viewId: AppView.SUPERADMIN_BULK_OPERATIONS, label: 'Bulk Operations', icon: <Upload size={20} />, category: 'enterprise' },
-
-    // System - AI & LLM (Two distinct modules)
-    { id: 'llm-management', viewId: AppView.SUPERADMIN_LLM_MANAGEMENT, label: 'LLM Management', icon: <Cpu size={20} />, category: 'system' },
-    { id: 'ai-intelligence', viewId: AppView.SUPERADMIN_AI_INTELLIGENCE, label: 'AI Intelligence', icon: <Sparkles size={20} />, highlight: true, category: 'system' },
-    { id: 'knowledge', viewId: AppView.SUPERADMIN_KNOWLEDGE, label: 'Knowledge Base', icon: <BookOpen size={20} />, category: 'system' },
-    { id: 'settings', viewId: AppView.SUPERADMIN_SETTINGS, label: 'Settings', icon: <Settings size={20} />, category: 'system' },
-];
 
 export const SuperAdminSidebar: React.FC<SuperAdminSidebarProps> = ({
     activeSection,
@@ -194,7 +153,7 @@ export const SuperAdminSidebar: React.FC<SuperAdminSidebarProps> = ({
     const [isHovered, setIsHovered] = useState(false);
     const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
 
-    // Fetch pending requests count for badge
+    // Fetch pending requests count for badge on Customers
     useEffect(() => {
         const fetchPendingCount = async () => {
             try {
@@ -206,13 +165,11 @@ export const SuperAdminSidebar: React.FC<SuperAdminSidebarProps> = ({
             }
         };
         fetchPendingCount();
-        // Refresh every 60 seconds
         const interval = setInterval(fetchPendingCount, 60000);
         return () => clearInterval(interval);
     }, []);
 
-    // "Show Full" if Pinned (not collapsed) OR Hovered
-    // If isSidebarCollapsed is true (unpinned), we only show full on hover.
+    // Show full if pinned (not collapsed) OR hovered
     const showFull = !isSidebarCollapsed || isHovered;
 
     return (
@@ -236,11 +193,11 @@ export const SuperAdminSidebar: React.FC<SuperAdminSidebarProps> = ({
                     <div className="text-[10px] text-slate-500 uppercase tracking-widest whitespace-nowrap">Console</div>
                 </div>
 
-                {/* Pin/Unpin Button - Visible only when expanded (showFull) */}
+                {/* Pin/Unpin Button */}
                 {showFull && (
                     <button
                         onClick={(e) => {
-                            e.stopPropagation(); // Prevent drag/other
+                            e.stopPropagation();
                             toggleSidebarCollapse();
                             setIsHovered(false);
                         }}
@@ -254,58 +211,20 @@ export const SuperAdminSidebar: React.FC<SuperAdminSidebarProps> = ({
 
             {/* Navigation */}
             <nav className="flex-1 p-2 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
-                {/* Core Management */}
-                {showFull && (
-                    <div className="text-[10px] uppercase tracking-widest text-slate-600 font-semibold px-3 mb-2 mt-2 fade-in">
-                        Management
-                    </div>
-                )}
                 <ul className="space-y-1">
-                    {menuItems.filter(item => item.category === 'core').map((item) => (
+                    {menuItems.map((item) => (
                         <li key={item.id}>
-                            <MenuButton item={item} activeSection={activeSection} showFull={showFull} onSectionChange={onSectionChange} pendingRequestsCount={pendingRequestsCount} />
-                        </li>
-                    ))}
-                </ul>
-
-                {/* Security & Access */}
-                {showFull && (
-                    <div className="text-[10px] uppercase tracking-widest text-slate-600 font-semibold px-3 mb-2 mt-4 fade-in">
-                        Security & Access
-                    </div>
-                )}
-                <ul className="space-y-1 mt-1">
-                    {menuItems.filter(item => item.category === 'security').map((item) => (
-                        <li key={item.id}>
-                            <MenuButton item={item} activeSection={activeSection} showFull={showFull} onSectionChange={onSectionChange} pendingRequestsCount={0} />
-                        </li>
-                    ))}
-                </ul>
-
-                {/* Enterprise Features */}
-                {showFull && (
-                    <div className="text-[10px] uppercase tracking-widest text-slate-600 font-semibold px-3 mb-2 mt-4 fade-in">
-                        Enterprise
-                    </div>
-                )}
-                <ul className="space-y-1 mt-1">
-                    {menuItems.filter(item => item.category === 'enterprise').map((item) => (
-                        <li key={item.id}>
-                            <MenuButton item={item} activeSection={activeSection} showFull={showFull} onSectionChange={onSectionChange} pendingRequestsCount={0} />
-                        </li>
-                    ))}
-                </ul>
-
-                {/* System */}
-                {showFull && (
-                    <div className="text-[10px] uppercase tracking-widest text-slate-600 font-semibold px-3 mb-2 mt-4 fade-in">
-                        System
-                    </div>
-                )}
-                <ul className="space-y-1 mt-1">
-                    {menuItems.filter(item => item.category === 'system').map((item) => (
-                        <li key={item.id}>
-                            <MenuButton item={item} activeSection={activeSection} showFull={showFull} onSectionChange={onSectionChange} pendingRequestsCount={0} />
+                            {/* Minimal separator - just a thin line */}
+                            {item.separator === 'before' && (
+                                <div className="mx-3 my-2 border-t border-white/5" />
+                            )}
+                            <MenuButton
+                                item={item}
+                                activeSection={activeSection}
+                                showFull={showFull}
+                                onSectionChange={onSectionChange}
+                                badge={item.id === 'customers' ? pendingRequestsCount : undefined}
+                            />
                         </li>
                     ))}
                 </ul>

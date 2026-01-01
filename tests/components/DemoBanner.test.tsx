@@ -6,11 +6,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import DemoBanner from '../../../components/DemoBanner';
 
-vi.mock('react-i18next', () => ({
-    useTranslation: () => ({
-        t: (key: string, fallback?: string) => fallback || key
-    })
-}));
 
 describe('DemoBanner Component', () => {
     const user = userEvent.setup();

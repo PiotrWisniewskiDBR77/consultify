@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Send, Bug, Lightbulb, Loader2, MessageSquareWarning } from 'lucide-react';
+import { X, Send, Bug, Lightbulb, Loader2, MessageSquareWarning, AlertTriangle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../../store/useAppStore';
 
@@ -8,6 +8,7 @@ export const FeedbackSidePanel: React.FC = () => {
     const { currentUser, activeSidePanel, closeSidePanel } = useAppStore();
     const [type, setType] = useState<'BUG' | 'IDEA'>('BUG');
     const [message, setMessage] = useState('');
+    const [isCritical, setIsCritical] = useState(false); // Severity state
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
 
@@ -31,7 +32,8 @@ export const FeedbackSidePanel: React.FC = () => {
                     userId: currentUser?.id || 'anonymous',
                     userEmail: currentUser?.email || 'anonymous',
                     type,
-                    message
+                    message,
+                    severity: (type === 'BUG' && isCritical) ? 'CRITICAL' : 'NORMAL'
                 })
             });
 
@@ -40,6 +42,7 @@ export const FeedbackSidePanel: React.FC = () => {
                 setTimeout(() => {
                     setShowSuccess(false);
                     setMessage('');
+                    setIsCritical(false);
                     closeSidePanel();
                 }, 2000);
             } else {
@@ -121,6 +124,31 @@ export const FeedbackSidePanel: React.FC = () => {
                                 </button>
                             </div>
 
+                            {/* Critical Toggle (Only for BUG) */}
+                            {type === 'BUG' && (
+                                <div
+                                    onClick={() => setIsCritical(!isCritical)}
+                                    className={`flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer ${isCritical
+                                        ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30'
+                                        : 'border-transparent hover:bg-slate-50 dark:hover:bg-white/5'
+                                        }`}
+                                >
+                                    <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isCritical ? 'bg-red-500 border-red-500' : 'border-slate-300 dark:border-slate-600'
+                                        }`}>
+                                        {isCritical && <X size={14} className="text-white" />}
+                                    </div>
+                                    <div className="flex-1">
+                                        <div className="text-sm font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                                            <AlertTriangle size={14} className={isCritical ? 'text-red-500' : 'text-slate-400'} />
+                                            Critical / Blocking Issue
+                                        </div>
+                                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                                            This bug prevents me from working.
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Message Input */}
                             <div className="flex-1 flex flex-col">
                                 <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
@@ -144,7 +172,10 @@ export const FeedbackSidePanel: React.FC = () => {
                                 <button
                                     type="submit"
                                     disabled={isSubmitting || !message.trim()}
-                                    className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 dark:disabled:bg-navy-700 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
+                                    className={`w-full py-3 font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg ${isCritical
+                                            ? 'bg-red-600 hover:bg-red-700 shadow-red-500/20 text-white'
+                                            : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20 text-white disabled:bg-slate-300 dark:disabled:bg-navy-700'
+                                        } disabled:cursor-not-allowed`}
                                 >
                                     {isSubmitting ? (
                                         <>
@@ -153,7 +184,7 @@ export const FeedbackSidePanel: React.FC = () => {
                                         </>
                                     ) : (
                                         <>
-                                            {t('feedback.submit')}
+                                            {isCritical ? 'Submit Critical Bug' : t('feedback.submit')}
                                             <Send size={18} />
                                         </>
                                     )}

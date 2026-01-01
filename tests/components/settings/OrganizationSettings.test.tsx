@@ -7,11 +7,6 @@ import userEvent from '@testing-library/user-event';
 import { OrganizationSettings } from '../../../components/settings/OrganizationSettings';
 import { Api } from '../../../services/api';
 
-vi.mock('react-i18next', () => ({
-    useTranslation: () => ({
-        t: (key: string, fallback?: string) => fallback || key
-    })
-}));
 
 vi.mock('../../../services/api', () => ({
     Api: {

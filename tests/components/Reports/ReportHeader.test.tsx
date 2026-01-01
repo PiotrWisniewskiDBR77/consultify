@@ -7,12 +7,6 @@ import userEvent from '@testing-library/user-event';
 import { ReportHeader } from '../../../components/Reports/ReportHeader';
 
 // Mock i18n
-vi.mock('react-i18next', () => ({
-    useTranslation: () => ({
-        t: (key: string, fallback?: string) => fallback || key,
-        i18n: { language: 'en' }
-    })
-}));
 
 const defaultProps = {
     name: 'Q4 Assessment Report',

@@ -8,16 +8,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 
 // Mock react-i18next
-vi.mock('react-i18next', () => ({
-    useTranslation: () => ({
-        t: (key: string, options?: any) => {
-            if (options?.returnObjects) {
-                return {};
-            }
-            return key;
-        }
-    })
-}));
 
 // Mock utils
 vi.mock('../../utils/assessmentColors', () => ({

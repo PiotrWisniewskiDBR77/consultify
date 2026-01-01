@@ -11,11 +11,6 @@ vi.mock('../../../contexts/HelpContext', () => ({
     useHelp: vi.fn()
 }));
 
-vi.mock('react-i18next', () => ({
-    useTranslation: () => ({
-        t: (key: string, fallback?: string) => fallback || key
-    })
-}));
 
 describe('HelpPanel Component', () => {
     const user = userEvent.setup();

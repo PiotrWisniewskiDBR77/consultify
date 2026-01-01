@@ -10,57 +10,6 @@ import userEvent from '@testing-library/user-event';
 import { AssessmentWizard } from '../../components/assessment/AssessmentWizard';
 
 // Mock react-i18next
-vi.mock('react-i18next', () => ({
-    useTranslation: () => ({
-        t: (key: string, options?: any) => {
-            if (options?.returnObjects) {
-                if (key === 'assessment.wizard') {
-                    return {
-                        cancel: 'Cancel',
-                        startBtn: 'Start Assessment',
-                        startDesc: 'Answer questions to assess your maturity level',
-                        recommendedLevel: 'Recommended Level',
-                        acceptResult: 'Accept Result',
-                        adjustManually: 'Adjust Manually'
-                    };
-                }
-                if (key.includes('axisContent')) {
-                    return {
-                        title: 'Digital Processes',
-                        intro: 'Assess your digital process maturity',
-                        areas: {
-                            sales: {
-                                title: 'Sales Processes',
-                                levels: [
-                                    'Manual paper-based',
-                                    'Basic digitization',
-                                    'CRM implemented',
-                                    'Integrated workflows',
-                                    'Advanced analytics',
-                                    'AI-augmented',
-                                    'Autonomous'
-                                ]
-                            },
-                            operations: {
-                                title: 'Operations',
-                                levels: [
-                                    'Manual',
-                                    'Basic tools',
-                                    'ERP system',
-                                    'Integrated',
-                                    'Optimized',
-                                    'AI-driven',
-                                    'Autonomous'
-                                ]
-                            }
-                        }
-                    };
-                }
-            }
-            return key;
-        }
-    })
-}));
 
 describe('AssessmentWizard', () => {
     const mockOnComplete = vi.fn();
@@ -354,11 +303,6 @@ describe('AssessmentWizard', () => {
 
     describe('Empty Areas Handling', () => {
         it('should show message when no areas defined', () => {
-            vi.mock('react-i18next', () => ({
-                useTranslation: () => ({
-                    t: () => ({ title: 'Test', areas: {} })
-                })
-            }));
 
             // This test would need to mock the translation to return empty areas
             // For now, we verify the component handles this gracefully

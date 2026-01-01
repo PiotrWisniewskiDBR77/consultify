@@ -45,20 +45,10 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
 }) => {
     return (
         <div className="p-8 overflow-y-auto relative">
-            <InfoButton cardId="superadmin-dashboard" position="top-right" />
             <div className="flex items-center justify-between mb-6">
                 <div>
                     <h1 className="text-2xl font-bold text-white">Dashboard</h1>
                     <p className="text-slate-400 text-sm mt-1">System overview and quick actions</p>
-                </div>
-                <div className="flex items-center gap-2">
-                    <InfoButton cardId="superadmin-dashboard" position="header-inline" size="md" showLabel label="Help" />
-                    <button 
-                        onClick={onRefresh} 
-                        className="flex items-center gap-2 px-4 py-2 bg-navy-800 hover:bg-navy-700 rounded-lg text-sm transition-colors border border-white/10"
-                    >
-                        <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Refresh
-                    </button>
                 </div>
             </div>
 
@@ -188,11 +178,10 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                     <div className="space-y-3 max-h-64 overflow-y-auto">
                         {activities.slice(0, 10).map((act, idx) => (
                             <div key={act.id || idx} className="flex items-center gap-3 text-sm border-b border-white/5 pb-2">
-                                <div className={`w-2 h-2 rounded-full ${
-                                    act.action === 'created' ? 'bg-green-500' : 
-                                    act.action === 'deleted' ? 'bg-red-500' : 
-                                    'bg-blue-500'
-                                }`} />
+                                <div className={`w-2 h-2 rounded-full ${act.action === 'created' ? 'bg-green-500' :
+                                    act.action === 'deleted' ? 'bg-red-500' :
+                                        'bg-blue-500'
+                                    }`} />
                                 <span className="text-slate-400">{act.user_name || act.user_email || 'System'}</span>
                                 <span className="text-slate-500">{act.action}</span>
                                 <span className="text-white font-medium">{act.entity_type}</span>

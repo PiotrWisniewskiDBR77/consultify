@@ -7,11 +7,6 @@ import userEvent from '@testing-library/user-event';
 import { PMOStatusBanner, PMOPhaseIndicator, PMOBlockingBadge } from '../../../components/PMO/PMOStatusBanner';
 
 // Mock dependencies
-vi.mock('react-i18next', () => ({
-    useTranslation: () => ({
-        t: (key: string, fallback?: string) => fallback || key
-    })
-}));
 
 const mockPMOStore = {
     currentPhase: 'Execution',

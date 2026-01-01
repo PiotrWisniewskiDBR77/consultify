@@ -8,11 +8,6 @@ import { FocusBoard } from '../../../components/MyWork/Focus/FocusBoard';
 import { Api } from '../../../services/api';
 
 // Mock dependencies
-vi.mock('react-i18next', () => ({
-    useTranslation: () => ({
-        t: (key: string, fallback?: string) => fallback || key
-    })
-}));
 
 vi.mock('../../../services/api', () => ({
     Api: {

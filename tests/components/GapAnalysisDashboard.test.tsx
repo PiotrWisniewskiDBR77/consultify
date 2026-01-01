@@ -9,24 +9,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 // Mock react-i18next
-vi.mock('react-i18next', () => ({
-    useTranslation: () => ({
-        t: (key: string) => {
-            const translations: Record<string, string> = {
-                'gapAnalysis.title': 'Gap Analysis',
-                'gapAnalysis.currentLevel': 'Current Level',
-                'gapAnalysis.targetLevel': 'Target Level',
-                'gapAnalysis.gap': 'Gap',
-                'gapAnalysis.priority': 'Priority',
-                'gapAnalysis.recommendations': 'Recommendations',
-                'gapAnalysis.pathway': 'Improvement Pathway',
-                'gapAnalysis.estimatedTime': 'Estimated Time',
-                'gapAnalysis.noData': 'No gap analysis data available'
-            };
-            return translations[key] || key;
-        }
-    })
-}));
 
 // Mock chart component
 vi.mock('recharts', () => ({

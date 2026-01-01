@@ -5,6 +5,94 @@ import { mockLLMApi } from './__mocks__/llmApi.js';
 
 const require = createRequire(import.meta.url);
 
+// Global mock for react-i18next to prevent "Cannot read properties of undefined (reading 'en')" errors
+vi.mock('react-i18next', () => {
+    // Helper function to create nested translation objects with language properties
+    const createTranslationObject = (key: string, defaultValue?: any): any => {
+        // If defaultValue is provided and is an object, use it
+        if (defaultValue && typeof defaultValue === 'object' && !Array.isArray(defaultValue)) {
+            return defaultValue;
+        }
+        
+        // Create a proxy that handles all property access
+        return new Proxy({}, {
+            get(target, prop: string) {
+                // Handle language properties (.en, .pl, etc.) - return the key or a safe value
+                if (['en', 'pl', 'de', 'fr', 'es', 'it', 'ja', 'zh'].includes(prop)) {
+                    return defaultValue || key;
+                }
+                // Handle common nested properties that might be accessed
+                if (['scenarios', 'deepDive', 'recommended', 'title', 'subtitle', 'name', 'description', 'gains', 'sacrifices', 'narrative'].includes(prop)) {
+                    return createTranslationObject(`${key}.${prop}`);
+                }
+                // Handle array access (e.g., t.scenarios[id])
+                if (typeof prop === 'string' && /^[a-zA-Z0-9_-]+$/.test(prop)) {
+                    return createTranslationObject(`${key}.${prop}`);
+                }
+                // Handle toString/valueOf for string conversion
+                if (prop === 'toString' || prop === 'valueOf') {
+                    return () => defaultValue || key;
+                }
+                // Handle undefined properties gracefully
+                if (prop === Symbol.toPrimitive) {
+                    return () => defaultValue || key;
+                }
+                // Return undefined for unknown properties (but don't throw)
+                return undefined;
+            },
+            // Make it work with Object.keys and similar
+            ownKeys() {
+                return ['en', 'pl', 'scenarios', 'deepDive', 'recommended'];
+            },
+            has(target, prop) {
+                return ['en', 'pl', 'scenarios', 'deepDive', 'recommended', 'toString', 'valueOf'].includes(prop as string) || 
+                       (typeof prop === 'string' && /^[a-zA-Z0-9_-]+$/.test(prop));
+            },
+            getOwnPropertyDescriptor(target, prop) {
+                return {
+                    enumerable: true,
+                    configurable: true,
+                    value: this.get(target, prop, target)
+                };
+            }
+        });
+    };
+
+    return {
+        useTranslation: () => ({
+            t: (key: string, options?: any) => {
+                // Handle returnObjects option
+                if (options?.returnObjects) {
+                    return createTranslationObject(key, options.defaultValue);
+                }
+                // Handle interpolation
+                if (options && typeof options === 'object' && !options.returnObjects) {
+                    // Simple interpolation - replace {key} with value
+                    let result = options.defaultValue || key;
+                    Object.keys(options).forEach(optKey => {
+                        if (optKey !== 'defaultValue' && optKey !== 'returnObjects') {
+                            result = String(result).replace(new RegExp(`\\{${optKey}\\}`, 'g'), String(options[optKey]));
+                        }
+                    });
+                    return result;
+                }
+                // Default: return the key or defaultValue
+                return options?.defaultValue || key;
+            },
+            i18n: {
+                language: 'en',
+                changeLanguage: vi.fn(),
+                getResourceBundle: vi.fn(() => ({})),
+                hasResourceBundle: vi.fn(() => false),
+                addResourceBundle: vi.fn(),
+            },
+            ready: true
+        }),
+        Trans: ({ children, i18nKey }: any) => children || i18nKey,
+        I18nextProvider: ({ children }: any) => children,
+    };
+});
+
 // Ensure consistent test-mode behavior across backend + frontend tests
 if (typeof process !== 'undefined' && process.env) {
     process.env.NODE_ENV = 'test';

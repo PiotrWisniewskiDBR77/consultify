@@ -39,7 +39,8 @@ const getRealType = () => isPostgres ? 'DOUBLE PRECISION' : 'REAL';
 
 // Required tables for AI system (PostgreSQL-compatible)
 const REQUIRED_TABLES = [
-    { name: 'ai_rate_limits', createSql: isPostgres ? `
+    {
+        name: 'ai_rate_limits', createSql: isPostgres ? `
         CREATE TABLE IF NOT EXISTS ai_rate_limits (
             id VARCHAR(255) PRIMARY KEY,
             organization_id VARCHAR(255) NOT NULL,
@@ -60,7 +61,8 @@ const REQUIRED_TABLES = [
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     `},
-    { name: 'ai_audit_log', createSql: isPostgres ? `
+    {
+        name: 'ai_audit_log', createSql: isPostgres ? `
         CREATE TABLE IF NOT EXISTS ai_audit_log (
             id VARCHAR(255) PRIMARY KEY,
             timestamp TIMESTAMP DEFAULT NOW(),
@@ -101,7 +103,8 @@ const REQUIRED_TABLES = [
             flag_reason TEXT
         )
     `},
-    { name: 'ai_data_access_log', createSql: isPostgres ? `
+    {
+        name: 'ai_data_access_log', createSql: isPostgres ? `
         CREATE TABLE IF NOT EXISTS ai_data_access_log (
             id VARCHAR(255) PRIMARY KEY,
             timestamp TIMESTAMP DEFAULT NOW(),
@@ -126,7 +129,8 @@ const REQUIRED_TABLES = [
             ai_request_id TEXT
         )
     `},
-    { name: 'ai_learning_patterns', createSql: isPostgres ? `
+    {
+        name: 'ai_learning_patterns', createSql: isPostgres ? `
         CREATE TABLE IF NOT EXISTS ai_learning_patterns (
             id VARCHAR(255) PRIMARY KEY,
             pattern_hash VARCHAR(255) UNIQUE,
@@ -149,7 +153,8 @@ const REQUIRED_TABLES = [
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     `},
-    { name: 'ai_learning_interactions', createSql: isPostgres ? `
+    {
+        name: 'ai_learning_interactions', createSql: isPostgres ? `
         CREATE TABLE IF NOT EXISTS ai_learning_interactions (
             id VARCHAR(255) PRIMARY KEY,
             user_id VARCHAR(255),
@@ -176,7 +181,8 @@ const REQUIRED_TABLES = [
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     `},
-    { name: 'ai_learned_patterns', createSql: isPostgres ? `
+    {
+        name: 'ai_learned_patterns', createSql: isPostgres ? `
         CREATE TABLE IF NOT EXISTS ai_learned_patterns (
             id VARCHAR(255) PRIMARY KEY,
             organization_id VARCHAR(255),
@@ -201,7 +207,8 @@ const REQUIRED_TABLES = [
             UNIQUE(organization_id, pattern_type, pattern_key)
         )
     `},
-    { name: 'ai_knowledge_embeddings', createSql: isPostgres ? `
+    {
+        name: 'ai_knowledge_embeddings', createSql: isPostgres ? `
         CREATE TABLE IF NOT EXISTS ai_knowledge_embeddings (
             id VARCHAR(255) PRIMARY KEY,
             organization_id VARCHAR(255),
@@ -224,7 +231,8 @@ const REQUIRED_TABLES = [
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     `},
-    { name: 'ai_cache', createSql: isPostgres ? `
+    {
+        name: 'ai_cache', createSql: isPostgres ? `
         CREATE TABLE IF NOT EXISTS ai_cache (
             id VARCHAR(255) PRIMARY KEY,
             query_hash VARCHAR(255),
@@ -348,7 +356,7 @@ class AIHealthMonitor {
 
             // Determine overall status
             const hasFailures = results.checks.some(c => !c.healthy);
-            const hasUnrepairedFailures = results.checks.some(c => 
+            const hasUnrepairedFailures = results.checks.some(c =>
                 !c.healthy && (!results.repairs.find(r => r.check === c.name)?.success)
             );
 
@@ -364,14 +372,50 @@ class AIHealthMonitor {
             }
 
             // Generate alerts if needed
-            if (this.consecutiveFailures >= CONFIG.maxFailuresBeforeAlert) {
+            if (this.consecutiveFailures >= CONFIG.maxFailuresBeforeAlert || results.checks.some(c => c.name === 'database' && !c.healthy)) {
+                const message = `AI system has failed ${this.consecutiveFailures} consecutive health checks. Failures: ${results.checks.filter(c => !c.healthy).map(c => c.name).join(', ')}`;
+
                 const alert = {
                     type: 'critical',
-                    message: `AI system has failed ${this.consecutiveFailures} consecutive health checks`,
+                    message,
                     checks: results.checks.filter(c => !c.healthy).map(c => c.name)
                 };
                 results.alerts.push(alert);
                 this.notifyListeners(alert);
+
+                // --- AUTO-REPORTING: SIGNALIZATOR INTEGRATION ---
+                // Immediately report Database failures or Persistent failures to NotificationService
+                try {
+                    const criticalFailure = results.checks.find(c => !c.healthy);
+                    if (criticalFailure) {
+                        const notificationService = require('../../notificationService');
+                        // Use a static debounce map to avoid spamming the DB every minute
+                        const alertKey = `health_${criticalFailure.name}`;
+                        const lastSent = this._lastAlertTime?.[alertKey] || 0;
+                        const now = Date.now();
+
+                        // Alert immediately for DB, or every 15 mins for others
+                        const cooldown = criticalFailure.name === 'database' ? 60000 : 900000;
+
+                        if (now - lastSent > cooldown) {
+                            notificationService.create({
+                                userId: 'system',
+                                organizationId: 'system',
+                                type: 'SYSTEM_ALERT',
+                                severity: 'CRITICAL',
+                                title: `CRITICAL INFRASTRUCTURE FAILURE: ${criticalFailure.name.toUpperCase()}`,
+                                message: `Automated Watchdog detected critical failure in ${criticalFailure.name}: ${criticalFailure.message || 'Unknown Error'}. Urgent attention required.`,
+                                isActionable: false
+                            }).then(() => {
+                                aiLogger.info('HealthMonitor', `Sent SYSTEM_ALERT for ${criticalFailure.name}`);
+                                if (!this._lastAlertTime) this._lastAlertTime = {};
+                                this._lastAlertTime[alertKey] = now;
+                            }).catch(err => console.error('Failed to send watchdog alert:', err));
+                        }
+                    }
+                } catch (notifyErr) {
+                    console.error('HealthMonitor Notification Error:', notifyErr);
+                }
             }
 
         } catch (error) {
@@ -384,7 +428,7 @@ class AIHealthMonitor {
         this.lastCheck = results;
 
         // Log summary
-        aiLogger.info('HealthMonitor', 
+        aiLogger.info('HealthMonitor',
             `Diagnostics complete: ${results.overall} (${results.duration}ms, ${results.checks.length} checks, ${results.repairs.length} repairs)`
         );
 
@@ -478,15 +522,15 @@ class AIHealthMonitor {
                 // For now, just check if API key is configured
                 const envKey = this.getProviderEnvKey(name);
                 const isConfigured = !!process.env[envKey];
-                
+
                 status.lastCheck = new Date().toISOString();
                 status.healthy = isConfigured;
                 status.lastError = isConfigured ? null : 'API key not configured';
-                
+
                 if (isConfigured) {
                     healthyCount++;
                 }
-                
+
                 check.providers[name] = {
                     configured: isConfigured,
                     healthy: status.healthy
@@ -501,7 +545,7 @@ class AIHealthMonitor {
 
         // At least one provider should be available
         check.healthy = healthyCount > 0;
-        check.message = check.healthy 
+        check.message = check.healthy
             ? `${healthyCount} provider(s) available`
             : 'No LLM providers configured';
 

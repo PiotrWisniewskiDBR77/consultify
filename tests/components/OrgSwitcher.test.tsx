@@ -11,11 +11,7 @@ vi.mock('../../../contexts/OrgContext', () => ({
     useOrgContext: vi.fn()
 }));
 
-vi.mock('react-i18next', () => ({
-    useTranslation: () => ({
-        t: (key: string, fallback?: string) => fallback || key
-    })
-}));
+// Using global mock from tests/setup.ts
 
 const mockOrgs = [
     { id: 'org-1', name: 'Organization 1', role: 'ADMIN' },

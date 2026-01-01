@@ -3,6 +3,7 @@
 
 const db = require('../database');
 const { v4: uuidv4 } = require('uuid');
+const SlackService = require('./slackService');
 
 const NOTIFICATION_TYPES = {
     // Execution
@@ -62,17 +63,29 @@ const NotificationService = {
         const id = uuidv4();
 
         return new Promise((resolve, reject) => {
+            // ADAPTATION: Removed columns missing from DB schema (project_id, related_object_*, is_actionable, action_url, expires_at)
             const sql = `INSERT INTO notifications 
-                (id, user_id, organization_id, project_id, type, severity, title, message,
-                 related_object_type, related_object_id, is_actionable, action_url, expires_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+                (id, user_id, organization_id, type, severity, title, message)
+                VALUES (?, ?, ?, ?, ?, ?, ?)`;
 
             db.run(sql, [
-                id, userId, organizationId, projectId, type, severity || 'INFO',
-                title, message, relatedObjectType, relatedObjectId,
-                isActionable ? 1 : 0, actionUrl, expiresAt
+                id, userId, organizationId, type, severity || 'INFO',
+                title, message
             ], function (err) {
                 if (err) return reject(err);
+
+                // --- SLACK INTEGRATION TRIGGERS ---
+                if (type === 'SYSTEM_ALERT') {
+                    SlackService.sendSystemAlert(title, message, severity || 'CRITICAL');
+                } else if (type === 'CLIENT_TICKET') {
+                    SlackService.sendClientTicket(title, message, 'Consultify Client');
+                } else if (type === 'USER_FEEDBACK') {
+                    // Feedback usually comes via dedicated feedback endpoint, but if feedback generates a notification,
+                    // we can trigger here too. However, feedbackService typically handles the main alert.
+                    // keeping here as backup or for manual feedback notifications.
+                    SlackService.sendNewFeedbackAlert({ type: 'FEEDBACK', userEmail: userId, message });
+                }
+
                 resolve({ id, type, severity, title });
             });
         });
@@ -120,11 +133,11 @@ const NotificationService = {
                     // Determine severity: use actual severity if exists, else map from priority
                     let severity = row.severity;
                     if (!severity) {
-                        severity = row.priority === 'urgent' ? 'CRITICAL' 
-                                : row.priority === 'high' ? 'WARNING' 
+                        severity = row.priority === 'urgent' ? 'CRITICAL'
+                            : row.priority === 'high' ? 'WARNING'
                                 : 'INFO';
                     }
-                    
+
                     return {
                         id: row.id,
                         userId: row.user_id,

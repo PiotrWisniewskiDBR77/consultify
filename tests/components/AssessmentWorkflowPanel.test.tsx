@@ -15,11 +15,6 @@ vi.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 // Mock react-i18next
-vi.mock('react-i18next', () => ({
-    useTranslation: () => ({
-        t: (key: string) => key
-    })
-}));
 
 // Mock store
 vi.mock('../../store/useAppStore', () => ({

@@ -39,9 +39,9 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
     (async () => {
         try {
             const { validateOnStartup } = require('./services/ai/startupValidator');
-            const healthReport = await validateOnStartup({ 
-                testConnectivity: true, 
-                parallel: true 
+            const healthReport = await validateOnStartup({
+                testConnectivity: true,
+                parallel: true
             });
 
             // Store health report for API access
@@ -75,13 +75,13 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
     try {
         const { healthMonitor } = require('./services/ai/healthMonitor');
         healthMonitor.start(60000); // Check every minute
-        
+
         // Register alert handler
         healthMonitor.onAlert((alert) => {
             console.error('[AI Health] CRITICAL ALERT:', alert.message);
             console.error('[AI Health] Failed checks:', alert.checks?.join(', '));
         });
-        
+
         console.log('[Server] AI Health Monitor started (self-healing enabled)');
     } catch (err) {
         console.warn('[Server] AI Health Monitor not available:', err.message);
@@ -296,6 +296,9 @@ app.use('/api/ai/nudges', aiNudgesRoutes);
 // AI Actions (Co-Thinker Action Executor)
 const aiActionsRoutes = require('./routes/aiActions');
 app.use('/api/ai/actions', aiActionsRoutes);
+// Voice API (Universal Voice Conversation System)
+const voiceRoutes = require('./routes/voice');
+app.use('/api/voice', voiceRoutes);
 app.use('/api/documents', documentRoutes); // New Document Route
 app.use('/api/settings', settingsRoutes);
 app.use('/api/superadmin', superAdminRoutes);
@@ -683,6 +686,10 @@ app.use((req, res) => {
 
 // Sentry Error Handler (must be before other error handlers)
 app.use(sentryHandlers.errorHandler);
+
+// Alert Watchdog: Catch 500 errors and trigger System Alerts
+const alertWatchdog = require('./middleware/alertWatchdog');
+app.use(alertWatchdog);
 
 // Error Handler Middleware (must be last, after all routes)
 const { errorHandlerMiddleware } = require('./utils/errorHandler');

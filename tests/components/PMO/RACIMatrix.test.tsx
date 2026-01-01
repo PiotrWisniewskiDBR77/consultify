@@ -16,11 +16,6 @@ vi.mock('../../../services/api', () => ({
 }));
 
 // Mock i18n
-vi.mock('react-i18next', () => ({
-    useTranslation: () => ({
-        t: (key: string) => key
-    })
-}));
 
 const mockRACIMatrix = {
     projectId: 'proj-1',

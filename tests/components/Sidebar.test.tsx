@@ -15,11 +15,7 @@ vi.mock('../../../hooks/useDeviceType', () => ({
     useDeviceType: () => ({ isMobile: false, isTablet: false })
 }));
 
-vi.mock('react-i18next', () => ({
-    useTranslation: () => ({
-        t: (key: string, fallback?: string) => fallback || key
-    })
-}));
+// Using global mock from tests/setup.ts
 
 describe('Sidebar Component', () => {
     const user = userEvent.setup();

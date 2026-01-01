@@ -6,14 +6,6 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { FullStep1Workspace } from '../../../components/FullStep1Workspace';
 
-vi.mock('react-i18next', () => ({
-    useTranslation: () => ({
-        t: (key: string, options?: any) => {
-            if (options?.returnObjects) return {};
-            return key;
-        }
-    })
-}));
 
 const mockSession = {
     id: 'session-1',
