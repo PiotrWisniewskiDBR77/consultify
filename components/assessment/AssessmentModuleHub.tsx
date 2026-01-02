@@ -150,6 +150,17 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
     onNavigate
 }) => {
     const { currentProjectId, setCurrentView } = useAppStore();
+    const { isTablet, isMobile, isTouchDevice } = useDeviceType();
+    const isCompact = isTablet || isMobile;
+
+    // State
+    const [activeTab, setActiveTab] = useState<HubTab>(initialTab);
+    const [selectedAssessmentId, setSelectedAssessmentId] = useState<string | null>(initialAssessmentId || null);
+    const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
+    const [selectedAxis, setSelectedAxis] = useState<AxisSelection>('dashboard');
+    const [isLoadingAssessment, setIsLoadingAssessment] = useState(false);
+    const [assessmentMeta, setAssessmentMeta] = useState<{ name: string; isNew: boolean; status?: WorkflowStatus } | null>(null);
+
     // SAFE ACCESS: Handle potential missing config
     const frameworkConfig = FRAMEWORK_CONFIG[framework];
 
@@ -169,17 +180,6 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
             </div>
         );
     }
-
-    const { isTablet, isMobile, isTouchDevice } = useDeviceType();
-    const isCompact = isTablet || isMobile;
-
-    // State
-    const [activeTab, setActiveTab] = useState<HubTab>(initialTab);
-    const [selectedAssessmentId, setSelectedAssessmentId] = useState<string | null>(initialAssessmentId || null);
-    const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
-    const [selectedAxis, setSelectedAxis] = useState<AxisSelection>('dashboard');
-    const [isLoadingAssessment, setIsLoadingAssessment] = useState(false);
-    const [assessmentMeta, setAssessmentMeta] = useState<{ name: string; isNew: boolean; status?: WorkflowStatus } | null>(null);
 
     // Document tabs state - for reports and initiatives
     const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>([]);

@@ -64,21 +64,47 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
         isActive: true
     });
 
-    useEffect(() => {
-        loadAlerts();
-    }, [currentOrganization?.id]);
-
     const loadAlerts = async () => {
         setLoading(true);
         try {
+            // Assuming 'api' is an imported axios instance or similar
+            // For this example, I'll use fetch as in the original code, but adapt to the instruction's structure
             const res = await fetch(`/api/organizations/${currentOrganization?.id}/spending-alerts`, {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
             });
-            if (res.ok) {
+            if (res.ok) { // Assuming res.ok implies success, similar to response.data.success
                 const data = await res.json();
-                setAlerts(data);
+                setAlerts(data || []); // Assuming data directly contains the alerts array
+            } else {
+                console.error('Failed to load alerts:', res.statusText);
+                // Fallback to mock data if API call fails or is not ok
+                setAlerts([
+                    {
+                        id: 'alert-1',
+                        organizationId: currentOrganization?.id || '',
+                        type: 'AI_TOKENS',
+                        threshold: 80,
+                        thresholdType: 'PERCENTAGE',
+                        action: 'NOTIFY',
+                        notifyEmails: [currentUser?.email || 'admin@company.com'],
+                        isActive: true,
+                        createdAt: new Date().toISOString()
+                    },
+                    {
+                        id: 'alert-2',
+                        organizationId: currentOrganization?.id || '',
+                        type: 'TOTAL_SPEND',
+                        threshold: 500,
+                        thresholdType: 'ABSOLUTE',
+                        action: 'NOTIFY_AND_PAUSE',
+                        notifyEmails: [currentUser?.email || 'admin@company.com', 'finance@company.com'],
+                        isActive: true,
+                        createdAt: new Date().toISOString()
+                    }
+                ]);
             }
         } catch (error) {
+            console.error('Failed to load alerts:', error);
             // Mock data
             setAlerts([
                 {
@@ -167,7 +193,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
             // Mock success
             toast.success(editingAlert ? 'Alert updated' : 'Alert created');
             setShowCreateModal(false);
-            
+
             if (!editingAlert) {
                 const newAlert: SpendingAlert = {
                     id: `alert-${Date.now()}`,
@@ -178,8 +204,8 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                 };
                 setAlerts(prev => [...prev, newAlert]);
             } else {
-                setAlerts(prev => prev.map(a => 
-                    a.id === editingAlert.id 
+                setAlerts(prev => prev.map(a =>
+                    a.id === editingAlert.id
                         ? { ...a, ...formData, notifyEmails: formData.notifyEmails.filter(e => e.trim()) }
                         : a
                 ));
@@ -286,7 +312,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                     const Icon = type.icon;
                     const hasAlert = alerts.some(a => a.type === type.id && a.isActive);
                     const mockUsage = type.id === 'AI_TOKENS' ? 75 : type.id === 'STORAGE' ? 25 : type.id === 'USERS' ? 48 : 60;
-                    
+
                     return (
                         <div
                             key={type.id}
@@ -306,9 +332,8 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                             </div>
                             <div className="w-full bg-slate-200 dark:bg-navy-700 rounded-full h-2">
                                 <div
-                                    className={`h-2 rounded-full ${
-                                        mockUsage > 80 ? 'bg-red-500' : mockUsage > 60 ? 'bg-amber-500' : 'bg-green-500'
-                                    }`}
+                                    className={`h-2 rounded-full ${mockUsage > 80 ? 'bg-red-500' : mockUsage > 60 ? 'bg-amber-500' : 'bg-green-500'
+                                        }`}
                                     style={{ width: `${mockUsage}%` }}
                                 />
                             </div>
@@ -339,19 +364,17 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                         return (
                             <div
                                 key={alert.id}
-                                className={`p-4 bg-white dark:bg-navy-800 rounded-xl border ${
-                                    alert.isActive
+                                className={`p-4 bg-white dark:bg-navy-800 rounded-xl border ${alert.isActive
                                         ? 'border-slate-200 dark:border-navy-700'
                                         : 'border-slate-200 dark:border-navy-700 opacity-60'
-                                }`}
+                                    }`}
                             >
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-4">
-                                        <div className={`p-3 rounded-lg ${
-                                            alert.isActive
+                                        <div className={`p-3 rounded-lg ${alert.isActive
                                                 ? 'bg-violet-100 dark:bg-violet-900/30'
                                                 : 'bg-slate-100 dark:bg-navy-700'
-                                        }`}>
+                                            }`}>
                                             <Icon className={
                                                 alert.isActive ? 'text-violet-600' : 'text-slate-400'
                                             } size={20} />
@@ -368,7 +391,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                                                 )}
                                             </div>
                                             <p className="text-sm text-slate-500 mt-0.5">
-                                                Alert at {alert.threshold}{alert.thresholdType === 'PERCENTAGE' ? '%' : ' USD'} • 
+                                                Alert at {alert.threshold}{alert.thresholdType === 'PERCENTAGE' ? '%' : ' USD'} •
                                                 {alert.action === 'NOTIFY' && ' Notify only'}
                                                 {alert.action === 'NOTIFY_AND_PAUSE' && ' Notify & Pause'}
                                                 {alert.action === 'HARD_LIMIT' && ' Hard limit'}

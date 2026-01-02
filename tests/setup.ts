@@ -135,6 +135,7 @@ beforeEach(() => {
 
 // Ensure DB schema is initialized before any test starts hitting it.
 beforeAll(async () => {
+    if (process.env.MOCK_DB === 'true') return;
     try {
         const db = require('../server/database');
         if (db?.initPromise) {

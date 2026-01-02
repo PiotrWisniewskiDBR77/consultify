@@ -11,11 +11,11 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-    FlaskConical, 
-    Plus, 
-    Play, 
-    Pause, 
+import {
+    FlaskConical,
+    Plus,
+    Play,
+    Pause,
     Archive,
     Trophy,
     BarChart3,
@@ -107,7 +107,7 @@ export function ABTestingDashboard() {
     const [creating, setCreating] = useState(false);
     const [expandedExperiments, setExpandedExperiments] = useState<Set<string>>(new Set());
     const [statusFilter, setStatusFilter] = useState<string>('all');
-    
+
     const [newExperiment, setNewExperiment] = useState<NewExperiment>({
         name: '',
         description: '',
@@ -128,7 +128,7 @@ export function ABTestingDashboard() {
         try {
             const params = statusFilter !== 'all' ? `?status=${statusFilter}` : '';
             const response = await api.get(`/ai-ab-testing/experiments${params}`);
-            
+
             if (response.data.success) {
                 setExperiments(response.data.experiments || []);
             } else {
@@ -161,7 +161,7 @@ export function ABTestingDashboard() {
         setCreating(true);
         try {
             const response = await api.post('/ai-ab-testing/experiments', newExperiment);
-            
+
             if (response.data.success) {
                 toast.success('Experiment created');
                 setShowCreateModal(false);
@@ -190,8 +190,8 @@ export function ABTestingDashboard() {
 
     const handleAction = async (experimentId: string, action: 'start' | 'pause' | 'complete' | 'archive') => {
         try {
-            const response = await api.post(`/ai-ab-testing/experiments/${experimentId}/${action}`);
-            
+            const response = await api.post(`/ai-ab-testing/experiments/${experimentId}/${action}`, {});
+
             if (response.data.success) {
                 toast.success(`Experiment ${action}ed`);
                 await fetchExperiments();
@@ -210,7 +210,7 @@ export function ABTestingDashboard() {
             const response = await api.post(`/ai-ab-testing/experiments/${experimentId}/declare-winner`, {
                 winningVariantId: variantId
             });
-            
+
             if (response.data.success) {
                 toast.success('Winner declared!');
                 await fetchExperiments();
@@ -277,7 +277,7 @@ export function ABTestingDashboard() {
     const updateVariant = (index: number, field: string, value: string | number) => {
         setNewExperiment(prev => ({
             ...prev,
-            variants: prev.variants.map((v, i) => 
+            variants: prev.variants.map((v, i) =>
                 i === index ? { ...v, [field]: value } : v
             )
         }));
@@ -324,11 +324,10 @@ export function ABTestingDashboard() {
                         <button
                             key={status}
                             onClick={() => setStatusFilter(status)}
-                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                                statusFilter === status
-                                    ? 'bg-purple-600 text-white'
-                                    : 'bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10'
-                            }`}
+                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${statusFilter === status
+                                ? 'bg-purple-600 text-white'
+                                : 'bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10'
+                                }`}
                         >
                             {status === 'all' ? 'All' : status}
                         </button>
@@ -473,11 +472,10 @@ export function ABTestingDashboard() {
                                             </div>
                                             <div>
                                                 <p className="text-slate-500 dark:text-slate-400">Statistical Significance</p>
-                                                <p className={`font-medium ${
-                                                    (experiment.statisticalSignificance || 0) >= experiment.confidenceLevel
-                                                        ? 'text-green-600 dark:text-green-400'
-                                                        : 'text-slate-900 dark:text-white'
-                                                }`}>
+                                                <p className={`font-medium ${(experiment.statisticalSignificance || 0) >= experiment.confidenceLevel
+                                                    ? 'text-green-600 dark:text-green-400'
+                                                    : 'text-slate-900 dark:text-white'
+                                                    }`}>
                                                     {experiment.statisticalSignificance?.toFixed(1) || '-'}%
                                                 </p>
                                             </div>
@@ -544,15 +542,15 @@ export function ABTestingDashboard() {
                                                                 {variant.avgSatisfaction.toFixed(2)}/5
                                                             </td>
                                                             <td className="px-4 py-3 text-center">
-                                                                {(experiment.status === 'RUNNING' || experiment.status === 'COMPLETED') && 
-                                                                 !experiment.winningVariantId && (
-                                                                    <button
-                                                                        onClick={() => handleDeclareWinner(experiment.id, variant.id)}
-                                                                        className="px-2 py-1 text-xs text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded transition-colors"
-                                                                    >
-                                                                        Declare Winner
-                                                                    </button>
-                                                                )}
+                                                                {(experiment.status === 'RUNNING' || experiment.status === 'COMPLETED') &&
+                                                                    !experiment.winningVariantId && (
+                                                                        <button
+                                                                            onClick={() => handleDeclareWinner(experiment.id, variant.id)}
+                                                                            className="px-2 py-1 text-xs text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded transition-colors"
+                                                                        >
+                                                                            Declare Winner
+                                                                        </button>
+                                                                    )}
                                                             </td>
                                                         </tr>
                                                     ))}

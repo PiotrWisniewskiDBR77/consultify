@@ -28,14 +28,14 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
     const [openFilter, setOpenFilter] = useState<'quick' | 'view' | null>(null);
     const [viewMode, setViewMode] = useState<'list' | 'pmo'>('pmo'); // Default to PMO view
     const [expandedCategories, setExpandedCategories] = useState<Set<PMOCategory>>(new Set(['blocking_phase', 'blocking_initiative', 'overdue']));
-    
+
     // Pinned Tasks state
     const [pinnedTaskIds, setPinnedTaskIds] = useState<Set<string>>(() => {
         // Load from localStorage if available
         const saved = localStorage.getItem('pinnedTaskIds');
         return saved ? new Set(JSON.parse(saved)) : new Set();
     });
-    
+
     // Legacy state - kept for compatibility but unused in new UI
     const [activePriority, setActivePriority] = useState<'all' | 'high' | 'medium' | 'low'>('all');
     const [activeStatus, setActiveStatus] = useState<'all' | 'todo' | 'in_progress' | 'done'>('all');
@@ -45,7 +45,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
     const toggleFilter = (filter: 'quick' | 'view') => {
         setOpenFilter(prev => prev === filter ? null : filter);
     };
-    
+
     // Quick filter labels
     const quickFilterLabels: Record<QuickFilter, string> = {
         all: 'All Tasks',
@@ -53,7 +53,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
         urgent: 'Urgent',
         today: 'Due Today'
     };
-    
+
     // Toggle pin for a task
     const togglePinTask = (taskId: string, event?: React.MouseEvent) => {
         event?.stopPropagation();
@@ -129,7 +129,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
-        
+
         // Quick Filter Logic
         switch (quickFilter) {
             case 'overdue':
@@ -137,19 +137,20 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                 if (isDone) return false;
                 if (!t.dueDate) return false;
                 return new Date(t.dueDate) < now;
-                
+
             case 'urgent':
                 // Show only urgent/high priority tasks
                 if (isDone) return false;
                 return ['urgent', 'high'].includes((t.priority || '').toLowerCase());
-                
-            case 'today':
+
+            case 'today': {
                 // Show tasks due today
                 if (isDone) return false;
                 if (!t.dueDate) return false;
                 const dueDate = new Date(t.dueDate);
                 return dueDate >= today && dueDate < tomorrow;
-                
+            }
+
             case 'all':
             default:
                 return true;
@@ -166,7 +167,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
             overdue: [],
             other: []
         };
-        
+
         // Filter out pinned tasks from PMO grouping
         const tasksToGroup = filteredTasks.filter(t => !pinnedTaskIds.has(t.id));
 
@@ -210,7 +211,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
 
         return groups;
     }, [filteredTasks, getTaskLabel, pinnedTaskIds]);
-    
+
     // Separate pinned and unpinned tasks
     const { pinnedTasks, unpinnedTasks } = useMemo(() => {
         const pinned = filteredTasks.filter(t => pinnedTaskIds.has(t.id));
@@ -328,7 +329,6 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                                 <AlertTriangle size={8} />
                                 <span className="capitalize">{task.priority || 'Normal'}</span>
                             </span>
-
                             {/* Assignee */}
                             {task.assignee && (
                                 <div className="flex items-center gap-1 text-[10px] text-slate-500">
@@ -343,11 +343,10 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                     <div className="shrink-0 flex flex-col justify-center items-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity pl-2">
                         <button
                             onClick={(e) => togglePinTask(task.id, e)}
-                            className={`p-1.5 rounded transition-colors ${
-                                pinnedTaskIds.has(task.id)
-                                    ? 'text-purple-500 bg-purple-50 dark:bg-purple-500/20'
-                                    : 'text-slate-300 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-500/10'
-                            }`}
+                            className={`p-1.5 rounded transition-colors ${pinnedTaskIds.has(task.id)
+                                ? 'text-purple-500 bg-purple-50 dark:bg-purple-500/20'
+                                : 'text-slate-300 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-500/10'
+                                }`}
                             title={pinnedTaskIds.has(task.id) ? 'Unpin from top' : 'Pin to top'}
                         >
                             <Pin size={14} />
@@ -391,7 +390,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
             <div className="h-12 px-5 flex items-center justify-between border-b border-slate-100 dark:border-white/5 shrink-0">
                 <div className="flex items-center gap-3 text-sm">
                     <span className="text-slate-400 text-xs">Showing:</span>
-                    
+
                     {/* Quick Filter Dropdown */}
                     <div className="relative">
                         <button
@@ -433,11 +432,11 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                             </>
                         )}
                     </div>
-                    
+
                     <span className="text-slate-300 dark:text-white/20">•</span>
                     <span className="text-slate-500 dark:text-slate-400 text-xs">{filteredTasks.length} tasks</span>
                 </div>
-                
+
                 {/* View Toggle */}
                 <div className="flex items-center gap-2">
                     <span className="text-slate-400 text-xs hidden sm:inline">View:</span>
@@ -492,7 +491,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                         <button onClick={onCreateTask} className="mt-2 text-xs text-blue-500 hover:underline">Create one?</button>
                     </div>
                 )}
-                
+
                 {/* Pinned Tasks Section */}
                 {!loading && pinnedTasks.length > 0 && (
                     <div className="mb-4 pb-3 border-b border-dashed border-slate-200 dark:border-white/10">

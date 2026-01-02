@@ -2575,6 +2575,7 @@ export interface User {
   accessLevel: 'free' | 'full';
   preferredLanguage?: Language;
   organizationId?: string;
+  organizationName?: string;
   avatarUrl?: string; // URL to avatar image
   tokenUsage?: number;
   tokenLimit?: number;

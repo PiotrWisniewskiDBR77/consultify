@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, useParams, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { RouterSync } from './components/RouterSync';
@@ -26,18 +26,18 @@ const KpiOkrView = React.lazy(() => import('./views/KpiOkrView').then(m => ({ de
 const AdminView = React.lazy(() => import('./views/admin/AdminView').then(m => ({ default: m.AdminView })));
 const SettingsView = React.lazy(() => import('./views/SettingsView').then(m => ({ default: m.SettingsView })));
 const SuperAdminView = React.lazy(() => import('./views/superadmin/SuperAdminView').then(m => ({ default: m.SuperAdminView })));
-const UserDashboardView = React.lazy(() => import('./views/UserDashboardView').then(m => ({ default: m.UserDashboardView })));
+// export const UserDashboardView = React.lazy(() => import('./views/UserDashboardView').then(m => ({ default: m.UserDashboardView })));
 const Module1ContextView = React.lazy(() => import('./views/Module1ContextView').then(m => ({ default: m.Module1ContextView })));
 const ContextBuilderView = React.lazy(() => import('./views/ContextBuilder/ContextBuilderView').then(m => ({ default: m.ContextBuilderView })));
 const MyWorkView = React.lazy(() => import('./views/MyWorkView').then(m => ({ default: m.MyWorkView })));
 const ActionProposalView = React.lazy(() => import('./views/ActionProposalView').then(m => ({ default: m.ActionProposalView })));
 const StudioView = React.lazy(() => import('./views/StudioView').then(m => ({ default: m.StudioView })));
-const InitiativeManagementView = React.lazy(() => import('./views/InitiativeManagementView').then(m => ({ default: m.InitiativeManagementView })));
+// export const InitiativeManagementView = React.lazy(() => import('./views/InitiativeManagementView').then(m => ({ default: m.InitiativeManagementView })));
 const ProjectIntelligenceView = React.lazy(() => import('./views/ProjectIntelligenceView').then(m => ({ default: m.ProjectIntelligenceView })));
 const BenefitsRealizationView = React.lazy(() => import('./views/BenefitsRealizationView').then(m => ({ default: m.BenefitsRealizationView })));
 const PortfolioView = React.lazy(() => import('./views/PortfolioView'));
-import { AppView, SessionMode, AuthStep, User, UserRole } from './types';
-import { Menu, UserCircle, ChevronRight, Loader2, LogOut, CreditCard, Cpu, Sun, Moon, Monitor, Languages, Bot, Database, Layers, Box, Sparkles } from 'lucide-react';
+import { AppView, SessionMode, AuthStep, User } from './types';
+import { Menu, ChevronRight, Loader2, Monitor, Languages, Bot, Database, Layers, Box, Sparkles } from 'lucide-react';
 import { useAppStore } from './store/useAppStore';
 import { Toaster } from 'react-hot-toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -232,7 +232,7 @@ const AppContent: React.FC = () => {
                         setCurrentUser(authenticatedUser);
                         localStorage.setItem('user', JSON.stringify(user));
                         console.log('[Auth] User profile synchronized with server');
-                        
+
                         // Set organization context for Admin panels
                         if (user.organizationId) {
                             setCurrentOrganization({
@@ -357,7 +357,7 @@ const AppContent: React.FC = () => {
             isAuthenticated: true
         };
         setCurrentUser(authenticatedUser);
-        
+
         // Set organization context for Admin panels
         if (validUser.organizationId) {
             setCurrentOrganization({
@@ -535,11 +535,11 @@ const AppContent: React.FC = () => {
         }
         // MyWork Views (unified Dashboard + My Work)
         else if (
-            currentView === AppView.MY_WORK ||
             currentView === AppView.USER_DASHBOARD ||
             currentView === AppView.DASHBOARD ||
             currentView === AppView.DASHBOARD_OVERVIEW ||
-            currentView === AppView.DASHBOARD_SNAPSHOT
+            currentView === AppView.DASHBOARD_SNAPSHOT ||
+            (currentView as any) === AppView.MY_WORK
         ) {
             section = t('myWork.title', 'My Work');
             sub = '';
@@ -589,7 +589,6 @@ const AppContent: React.FC = () => {
         // --- MyWork (unified Dashboard + My Work) ---
         // All Dashboard views redirect to MyWork as the primary home
         if (
-            currentView === AppView.MY_WORK ||
             currentView === AppView.USER_DASHBOARD ||
             currentView === AppView.DASHBOARD ||
             currentView === AppView.DASHBOARD_OVERVIEW ||
@@ -597,7 +596,7 @@ const AppContent: React.FC = () => {
         ) {
             return (
                 <React.Suspense fallback={<LoadingScreen />}>
-                    <MyWorkView currentUser={currentUser} onNavigate={setCurrentView} />
+                    <MyWorkView currentUser={currentUser} onNavigate={(view: string) => setCurrentView(view as AppView)} />
                 </React.Suspense>
             );
         }

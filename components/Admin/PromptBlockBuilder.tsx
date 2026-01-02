@@ -135,7 +135,7 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
     }, {} as Record<string, Block[]>);
 
     // Get selected block details
-    const selectedBlockDetails = selectedBlocks.map(code => 
+    const selectedBlockDetails = selectedBlocks.map(code =>
         availableBlocks.find(b => b.code === code)
     ).filter(Boolean) as Block[];
 
@@ -195,14 +195,14 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
         }
 
         setShowPreview(true);
-        
+
         // Build preview locally from selected blocks
         const preview = selectedBlockDetails
             .map(block => `# ${block.category}: ${block.name}\n${block.semantic}`)
             .join('\n\n---\n\n');
-        
+
         setPreviewContent(preview);
-        
+
         if (onPreview) {
             onPreview(preview);
         }
@@ -236,7 +236,7 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
                             Block Library
                         </h3>
                     </div>
-                    
+
                     {/* Search */}
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -284,11 +284,10 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
                                         return (
                                             <div
                                                 key={block.code}
-                                                className={`group flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-all ${
-                                                    isSelected
-                                                        ? 'bg-blue-100 dark:bg-blue-900/30 border-2 border-blue-500'
-                                                        : 'bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 hover:border-blue-300 dark:hover:border-blue-700'
-                                                }`}
+                                                className={`group flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-all ${isSelected
+                                                    ? 'bg-blue-100 dark:bg-blue-900/30 border-2 border-blue-500'
+                                                    : 'bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 hover:border-blue-300 dark:hover:border-blue-700'
+                                                    }`}
                                                 onClick={() => isSelected ? removeBlock(block.code) : addBlock(block.code)}
                                             >
                                                 <div className="flex-1 min-w-0">
@@ -307,13 +306,16 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        isSelected ? removeBlock(block.code) : addBlock(block.code);
+                                                        if (isSelected) {
+                                                            removeBlock(block.code);
+                                                        } else {
+                                                            addBlock(block.code);
+                                                        }
                                                     }}
-                                                    className={`p-1.5 rounded-lg transition-colors ${
-                                                        isSelected
-                                                            ? 'text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30'
-                                                            : 'text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/30 opacity-0 group-hover:opacity-100'
-                                                    }`}
+                                                    className={`p-1.5 rounded-lg transition-colors ${isSelected
+                                                        ? 'text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30'
+                                                        : 'text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/30 opacity-0 group-hover:opacity-100'
+                                                        }`}
                                                 >
                                                     {isSelected ? <Trash2 size={14} /> : <Plus size={14} />}
                                                 </button>
@@ -367,11 +369,10 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
                                     onDragStart={() => handleDragStart(block.code)}
                                     onDragOver={(e) => handleDragOver(e, index)}
                                     onDragEnd={handleDragEnd}
-                                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all ${
-                                        dragOverIndex === index
-                                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                                            : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800'
-                                    } ${draggedBlock === block.code ? 'opacity-50' : ''}`}
+                                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all ${dragOverIndex === index
+                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                        : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800'
+                                        } ${draggedBlock === block.code ? 'opacity-50' : ''}`}
                                 >
                                     <GripVertical size={16} className="text-slate-400 cursor-move flex-shrink-0" />
                                     <span className={`p-1 rounded ${getCategoryColor(block.category).bg} ${getCategoryColor(block.category).text}`}>
@@ -434,7 +435,7 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 };
 

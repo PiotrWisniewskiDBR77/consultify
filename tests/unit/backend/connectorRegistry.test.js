@@ -86,9 +86,9 @@ describe('ConnectorRegistry', () => {
                 api_token: 'token123'
             };
 
-            const isValid = ConnectorRegistry.validateCredentials(connector.key, credentials);
+            const result = ConnectorRegistry.validateCredentials(connector.key, credentials);
 
-            expect(isValid).toBe(true);
+            expect(result.valid).toBe(true);
         });
 
         it('should reject missing required credentials', () => {
@@ -98,9 +98,11 @@ describe('ConnectorRegistry', () => {
                 // Missing email and api_token
             };
 
-            const isValid = ConnectorRegistry.validateCredentials(connector.key, credentials);
+            const result = ConnectorRegistry.validateCredentials(connector.key, credentials);
 
-            expect(isValid).toBe(false);
+            expect(result.valid).toBe(false);
+            expect(result.missing).toContain('email');
+            expect(result.missing).toContain('api_token');
         });
 
         it('should allow optional credentials', () => {
@@ -110,9 +112,9 @@ describe('ConnectorRegistry', () => {
                 // webhook_url is optional
             };
 
-            const isValid = ConnectorRegistry.validateCredentials(connector.key, credentials);
+            const result = ConnectorRegistry.validateCredentials(connector.key, credentials);
 
-            expect(isValid).toBe(true);
+            expect(result.valid).toBe(true);
         });
     });
 });

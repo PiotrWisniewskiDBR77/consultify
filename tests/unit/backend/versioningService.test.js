@@ -1,55 +1,66 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
 
-const mockDb = {
-    run: vi.fn(),
-    get: vi.fn(),
-    all: vi.fn()
-};
+const { mockDb } = vi.hoisted(() => {
+    return {
+        mockDb: {
+            run: vi.fn(),
+            get: vi.fn(),
+            all: vi.fn(),
+            exec: vi.fn(),
+            query: vi.fn(),
+            serialize: vi.fn((cb) => cb()),
+            on: vi.fn(),
+        }
+    };
+});
 
-vi.mock('../../../server/database', () => ({
-    default: mockDb
-}));
+// Inject the mock into the global object so server/database.js can pick it up
+global.__TEST_DB_MOCK__ = mockDb;
 
 describe('VersioningService', () => {
     let VersioningService;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         vi.clearAllMocks();
         vi.resetModules();
 
+        // Default mock implementations - MUST USE CALLBACKS
         mockDb.run.mockImplementation((sql, params, callback) => {
-            if (typeof callback === 'function') {
-                callback(null, { lastID: 1, changes: 1 });
-            }
+            const cb = typeof params === 'function' ? params : callback;
+            if (typeof cb === 'function') cb(null, { lastID: 1, changes: 1 });
         });
 
         mockDb.get.mockImplementation((sql, params, callback) => {
-            if (sql.includes('MAX(version_number)')) {
-                callback(null, { maxVersion: 1 });
-            } else if (sql.includes('digitization_analyses')) {
-                callback(null, {
-                    id: 'analysis-123',
-                    overall_score: 4.5,
-                    completion_percent: 75
-                });
-            } else {
-                callback(null, {
-                    id: 'version-123',
-                    analysis_id: 'analysis-123',
-                    version_number: 2,
-                    version_name: 'Version 2',
-                    version_type: 'snapshot'
-                });
+            const cb = typeof params === 'function' ? params : callback;
+            if (typeof cb === 'function') {
+                if (sql.includes('MAX(version_number)')) {
+                    cb(null, { maxVersion: 1 });
+                } else if (sql.includes('digitization_analyses')) {
+                    cb(null, {
+                        id: 'analysis-123',
+                        overall_score: 4.5,
+                        completion_percent: 75
+                    });
+                } else {
+                    cb(null, {
+                        id: 'version-123',
+                        analysis_id: 'analysis-123',
+                        version_number: 2,
+                        version_name: 'Version 2',
+                        version_type: 'snapshot',
+                        snapshot_data: '{}'
+                    });
+                }
             }
         });
 
         mockDb.all.mockImplementation((sql, params, callback) => {
-            callback(null, []);
+            const cb = typeof params === 'function' ? params : callback;
+            if (typeof cb === 'function') cb(null, []);
         });
 
-        VersioningService = require('../../../server/services/versioningService');
+        const mod = require('../../../server/services/versioningService');
+        VersioningService = mod.default || mod;
     });
 
     afterEach(() => {
@@ -64,7 +75,8 @@ describe('VersioningService', () => {
 
         it('should return 1 for first version', async () => {
             mockDb.get.mockImplementation((sql, params, callback) => {
-                callback(null, { maxVersion: null });
+                const cb = typeof params === 'function' ? params : callback;
+                if (typeof cb === 'function') cb(null, { maxVersion: null });
             });
 
             const versionNumber = await VersioningService.getNextVersionNumber('analysis-123');
@@ -90,10 +102,13 @@ describe('VersioningService', () => {
 
         it('should throw error if analysis not found', async () => {
             mockDb.get.mockImplementation((sql, params, callback) => {
-                if (sql.includes('digitization_analyses')) {
-                    callback(null, null);
-                } else {
-                    callback(null, { maxVersion: 0 });
+                const cb = typeof params === 'function' ? params : callback;
+                if (typeof cb === 'function') {
+                    if (sql.includes('digitization_analyses')) {
+                        cb(null, null);
+                    } else {
+                        cb(null, { maxVersion: 0 });
+                    }
                 }
             });
 
@@ -103,6 +118,3 @@ describe('VersioningService', () => {
         });
     });
 });
-
-
-

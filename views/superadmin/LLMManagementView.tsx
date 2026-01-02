@@ -77,10 +77,6 @@ export const LLMManagementView: React.FC = () => {
     // Health status
     const [healthStatus, setHealthStatus] = useState<any>(null);
 
-    useEffect(() => {
-        loadInitialData();
-    }, []);
-
     const loadInitialData = async () => {
         setLoading(true);
         try {
@@ -262,11 +258,10 @@ export const LLMManagementView: React.FC = () => {
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                            activeTab === tab.id
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id
                                 ? 'bg-blue-600 text-white'
                                 : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
-                        }`}
+                            }`}
                     >
                         <tab.icon size={16} />
                         {tab.label}
@@ -318,11 +313,10 @@ export const LLMManagementView: React.FC = () => {
                                                     key={model.name}
                                                     onClick={() => !alreadyAdded && addOllamaModel(model.name)}
                                                     disabled={alreadyAdded}
-                                                    className={`px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition-colors ${
-                                                        alreadyAdded
+                                                    className={`px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition-colors ${alreadyAdded
                                                             ? 'bg-emerald-500/10 text-emerald-400 cursor-default'
                                                             : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                                                    }`}
+                                                        }`}
                                                 >
                                                     {alreadyAdded && <Check size={12} />}
                                                     {model.name}
@@ -407,16 +401,16 @@ export const LLMManagementView: React.FC = () => {
                                                         </select>
                                                     </td>
                                                     <td className="px-4 py-3">
-                                                        <StatusBadge 
-                                                            variant={p.visibility === 'public' ? 'success' : p.visibility === 'beta' ? 'warning' : 'neutral'} 
-                                                            label={p.visibility || 'admin'} 
+                                                        <StatusBadge
+                                                            variant={p.visibility === 'public' ? 'success' : p.visibility === 'beta' ? 'warning' : 'neutral'}
+                                                            label={p.visibility || 'admin'}
                                                             dot={false}
                                                         />
                                                     </td>
                                                     <td className="px-4 py-3">
-                                                        <StatusBadge 
-                                                            variant={p.is_active ? 'success' : 'neutral'} 
-                                                            label={p.is_active ? 'Active' : 'Inactive'} 
+                                                        <StatusBadge
+                                                            variant={p.is_active ? 'success' : 'neutral'}
+                                                            label={p.is_active ? 'Active' : 'Inactive'}
                                                         />
                                                     </td>
                                                     <td className="px-4 py-3">
@@ -457,8 +451,8 @@ export const LLMManagementView: React.FC = () => {
                     <div className="p-8 overflow-y-auto h-full">
                         <div className="max-w-3xl mx-auto">
                             <Card variant="bordered" padding="lg">
-                                <SectionHeader 
-                                    title="Model Routing per Tier" 
+                                <SectionHeader
+                                    title="Model Routing per Tier"
                                     subtitle="Configure which models serve each performance tier"
                                 />
                                 <div className="space-y-3 mt-4">
@@ -547,19 +541,18 @@ export const LLMManagementView: React.FC = () => {
                             <Card variant="bordered" padding="lg">
                                 <div className="flex items-center justify-between mb-4">
                                     <SectionHeader title="AI System Status" />
-                                    <StatusBadge 
-                                        variant={healthStatus?.status === 'OK' ? 'success' : 'warning'} 
-                                        label={healthStatus?.status || 'Unknown'} 
+                                    <StatusBadge
+                                        variant={healthStatus?.status === 'OK' ? 'success' : 'warning'}
+                                        label={healthStatus?.status || 'Unknown'}
                                     />
                                 </div>
                                 <div className="space-y-2">
                                     {healthStatus?.checks?.map((check: any, idx: number) => (
                                         <div key={idx} className="flex items-center justify-between py-2 border-b border-white/[0.04] last:border-0">
                                             <span className="text-sm text-slate-300">{check.name}</span>
-                                            <span className={`text-sm ${
-                                                check.status === 'OK' ? 'text-emerald-400' :
-                                                check.status === 'MISSING' ? 'text-amber-400' : 'text-slate-400'
-                                            }`}>
+                                            <span className={`text-sm ${check.status === 'OK' ? 'text-emerald-400' :
+                                                    check.status === 'MISSING' ? 'text-amber-400' : 'text-slate-400'
+                                                }`}>
                                                 {check.status || check.value}
                                             </span>
                                         </div>
@@ -599,9 +592,9 @@ export const LLMManagementView: React.FC = () => {
                             <h2 className="text-lg font-semibold text-slate-100">
                                 {editingProviderId ? 'Edit Provider' : 'Add Provider'}
                             </h2>
-                            <IconButton 
-                                icon={X} 
-                                onClick={() => setShowProviderModal(false)} 
+                            <IconButton
+                                icon={X}
+                                onClick={() => setShowProviderModal(false)}
                                 label="Close"
                             />
                         </div>
@@ -609,18 +602,18 @@ export const LLMManagementView: React.FC = () => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Display Name</label>
-                                    <input 
-                                        required 
-                                        value={providerForm.name} 
-                                        onChange={e => setProviderForm({ ...providerForm, name: e.target.value })} 
-                                        className="w-full px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-blue-500/50" 
+                                    <input
+                                        required
+                                        value={providerForm.name}
+                                        onChange={e => setProviderForm({ ...providerForm, name: e.target.value })}
+                                        className="w-full px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Provider Type</label>
-                                    <select 
-                                        value={providerForm.provider} 
-                                        onChange={e => setProviderForm({ ...providerForm, provider: e.target.value as any })} 
+                                    <select
+                                        value={providerForm.provider}
+                                        onChange={e => setProviderForm({ ...providerForm, provider: e.target.value as any })}
                                         className="w-full px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
                                     >
                                         <optgroup label="Major Providers">
@@ -640,30 +633,30 @@ export const LLMManagementView: React.FC = () => {
 
                             <div>
                                 <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">API Key</label>
-                                <input 
-                                    type="password" 
-                                    value={providerForm.api_key} 
-                                    onChange={e => setProviderForm({ ...providerForm, api_key: e.target.value })} 
-                                    className="w-full px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-blue-500/50" 
-                                    placeholder="sk-..." 
+                                <input
+                                    type="password"
+                                    value={providerForm.api_key}
+                                    onChange={e => setProviderForm({ ...providerForm, api_key: e.target.value })}
+                                    className="w-full px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
+                                    placeholder="sk-..."
                                 />
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Model ID</label>
-                                    <input 
-                                        required 
-                                        value={providerForm.model_id} 
-                                        onChange={e => setProviderForm({ ...providerForm, model_id: e.target.value })} 
-                                        className="w-full px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-blue-500/50" 
+                                    <input
+                                        required
+                                        value={providerForm.model_id}
+                                        onChange={e => setProviderForm({ ...providerForm, model_id: e.target.value })}
+                                        className="w-full px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Performance Tier</label>
-                                    <select 
-                                        value={providerForm.tier || 'STANDARD'} 
-                                        onChange={e => setProviderForm({ ...providerForm, tier: e.target.value })} 
+                                    <select
+                                        value={providerForm.tier || 'STANDARD'}
+                                        onChange={e => setProviderForm({ ...providerForm, tier: e.target.value })}
                                         className="w-full px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
                                     >
                                         <option value="BUDGET">Budget</option>
@@ -677,9 +670,9 @@ export const LLMManagementView: React.FC = () => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Visibility</label>
-                                    <select 
-                                        value={providerForm.visibility} 
-                                        onChange={e => setProviderForm({ ...providerForm, visibility: e.target.value as any })} 
+                                    <select
+                                        value={providerForm.visibility}
+                                        onChange={e => setProviderForm({ ...providerForm, visibility: e.target.value as any })}
                                         className="w-full px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
                                     >
                                         <option value="admin">Admin Only</option>
@@ -689,11 +682,11 @@ export const LLMManagementView: React.FC = () => {
                                 </div>
                                 <div className="flex items-center pt-6">
                                     <label className="flex items-center gap-2 cursor-pointer">
-                                        <input 
-                                            type="checkbox" 
-                                            checked={providerForm.is_active} 
-                                            onChange={e => setProviderForm({ ...providerForm, is_active: e.target.checked })} 
-                                            className="w-4 h-4 rounded bg-slate-800 border-white/10" 
+                                        <input
+                                            type="checkbox"
+                                            checked={providerForm.is_active}
+                                            onChange={e => setProviderForm({ ...providerForm, is_active: e.target.checked })}
+                                            className="w-4 h-4 rounded bg-slate-800 border-white/10"
                                         />
                                         <span className="text-sm text-slate-300">Active</span>
                                     </label>

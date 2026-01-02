@@ -37,7 +37,7 @@ interface EmbeddedMatrixProps {
 // Priority badge component
 const PriorityBadge: React.FC<{ gap: number }> = ({ gap }) => {
   const { t } = useTranslation();
-  
+
   if (gap >= 3) {
     return (
       <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 rounded-full">
@@ -89,20 +89,19 @@ const ProgressBar: React.FC<{ actual: number; target: number; maxLevel: number }
   return (
     <div className="relative h-2 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
       {/* Target indicator */}
-      <div 
+      <div
         className="absolute top-0 bottom-0 w-0.5 bg-slate-400 dark:bg-slate-500 z-10"
         style={{ left: `${targetPercent}%` }}
         title={`Target: ${target}`}
       />
       {/* Actual bar */}
-      <div 
-        className={`h-full rounded-full transition-all ${
-          actual >= target 
-            ? 'bg-green-500' 
-            : actual >= target * 0.7 
-              ? 'bg-yellow-500' 
-              : 'bg-red-500'
-        }`}
+      <div
+        className={`h-full rounded-full transition-all ${actual >= target
+          ? 'bg-green-500'
+          : actual >= target * 0.7
+            ? 'bg-yellow-500'
+            : 'bg-red-500'
+          }`}
         style={{ width: `${actualPercent}%` }}
       />
     </div>
@@ -152,7 +151,7 @@ const MaturityOverviewMatrix: React.FC<{ axisData: Record<string, AxisData> }> =
       <h4 className="text-sm font-semibold text-navy-900 dark:text-white mb-4">
         {t('reports.maturityMatrix', 'Maturity Matrix - 7 Axes')}
       </h4>
-      
+
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -172,13 +171,12 @@ const MaturityOverviewMatrix: React.FC<{ axisData: Record<string, AxisData> }> =
                   <span className="font-medium text-navy-900 dark:text-white">{axis.name}</span>
                 </td>
                 <td className="py-3 text-center">
-                  <span className={`font-mono font-medium ${
-                    axis.actual >= axis.maxLevel * 0.7 
-                      ? 'text-green-600 dark:text-green-400' 
-                      : axis.actual >= axis.maxLevel * 0.4 
-                        ? 'text-yellow-600 dark:text-yellow-400'
-                        : 'text-red-600 dark:text-red-400'
-                  }`}>
+                  <span className={`font-mono font-medium ${axis.actual >= axis.maxLevel * 0.7
+                    ? 'text-green-600 dark:text-green-400'
+                    : axis.actual >= axis.maxLevel * 0.4
+                      ? 'text-yellow-600 dark:text-yellow-400'
+                      : 'text-red-600 dark:text-red-400'
+                    }`}>
                     {axis.actual || '-'}
                   </span>
                 </td>
@@ -190,9 +188,8 @@ const MaturityOverviewMatrix: React.FC<{ axisData: Record<string, AxisData> }> =
                 <td className="py-3 text-center">
                   <div className="inline-flex items-center gap-1">
                     <GapIndicator gap={axis.gap} />
-                    <span className={`font-mono font-medium ${
-                      axis.gap > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
-                    }`}>
+                    <span className={`font-mono font-medium ${axis.gap > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
+                      }`}>
                       {axis.gap > 0 ? `+${axis.gap}` : axis.gap}
                     </span>
                   </div>
@@ -227,15 +224,10 @@ const AxisDetailMatrix: React.FC<{ axisId: string; data: AxisData }> = ({ axisId
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
-  const axisConfig = DRD_AXES[axisId];
-  if (!axisConfig) return null;
-
-  const gap = (data.target || 0) - (data.actual || 0);
-
   // Parse area scores if available
   const areaScores = useMemo(() => {
     if (!data.areaScores) return [];
-    
+
     return Object.entries(data.areaScores).map(([areaId, scores]) => {
       const actual = Array.isArray(scores) ? scores[0] : (scores as { actual?: number })?.actual || 0;
       const target = Array.isArray(scores) ? scores[1] : (scores as { target?: number })?.target || 0;
@@ -247,6 +239,11 @@ const AxisDetailMatrix: React.FC<{ axisId: string; data: AxisData }> = ({ axisId
       };
     }).sort((a, b) => b.gap - a.gap);
   }, [data.areaScores]);
+
+  const axisConfig = DRD_AXES[axisId];
+  if (!axisConfig) return null;
+
+  const gap = (data.target || 0) - (data.actual || 0);
 
   return (
     <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl p-4">
@@ -274,9 +271,8 @@ const AxisDetailMatrix: React.FC<{ axisId: string; data: AxisData }> = ({ axisId
           <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">
             {t('reports.gap', 'Gap')}
           </div>
-          <div className={`text-2xl font-bold ${
-            gap > 0 ? 'text-red-600 dark:text-red-400' : gap < 0 ? 'text-green-600 dark:text-green-400' : 'text-slate-600 dark:text-slate-400'
-          }`}>
+          <div className={`text-2xl font-bold ${gap > 0 ? 'text-red-600 dark:text-red-400' : gap < 0 ? 'text-green-600 dark:text-green-400' : 'text-slate-600 dark:text-slate-400'
+            }`}>
             {gap > 0 ? `+${gap}` : gap}
           </div>
           <div className="text-xs text-slate-400">{t('reports.levels', 'levels')}</div>
@@ -298,17 +294,16 @@ const AxisDetailMatrix: React.FC<{ axisId: string; data: AxisData }> = ({ axisId
         </div>
         <div className="relative h-4 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
           {/* Target marker */}
-          <div 
+          <div
             className="absolute top-0 bottom-0 w-1 bg-slate-500 dark:bg-slate-400 z-10"
             style={{ left: `${((data.target || 0) / axisConfig.maxLevel) * 100}%` }}
           />
           {/* Current level */}
-          <div 
-            className={`h-full rounded-full transition-all ${
-              (data.actual || 0) >= (data.target || 0) 
-                ? 'bg-gradient-to-r from-green-400 to-green-500' 
-                : 'bg-gradient-to-r from-blue-400 to-blue-500'
-            }`}
+          <div
+            className={`h-full rounded-full transition-all ${(data.actual || 0) >= (data.target || 0)
+              ? 'bg-gradient-to-r from-green-400 to-green-500'
+              : 'bg-gradient-to-r from-blue-400 to-blue-500'
+              }`}
             style={{ width: `${((data.actual || 0) / axisConfig.maxLevel) * 100}%` }}
           />
           {/* Level markers */}
@@ -350,9 +345,8 @@ const AxisDetailMatrix: React.FC<{ axisId: string; data: AxisData }> = ({ axisId
                     <td className="py-2 text-center font-mono">{area.actual || '-'}</td>
                     <td className="py-2 text-center font-mono text-slate-500">{area.target || '-'}</td>
                     <td className="py-2 text-center">
-                      <span className={`font-mono ${
-                        area.gap > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
-                      }`}>
+                      <span className={`font-mono ${area.gap > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
+                        }`}>
                         {area.gap > 0 ? `+${area.gap}` : area.gap}
                       </span>
                     </td>
@@ -451,13 +445,12 @@ const GapAnalysisMatrix: React.FC<{ axisData: Record<string, AxisData> }> = ({ a
                   {axis.effort} {axis.effort !== '-' && (isPolish ? 'mies.' : 'mo.')}
                 </td>
                 <td className="py-3 text-center">
-                  <span className={`inline-block px-2 py-0.5 text-xs rounded ${
-                    axis.complexity === 'High' 
-                      ? 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400'
-                      : axis.complexity === 'Medium'
-                        ? 'bg-yellow-100 dark:bg-yellow-500/20 text-yellow-700 dark:text-yellow-400'
-                        : 'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400'
-                  }`}>
+                  <span className={`inline-block px-2 py-0.5 text-xs rounded ${axis.complexity === 'High'
+                    ? 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400'
+                    : axis.complexity === 'Medium'
+                      ? 'bg-yellow-100 dark:bg-yellow-500/20 text-yellow-700 dark:text-yellow-400'
+                      : 'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400'
+                    }`}>
                     {axis.complexity}
                   </span>
                 </td>
@@ -480,14 +473,14 @@ export const EmbeddedMatrix: React.FC<EmbeddedMatrixProps> = ({
   switch (sectionType) {
     case 'maturity_overview':
       return <MaturityOverviewMatrix axisData={axisData} />;
-    
+
     case 'axis_detail':
       if (!axisId || !axisData[axisId]) return null;
       return <AxisDetailMatrix axisId={axisId} data={axisData[axisId]} />;
-    
+
     case 'gap_analysis':
       return <GapAnalysisMatrix axisData={axisData} />;
-    
+
     default:
       return null;
   }

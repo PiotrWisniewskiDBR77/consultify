@@ -98,14 +98,14 @@ export const AICharterPreview: React.FC<AICharterPreviewProps> = ({
 
     const saveEditing = (field: string, path: string[]) => {
         // Build update object from path
-        let update: any = {};
+        const update: any = {};
         let current = update;
         for (let i = 0; i < path.length - 1; i++) {
             current[path[i]] = {};
             current = current[path[i]];
         }
         current[path[path.length - 1]] = editValue;
-        
+
         onUpdate(update);
         setEditingField(null);
         setEditValue('');
@@ -207,11 +207,10 @@ export const AICharterPreview: React.FC<AICharterPreviewProps> = ({
                     return (
                         <div
                             key={section.id}
-                            className={`border rounded-xl overflow-hidden transition-all ${
-                                isExpanded 
-                                    ? `border-${section.color}-500/30 bg-${section.color}-50/50 dark:bg-${section.color}-500/5` 
-                                    : 'border-slate-200 dark:border-white/5 bg-white dark:bg-navy-950'
-                            }`}
+                            className={`border rounded-xl overflow-hidden transition-all ${isExpanded
+                                ? `border-${section.color}-500/30 bg-${section.color}-50/50 dark:bg-${section.color}-500/5`
+                                : 'border-slate-200 dark:border-white/5 bg-white dark:bg-navy-950'
+                                }`}
                         >
                             {/* Section Header */}
                             <button
@@ -234,11 +233,10 @@ export const AICharterPreview: React.FC<AICharterPreviewProps> = ({
                                                 handleRegenerate(section.id);
                                             }}
                                             disabled={isRegenerating}
-                                            className={`p-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors ${
-                                                isRegenerating 
-                                                    ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-500' 
-                                                    : 'bg-slate-100 dark:bg-white/5 text-slate-500 hover:text-purple-500 hover:bg-purple-50'
-                                            }`}
+                                            className={`p-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors ${isRegenerating
+                                                ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-500'
+                                                : 'bg-slate-100 dark:bg-white/5 text-slate-500 hover:text-purple-500 hover:bg-purple-50'
+                                                }`}
                                         >
                                             <RefreshCw size={12} className={isRegenerating ? 'animate-spin' : ''} />
                                             {isRegenerating ? 'Regenerating...' : 'Regenerate'}
@@ -363,11 +361,10 @@ export const AICharterPreview: React.FC<AICharterPreviewProps> = ({
                                                 <div key={i} className="p-3 bg-white dark:bg-navy-900 rounded-lg border border-orange-200 dark:border-orange-500/20">
                                                     <div className="flex items-start justify-between">
                                                         <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{risk.risk}</span>
-                                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                                                            risk.metric === 'High' ? 'bg-red-100 text-red-600' :
+                                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${risk.metric === 'High' ? 'bg-red-100 text-red-600' :
                                                             risk.metric === 'Medium' ? 'bg-amber-100 text-amber-600' :
-                                                            'bg-green-100 text-green-600'
-                                                        }`}>
+                                                                'bg-green-100 text-green-600'
+                                                            }`}>
                                                             {risk.metric}
                                                         </span>
                                                     </div>

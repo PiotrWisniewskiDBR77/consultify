@@ -60,10 +60,6 @@ export const AIIntelligenceView: React.FC = () => {
         languagesCovered: 6
     });
 
-    useEffect(() => {
-        loadStats();
-    }, []);
-
     const loadStats = async () => {
         setLoading(true);
         try {
@@ -81,6 +77,10 @@ export const AIIntelligenceView: React.FC = () => {
         setLoading(false);
     };
 
+    useEffect(() => {
+        loadStats();
+    }, []);
+
     const tabs = [
         { id: 'overview' as AIIntelligenceTab, label: 'Overview', icon: Brain },
         { id: 'prompts' as AIIntelligenceTab, label: 'Prompt Templates', icon: FileText },
@@ -93,7 +93,7 @@ export const AIIntelligenceView: React.FC = () => {
     return (
         <div className="h-full flex flex-col bg-navy-950 overflow-hidden relative">
             <InfoButton cardId="superadmin-ai-intelligence" position="top-right" />
-            
+
             {/* Header */}
             <div className="shrink-0 px-8 py-6 border-b border-white/10">
                 <div className="flex items-center justify-between">
@@ -139,35 +139,35 @@ export const AIIntelligenceView: React.FC = () => {
                     <div className="p-8 overflow-y-auto h-full">
                         {/* Stats Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-                            <StatCard 
-                                icon={FileText} 
-                                label="Prompt Templates" 
-                                value={stats.totalPrompts.toString()} 
-                                color="text-cyan-400" 
+                            <StatCard
+                                icon={FileText}
+                                label="Prompt Templates"
+                                value={stats.totalPrompts.toString()}
+                                color="text-cyan-400"
                             />
-                            <StatCard 
-                                icon={Blocks} 
-                                label="Active Blocks" 
-                                value={stats.activeBlocks.toString()} 
-                                color="text-purple-400" 
+                            <StatCard
+                                icon={Blocks}
+                                label="Active Blocks"
+                                value={stats.activeBlocks.toString()}
+                                color="text-purple-400"
                             />
-                            <StatCard 
-                                icon={Languages} 
-                                label="Languages" 
-                                value={stats.languagesCovered.toString()} 
-                                color="text-emerald-400" 
+                            <StatCard
+                                icon={Languages}
+                                label="Languages"
+                                value={stats.languagesCovered.toString()}
+                                color="text-emerald-400"
                             />
-                            <StatCard 
-                                icon={MessageSquare} 
-                                label="Feedback Items" 
-                                value={stats.feedbackItems.toString()} 
-                                color="text-amber-400" 
+                            <StatCard
+                                icon={MessageSquare}
+                                label="Feedback Items"
+                                value={stats.feedbackItems.toString()}
+                                color="text-amber-400"
                             />
-                            <StatCard 
-                                icon={Sparkles} 
-                                label="Avg Rating" 
-                                value={stats.avgRating.toFixed(1)} 
-                                color="text-pink-400" 
+                            <StatCard
+                                icon={Sparkles}
+                                label="Avg Rating"
+                                value={stats.avgRating.toFixed(1)}
+                                color="text-pink-400"
                             />
                         </div>
 
@@ -253,7 +253,7 @@ export const AIIntelligenceView: React.FC = () => {
                 {/* Blocks Tab */}
                 {activeTab === 'blocks' && (
                     <div className="h-full overflow-hidden">
-                        <PromptBlockBuilder />
+                        <PromptBlockBuilder selectedBlocks={[]} onBlocksChange={() => { }} />
                     </div>
                 )}
 
@@ -286,8 +286,8 @@ export const AIIntelligenceView: React.FC = () => {
 // Helper Components
 // ─────────────────────────────────────────────────────────────────────────────
 
-const StatCard: React.FC<{ icon: any; label: string; value: string; color: string }> = ({ 
-    icon: Icon, label, value, color 
+const StatCard: React.FC<{ icon: any; label: string; value: string; color: string }> = ({
+    icon: Icon, label, value, color
 }) => (
     <div className="bg-navy-900 border border-white/10 rounded-xl p-4">
         <div className="flex items-center gap-3 mb-2">
@@ -298,11 +298,11 @@ const StatCard: React.FC<{ icon: any; label: string; value: string; color: strin
     </div>
 );
 
-const CapabilityCard: React.FC<{ 
-    icon: any; 
-    title: string; 
-    description: string; 
-    status: 'active' | 'beta' | 'coming' 
+const CapabilityCard: React.FC<{
+    icon: any;
+    title: string;
+    description: string;
+    status: 'active' | 'beta' | 'coming'
 }> = ({ icon: Icon, title, description, status }) => (
     <div className="bg-navy-900 border border-white/10 rounded-xl p-5 hover:border-purple-500/30 transition-colors">
         <div className="flex items-start gap-4">
@@ -312,11 +312,10 @@ const CapabilityCard: React.FC<{
             <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                     <h4 className="text-white font-medium">{title}</h4>
-                    <span className={`px-1.5 py-0.5 rounded text-[10px] ${
-                        status === 'active' ? 'bg-emerald-500/20 text-emerald-400' :
+                    <span className={`px-1.5 py-0.5 rounded text-[10px] ${status === 'active' ? 'bg-emerald-500/20 text-emerald-400' :
                         status === 'beta' ? 'bg-amber-500/20 text-amber-400' :
-                        'bg-slate-700 text-slate-400'
-                    }`}>
+                            'bg-slate-700 text-slate-400'
+                        }`}>
                         {status === 'active' ? 'Active' : status === 'beta' ? 'Beta' : 'Coming'}
                     </span>
                 </div>
@@ -326,8 +325,8 @@ const CapabilityCard: React.FC<{
     </div>
 );
 
-const QuickAction: React.FC<{ icon: any; label: string; onClick: () => void }> = ({ 
-    icon: Icon, label, onClick 
+const QuickAction: React.FC<{ icon: any; label: string; onClick: () => void }> = ({
+    icon: Icon, label, onClick
 }) => (
     <button
         onClick={onClick}
@@ -348,10 +347,6 @@ const PromptTemplateManager: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
 
-    useEffect(() => {
-        loadTemplates();
-    }, []);
-
     const loadTemplates = async () => {
         setLoading(true);
         try {
@@ -368,33 +363,37 @@ const PromptTemplateManager: React.FC = () => {
         setLoading(false);
     };
 
-    const filteredTemplates = templates.filter(t => 
+    useEffect(() => {
+        loadTemplates();
+    }, []);
+
+    const filteredTemplates = templates.filter(t =>
         t.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         t.code?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const defaultTemplates = [
-        { 
-            code: 'STRATEGIC_ADVISOR', 
-            name: 'Strategic Advisor', 
+        {
+            code: 'STRATEGIC_ADVISOR',
+            name: 'Strategic Advisor',
             category: 'consultant',
             description: 'Harvard-level strategic consultant for digital transformation'
         },
-        { 
-            code: 'INITIATIVE_GENERATOR', 
-            name: 'Initiative Generator', 
+        {
+            code: 'INITIATIVE_GENERATOR',
+            name: 'Initiative Generator',
             category: 'pmo',
             description: 'Generates actionable initiatives from assessment results'
         },
-        { 
-            code: 'RISK_ANALYZER', 
-            name: 'Risk Analyzer', 
+        {
+            code: 'RISK_ANALYZER',
+            name: 'Risk Analyzer',
             category: 'pmo',
             description: 'Analyzes project risks and suggests mitigations'
         },
-        { 
-            code: 'REPORT_WRITER', 
-            name: 'Report Writer', 
+        {
+            code: 'REPORT_WRITER',
+            name: 'Report Writer',
             category: 'output',
             description: 'Creates executive reports and presentations'
         },
@@ -496,10 +495,6 @@ const LearningSystemDashboard: React.FC = () => {
     });
     const [qualityTrends, setQualityTrends] = useState<QualityTrend[]>([]);
 
-    useEffect(() => {
-        loadLearningData();
-    }, [timeRange]);
-
     const loadLearningData = async () => {
         setLoading(true);
         try {
@@ -549,6 +544,10 @@ const LearningSystemDashboard: React.FC = () => {
         setLoading(false);
     };
 
+    useEffect(() => {
+        loadLearningData();
+    }, [timeRange]);
+
     const generateMockTrends = (): QualityTrend[] => {
         const days = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
         return Array.from({ length: days }, (_, i) => ({
@@ -593,24 +592,23 @@ const LearningSystemDashboard: React.FC = () => {
                             <button
                                 key={range}
                                 onClick={() => setTimeRange(range)}
-                                className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                                    timeRange === range
-                                        ? 'bg-purple-600 text-white'
-                                        : 'text-slate-400 hover:text-white'
-                                }`}
+                                className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${timeRange === range
+                                    ? 'bg-purple-600 text-white'
+                                    : 'text-slate-400 hover:text-white'
+                                    }`}
                             >
                                 {range === '7d' ? '7 Days' : range === '30d' ? '30 Days' : '90 Days'}
                             </button>
                         ))}
                     </div>
-                    <button 
+                    <button
                         onClick={handleExport}
                         className="flex items-center gap-2 px-3 py-2 bg-navy-800 hover:bg-navy-700 text-slate-300 rounded-lg text-sm font-medium transition-colors"
                     >
                         <Download size={14} />
                         Export
                     </button>
-                    <button 
+                    <button
                         onClick={loadLearningData}
                         className="flex items-center gap-2 px-3 py-2 bg-navy-800 hover:bg-navy-700 text-slate-300 rounded-lg text-sm font-medium transition-colors"
                     >
@@ -622,41 +620,41 @@ const LearningSystemDashboard: React.FC = () => {
 
             {/* Metrics Cards */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                <MetricCard 
-                    icon={BarChart3} 
-                    label="Total Interactions" 
-                    value={metrics.totalInteractions.toLocaleString()} 
-                    color="text-cyan-400" 
+                <MetricCard
+                    icon={BarChart3}
+                    label="Total Interactions"
+                    value={metrics.totalInteractions.toLocaleString()}
+                    color="text-cyan-400"
                 />
-                <MetricCard 
-                    icon={Target} 
-                    label="Success Rate" 
-                    value={`${metrics.successRate.toFixed(1)}%`} 
-                    color="text-emerald-400" 
+                <MetricCard
+                    icon={Target}
+                    label="Success Rate"
+                    value={`${metrics.successRate.toFixed(1)}%`}
+                    color="text-emerald-400"
                 />
-                <MetricCard 
-                    icon={TrendingUp} 
-                    label="Avg Quality" 
-                    value={`${(metrics.avgQualityScore * 100).toFixed(0)}%`} 
-                    color="text-purple-400" 
+                <MetricCard
+                    icon={TrendingUp}
+                    label="Avg Quality"
+                    value={`${(metrics.avgQualityScore * 100).toFixed(0)}%`}
+                    color="text-purple-400"
                 />
-                <MetricCard 
-                    icon={Clock} 
-                    label="Avg Response" 
-                    value={`${metrics.avgResponseTime.toFixed(1)}s`} 
-                    color="text-amber-400" 
+                <MetricCard
+                    icon={Clock}
+                    label="Avg Response"
+                    value={`${metrics.avgResponseTime.toFixed(1)}s`}
+                    color="text-amber-400"
                 />
-                <MetricCard 
-                    icon={Lightbulb} 
-                    label="Patterns" 
-                    value={metrics.patternsLearned.toString()} 
-                    color="text-pink-400" 
+                <MetricCard
+                    icon={Lightbulb}
+                    label="Patterns"
+                    value={metrics.patternsLearned.toString()}
+                    color="text-pink-400"
                 />
-                <MetricCard 
-                    icon={Brain} 
-                    label="Active Models" 
-                    value={metrics.activeModels.toString()} 
-                    color="text-blue-400" 
+                <MetricCard
+                    icon={Brain}
+                    label="Active Models"
+                    value={metrics.activeModels.toString()}
+                    color="text-blue-400"
                 />
             </div>
 
@@ -672,7 +670,7 @@ const LearningSystemDashboard: React.FC = () => {
                     <div className="h-40 flex items-end gap-1">
                         {qualityTrends.slice(-30).map((trend, idx) => (
                             <div key={idx} className="flex-1 flex flex-col items-center gap-1 group">
-                                <div 
+                                <div
                                     className="w-full bg-gradient-to-t from-purple-600 to-purple-400 rounded-t transition-all group-hover:from-purple-500 group-hover:to-purple-300"
                                     style={{ height: `${(trend.score / maxScore) * 100}%`, minHeight: '4px' }}
                                     title={`${trend.date}: ${(trend.score * 100).toFixed(1)}%`}
@@ -760,8 +758,8 @@ const LearningSystemDashboard: React.FC = () => {
 };
 
 // Metric Card Component for Learning Analytics
-const MetricCard: React.FC<{ icon: any; label: string; value: string; color: string }> = ({ 
-    icon: Icon, label, value, color 
+const MetricCard: React.FC<{ icon: any; label: string; value: string; color: string }> = ({
+    icon: Icon, label, value, color
 }) => (
     <div className="bg-navy-900 border border-white/10 rounded-xl p-4">
         <div className="flex items-center gap-2 mb-2">

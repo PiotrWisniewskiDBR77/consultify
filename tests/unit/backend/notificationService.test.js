@@ -1,38 +1,48 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
 
-const mockDb = {
-    run: vi.fn(),
-    get: vi.fn(),
-    all: vi.fn()
-};
+const { mockDb } = vi.hoisted(() => {
+    return {
+        mockDb: {
+            run: vi.fn(),
+            get: vi.fn(),
+            all: vi.fn(),
+            exec: vi.fn(),
+            query: vi.fn(),
+            serialize: vi.fn((cb) => cb()),
+            on: vi.fn(),
+        }
+    };
+});
 
-vi.mock('../../../server/database', () => ({
-    default: mockDb
-}));
+// Inject the mock into the global object so server/database.js can pick it up
+global.__TEST_DB_MOCK__ = mockDb;
 
 describe('NotificationService', () => {
     let NotificationService;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         vi.clearAllMocks();
         vi.resetModules();
 
+        // Default mock implementations - MUST USE CALLBACKS
         mockDb.run.mockImplementation((sql, params, callback) => {
-            callback(null, { lastID: 'notification-123', changes: 1 });
+            const cb = typeof params === 'function' ? params : callback;
+            if (typeof cb === 'function') cb(null, { lastID: 'notification-123', changes: 1 });
         });
 
         mockDb.get.mockImplementation((sql, params, callback) => {
-            // Mock mute settings check - return false (don't mute)
-            callback(null, null);
+            const cb = typeof params === 'function' ? params : callback;
+            if (typeof cb === 'function') cb(null, null);
         });
 
         mockDb.all.mockImplementation((sql, params, callback) => {
-            callback(null, []);
+            const cb = typeof params === 'function' ? params : callback;
+            if (typeof cb === 'function') cb(null, []);
         });
 
-        NotificationService = require('../../../server/services/notificationService');
+        // We use require to ensure it picked up the mocks
+        const mod = require('../../../server/services/notificationService');
+        NotificationService = mod.default || mod;
     });
 
     afterEach(() => {
@@ -62,8 +72,8 @@ describe('NotificationService', () => {
 
         it('should not create notification if muted', async () => {
             mockDb.get.mockImplementation((sql, params, callback) => {
-                // Mock mute settings - return true (mute)
-                callback(null, { mute: 1 });
+                const cb = typeof params === 'function' ? params : callback;
+                if (typeof cb === 'function') cb(null, { mute_info: 1 });
             });
 
             const notification = {
@@ -71,7 +81,8 @@ describe('NotificationService', () => {
                 organizationId: 'org-456',
                 type: NotificationService.NOTIFICATION_TYPES.TASK_ASSIGNED,
                 title: 'Test',
-                message: 'Test'
+                message: 'Test',
+                severity: 'INFO'
             };
 
             const result = await NotificationService.create(notification);
@@ -82,7 +93,8 @@ describe('NotificationService', () => {
     describe('getForUser', () => {
         it('should get notifications for user', async () => {
             mockDb.all.mockImplementation((sql, params, callback) => {
-                callback(null, [
+                const cb = typeof params === 'function' ? params : callback;
+                if (typeof cb === 'function') cb(null, [
                     {
                         id: 'notif-1',
                         type: 'TASK_ASSIGNED',
@@ -100,7 +112,8 @@ describe('NotificationService', () => {
 
         it('should filter unread notifications', async () => {
             mockDb.all.mockImplementation((sql, params, callback) => {
-                callback(null, []);
+                const cb = typeof params === 'function' ? params : callback;
+                if (typeof cb === 'function') cb(null, []);
             });
 
             await NotificationService.getForUser('user-123', { unreadOnly: true });
@@ -116,6 +129,3 @@ describe('NotificationService', () => {
         });
     });
 });
-
-
-

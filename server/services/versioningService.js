@@ -70,7 +70,9 @@ const VersioningService = {
             analysis.completionPercent || 0
         ];
 
-        await db.run(sql, params);
+        await new Promise((resolve, reject) => {
+            db.run(sql, params, (err) => err ? reject(err) : resolve());
+        });
 
         return VersioningService.getVersion(id);
     },
@@ -430,12 +432,15 @@ const VersioningService = {
 
         params.push(versionId);
 
-        await db.run(
-            `UPDATE digitization_analysis_versions 
-             SET ${updateParts.join(', ')}
-             WHERE id = ?`,
-            params
-        );
+        await new Promise((resolve, reject) => {
+            db.run(
+                `UPDATE digitization_analysis_versions 
+                 SET ${updateParts.join(', ')}
+                 WHERE id = ?`,
+                params,
+                (err) => err ? reject(err) : resolve()
+            );
+        });
 
         return VersioningService.getVersion(versionId);
     },
@@ -454,10 +459,13 @@ const VersioningService = {
             throw new Error('Baseline versions cannot be deleted');
         }
 
-        await db.run(
-            `DELETE FROM digitization_analysis_versions WHERE id = ?`,
-            [versionId]
-        );
+        await new Promise((resolve, reject) => {
+            db.run(
+                `DELETE FROM digitization_analysis_versions WHERE id = ?`,
+                [versionId],
+                (err) => err ? reject(err) : resolve()
+            );
+        });
 
         return true;
     },
@@ -466,12 +474,15 @@ const VersioningService = {
      * Mark a version as baseline
      */
     markAsBaseline: async (versionId) => {
-        await db.run(
-            `UPDATE digitization_analysis_versions 
-             SET version_type = 'baseline'
-             WHERE id = ?`,
-            [versionId]
-        );
+        await new Promise((resolve, reject) => {
+            db.run(
+                `UPDATE digitization_analysis_versions 
+                 SET version_type = 'baseline'
+                 WHERE id = ?`,
+                [versionId],
+                (err) => err ? reject(err) : resolve()
+            );
+        });
 
         return VersioningService.getVersion(versionId);
     }

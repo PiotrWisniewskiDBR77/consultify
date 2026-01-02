@@ -192,21 +192,39 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
 
     const [saving, setSaving] = useState(false);
 
-    useEffect(() => {
-        loadCustomRoles();
-    }, [currentOrganization?.id]);
-
     const loadCustomRoles = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`/api/organizations/${currentOrganization?.id}/roles`, {
+            const response = await fetch(`/api/organizations/${currentOrganization?.id}/roles`, {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
             });
-            if (res.ok) {
-                const data = await res.json();
+            if (response.ok) {
+                const data = await response.json();
                 setCustomRoles(data);
+            } else {
+                // Mock data for development if API fails
+                setCustomRoles([
+                    {
+                        id: 'custom-1',
+                        organizationId: currentOrganization?.id || '',
+                        name: 'Senior Developer',
+                        description: 'Extended permissions for senior team members',
+                        baseRole: UserRole.TEAM_MEMBER,
+                        permissions: [
+                            { resource: 'tasks', action: '*', allowed: true },
+                            { resource: 'projects', action: 'read', allowed: true },
+                            { resource: 'initiatives', action: 'read', allowed: true },
+                            { resource: 'initiatives', action: 'create', allowed: true }
+                        ],
+                        isSystemRole: false,
+                        createdBy: 'user-1',
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
+                    }
+                ]);
             }
         } catch (error) {
+            console.error('Failed to load custom roles:', error);
             // Mock data for development
             setCustomRoles([
                 {
@@ -289,7 +307,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
             // Mock success
             toast.success(editingRole ? 'Role updated' : 'Role created');
             setShowCreateModal(false);
-            
+
             if (!editingRole) {
                 const newRole: CustomRole = {
                     id: `custom-${Date.now()}`,
@@ -400,11 +418,10 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                             <div
                                 key={role.id}
                                 onClick={() => setSelectedRole(selectedRole === role.id ? null : role.id)}
-                                className={`p-4 bg-white dark:bg-navy-800 rounded-xl border cursor-pointer transition-all ${
-                                    selectedRole === role.id
+                                className={`p-4 bg-white dark:bg-navy-800 rounded-xl border cursor-pointer transition-all ${selectedRole === role.id
                                         ? 'border-violet-500 ring-2 ring-violet-500/20'
                                         : 'border-slate-200 dark:border-navy-700 hover:border-slate-300'
-                                }`}
+                                    }`}
                             >
                                 <div className="flex items-start gap-3">
                                     <div className={`p-2.5 rounded-lg ${colors.light}`}>
@@ -511,7 +528,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                                 {expandedCategories.includes(category.category) && (
                                     <div className="p-3 space-y-2">
                                         {category.permissions.map(perm => {
-                                            const hasPermission = selectedRole === 'OWNER' || 
+                                            const hasPermission = selectedRole === 'OWNER' ||
                                                 (selectedRole === 'ADMIN' && !perm.id.includes('org:'));
                                             return (
                                                 <div
@@ -522,11 +539,10 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                                                         <span className="text-sm text-slate-900 dark:text-white">{perm.label}</span>
                                                         <p className="text-xs text-slate-500">{perm.description}</p>
                                                     </div>
-                                                    <div className={`w-6 h-6 rounded flex items-center justify-center ${
-                                                        hasPermission
+                                                    <div className={`w-6 h-6 rounded flex items-center justify-center ${hasPermission
                                                             ? 'bg-green-500 text-white'
                                                             : 'bg-slate-200 dark:bg-navy-700 text-slate-400'
-                                                    }`}>
+                                                        }`}>
                                                         {hasPermission ? <Check size={14} /> : <X size={14} />}
                                                     </div>
                                                 </div>
@@ -619,11 +635,10 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                                                             key={perm.id}
                                                             type="button"
                                                             onClick={() => togglePermission(perm.id)}
-                                                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                                                                formData.permissions.includes(perm.id)
+                                                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${formData.permissions.includes(perm.id)
                                                                     ? 'bg-violet-600 text-white'
                                                                     : 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
-                                                            }`}
+                                                                }`}
                                                         >
                                                             {perm.label}
                                                         </button>

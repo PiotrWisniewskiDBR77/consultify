@@ -137,10 +137,6 @@ export const AIConfigurationView: React.FC = () => {
     const [testingOllama, setTestingOllama] = useState(false);
     const [testingConnection, setTestingConnection] = useState(false);
 
-    useEffect(() => {
-        loadInitialData();
-    }, []);
-
     const loadInitialData = async () => {
         setLoading(true);
         try {
@@ -193,6 +189,10 @@ export const AIConfigurationView: React.FC = () => {
         setLoading(false);
     };
 
+    useEffect(() => {
+        loadInitialData();
+    }, []);
+
     // Save global settings
     const saveGlobalSettings = async () => {
         if (!globalSettings) return;
@@ -215,7 +215,7 @@ export const AIConfigurationView: React.FC = () => {
     };
 
     const updateGlobalSetting = <K extends keyof SuperAdminAISettings>(
-        key: K, 
+        key: K,
         value: SuperAdminAISettings[K]
     ) => {
         setGlobalSettings(prev => prev ? { ...prev, [key]: value } : null);
@@ -1060,8 +1060,8 @@ Help leaders develop change management competencies.`
                                         collapsible
                                         defaultExpanded={false}
                                     >
-                                        <AuditLogViewer 
-                                            level="superadmin" 
+                                        <AuditLogViewer
+                                            level="superadmin"
                                             showFilters={true}
                                             showExport={true}
                                             limit={50}

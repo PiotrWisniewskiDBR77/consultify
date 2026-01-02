@@ -6,11 +6,11 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { 
-    Plus, 
-    Upload, 
-    Clipboard, 
-    Link, 
+import {
+    Plus,
+    Upload,
+    Clipboard,
+    Link,
     Target,
     Lightbulb,
     Map,
@@ -24,53 +24,53 @@ interface AddFilesMenuProps {
 }
 
 const MENU_ITEMS = [
-    { 
-        id: 'upload', 
-        icon: Upload, 
-        labelKey: 'aiChat.menu.uploadFile', 
+    {
+        id: 'upload',
+        icon: Upload,
+        labelKey: 'aiChat.menu.uploadFile',
         label: 'Upload File',
         accept: '.pdf,.docx,.xlsx,.csv,.txt,.json'
     },
-    { 
-        id: 'paste', 
-        icon: Clipboard, 
-        labelKey: 'aiChat.menu.pasteContent', 
+    {
+        id: 'paste',
+        icon: Clipboard,
+        labelKey: 'aiChat.menu.pasteContent',
         label: 'Paste Content'
     },
-    { 
-        id: 'link', 
-        icon: Link, 
-        labelKey: 'aiChat.menu.addLink', 
+    {
+        id: 'link',
+        icon: Link,
+        labelKey: 'aiChat.menu.addLink',
         label: 'Add Link / URL'
     },
     { divider: true },
-    { 
-        id: 'import-assessment', 
-        icon: Target, 
-        labelKey: 'aiChat.menu.importAssessment', 
+    {
+        id: 'import-assessment',
+        icon: Target,
+        labelKey: 'aiChat.menu.importAssessment',
         label: 'Import Assessment',
-        pmo: true 
+        pmo: true
     },
-    { 
-        id: 'import-initiative', 
-        icon: Lightbulb, 
-        labelKey: 'aiChat.menu.importInitiative', 
+    {
+        id: 'import-initiative',
+        icon: Lightbulb,
+        labelKey: 'aiChat.menu.importInitiative',
         label: 'Import Initiative',
-        pmo: true 
+        pmo: true
     },
-    { 
-        id: 'import-roadmap', 
-        icon: Map, 
-        labelKey: 'aiChat.menu.importRoadmap', 
+    {
+        id: 'import-roadmap',
+        icon: Map,
+        labelKey: 'aiChat.menu.importRoadmap',
         label: 'Import Roadmap',
-        pmo: true 
+        pmo: true
     },
-    { 
-        id: 'import-report', 
-        icon: FileText, 
-        labelKey: 'aiChat.menu.importReport', 
+    {
+        id: 'import-report',
+        icon: FileText,
+        labelKey: 'aiChat.menu.importReport',
         label: 'Import Report',
-        pmo: true 
+        pmo: true
     }
 ];
 
@@ -248,7 +248,7 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
                                     );
                                 }
 
-                                const Icon = item.icon;
+                                const Icon = (item as any).icon;
                                 return (
                                     <button
                                         key={item.id}
@@ -261,7 +261,7 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
                                         "
                                     >
                                         <Icon size={16} className={item.pmo ? 'text-primary-500' : 'text-slate-400'} />
-                                        {t(item.labelKey, item.label)}
+                                        {t(item.labelKey || '', item.label || '')}
                                     </button>
                                 );
                             })}
