@@ -1,6 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
+/* eslint-disable @typescript-eslint/no-require-imports */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -34,8 +35,9 @@ describe('PMOStatusBanner Component', () => {
     });
 
     describe('Loading State', () => {
-        it('returns null when loading', () => {
-            vi.mocked(require('../../../store/usePMOStore').usePMOStore).mockReturnValueOnce({
+        it('returns null when loading', async () => {
+            const { usePMOStore } = await import('../../../store/usePMOStore');
+            vi.mocked(usePMOStore).mockReturnValueOnce({
                 ...mockPMOStore,
                 isLoading: true
             });
@@ -44,8 +46,9 @@ describe('PMOStatusBanner Component', () => {
             // Should not render content during loading
         });
 
-        it('returns null when no phase', () => {
-            vi.mocked(require('../../../store/usePMOStore').usePMOStore).mockReturnValueOnce({
+        it('returns null when no phase', async () => {
+            const { usePMOStore } = await import('../../../store/usePMOStore');
+            vi.mocked(usePMOStore).mockReturnValueOnce({
                 ...mockPMOStore,
                 currentPhase: null
             });

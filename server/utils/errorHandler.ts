@@ -5,8 +5,10 @@
  * Provides consistent error responses across the API.
  */
 
+/* eslint-disable @typescript-eslint/no-require-imports */
 const express = require('express');
 const logger = require('./logger');
+/* eslint-enable @typescript-eslint/no-require-imports */
 
 /**
  * Error types/codes

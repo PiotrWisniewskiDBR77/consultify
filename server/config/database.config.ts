@@ -5,6 +5,7 @@
  * Switch by setting DATABASE_URL environment variable
  */
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const path = require('path');
 
 const isProduction = process.env.NODE_ENV === 'production';

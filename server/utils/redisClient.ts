@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { createClient } = require('redis');
 
 const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
