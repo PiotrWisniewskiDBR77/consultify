@@ -198,52 +198,15 @@
             radial-gradient(circle at 100% 0%, rgba(59, 130, 246, 0.03) 0%, transparent 50%);
         background-attachment: fixed;
     }
-    
-    /* ========================================
-       Light Mode Navy Blue Enhancement
-       Better visibility & contrast
-       ======================================== */
-    
-    /* Light mode body background - slightly cooler */
-    body:not(.dark) {
-        background-color: #F1F5F9; /* slate-100 - slightly darker than default */
-        background-image: 
-            radial-gradient(circle at 0% 0%, rgba(30, 58, 95, 0.03) 0%, transparent 50%),
-            radial-gradient(circle at 100% 100%, rgba(124, 58, 237, 0.02) 0%, transparent 50%);
-    }
-    
-    /* Headers and titles in light mode - navy instead of gray */
-    :not(.dark) h1,
-    :not(.dark) h2,
-    :not(.dark) h3,
-    :not(.dark) h4,
-    :not(.dark) h5,
-    :not(.dark) h6 {
-        color: var(--light-navy-900);
-    }
 }
 
 @layer components {
-    /* ========================================
-       Light Mode Navy Enhancement - Components
-       ======================================== */
-    
     .glass-panel {
-        @apply bg-white/90 dark:bg-navy-900/60 backdrop-blur-xl border border-slate-300 dark:border-white/5 shadow-md dark:shadow-2xl;
+        @apply bg-white/70 dark:bg-navy-900/60 backdrop-blur-xl border border-white/20 dark:border-white/5 shadow-sm dark:shadow-2xl;
     }
 
     .glass-card {
-        @apply bg-white dark:bg-navy-800/40 backdrop-blur-md border border-slate-300 dark:border-white/5 transition-all duration-300 hover:border-brand/50 dark:hover:border-white/10 hover:shadow-lg dark:hover:shadow-glow;
-    }
-    
-    /* Light mode card with navy accent */
-    .light-card-navy {
-        @apply bg-white border border-slate-300 shadow-sm hover:shadow-md hover:border-slate-400 transition-all duration-200;
-    }
-    
-    /* Navy accent border for active states in light mode */
-    .light-active-navy {
-        @apply border-l-4 border-l-[#1E3A5F];
+        @apply bg-white/50 dark:bg-navy-800/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 transition-all duration-300 hover:border-brand/30 dark:hover:border-white/10 hover:shadow-glow;
     }
 
     /* Button Base Utilities */
@@ -261,9 +224,9 @@
         @apply btn-base bg-navy-800 hover:bg-navy-700 text-white border border-white/10 shadow-lg hover:shadow-xl hover:border-white/20;
     }
 
-    /* Ghost Button - Navy text for light mode */
+    /* Ghost Button - Darkened text for light mode */
     .btn-ghost {
-        @apply btn-base bg-transparent hover:bg-slate-200 dark:hover:bg-white/5 text-slate-700 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white border border-transparent;
+        @apply btn-base bg-transparent hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white border border-transparent;
     }
 
     /* Danger Button */
@@ -271,29 +234,14 @@
         @apply btn-base bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-500/20 border border-transparent;
     }
 
-    /* Outline Button - More visible border in light mode */
+    /* Outline Button */
     .btn-outline {
-        @apply btn-base bg-transparent border border-slate-300 dark:border-white/10 text-slate-800 dark:text-slate-200 dark:hover:text-white;
-    }
-    .btn-outline:hover {
-        border-color: #3E5A7F; /* navyBlue-600 */
-        color: #1E3A5F; /* navyBlue-800 */
+        @apply btn-base bg-transparent border border-slate-200 dark:border-white/10 hover:border-brand/50 text-slate-700 dark:text-slate-200 hover:text-brand dark:hover:text-white;
     }
 
-    /* Glass Button - Navy variant for light mode */
+    /* Glass Button (Special Variant) */
     .btn-glass {
-        @apply btn-base bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-navy-900 dark:text-white border border-slate-300 dark:border-white/10 backdrop-blur-sm shadow-sm;
-    }
-    
-    /* Navy Button - Light mode primary action */
-    .btn-navy {
-        @apply btn-base text-white shadow-lg border;
-        background-color: #1E3A5F; /* navyBlue-800 */
-        border-color: #2E4A6F; /* navyBlue-700 */
-        box-shadow: 0 10px 15px -3px rgba(30, 58, 95, 0.25);
-    }
-    .btn-navy:hover {
-        background-color: #0F2744; /* navyBlue-900 */
+        @apply btn-base bg-white/5 hover:bg-white/10 text-navy-900 dark:text-white border border-white/10 backdrop-blur-sm shadow-sm;
     }
 
     /* Compact layout utilities */
@@ -613,218 +561,163 @@
 
 /* ========================================
    LIGHT MODE NAVY BLUE VISIBILITY ENHANCEMENTS
-   Applied outside @layer for higher specificity
-   ======================================== */
-
-/* Sidebar navigation in light mode */
-:root:not(.dark) aside,
-body:not(.dark) aside {
-    border-color: var(--light-border);
-}
-
-/* Input fields in light mode - stronger borders */
-body:not(.dark) input,
-body:not(.dark) select,
-body:not(.dark) textarea {
-    border-color: var(--light-border);
-    background-color: var(--light-bg-card);
-    color: var(--light-navy-800);
-}
-
-body:not(.dark) input::placeholder,
-body:not(.dark) textarea::placeholder {
-    color: var(--light-navy-500);
-}
-
-body:not(.dark) input:focus,
-body:not(.dark) select:focus,
-body:not(.dark) textarea:focus {
-    border-color: var(--light-accent-navy);
-    box-shadow: 0 0 0 3px var(--light-accent-navy-surface);
-}
-
-/* Dropdown menus in light mode */
-body:not(.dark) [role="menu"],
-body:not(.dark) [role="listbox"] {
-    background-color: var(--light-bg-card);
-    border-color: var(--light-border);
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
-}
-
-/* Tooltips in light mode */
-body:not(.dark) [role="tooltip"] {
-    background-color: var(--light-navy-900);
-    color: white;
-}
-
-/* ========================================
-   LIGHT MODE - Component Visibility Overrides
+   Using html:not(.dark) selector for proper dark mode support
    ======================================== */
 
 /* Admin Metric Cards - Darker text and borders */
-body:not(.dark) .admin-metric {
+html:not(.dark) .admin-metric {
     background-color: white;
     border-color: #CBD5E1;
     box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
 }
 
-body:not(.dark) .admin-metric-label {
+html:not(.dark) .admin-metric-label {
     color: #475569;
 }
 
-body:not(.dark) .admin-metric-value {
+html:not(.dark) .admin-metric-value {
     color: #0F172A;
 }
 
-body:not(.dark) .admin-metric-subtitle {
+html:not(.dark) .admin-metric-subtitle {
     color: #475569;
 }
 
 /* Admin Tables - Better contrast */
-body:not(.dark) .admin-table thead {
+html:not(.dark) .admin-table thead {
     background-color: #F1F5F9;
 }
 
-body:not(.dark) .admin-table th {
+html:not(.dark) .admin-table th {
     color: #334155;
     border-bottom: 1px solid #CBD5E1;
 }
 
-body:not(.dark) .admin-table tbody tr {
+html:not(.dark) .admin-table tbody tr {
     border-bottom: 1px solid #E2E8F0;
 }
 
-body:not(.dark) .admin-table tbody tr:hover {
+html:not(.dark) .admin-table tbody tr:hover {
     background-color: #F8FAFC;
 }
 
-body:not(.dark) .admin-table td {
+html:not(.dark) .admin-table td {
     color: #334155;
 }
 
 /* Status Colors - More vibrant in light mode */
-body:not(.dark) .admin-status-healthy {
+html:not(.dark) .admin-status-healthy {
     color: #059669;
 }
 
-body:not(.dark) .admin-status-healthy .admin-status-dot {
+html:not(.dark) .admin-status-healthy .admin-status-dot {
     background-color: #059669;
 }
 
-body:not(.dark) .admin-status-warning {
+html:not(.dark) .admin-status-warning {
     color: #D97706;
 }
 
-body:not(.dark) .admin-status-warning .admin-status-dot {
+html:not(.dark) .admin-status-warning .admin-status-dot {
     background-color: #D97706;
 }
 
-body:not(.dark) .admin-status-error {
+html:not(.dark) .admin-status-error {
     color: #DC2626;
 }
 
-body:not(.dark) .admin-status-error .admin-status-dot {
+html:not(.dark) .admin-status-error .admin-status-dot {
     background-color: #DC2626;
 }
 
 /* Section headers - Navy accent */
-body:not(.dark) .admin-section-header {
+html:not(.dark) .admin-section-header {
     border-bottom-color: #CBD5E1;
 }
 
-body:not(.dark) .admin-section-title {
+html:not(.dark) .admin-section-title {
     color: #0F172A;
 }
 
 /* Tabs - Navy blue accent in light mode */
-body:not(.dark) .admin-tabs {
+html:not(.dark) .admin-tabs {
     border-bottom-color: #CBD5E1;
 }
 
-body:not(.dark) .admin-tab {
+html:not(.dark) .admin-tab {
     color: #475569;
 }
 
-body:not(.dark) .admin-tab:hover {
+html:not(.dark) .admin-tab:hover {
     color: #0F172A;
 }
 
-body:not(.dark) .admin-tab-active {
+html:not(.dark) .admin-tab-active {
     color: #1E3A5F;
     border-bottom-color: #1E3A5F;
 }
 
 /* Buttons in light mode - Navy styling */
-body:not(.dark) .admin-btn-ghost {
+html:not(.dark) .admin-btn-ghost {
     color: #475569;
 }
 
-body:not(.dark) .admin-btn-ghost:hover {
+html:not(.dark) .admin-btn-ghost:hover {
     color: #0F172A;
     background-color: #F1F5F9;
 }
 
-body:not(.dark) .admin-btn-subtle {
+html:not(.dark) .admin-btn-subtle {
     background-color: white;
     border-color: #CBD5E1;
     color: #334155;
 }
 
-body:not(.dark) .admin-btn-subtle:hover {
+html:not(.dark) .admin-btn-subtle:hover {
     background-color: #F8FAFC;
     color: #0F172A;
 }
 
 /* Glass panels - Stronger borders */
-body:not(.dark) .glass-panel {
+html:not(.dark) .glass-panel {
     background-color: rgba(255, 255, 255, 0.95);
     border-color: #CBD5E1;
     box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.1);
 }
 
-body:not(.dark) .glass-card {
+html:not(.dark) .glass-card {
     background-color: white;
     border-color: #CBD5E1;
 }
 
-body:not(.dark) .glass-card:hover {
+html:not(.dark) .glass-card:hover {
     border-color: #94A3B8;
     box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.12);
 }
 
-/* Text colors - Darker for better visibility */
-body:not(.dark) .text-slate-400 {
-    color: #475569 !important;
+/* Text colors - Darker for better visibility in light mode */
+html:not(.dark) .text-slate-400 {
+    color: #475569;
 }
 
-body:not(.dark) .text-slate-500 {
-    color: #334155 !important;
+html:not(.dark) .text-slate-500 {
+    color: #334155;
 }
 
-body:not(.dark) .text-gray-400 {
-    color: #475569 !important;
+html:not(.dark) .text-gray-400 {
+    color: #475569;
 }
 
-body:not(.dark) .text-gray-500 {
-    color: #334155 !important;
+html:not(.dark) .text-gray-500 {
+    color: #334155;
 }
 
-/* Border colors - More visible */
-body:not(.dark) .border-slate-200 {
-    border-color: #CBD5E1 !important;
+/* Border colors - More visible in light mode */
+html:not(.dark) .border-slate-200 {
+    border-color: #CBD5E1;
 }
 
-body:not(.dark) .border-white\/10,
-body:not(.dark) .border-white\/5 {
-    border-color: #CBD5E1 !important;
-}
-
-/* Background improvements */
-body:not(.dark) .bg-slate-50 {
-    background-color: #F1F5F9 !important;
-}
-
-body:not(.dark) .bg-white\/50,
-body:not(.dark) .bg-white\/70 {
-    background-color: rgba(255, 255, 255, 0.95) !important;
+html:not(.dark) .border-white\/10,
+html:not(.dark) .border-white\/5 {
+    border-color: #CBD5E1;
 }

@@ -14,7 +14,7 @@ describe('Legal API Routes', () => {
     let testToken: string;
     let testUserId: string;
     let testOrgId: string;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     let adminUserId: string;
 
     beforeAll(async () => {

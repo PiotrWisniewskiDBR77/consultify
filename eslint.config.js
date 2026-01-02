@@ -28,10 +28,12 @@ export default tseslint.config(
             }],
             // React Hooks - włączone z ostrzeżeniami
             'react-hooks/exhaustive-deps': 'warn', // Ostrzeżenia dla brakujących zależności
+            'react-hooks/rules-of-hooks': 'error', // Keep critical rules
             'react-hooks/static-components': 'off',
             'react-hooks/use-memo': 'off',
             'react-hooks/set-state-in-effect': 'off',
             'react-hooks/purity': 'off',
+            'react-hooks/immutability': 'off', // Disable - causes parser errors
             // Suppress React Compiler errors if any
             // Note: If the plugin doesn't export this rule, ESLint might complain about unknown rule. 
             // But the error output showed this name.
